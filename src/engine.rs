@@ -13,7 +13,7 @@ pub struct PixEngine<S>
 where
     S: State,
 {
-    app_name: &'static str,
+    app_name: String,
     state: S,
     should_close: bool,
     debug: bool,
@@ -26,18 +26,19 @@ where
 {
     /// Create a new PixEngine instance
     pub fn new(
-        app_name: &'static str,
+        app_name: String,
         state: S,
         screen_width: u32,
         screen_height: u32,
         vsync: bool,
     ) -> PixEngineResult<Self> {
+        let data = StateData::new(&app_name, screen_width, screen_height, vsync)?;
         Ok(Self {
             app_name,
             state,
             should_close: false,
             debug: false,
-            data: StateData::new(app_name, screen_width, screen_height, vsync)?,
+            data,
         })
     }
     /// Set a custom window icon

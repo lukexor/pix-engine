@@ -149,7 +149,7 @@ impl StateData {
 
 impl StateData {
     pub(super) fn new(
-        app_name: &str,
+        app_name: &String,
         screen_width: u32,
         screen_height: u32,
         vsync: bool,

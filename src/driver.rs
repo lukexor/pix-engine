@@ -69,9 +69,9 @@ pub(super) struct DriverOpts {
 }
 
 impl DriverOpts {
-    pub(super) fn new(title: &str, width: u32, height: u32, vsync: bool) -> Self {
+    pub(super) fn new(title: &String, width: u32, height: u32, vsync: bool) -> Self {
         Self {
-            title: title.to_string(),
+            title: title.to_owned(),
             width,
             height,
             vsync,
