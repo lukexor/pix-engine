@@ -1,10 +1,13 @@
 [package]
 name = "pix-engine"
 version = "0.2.0"
-license = "GNU"
+license = "GPL-3.0-or-later"
 description = "A simple, cross-platform graphics/UI engine framework with a minimal interface."
-readme = "README.md"
 authors = ["Luke Petherbridge <me@lukeworks.tech>"]
+readme = "README.md"
+documentation = "https://github.com/lukexor/pix-engine"
+repository = "https://github.com/lukexor/pix-engine.git"
+homepage = "https://github.com/lukexor/pix-engine"
 edition = "2018"
 
 [lib]
