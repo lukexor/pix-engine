@@ -19,7 +19,7 @@ use sdl2::{
 };
 use std::collections::HashMap;
 
-pub const SAMPLE_RATE: i32 = 96_000; // in Hz
+pub const DEFAULT_SAMPLE_RATE: i32 = 48_000; // in Hz
 
 mod event;
 
@@ -94,7 +94,10 @@ impl Sdl2Driver {
         // Set up Audio
         let audio_sub = context.audio()?;
         let desired_spec = AudioSpecDesired {
-            freq: Some(SAMPLE_RATE),
+            freq: Some(
+                opts.audio_sample_rate
+                    .unwrap_or_else(|| DEFAULT_SAMPLE_RATE),
+            ),
             channels: Some(1),
             samples: None,
         };
@@ -410,9 +413,25 @@ impl Driver for Sdl2Driver {
         let _ = self.canvases.remove(&window_id);
     }
 
+    // TODO: This spinlocks waiting for samples, not ideal
     fn enqueue_audio(&mut self, samples: &[f32]) {
-        while self.audio_device.size() > SAMPLE_RATE as u32 {}
+        let sample_rate = self.audio_device.spec().freq as u32;
+        while self.audio_device.size() > sample_rate {
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
         self.audio_device.queue(samples);
+    }
+
+    fn set_audio_sample_rate(&mut self, sample_rate: i32) -> PixEngineResult<()> {
+        let audio_sub = self.context.audio()?;
+        let desired_spec = AudioSpecDesired {
+            freq: Some(sample_rate),
+            channels: Some(1),
+            samples: None,
+        };
+        self.audio_device = audio_sub.open_queue(None, &desired_spec)?;
+        self.audio_device.resume();
+        Ok(())
     }
 }
 

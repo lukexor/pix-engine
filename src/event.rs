@@ -4,8 +4,8 @@ pub enum PixEvent {
     None,
     Quit,
     AppTerminating,
-    GamepadBtn(i32, Button, bool),     // Id, Button, pressed
-    GamepadAxis(i32, Axis, i16),       // Id, Axis, value
+    GamepadBtn(u32, Button, bool),     // Id, Button, pressed
+    GamepadAxis(u32, Axis, i16),       // Id, Axis, value
     KeyPress(Key, bool, bool),         // Key, pressed, repeat
     MousePress(Mouse, i32, i32, bool), // Mouse, x, y, pressed
     MouseWheel(i32),                   // Wheel delta
@@ -84,6 +84,12 @@ pub enum Axis {
 impl Default for PixEvent {
     fn default() -> Self {
         Self::None
+    }
+}
+
+impl Default for Mouse {
+    fn default() -> Self {
+        Self::Left
     }
 }
 

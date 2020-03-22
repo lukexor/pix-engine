@@ -129,7 +129,7 @@ impl Sdl2Driver {
 
     pub(super) fn map_button(
         &self,
-        which: i32,
+        which: u32,
         btn: controller::Button,
         pressed: bool,
     ) -> PixEvent {
@@ -153,7 +153,7 @@ impl Sdl2Driver {
         PixEvent::GamepadBtn(which, btn, pressed)
     }
 
-    pub(super) fn map_axis(&self, which: i32, axis: controller::Axis, value: i16) -> PixEvent {
+    pub(super) fn map_axis(&self, which: u32, axis: controller::Axis, value: i16) -> PixEvent {
         let axis = match axis {
             controller::Axis::LeftX => Axis::LeftX,
             controller::Axis::LeftY => Axis::LeftY,

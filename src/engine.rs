@@ -53,6 +53,10 @@ where
     pub fn vsync(&mut self, val: bool) -> PixEngineResult<()> {
         self.data.vsync(val)
     }
+    /// Set audio sample rate
+    pub fn set_audio_sample_rate(&mut self, sample_rate: i32) -> PixEngineResult<()> {
+        self.data.set_audio_sample_rate(sample_rate)
+    }
 
     /// Starts the engine loop. Will execute until one of on_create, on_update, or on_destroy
     /// returns false or the Window receives a termination event

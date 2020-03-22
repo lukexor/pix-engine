@@ -34,6 +34,9 @@ pub(super) trait Driver {
     fn set_size(&mut self, _window_id: u32, _width: u32, _height: u32) -> PixEngineResult<()> {
         Ok(())
     }
+    fn set_audio_sample_rate(&mut self, _sample_rate: i32) -> PixEngineResult<()> {
+        Ok(())
+    }
     fn poll(&mut self) -> PixEngineResult<Vec<PixEvent>> {
         Ok(Vec::new())
     }
@@ -65,15 +68,17 @@ pub(super) struct DriverOpts {
     title: String,
     width: u32,
     height: u32,
+    audio_sample_rate: Option<i32>,
     vsync: bool,
 }
 
 impl DriverOpts {
-    pub(super) fn new(title: &String, width: u32, height: u32, vsync: bool) -> Self {
+    pub(super) fn new(title: &str, width: u32, height: u32, vsync: bool) -> Self {
         Self {
             title: title.to_owned(),
             width,
             height,
+            audio_sample_rate: None,
             vsync,
         }
     }

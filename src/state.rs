@@ -149,7 +149,7 @@ impl StateData {
 
 impl StateData {
     pub(super) fn new(
-        app_name: &String,
+        app_name: &str,
         screen_width: u32,
         screen_height: u32,
         vsync: bool,
@@ -191,6 +191,9 @@ impl StateData {
     }
     pub(super) fn set_focused(&mut self, val: bool) {
         self.has_input_focus = val;
+    }
+    pub(super) fn set_audio_sample_rate(&mut self, sample_rate: i32) -> PixEngineResult<()> {
+        self.driver.set_audio_sample_rate(sample_rate)
     }
     pub(super) fn update_mouse(&mut self, x: i32, y: i32) {
         self.mouse_x = x;
