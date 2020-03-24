@@ -9,6 +9,8 @@ use crate::{
 pub mod draw;
 pub mod transform;
 
+pub type WindowId = u32;
+
 pub trait State {
     fn on_start(&mut self, _data: &mut StateData) -> PixEngineResult<bool> {
         Ok(true)
@@ -41,7 +43,7 @@ pub struct StateData {
     #[cfg(all(feature = "wasm-driver", not(feature = "sdl2-driver")))]
     pub(super) driver: driver::wasm::WasmDriver,
     pub(super) events: Vec<PixEvent>,
-    main_window: u32,
+    main_window_id: WindowId,
     title: String,
     screen_width: u32,
     screen_height: u32,
@@ -69,8 +71,8 @@ pub struct StateData {
 impl StateData {
     /// Engine attributes ======================================================
 
-    pub fn main_window(&self) -> u32 {
-        self.main_window
+    pub fn main_window_id(&self) -> WindowId {
+        self.main_window_id
     }
     /// Custom title to append in the window
     pub fn title(&self) -> &str {
@@ -82,11 +84,11 @@ impl StateData {
     }
     /// Toggle fullscreen
     pub fn fullscreen(&mut self, val: bool) -> PixEngineResult<()> {
-        self.driver.fullscreen(self.main_window, val)
+        self.driver.fullscreen(self.main_window_id, val)
     }
     /// Toggle vsync
     pub fn vsync(&mut self, val: bool) -> PixEngineResult<()> {
-        self.driver.vsync(self.main_window, val)
+        self.driver.vsync(self.main_window_id, val)
     }
     /// Screen Width
     pub fn screen_width(&self) -> u32 {
@@ -108,7 +110,7 @@ impl StateData {
         self.default_draw_target = new_draw_target;
         self.screen_width = width;
         self.screen_height = height;
-        self.driver.set_size(self.main_window, width, height)
+        self.driver.set_size(self.main_window_id, width, height)
     }
     /// Whether window has focus
     pub fn is_focused(&self) -> bool {
@@ -158,12 +160,12 @@ impl StateData {
         // Initialize backend driver library
         let opts = DriverOpts::new(app_name, screen_width, screen_height, vsync);
         let driver = driver::load_driver(opts)?;
-        let main_window = driver.window_id();
+        let main_window_id = driver.window_id();
         let state_data = Self {
             default_target_dirty: false,
             driver,
             events: Vec::new(),
-            main_window,
+            main_window_id,
             title: String::new(),
             screen_width,
             screen_height,

@@ -11,7 +11,7 @@ mod state;
 
 pub use engine::PixEngine;
 pub use sprite::Sprite;
-pub use state::{draw, transform, AlphaMode, State, StateData};
+pub use state::{draw, transform, AlphaMode, State, StateData, WindowId};
 
 pub type PixEngineResult<T> = std::result::Result<T, PixEngineErr>;
 

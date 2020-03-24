@@ -4,7 +4,7 @@ use crate::{
     event::PixEvent,
     pixel::ColorType,
     sprite::Sprite,
-    PixEngineErr, PixEngineResult,
+    PixEngineErr, PixEngineResult, WindowId,
 };
 use sdl2::{
     audio::{AudioQueue, AudioSpecDesired},
@@ -25,7 +25,7 @@ mod event;
 
 pub(crate) struct Sdl2Driver {
     context: Sdl,
-    window_id: u32,
+    window_id: WindowId,
     canvases: HashMap<u32, (Canvas<video::Window>, TextureCreator<WindowContext>)>,
     texture_maps: HashMap<String, TextureMap>,
     audio_device: AudioQueue<f32>,
@@ -122,7 +122,7 @@ impl Sdl2Driver {
 }
 
 impl Driver for Sdl2Driver {
-    fn fullscreen(&mut self, window_id: u32, val: bool) -> PixEngineResult<()> {
+    fn fullscreen(&mut self, window_id: WindowId, val: bool) -> PixEngineResult<()> {
         if let Some((canvas, _)) = self.canvases.get_mut(&window_id) {
             let state = canvas.window().fullscreen_state();
             let mouse = self.context.mouse();
@@ -143,7 +143,7 @@ impl Driver for Sdl2Driver {
         }
     }
 
-    fn vsync(&mut self, window_id: u32, val: bool) -> PixEngineResult<()> {
+    fn vsync(&mut self, window_id: WindowId, val: bool) -> PixEngineResult<()> {
         if let Some((canvas, texture_creator)) = self.canvases.get_mut(&window_id) {
             let title = canvas.window().title();
             let (width, height) = canvas.window().size();
@@ -205,11 +205,11 @@ impl Driver for Sdl2Driver {
         Ok(())
     }
 
-    fn window_id(&self) -> u32 {
+    fn window_id(&self) -> WindowId {
         self.window_id
     }
 
-    fn set_title(&mut self, window_id: u32, title: &str) -> PixEngineResult<()> {
+    fn set_title(&mut self, window_id: WindowId, title: &str) -> PixEngineResult<()> {
         if let Some((canvas, _)) = self.canvases.get_mut(&window_id) {
             canvas.window_mut().set_title(title)?;
             Ok(())
@@ -221,7 +221,7 @@ impl Driver for Sdl2Driver {
         }
     }
 
-    fn set_size(&mut self, window_id: u32, width: u32, height: u32) -> PixEngineResult<()> {
+    fn set_size(&mut self, window_id: WindowId, width: u32, height: u32) -> PixEngineResult<()> {
         if let Some((canvas, texture_creator)) = self.canvases.get_mut(&window_id) {
             canvas.set_logical_size(width, height)?;
             let window = canvas.window_mut();
@@ -245,6 +245,7 @@ impl Driver for Sdl2Driver {
         let events: Vec<Event> = self.event_pump.poll_iter().collect();
         let mut pix_events: Vec<PixEvent> = Vec::new();
         for event in events {
+            // println!("Event {:?}", event);
             let pix_event = match event {
                 Event::Quit { .. } => PixEvent::Quit,
                 Event::AppTerminating { .. } => PixEvent::AppTerminating,
@@ -260,6 +261,7 @@ impl Driver for Sdl2Driver {
                     _ => PixEvent::None, // Ignore others
                 },
                 Event::ControllerDeviceAdded { which: id, .. } => {
+                    println!("Device {} added", id);
                     match id {
                         0 => self.controller1 = Some(self.controller_sub.open(id)?),
                         1 => self.controller2 = Some(self.controller_sub.open(id)?),
@@ -304,7 +306,7 @@ impl Driver for Sdl2Driver {
         Ok(pix_events)
     }
 
-    fn clear(&mut self, window_id: u32) -> PixEngineResult<()> {
+    fn clear(&mut self, window_id: WindowId) -> PixEngineResult<()> {
         if let Some((canvas, _)) = self.canvases.get_mut(&window_id) {
             canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
             canvas.clear();
@@ -325,7 +327,7 @@ impl Driver for Sdl2Driver {
 
     fn create_texture(
         &mut self,
-        window_id: u32,
+        window_id: WindowId,
         name: &str,
         color_type: ColorType,
         src: Rect,
@@ -361,7 +363,12 @@ impl Driver for Sdl2Driver {
         }
     }
 
-    fn copy_texture(&mut self, window_id: u32, name: &str, bytes: &[u8]) -> PixEngineResult<()> {
+    fn copy_texture(
+        &mut self,
+        window_id: WindowId,
+        name: &str,
+        bytes: &[u8],
+    ) -> PixEngineResult<()> {
         if let Some(map) = self.texture_maps.get_mut(name) {
             map.tex.update(None, bytes, map.pitch)?;
             if let Some((canvas, _)) = self.canvases.get_mut(&window_id) {
@@ -409,7 +416,7 @@ impl Driver for Sdl2Driver {
         Ok(window_id)
     }
 
-    fn close_window(&mut self, window_id: u32) {
+    fn close_window(&mut self, window_id: WindowId) {
         let _ = self.canvases.remove(&window_id);
     }
 

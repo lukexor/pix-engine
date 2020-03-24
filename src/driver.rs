@@ -1,4 +1,4 @@
-use crate::{draw::Rect, event::PixEvent, pixel::ColorType, PixEngineResult};
+use crate::{draw::Rect, event::PixEvent, pixel::ColorType, PixEngineResult, WindowId};
 
 #[cfg(all(feature = "sdl2-driver", not(feature = "wasm-driver")))]
 pub(super) mod sdl2;
@@ -16,22 +16,22 @@ pub(super) fn load_driver(opts: DriverOpts) -> PixEngineResult<wasm::WasmDriver>
 
 // TODO Add DriverErr and DriverResult types
 pub(super) trait Driver {
-    fn fullscreen(&mut self, _window_id: u32, _val: bool) -> PixEngineResult<()> {
+    fn fullscreen(&mut self, _window_id: WindowId, _val: bool) -> PixEngineResult<()> {
         Ok(())
     }
-    fn vsync(&mut self, _window_id: u32, _val: bool) -> PixEngineResult<()> {
+    fn vsync(&mut self, _window_id: WindowId, _val: bool) -> PixEngineResult<()> {
         Ok(())
     }
     fn load_icon(&mut self, _path: &str) -> PixEngineResult<()> {
         Ok(())
     }
-    fn window_id(&self) -> u32 {
+    fn window_id(&self) -> WindowId {
         0
     }
-    fn set_title(&mut self, _window_id: u32, _title: &str) -> PixEngineResult<()> {
+    fn set_title(&mut self, _window_id: WindowId, _title: &str) -> PixEngineResult<()> {
         Ok(())
     }
-    fn set_size(&mut self, _window_id: u32, _width: u32, _height: u32) -> PixEngineResult<()> {
+    fn set_size(&mut self, _window_id: WindowId, _width: u32, _height: u32) -> PixEngineResult<()> {
         Ok(())
     }
     fn set_audio_sample_rate(&mut self, _sample_rate: i32) -> PixEngineResult<()> {
@@ -40,13 +40,13 @@ pub(super) trait Driver {
     fn poll(&mut self) -> PixEngineResult<Vec<PixEvent>> {
         Ok(Vec::new())
     }
-    fn clear(&mut self, _window_id: u32) -> PixEngineResult<()> {
+    fn clear(&mut self, _window_id: WindowId) -> PixEngineResult<()> {
         Ok(())
     }
     fn present(&mut self) {}
     fn create_texture(
         &mut self,
-        _window_id: u32,
+        _window_id: WindowId,
         _name: &str,
         _color_type: ColorType,
         _src: Rect,
@@ -54,13 +54,18 @@ pub(super) trait Driver {
     ) -> PixEngineResult<()> {
         Ok(())
     }
-    fn copy_texture(&mut self, _window_id: u32, _name: &str, _bytes: &[u8]) -> PixEngineResult<()> {
+    fn copy_texture(
+        &mut self,
+        _window_id: WindowId,
+        _name: &str,
+        _bytes: &[u8],
+    ) -> PixEngineResult<()> {
         Ok(())
     }
     fn open_window(&mut self, _title: &str, _width: u32, _height: u32) -> PixEngineResult<u32> {
         Ok(1)
     }
-    fn close_window(&mut self, _window_id: u32) {}
+    fn close_window(&mut self, _window_id: WindowId) {}
     fn enqueue_audio(&mut self, _samples: &[f32]) {}
 }
 

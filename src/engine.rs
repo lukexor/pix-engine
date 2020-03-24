@@ -78,7 +78,7 @@ where
         let mut fps_samples = VecDeque::new();
 
         // Start main loop
-        let main_screen = format!("screen{}", self.data.main_window()); // TODO abstract this out
+        let main_screen = format!("screen{}", self.data.main_window_id()); // TODO abstract this out
         let mut timer = Instant::now();
         let mut frame_timer = Duration::new(0, 0);
         let mut frame_counter = 0;
@@ -97,7 +97,7 @@ where
                     match event {
                         PixEvent::Quit | PixEvent::AppTerminating => self.should_close = true,
                         PixEvent::WinClose(window_id) => {
-                            if window_id == self.data.main_window() {
+                            if window_id == self.data.main_window_id() {
                                 self.should_close = true;
                             } else {
                                 self.data.driver.close_window(window_id);
@@ -130,7 +130,7 @@ where
                 // Display updated frame
                 if self.data.default_target_dirty {
                     self.data
-                        .copy_draw_target(self.data.main_window(), &main_screen)?;
+                        .copy_draw_target(self.data.main_window_id(), &main_screen)?;
                 }
                 self.data.driver.present();
 
@@ -151,7 +151,7 @@ where
                     }
                     self.data
                         .driver
-                        .set_title(self.data.main_window(), &title)?;
+                        .set_title(self.data.main_window_id(), &title)?;
                     frame_counter = 0;
                 }
             }

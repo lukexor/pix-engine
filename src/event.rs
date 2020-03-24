@@ -1,3 +1,5 @@
+use crate::WindowId;
+
 // Represents an input event
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum PixEvent {
@@ -10,7 +12,7 @@ pub enum PixEvent {
     MousePress(Mouse, i32, i32, bool), // Mouse, x, y, pressed
     MouseWheel(i32),                   // Wheel delta
     MouseMotion(i32, i32),             // x, y
-    WinClose(u32),                     // Window Id
+    WinClose(WindowId),
     Resized,
     Focus(u32, bool), // Window ID, focused
     Background(bool),
