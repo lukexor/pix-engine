@@ -103,7 +103,7 @@ impl App {
         self.ship.dy = 0.0;
         self.ship.angle = 0.0;
 
-        let asteroid_count = if self.asteroids.len() > 0 {
+        let asteroid_count = if !self.asteroids.is_empty() {
             std::cmp::min(self.level + 2, self.asteroids.len() as u32)
         } else {
             self.level + 2
@@ -134,7 +134,7 @@ impl App {
 }
 
 impl State for App {
-    fn on_start(&mut self, data: &mut StateData) -> PixEngineResult<()> {
+    fn on_start(&mut self, data: &mut StateData) -> PixEngineResult<bool> {
         data.enable_coord_wrapping(true);
         self.ship_model = vec![(0.0, -5.0), (-2.5, 2.5), (2.5, 2.5)];
         for i in 0..20 {
@@ -145,10 +145,10 @@ impl State for App {
             self.asteroid_model.push((x, y));
         }
         self.spawn_new_ship(data);
-        Ok(())
+        Ok(true)
     }
 
-    fn on_update(&mut self, elapsed: f32, data: &mut StateData) -> PixEngineResult<()> {
+    fn on_update(&mut self, elapsed: f32, data: &mut StateData) -> PixEngineResult<bool> {
         if data.get_key(Key::Escape).pressed {
             self.paused = !self.paused;
         }
@@ -157,7 +157,7 @@ impl State for App {
         }
 
         if self.paused {
-            return Ok(());
+            return Ok(true);
         }
 
         // Steer
@@ -208,7 +208,7 @@ impl State for App {
                     self.reset(data);
                 }
             }
-            return Ok(());
+            return Ok(true);
         }
 
         // Draw Level, Lives, & Score
@@ -333,13 +333,13 @@ impl State for App {
             }
         }
 
-        Ok(())
+        Ok(true)
     }
 }
 
 pub fn main() {
     let app = App::new();
-    let mut engine = PixEngine::new("Asteroids", app, 800, 600, false).unwrap();
+    let mut engine = PixEngine::new("Asteroids".to_string(), app, 800, 600, false).unwrap();
     if let Err(e) = engine.run() {
         eprintln!("Encountered a PixEngineErr: {}", e.to_string());
     }
