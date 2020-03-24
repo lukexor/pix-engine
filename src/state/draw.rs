@@ -65,21 +65,32 @@ impl StateData {
 
     // Get/Set ==============================================================
 
-    // Returns the active draw target
+    /// Returns a reference to the active draw target
+    ///
+    /// panics if draw_target is not cleared properly and references an invalid
+    /// target
+    // TODO: Refactor out this unsafe
     pub fn get_draw_target(&mut self) -> &Sprite {
         match &self.draw_target {
             Some(target) => unsafe { &**target },
             None => &self.default_draw_target,
         }
     }
+    /// Returns a mutable reference to the active draw target
+    ///
+    /// panics if draw_target is not cleared properly and references an invalid
+    /// target
+    // TODO: Refactor out this unsafe
     pub fn get_draw_target_mut(&mut self) -> &mut Sprite {
         match &mut self.draw_target {
             Some(target) => unsafe { &mut **target },
             None => &mut self.default_draw_target,
         }
     }
-    // Specify which sprite should be the target for draw functions
-    // Pass None to use default draw target
+    /// Specify which sprite should be the target for draw functions
+    ///
+    /// Note you must call clear_draw_target when finished. otherwise
+    /// get_draw_target will likely panic
     pub fn set_draw_target(&mut self, target: &mut Sprite) {
         self.draw_target = Some(target as *mut Sprite);
     }
