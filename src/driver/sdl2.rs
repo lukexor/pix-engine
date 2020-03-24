@@ -119,6 +119,25 @@ impl Sdl2Driver {
             texture_maps,
         })
     }
+
+    fn assign_controller(&mut self, id: u32) -> PixEngineResult<()> {
+        if self.controller_sub.is_game_controller(id) {
+            if let Some(controller) = &self.controller1 {
+                if id as i32 == controller.instance_id() {
+                    return Ok(());
+                }
+            } else {
+                println!("Controller 1 connected.");
+                self.controller1 = Some(self.controller_sub.open(id)?);
+                return Ok(());
+            }
+            if self.controller2.is_none() {
+                println!("Controller 2 connected.");
+                self.controller2 = Some(self.controller_sub.open(id)?);
+            }
+        }
+        Ok(())
+    }
 }
 
 impl Driver for Sdl2Driver {
@@ -245,7 +264,6 @@ impl Driver for Sdl2Driver {
         let events: Vec<Event> = self.event_pump.poll_iter().collect();
         let mut pix_events: Vec<PixEvent> = Vec::new();
         for event in events {
-            // println!("Event {:?}", event);
             let pix_event = match event {
                 Event::Quit { .. } => PixEvent::Quit,
                 Event::AppTerminating { .. } => PixEvent::AppTerminating,
@@ -260,13 +278,12 @@ impl Driver for Sdl2Driver {
                     WindowEvent::Close => PixEvent::WinClose(window_id),
                     _ => PixEvent::None, // Ignore others
                 },
+                Event::JoyDeviceAdded { which: id, .. } => {
+                    self.assign_controller(id)?;
+                    PixEvent::None // TODO add event for this
+                }
                 Event::ControllerDeviceAdded { which: id, .. } => {
-                    println!("Device {} added", id);
-                    match id {
-                        0 => self.controller1 = Some(self.controller_sub.open(id)?),
-                        1 => self.controller2 = Some(self.controller_sub.open(id)?),
-                        _ => (),
-                    }
+                    self.assign_controller(id)?;
                     PixEvent::None // TODO add event for this
                 }
                 Event::KeyDown {
