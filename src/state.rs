@@ -1,8 +1,8 @@
 use crate::{
     driver::{self, Driver, DriverOpts},
     event::{Input, Key, Mouse, PixEvent},
+    image::Image,
     pixel::{self, Pixel},
-    sprite::Sprite,
     PixEngineErr, PixEngineResult,
 };
 
@@ -47,8 +47,8 @@ pub struct StateData {
     title: String,
     screen_width: u32,
     screen_height: u32,
-    default_draw_target: Sprite,
-    draw_target: Option<*mut Sprite>,
+    default_draw_target: Image,
+    draw_target: Option<*mut Image>,
     default_draw_color: Pixel,
     draw_color: Pixel,
     draw_scale: u32,
@@ -57,7 +57,7 @@ pub struct StateData {
     mouse_x: i32,
     mouse_y: i32,
     mouse_wheel_delta: i32,
-    font: Sprite,
+    font: Image,
     has_input_focus: bool,
     old_key_state: [bool; 256],
     new_key_state: [bool; 256],
@@ -100,7 +100,7 @@ impl StateData {
     }
     /// Change screen dimensions.
     pub fn set_screen_size(&mut self, width: u32, height: u32) -> PixEngineResult<()> {
-        let mut new_draw_target = Sprite::new(width, height);
+        let mut new_draw_target = Image::new(width, height);
         for x in 0..std::cmp::min(width, self.screen_width) {
             for y in 0..std::cmp::min(width, self.screen_height) {
                 let p = self.default_draw_target.get_pixel(x, y);
@@ -169,7 +169,7 @@ impl StateData {
             title: String::new(),
             screen_width,
             screen_height,
-            default_draw_target: Sprite::new(screen_width, screen_height),
+            default_draw_target: Image::new(screen_width, screen_height),
             draw_target: None,
             default_draw_color: pixel::WHITE,
             draw_color: pixel::WHITE,

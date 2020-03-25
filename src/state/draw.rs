@@ -1,7 +1,7 @@
 use crate::{
     driver::Driver,
+    image::Image,
     pixel::{ColorType, Pixel},
-    sprite::Sprite,
     state::{AlphaMode, StateData},
     PixEngineResult,
 };
@@ -22,7 +22,7 @@ impl Rect {
 
 impl StateData {
     // Thanks to https://github.com/OneLoneCoder/olcPixelGameEngine for this!
-    pub fn construct_font() -> Sprite {
+    pub fn construct_font() -> Image {
         let mut data = String::new();
         data.push_str("?Q`0001oOch0o01o@F40o0<AGD4090LAGD<090@A7ch0?00O7Q`0600>00000000");
         data.push_str("O000000nOT0063Qo4d8>?7a14Gno94AA4gno94AaOT0>o3`oO400o7QN00000400");
@@ -41,7 +41,7 @@ impl StateData {
         data.push_str("O`000P08Od400g`<3V=P0G`673IP0`@3>1`00P@6O`P00g`<O`000GP800000000");
         data.push_str("?P9PL020O`<`N3R0@E4HC7b0@ET<ATB0@@l6C4B0O`H3N7b0?P01L3R000000020");
 
-        let mut font = Sprite::new(128, 48);
+        let mut font = Image::new(128, 48);
         let (mut px, mut py) = (0, 0);
         let bytes = data.as_bytes();
         for b in (0..1024).step_by(4) {
@@ -70,7 +70,7 @@ impl StateData {
     /// panics if draw_target is not cleared properly and references an invalid
     /// target
     // TODO: Refactor out this unsafe
-    pub fn get_draw_target(&mut self) -> &Sprite {
+    pub fn get_draw_target(&mut self) -> &Image {
         match &self.draw_target {
             Some(target) => unsafe { &**target },
             None => &self.default_draw_target,
@@ -81,18 +81,18 @@ impl StateData {
     /// panics if draw_target is not cleared properly and references an invalid
     /// target
     // TODO: Refactor out this unsafe
-    pub fn get_draw_target_mut(&mut self) -> &mut Sprite {
+    pub fn get_draw_target_mut(&mut self) -> &mut Image {
         match &mut self.draw_target {
             Some(target) => unsafe { &mut **target },
             None => &mut self.default_draw_target,
         }
     }
-    /// Specify which sprite should be the target for draw functions
+    /// Specify which image should be the target for draw functions
     ///
     /// Note you must call clear_draw_target when finished. otherwise
     /// get_draw_target will likely panic
-    pub fn set_draw_target(&mut self, target: &mut Sprite) {
-        self.draw_target = Some(target as *mut Sprite);
+    pub fn set_draw_target(&mut self, target: &mut Image) {
+        self.draw_target = Some(target as *mut Image);
     }
     pub fn clear_draw_target(&mut self) {
         self.draw_target = None;
@@ -167,8 +167,8 @@ impl StateData {
         let width = target.width();
         let height = target.height();
         *target = match target.color_type() {
-            ColorType::Rgb => Sprite::rgb(width, height),
-            ColorType::Rgba => Sprite::rgba(width, height),
+            ColorType::Rgb => Image::rgb(width, height),
+            ColorType::Rgba => Image::rgba(width, height),
         }
     }
 
@@ -546,35 +546,35 @@ impl StateData {
         }
     }
 
-    // Draws an entire sprite at location (x, y)
-    pub fn draw_sprite(&mut self, x: u32, y: u32, sprite: &Sprite) {
+    // Draws an entire image at location (x, y)
+    pub fn draw_image(&mut self, x: u32, y: u32, image: &Image) {
         if self.draw_scale > 1 {
-            for ox in 0..sprite.width() {
-                for oy in 0..sprite.height() {
+            for ox in 0..image.width() {
+                for oy in 0..image.height() {
                     for xs in 0..self.draw_scale {
                         for ys in 0..self.draw_scale {
                             self.draw(
                                 x + (ox * self.draw_scale) + xs,
                                 y + (oy * self.draw_scale) + ys,
-                                sprite.get_pixel(ox, oy),
+                                image.get_pixel(ox, oy),
                             );
                         }
                     }
                 }
             }
         } else {
-            for ox in 0..sprite.width() {
-                for oy in 0..sprite.height() {
-                    self.draw(x + ox, y + oy, sprite.get_pixel(ox, oy));
+            for ox in 0..image.width() {
+                for oy in 0..image.height() {
+                    self.draw(x + ox, y + oy, image.get_pixel(ox, oy));
                 }
             }
         }
     }
 
-    // Draws part of a sprite at location (x, y) where the drawn area
+    // Draws part of a image at location (x, y) where the drawn area
     // is (ox, oy) to (ox + w, oy + h)
     #[allow(clippy::too_many_arguments)]
-    pub fn draw_partial_sprite(
+    pub fn draw_partial_image(
         &mut self,
         x: u32,
         y: u32,
@@ -582,7 +582,7 @@ impl StateData {
         oy: u32,
         w: u32,
         h: u32,
-        sprite: &Sprite,
+        image: &Image,
     ) {
         if self.draw_scale > 1 {
             for ox1 in 0..w {
@@ -592,7 +592,7 @@ impl StateData {
                             self.draw(
                                 x + (ox1 * self.draw_scale) + xs,
                                 y + (oy1 * self.draw_scale) + ys,
-                                sprite.get_pixel(ox1 + ox, oy1 + oy),
+                                image.get_pixel(ox1 + ox, oy1 + oy),
                             );
                         }
                     }
@@ -601,7 +601,7 @@ impl StateData {
         } else {
             for ox1 in 0..w {
                 for oy1 in 0..h {
-                    self.draw(x + ox1, y + oy1, sprite.get_pixel(ox1 + ox, oy1 + oy));
+                    self.draw(x + ox1, y + oy1, image.get_pixel(ox1 + ox, oy1 + oy));
                 }
             }
         }

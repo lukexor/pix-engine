@@ -2,8 +2,8 @@ use crate::{
     draw::Rect,
     driver::{Driver, DriverOpts},
     event::PixEvent,
+    image::Image,
     pixel::ColorType,
-    sprite::Sprite,
     PixEngineErr, PixEngineResult, WindowId,
 };
 use sdl2::{
@@ -208,7 +208,7 @@ impl Driver for Sdl2Driver {
     }
 
     fn load_icon(&mut self, path: &str) -> PixEngineResult<()> {
-        let mut icon = Sprite::from_file(path)?;
+        let mut icon = Image::from_file(path)?;
         let width = icon.width();
         let height = icon.height();
         let pixels = icon.bytes_mut();

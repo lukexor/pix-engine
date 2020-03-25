@@ -1,4 +1,4 @@
-use crate::{sprite::Sprite, state::StateData};
+use crate::{image::Image, state::StateData};
 
 type Matrix = [[f32; 3]; 3];
 
@@ -125,8 +125,8 @@ impl Transform {
 }
 
 impl StateData {
-    /// Draws a sprite using the transform matrix
-    pub fn draw_transform(&mut self, transform: &mut Transform, sprite: &Sprite) {
+    /// Draws a image using the transform matrix
+    pub fn draw_transform(&mut self, transform: &mut Transform, image: &Image) {
         // Top Left pixel bounds
         let (px, py) = transform.forward(0.0, 0.0);
         let sx = px;
@@ -135,21 +135,21 @@ impl StateData {
         let ey = py;
 
         // Bottom Right pixel bounds
-        let (px, py) = transform.forward(sprite.width() as f32, sprite.height() as f32);
+        let (px, py) = transform.forward(image.width() as f32, image.height() as f32);
         let sx = sx.max(px);
         let sy = sy.max(py);
         let ex = ex.min(px);
         let ey = ey.min(py);
 
         // Bottom Left pixel bounds
-        let (px, py) = transform.forward(0.0, sprite.height() as f32);
+        let (px, py) = transform.forward(0.0, image.height() as f32);
         let sx = sx.max(px);
         let sy = sy.max(py);
         let ex = ex.min(px);
         let ey = ey.min(py);
 
         // Top Right pixel bounds
-        let (px, py) = transform.forward(sprite.width() as f32, 0.0);
+        let (px, py) = transform.forward(image.width() as f32, 0.0);
 
         // Take final min/max and round up
         let mut sx = sx.max(px).ceil() as u32;
@@ -170,7 +170,7 @@ impl StateData {
         for x in sx..ex {
             for y in sy..ey {
                 let (nx, ny) = transform.backward(x as f32, y as f32);
-                let p = sprite.get_pixel(nx.ceil() as u32, ny.ceil() as u32);
+                let p = image.get_pixel(nx.ceil() as u32, ny.ceil() as u32);
                 self.draw(x, y, p);
             }
         }
