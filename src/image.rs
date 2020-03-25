@@ -4,9 +4,13 @@ use crate::{
 };
 use png;
 use std::{
+    cell::RefCell,
     ffi::OsStr,
     io::{BufReader, BufWriter},
+    rc::Rc,
 };
+
+pub type ImageRef = Rc<RefCell<Image>>;
 
 #[derive(Clone)]
 pub struct Image {
@@ -23,6 +27,14 @@ impl Image {
         Self::rgba(width, height)
     }
 
+    pub fn new_ref(width: u32, height: u32) -> ImageRef {
+        Rc::new(RefCell::new(Self::new(width, height)))
+    }
+
+    pub fn ref_from(image: Image) -> ImageRef {
+        Rc::new(RefCell::new(image))
+    }
+
     pub fn rgb(width: u32, height: u32) -> Self {
         Self {
             width,
@@ -31,6 +43,10 @@ impl Image {
             color_type: ColorType::Rgb,
             data: vec![0; 3 * (width * height) as usize],
         }
+    }
+
+    pub fn rgb_ref(width: u32, height: u32) -> ImageRef {
+        Self::ref_from(Self::rgb(width, height))
     }
 
     pub fn rgba(width: u32, height: u32) -> Self {

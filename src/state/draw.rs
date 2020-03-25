@@ -1,6 +1,6 @@
 use crate::{
     driver::Driver,
-    image::Image,
+    image::{Image, ImageRef},
     pixel::{ColorType, Pixel},
     state::{AlphaMode, StateData},
     PixEngineResult,
@@ -69,30 +69,18 @@ impl StateData {
     ///
     /// panics if draw_target is not cleared properly and references an invalid
     /// target
-    // TODO: Refactor out this unsafe
-    pub fn get_draw_target(&mut self) -> &Image {
+    pub fn get_draw_target(&mut self) -> ImageRef {
         match &self.draw_target {
-            Some(target) => unsafe { &**target },
-            None => &self.default_draw_target,
-        }
-    }
-    /// Returns a mutable reference to the active draw target
-    ///
-    /// panics if draw_target is not cleared properly and references an invalid
-    /// target
-    // TODO: Refactor out this unsafe
-    pub fn get_draw_target_mut(&mut self) -> &mut Image {
-        match &mut self.draw_target {
-            Some(target) => unsafe { &mut **target },
-            None => &mut self.default_draw_target,
+            Some(target) => target.clone(),
+            None => self.default_draw_target.clone(),
         }
     }
     /// Specify which image should be the target for draw functions
     ///
     /// Note you must call clear_draw_target when finished. otherwise
     /// get_draw_target will likely panic
-    pub fn set_draw_target(&mut self, target: &mut Image) {
-        self.draw_target = Some(target as *mut Image);
+    pub fn set_draw_target(&mut self, target: ImageRef) {
+        self.draw_target = Some(target);
     }
     pub fn clear_draw_target(&mut self) {
         self.draw_target = None;
@@ -156,14 +144,17 @@ impl StateData {
 
     // Fills entire draw target to Pixel
     pub fn fill(&mut self, p: Pixel) {
-        let width = self.get_draw_target().width();
-        let height = self.get_draw_target().height();
+        let target = self.get_draw_target();
+        let target = target.borrow();
+        let width = target.width();
+        let height = target.height();
         self.fill_rect(0, 0, width, height, p);
     }
 
     // Clears entire draw target to empty
     pub fn clear(&mut self) {
-        let target = self.get_draw_target_mut();
+        let target = self.get_draw_target();
+        let mut target = target.borrow_mut();
         let width = target.width();
         let height = target.height();
         *target = match target.color_type() {
@@ -189,7 +180,8 @@ impl StateData {
         let alpha_mode = self.alpha_mode;
         let blend_factor = self.blend_factor;
 
-        let target = self.get_draw_target_mut();
+        let target = self.get_draw_target();
+        let mut target = target.borrow_mut();
         if x >= target.width() || y >= target.height() {
             return;
         }
@@ -725,10 +717,8 @@ impl StateData {
     pub fn copy_draw_target(&mut self, window_id: u32, name: &str) -> PixEngineResult<()> {
         self.default_target_dirty = false;
         // TODO add size check for draw_target to texture dimensions
-        let target = match &self.draw_target {
-            Some(target) => unsafe { &**target },
-            None => &self.default_draw_target,
-        };
+        let target = self.get_draw_target();
+        let target = target.borrow();
         let driver = &mut self.driver;
         let pixels = target.bytes();
         driver.copy_texture(window_id, name, &pixels)?;
