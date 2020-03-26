@@ -16,10 +16,10 @@ pub(super) fn load_driver(opts: DriverOpts) -> PixEngineResult<wasm::WasmDriver>
 
 // TODO Add DriverErr and DriverResult types
 pub(super) trait Driver {
-    fn fullscreen(&mut self, _window_id: WindowId, _val: bool) -> PixEngineResult<()> {
+    fn fullscreen(&mut self, _val: bool) -> PixEngineResult<()> {
         Ok(())
     }
-    fn vsync(&mut self, _window_id: WindowId, _val: bool) -> PixEngineResult<()> {
+    fn vsync(&mut self, _val: bool) -> PixEngineResult<()> {
         Ok(())
     }
     fn load_icon(&mut self, _path: &str) -> PixEngineResult<()> {

@@ -2,8 +2,8 @@ use crate::{
     draw::Rect,
     driver::{Driver, DriverOpts},
     event::PixEvent,
+    image::Image,
     pixel::ColorType,
-    sprite::Sprite,
     PixEngineErr, PixEngineResult, WindowId,
 };
 use sdl2::{
@@ -141,8 +141,9 @@ impl Sdl2Driver {
 }
 
 impl Driver for Sdl2Driver {
-    fn fullscreen(&mut self, window_id: WindowId, val: bool) -> PixEngineResult<()> {
-        if let Some((canvas, _)) = self.canvases.get_mut(&window_id) {
+    fn fullscreen(&mut self, val: bool) -> PixEngineResult<()> {
+        if self.canvases.len() == 1 {
+            let (canvas, _) = self.canvases.get_mut(&self.window_id).unwrap();
             let state = canvas.window().fullscreen_state();
             let mouse = self.context.mouse();
             let mode = if val && state == FullscreenType::Off {
@@ -155,15 +156,15 @@ impl Driver for Sdl2Driver {
             canvas.window_mut().set_fullscreen(mode)?;
             Ok(())
         } else {
-            Err(PixEngineErr::new(format!(
-                "invalid window_id {}",
-                window_id
-            )))
+            Err(PixEngineErr::new(
+                "can only go fullscreen with one window open".to_string(),
+            ))
         }
     }
 
-    fn vsync(&mut self, window_id: WindowId, val: bool) -> PixEngineResult<()> {
-        if let Some((canvas, texture_creator)) = self.canvases.get_mut(&window_id) {
+    fn vsync(&mut self, val: bool) -> PixEngineResult<()> {
+        if self.canvases.len() == 1 {
+            let (canvas, texture_creator) = self.canvases.get_mut(&self.window_id).unwrap();
             let title = canvas.window().title();
             let (width, height) = canvas.window().size();
             let (x, y) = canvas.window().position();
@@ -208,7 +209,7 @@ impl Driver for Sdl2Driver {
     }
 
     fn load_icon(&mut self, path: &str) -> PixEngineResult<()> {
-        let mut icon = Sprite::from_file(path)?;
+        let mut icon = Image::from_file(path)?;
         let width = icon.width();
         let height = icon.height();
         let pixels = icon.bytes_mut();

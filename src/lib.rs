@@ -1,8 +1,8 @@
 use std::{error, fmt};
 
 pub mod event;
+pub mod image;
 pub mod pixel;
-pub mod sprite;
 
 mod audio;
 mod driver;
@@ -10,7 +10,7 @@ mod engine;
 mod state;
 
 pub use engine::PixEngine;
-pub use sprite::Sprite;
+pub use image::Image;
 pub use state::{draw, transform, AlphaMode, State, StateData, WindowId};
 
 pub type PixEngineResult<T> = std::result::Result<T, PixEngineErr>;

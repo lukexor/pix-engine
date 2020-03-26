@@ -4,12 +4,16 @@ use crate::{
 };
 use png;
 use std::{
+    cell::RefCell,
     ffi::OsStr,
     io::{BufReader, BufWriter},
+    rc::Rc,
 };
 
+pub type ImageRef = Rc<RefCell<Image>>;
+
 #[derive(Clone)]
-pub struct Sprite {
+pub struct Image {
     width: u32,
     height: u32,
     channels: u8,
@@ -17,10 +21,18 @@ pub struct Sprite {
     data: Vec<u8>,
 }
 
-impl Sprite {
-    /// Creates a new sprite with given size
+impl Image {
+    /// Creates a new image with given size
     pub fn new(width: u32, height: u32) -> Self {
         Self::rgba(width, height)
+    }
+
+    pub fn new_ref(width: u32, height: u32) -> ImageRef {
+        Rc::new(RefCell::new(Self::new(width, height)))
+    }
+
+    pub fn ref_from(image: Image) -> ImageRef {
+        Rc::new(RefCell::new(image))
     }
 
     pub fn rgb(width: u32, height: u32) -> Self {
@@ -33,6 +45,10 @@ impl Sprite {
         }
     }
 
+    pub fn rgb_ref(width: u32, height: u32) -> ImageRef {
+        Self::ref_from(Self::rgb(width, height))
+    }
+
     pub fn rgba(width: u32, height: u32) -> Self {
         Self {
             width,
@@ -43,7 +59,7 @@ impl Sprite {
         }
     }
 
-    /// Creates a new sprite from an array of bytes
+    /// Creates a new image from an array of bytes
     pub fn from_bytes(width: u32, height: u32, bytes: &[u8]) -> PixEngineResult<Self> {
         if bytes.len() != (4 * width * height) as usize {
             Err(PixEngineErr::new(
@@ -89,32 +105,32 @@ impl Sprite {
         }
     }
 
-    /// ColorType of the sprite
+    /// ColorType of the image
     pub fn color_type(&self) -> ColorType {
         self.color_type
     }
 
-    /// Width of the sprite
+    /// Width of the image
     pub fn width(&self) -> u32 {
         self.width
     }
 
-    /// Height of the sprite
+    /// Height of the image
     pub fn height(&self) -> u32 {
         self.height
     }
 
-    /// Returns a reference to the pixels within the sprite
+    /// Returns a reference to the pixels within the image
     pub fn bytes(&self) -> &Vec<u8> {
         &self.data
     }
 
-    /// Returns a mutable reference to the pixels within the sprite
+    /// Returns a mutable reference to the pixels within the image
     pub fn bytes_mut(&mut self) -> &mut Vec<u8> {
         &mut self.data
     }
 
-    /// Create a new sprite from a PNG file
+    /// Create a new image from a PNG file
     /// Only 8-bit RGBA formats are supported currently
     pub fn from_file(file: &str) -> PixEngineResult<Self> {
         use std::path::PathBuf;
@@ -141,10 +157,10 @@ impl Sprite {
         let mut data = vec![0; info.buffer_size()];
         reader.next_frame(&mut data).unwrap();
 
-        Sprite::from_bytes(info.width, info.height, &data)
+        Image::from_bytes(info.width, info.height, &data)
     }
 
-    /// Saves a sprite out to a png file
+    /// Saves a image out to a png file
     pub fn save_to_file(&mut self, file: &str) -> PixEngineResult<()> {
         use std::path::PathBuf;
         let path = PathBuf::from(file);

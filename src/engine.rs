@@ -129,8 +129,7 @@ where
 
                 // Display updated frame
                 if self.data.default_target_dirty {
-                    self.data
-                        .copy_draw_target(self.data.main_window_id(), &main_screen)?;
+                    self.data.copy_draw_target(&main_screen)?;
                 }
                 self.data.driver.present();
 
