@@ -704,6 +704,16 @@ impl StateData {
 
     pub fn create_texture(
         &mut self,
+        name: &'static str,
+        color_type: ColorType,
+        src: Rect,
+        dst: Rect,
+    ) -> PixEngineResult<()> {
+        self.create_window_texture(self.main_window_id, name, color_type, src, dst)
+    }
+
+    pub fn create_window_texture(
+        &mut self,
         window_id: u32,
         name: &'static str,
         color_type: ColorType,
@@ -714,7 +724,11 @@ impl StateData {
             .create_texture(window_id, name, color_type, src, dst)
     }
 
-    pub fn copy_draw_target(&mut self, window_id: u32, name: &str) -> PixEngineResult<()> {
+    pub fn copy_draw_target(&mut self, name: &str) -> PixEngineResult<()> {
+        self.copy_window_draw_target(self.main_window_id, name)
+    }
+
+    pub fn copy_window_draw_target(&mut self, window_id: u32, name: &str) -> PixEngineResult<()> {
         self.default_target_dirty = false;
         // TODO add size check for draw_target to texture dimensions
         let target = self.get_draw_target();
@@ -725,7 +739,11 @@ impl StateData {
         Ok(())
     }
 
-    pub fn copy_texture(
+    pub fn copy_texture(&mut self, name: &str, bytes: &[u8]) -> PixEngineResult<()> {
+        self.copy_window_texture(self.main_window_id, name, bytes)
+    }
+
+    pub fn copy_window_texture(
         &mut self,
         window_id: u32,
         name: &str,

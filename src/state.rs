@@ -84,11 +84,11 @@ impl StateData {
     }
     /// Toggle fullscreen
     pub fn fullscreen(&mut self, val: bool) -> PixEngineResult<()> {
-        self.driver.fullscreen(self.main_window_id, val)
+        self.driver.fullscreen(val)
     }
     /// Toggle vsync
     pub fn vsync(&mut self, val: bool) -> PixEngineResult<()> {
-        self.driver.vsync(self.main_window_id, val)
+        self.driver.vsync(val)
     }
     /// Screen Width
     pub fn screen_width(&self) -> u32 {
