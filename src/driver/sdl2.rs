@@ -156,9 +156,8 @@ impl Driver for Sdl2Driver {
             canvas.window_mut().set_fullscreen(mode)?;
             Ok(())
         } else {
-            Err(PixEngineErr::new(
-                "can only go fullscreen with one window open".to_string(),
-            ))
+            eprintln!("can only go fullscreen with one window open");
+            Ok(())
         }
     }
 

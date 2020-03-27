@@ -69,7 +69,7 @@ impl StateData {
     ///
     /// panics if draw_target is not cleared properly and references an invalid
     /// target
-    pub fn get_draw_target(&mut self) -> ImageRef {
+    pub fn get_draw_target(&self) -> ImageRef {
         match &self.draw_target {
             Some(target) => target.clone(),
             None => self.default_draw_target.clone(),
@@ -81,6 +81,11 @@ impl StateData {
     /// get_draw_target will likely panic
     pub fn set_draw_target(&mut self, target: ImageRef) {
         self.draw_target = Some(target);
+    }
+    pub fn get_draw_target_dims(&self) -> (u32, u32) {
+        let target = self.get_draw_target();
+        let target = target.borrow();
+        (target.width(), target.height())
     }
     pub fn clear_draw_target(&mut self) {
         self.draw_target = None;
@@ -144,22 +149,17 @@ impl StateData {
 
     // Fills entire draw target to Pixel
     pub fn fill(&mut self, p: Pixel) {
-        let target = self.get_draw_target();
-        let target = target.borrow();
-        let width = target.width();
-        let height = target.height();
+        let (width, height) = self.get_draw_target_dims();
         self.fill_rect(0, 0, width, height, p);
     }
 
     // Clears entire draw target to empty
     pub fn clear(&mut self) {
-        let target = self.get_draw_target();
-        let mut target = target.borrow_mut();
-        let width = target.width();
-        let height = target.height();
-        *target = match target.color_type() {
-            ColorType::Rgb => Image::rgb(width, height),
-            ColorType::Rgba => Image::rgba(width, height),
+        let (width, height) = self.get_draw_target_dims();
+        let color_type = self.get_draw_target().borrow().color_type();
+        self.draw_target = match color_type {
+            ColorType::Rgb => Some(Image::rgb_ref(width, height)),
+            ColorType::Rgba => Some(Image::rgba_ref(width, height)),
         }
     }
 

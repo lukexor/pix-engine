@@ -1,6 +1,6 @@
 [package]
 name = "pix-engine"
-version = "0.3.2"
+version = "0.3.3"
 license = "GPL-3.0-or-later"
 description = "A simple, cross-platform graphics/UI engine framework with a minimal interface."
 authors = ["Luke Petherbridge <me@lukeworks.tech>"]

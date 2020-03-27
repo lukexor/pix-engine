@@ -59,6 +59,10 @@ impl Image {
         }
     }
 
+    pub fn rgba_ref(width: u32, height: u32) -> ImageRef {
+        Self::ref_from(Self::rgba(width, height))
+    }
+
     /// Creates a new image from an array of bytes
     pub fn from_bytes(width: u32, height: u32, bytes: &[u8]) -> PixEngineResult<Self> {
         if bytes.len() != (4 * width * height) as usize {
