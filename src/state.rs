@@ -154,11 +154,10 @@ impl StateData {
         app_name: &str,
         screen_width: u32,
         screen_height: u32,
-        vsync: bool,
     ) -> PixEngineResult<Self> {
         let font = StateData::construct_font();
         // Initialize backend driver library
-        let opts = DriverOpts::new(app_name, screen_width, screen_height, vsync);
+        let opts = DriverOpts::new(app_name, screen_width, screen_height);
         let driver = driver::load_driver(opts)?;
         let main_window_id = driver.window_id();
         let state_data = Self {

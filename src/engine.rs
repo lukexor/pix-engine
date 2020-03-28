@@ -30,9 +30,8 @@ where
         state: S,
         screen_width: u32,
         screen_height: u32,
-        vsync: bool,
     ) -> PixEngineResult<Self> {
-        let data = StateData::new(&app_name, screen_width, screen_height, vsync)?;
+        let data = StateData::new(&app_name, screen_width, screen_height)?;
         Ok(Self {
             app_name,
             state,

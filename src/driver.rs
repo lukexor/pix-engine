@@ -74,17 +74,15 @@ pub(super) struct DriverOpts {
     width: u32,
     height: u32,
     audio_sample_rate: Option<i32>,
-    vsync: bool,
 }
 
 impl DriverOpts {
-    pub(super) fn new(title: &str, width: u32, height: u32, vsync: bool) -> Self {
+    pub(super) fn new(title: &str, width: u32, height: u32) -> Self {
         Self {
             title: title.to_owned(),
             width,
             height,
             audio_sample_rate: None,
-            vsync,
         }
     }
 }

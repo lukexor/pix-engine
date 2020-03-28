@@ -61,9 +61,7 @@ impl Sdl2Driver {
 
         // Set up canvas
         let mut canvas_builder = window.into_canvas().target_texture();
-        if opts.vsync {
-            canvas_builder = canvas_builder.present_vsync();
-        }
+        canvas_builder = canvas_builder.present_vsync();
         let mut canvas = canvas_builder.build()?;
         canvas.set_logical_size(opts.width, opts.height)?;
 
