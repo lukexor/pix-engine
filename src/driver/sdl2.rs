@@ -19,7 +19,7 @@ use sdl2::{
 };
 use std::collections::HashMap;
 
-pub const DEFAULT_SAMPLE_RATE: i32 = 48_000; // in Hz
+pub const DEFAULT_SAMPLE_RATE: i32 = 44_100; // in Hz
 
 mod event;
 
