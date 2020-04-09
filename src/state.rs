@@ -37,7 +37,6 @@ pub enum AlphaMode {
 /// Manages all engine state including graphics and inputs
 // TODO add stroke for line drawing
 pub struct StateData {
-    pub(super) default_target_dirty: bool,
     #[cfg(all(feature = "sdl2-driver", not(feature = "wasm-driver")))]
     pub(super) driver: driver::sdl2::Sdl2Driver,
     #[cfg(all(feature = "wasm-driver", not(feature = "sdl2-driver")))]
@@ -136,7 +135,7 @@ impl StateData {
     pub fn get_mouse_wheel(&self) -> i32 {
         self.mouse_wheel_delta
     }
-    pub fn poll(&mut self) -> Vec<PixEvent> {
+    pub fn poll_events(&mut self) -> Vec<PixEvent> {
         self.events.drain(..).collect()
     }
 
@@ -161,7 +160,6 @@ impl StateData {
         let driver = driver::load_driver(opts)?;
         let main_window_id = driver.window_id();
         let state_data = Self {
-            default_target_dirty: false,
             driver,
             events: Vec::new(),
             main_window_id,

@@ -339,7 +339,7 @@ impl State for App {
 
 pub fn main() {
     let app = App::new();
-    let mut engine = PixEngine::new("Asteroids".to_string(), app, 800, 600, false).unwrap();
+    let mut engine = PixEngine::new("Asteroids".to_string(), app, 800, 600).unwrap();
     if let Err(e) = engine.run() {
         eprintln!("Encountered a PixEngineErr: {}", e.to_string());
     }

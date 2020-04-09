@@ -4,9 +4,6 @@ use crate::{
     state::{State, StateData},
     PixEngineErr, PixEngineResult,
 };
-use std::collections::VecDeque;
-
-const FPS_SAMPLE_SIZE: usize = 30;
 
 /// Primary PixEngine object that controls Window and StateData
 pub struct PixEngine<S>
@@ -16,7 +13,6 @@ where
     app_name: String,
     state: S,
     should_close: bool,
-    debug: bool,
     data: StateData,
 }
 
@@ -36,7 +32,6 @@ where
             app_name,
             state,
             should_close: false,
-            debug: false,
             data,
         })
     }
@@ -73,21 +68,19 @@ where
             _ => (), // continue on
         }
 
-        // Average FPS if debug enabled
-        let mut fps_samples = VecDeque::new();
-
         // Start main loop
         let main_screen = format!("screen{}", self.data.main_window_id()); // TODO abstract this out
-        let mut timer = Instant::now();
-        let mut frame_timer = Duration::new(0, 0);
-        let mut frame_counter = 0;
         let one_second = Duration::new(1, 0);
         let zero_seconds = Duration::new(0, 0);
+        let mut frame_timer = zero_seconds;
+        let mut last_frame_time = Instant::now();
+        let epsilon = Duration::from_millis(5);
         while !self.should_close {
             // Extra loop allows on_destroy to prevent closing
             while !self.should_close {
-                let elapsed = timer.elapsed();
-                timer = Instant::now();
+                let now = Instant::now();
+                let time_since_last = now - last_frame_time;
+                let target_time_between_frames = one_second / 60; // TODO replace with target_frame_rate
 
                 let events: Vec<PixEvent> = self.data.driver.poll()?;
                 self.data.events.clear();
@@ -119,38 +112,40 @@ where
                 self.data.update_key_states();
                 self.data.update_mouse_states();
 
-                // Handle user frame updates
-                match self.state.on_update(elapsed.as_secs_f32(), &mut self.data) {
+                // Handle user updates
+                match self
+                    .state
+                    .on_update(time_since_last.as_secs_f32(), &mut self.data)
+                {
                     Ok(false) => self.should_close = true,
                     Err(e) => return Err(e),
                     _ => (), // continue on
                 }
 
                 // Display updated frame
-                if self.data.default_target_dirty {
+                if time_since_last >= target_time_between_frames - epsilon {
+                    self.data.driver.clear()?;
                     self.data.copy_draw_target(&main_screen)?;
-                }
-                self.data.driver.present();
+                    self.data.driver.present();
 
-                // Update window title and FPS counter
-                frame_timer = frame_timer.checked_add(elapsed).unwrap_or(one_second);
-                frame_counter += 1;
-                if frame_timer >= one_second {
-                    frame_timer = frame_timer.checked_sub(one_second).unwrap_or(zero_seconds);
-                    if self.debug {
-                        fps_samples.push_back(frame_counter);
-                        if fps_samples.len() > FPS_SAMPLE_SIZE {
-                            let _ = fps_samples.pop_front();
+                    let frame_rate =
+                        (one_second.as_secs_f32() / time_since_last.as_secs_f32()) as u32;
+                    frame_timer = frame_timer
+                        .checked_add(time_since_last)
+                        .unwrap_or(one_second);
+                    last_frame_time = now;
+                    if frame_timer >= one_second {
+                        frame_timer = frame_timer.checked_sub(one_second).unwrap_or(zero_seconds);
+                        let mut title = format!("{} - FPS: {}", self.app_name, frame_rate);
+                        if !self.data.title().is_empty() {
+                            title.push_str(&format!(" - {}", self.data.title()));
                         }
+                        self.data
+                            .driver
+                            .set_title(self.data.main_window_id(), &title)?;
                     }
-                    let mut title = format!("{} - FPS: {}", self.app_name, frame_counter);
-                    if !self.data.title().is_empty() {
-                        title.push_str(&format!(" - {}", self.data.title()));
-                    }
-                    self.data
-                        .driver
-                        .set_title(self.data.main_window_id(), &title)?;
-                    frame_counter = 0;
+                } else {
+                    std::thread::sleep(target_time_between_frames - time_since_last - epsilon);
                 }
             }
 
@@ -159,15 +154,6 @@ where
                 Err(e) => return Err(e),
                 _ => (), // continue on
             }
-        }
-
-        if self.debug {
-            let fps_avg = if !fps_samples.is_empty() {
-                fps_samples.iter().sum::<u32>() as f32 / fps_samples.len() as f32
-            } else {
-                0.0
-            };
-            println!("Average FPS: {}", fps_avg);
         }
 
         Ok(())

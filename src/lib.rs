@@ -1,6 +1,7 @@
 use std::{error, fmt};
 
 pub mod event;
+pub mod gui;
 pub mod image;
 pub mod pixel;
 

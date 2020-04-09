@@ -321,7 +321,11 @@ impl Driver for Sdl2Driver {
         Ok(pix_events)
     }
 
-    fn clear(&mut self, window_id: WindowId) -> PixEngineResult<()> {
+    fn clear(&mut self) -> PixEngineResult<()> {
+        self.clear_window(self.window_id)
+    }
+
+    fn clear_window(&mut self, window_id: WindowId) -> PixEngineResult<()> {
         if let Some((canvas, _)) = self.canvases.get_mut(&window_id) {
             canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
             canvas.clear();

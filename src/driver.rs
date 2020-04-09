@@ -40,7 +40,10 @@ pub(super) trait Driver {
     fn poll(&mut self) -> PixEngineResult<Vec<PixEvent>> {
         Ok(Vec::new())
     }
-    fn clear(&mut self, _window_id: WindowId) -> PixEngineResult<()> {
+    fn clear(&mut self) -> PixEngineResult<()> {
+        Ok(())
+    }
+    fn clear_window(&mut self, _window_id: WindowId) -> PixEngineResult<()> {
         Ok(())
     }
     fn present(&mut self) {}

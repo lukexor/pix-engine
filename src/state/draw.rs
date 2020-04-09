@@ -121,6 +121,10 @@ impl StateData {
     pub fn reset_draw_color(&mut self) {
         self.draw_color = self.default_draw_color;
     }
+    // Gets the scale factor for draw target
+    pub fn get_draw_scale(&mut self) -> u32 {
+        self.draw_scale
+    }
     // Sets the scale factor for draw target
     pub fn set_draw_scale(&mut self, scale: u32) {
         self.draw_scale = scale;
@@ -203,9 +207,6 @@ impl StateData {
             }
         } else {
             target.put_pixel(x, y, p);
-        }
-        if self.draw_target.is_none() {
-            self.default_target_dirty = true;
         }
     }
 
@@ -729,7 +730,6 @@ impl StateData {
     }
 
     pub fn copy_window_draw_target(&mut self, window_id: u32, name: &str) -> PixEngineResult<()> {
-        self.default_target_dirty = false;
         // TODO add size check for draw_target to texture dimensions
         let target = self.get_draw_target();
         let target = target.borrow();

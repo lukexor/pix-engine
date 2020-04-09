@@ -22,7 +22,6 @@ impl State for App {
 
 pub fn main() {
     let app = App::new();
-    let vsync = false;
-    let mut engine = PixEngine::new("App".to_string(), app, 800, 600, vsync).expect("valid engine");
+    let mut engine = PixEngine::new("App".to_string(), app, 800, 600).expect("valid engine");
     engine.run().expect("engine run");
 }
