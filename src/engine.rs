@@ -73,6 +73,7 @@ where
         let one_second = Duration::new(1, 0);
         let zero_seconds = Duration::new(0, 0);
         let mut frame_timer = zero_seconds;
+        let mut frame_count = 0;
         let mut last_frame_time = Instant::now();
         let epsilon = Duration::from_millis(5);
         while !self.should_close {
@@ -80,7 +81,7 @@ where
             while !self.should_close {
                 let now = Instant::now();
                 let time_since_last = now - last_frame_time;
-                let target_time_between_frames = one_second / 60; // TODO replace with target_frame_rate
+                last_frame_time = now;
 
                 let events: Vec<PixEvent> = self.data.driver.poll()?;
                 self.data.events.clear();
@@ -112,6 +113,8 @@ where
                 self.data.update_key_states();
                 self.data.update_mouse_states();
 
+                self.data.driver.clear()?;
+
                 // Handle user updates
                 match self
                     .state
@@ -123,29 +126,22 @@ where
                 }
 
                 // Display updated frame
-                if time_since_last >= target_time_between_frames - epsilon {
-                    self.data.driver.clear()?;
-                    self.data.copy_draw_target(&main_screen)?;
-                    self.data.driver.present();
+                // self.data.copy_draw_target(&main_screen)?;
+                self.data.driver.present();
 
-                    let frame_rate =
-                        (one_second.as_secs_f32() / time_since_last.as_secs_f32()) as u32;
-                    frame_timer = frame_timer
-                        .checked_add(time_since_last)
-                        .unwrap_or(one_second);
-                    last_frame_time = now;
-                    if frame_timer >= one_second {
-                        frame_timer = frame_timer.checked_sub(one_second).unwrap_or(zero_seconds);
-                        let mut title = format!("{} - FPS: {}", self.app_name, frame_rate);
-                        if !self.data.title().is_empty() {
-                            title.push_str(&format!(" - {}", self.data.title()));
-                        }
-                        self.data
-                            .driver
-                            .set_title(self.data.main_window_id(), &title)?;
+                // Update title
+                frame_timer += time_since_last;
+                frame_count += 1;
+                if frame_timer >= one_second {
+                    frame_timer -= one_second;
+                    let mut title = format!("{} - FPS: {}", self.app_name, frame_count);
+                    if !self.data.title().is_empty() {
+                        title.push_str(&format!(" - {}", self.data.title()));
                     }
-                } else {
-                    std::thread::sleep(target_time_between_frames - time_since_last - epsilon);
+                    self.data
+                        .driver
+                        .set_title(self.data.main_window_id(), &title)?;
+                    frame_count = 0;
                 }
             }
 

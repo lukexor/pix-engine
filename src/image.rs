@@ -64,8 +64,17 @@ impl Image {
     }
 
     /// Creates a new image from an array of bytes
-    pub fn from_bytes(width: u32, height: u32, bytes: &[u8]) -> PixEngineResult<Self> {
-        if bytes.len() != (4 * width * height) as usize {
+    pub fn from_bytes(
+        width: u32,
+        height: u32,
+        color_type: ColorType,
+        bytes: &[u8],
+    ) -> PixEngineResult<Self> {
+        let channels = match color_type {
+            ColorType::Rgb => 3,
+            ColorType::Rgba => 4,
+        };
+        if bytes.len() != (channels * width * height) as usize {
             Err(PixEngineErr::new(
                 "width/height does not match bytes length",
             ))
@@ -73,8 +82,8 @@ impl Image {
             Ok(Self {
                 width,
                 height,
-                channels: 4,
-                color_type: ColorType::Rgba,
+                channels: channels as u8,
+                color_type,
                 data: bytes.to_vec(),
             })
         }
@@ -148,29 +157,33 @@ impl Image {
         let (info, mut reader) = png.read_info()?;
 
         assert_eq!(
-            info.color_type,
-            png::ColorType::RGBA,
-            "Only RGBA formats supported right now."
-        );
-        assert_eq!(
             info.bit_depth,
             png::BitDepth::Eight,
             "Only 8-bit formats supported right now."
         );
+        let color_type = match info.color_type {
+            png::ColorType::RGB => ColorType::Rgb,
+            png::ColorType::RGBA => ColorType::Rgba,
+            _ => panic!("Only RGB and RGBA formats are supported right now."),
+        };
 
         let mut data = vec![0; info.buffer_size()];
         reader.next_frame(&mut data).unwrap();
 
-        Image::from_bytes(info.width, info.height, &data)
+        Image::from_bytes(info.width, info.height, color_type, &data)
     }
 
     /// Saves a image out to a png file
-    pub fn save_to_file(&mut self, file: &str) -> PixEngineResult<()> {
+    pub fn save_to_file(&self, file: &str) -> PixEngineResult<()> {
         use std::path::PathBuf;
         let path = PathBuf::from(file);
         let png_file = BufWriter::new(std::fs::File::create(&path)?);
         let mut png = png::Encoder::new(png_file, self.width, self.height);
-        png.set_color(png::ColorType::RGBA);
+        let color = match self.color_type {
+            ColorType::Rgb => png::ColorType::RGB,
+            ColorType::Rgba => png::ColorType::RGBA,
+        };
+        png.set_color(color);
         let mut writer = png.write_header()?;
         writer.write_image_data(self.bytes())?;
         Ok(())
