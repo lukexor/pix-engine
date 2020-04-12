@@ -1,8 +1,8 @@
 use crate::{
-    driver::{self, Driver, DriverOpts},
     event::{Input, Key, Mouse, PixEvent},
     image::{Image, ImageRef},
-    pixel::{self, Pixel},
+    pixel::Pixel,
+    renderer::{self, Renderer, RendererOpts},
     PixEngineErr, PixEngineResult,
 };
 
@@ -37,10 +37,10 @@ pub enum AlphaMode {
 /// Manages all engine state including graphics and inputs
 // TODO add stroke for line drawing
 pub struct StateData {
-    #[cfg(all(feature = "sdl2-driver", not(feature = "wasm-driver")))]
-    pub(super) driver: driver::sdl2::Sdl2Driver,
-    #[cfg(all(feature = "wasm-driver", not(feature = "sdl2-driver")))]
-    pub(super) driver: driver::wasm::WasmDriver,
+    #[cfg(all(feature = "sdl2-renderer", not(feature = "wasm-renderer")))]
+    pub(super) renderer: renderer::sdl2::Sdl2Renderer,
+    #[cfg(all(feature = "wasm-renderer", not(feature = "sdl2-renderer")))]
+    pub(super) renderer: renderer::wasm::WasmRenderer,
     pub(super) events: Vec<PixEvent>,
     main_window_id: WindowId,
     title: String,
@@ -83,11 +83,11 @@ impl StateData {
     }
     /// Toggle fullscreen
     pub fn fullscreen(&mut self, val: bool) -> PixEngineResult<()> {
-        self.driver.fullscreen(val)
+        self.renderer.fullscreen(val)
     }
     /// Toggle vsync
     pub fn vsync(&mut self, val: bool) -> PixEngineResult<()> {
-        self.driver.vsync(val)
+        self.renderer.vsync(val)
     }
     /// Screen Width
     pub fn screen_width(&self) -> u32 {
@@ -109,7 +109,7 @@ impl StateData {
         self.default_draw_target = Image::ref_from(new_draw_target);
         self.screen_width = width;
         self.screen_height = height;
-        self.driver.set_size(self.main_window_id, width, height)
+        self.renderer.set_size(self.main_window_id, width, height)
     }
     /// Whether window has focus
     pub fn is_focused(&self) -> bool {
@@ -155,12 +155,12 @@ impl StateData {
         screen_height: u32,
     ) -> PixEngineResult<Self> {
         let font = StateData::construct_font();
-        // Initialize backend driver library
-        let opts = DriverOpts::new(app_name, screen_width, screen_height);
-        let driver = driver::load_driver(opts)?;
-        let main_window_id = driver.window_id();
+        // Initialize backend renderer library
+        let opts = RendererOpts::new(app_name, screen_width, screen_height);
+        let renderer = renderer::load_renderer(opts)?;
+        let main_window_id = renderer.window_id();
         let state_data = Self {
-            driver,
+            renderer,
             events: Vec::new(),
             main_window_id,
             title: String::new(),
@@ -168,8 +168,8 @@ impl StateData {
             screen_height,
             default_draw_target: Image::new_ref(screen_width, screen_height),
             draw_target: None,
-            default_draw_color: pixel::WHITE,
-            draw_color: pixel::WHITE,
+            default_draw_color: Pixel::white(),
+            draw_color: Pixel::white(),
             draw_scale: 1,
             alpha_mode: AlphaMode::Normal,
             blend_factor: 1.0,
@@ -192,7 +192,7 @@ impl StateData {
         self.has_input_focus = val;
     }
     pub(super) fn set_audio_sample_rate(&mut self, sample_rate: i32) -> PixEngineResult<()> {
-        self.driver.set_audio_sample_rate(sample_rate)
+        self.renderer.set_audio_sample_rate(sample_rate)
     }
     pub(super) fn update_mouse(&mut self, x: i32, y: i32) {
         self.mouse_x = x;

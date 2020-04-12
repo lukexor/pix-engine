@@ -1,5 +1,7 @@
 use pix_engine::{
+    draw::Rect,
     gui::{element::Text, selection::ListSelection, Drawable},
+    pixel::Pixel,
     PixEngine, PixEngineResult, State, StateData,
 };
 use std::path::PathBuf;
@@ -7,6 +9,7 @@ use std::path::PathBuf;
 struct Gui {
     selection: ListSelection,
     paths: Vec<PathBuf>,
+    items: Vec<Text>,
 }
 
 impl Gui {
@@ -14,6 +17,7 @@ impl Gui {
         Self {
             selection: ListSelection::new(),
             paths: Vec::new(),
+            items: Vec::new(),
         }
     }
 }
@@ -28,24 +32,22 @@ impl State for Gui {
             self.paths
                 .push(PathBuf::from(&format!("/Users/filename.{}", i)));
         }
-        let mut items: Vec<Text> = self
+        self.items = self
             .paths
             .iter()
             .filter_map(|p| p.file_name())
             .filter_map(|s| s.to_str())
             .map(|s| Text::new(&s))
             .collect();
-        items.insert(0, Text::new("../"));
-        self.selection = ListSelection::with_items(10, 10, 800, 600 - 10, items);
+        self.items.insert(0, Text::new("../"));
+        self.selection = ListSelection::with_items(Rect::new(100, 100, 200, 400), &self.items);
         Ok(true)
     }
     fn on_update(&mut self, _elapsed: f32, data: &mut StateData) -> PixEngineResult<bool> {
+        data.set_draw_color(Pixel::very_dark_gray());
+        data.fill_rect(Rect::new(0, 0, 800, 600));
         self.selection.update(data);
-        self.selection.draw(data);
-        // let events = data.poll_events();
-        // if !events.is_empty() {
-        //     println!("{:?}", events);
-        // }
+        let _ = data.poll_events();
         Ok(true)
     }
     fn on_stop(&mut self, _data: &mut StateData) -> PixEngineResult<bool> {

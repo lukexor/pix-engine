@@ -1,6 +1,6 @@
 use crate::{
-    driver::Driver,
     event::PixEvent,
+    renderer::Renderer,
     state::{State, StateData},
     PixEngineErr, PixEngineResult,
 };
@@ -37,7 +37,7 @@ where
     }
     /// Set a custom window icon
     pub fn set_icon(&mut self, path: &str) -> PixEngineResult<()> {
-        self.data.driver.load_icon(path)
+        self.data.renderer.load_icon(path)
     }
     /// Toggle fullscreen
     pub fn fullscreen(&mut self, val: bool) -> PixEngineResult<()> {
@@ -69,13 +69,11 @@ where
         }
 
         // Start main loop
-        let main_screen = format!("screen{}", self.data.main_window_id()); // TODO abstract this out
         let one_second = Duration::new(1, 0);
         let zero_seconds = Duration::new(0, 0);
         let mut frame_timer = zero_seconds;
         let mut frame_count = 0;
         let mut last_frame_time = Instant::now();
-        let epsilon = Duration::from_millis(5);
         while !self.should_close {
             // Extra loop allows on_destroy to prevent closing
             while !self.should_close {
@@ -83,7 +81,7 @@ where
                 let time_since_last = now - last_frame_time;
                 last_frame_time = now;
 
-                let events: Vec<PixEvent> = self.data.driver.poll()?;
+                let events: Vec<PixEvent> = self.data.renderer.poll()?;
                 self.data.events.clear();
                 for event in events {
                     self.data.events.push(event);
@@ -93,7 +91,7 @@ where
                             if window_id == self.data.main_window_id() {
                                 self.should_close = true;
                             } else {
-                                self.data.driver.close_window(window_id);
+                                self.data.renderer.close_window(window_id);
                             }
                         }
                         PixEvent::KeyPress(key, pressed, ..) => {
@@ -113,8 +111,6 @@ where
                 self.data.update_key_states();
                 self.data.update_mouse_states();
 
-                self.data.driver.clear()?;
-
                 // Handle user updates
                 match self
                     .state
@@ -126,8 +122,7 @@ where
                 }
 
                 // Display updated frame
-                // self.data.copy_draw_target(&main_screen)?;
-                self.data.driver.present();
+                self.data.renderer.present();
 
                 // Update title
                 frame_timer += time_since_last;
@@ -139,7 +134,7 @@ where
                         title.push_str(&format!(" - {}", self.data.title()));
                     }
                     self.data
-                        .driver
+                        .renderer
                         .set_title(self.data.main_window_id(), &title)?;
                     frame_count = 0;
                 }

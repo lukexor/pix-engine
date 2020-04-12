@@ -171,7 +171,8 @@ impl StateData {
             for y in sy..ey {
                 let (nx, ny) = transform.backward(x as f32, y as f32);
                 let p = image.get_pixel(nx.ceil() as u32, ny.ceil() as u32);
-                self.draw(x, y, p);
+                self.set_draw_color(p);
+                self.draw_point(x, y);
             }
         }
     }

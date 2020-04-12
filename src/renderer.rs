@@ -1,21 +1,26 @@
-use crate::{draw::Rect, event::PixEvent, pixel::ColorType, PixEngineResult, WindowId};
+use crate::{
+    draw::{Point, Rect},
+    event::PixEvent,
+    pixel::{ColorType, Pixel},
+    PixEngineResult, WindowId,
+};
 
-#[cfg(all(feature = "sdl2-driver", not(feature = "wasm-driver")))]
+#[cfg(all(feature = "sdl2-renderer", not(feature = "wasm-renderer")))]
 pub(super) mod sdl2;
-#[cfg(all(feature = "wasm-driver", not(feature = "sdl2-driver")))]
+#[cfg(all(feature = "wasm-renderer", not(feature = "sdl2-renderer")))]
 pub(super) mod wasm;
 
-#[cfg(all(feature = "sdl2-driver", not(feature = "wasm-driver")))]
-pub(super) fn load_driver(opts: DriverOpts) -> PixEngineResult<sdl2::Sdl2Driver> {
-    sdl2::Sdl2Driver::new(opts)
+#[cfg(all(feature = "sdl2-renderer", not(feature = "wasm-renderer")))]
+pub(super) fn load_renderer(opts: RendererOpts) -> PixEngineResult<sdl2::Sdl2Renderer> {
+    sdl2::Sdl2Renderer::new(opts)
 }
-#[cfg(all(feature = "wasm-driver", not(feature = "sdl2-driver")))]
-pub(super) fn load_driver(opts: DriverOpts) -> PixEngineResult<wasm::WasmDriver> {
-    wasm::WasmDriver::new(opts)
+#[cfg(all(feature = "wasm-renderer", not(feature = "sdl2-renderer")))]
+pub(super) fn load_renderer(opts: RendererOpts) -> PixEngineResult<wasm::WasmRenderer> {
+    wasm::WasmRenderer::new(opts)
 }
 
-// TODO Add DriverErr and DriverResult types
-pub(super) trait Driver {
+// TODO Add RendererErr and RendererResult types
+pub(super) trait Renderer {
     fn fullscreen(&mut self, _val: bool) -> PixEngineResult<()> {
         Ok(())
     }
@@ -70,16 +75,28 @@ pub(super) trait Driver {
     }
     fn close_window(&mut self, _window_id: WindowId) {}
     fn enqueue_audio(&mut self, _samples: &[f32]) {}
+    fn set_draw_color(&mut self, _p: Pixel) -> PixEngineResult<()> {
+        Ok(())
+    }
+    fn fill_rect(&mut self, _rect: Rect) -> PixEngineResult<()> {
+        Ok(())
+    }
+    fn draw_point(&mut self, _point: Point) -> PixEngineResult<()> {
+        Ok(())
+    }
+    fn set_viewport(&mut self, _rect: Option<Rect>) -> PixEngineResult<()> {
+        Ok(())
+    }
 }
 
-pub(super) struct DriverOpts {
+pub(super) struct RendererOpts {
     title: String,
     width: u32,
     height: u32,
     audio_sample_rate: Option<i32>,
 }
 
-impl DriverOpts {
+impl RendererOpts {
     pub(super) fn new(title: &str, width: u32, height: u32) -> Self {
         Self {
             title: title.to_owned(),

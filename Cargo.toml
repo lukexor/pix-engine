@@ -21,6 +21,6 @@ sdl2 = { version = "0.33.0", default-features = false, features = ["unsafe_textu
 wasm-bindgen = { version = "0.2.59", optional = true }
 
 [features]
-default = ["sdl2-driver"]
-sdl2-driver = ["sdl2"]
-wasm-driver = ["wasm-bindgen"]
+default = ["sdl2-renderer"]
+sdl2-renderer = ["sdl2"]
+wasm-renderer = ["wasm-bindgen"]

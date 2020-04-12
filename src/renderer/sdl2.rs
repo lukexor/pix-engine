@@ -1,9 +1,9 @@
 use crate::{
-    draw::Rect,
-    driver::{Driver, DriverOpts},
+    draw::{Point, Rect},
     event::PixEvent,
     image::Image,
-    pixel::ColorType,
+    pixel::{ColorType, Pixel},
+    renderer::{Renderer, RendererOpts},
     PixEngineErr, PixEngineResult, WindowId,
 };
 use sdl2::{
@@ -23,7 +23,7 @@ pub const DEFAULT_SAMPLE_RATE: i32 = 44_100; // in Hz
 
 mod event;
 
-pub(crate) struct Sdl2Driver {
+pub(crate) struct Sdl2Renderer {
     context: Sdl,
     window_id: WindowId,
     canvases: HashMap<u32, (Canvas<video::Window>, TextureCreator<WindowContext>)>,
@@ -47,22 +47,29 @@ pub struct TextureMap {
 fn rect_to_sdl(rect: Rect) -> rect::Rect {
     rect::Rect::new(rect.x as i32, rect.y as i32, rect.w, rect.h)
 }
+fn point_to_sdl(point: Point) -> rect::Point {
+    rect::Point::new(point.x as i32, point.y as i32)
+}
 
-impl Sdl2Driver {
-    pub(crate) fn new(opts: DriverOpts) -> PixEngineResult<Self> {
+impl Sdl2Renderer {
+    pub(crate) fn new(opts: RendererOpts) -> PixEngineResult<Self> {
         let context = sdl2::init()?;
 
         // Set up the window
         let video_sub = context.video()?;
-        let mut window_builder = video_sub.window(&opts.title, opts.width, opts.height);
-        window_builder.position_centered().resizable();
-        let window = window_builder.build()?;
+        let window = video_sub
+            .window(&opts.title, opts.width, opts.height)
+            .position_centered()
+            .resizable()
+            .build()?;
         let window_id = window.id();
 
         // Set up canvas
-        let mut canvas_builder = window.into_canvas().target_texture();
-        canvas_builder = canvas_builder.present_vsync();
-        let mut canvas = canvas_builder.build()?;
+        let mut canvas = window
+            .into_canvas()
+            .target_texture()
+            .present_vsync()
+            .build()?;
         canvas.set_logical_size(opts.width, opts.height)?;
 
         // Event pump
@@ -71,23 +78,23 @@ impl Sdl2Driver {
 
         // Primary screen texture
         let texture_creator = canvas.texture_creator();
-        let screen_tex = texture_creator.create_texture_streaming(
+        let mut screen_tex = texture_creator.create_texture_streaming(
             PixelFormatEnum::RGBA32,
             opts.width,
             opts.height,
         )?;
         let mut texture_maps = HashMap::new();
-        texture_maps.insert(
-            format!("screen{}", window_id),
-            TextureMap {
-                tex: screen_tex,
-                format: PixelFormatEnum::RGBA32,
-                channels: 4,
-                pitch: (4 * opts.width) as usize,
-                src: Some(rect::Rect::new(0, 0, opts.width, opts.height)),
-                dst: Some(rect::Rect::new(0, 0, opts.width, opts.height)),
-            },
-        );
+        // texture_maps.insert(
+        //     format!("screen{}", window_id),
+        //     TextureMap {
+        //         tex: screen_tex,
+        //         format: PixelFormatEnum::RGBA32,
+        //         channels: 4,
+        //         pitch: (4 * opts.width) as usize,
+        //         src: Some(rect::Rect::new(0, 0, opts.width, opts.height)),
+        //         dst: Some(rect::Rect::new(0, 0, opts.width, opts.height)),
+        //     },
+        // );
 
         // Set up Audio
         let audio_sub = context.audio()?;
@@ -136,9 +143,20 @@ impl Sdl2Driver {
         }
         Ok(())
     }
+
+    fn get_canvas(&mut self) -> PixEngineResult<&mut Canvas<video::Window>> {
+        if let Some((canvas, _)) = self.canvases.get_mut(&self.window_id) {
+            Ok(canvas)
+        } else {
+            Err(PixEngineErr::new(format!(
+                "invalid window_id {}",
+                self.window_id
+            )))
+        }
+    }
 }
 
-impl Driver for Sdl2Driver {
+impl Renderer for Sdl2Renderer {
     fn fullscreen(&mut self, val: bool) -> PixEngineResult<()> {
         if self.canvases.len() == 1 {
             let (canvas, _) = self.canvases.get_mut(&self.window_id).unwrap();
@@ -411,8 +429,7 @@ impl Driver for Sdl2Driver {
         let window = window_builder.build()?;
 
         // Set up canvas
-        let canvas_builder = window.into_canvas().target_texture();
-        let mut canvas = canvas_builder.build()?;
+        let mut canvas = window.into_canvas().target_texture().build()?;
         canvas.set_logical_size(width, height)?;
         let window_id = canvas.window().id();
 
@@ -457,6 +474,30 @@ impl Driver for Sdl2Driver {
         };
         self.audio_device = audio_sub.open_queue(None, &desired_spec)?;
         self.audio_device.resume();
+        Ok(())
+    }
+
+    fn set_draw_color(&mut self, p: Pixel) -> PixEngineResult<()> {
+        self.get_canvas()?
+            .set_draw_color(Color::RGBA(p.r(), p.g(), p.b(), p.a()));
+        Ok(())
+    }
+
+    fn fill_rect(&mut self, rect: Rect) -> PixEngineResult<()> {
+        let rect = rect_to_sdl(rect);
+        self.get_canvas()?.fill_rect(rect)?;
+        Ok(())
+    }
+
+    fn draw_point(&mut self, point: Point) -> PixEngineResult<()> {
+        let point = point_to_sdl(point);
+        self.get_canvas()?.draw_point(point)?;
+        Ok(())
+    }
+
+    fn set_viewport(&mut self, rect: Option<Rect>) -> PixEngineResult<()> {
+        let rect = rect.and_then(|r| Some(rect_to_sdl(r)));
+        self.get_canvas()?.set_clip_rect(rect);
         Ok(())
     }
 }

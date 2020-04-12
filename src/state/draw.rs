@@ -1,7 +1,7 @@
 use crate::{
-    driver::Driver,
     image::{Image, ImageRef},
     pixel::{ColorType, Pixel},
+    renderer::Renderer,
     state::{AlphaMode, StateData},
     PixEngineResult,
 };
@@ -17,6 +17,17 @@ pub struct Rect {
 impl Rect {
     pub fn new(x: u32, y: u32, w: u32, h: u32) -> Self {
         Self { x, y, w, h }
+    }
+}
+
+pub struct Point {
+    pub x: u32,
+    pub y: u32,
+}
+
+impl Point {
+    pub fn new(x: u32, y: u32) -> Self {
+        Self { x, y }
     }
 }
 
@@ -52,7 +63,7 @@ impl StateData {
             let r = sym1 << 18 | sym2 << 12 | sym3 << 6 | sym4;
             for i in 0..24 {
                 let k = if r & (1 << i) > 0 { 255 } else { 0 };
-                font.put_pixel(px, py, Pixel([k, k, k, k]));
+                font.put_pixel(px, py, Pixel::rgba(k, k, k, k));
                 py += 1;
                 if py == 48 {
                     px += 1;
@@ -114,8 +125,9 @@ impl StateData {
         self.draw_color
     }
     // Sets the Pixel color for draw target
-    pub fn set_draw_color(&mut self, p: Pixel) {
+    pub fn set_draw_color(&mut self, p: Pixel) -> PixEngineResult<()> {
         self.draw_color = p;
+        self.renderer.set_draw_color(p)
     }
     // Resets color for draw target
     pub fn reset_draw_color(&mut self) {
@@ -152,28 +164,24 @@ impl StateData {
     // Draw functions =========================================================
 
     // Fills entire draw target to Pixel
-    pub fn fill(&mut self, p: Pixel) {
+    pub fn fill(&mut self, p: Pixel) -> PixEngineResult<()> {
         let (width, height) = self.get_draw_target_dims();
-        self.fill_rect(0, 0, width, height, p);
+        self.renderer.set_draw_color(p)?;
+        self.fill_rect(Rect::new(0, 0, width, height))
     }
 
-    // Clears entire draw target to empty
-    pub fn clear(&mut self) {
-        let (width, height) = self.get_draw_target_dims();
-        let color_type = self.get_draw_target().borrow().color_type();
-        self.draw_target = match color_type {
-            ColorType::Rgb => Some(Image::rgb_ref(width, height)),
-            ColorType::Rgba => Some(Image::rgba_ref(width, height)),
-        }
+    // Clears entire draw target to current draw color
+    pub fn clear(&mut self) -> PixEngineResult<()> {
+        self.renderer.clear()
     }
 
     // Draws a single pixel to the draw target
-    fn draw_i32(&mut self, x: i32, y: i32, p: Pixel) {
-        self.draw(x as u32, y as u32, p);
+    fn draw_point_i32(&mut self, x: i32, y: i32) {
+        self.draw_point(x as u32, y as u32);
     }
 
     #[allow(clippy::many_single_char_names)]
-    pub fn draw(&mut self, mut x: u32, mut y: u32, p: Pixel) {
+    pub fn draw_point(&mut self, mut x: u32, mut y: u32) {
         if self.coord_wrapping {
             let (mut ox, mut oy) = (0.0, 0.0);
             self.wrap_coords(x as f32, y as f32, &mut ox, &mut oy);
@@ -184,50 +192,41 @@ impl StateData {
         let alpha_mode = self.alpha_mode;
         let blend_factor = self.blend_factor;
 
-        let target = self.get_draw_target();
-        let mut target = target.borrow_mut();
-        if x >= target.width() || y >= target.height() {
-            return;
-        }
-
-        if target.color_type() == ColorType::Rgba {
-            match alpha_mode {
-                AlphaMode::Normal => target.put_pixel(x, y, p),
-                AlphaMode::Mask if p[3] == 255 => target.put_pixel(x, y, p),
-                AlphaMode::Blend => {
-                    let current_p = target.get_pixel(x, y);
-                    let a = (f32::from(p[3]) / 255.0) * blend_factor;
-                    let c = 1.0 - a;
-                    let r = a * f32::from(p[0]) + c * f32::from(current_p[0]);
-                    let g = a * f32::from(p[1]) + c * f32::from(current_p[1]);
-                    let b = a * f32::from(p[2]) + c * f32::from(current_p[2]);
-                    target.put_pixel(x, y, Pixel([r as u8, g as u8, b as u8, 255]));
+        let point = Point::new(x, y);
+        let _ = match alpha_mode {
+            AlphaMode::Normal => self.renderer.draw_point(point),
+            AlphaMode::Mask => {
+                if self.get_draw_color().a() == 255 {
+                    self.renderer.draw_point(point)
+                } else {
+                    Ok(())
                 }
-                _ => (),
             }
-        } else {
-            target.put_pixel(x, y, p);
-        }
+            AlphaMode::Blend => {
+                Ok(())
+                // let current_p = target.get_pixel(x, y);
+                // let a = (f32::from(p.a()) / 255.0) * blend_factor;
+                // let c = 1.0 - a;
+                // let r = a * f32::from(p.r()) + c * f32::from(current_p.r());
+                // let g = a * f32::from(p.g()) + c * f32::from(current_p.g());
+                // let b = a * f32::from(p.b()) + c * f32::from(current_p.b());
+                // let blended = Pixel::rgb(r as u8, g as u8, b as u8);
+                // self.renderer.set_draw_color(blended);
+                // self.renderer.draw_point(point)
+            }
+        };
     }
 
     // Draws a line from (x1, y1) to (x2, y2)
-    pub fn draw_line(&mut self, x1: u32, y1: u32, x2: u32, y2: u32, p: Pixel) {
-        self.draw_line_pattern(x1, y1, x2, y2, 0xFFFF_FFFF, p);
+    pub fn draw_line(&mut self, x1: u32, y1: u32, x2: u32, y2: u32) {
+        self.draw_line_pattern(x1, y1, x2, y2, 0xFFFF_FFFF);
     }
-    pub fn draw_line_i32(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, p: Pixel) {
-        self.draw_line(x1 as u32, y1 as u32, x2 as u32, y2 as u32, p)
+    pub fn draw_line_i32(&mut self, x1: i32, y1: i32, x2: i32, y2: i32) {
+        self.draw_line(x1 as u32, y1 as u32, x2 as u32, y2 as u32)
     }
 
     // Draws a line pattern from (x1, y1) to (x2, y2)
-    pub fn draw_line_pattern(
-        &mut self,
-        x1: u32,
-        y1: u32,
-        x2: u32,
-        y2: u32,
-        mut pattern: u32,
-        p: Pixel,
-    ) {
+    pub fn draw_line_pattern(&mut self, x1: u32, y1: u32, x2: u32, y2: u32, mut pattern: u32) {
         let mut x1 = x1 as i32;
         let mut y1 = y1 as i32;
         let mut x2 = x2 as i32;
@@ -247,7 +246,7 @@ impl StateData {
             }
             for y in y1..=y2 {
                 if rol() {
-                    self.draw_i32(x1, y, p);
+                    self.draw_point_i32(x1, y);
                 }
             }
         } else if dy == 0 {
@@ -257,7 +256,7 @@ impl StateData {
             }
             for x in x1..=x2 {
                 if rol() {
-                    self.draw_i32(x, y1, p);
+                    self.draw_point_i32(x, y1);
                 }
             }
         } else {
@@ -278,7 +277,7 @@ impl StateData {
                     xe = x1;
                 }
                 if rol() {
-                    self.draw_i32(x, y, p);
+                    self.draw_point_i32(x, y);
                 }
                 while x < xe {
                     x += 1;
@@ -293,7 +292,7 @@ impl StateData {
                         px += 2 * (dy1 - dx1);
                     }
                     if rol() {
-                        self.draw_i32(x, y, p);
+                        self.draw_point_i32(x, y);
                     }
                 }
             } else {
@@ -307,7 +306,7 @@ impl StateData {
                     ye = y1;
                 }
                 if rol() {
-                    self.draw_i32(x, y, p);
+                    self.draw_point_i32(x, y);
                 }
                 while y < ye {
                     y += 1;
@@ -322,7 +321,7 @@ impl StateData {
                         py += 2 * (dx1 - dy1);
                     }
                     if rol() {
-                        self.draw_i32(x, y, p);
+                        self.draw_point_i32(x, y);
                     }
                 }
             }
@@ -330,13 +329,13 @@ impl StateData {
     }
 
     // Draws a circle centered at (x, y) with radius r
-    pub fn draw_circle(&mut self, x: u32, y: u32, r: u32, p: Pixel) {
-        self.draw_partial_circle(x, y, r, 0xFF, p);
+    pub fn draw_circle(&mut self, x: u32, y: u32, r: u32) {
+        self.draw_partial_circle(x, y, r, 0xFF);
     }
 
     // Draws a partial circle centered at (x, y) with radius r, partially masked
     #[allow(clippy::many_single_char_names)]
-    pub fn draw_partial_circle(&mut self, x: u32, y: u32, r: u32, mask: u8, p: Pixel) {
+    pub fn draw_partial_circle(&mut self, x: u32, y: u32, r: u32, mask: u8) {
         let x = x as i32;
         let y = y as i32;
         let mut x0 = 0;
@@ -348,28 +347,28 @@ impl StateData {
 
         while y0 >= x0 {
             if mask & 0x01 > 0 {
-                self.draw_i32(x + x0, y - y0, p);
+                self.draw_point_i32(x + x0, y - y0);
             }
             if mask & 0x02 > 0 {
-                self.draw_i32(x + y0, y - x0, p);
+                self.draw_point_i32(x + y0, y - x0);
             }
             if mask & 0x04 > 0 {
-                self.draw_i32(x + y0, y + x0, p);
+                self.draw_point_i32(x + y0, y + x0);
             }
             if mask & 0x08 > 0 {
-                self.draw_i32(x + x0, y + y0, p);
+                self.draw_point_i32(x + x0, y + y0);
             }
             if mask & 0x10 > 0 {
-                self.draw_i32(x - x0, y + y0, p);
+                self.draw_point_i32(x - x0, y + y0);
             }
             if mask & 0x20 > 0 {
-                self.draw_i32(x - y0, y + x0, p);
+                self.draw_point_i32(x - y0, y + x0);
             }
             if mask & 0x40 > 0 {
-                self.draw_i32(x - y0, y - x0, p);
+                self.draw_point_i32(x - y0, y - x0);
             }
             if mask & 0x80 > 0 {
-                self.draw_i32(x - x0, y - y0, p);
+                self.draw_point_i32(x - x0, y - y0);
             }
             x0 += 1;
             if d < 0 {
@@ -383,7 +382,7 @@ impl StateData {
 
     // Draws a filled circle centered at (x, y) with radius r
     #[allow(clippy::many_single_char_names)]
-    pub fn fill_circle(&mut self, x: u32, y: u32, r: u32, p: Pixel) {
+    pub fn fill_circle(&mut self, x: u32, y: u32, r: u32) {
         let x = x as i32;
         let y = y as i32;
         let mut x0 = 0;
@@ -395,7 +394,7 @@ impl StateData {
 
         let mut draw_hline = |sx, ex, ny| {
             for i in sx..ex {
-                self.draw_i32(i, ny, p);
+                self.draw_point_i32(i, ny);
             }
         };
 
@@ -414,64 +413,42 @@ impl StateData {
         }
     }
 
-    pub fn draw_elipse(&mut self, _p: Pixel) {
+    pub fn draw_elipse(&mut self) {
         // TODO
     }
 
-    pub fn fill_elipse(&mut self, _p: Pixel) {
+    pub fn fill_elipse(&mut self) {
         // TODO
     }
 
     // Draws a rectangle at (x, y) to (x + w, y + h)
     #[allow(clippy::many_single_char_names)]
-    pub fn draw_rect(&mut self, x: u32, y: u32, w: u32, h: u32, p: Pixel) {
-        self.draw_line(x, y, x + w, y, p); // Top
-        self.draw_line(x + w, y, x + w, y + h, p); // Right
-        self.draw_line(x + w, y + h, x, y + h, p); // Bottom
-        self.draw_line(x, y + h, x, y, p); // Left
+    pub fn draw_rect(&mut self, x: u32, y: u32, w: u32, h: u32) {
+        self.draw_line(x, y, x + w, y); // Top
+        self.draw_line(x + w, y, x + w, y + h); // Right
+        self.draw_line(x + w, y + h, x, y + h); // Bottom
+        self.draw_line(x, y + h, x, y); // Left
     }
 
     // Draws a filled rectangle at (x, y) to (x + w, y + h)
     #[allow(clippy::many_single_char_names)]
-    pub fn fill_rect(&mut self, x: u32, y: u32, w: u32, h: u32, p: Pixel) {
-        for x1 in x..x + w {
-            for y1 in y..y + h {
-                self.draw(x1, y1, p);
-            }
-        }
+    pub fn fill_rect(&mut self, rect: Rect) -> PixEngineResult<()> {
+        self.renderer.fill_rect(rect)
     }
 
     // Draws a triangle between points (x1, y1), (x2, y2), and (x3, y3)
     #[allow(clippy::too_many_arguments)]
-    pub fn draw_triangle(
-        &mut self,
-        x1: u32,
-        y1: u32,
-        x2: u32,
-        y2: u32,
-        x3: u32,
-        y3: u32,
-        p: Pixel,
-    ) {
-        self.draw_line(x1, y1, x2, y2, p);
-        self.draw_line(x2, y2, x3, y3, p);
-        self.draw_line(x3, y3, x1, y1, p);
+    pub fn draw_triangle(&mut self, x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32) {
+        self.draw_line(x1, y1, x2, y2);
+        self.draw_line(x2, y2, x3, y3);
+        self.draw_line(x3, y3, x1, y1);
     }
 
     // Draws a filled triangle between points (x1, y1), (x2, y2), and (x3, y3)
     // https://www.avrfreaks.net/sites/default/files/triangles.c
     // Original Author: Adafruit Industries
     #[allow(clippy::too_many_arguments)]
-    pub fn fill_triangle(
-        &mut self,
-        x1: u32,
-        y1: u32,
-        x2: u32,
-        y2: u32,
-        x3: u32,
-        y3: u32,
-        p: Pixel,
-    ) {
+    pub fn fill_triangle(&mut self, x1: u32, y1: u32, x2: u32, y2: u32, x3: u32, y3: u32) {
         let mut x1 = x1 as i32;
         let mut y1 = y1 as i32;
         let mut x2 = x2 as i32;
@@ -506,7 +483,7 @@ impl StateData {
             } else if x3 > b {
                 b = x3;
             }
-            self.draw_line_i32(a, y1, b, y1, p); // Horizontal line
+            self.draw_line_i32(a, y1, b, y1); // Horizontal line
         } else {
             let dx12 = x2 - x1;
             let dy12 = y2 - y1;
@@ -524,7 +501,7 @@ impl StateData {
                 let b = x1 + sb / dy13;
                 sa += dx12;
                 sb += dx13;
-                self.draw_line_i32(a, y, b, y, p);
+                self.draw_line_i32(a, y, b, y);
             }
 
             sa = dx23 * (last - y2);
@@ -534,7 +511,7 @@ impl StateData {
                 let b = x1 + sb / dy13;
                 sa += dx23;
                 sb += dx13;
-                self.draw_line_i32(a, y, b, y, p);
+                self.draw_line_i32(a, y, b, y);
             }
         }
     }
@@ -542,23 +519,24 @@ impl StateData {
     // Draws an entire image at location (x, y)
     pub fn draw_image(&mut self, x: u32, y: u32, image: &Image) {
         if self.draw_scale > 1 {
-            for ox in 0..image.width() {
-                for oy in 0..image.height() {
-                    for xs in 0..self.draw_scale {
-                        for ys in 0..self.draw_scale {
-                            self.draw(
+            for oy in 0..image.height() {
+                for ox in 0..image.width() {
+                    for ys in 0..self.draw_scale {
+                        for xs in 0..self.draw_scale {
+                            self.set_draw_color(image.get_pixel(ox, oy));
+                            self.draw_point(
                                 x + (ox * self.draw_scale) + xs,
                                 y + (oy * self.draw_scale) + ys,
-                                image.get_pixel(ox, oy),
                             );
                         }
                     }
                 }
             }
         } else {
-            for ox in 0..image.width() {
-                for oy in 0..image.height() {
-                    self.draw(x + ox, y + oy, image.get_pixel(ox, oy));
+            for oy in 0..image.height() {
+                for ox in 0..image.width() {
+                    self.set_draw_color(image.get_pixel(ox, oy));
+                    self.draw_point(x + ox, y + oy);
                 }
             }
         }
@@ -578,40 +556,33 @@ impl StateData {
         image: &Image,
     ) {
         if self.draw_scale > 1 {
-            for ox1 in 0..w {
-                for oy1 in 0..h {
-                    for xs in 0..self.draw_scale {
-                        for ys in 0..self.draw_scale {
-                            self.draw(
+            for oy1 in 0..h {
+                for ox1 in 0..w {
+                    for ys in 0..self.draw_scale {
+                        for xs in 0..self.draw_scale {
+                            self.set_draw_color(image.get_pixel(ox1 + ox, oy1 + oy));
+                            self.draw_point(
                                 x + (ox1 * self.draw_scale) + xs,
                                 y + (oy1 * self.draw_scale) + ys,
-                                image.get_pixel(ox1 + ox, oy1 + oy),
                             );
                         }
                     }
                 }
             }
         } else {
-            for ox1 in 0..w {
-                for oy1 in 0..h {
-                    self.draw(x + ox1, y + oy1, image.get_pixel(ox1 + ox, oy1 + oy));
+            for oy1 in 0..h {
+                for ox1 in 0..w {
+                    self.set_draw_color(image.get_pixel(ox1 + ox, oy1 + oy));
+                    self.draw_point(x + ox1, y + oy1);
                 }
             }
         }
     }
 
     // Draws a single line of text at (x, y)
-    pub fn draw_string(&mut self, x: u32, y: u32, text: &str, p: Pixel) {
+    pub fn draw_string(&mut self, x: u32, y: u32, text: &str) {
         let mut sx = 0;
         let mut sy = 0;
-
-        // Temporarily change alpha mode so text will overlay
-        let alpha_mode = self.get_alpha_mode();
-        if self.draw_color[0] != 255 {
-            self.set_alpha_mode(AlphaMode::Blend);
-        } else {
-            self.set_alpha_mode(AlphaMode::Mask);
-        }
         for c in text.chars() {
             if c == '\n' {
                 sx = 0;
@@ -620,15 +591,14 @@ impl StateData {
                 let ox = (c as u32 - 32) % 16;
                 let oy = (c as u32 - 32) / 16;
                 if self.draw_scale > 1 {
-                    for ox1 in 0..8 {
-                        for oy1 in 0..8 {
-                            if self.font.get_pixel(ox1 + ox * 8, oy1 + oy * 8)[0] > 0 {
-                                for xs in 0..self.draw_scale {
-                                    for ys in 0..self.draw_scale {
-                                        self.draw(
+                    for oy1 in 0..8 {
+                        for ox1 in 0..8 {
+                            if self.font.get_pixel(ox1 + ox * 8, oy1 + oy * 8).a() > 0 {
+                                for ys in 0..self.draw_scale {
+                                    for xs in 0..self.draw_scale {
+                                        self.draw_point(
                                             x + sx + (ox1 * self.draw_scale) + xs,
                                             y + sy + (oy1 * self.draw_scale) + ys,
-                                            p,
                                         );
                                     }
                                 }
@@ -636,10 +606,10 @@ impl StateData {
                         }
                     }
                 } else {
-                    for ox1 in 0..8 {
-                        for oy1 in 0..8 {
-                            if self.font.get_pixel(ox1 + ox * 8, oy1 + oy * 8)[0] > 0 {
-                                self.draw(x + sx + ox1, y + sy + oy1, p);
+                    for oy1 in 0..8 {
+                        for ox1 in 0..8 {
+                            if self.font.get_pixel(ox1 + ox * 8, oy1 + oy * 8).a() > 0 {
+                                self.draw_point(x + sx + ox1, y + sy + oy1);
                             }
                         }
                     }
@@ -647,7 +617,6 @@ impl StateData {
                 sx += 8 * self.draw_scale;
             }
         }
-        self.set_alpha_mode(alpha_mode); // Restore alpha mode
     }
 
     // Draws a wireframe model based on a set of vertices
@@ -658,7 +627,6 @@ impl StateData {
         y: f32,
         angle: f32,
         scale: f32,
-        p: Pixel,
     ) {
         let verts = model_coords.len();
         let mut transformed_coords = vec![(0.0, 0.0); verts];
@@ -698,7 +666,6 @@ impl StateData {
                 transformed_coords[i % verts].1 as u32,
                 transformed_coords[j % verts].0 as u32,
                 transformed_coords[j % verts].1 as u32,
-                p,
             );
         }
     }
@@ -721,7 +688,7 @@ impl StateData {
         src: Rect,
         dst: Rect,
     ) -> PixEngineResult<()> {
-        self.driver
+        self.renderer
             .create_texture(window_id, name, color_type, src, dst)
     }
 
@@ -733,10 +700,16 @@ impl StateData {
         // TODO add size check for draw_target to texture dimensions
         let target = self.get_draw_target();
         let target = target.borrow();
-        let driver = &mut self.driver;
+        let renderer = &mut self.renderer;
         let pixels = target.bytes();
-        driver.copy_texture(window_id, name, &pixels)?;
+        renderer.copy_texture(window_id, name, &pixels)?;
         Ok(())
+    }
+
+    pub fn copy_image(&mut self, image: &Image) -> PixEngineResult<()> {
+        let main_screen = format!("screen{}", self.main_window_id);
+        self.renderer
+            .copy_texture(self.main_window_id, &main_screen, image.bytes())
     }
 
     pub fn copy_texture(&mut self, name: &str, bytes: &[u8]) -> PixEngineResult<()> {
@@ -749,7 +722,7 @@ impl StateData {
         name: &str,
         bytes: &[u8],
     ) -> PixEngineResult<()> {
-        self.driver.copy_texture(window_id, name, bytes)
+        self.renderer.copy_texture(window_id, name, bytes)
     }
 
     pub fn open_window(
@@ -758,10 +731,14 @@ impl StateData {
         width: u32,
         height: u32,
     ) -> PixEngineResult<u32> {
-        self.driver.open_window(title, width, height)
+        self.renderer.open_window(title, width, height)
     }
 
     pub fn close_window(&mut self, window_id: u32) {
-        self.driver.close_window(window_id);
+        self.renderer.close_window(window_id);
+    }
+
+    pub fn set_viewport(&mut self, rect: Option<Rect>) -> PixEngineResult<()> {
+        self.renderer.set_viewport(rect)
     }
 }

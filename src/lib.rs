@@ -6,8 +6,8 @@ pub mod image;
 pub mod pixel;
 
 mod audio;
-mod driver;
 mod engine;
+mod renderer;
 mod state;
 
 pub use engine::PixEngine;

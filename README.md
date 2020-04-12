@@ -17,13 +17,13 @@ Update your `Cargo.toml` file to include pix-engine:
 pix-engine = "0.2.0"
 ```
 
-The default driver is sdl2. Future versions will support wasm. To use it:
+The default renderer is sdl2. Future versions will support wasm. To use it:
 
 ```
 pix-engine = {
   version = "0.2.0",
   default-features = false,
-  features = ["wasm-driver"],
+  features = ["wasm-renderer"],
 }
 ```
 

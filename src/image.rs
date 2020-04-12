@@ -1,5 +1,5 @@
 use crate::{
-    pixel::{self, ColorType, Pixel},
+    pixel::{ColorType, Pixel},
     PixEngineErr, PixEngineResult,
 };
 use png;
@@ -91,30 +91,30 @@ impl Image {
 
     /// Gets the pixel at the given (x, y) coords
     pub fn get_pixel(&self, x: u32, y: u32) -> Pixel {
-        if x < self.width && y < self.height {
-            let idx = self.channels as usize * (y * self.width + x) as usize;
-            Pixel([
-                self.data[idx],
-                self.data[idx + 1],
-                self.data[idx + 2],
-                if self.channels == 3 {
-                    255
-                } else {
-                    self.data[idx + 3]
-                },
-            ])
+        let idx = self.channels as usize * (y * self.width + x) as usize;
+        assert!(idx < self.data.len(), "(x, y) within bounds");
+        let alpha = if self.channels == 4 {
+            self.data[idx + 3]
         } else {
-            pixel::TRANSPARENT
-        }
+            255
+        };
+        Pixel::rgba(
+            self.data[idx],
+            self.data[idx + 1],
+            self.data[idx + 2],
+            alpha,
+        )
     }
 
     /// Sets the pixel at the given (x, y) coords
     pub fn put_pixel(&mut self, x: u32, y: u32, p: Pixel) {
-        if x < self.width && y < self.height {
-            let idx = self.channels as usize * (y * self.width + x) as usize;
-            for i in 0..self.channels as usize {
-                self.data[idx + i] = p[i];
-            }
+        let idx = self.channels as usize * (y * self.width + x) as usize;
+        assert!(idx < self.data.len(), "(x, y) within bounds");
+        self.data[idx] = p.r();
+        self.data[idx + 1] = p.g();
+        self.data[idx + 2] = p.b();
+        if self.channels == 4 {
+            self.data[idx + 3] = p.a();
         }
     }
 
