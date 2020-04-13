@@ -1,533 +1,255 @@
-use crate::{
-    draw::{Point, Rect},
-    event::PixEvent,
-    image::Image,
-    pixel::{ColorType, Pixel},
-    renderer::{Renderer, RendererOpts},
-    PixEngineErr, PixEngineResult, WindowId,
-};
+use super::BlendMode;
+use crate::{color::Color, event::PixEvent, renderer::Renderer, PixEngineError, PixEngineResult};
 use sdl2::{
     audio::{AudioQueue, AudioSpecDesired},
     controller::GameController,
-    event::{Event, WindowEvent},
-    pixels::{Color, PixelFormatEnum},
-    rect,
-    render::{self, BlendMode, Canvas, Texture, TextureCreator},
-    surface::Surface,
-    video::{self, FullscreenType, WindowContext, WindowPos},
+    pixels,
+    render::Canvas,
+    video::{self, Window},
     EventPump, GameControllerSubsystem, Sdl,
 };
-use std::collections::HashMap;
+use std::borrow::Cow;
+
+mod event;
+mod render;
 
 pub const DEFAULT_SAMPLE_RATE: i32 = 44_100; // in Hz
 
-mod event;
-
 pub(crate) struct Sdl2Renderer {
     context: Sdl,
-    window_id: WindowId,
-    canvases: HashMap<u32, (Canvas<video::Window>, TextureCreator<WindowContext>)>,
-    texture_maps: HashMap<String, TextureMap>,
+    default_target: Option<u32>,
+    window_target: Vec<u32>,
+    canvases: Vec<Canvas<Window>>,
     audio_device: AudioQueue<f32>,
     event_pump: EventPump,
     controller_sub: GameControllerSubsystem,
-    controller1: Option<GameController>,
-    controller2: Option<GameController>,
-}
-
-pub struct TextureMap {
-    tex: Texture,
-    format: PixelFormatEnum,
-    channels: u32,
-    pitch: usize,
-    src: Option<rect::Rect>,
-    dst: Option<rect::Rect>,
-}
-
-fn rect_to_sdl(rect: Rect) -> rect::Rect {
-    rect::Rect::new(rect.x as i32, rect.y as i32, rect.w, rect.h)
-}
-fn point_to_sdl(point: Point) -> rect::Point {
-    rect::Point::new(point.x as i32, point.y as i32)
+    controllers: Vec<GameController>,
 }
 
 impl Sdl2Renderer {
-    pub(crate) fn new(opts: RendererOpts) -> PixEngineResult<Self> {
+    pub fn new(title: &str, width: u32, height: u32) -> PixEngineResult<Self> {
         let context = sdl2::init()?;
+        let canvases = vec![Self::new_canvas(&context, title, width, height)?];
 
-        // Set up the window
-        let video_sub = context.video()?;
-        let window = video_sub
-            .window(&opts.title, opts.width, opts.height)
-            .position_centered()
-            .resizable()
-            .build()?;
-        let window_id = window.id();
-
-        // Set up canvas
-        let mut canvas = window
-            .into_canvas()
-            .target_texture()
-            .present_vsync()
-            .build()?;
-        canvas.set_logical_size(opts.width, opts.height)?;
-
-        // Event pump
+        // Event pump & controller subsystem
         let event_pump = context.event_pump()?;
         let controller_sub = context.game_controller()?;
-
-        // Primary screen texture
-        let texture_creator = canvas.texture_creator();
-        let mut screen_tex = texture_creator.create_texture_streaming(
-            PixelFormatEnum::RGBA32,
-            opts.width,
-            opts.height,
-        )?;
-        let mut texture_maps = HashMap::new();
-        // texture_maps.insert(
-        //     format!("screen{}", window_id),
-        //     TextureMap {
-        //         tex: screen_tex,
-        //         format: PixelFormatEnum::RGBA32,
-        //         channels: 4,
-        //         pitch: (4 * opts.width) as usize,
-        //         src: Some(rect::Rect::new(0, 0, opts.width, opts.height)),
-        //         dst: Some(rect::Rect::new(0, 0, opts.width, opts.height)),
-        //     },
-        // );
 
         // Set up Audio
         let audio_sub = context.audio()?;
         let desired_spec = AudioSpecDesired {
-            freq: Some(
-                opts.audio_sample_rate
-                    .unwrap_or_else(|| DEFAULT_SAMPLE_RATE),
-            ),
+            freq: Some(DEFAULT_SAMPLE_RATE),
             channels: Some(1),
             samples: None,
         };
         let audio_device = audio_sub.open_queue(None, &desired_spec)?;
         audio_device.resume();
 
-        let mut canvases = HashMap::new();
-        canvases.insert(window_id, (canvas, texture_creator));
-
+        let default_window_id = canvases[0].window().id();
         Ok(Self {
             context,
-            window_id,
+            default_target: Some(default_window_id),
+            window_target: vec![default_window_id],
             canvases,
             audio_device,
             event_pump,
             controller_sub,
-            controller1: None,
-            controller2: None,
-            texture_maps,
+            controllers: Vec::new(),
         })
     }
 
-    fn assign_controller(&mut self, id: u32) -> PixEngineResult<()> {
-        if self.controller_sub.is_game_controller(id) {
-            if let Some(controller) = &self.controller1 {
-                if id as i32 == controller.instance_id() {
-                    return Ok(());
-                }
-            } else {
-                println!("Controller 1 connected.");
-                self.controller1 = Some(self.controller_sub.open(id)?);
-                return Ok(());
-            }
-            if self.controller2.is_none() {
-                println!("Controller 2 connected.");
-                self.controller2 = Some(self.controller_sub.open(id)?);
-            }
-        }
-        Ok(())
+    fn new_canvas(
+        context: &Sdl,
+        title: &str,
+        width: u32,
+        height: u32,
+    ) -> PixEngineResult<Canvas<Window>> {
+        // Set up the window
+        let video_sub = context.video()?;
+        let window = video_sub
+            .window(title, width, height)
+            .position_centered() // TODO make this an option
+            .resizable() // TODO make this an option
+            .build()?;
+
+        // Set up canvas
+        let mut canvas = window
+            .into_canvas()
+            .accelerated()
+            .target_texture()
+            .present_vsync() // TODO make this an option
+            .build()?;
+        canvas.set_logical_size(width, height)?;
+        Ok(canvas)
     }
 
-    fn get_canvas(&mut self) -> PixEngineResult<&mut Canvas<video::Window>> {
-        if let Some((canvas, _)) = self.canvases.get_mut(&self.window_id) {
-            Ok(canvas)
-        } else {
-            Err(PixEngineErr::new(format!(
-                "invalid window_id {}",
-                self.window_id
-            )))
-        }
+    fn get_canvas(&self) -> &Canvas<Window> {
+        let window_target = self.current_window_target();
+        self.canvases
+            .iter()
+            .find(|c| window_target == c.window().id())
+            .expect("valid window_target")
+    }
+
+    fn get_canvas_mut(&mut self) -> &mut Canvas<Window> {
+        let window_target = self.current_window_target();
+        self.canvases
+            .iter_mut()
+            .find(|c| window_target == c.window().id())
+            .expect("valid window_target")
     }
 }
 
 impl Renderer for Sdl2Renderer {
-    fn fullscreen(&mut self, val: bool) -> PixEngineResult<()> {
-        if self.canvases.len() == 1 {
-            let (canvas, _) = self.canvases.get_mut(&self.window_id).unwrap();
-            let state = canvas.window().fullscreen_state();
-            let mouse = self.context.mouse();
-            let mode = if val && state == FullscreenType::Off {
-                mouse.show_cursor(false);
-                video::FullscreenType::True
-            } else {
-                mouse.show_cursor(true);
-                video::FullscreenType::Off
-            };
-            canvas.window_mut().set_fullscreen(mode)?;
-            Ok(())
-        } else {
-            eprintln!("can only go fullscreen with one window open");
-            Ok(())
-        }
-    }
+    /// Settings
 
-    fn vsync(&mut self, val: bool) -> PixEngineResult<()> {
-        if self.canvases.len() == 1 {
-            let (canvas, texture_creator) = self.canvases.get_mut(&self.window_id).unwrap();
-            let title = canvas.window().title();
-            let (width, height) = canvas.window().size();
-            let (x, y) = canvas.window().position();
-            let video_sub = canvas.window().subsystem();
-
-            let mut window_builder = video_sub.window(&title, width, height);
-            window_builder.position(x, y).resizable();
-            let window = window_builder.build()?;
-
-            // Set up canvas
-            let mut canvas_builder = window.into_canvas().target_texture();
-            if val {
-                canvas_builder = canvas_builder.present_vsync();
-            }
-            let mut new_canvas = canvas_builder.build()?;
-            new_canvas.set_logical_size(width, height)?;
-            let new_texture_creator = new_canvas.texture_creator();
-            let mut texture_maps = HashMap::new();
-            for (name, map) in self.texture_maps.iter() {
-                let tex = new_texture_creator.create_texture_streaming(
-                    map.format,
-                    map.src.expect("src").width(),
-                    map.src.expect("src").height(),
-                )?;
-                texture_maps.insert(
-                    name.to_string(),
-                    TextureMap {
-                        tex,
-                        format: map.format,
-                        channels: map.channels,
-                        pitch: map.pitch,
-                        src: map.src,
-                        dst: map.dst,
-                    },
-                );
-            }
-            *canvas = new_canvas;
-            *texture_creator = new_texture_creator;
-            self.texture_maps = texture_maps;
-        }
+    /// Set title for the current window target.
+    ///
+    /// Errors if the title contains a nul byte.
+    fn set_title(&mut self, title: &str) -> PixEngineResult<()> {
+        self.get_canvas_mut().window_mut().set_title(title)?;
         Ok(())
     }
 
-    fn load_icon(&mut self, path: &str) -> PixEngineResult<()> {
-        let mut icon = Image::from_file(path)?;
-        let width = icon.width();
-        let height = icon.height();
-        let pixels = icon.bytes_mut();
-        for (_, (canvas, _)) in self.canvases.iter_mut() {
-            let surface =
-                Surface::from_data(pixels, width, height, width * 4, PixelFormatEnum::RGBA32);
-            if let Ok(surface) = surface {
-                canvas.window_mut().set_icon(surface);
-            } else {
-                return Err(PixEngineErr::new("failed to load icon"));
-            }
-        }
-        Ok(())
+    /// Get draw color for the current window target.
+    fn draw_color(&self) -> Color {
+        self.get_canvas().draw_color().into()
     }
 
-    fn window_id(&self) -> WindowId {
-        self.window_id
+    /// Set draw color for drawing operations on the current window target.
+    fn set_draw_color<C: Into<Color>>(&mut self, color: C) {
+        self.get_canvas_mut().set_draw_color(color.into())
     }
 
-    fn set_title(&mut self, window_id: WindowId, title: &str) -> PixEngineResult<()> {
-        if let Some((canvas, _)) = self.canvases.get_mut(&window_id) {
-            canvas.window_mut().set_title(title)?;
-            Ok(())
-        } else {
-            Err(PixEngineErr::new(format!(
-                "invalid window_id {}",
-                window_id
-            )))
-        }
+    /// Get the blending mode for the current window target.
+    fn blend_mode(&self) -> BlendMode {
+        self.get_canvas().blend_mode().into()
     }
 
-    fn set_size(&mut self, window_id: WindowId, width: u32, height: u32) -> PixEngineResult<()> {
-        if let Some((canvas, texture_creator)) = self.canvases.get_mut(&window_id) {
-            canvas.set_logical_size(width, height)?;
-            let window = canvas.window_mut();
-            window.set_size(width, height)?;
-            window.set_position(WindowPos::Centered, WindowPos::Centered);
-            if let Some(map) = self.texture_maps.get_mut(&format!("screen{}", window_id)) {
-                let tex = texture_creator.create_texture_streaming(map.format, width, height)?;
-                map.tex = tex;
-                map.pitch = (map.channels * width) as usize;
-            }
-            Ok(())
-        } else {
-            Err(PixEngineErr::new(format!(
-                "invalid window_id {}",
-                window_id
-            )))
-        }
+    /// Set the blending mode for drawing operations on the current window target.
+    fn set_blend_mode(&mut self, mode: BlendMode) {
+        self.get_canvas_mut().set_blend_mode(mode.into());
     }
 
-    fn poll(&mut self) -> PixEngineResult<Vec<PixEvent>> {
-        let events: Vec<Event> = self.event_pump.poll_iter().collect();
-        let mut pix_events: Vec<PixEvent> = Vec::new();
-        for event in events {
-            let pix_event = match event {
-                Event::Quit { .. } => PixEvent::Quit,
-                Event::AppTerminating { .. } => PixEvent::AppTerminating,
-                Event::Window {
-                    win_event,
-                    window_id,
-                    ..
-                } => match win_event {
-                    WindowEvent::Resized(..) | WindowEvent::SizeChanged(..) => PixEvent::Resized,
-                    WindowEvent::FocusGained => PixEvent::Focus(window_id, true),
-                    WindowEvent::FocusLost => PixEvent::Focus(window_id, false),
-                    WindowEvent::Close => PixEvent::WinClose(window_id),
-                    _ => PixEvent::None, // Ignore others
-                },
-                Event::JoyDeviceAdded { which: id, .. } => {
-                    self.assign_controller(id)?;
-                    PixEvent::None // TODO add event for this
-                }
-                Event::ControllerDeviceAdded { which: id, .. } => {
-                    self.assign_controller(id)?;
-                    PixEvent::None // TODO add event for this
-                }
-                Event::KeyDown {
-                    keycode: Some(key),
-                    repeat,
-                    ..
-                } => self.map_key(key, true, repeat),
-                Event::KeyUp {
-                    keycode: Some(key), ..
-                } => self.map_key(key, false, false),
-                Event::MouseButtonDown {
-                    mouse_btn, x, y, ..
-                } => self.map_mouse(mouse_btn, x, y, true),
-                Event::MouseButtonUp {
-                    mouse_btn, x, y, ..
-                } => self.map_mouse(mouse_btn, x, y, false),
-                Event::ControllerButtonDown { which, button, .. } => {
-                    self.map_button(which, button, true)
-                }
-                Event::ControllerButtonUp { which, button, .. } => {
-                    self.map_button(which, button, false)
-                }
-                Event::ControllerAxisMotion {
-                    which, axis, value, ..
-                } => self.map_axis(which, axis, value),
-                // Only really care about vertical scroll
-                Event::MouseWheel { y, .. } => PixEvent::MouseWheel(y),
-                Event::MouseMotion { x, y, .. } => PixEvent::MouseMotion(x, y),
-                Event::AppDidEnterBackground { .. } => PixEvent::Background(true),
-                Event::AppDidEnterForeground { .. } => PixEvent::Background(false),
-                _ => PixEvent::None, // Ignore others
-            };
-            if pix_event != PixEvent::None {
-                pix_events.push(pix_event)
-            }
-        }
-        Ok(pix_events)
+    /// Returns a list of events from the event queue since last time poll_events
+    /// was called.
+    fn poll_events(&mut self) -> Vec<PixEvent> {
+        self.sdl_poll_events()
     }
 
-    fn clear(&mut self) -> PixEngineResult<()> {
-        self.clear_window(self.window_id)
-    }
-
-    fn clear_window(&mut self, window_id: WindowId) -> PixEngineResult<()> {
-        if let Some((canvas, _)) = self.canvases.get_mut(&window_id) {
-            canvas.set_draw_color(Color::RGBA(0, 0, 0, 255));
-            canvas.clear();
-            Ok(())
-        } else {
-            Err(PixEngineErr::new(format!(
-                "invalid window_id {}",
-                window_id
-            )))
-        }
-    }
-
+    /// Presents changes made to the canvas on the current window target since present was last
+    /// called.
     fn present(&mut self) {
-        for (_, (canvas, _)) in self.canvases.iter_mut() {
+        self.get_canvas_mut().present();
+    }
+
+    /// Presents changes made to the canvases of all windows since present was last called.
+    fn present_all(&mut self) {
+        for canvas in self.canvases.iter_mut() {
             canvas.present();
         }
     }
 
-    fn create_texture(
-        &mut self,
-        window_id: WindowId,
-        name: &str,
-        color_type: ColorType,
-        src: Rect,
-        dst: Rect,
-    ) -> PixEngineResult<()> {
-        if let Some((_, texture_creator)) = self.canvases.get_mut(&window_id) {
-            let (format, channels) = match color_type {
-                ColorType::Rgb => (PixelFormatEnum::RGB24, 3),
-                ColorType::Rgba => (PixelFormatEnum::RGBA32, 4),
-            };
-            let mut tex = texture_creator.create_texture_streaming(format, src.w, src.h)?;
-            match color_type {
-                ColorType::Rgb => tex.set_blend_mode(BlendMode::None),
-                ColorType::Rgba => tex.set_blend_mode(BlendMode::Blend),
-            }
-            let _ = self.texture_maps.insert(
-                name.to_string(),
-                TextureMap {
-                    tex,
-                    format,
-                    channels,
-                    pitch: (channels * src.w) as usize,
-                    src: Some(rect_to_sdl(src)),
-                    dst: Some(rect_to_sdl(dst)),
-                },
-            );
+    /// Clears the canvas on the current window target to the current draw color.
+    fn clear(&mut self) {
+        self.get_canvas_mut().clear();
+    }
+
+    /// Clears all canvases of all windows to their current draw colors.
+    fn clear_all(&mut self) {
+        for canvas in self.canvases.iter_mut() {
+            canvas.clear();
+        }
+    }
+
+    /// Window Management
+
+    /// Set a new window target.
+    ///
+    /// Errors if the window_id is not a valid window_id.
+    fn push_window_target(&mut self, window_id: u32) -> PixEngineResult<()> {
+        if self.canvases.iter().any(|c| window_id == c.window().id()) {
+            self.window_target.push(window_id);
             Ok(())
         } else {
-            Err(PixEngineErr::new(format!(
-                "invalid window_id {}",
-                window_id
-            )))
+            Err(PixEngineError::Renderer(Cow::from("invalid window target")))
         }
     }
 
-    fn copy_texture(
-        &mut self,
-        window_id: WindowId,
-        name: &str,
-        bytes: &[u8],
-    ) -> PixEngineResult<()> {
-        if let Some(map) = self.texture_maps.get_mut(name) {
-            map.tex.update(None, bytes, map.pitch)?;
-            if let Some((canvas, _)) = self.canvases.get_mut(&window_id) {
-                canvas.copy(&map.tex, map.src, map.dst)?;
-                Ok(())
-            } else {
-                Err(PixEngineErr::new(format!(
-                    "invalid window_id {}",
-                    window_id
-                )))
-            }
-        } else {
-            Err(PixEngineErr::new(format!("invalid texture {}", name)))
-        }
+    /// Removes the current window target and switches it to the previous
+    /// current window target.
+    ///
+    /// Will not remove the last window target (the one created upon engine creation).
+    fn pop_window_target(&mut self) -> Option<u32> {
+        self.window_target.pop()
     }
 
-    fn open_window(&mut self, title: &str, width: u32, height: u32) -> PixEngineResult<u32> {
-        let video_sub = self.context.video()?;
-        let mut window_builder = video_sub.window(title, width, height);
-        window_builder.position(20, 40).resizable();
-        let window = window_builder.build()?;
+    /// Returns the window_id of the current window target
+    fn current_window_target(&self) -> u32 {
+        *self
+            .window_target
+            .last()
+            .or_else(|| self.default_target.as_ref())
+            .expect("valid window target")
+    }
 
-        // Set up canvas
-        let mut canvas = window.into_canvas().target_texture().build()?;
-        canvas.set_logical_size(width, height)?;
+    /// Create and open a new window.
+    ///
+    /// Errors if the window can't be created for any reason.
+    fn create_window(&mut self, title: &str, width: u32, height: u32) -> PixEngineResult<u32> {
+        let canvas = Self::new_canvas(&self.context, title, width, height)?;
         let window_id = canvas.window().id();
-
-        let texture_creator = canvas.texture_creator();
-        let screen_tex =
-            texture_creator.create_texture_streaming(PixelFormatEnum::RGBA32, width, height)?;
-
-        self.canvases.insert(window_id, (canvas, texture_creator));
-        self.texture_maps.insert(
-            format!("screen{}", window_id),
-            TextureMap {
-                tex: screen_tex,
-                format: PixelFormatEnum::RGBA32,
-                channels: 4,
-                pitch: (4 * width) as usize,
-                src: None,
-                dst: None,
-            },
-        );
+        self.canvases.push(canvas);
         Ok(window_id)
     }
 
-    fn close_window(&mut self, window_id: WindowId) {
-        let _ = self.canvases.remove(&window_id);
-    }
-
-    // TODO: This spinlocks waiting for samples, not ideal
-    fn enqueue_audio(&mut self, samples: &[f32]) {
-        let sample_rate = self.audio_device.spec().freq as u32;
-        while self.audio_device.size() > sample_rate {
-            std::thread::sleep(std::time::Duration::from_millis(10));
-        }
-        self.audio_device.queue(samples);
-    }
-
-    fn set_audio_sample_rate(&mut self, sample_rate: i32) -> PixEngineResult<()> {
-        let audio_sub = self.context.audio()?;
-        let desired_spec = AudioSpecDesired {
-            freq: Some(sample_rate),
-            channels: Some(1),
-            samples: None,
-        };
-        self.audio_device = audio_sub.open_queue(None, &desired_spec)?;
-        self.audio_device.resume();
-        Ok(())
-    }
-
-    fn set_draw_color(&mut self, p: Pixel) -> PixEngineResult<()> {
-        self.get_canvas()?
-            .set_draw_color(Color::RGBA(p.r(), p.g(), p.b(), p.a()));
-        Ok(())
-    }
-
-    fn fill_rect(&mut self, rect: Rect) -> PixEngineResult<()> {
-        let rect = rect_to_sdl(rect);
-        self.get_canvas()?.fill_rect(rect)?;
-        Ok(())
-    }
-
-    fn draw_point(&mut self, point: Point) -> PixEngineResult<()> {
-        let point = point_to_sdl(point);
-        self.get_canvas()?.draw_point(point)?;
-        Ok(())
-    }
-
-    fn set_viewport(&mut self, rect: Option<Rect>) -> PixEngineResult<()> {
-        let rect = rect.and_then(|r| Some(rect_to_sdl(r)));
-        self.get_canvas()?.set_clip_rect(rect);
-        Ok(())
+    /// Close the current window target.
+    fn close_window(&mut self) -> bool {
+        let window_target = *self.window_target.last().unwrap();
+        self.canvases.retain(|c| window_target != c.window().id());
+        self.window_target.retain(|id| window_target != *id);
+        self.canvases.is_empty()
     }
 }
 
-impl From<video::WindowBuildError> for PixEngineErr {
+impl From<video::WindowBuildError> for PixEngineError {
     fn from(err: video::WindowBuildError) -> Self {
-        Self::new(err.to_string())
+        Self::Renderer(Cow::from(err.to_string()))
     }
 }
 
-impl From<sdl2::IntegerOrSdlError> for PixEngineErr {
+impl From<sdl2::IntegerOrSdlError> for PixEngineError {
     fn from(err: sdl2::IntegerOrSdlError) -> Self {
-        Self::new(err.to_string())
+        Self::Renderer(Cow::from(err.to_string()))
     }
 }
 
-impl From<render::TextureValueError> for PixEngineErr {
-    fn from(err: render::TextureValueError) -> Self {
-        Self::new(err.to_string())
+impl From<sdl2::render::TextureValueError> for PixEngineError {
+    fn from(err: sdl2::render::TextureValueError) -> Self {
+        Self::Renderer(Cow::from(err.to_string()))
     }
 }
 
-impl From<render::UpdateTextureError> for PixEngineErr {
-    fn from(err: render::UpdateTextureError) -> Self {
-        Self::new(err.to_string())
+impl From<sdl2::render::UpdateTextureError> for PixEngineError {
+    fn from(err: sdl2::render::UpdateTextureError) -> Self {
+        Self::Renderer(Cow::from(err.to_string()))
     }
 }
 
-impl From<std::ffi::NulError> for PixEngineErr {
+impl From<std::ffi::NulError> for PixEngineError {
     fn from(err: std::ffi::NulError) -> Self {
-        Self::new(err.to_string())
+        Self::Renderer(Cow::from(err.to_string()))
+    }
+}
+
+impl From<pixels::Color> for Color {
+    fn from(color: pixels::Color) -> Self {
+        color.rgb().into()
+    }
+}
+
+impl From<Color> for pixels::Color {
+    fn from(color: Color) -> Self {
+        color.rgb().into()
     }
 }

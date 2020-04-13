@@ -1,63 +1,25 @@
-use std::{error, fmt};
+#![allow(unused_variables, dead_code)]
 
-pub mod event;
-pub mod gui;
-pub mod image;
-pub mod pixel;
+#[macro_use]
+extern crate bitflags;
 
-mod audio;
-mod engine;
+mod color;
+mod common;
+mod core;
+mod event;
+mod gui;
+mod image;
+mod math;
 mod renderer;
+mod shape;
 mod state;
+mod time;
+mod transform;
+mod typography;
 
-pub use engine::PixEngine;
-pub use image::Image;
-pub use state::{draw, transform, AlphaMode, State, StateData, WindowId};
-
-pub type PixEngineResult<T> = std::result::Result<T, PixEngineErr>;
-
-pub struct PixEngineErr {
-    description: String,
-}
-
-impl PixEngineErr {
-    pub fn new<D: ToString>(desc: D) -> Self {
-        Self {
-            description: desc.to_string(),
-        }
-    }
-}
-
-impl fmt::Display for PixEngineErr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.description)
-    }
-}
-
-impl fmt::Debug for PixEngineErr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{{ err: {}, file: {}, line: {} }}",
-            self.description,
-            file!(),
-            line!(),
-        )
-    }
-}
-
-impl error::Error for PixEngineErr {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        None
-    }
-}
-impl From<std::io::Error> for PixEngineErr {
-    fn from(err: std::io::Error) -> Self {
-        Self::new(err)
-    }
-}
-impl From<String> for PixEngineErr {
-    fn from(err: String) -> Self {
-        Self::new(err)
-    }
-}
+pub use crate::{
+    color::{Color, ColorMode},
+    common::{PixEngineError, PixEngineResult},
+    core::{PixApp, PixEngine},
+    state::State,
+};

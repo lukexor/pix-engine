@@ -1,50 +1,212 @@
-use crate::WindowId;
+use std::fmt;
 
 // Represents an input event
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PixEvent {
+    Quit {
+        timestamp: u32,
+    },
+    AppTerminating {
+        timestamp: u32,
+    },
+    AppWillEnterBackground {
+        timestamp: u32,
+    },
+    AppDidEnterBackground {
+        timestamp: u32,
+    },
+    AppWillEnterForeground {
+        timestamp: u32,
+    },
+    AppDidEnterForeground {
+        timestamp: u32,
+    },
+    Window {
+        timestamp: u32,
+        window_id: u32,
+        win_event: WindowEvent,
+    },
+    KeyDown {
+        timestamp: u32,
+        window_id: u32,
+        key: Key,
+        keymod: KeyMod,
+        repeat: bool,
+    },
+    KeyUp {
+        timestamp: u32,
+        window_id: u32,
+        key: Key,
+        keymod: KeyMod,
+        repeat: bool,
+    },
+    TextEditing {
+        timestamp: u32,
+        window_id: u32,
+        text: String,
+        start: i32,
+        length: i32,
+    },
+    TextInput {
+        timestamp: u32,
+        window_id: u32,
+        text: String,
+    },
+    MouseMotion {
+        timestamp: u32,
+        window_id: u32,
+        which: u32,
+        x: i32,
+        y: i32,
+        xrel: i32,
+        yrel: i32,
+    },
+    MouseButtonDown {
+        timestamp: u32,
+        window_id: u32,
+        which: u32,
+        mouse_btn: MouseButton,
+        clicks: u8,
+        x: i32,
+        y: i32,
+    },
+    MouseButtonUp {
+        timestamp: u32,
+        window_id: u32,
+        which: u32,
+        mouse_btn: MouseButton,
+        clicks: u8,
+        x: i32,
+        y: i32,
+    },
+    MouseWheel {
+        timestamp: u32,
+        window_id: u32,
+        which: u32,
+        x: i32,
+        y: i32,
+        direction: MouseWheelDirection,
+    },
+    JoyAxisMotion {
+        timestamp: u32,
+        which: u32,
+        axis_idx: u8,
+        value: i16,
+    },
+    JoyButtonDown {
+        timestamp: u32,
+        which: u32,
+        button_idx: u8,
+    },
+    JoyButtonUp {
+        timestamp: u32,
+        which: u32,
+        button_idx: u8,
+    },
+    JoyDeviceAdded {
+        timestamp: u32,
+        which: u32,
+    },
+    JoyDeviceRemoved {
+        timestamp: u32,
+        which: u32,
+    },
+    ControllerAxisMotion {
+        timestamp: u32,
+        which: u32,
+        axis: Axis,
+        value: i16,
+    },
+    ControllerButtonDown {
+        timestamp: u32,
+        which: u32,
+        button: Button,
+    },
+    ControllerButtonUp {
+        timestamp: u32,
+        which: u32,
+        button: Button,
+    },
+    ControllerDeviceAdded {
+        timestamp: u32,
+        which: u32,
+    },
+    ControllerDeviceRemoved {
+        timestamp: u32,
+        which: u32,
+    },
+    ControllerDeviceRemapped {
+        timestamp: u32,
+        which: u32,
+    },
+    Unknown {
+        timestamp: u32,
+        type_: u32,
+    },
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum WindowEvent {
     None,
-    Quit,
-    AppTerminating,
-    GamepadBtn(u32, Button, bool),     // Id, Button, pressed
-    GamepadAxis(u32, Axis, i16),       // Id, Axis, value
-    KeyPress(Key, bool, bool),         // Key, pressed, repeat
-    MousePress(Mouse, i32, i32, bool), // Mouse, x, y, pressed
-    MouseWheel(i32),                   // Wheel delta
-    MouseMotion(i32, i32),             // x, y
-    WinClose(WindowId),
-    Resized,
-    Focus(u32, bool), // Window ID, focused
-    Background(bool),
+    Shown,
+    Hidden,
+    Exposed,
+    Moved(i32, i32),
+    Resized(i32, i32),
+    SizeChanged(i32, i32),
+    Minimized,
+    Maximized,
+    Restored,
+    Enter,
+    Leave,
+    FocusGained,
+    FocusLost,
+    Close,
+    TakeFocus,
+    HitTest,
 }
 
-/// Represents a user key/button input
-#[derive(Debug, Copy, Clone)]
-pub struct Input {
-    pub pressed: bool,  // Set once during the frame in which it occurs
-    pub released: bool, // Set once during the frame in which it occurs
-    pub held: bool,     // Set for all frames between pressed and released
+bitflags! {
+    pub struct KeyMod: u16 {
+        const NOMOD = 0x0000;
+        const LSHIFTMOD = 0x0001;
+        const RSHIFTMOD = 0x0002;
+        const LCTRLMOD = 0x0040;
+        const RCTRLMOD = 0x0080;
+        const LALTMOD = 0x0100;
+        const RALTMOD = 0x0200;
+        const LGUIMOD = 0x0400;
+        const RGUIMOD = 0x0800;
+        const NUMMOD = 0x1000;
+        const CAPSMOD = 0x2000;
+        const MODEMOD = 0x4000;
+        const RESERVEDMOD = 0x8000;
+    }
 }
 
-impl Input {
-    pub(super) fn new() -> Self {
-        Self {
-            pressed: false,
-            released: false,
-            held: false,
-        }
+impl fmt::Display for KeyMod {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:04x}", *self)
     }
 }
 
 /// Represents a mouse button
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum Mouse {
+pub enum MouseButton {
     Left,
     Middle,
     Right,
     X1,
     X2,
     Unknown,
+}
+
+/// Represents a mouse wheel direction
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum MouseWheelDirection {
+    Normal,
+    Flipped,
+    Unknown(u32),
 }
 
 /// A non-exhaustive list of useful keys to detect
@@ -65,7 +227,7 @@ pub enum Key {
     LeftBracket, RightBracket, Backslash,
     CapsLock, Semicolon, Colon, Quotedbl, Quote,
     Less, Comma, Greater, Question, Slash,
-    LShift, RShift, Space, Ctrl, Alt, Meta,
+    LShift, RShift, Space, LCtrl, RCtrl, LAlt, RAlt, LGui, RGui,
     Unknown,
 }
 
@@ -85,13 +247,22 @@ pub enum Axis {
 
 impl Default for PixEvent {
     fn default() -> Self {
-        Self::None
+        Self::Unknown {
+            timestamp: 0,
+            type_: 0,
+        }
     }
 }
 
-impl Default for Mouse {
+impl Default for MouseButton {
     fn default() -> Self {
         Self::Left
+    }
+}
+
+impl Default for MouseWheelDirection {
+    fn default() -> Self {
+        Self::Normal
     }
 }
 
@@ -110,11 +281,5 @@ impl Default for Button {
 impl Default for Axis {
     fn default() -> Self {
         Self::LeftX
-    }
-}
-
-impl Default for Input {
-    fn default() -> Self {
-        Self::new()
     }
 }
