@@ -127,12 +127,28 @@ impl Default for ColorMode {
     }
 }
 
+/// From gray value to Color
+impl From<u8> for Color {
+    fn from(gray: u8) -> Color {
+        Color::RGB(gray, gray, gray)
+    }
+}
+
+/// From gray value with alpha to Color
+impl From<(u8, u8)> for Color {
+    fn from((gray, a): (u8, u8)) -> Color {
+        Color::RGBA(gray, gray, gray, a)
+    }
+}
+
+/// From tuple of (r, g, b) to Color
 impl From<(u8, u8, u8)> for Color {
     fn from((r, g, b): (u8, u8, u8)) -> Color {
         Color::RGB(r, g, b)
     }
 }
 
+/// From tuple of (r, g, b, a) to Color
 impl From<(u8, u8, u8, u8)> for Color {
     fn from((r, g, b, a): (u8, u8, u8, u8)) -> Color {
         Color::RGBA(r, g, b, a)
