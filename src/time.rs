@@ -16,6 +16,6 @@ pub(crate) fn sub(time1: Instant, time2: Instant) -> f32 {
     (time1 - time2).as_secs_f32()
 }
 #[cfg(all(feature = "wasm-renderer", not(feature = "sdl2-renderer")))]
-pub(crate) const fn sub(time1: f32, time2: f32) -> &str {
+pub(crate) fn sub(time1: f32, time2: f32) -> f32 {
     time1 - time2
 }

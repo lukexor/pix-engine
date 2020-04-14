@@ -1,98 +1,60 @@
+use super::{Renderer, Result};
 use crate::{color::Color, event::PixEvent, state::rendering::BlendMode};
-use std::{borrow::Cow, error, ffi::NulError, fmt};
 
-/// Result type for Renderer Errors.
-pub type Result<T> = std::result::Result<T, Error>;
+pub(crate) struct WasmRenderer {}
 
-/// Types of errors Renderers can return in a result.
-#[derive(Debug)]
-pub enum Error {
-    IntegerOverflows(Cow<'static, str>, u32),
-    InvalidWindowTarget(u32),
-    InvalidWidth(u32),
-    InvalidHeight(u32),
-    InvalidString(NulError),
-    Other(Cow<'static, str>),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
-        match self {
-            IntegerOverflows(err, val) => write!(f, "integer overflowed {}: {}", val, err),
-            InvalidWindowTarget(t) => write!(f, "invalid window_target: {}", &t),
-            InvalidWidth(w) => write!(f, "invalid width: {}", &w),
-            InvalidHeight(h) => write!(f, "invalid height: {}", &h),
-            InvalidString(err) => write!(f, "invalid string: {}", &err),
-            Other(desc) => write!(f, "{}", &desc),
-        }
+impl WasmRenderer {
+    pub fn new(title: &str, width: u32, height: u32) -> Result<Self> {
+        Ok(Self {})
     }
 }
 
-impl error::Error for Error {
-    fn cause(&self) -> Option<&(dyn error::Error + 'static)> {
-        None
-    }
-}
-
-impl From<String> for Error {
-    fn from(err: String) -> Error {
-        Error::Other(err.into())
-    }
-}
-
-#[cfg(all(feature = "sdl2-renderer", not(feature = "wasm-renderer")))]
-pub(super) mod sdl2;
-#[cfg(all(feature = "wasm-renderer", not(feature = "sdl2-renderer")))]
-pub(super) mod wasm;
-
-#[cfg(all(feature = "sdl2-renderer", not(feature = "wasm-renderer")))]
-pub(crate) fn load_renderer(title: &str, width: u32, height: u32) -> Result<sdl2::Sdl2Renderer> {
-    sdl2::Sdl2Renderer::new(title, width, height)
-}
-#[cfg(all(feature = "wasm-renderer", not(feature = "sdl2-renderer")))]
-pub(crate) fn load_renderer(title: &str, width: u32, height: u32) -> Result<wasm::WasmRenderer> {
-    wasm::WasmRenderer::new(title, width, height)
-}
-
-pub(crate) trait Renderer {
+impl Renderer for WasmRenderer {
     /// Settings
 
     /// Set title for the current window target.
     ///
     /// Errors if the title contains a nul byte.
-    fn set_title(&mut self, _title: &str) -> Result<()>;
+    fn set_title(&mut self, _title: &str) -> Result<()> {
+        Ok(())
+    }
 
     /// Get draw color for the current window target.
-    fn draw_color(&self) -> Color;
+    fn draw_color(&self) -> Color {
+        Color::default()
+    }
 
     /// Set draw color for drawing operations on the current window target.
-    fn set_draw_color<C: Into<Color>>(&mut self, _color: C);
+    fn set_draw_color<C: Into<Color>>(&mut self, _color: C) {}
 
     /// Get the blending mode for the current window target.
-    fn blend_mode(&self) -> BlendMode;
+    fn blend_mode(&self) -> BlendMode {
+        BlendMode::default()
+    }
 
     /// Set the blending mode for drawing operations on the current window target.
-    fn set_blend_mode(&mut self, _mode: BlendMode);
+    fn set_blend_mode(&mut self, _mode: BlendMode) {}
 
     /// Returns a list of events from the event queue since last time poll_events
     /// was called.
-    fn poll_events(&mut self) -> Vec<PixEvent>;
+    fn poll_events(&mut self) -> Vec<PixEvent> {
+        Vec::new()
+    }
 
     /// Rendering
 
     /// Presents changes made to the canvas on the current window target since present was last
     /// called.
-    fn present(&mut self);
+    fn present(&mut self) {}
 
     /// Presents changes made to the canvases of all windows since present was last called.
-    fn present_all(&mut self);
+    fn present_all(&mut self) {}
 
     /// Clears the canvas on the current window target to the current draw color.
-    fn clear(&mut self);
+    fn clear(&mut self) {}
 
     /// Clears all canvases of all windows to their current draw colors.
-    fn clear_all(&mut self);
+    fn clear_all(&mut self) {}
 
     /// Get the scale_x and scale_y factors for the current window target.
     // fn scale(&self) -> (f32, f32);
@@ -154,24 +116,34 @@ pub(crate) trait Renderer {
     /// Set a new window target.
     ///
     /// Errors if the window_id is not a valid window_id.
-    fn push_window_target(&mut self, _window_id: u32) -> Result<()>;
+    fn push_window_target(&mut self, _window_id: u32) -> Result<()> {
+        Ok(())
+    }
 
     /// Removes the current window target and switches it to the previous
     /// current window target.
     ///
     /// Will not remove the last window target (the one created upon engine creation).
-    fn pop_window_target(&mut self) -> Option<u32>;
+    fn pop_window_target(&mut self) -> Option<u32> {
+        None
+    }
 
     /// Returns the window_id of the current window target
-    fn current_window_target(&self) -> u32;
+    fn current_window_target(&self) -> u32 {
+        0
+    }
 
     /// Create and open a new window.
     ///
     /// Errors if the window can't be created for any reason.
-    fn create_window(&mut self, _title: &str, _width: u32, _height: u32) -> Result<u32>;
+    fn create_window(&mut self, _title: &str, _width: u32, _height: u32) -> Result<u32> {
+        Ok(0)
+    }
 
     /// Close the current window target.
     ///
     /// Returns true when all windows are closed.
-    fn close_window(&mut self) -> bool;
+    fn close_window(&mut self) -> bool {
+        true
+    }
 }
