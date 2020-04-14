@@ -1,5 +1,5 @@
 use super::State;
-use crate::renderer::{Renderer, Result};
+use crate::renderer::Renderer;
 
 pub const DEFAULT_BLEND_FACTOR: f32 = 1.0;
 
@@ -25,8 +25,8 @@ impl State {
     /// Set title for the current window target.
     ///
     /// Errors if the title contains a nul byte.
-    pub fn set_title(&mut self, title: &str) -> Result<()> {
-        self.renderer.set_title(title)
+    pub fn set_title(&mut self, title: &str) {
+        self.get_window_mut().set_title(title);
     }
 
     /// Rendering
@@ -50,8 +50,12 @@ impl State {
 
     /// Clears all canvases of all windows to their current draw colors.
     pub fn clear_all(&mut self) {
-        self.renderer.set_draw_color(self.bg_color());
-        self.renderer.clear_all()
+        let window_ids: Vec<u32> = self.windows.iter().map(|w| w.id()).collect();
+        for window_id in window_ids {
+            let _ = self.set_window_target(window_id);
+            self.clear();
+            let _ = self.set_window_target(None);
+        }
     }
 
     // /// Get the scale_x and scale_y factors for the current window target.
@@ -115,35 +119,13 @@ impl State {
 
     /// Window Management
 
-    /// Set a new window target.
-    ///
-    /// Errors if the window_id is not a valid window_id.
-    pub fn push_window_target(&mut self, window_id: u32) -> Result<()> {
-        self.renderer.push_window_target(window_id)
+    /// Hide the current window target.
+    pub fn hide_window(&mut self) {
+        self.renderer.hide_window();
     }
 
-    /// Removes the current window target and switches it to the previous
-    /// current window target.
-    ///
-    /// Will not remove the last window target (the one created upon engine creation).
-    pub fn pop_window_target(&mut self) -> Option<u32> {
-        self.renderer.pop_window_target()
-    }
-
-    /// Returns the window_id of the current window target
-    pub fn current_window_target(&self) -> u32 {
-        self.renderer.current_window_target()
-    }
-
-    /// Create and open a new window.
-    ///
-    /// Errors if the window can't be created for any reason.
-    pub fn create_window(&mut self, title: &str, width: u32, height: u32) -> Result<u32> {
-        self.renderer.create_window(title, width, height)
-    }
-
-    /// Close the current window target.
-    pub fn close_window(&mut self) -> bool {
-        self.renderer.close_window()
+    /// Show the current window target.
+    pub fn show_window(&mut self) {
+        self.renderer.show_window();
     }
 }

@@ -16,10 +16,10 @@ path = "src/lib.rs"
 
 [dependencies]
 bitflags = "1.2.1"
-png = "0.16.1"
+png = "0.16.2"
 rand = "0.7.3"
-sdl2 = { version = "0.33.0", default-features = false, features = ["unsafe_textures"], optional = true }
-wasm-bindgen = { version = "0.2.59", optional = true }
+sdl2 = { version = "0.33.0", optional = true }
+wasm-bindgen = { version = "0.2.60", optional = true }
 
 [features]
 default = ["sdl2-renderer"]

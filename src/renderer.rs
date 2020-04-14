@@ -151,24 +151,25 @@ pub(crate) trait Renderer {
 
     /// Window Management
 
-    /// Set a new window target.
-    ///
-    /// Errors if the window_id is not a valid window_id.
-    fn push_window_target(&mut self, _window_id: u32) -> Result<()>;
+    /// Returns the id of the default window created on instantiation.
+    fn default_window_id(&self) -> u32;
 
-    /// Removes the current window target and switches it to the previous
-    /// current window target.
-    ///
-    /// Will not remove the last window target (the one created upon engine creation).
-    fn pop_window_target(&mut self) -> Option<u32>;
+    /// Get the id of the current window target.
+    fn window_target(&self) -> u32;
 
-    /// Returns the window_id of the current window target
-    fn current_window_target(&self) -> u32;
+    /// Set the current window target.
+    fn set_window_target<I: Into<Option<u32>>>(&mut self, _window_id: I);
 
     /// Create and open a new window.
     ///
     /// Errors if the window can't be created for any reason.
     fn create_window(&mut self, _title: &str, _width: u32, _height: u32) -> Result<u32>;
+
+    /// Hide the current window target.
+    fn hide_window(&mut self);
+
+    /// Show the current window target.
+    fn show_window(&mut self);
 
     /// Close the current window target.
     ///

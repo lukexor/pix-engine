@@ -12,11 +12,13 @@ use sdl2::{
 mod event;
 mod render;
 
-pub const DEFAULT_SAMPLE_RATE: i32 = 44_100; // in Hz
+/// Default audio sampling rate in Hertz
+pub const DEFAULT_SAMPLE_RATE: i32 = 44_100;
 
+/// An Sdl2Renderer that handles drawing, input, and audio in a cross-platform way.
 pub(crate) struct Sdl2Renderer {
     context: Sdl,
-    window_target: Vec<u32>,
+    window_target: u32,
     canvases: Vec<Canvas<Window>>,
     audio_device: AudioQueue<f32>,
     event_pump: EventPump,
@@ -25,6 +27,7 @@ pub(crate) struct Sdl2Renderer {
 }
 
 impl Sdl2Renderer {
+    /// Creates a new instance of an SDL2 Renderer
     pub fn new(title: &str, width: u32, height: u32) -> Result<Self> {
         let context = sdl2::init()?;
         let canvases = vec![Self::new_canvas(&context, title, width, height)?];
@@ -43,10 +46,9 @@ impl Sdl2Renderer {
         let audio_device = audio_sub.open_queue(None, &desired_spec)?;
         audio_device.resume();
 
-        let default_window_id = canvases[0].window().id();
         Ok(Self {
             context,
-            window_target: vec![default_window_id],
+            window_target: canvases[0].window().id(),
             canvases,
             audio_device,
             event_pump,
@@ -55,6 +57,7 @@ impl Sdl2Renderer {
         })
     }
 
+    /// Static method to create a new window and associated canvas.
     fn new_canvas(context: &Sdl, title: &str, width: u32, height: u32) -> Result<Canvas<Window>> {
         // Set up the window
         let video_sub = context.video()?;
@@ -75,20 +78,22 @@ impl Sdl2Renderer {
         Ok(canvas)
     }
 
+    /// Get a canvas based on the current window target.
     fn get_canvas(&self) -> &Canvas<Window> {
-        let window_target = self.current_window_target();
+        let target = self.window_target();
         self.canvases
             .iter()
-            .find(|c| window_target == c.window().id())
-            .expect("valid window_target")
+            .find(|c| target == c.window().id())
+            .expect("valid window target")
     }
 
+    /// Get a mutable canvas based on the current window target.
     fn get_canvas_mut(&mut self) -> &mut Canvas<Window> {
-        let window_target = self.current_window_target();
+        let target = self.window_target();
         self.canvases
             .iter_mut()
-            .find(|c| window_target == c.window().id())
-            .expect("valid window_target")
+            .find(|c| target == c.window().id())
+            .expect("valid window target")
     }
 }
 
@@ -156,35 +161,27 @@ impl Renderer for Sdl2Renderer {
 
     /// Window Management
 
-    /// Set a new window target.
-    ///
-    /// Errors if the window_id is not a valid window_id.
-    fn push_window_target(&mut self, window_id: u32) -> Result<()> {
-        if window_id == self.current_window_target() {
-            Ok(())
-        } else if self.canvases.iter().any(|c| window_id == c.window().id()) {
-            self.window_target.push(window_id);
-            Ok(())
-        } else {
-            Err(Error::InvalidWindowTarget(window_id))
-        }
-    }
-
-    /// Removes the current window target and switches it to the previous
-    /// current window target.
-    ///
-    /// Will not remove the last window target (the one created upon engine creation).
-    fn pop_window_target(&mut self) -> Option<u32> {
-        self.window_target.pop()
+    /// Returns the id of the default window created on instantiation.
+    fn default_window_id(&self) -> u32 {
+        self.canvases[0].window().id()
     }
 
     /// Returns the window_id of the current window target
-    fn current_window_target(&self) -> u32 {
+    fn window_target(&self) -> u32 {
         self.window_target
-            .last()
-            .copied()
-            .or_else(|| self.canvases.last().map(|c| c.window().id()))
-            .expect("should have at least one window")
+    }
+
+    /// Set the current window target.
+    fn set_window_target<I: Into<Option<u32>>>(&mut self, window_id: I) {
+        match window_id.into() {
+            Some(id) => {
+                if self.canvases.iter().any(|c| id == c.window().id()) {
+                    self.window_target = id;
+                } else {
+                }
+            }
+            None => self.window_target = self.canvases[0].window().id(),
+        }
     }
 
     /// Create and open a new window.
@@ -197,11 +194,24 @@ impl Renderer for Sdl2Renderer {
         Ok(window_id)
     }
 
+    /// Hide the current window target.
+    ///
+    /// Returns true when all windows are hidden.
+    fn hide_window(&mut self) {
+        self.get_canvas_mut().window_mut().hide();
+    }
+
+    /// Show the current window target.
+    fn show_window(&mut self) {
+        self.get_canvas_mut().window_mut().show();
+    }
+
     /// Close the current window target.
+    ///
+    /// Returns true when all windows are closed.
     fn close_window(&mut self) -> bool {
-        let window_target = *self.window_target.last().unwrap();
-        self.canvases.retain(|c| window_target != c.window().id());
-        self.window_target.retain(|id| window_target != *id);
+        let target = self.window_target();
+        self.canvases.retain(|c| target != c.window().id());
         self.canvases.is_empty()
     }
 }

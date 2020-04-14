@@ -72,7 +72,7 @@ where
 
         let mut last_frame_time = time::now();
         let one_second = 1.0;
-        let mut frame_timer = 0.0;
+        let mut frame_timer = 1.0; // Start at 1.0 to update title on first frame
         let mut frame_count = 0;
         while !self.should_close {
             // Extra loop allows on_stop to prevent closing
@@ -94,8 +94,9 @@ where
                             win_event: WindowEvent::Close,
                             ..
                         } => {
-                            if self.state.push_window_target(window_id).is_ok() {
-                                self.should_close = self.state.close_window();
+                            if self.state.set_window_target(window_id).is_ok() {
+                                self.state.hide_window();
+                                self.state.set_window_target(None)?;
                             }
                         }
                         _ => (),
@@ -104,10 +105,13 @@ where
                 }
 
                 // Update app
-                match self.app.on_update(&mut self.state) {
-                    Ok(false) => self.should_close = true,
-                    Err(e) => return Err(e),
-                    _ => (), // continue on
+                if self.state.should_loop || self.state.manual_update > 0 {
+                    self.state.manual_update -= 1;
+                    match self.app.on_update(&mut self.state) {
+                        Ok(false) => self.should_close = true,
+                        Err(e) => return Err(e),
+                        _ => (), // continue on
+                    }
                 }
 
                 self.state.present_all();
@@ -115,15 +119,17 @@ where
                 if self.state.show_frame_rate() {
                     frame_timer += self.state.delta_time();
                     frame_count += 1;
-                    if frame_timer >= one_second {
+                    self.state.inc_frame_count();
+                    let primary = self.state.primary_window();
+                    if frame_timer >= one_second && self.state.set_window_target(primary).is_ok() {
+                        self.state.set_frame_rate(frame_count);
                         frame_timer -= one_second;
-                        let mut title = self.state.title.to_owned();
+                        let mut title = self.state.get_window().title().to_owned();
                         title.push_str(&format!("- FPS: {}", frame_count));
-                        self.state.set_title(&title)?;
+                        self.state.renderer.set_title(&title)?;
                         frame_count = 0;
+                        self.state.set_window_target(None)?;
                     }
-                } else {
-                    self.state.renderer.set_title(&self.state.title)?;
                 }
             }
 

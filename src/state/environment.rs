@@ -3,7 +3,7 @@ use crate::gui::CursorType;
 
 const DEFAULT_TARGET_FRAME_RATE: u32 = 60;
 
-pub(crate) struct StateEnvironment {
+pub(crate) struct Environment {
     /// Number of frames since start of execution
     frame_count: u32,
     /// Current frame rate per second
@@ -12,8 +12,6 @@ pub(crate) struct StateEnvironment {
     target_frame_rate: u32,
     /// Time since last frame
     delta_time: f32,
-    /// Scale factor
-    scale: u32,
     /// Width of the display screen
     display_width: u32,
     /// Height of the display screen
@@ -24,7 +22,7 @@ pub(crate) struct StateEnvironment {
     cursor: Option<CursorType>,
 }
 
-impl StateEnvironment {
+impl Environment {
     pub(crate) fn new() -> Self {
         let (width, height, density) = Self::determine_display_dimensions();
         Self {
@@ -32,7 +30,6 @@ impl StateEnvironment {
             frame_rate: 0,
             target_frame_rate: Self::default_target_frame_rate(),
             delta_time: 0.0,
-            scale: 1,
             display_width: width,
             display_height: height,
             display_density: density,
@@ -42,33 +39,81 @@ impl StateEnvironment {
 
     fn default_target_frame_rate() -> u32 {
         // TODO - Determine monitor refresh rate
+        // sdl2 window.display_mode().refresh_rate
         DEFAULT_TARGET_FRAME_RATE
     }
 
     fn determine_display_dimensions() -> (u32, u32, u32) {
         // TODO - Determine monitor display dimensions and pixel density
+        // sdl2 window.display_mode().w/h
         (800, 600, 1)
     }
 }
 
 impl State {
-    /// Returns whether the application has focus in any of it's windows
-    pub fn focused(&self) -> bool {
-        false
+    /// Get the frame count since execution started.
+    pub fn frame_count(&self) -> u32 {
+        self.environment.frame_count
     }
 
-    /// Returns the delta time in seconds since the last frame update
-    pub fn delta_time(&mut self) -> f32 {
+    /// Get the frame rate per second of the primary window.
+    pub fn frame_rate(&self) -> u32 {
+        self.environment.frame_rate
+    }
+
+    /// Get the target frame rate per second of the primary window.
+    pub fn target_frame_rate(&self) -> u32 {
+        self.environment.target_frame_rate
+    }
+    /// Set the target frame rate per second of the primary window.
+    pub fn set_target_frame_rate(&mut self, target_frame_rate: u32) {
+        self.environment.target_frame_rate = target_frame_rate;
+    }
+
+    /// Get the delta time in seconds since the last frame update.
+    pub fn delta_time(&self) -> f32 {
         self.environment.delta_time
     }
 
-    // Used by the core update loop to set the delta time
+    /// Get the display width of the primary monitor.
+    pub fn display_width(&self) -> u32 {
+        self.environment.display_width
+    }
+
+    /// Get the display height of the primary monitor.
+    pub fn display_height(&self) -> u32 {
+        self.environment.display_height
+    }
+
+    /// Get the display density of the primary monitor.
+    pub fn display_density(&self) -> u32 {
+        self.environment.display_density
+    }
+
+    /// Get the system cursor type.
+    pub fn cursor(&self) -> Option<&CursorType> {
+        self.environment.cursor.as_ref()
+    }
+    /// Get the system cursor type.
+    pub fn set_cursor<C: Into<Option<CursorType>>>(&mut self, cursor: C) {
+        self.environment.cursor = cursor.into();
+    }
+
+    /// Used by the core update loop to increment the frame count since execution started.
+    pub(crate) fn inc_frame_count(&mut self) {
+        self.environment.frame_count += 1;
+    }
+    /// Used by the core update loop to set the frame rate per second of the primary window.
+    pub(crate) fn set_frame_rate(&mut self, frame_rate: u32) {
+        self.environment.frame_rate = frame_rate;
+    }
+    /// Used by the core update loop to set the delta time
     pub(crate) fn set_delta_time(&mut self, time: f32) {
         self.environment.delta_time = time;
     }
 }
 
-impl Default for StateEnvironment {
+impl Default for Environment {
     fn default() -> Self {
         Self::new()
     }
