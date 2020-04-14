@@ -1,4 +1,45 @@
-use crate::{color::Color, event::PixEvent, state::rendering::BlendMode, PixEngineResult};
+use crate::{color::Color, event::PixEvent, state::rendering::BlendMode};
+use std::{borrow::Cow, error, ffi::NulError, fmt};
+
+/// Result type for Renderer Errors.
+pub type Result<T> = std::result::Result<T, Error>;
+
+/// Types of errors Renderers can return in a result.
+#[derive(Debug)]
+pub enum Error {
+    IntegerOverflows(Cow<'static, str>, u32),
+    InvalidWindowTarget(u32),
+    InvalidWidth(u32),
+    InvalidHeight(u32),
+    InvalidString(NulError),
+    Other(Cow<'static, str>),
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use Error::*;
+        match self {
+            IntegerOverflows(err, val) => write!(f, "integer overflowed {}: {}", val, err),
+            InvalidWindowTarget(t) => write!(f, "invalid window_target: {}", &t),
+            InvalidWidth(w) => write!(f, "invalid width: {}", &w),
+            InvalidHeight(h) => write!(f, "invalid height: {}", &h),
+            InvalidString(err) => write!(f, "invalid string: {}", &err),
+            Other(desc) => write!(f, "{}", &desc),
+        }
+    }
+}
+
+impl error::Error for Error {
+    fn cause(&self) -> Option<&(dyn error::Error + 'static)> {
+        None
+    }
+}
+
+impl From<String> for Error {
+    fn from(err: String) -> Error {
+        Error::Other(err.into())
+    }
+}
 
 #[cfg(all(feature = "sdl2-renderer", not(feature = "wasm-renderer")))]
 pub(super) mod sdl2;
@@ -6,19 +47,11 @@ pub(super) mod sdl2;
 pub(super) mod wasm;
 
 #[cfg(all(feature = "sdl2-renderer", not(feature = "wasm-renderer")))]
-pub(crate) fn load_renderer(
-    title: &str,
-    width: u32,
-    height: u32,
-) -> PixEngineResult<sdl2::Sdl2Renderer> {
+pub(crate) fn load_renderer(title: &str, width: u32, height: u32) -> Result<sdl2::Sdl2Renderer> {
     sdl2::Sdl2Renderer::new(title, width, height)
 }
 #[cfg(all(feature = "wasm-renderer", not(feature = "sdl2-renderer")))]
-pub(crate) fn load_renderer(
-    title: &str,
-    width: u32,
-    height: u32,
-) -> PixEngineResult<wasm::WasmRenderer> {
+pub(crate) fn load_renderer(title: &str, width: u32, height: u32) -> Result<wasm::WasmRenderer> {
     wasm::WasmRenderer::new(title, width, height)
 }
 
@@ -28,7 +61,7 @@ pub(crate) trait Renderer {
     /// Set title for the current window target.
     ///
     /// Errors if the title contains a nul byte.
-    fn set_title(&mut self, _title: &str) -> PixEngineResult<()>;
+    fn set_title(&mut self, _title: &str) -> Result<()>;
 
     /// Get draw color for the current window target.
     fn draw_color(&self) -> Color;
@@ -122,7 +155,7 @@ pub(crate) trait Renderer {
     /// Set a new window target.
     ///
     /// Errors if the window_id is not a valid window_id.
-    fn push_window_target(&mut self, _window_id: u32) -> PixEngineResult<()>;
+    fn push_window_target(&mut self, _window_id: u32) -> Result<()>;
 
     /// Removes the current window target and switches it to the previous
     /// current window target.
@@ -136,7 +169,7 @@ pub(crate) trait Renderer {
     /// Create and open a new window.
     ///
     /// Errors if the window can't be created for any reason.
-    fn create_window(&mut self, _title: &str, _width: u32, _height: u32) -> PixEngineResult<u32>;
+    fn create_window(&mut self, _title: &str, _width: u32, _height: u32) -> Result<u32>;
 
     /// Close the current window target.
     ///

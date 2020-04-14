@@ -48,7 +48,7 @@ impl Color {
     }
 
     /// Creates a new Rgb Color from a u32
-    pub fn from_u32(color: u32) -> Self {
+    pub const fn from_u32(color: u32) -> Self {
         Self {
             r: (color >> RED_SHIFT) as u8,
             g: (color >> GREEN_SHIFT) as u8,
@@ -59,7 +59,7 @@ impl Color {
     }
 
     /// Converts a Color to a u32 representation
-    pub fn to_u32(self, color: u32) -> u32 {
+    pub const fn to_u32(self, color: u32) -> u32 {
         (self.r as u32) << RED_SHIFT
             | (self.g as u32) << GREEN_SHIFT
             | (self.b as u32) << BLUE_SHIFT
@@ -83,7 +83,7 @@ impl Color {
         self.r
     }
     /// Set the red value of the color ranging from 0-255
-    pub fn set_r(mut self, r: u8) {
+    pub const fn set_r(mut self, r: u8) {
         self.r = r;
     }
 
@@ -92,7 +92,7 @@ impl Color {
         self.g
     }
     /// Set the green value of the color ranging from 0-255
-    pub fn set_g(mut self, g: u8) {
+    pub const fn set_g(mut self, g: u8) {
         self.g = g;
     }
 
@@ -101,7 +101,7 @@ impl Color {
         self.b
     }
     /// Set the blue value of the color ranging from 0-255
-    pub fn set_b(mut self, b: u8) {
+    pub const fn set_b(mut self, b: u8) {
         self.b = b;
     }
 
@@ -110,7 +110,7 @@ impl Color {
         self.a
     }
     /// Set the alpha value of the color ranging from 0-255
-    pub fn set_a(mut self, a: u8) {
+    pub const fn set_a(mut self, a: u8) {
         self.a = a;
     }
 }
@@ -148,194 +148,46 @@ impl fmt::Display for Color {
 /// Color Constants for common colors
 
 // WHITE/BLACK/BLANK
-pub const WHITE: Color = Color {
-    r: 255,
-    g: 255,
-    b: 255,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
-pub const BLACK: Color = Color {
-    r: 0,
-    g: 0,
-    b: 0,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
-pub const TRANSPARENT: Color = Color {
-    r: 0,
-    g: 0,
-    b: 0,
-    a: 0,
-    color_mode: ColorMode::Rgb,
-};
+pub const WHITE: Color = Color::RGB(255, 255, 255);
+pub const BLACK: Color = Color::RGB(0, 0, 0);
+pub const TRANSPARENT: Color = Color::RGBA(0, 0, 0, 0);
 
 // GRAY
-pub const GRAY: Color = Color {
-    r: 192,
-    g: 192,
-    b: 192,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
-pub const DARK_GRAY: Color = Color {
-    r: 128,
-    g: 128,
-    b: 128,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
-pub const VERY_DARK_GRAY: Color = Color {
-    r: 64,
-    g: 64,
-    b: 64,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
+pub const BRIGHT_GRAY: Color = Color::RGB(192, 192, 192);
+pub const GRAY: Color = Color::RGB(128, 128, 128);
+pub const DARK_GRAY: Color = Color::RGB(64, 64, 64);
 
 // RED
-pub const RED: Color = Color {
-    r: 255,
-    g: 0,
-    b: 0,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
-pub const DARK_RED: Color = Color {
-    r: 128,
-    g: 0,
-    b: 0,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
-pub const VERY_DARK_RED: Color = Color {
-    r: 64,
-    g: 0,
-    b: 0,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
+pub const BRIGHT_RED: Color = Color::RGB(255, 0, 0);
+pub const RED: Color = Color::RGB(128, 0, 0);
+pub const DARK_RED: Color = Color::RGB(64, 0, 0);
 
 // ORANGE
-pub const ORANGE: Color = Color {
-    r: 255,
-    g: 128,
-    b: 0,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
+pub const BRIGHT_ORANGE: Color = Color::RGB(255, 128, 0);
+pub const ORANGE: Color = Color::RGB(128, 64, 0);
+pub const DARK_ORANGE: Color = Color::RGB(64, 32, 0);
 
 // YELLOW
-pub const YELLOW: Color = Color {
-    r: 255,
-    g: 255,
-    b: 0,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
-pub const DARK_YELLOW: Color = Color {
-    r: 128,
-    g: 128,
-    b: 0,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
-pub const VERY_DARK_YELLOW: Color = Color {
-    r: 64,
-    g: 64,
-    b: 0,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
+pub const BRIGHT_YELLOW: Color = Color::RGB(255, 255, 0);
+pub const YELLOW: Color = Color::RGB(128, 128, 0);
+pub const DARK_YELLOW: Color = Color::RGB(64, 64, 0);
 
 // GREEN
-pub const GREEN: Color = Color {
-    r: 0,
-    g: 255,
-    b: 0,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
-pub const DARK_GREEN: Color = Color {
-    r: 0,
-    g: 128,
-    b: 0,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
-pub const VERY_DARK_GREEN: Color = Color {
-    r: 0,
-    g: 64,
-    b: 0,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
+pub const BRIGHT_GREEN: Color = Color::RGB(0, 255, 0);
+pub const GREEN: Color = Color::RGB(0, 128, 0);
+pub const DARK_GREEN: Color = Color::RGB(0, 64, 0);
 
 // CYAN
-pub const CYAN: Color = Color {
-    r: 0,
-    g: 255,
-    b: 255,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
-pub const DARK_CYAN: Color = Color {
-    r: 0,
-    g: 128,
-    b: 128,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
-pub const VERY_DARK_CYAN: Color = Color {
-    r: 0,
-    g: 64,
-    b: 64,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
+pub const BRIGHT_CYAN: Color = Color::RGB(0, 255, 255);
+pub const CYAN: Color = Color::RGB(0, 128, 128);
+pub const DARK_CYAN: Color = Color::RGB(0, 64, 64);
 
 // BLUE
-pub const BLUE: Color = Color {
-    r: 0,
-    g: 255,
-    b: 255,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
-pub const DARK_BLUE: Color = Color {
-    r: 0,
-    g: 0,
-    b: 128,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
-pub const VERY_DARK_BLUE: Color = Color {
-    r: 0,
-    g: 0,
-    b: 64,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
+pub const BRIGHT_BLUE: Color = Color::RGB(0, 255, 255);
+pub const BLUE: Color = Color::RGB(0, 0, 128);
+pub const DARK_BLUE: Color = Color::RGB(0, 0, 64);
 
 // MAGENTA
-pub const MAGENTA: Color = Color {
-    r: 255,
-    g: 0,
-    b: 255,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
-pub const DARK_MAGENTA: Color = Color {
-    r: 128,
-    g: 0,
-    b: 128,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
-pub const VERY_DARK_MAGENTA: Color = Color {
-    r: 64,
-    g: 0,
-    b: 64,
-    a: 255,
-    color_mode: ColorMode::Rgb,
-};
+pub const BRIGHT_MAGENTA: Color = Color::RGB(255, 0, 255);
+pub const MAGENTA: Color = Color::RGB(128, 0, 128);
+pub const DARK_MAGENTA: Color = Color::RGB(64, 0, 64);

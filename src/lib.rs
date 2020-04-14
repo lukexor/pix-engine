@@ -1,14 +1,12 @@
 #![allow(unused_variables, dead_code)]
 
-#[macro_use]
-extern crate bitflags;
+pub mod color;
+pub mod event;
+pub mod gui;
+pub mod image;
 
-mod color;
 mod common;
 mod core;
-mod event;
-mod gui;
-mod image;
 mod math;
 mod renderer;
 mod shape;
@@ -19,7 +17,8 @@ mod typography;
 
 pub use crate::{
     color::{Color, ColorMode},
-    common::{PixEngineError, PixEngineResult},
+    common::{Error, Result},
     core::{PixApp, PixEngine},
+    event::{PixEvent, WindowEvent},
     state::State,
 };

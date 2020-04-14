@@ -1,37 +1,37 @@
 use crate::{
-    common::PixEngineResult,
+    common::Result,
     event::{PixEvent, WindowEvent},
     renderer::Renderer,
     state::State,
     time,
 };
 
-/// Defines operations that the engine will call on the enclosed app
+/// Defines operations that the engine will call on the enclosed app.
 pub trait PixApp {
-    /// Called once upon engine start (when run() is called).
+    /// Called once upon engine start (when `PixEngine::run()` is called).
     ///
-    /// Return true to continue running
-    /// Reeturn false to shutdown the engine and close the application
-    fn on_start(&mut self, _state: &mut State) -> PixEngineResult<bool> {
+    /// Return true to continue running.
+    /// Reeturn false to shutdown the engine and close the application.
+    fn on_start(&mut self, _state: &mut State) -> Result<bool> {
         Ok(true)
     }
     /// Called once when the engine detects a close/exit event.
     ///
-    /// Return true to continue exiting
-    /// Return false to keep running
-    fn on_stop(&mut self, _state: &mut State) -> PixEngineResult<bool> {
+    /// Return true to continue exiting.
+    /// Return false to keep running.
+    fn on_stop(&mut self, _state: &mut State) -> Result<bool> {
         Ok(true)
     }
-    /// Called every frame based on the target_frame_rate
+    /// Called every frame based on the target_frame_rate. By default this is as often as possible.
     ///
-    /// Return true to continue running
-    /// Return false to shutdown the engine and close the application
-    fn on_update(&mut self, _state: &mut State) -> PixEngineResult<bool> {
+    /// Return true to continue running.
+    /// Return false to shutdown the engine and close the application.
+    fn on_update(&mut self, _state: &mut State) -> Result<bool> {
         Ok(true)
     }
 }
 
-/// Primary PixEngine object that controls update loop and engine state
+/// Primary PixEngine object that controls update loop and engine state.
 pub struct PixEngine<A>
 where
     A: PixApp,
@@ -45,8 +45,8 @@ impl<A> PixEngine<A>
 where
     A: PixApp,
 {
-    /// Create a new PixEngine instance, consuming the app in the process
-    pub fn new(title: &str, app: A, width: u32, height: u32) -> PixEngineResult<Self> {
+    /// Create a new PixEngine instance, consuming the app in the process.
+    pub fn new(title: &str, app: A, width: u32, height: u32) -> Result<Self> {
         let state = State::new(title, width, height)?;
         Ok(Self {
             app,
@@ -55,7 +55,11 @@ where
         })
     }
 
-    pub fn run(&mut self) -> PixEngineResult<()> {
+    /// Start the engine loop. This will only exit and return if an error is encountered, the app
+    /// returns false in any of the App trait methods, or all open windows receive close events.
+    ///
+    /// Errors if the renderer or the app returns an error.
+    pub fn run(&mut self) -> Result<()> {
         // Pump event queue once before starting to initialize default window
         let _ = self.state.renderer.poll_events();
 
@@ -73,7 +77,7 @@ where
         while !self.should_close {
             // Extra loop allows on_stop to prevent closing
             while !self.should_close {
-                self.state.renderer.clear_all();
+                self.state.clear_all();
 
                 let now = time::now();
                 self.state.set_delta_time(time::sub(now, last_frame_time));
@@ -90,17 +94,13 @@ where
                             win_event: WindowEvent::Close,
                             ..
                         } => {
-                            if self.state.renderer.push_window_target(window_id).is_ok() {
-                                self.should_close = self.state.renderer.close_window();
+                            if self.state.push_window_target(window_id).is_ok() {
+                                self.should_close = self.state.close_window();
                             }
                         }
                         _ => (),
                     }
                     self.state.events.push(event);
-                }
-
-                if self.should_close {
-                    break;
                 }
 
                 // Update app
@@ -110,7 +110,7 @@ where
                     _ => (), // continue on
                 }
 
-                self.state.renderer.present_all();
+                self.state.present_all();
 
                 if self.state.show_frame_rate() {
                     frame_timer += self.state.delta_time();
@@ -119,7 +119,7 @@ where
                         frame_timer -= one_second;
                         let mut title = self.state.title.to_owned();
                         title.push_str(&format!("- FPS: {}", frame_count));
-                        self.state.renderer.set_title(&title)?;
+                        self.state.set_title(&title)?;
                         frame_count = 0;
                     }
                 } else {

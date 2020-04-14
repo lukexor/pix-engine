@@ -1,5 +1,5 @@
-/// The mode used to determine the value of angle parameters either in Radians
-/// or Degrees. The default is Radians.
+/// The mode used to interpret angle parameters in draw functions. The default is Radians.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum AngleMode {
     Radians,
     Degrees,

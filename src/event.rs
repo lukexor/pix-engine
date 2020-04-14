@@ -1,3 +1,4 @@
+use bitflags::bitflags;
 use std::fmt;
 
 // Represents an input event

@@ -1,27 +1,18 @@
+use crate::state::State;
+
 mod ellipse;
 
 pub const DEFAULT_STROKE_WEIGHT: u32 = 1;
 
-pub use ellipse::ArcMode;
-
-/// Determines the way ellipses/circles are drawn by changing how the parameters given to
-/// State.draw_ellipse and State.draw_circle are interpreted. The default is Center.
-///
-/// Center: Uses x and y as the center of the shape
-/// Radius: Uses x and y as the center, but the w/h or d values as half the shape's width/height
-/// Corner: Uses x and y as the upper-left corner of the shape
-pub enum EllipseMode {
-    Center,
-    Radius,
-    Corner,
-}
+pub use ellipse::{ArcMode, EllipseMode};
 
 /// Determines the way rect/squares are drawn by changing how the parameters given to
-/// State.draw_rect and State.draw_square are interpreted. The default is Corner.
+/// `State::draw_rect()` and `State::draw_square()` are interpreted. The default is Corner.
 ///
-/// Corner: Uses x and y as the upper-left corner of the shape
-/// Center: Uses x and y as the center of the shape
-/// Radius: Uses x and y as the center, but the w/h or d values as half the shape's width/height
+/// Corner: Uses x and y as the upper-left corner of the shape.
+/// Center: Uses x and y as the center of the shape.
+/// Radius: Uses x and y as the center, but the w/h or d values as half the shape's width/height.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum RectMode {
     Corner,
     Center,
@@ -30,6 +21,7 @@ pub enum RectMode {
 
 /// Sets the style for rendering line endings. More noticeable when stroke weight is set greater
 /// than 1. The default is Round.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum StrokeCap {
     Round,
     Square,
@@ -38,16 +30,11 @@ pub enum StrokeCap {
 
 /// Sets the style of the joints which connect line segments. More noticeable when stroke weight is
 /// set greater than 1. The default is Miter.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum StrokeJoin {
     Miter,
     Bevel,
     Round,
-}
-
-impl Default for EllipseMode {
-    fn default() -> Self {
-        Self::Center
-    }
 }
 
 impl Default for RectMode {
@@ -67,3 +54,5 @@ impl Default for StrokeJoin {
         Self::Miter
     }
 }
+
+impl State {}

@@ -1,30 +1,31 @@
-use std::{borrow::Cow, path::PathBuf};
+// use std::path::PathBuf;
+use bitflags::bitflags;
 
 pub const DEFAULT_TEXT_LEADING: u32 = 15;
 pub const DEFAULT_TEXT_SIZE: u32 = 12;
 
 /// Represents a specfic font-family
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Font {
     Arial,
-    Custom(Cow<'static, str>, PathBuf),
+    // Custom(String, PathBuf),
 }
 
-/// The horizontal alignment for drawing text. Default is Left.
-pub enum TextAlignHori {
-    Left,
-    Center,
-    Right,
-}
-
-/// The vertical alignment for drawing text. Default is Top.
-pub enum TextAlignVert {
-    Top,
-    Center,
-    Bottom,
-    Baseline,
+bitflags! {
+    /// The horizontal and vertical alignment for drawing text. Default is Left/Top.
+    pub struct TextAlign: u16 {
+        const LEFT = 0x0000;
+        const CENTER = 0x0001;
+        const RIGHT = 0x0002;
+        const TOP = 0x0010;
+        const MIDDLE = 0x0020;
+        const BOTTOM = 0x0040;
+        const BASELINE = 0x0080;
+    }
 }
 
 /// The text style for drawing text. The default is Normal.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum TextStyle {
     Normal,
     Italic,
@@ -38,15 +39,9 @@ impl Default for Font {
     }
 }
 
-impl Default for TextAlignHori {
+impl Default for TextAlign {
     fn default() -> Self {
-        Self::Left
-    }
-}
-
-impl Default for TextAlignVert {
-    fn default() -> Self {
-        Self::Top
+        Self::LEFT | Self::TOP
     }
 }
 

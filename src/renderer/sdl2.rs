@@ -1,5 +1,5 @@
-use super::BlendMode;
-use crate::{color::Color, event::PixEvent, renderer::Renderer, PixEngineError, PixEngineResult};
+use super::{Error, Renderer, Result};
+use crate::{color::Color, event::PixEvent, state::rendering::BlendMode};
 use sdl2::{
     audio::{AudioQueue, AudioSpecDesired},
     controller::GameController,
@@ -8,7 +8,6 @@ use sdl2::{
     video::{self, Window},
     EventPump, GameControllerSubsystem, Sdl,
 };
-use std::borrow::Cow;
 
 mod event;
 mod render;
@@ -17,7 +16,6 @@ pub const DEFAULT_SAMPLE_RATE: i32 = 44_100; // in Hz
 
 pub(crate) struct Sdl2Renderer {
     context: Sdl,
-    default_target: Option<u32>,
     window_target: Vec<u32>,
     canvases: Vec<Canvas<Window>>,
     audio_device: AudioQueue<f32>,
@@ -27,7 +25,7 @@ pub(crate) struct Sdl2Renderer {
 }
 
 impl Sdl2Renderer {
-    pub fn new(title: &str, width: u32, height: u32) -> PixEngineResult<Self> {
+    pub fn new(title: &str, width: u32, height: u32) -> Result<Self> {
         let context = sdl2::init()?;
         let canvases = vec![Self::new_canvas(&context, title, width, height)?];
 
@@ -48,7 +46,6 @@ impl Sdl2Renderer {
         let default_window_id = canvases[0].window().id();
         Ok(Self {
             context,
-            default_target: Some(default_window_id),
             window_target: vec![default_window_id],
             canvases,
             audio_device,
@@ -58,12 +55,7 @@ impl Sdl2Renderer {
         })
     }
 
-    fn new_canvas(
-        context: &Sdl,
-        title: &str,
-        width: u32,
-        height: u32,
-    ) -> PixEngineResult<Canvas<Window>> {
+    fn new_canvas(context: &Sdl, title: &str, width: u32, height: u32) -> Result<Canvas<Window>> {
         // Set up the window
         let video_sub = context.video()?;
         let window = video_sub
@@ -106,7 +98,7 @@ impl Renderer for Sdl2Renderer {
     /// Set title for the current window target.
     ///
     /// Errors if the title contains a nul byte.
-    fn set_title(&mut self, title: &str) -> PixEngineResult<()> {
+    fn set_title(&mut self, title: &str) -> Result<()> {
         self.get_canvas_mut().window_mut().set_title(title)?;
         Ok(())
     }
@@ -167,12 +159,14 @@ impl Renderer for Sdl2Renderer {
     /// Set a new window target.
     ///
     /// Errors if the window_id is not a valid window_id.
-    fn push_window_target(&mut self, window_id: u32) -> PixEngineResult<()> {
-        if self.canvases.iter().any(|c| window_id == c.window().id()) {
+    fn push_window_target(&mut self, window_id: u32) -> Result<()> {
+        if window_id == self.current_window_target() {
+            Ok(())
+        } else if self.canvases.iter().any(|c| window_id == c.window().id()) {
             self.window_target.push(window_id);
             Ok(())
         } else {
-            Err(PixEngineError::Renderer(Cow::from("invalid window target")))
+            Err(Error::InvalidWindowTarget(window_id))
         }
     }
 
@@ -186,17 +180,17 @@ impl Renderer for Sdl2Renderer {
 
     /// Returns the window_id of the current window target
     fn current_window_target(&self) -> u32 {
-        *self
-            .window_target
+        self.window_target
             .last()
-            .or_else(|| self.default_target.as_ref())
-            .expect("valid window target")
+            .copied()
+            .or_else(|| self.canvases.last().map(|c| c.window().id()))
+            .expect("should have at least one window")
     }
 
     /// Create and open a new window.
     ///
     /// Errors if the window can't be created for any reason.
-    fn create_window(&mut self, title: &str, width: u32, height: u32) -> PixEngineResult<u32> {
+    fn create_window(&mut self, title: &str, width: u32, height: u32) -> Result<u32> {
         let canvas = Self::new_canvas(&self.context, title, width, height)?;
         let window_id = canvas.window().id();
         self.canvases.push(canvas);
@@ -212,33 +206,31 @@ impl Renderer for Sdl2Renderer {
     }
 }
 
-impl From<video::WindowBuildError> for PixEngineError {
+impl From<video::WindowBuildError> for Error {
     fn from(err: video::WindowBuildError) -> Self {
-        Self::Renderer(Cow::from(err.to_string()))
+        use video::WindowBuildError::*;
+        match err {
+            HeightOverflows(h) => Self::InvalidHeight(h),
+            WidthOverflows(w) => Self::InvalidWidth(w),
+            InvalidTitle(err) => Self::InvalidString(err),
+            SdlError(err) => Self::Other(err.into()),
+        }
     }
 }
 
-impl From<sdl2::IntegerOrSdlError> for PixEngineError {
+impl From<sdl2::IntegerOrSdlError> for Error {
     fn from(err: sdl2::IntegerOrSdlError) -> Self {
-        Self::Renderer(Cow::from(err.to_string()))
+        use sdl2::IntegerOrSdlError::*;
+        match err {
+            IntegerOverflows(err, val) => Self::IntegerOverflows(err.into(), val),
+            SdlError(err) => Self::Other(err.into()),
+        }
     }
 }
 
-impl From<sdl2::render::TextureValueError> for PixEngineError {
-    fn from(err: sdl2::render::TextureValueError) -> Self {
-        Self::Renderer(Cow::from(err.to_string()))
-    }
-}
-
-impl From<sdl2::render::UpdateTextureError> for PixEngineError {
-    fn from(err: sdl2::render::UpdateTextureError) -> Self {
-        Self::Renderer(Cow::from(err.to_string()))
-    }
-}
-
-impl From<std::ffi::NulError> for PixEngineError {
+impl From<std::ffi::NulError> for Error {
     fn from(err: std::ffi::NulError) -> Self {
-        Self::Renderer(Cow::from(err.to_string()))
+        Self::InvalidString(err)
     }
 }
 

@@ -4,23 +4,31 @@ use crate::gui::CursorType;
 const DEFAULT_TARGET_FRAME_RATE: u32 = 60;
 
 pub(crate) struct StateEnvironment {
-    pub(super) focused: bool,
-    pub(super) frame_rate: u32,
-    pub(super) target_frame_rate: u32,
-    pub(super) delta_time: f32,
-    pub(super) scale: u32,
-    pub(super) display_width: u32,
-    pub(super) display_height: u32,
-    pub(super) display_density: u32,
-    pub(super) windows: Vec<u32>,
-    pub(super) cursor: Option<CursorType>,
+    /// Number of frames since start of execution
+    frame_count: u32,
+    /// Current frame rate per second
+    frame_rate: u32,
+    /// Target frame rate per second
+    target_frame_rate: u32,
+    /// Time since last frame
+    delta_time: f32,
+    /// Scale factor
+    scale: u32,
+    /// Width of the display screen
+    display_width: u32,
+    /// Height of the display screen
+    display_height: u32,
+    /// Pixel density of the display screen for high resolution displays
+    display_density: u32,
+    /// Current system cursor type
+    cursor: Option<CursorType>,
 }
 
 impl StateEnvironment {
     pub(crate) fn new() -> Self {
         let (width, height, density) = Self::determine_display_dimensions();
         Self {
-            focused: false,
+            frame_count: 0,
             frame_rate: 0,
             target_frame_rate: Self::default_target_frame_rate(),
             delta_time: 0.0,
@@ -28,7 +36,6 @@ impl StateEnvironment {
             display_width: width,
             display_height: height,
             display_density: density,
-            windows: Vec::new(),
             cursor: Some(CursorType::Arrow),
         }
     }
@@ -45,6 +52,11 @@ impl StateEnvironment {
 }
 
 impl State {
+    /// Returns whether the application has focus in any of it's windows
+    pub fn focused(&self) -> bool {
+        false
+    }
+
     /// Returns the delta time in seconds since the last frame update
     pub fn delta_time(&mut self) -> f32 {
         self.environment.delta_time

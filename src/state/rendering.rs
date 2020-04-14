@@ -1,9 +1,10 @@
 use super::State;
-use crate::{color::Color, renderer::Renderer, PixEngineResult};
+use crate::renderer::{Renderer, Result};
 
 pub const DEFAULT_BLEND_FACTOR: f32 = 1.0;
 
 /// Blend mode used by the renderer for drawing operations
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum BlendMode {
     None,
     Blend,
@@ -24,28 +25,8 @@ impl State {
     /// Set title for the current window target.
     ///
     /// Errors if the title contains a nul byte.
-    pub fn set_title(&mut self, title: &str) -> PixEngineResult<()> {
+    pub fn set_title(&mut self, title: &str) -> Result<()> {
         self.renderer.set_title(title)
-    }
-
-    /// Get draw color for the current window target.
-    pub fn draw_color(&self) -> Color {
-        self.renderer.draw_color()
-    }
-
-    /// Set draw color for drawing operations on the current window target.
-    pub fn set_draw_color<C: Into<Color>>(&mut self, color: C) {
-        self.renderer.set_draw_color(color)
-    }
-
-    /// Get the blending mode for the current window target.
-    pub fn blend_mode(&self) -> BlendMode {
-        self.renderer.blend_mode()
-    }
-
-    /// Set the blending mode for drawing operations on the current window target.
-    pub fn set_blend_mode(&mut self, mode: BlendMode) {
-        self.renderer.set_blend_mode(mode)
     }
 
     /// Rendering
@@ -63,11 +44,13 @@ impl State {
 
     /// Clears the canvas on the current window target to the current draw color.
     pub fn clear(&mut self) {
+        self.renderer.set_draw_color(self.bg_color());
         self.renderer.clear()
     }
 
     /// Clears all canvases of all windows to their current draw colors.
     pub fn clear_all(&mut self) {
+        self.renderer.set_draw_color(self.bg_color());
         self.renderer.clear_all()
     }
 
@@ -135,7 +118,7 @@ impl State {
     /// Set a new window target.
     ///
     /// Errors if the window_id is not a valid window_id.
-    pub fn push_window_target(&mut self, window_id: u32) -> PixEngineResult<()> {
+    pub fn push_window_target(&mut self, window_id: u32) -> Result<()> {
         self.renderer.push_window_target(window_id)
     }
 
@@ -155,12 +138,12 @@ impl State {
     /// Create and open a new window.
     ///
     /// Errors if the window can't be created for any reason.
-    pub fn create_window(&mut self, title: &str, width: u32, height: u32) -> PixEngineResult<u32> {
+    pub fn create_window(&mut self, title: &str, width: u32, height: u32) -> Result<u32> {
         self.renderer.create_window(title, width, height)
     }
 
     /// Close the current window target.
-    pub fn close_window(&mut self) {
-        self.renderer.close_window();
+    pub fn close_window(&mut self) -> bool {
+        self.renderer.close_window()
     }
 }
