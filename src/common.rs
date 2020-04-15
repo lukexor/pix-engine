@@ -1,4 +1,4 @@
-use crate::{renderer, state};
+use crate::{image, renderer, state};
 use std::{borrow::Cow, error, fmt, io};
 
 /// Result type for PixEngine Errors.
@@ -14,6 +14,7 @@ pub enum Error {
         /// Message why the setting is invalid
         message: Cow<'static, str>,
     },
+    ImageError(image::Error),
     RendererError(renderer::Error),
     StateError(state::Error),
     Other(Cow<'static, str>),
@@ -27,6 +28,7 @@ impl fmt::Display for Error {
             InvalidSetting { setting, message } => {
                 write!(f, "invalid setting `{}`: {}", &setting, &message)
             }
+            ImageError(err) => write!(f, "image error: {}", &err),
             RendererError(err) => write!(f, "renderer error: {}", &err),
             StateError(err) => write!(f, "state error: {}", &err),
             Other(desc) => write!(f, "{}", &desc),

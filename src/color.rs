@@ -113,6 +113,10 @@ impl Color {
     pub const fn set_a(mut self, a: u8) {
         self.a = a;
     }
+
+    pub const fn as_list(self) -> [u8; 4] {
+        [self.r, self.g, self.b, self.a]
+    }
 }
 
 impl Default for Color {
@@ -152,6 +156,17 @@ impl From<(u8, u8, u8)> for Color {
 impl From<(u8, u8, u8, u8)> for Color {
     fn from((r, g, b, a): (u8, u8, u8, u8)) -> Color {
         Color::RGBA(r, g, b, a)
+    }
+}
+
+/// From &[u8] to Color
+impl From<&[u8]> for Color {
+    fn from(slice: &[u8]) -> Color {
+        match slice {
+            [r, g, b] => Color::RGB(*r, *g, *b),
+            [r, g, b, a] => Color::RGBA(*r, *g, *b, *a),
+            _ => panic!("invalid color slice"),
+        }
     }
 }
 
