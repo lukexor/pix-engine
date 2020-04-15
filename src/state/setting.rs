@@ -246,6 +246,11 @@ impl State {
         let window = self.get_window_mut();
         window.settings.image_tint = color.into();
     }
+    /// Disable image tint
+    /// Shortcut for `State::set_image_tint(None)`
+    pub fn no_image_tint(&mut self) {
+        self.set_image_tint(None)
+    }
 
     /// Gets the current image mode used for drawing images.
     pub fn image_mode(&self) -> ImageMode {

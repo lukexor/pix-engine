@@ -10,6 +10,7 @@ const ALPHA_SHIFT: u32 = 0;
 /// RGB values range from 0-255 for red, green, blue, and alpha
 /// HSB instead ranges from 0-360 for hue, and 0-100 for saturation and brightness
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[repr(C)]
 pub enum ColorMode {
     Rgb,
     Hsb,
@@ -18,6 +19,7 @@ pub enum ColorMode {
 /// Represents a color (by default stored as RGBA values ranging from 0-255).  The default is
 /// black.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[repr(C)]
 pub struct Color {
     r: u8,
     g: u8,
@@ -26,16 +28,16 @@ pub struct Color {
     color_mode: ColorMode,
 }
 
-impl Color {
+impl<'a> Color {
     /// Creates a new Rgb Color (same as calling new)
-    #[inline]
+    #[inline(always)]
     #[allow(non_snake_case)]
     pub const fn RGB(r: u8, g: u8, b: u8) -> Self {
         Self::RGBA(r, g, b, 255)
     }
 
     /// Creates a new Rgb Color with alpha
-    #[inline]
+    #[inline(always)]
     #[allow(non_snake_case)]
     pub const fn RGBA(r: u8, g: u8, b: u8, a: u8) -> Self {
         Self {
@@ -48,6 +50,7 @@ impl Color {
     }
 
     /// Creates a new Rgb Color from a u32
+    #[inline(always)]
     pub const fn from_u32(color: u32) -> Self {
         Self {
             r: (color >> RED_SHIFT) as u8,
@@ -59,6 +62,7 @@ impl Color {
     }
 
     /// Converts a Color to a u32 representation
+    #[inline(always)]
     pub const fn to_u32(self, color: u32) -> u32 {
         (self.r as u32) << RED_SHIFT
             | (self.g as u32) << GREEN_SHIFT
@@ -67,55 +71,72 @@ impl Color {
     }
 
     /// Returns an rgb tuple
-    #[inline]
+    #[inline(always)]
     pub const fn rgb(self) -> (u8, u8, u8) {
         (self.r, self.g, self.b)
     }
 
     /// Returns an rgba tuple
-    #[inline]
+    #[inline(always)]
     pub const fn rgba(self) -> (u8, u8, u8, u8) {
         (self.r, self.g, self.b, self.a)
     }
 
     /// Get the red value of the color ranging from 0-255
+    #[inline(always)]
     pub const fn r(self) -> u8 {
         self.r
     }
     /// Set the red value of the color ranging from 0-255
-    pub const fn set_r(mut self, r: u8) {
+    #[inline(always)]
+    pub fn set_r(&mut self, r: u8) {
         self.r = r;
     }
 
     /// Get the green value of the color ranging from 0-255
+    #[inline(always)]
     pub const fn g(self) -> u8 {
         self.g
     }
     /// Set the green value of the color ranging from 0-255
-    pub const fn set_g(mut self, g: u8) {
+    #[inline(always)]
+    pub fn set_g(&mut self, g: u8) {
         self.g = g;
     }
 
     /// Get the blue value of the color ranging from 0-255
+    #[inline(always)]
     pub const fn b(self) -> u8 {
         self.b
     }
     /// Set the blue value of the color ranging from 0-255
-    pub const fn set_b(mut self, b: u8) {
+    #[inline(always)]
+    pub fn set_b(&mut self, b: u8) {
         self.b = b;
     }
 
     /// Get the alpha value of the color ranging from 0-255
+    #[inline(always)]
     pub const fn a(self) -> u8 {
         self.a
     }
     /// Set the alpha value of the color ranging from 0-255
-    pub const fn set_a(mut self, a: u8) {
+    #[inline(always)]
+    pub fn set_a(&mut self, a: u8) {
         self.a = a;
     }
 
-    pub const fn as_list(self) -> [u8; 4] {
-        [self.r, self.g, self.b, self.a]
+    /// Gets a Color as a slice of rgba values.
+    #[allow(clippy::trivially_copy_pass_by_ref)]
+    #[inline(always)]
+    pub fn as_slice(&self) -> &'a [u8] {
+        unsafe { core::slice::from_raw_parts(self as *const Self as *const u8, 4) }
+    }
+
+    /// Gets a Color as a mutable slice of rgba values.
+    #[inline(always)]
+    pub fn as_slice_mut(&mut self) -> &'a mut [u8] {
+        unsafe { core::slice::from_raw_parts_mut(self as *mut Self as *mut u8, 4) }
     }
 }
 
@@ -133,35 +154,35 @@ impl Default for ColorMode {
 
 /// From gray value to Color
 impl From<u8> for Color {
-    fn from(gray: u8) -> Color {
+    fn from(gray: u8) -> Self {
         Color::RGB(gray, gray, gray)
     }
 }
 
 /// From gray value with alpha to Color
 impl From<(u8, u8)> for Color {
-    fn from((gray, a): (u8, u8)) -> Color {
+    fn from((gray, a): (u8, u8)) -> Self {
         Color::RGBA(gray, gray, gray, a)
     }
 }
 
 /// From tuple of (r, g, b) to Color
 impl From<(u8, u8, u8)> for Color {
-    fn from((r, g, b): (u8, u8, u8)) -> Color {
+    fn from((r, g, b): (u8, u8, u8)) -> Self {
         Color::RGB(r, g, b)
     }
 }
 
 /// From tuple of (r, g, b, a) to Color
 impl From<(u8, u8, u8, u8)> for Color {
-    fn from((r, g, b, a): (u8, u8, u8, u8)) -> Color {
+    fn from((r, g, b, a): (u8, u8, u8, u8)) -> Self {
         Color::RGBA(r, g, b, a)
     }
 }
 
 /// From &[u8] to Color
 impl From<&[u8]> for Color {
-    fn from(slice: &[u8]) -> Color {
+    fn from(slice: &[u8]) -> Self {
         match slice {
             [r, g, b] => Color::RGB(*r, *g, *b),
             [r, g, b, a] => Color::RGBA(*r, *g, *b, *a),

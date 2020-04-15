@@ -4,16 +4,16 @@ pub mod color;
 pub mod event;
 pub mod gui;
 pub mod image;
+pub mod math;
+pub mod shape;
+pub mod transform;
+pub mod typography;
 
 mod common;
 mod core;
-mod math;
 mod renderer;
-mod shape;
 mod state;
 mod time;
-mod transform;
-mod typography;
 
 pub use crate::{
     color::{Color, ColorMode},

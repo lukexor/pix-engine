@@ -106,7 +106,9 @@ where
 
                 // Update app
                 if self.state.should_loop || self.state.manual_update > 0 {
-                    self.state.manual_update -= 1;
+                    if self.state.manual_update > 0 {
+                        self.state.manual_update -= 1;
+                    }
                     match self.app.on_update(&mut self.state) {
                         Ok(false) => self.should_close = true,
                         Err(e) => return Err(e),
