@@ -4,6 +4,7 @@ use crate::{
     state::rendering::BlendMode,
     State,
 };
+use rayon::prelude::*;
 use std::{
     borrow::Cow,
     error,
@@ -30,6 +31,53 @@ pub enum Error {
     Other(Cow<'static, str>),
 }
 
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use Error::*;
+        match self {
+            IoError(err) => write!(f, "io error: {}", err),
+            PngEncodingError(err) => write!(f, "png encoding error: {}", err),
+            PngDecodingError(err) => write!(f, "png decoding error: {}", err),
+            InvalidFormat(format, w, h) => write!(
+                f,
+                "invalid pixel format {:?} for image ({}, {})",
+                &format, w, h
+            ),
+            InvalidFile(path) => write!(f, "invalid file: {}", path.display()),
+            Other(desc) => write!(f, "{}", &desc),
+        }
+    }
+}
+
+impl error::Error for Error {
+    fn cause(&self) -> Option<&(dyn error::Error + 'static)> {
+        use Error::*;
+        match self {
+            IoError(err) => Some(err),
+            PngEncodingError(err) => Some(err),
+            PngDecodingError(err) => Some(err),
+            _ => None,
+        }
+    }
+}
+
+impl From<io::Error> for Error {
+    fn from(err: io::Error) -> Self {
+        Self::IoError(err)
+    }
+}
+
+impl From<png::DecodingError> for Error {
+    fn from(err: png::DecodingError) -> Self {
+        Self::PngDecodingError(err)
+    }
+}
+impl From<png::EncodingError> for Error {
+    fn from(err: png::EncodingError) -> Self {
+        Self::PngEncodingError(err)
+    }
+}
+
 /// Determines the way images are drawn by changing how the parameters given to
 /// `State::draw_image()` are interpreted. The default is Corner.
 ///
@@ -41,11 +89,38 @@ pub enum ImageMode {
     Center,
 }
 
+impl Default for ImageMode {
+    fn default() -> Self {
+        Self::Corner
+    }
+}
+
 /// Represents the data format for an Image as either RGB or RGBA.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum PixelFormat {
     Rgb,
     Rgba,
+}
+
+impl From<png::ColorType> for PixelFormat {
+    fn from(color_type: png::ColorType) -> Self {
+        use png::ColorType::*;
+        match color_type {
+            RGB => Self::Rgb,
+            RGBA => Self::Rgba,
+            _ => panic!("Only RGB and RGBA formats are supported right now."),
+        }
+    }
+}
+
+impl From<PixelFormat> for png::ColorType {
+    fn from(format: PixelFormat) -> Self {
+        use PixelFormat::*;
+        match format {
+            Rgb => Self::RGB,
+            Rgba => Self::RGBA,
+        }
+    }
 }
 
 /// A filter type that can be applied to an image.
@@ -141,7 +216,7 @@ impl Image {
                 channels: RGBA_CHANNELS,
                 pixel_format: PixelFormat::Rgba,
                 data: pixels
-                    .iter()
+                    .par_iter()
                     .map(|c| c.as_slice())
                     .flatten()
                     .copied()
@@ -188,7 +263,7 @@ impl Image {
     pub fn update_pixels(&mut self) {
         self.data = self
             .pixels
-            .iter()
+            .par_iter()
             .map(|c| c.as_slice())
             .flatten()
             .copied()
@@ -348,7 +423,7 @@ impl Image {
     fn get_index<P: Into<Point>>(&self, p: P) -> usize {
         let p: Point = p.into();
         assert!(
-            p.x > 0 && p.y > 0,
+            p.x >= 0 && p.y >= 0,
             "pixel index {:?} is negative",
             (p.x, p.y)
         );
@@ -394,79 +469,5 @@ impl State {
     /// the given src rectangle.
     pub fn draw_image_projected<R: Into<Option<Rect>>>(&mut self, img: Image, dest: R, src: R) {
         // TODO State::draw_image_projected()
-    }
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
-        match self {
-            IoError(err) => write!(f, "io error: {}", err),
-            PngEncodingError(err) => write!(f, "png encoding error: {}", err),
-            PngDecodingError(err) => write!(f, "png decoding error: {}", err),
-            InvalidFormat(format, w, h) => write!(
-                f,
-                "invalid pixel format {:?} for image ({}, {})",
-                &format, w, h
-            ),
-            InvalidFile(path) => write!(f, "invalid file: {}", path.display()),
-            Other(desc) => write!(f, "{}", &desc),
-        }
-    }
-}
-
-impl error::Error for Error {
-    fn cause(&self) -> Option<&(dyn error::Error + 'static)> {
-        use Error::*;
-        match self {
-            IoError(err) => Some(err),
-            PngEncodingError(err) => Some(err),
-            PngDecodingError(err) => Some(err),
-            _ => None,
-        }
-    }
-}
-
-impl From<io::Error> for Error {
-    fn from(err: io::Error) -> Self {
-        Self::IoError(err)
-    }
-}
-
-impl From<png::DecodingError> for Error {
-    fn from(err: png::DecodingError) -> Self {
-        Self::PngDecodingError(err)
-    }
-}
-impl From<png::EncodingError> for Error {
-    fn from(err: png::EncodingError) -> Self {
-        Self::PngEncodingError(err)
-    }
-}
-
-impl From<png::ColorType> for PixelFormat {
-    fn from(color_type: png::ColorType) -> Self {
-        use png::ColorType::*;
-        match color_type {
-            RGB => Self::Rgb,
-            RGBA => Self::Rgba,
-            _ => panic!("Only RGB and RGBA formats are supported right now."),
-        }
-    }
-}
-
-impl From<PixelFormat> for png::ColorType {
-    fn from(format: PixelFormat) -> Self {
-        use PixelFormat::*;
-        match format {
-            Rgb => Self::RGB,
-            Rgba => Self::RGBA,
-        }
-    }
-}
-
-impl Default for ImageMode {
-    fn default() -> Self {
-        Self::Corner
     }
 }

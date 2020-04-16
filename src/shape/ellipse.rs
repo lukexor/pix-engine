@@ -13,6 +13,12 @@ pub enum EllipseMode {
     Corner,
 }
 
+impl Default for EllipseMode {
+    fn default() -> Self {
+        Self::Center
+    }
+}
+
 /// Determines the way arcs are filled. Has no effect if fill is disabled. The default is Pie.
 ///
 /// Pie: Filled as a closed pie segment.
@@ -23,12 +29,6 @@ pub enum ArcMode {
     Pie,
     Open,
     Chord,
-}
-
-impl Default for EllipseMode {
-    fn default() -> Self {
-        Self::Center
-    }
 }
 
 impl Default for ArcMode {

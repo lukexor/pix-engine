@@ -13,60 +13,97 @@ use std::fmt;
 /// Vectors can be combined using "vector" math, so for example two vectors can be added together
 /// to form a new vector using `Vector::add_vectors(v1, v2)` or you can add one vector to another
 /// by calling `v1.add(v2)`.
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Default, Debug, Copy, Clone, PartialEq)]
 pub struct Vector {
     pub x: f32,
     pub y: f32,
     pub z: f32,
 }
 
-impl Vector {
-    /// Creates a new Vector in 3D space. Shortcut for `Vector::new_3d()`.
-    pub fn new(x: f32, y: f32, z: f32) -> Self {
-        if !Self::valid_coordinates(x, y, z) {
-            eprintln!("Vector::new: vector contains components that are either undefined or not finite numbers: {:?}", (x, y, z));
-        }
-        Self { x, y, z }
-    }
-
-    /// Creates a new Vector in 2D space.
-    pub fn new_2d(x: f32, y: f32) -> Self {
-        Self::new(x, y, 0.0)
-    }
-
-    /// Creates a new Vector in 3D space.
-    pub fn new_3d(x: f32, y: f32, z: f32) -> Self {
-        Self::new(x, y, z)
-    }
-
-    /// Creates a new Vector in 3D space from a Point.
-    pub fn from_point(p: Point) -> Self {
-        Self::new(p.x as f32, p.y as f32, p.z as f32)
-    }
-
-    /// Copies the current Vector into a new Vector.
-    pub fn copy(&self) -> Self {
-        *self
-    }
-
-    /// Creates a new Vector in 3D space from given parameters.
+impl<'a> Vector {
+    /// Creates a new Vector in 3D space. Shortcut for `Vector::new_2d()` and `Vector::new_3d()`.
     ///
     /// # Examples
     ///
     /// ```
     /// use pix_engine::math::Vector;
     ///
-    /// let v = Vector::create_vector((1, 2));
-    /// assert_eq!(v.get(), (1.0, 2.0, 0.0));
+    /// let v1 = Vector::new((1, 2));
+    /// assert_eq!(v1.get(), (1.0, 2.0, 0.0));
     ///
-    /// let v = Vector::create_vector((2.1, 3.5, 1.0));
-    /// assert_eq!(v.get(), (2.1, 3.5, 1.0));
-    ///
-    /// let v = Vector::create_vector(Vector::new(0.0, 2.0, 1.0));
-    /// assert_eq!(v.get(), (0.0, 2.0, 1.0));
+    /// let v2 = Vector::new((2.1, 3.5, 1.0));
+    /// assert_eq!(v2.get(), (2.1, 3.5, 1.0));
     /// ```
-    pub fn create_vector<V: Into<Vector>>(v: V) -> Self {
-        v.into()
+    pub fn new<V: Into<Vector>>(v: V) -> Self {
+        let v = v.into();
+        if !Self::valid_coordinates(v.x, v.y, v.z) {
+            eprintln!("Vector::new: vector contains components that are either undefined or not finite numbers: {}", v);
+        }
+        v
+    }
+
+    /// Creates a new Vector in 2D space.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use pix_engine::math::Vector;
+    ///
+    /// let v = Vector::new((1, 2));
+    /// assert_eq!(v.get(), (1.0, 2.0, 0.0));
+    /// ```
+    pub fn new_2d(x: f32, y: f32) -> Self {
+        Self::new_3d(x, y, 0.0)
+    }
+
+    /// Creates a new Vector in 3D space.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use pix_engine::math::Vector;
+    ///
+    /// let v = Vector::new((2.1, 3.5, 1.0));
+    /// assert_eq!(v.get(), (2.1, 3.5, 1.0));
+    /// ```
+    pub fn new_3d(x: f32, y: f32, z: f32) -> Self {
+        if !Self::valid_coordinates(x, y, z) {
+            eprintln!("Vector::new: vector contains components that are either undefined or not finite numbers: {:?}", (x, y, z));
+        }
+        Self { x, y, z }
+    }
+
+    /// Creates a new Vector in 3D space from a Point.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use pix_engine::{shape::Point, math::Vector};
+    ///
+    /// let p = Point::new(1, 2, 3);
+    /// let v = Vector::from_point(p);
+    /// assert_eq!(v.get(), (1.0, 2.0, 3.0));
+    /// ```
+    pub fn from_point(p: Point) -> Self {
+        Self::new_3d(p.x as f32, p.y as f32, p.z as f32)
+    }
+
+    /// Copies the current Vector into a new Vector.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use pix_engine::math::Vector;
+    ///
+    /// let v1 = Vector::new((1, 0, 1));
+    /// let mut v2 = v1.copy();
+    /// v2.x = 2.0;
+    ///
+    /// assert_eq!(v1.get(), (1.0, 0.0, 1.0));
+    /// assert_eq!(v2.get(), (2.0, 0.0, 1.0));
+    /// ```
+    pub fn copy(&self) -> Self {
+        *self
     }
 
     /// Creates a new unit Vector in 2D space from a given angle. Angle is given
@@ -79,15 +116,15 @@ impl Vector {
     ///
     /// let v = Vector::from_angle(30.0, 15.0);
     ///
-    /// let abs_difference_x = (v.x() - 2.3137717).abs();
-    /// let abs_difference_y = (v.y() - (-14.820475)).abs();
+    /// let abs_difference_x = (v.x - 2.3137717).abs();
+    /// let abs_difference_y = (v.y - (-14.820475)).abs();
     ///
     /// assert!(abs_difference_x <= std::f32::EPSILON);
     /// assert!(abs_difference_y <= std::f32::EPSILON);
     /// ```
     pub fn from_angle(angle: f32, length: f32) -> Self {
         let (sin, cos) = angle.sin_cos();
-        Self::new(length * cos, length * sin, 0.0)
+        Self::new_2d(length * cos, length * sin)
     }
 
     /// Make a random unit Vector in 2D space.
@@ -128,62 +165,20 @@ impl Vector {
         let z_base = (1.0 - z * z).sqrt();
         let x = z_base * cos;
         let y = z_base * sin;
-        Self::new(x, y, z)
+        Self::new_3d(x, y, z)
     }
 
     /// Get the xyz coordinates as a tuple.
-    pub const fn get(self) -> (f32, f32, f32) {
+    pub const fn get(&self) -> (f32, f32, f32) {
         (self.x, self.y, self.z)
     }
-    /// Get the mutable xyz coordinates as a tuple.
-    pub fn get_mut(&mut self) -> (&mut f32, &mut f32, &mut f32) {
-        (&mut self.x, &mut self.y, &mut self.z)
-    }
+
     /// Set the xyz coordinates.
     pub fn set<V: Into<Vector>>(&mut self, v: V) {
         let v = v.into();
         self.x = v.x;
         self.y = v.y;
         self.z = v.z;
-    }
-
-    /// Get the x coordinate.
-    pub const fn x(self) -> f32 {
-        self.x
-    }
-    /// Get a mutable x coordinate.
-    pub fn x_mut(&mut self) -> &mut f32 {
-        &mut self.x
-    }
-    /// Set the x coordinate.
-    pub fn set_x(&mut self, x: f32) {
-        self.x = x;
-    }
-
-    /// Get the y coordinate.
-    pub const fn y(self) -> f32 {
-        self.y
-    }
-    /// Get a mutable y coordinate.
-    pub fn y_mut(&mut self) -> &mut f32 {
-        &mut self.y
-    }
-    /// Set the y coordinate.
-    pub fn set_y(&mut self, y: f32) {
-        self.y = y;
-    }
-
-    /// Get the z coordinate.
-    pub const fn z(self) -> f32 {
-        self.z
-    }
-    /// Get a mutable z coordinate.
-    pub fn z_mut(&mut self) -> &mut f32 {
-        &mut self.z
-    }
-    /// Set the z coordinate.
-    pub fn set_z(&mut self, z: f32) {
-        self.z = z;
     }
 
     /// Adds a vector to the current Vector.
@@ -193,16 +188,13 @@ impl Vector {
     /// ```
     /// use pix_engine::math::Vector;
     ///
-    /// let mut v = Vector::create_vector((1, 2, 3));
+    /// let mut v = Vector::new((1, 2, 3));
     ///
     /// v.add((4, 5));
     /// assert_eq!(v.get(), (5.0, 7.0, 3.0));
     ///
     /// v.add((2, 0, 6));
     /// assert_eq!(v.get(), (7.0, 7.0, 9.0));
-    ///
-    /// v.add(Vector::new(1.0, 2.0, -3.0));
-    /// assert_eq!(v.get(), (8.0, 9.0, 6.0));
     /// ```
     pub fn add<V: Into<Vector>>(&mut self, v: V) {
         let v = v.into();
@@ -218,16 +210,13 @@ impl Vector {
     /// ```
     /// use pix_engine::math::Vector;
     ///
-    /// let mut v = Vector::create_vector((1, 2, 3));
+    /// let mut v = Vector::new((1, 2, 3));
     ///
     /// v.sub((4, 5));
     /// assert_eq!(v.get(), (-3.0, -3.0, 3.0));
     ///
     /// v.sub((2, 0, 6));
     /// assert_eq!(v.get(), (-5.0, -3.0, -3.0));
-    ///
-    /// v.sub(Vector::new(1.0, 2.0, -3.0));
-    /// assert_eq!(v.get(), (-6.0, -5.0, 0.0));
     /// ```
     pub fn sub<V: Into<Vector>>(&mut self, v: V) {
         let v = v.into();
@@ -236,47 +225,21 @@ impl Vector {
         self.z -= v.z;
     }
 
-    /// Multiplies the current Vector by another 3D Vector.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use pix_engine::math::Vector;
-    ///
-    /// let mut v = Vector::create_vector((1, 2, 3));
-    ///
-    /// v.mul((2, 0, -1));
-    /// assert_eq!(v.get(), (2.0, 0.0, -3.0));
-    ///
-    /// v.mul(Vector::new(1.5, 2.0, -3.0));
-    /// assert_eq!(v.get(), (3.0, 0.0, 9.0));
-    /// ```
-    pub fn mul<V: Into<Vector>>(&mut self, v: V) {
-        let v = v.into();
-        if !Self::valid_coordinates(v.x, v.y, v.z) {
-            eprintln!("Vector::mul: vector contains components that are either undefined or not finite numbers: {}", v);
-        } else {
-            self.x *= v.x;
-            self.y *= v.y;
-            self.z *= v.z;
-        }
-    }
-
     /// Multiplies the current Vector by a scaler.
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```
     /// use pix_engine::math::Vector;
     ///
-    /// let mut v = Vector::create_vector((1, 2, 3));
-    /// v.mul_scaler(2.0);
+    /// let mut v = Vector::new((1, 2, 3));
+    /// v.mul(2.0);
     /// assert_eq!(v.get(), (2.0, 4.0, 6.0));
     /// ```
-    pub fn mul_scaler(&mut self, s: f32) {
+    pub fn mul(&mut self, s: f32) {
         if s.is_infinite() || s.is_nan() {
             eprintln!(
-                "Vector::mul_scaler: scaler is either undefined or not finite: {}",
+                "Vector::mul: scaler is either undefined or not finite: {}",
                 s
             );
         } else {
@@ -286,50 +249,21 @@ impl Vector {
         }
     }
 
-    /// Divides the current Vector by another 3D Vector.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use pix_engine::math::Vector;
-    ///
-    /// let mut v = Vector::create_vector((4, 5, 6));
-    ///
-    /// v.div((1, 2, 3));
-    /// assert_eq!(v.get(), (4.0, 2.5, 2.0));
-    ///
-    /// v.div((2.0, 1.0, 2.0));
-    /// assert_eq!(v.get(), (2.0, 2.5, 1.0));
-    ///
-    /// v.div(Vector::new(1.0, 2.0, -0.5));
-    /// assert_eq!(v.get(), (2.0, 1.25, -2.0));
-    /// ```
-    pub fn div<V: Into<Vector>>(&mut self, v: V) {
-        let v = v.into();
-        if v.x == 0.0 || v.y == 0.0 || v.z == 0.0 {
-            eprintln!("Vector::div: divide by zero: {}", v);
-        } else {
-            self.x /= v.x;
-            self.y /= v.y;
-            self.z /= v.z;
-        }
-    }
-
     /// Divides the current Vector by a scaler.
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```
     /// use pix_engine::math::Vector;
     ///
-    /// let mut v = Vector::create_vector((2, 4, 6));
-    /// v.div_scaler(2.0);
+    /// let mut v = Vector::new((2, 4, 6));
+    /// v.div(2.0);
     /// assert_eq!(v.get(), (1.0, 2.0, 3.0));
     /// ```
-    pub fn div_scaler(&mut self, s: f32) {
+    pub fn div(&mut self, s: f32) {
         if s == 0.0 || s.is_infinite() || s.is_nan() {
             eprintln!(
-                "Vector::mul_scaler: scaler is either zero, undefined or not finite: {}",
+                "Vector::mul: scaler is either zero, undefined or not finite: {}",
                 s
             );
         } else {
@@ -341,12 +275,12 @@ impl Vector {
 
     /// Calculates the remainder of a Vector when divided by another Vector.
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```
     /// use pix_engine::math::Vector;
     ///
-    /// let v = Vector::create_vector((3, 4, 5));
+    /// let v = Vector::new((3, 4, 5));
     /// let rem = v.rem((2, 3, 3));
     /// assert_eq!(rem.get(), (1.0, 1.0, 2.0));
     /// ```
@@ -369,12 +303,12 @@ impl Vector {
     ///
     /// The formula is `sqrt(x*x + y*y + z*z)`.
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```
     /// use pix_engine::math::Vector;
     ///
-    /// let v = Vector::create_vector((1, 2, 3));
+    /// let v = Vector::new((1, 2, 3));
     /// let abs_difference = (v.mag() - 3.7416575).abs();
     /// assert!(abs_difference <= std::f32::EPSILON);
     /// ```
@@ -387,12 +321,12 @@ impl Vector {
     ///
     /// The formula is `x*x + y*y + z*z`.
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```
     /// use pix_engine::math::Vector;
     ///
-    /// let v = Vector::create_vector((1, 2, 3));
+    /// let v = Vector::new((1, 2, 3));
     /// assert_eq!(v.mag_sq(), 14.0);
     /// ```
     pub fn mag_sq(&self) -> f32 {
@@ -401,18 +335,18 @@ impl Vector {
 
     /// Set the magnitude (length) of the Vector.
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```
     /// use pix_engine::math::Vector;
     ///
-    /// let mut v = Vector::create_vector((10, 20, 2));
+    /// let mut v = Vector::new((10, 20, 2));
     /// v.set_mag(10.0);
     ///
     /// let abs_difference_mag = (v.mag() - 10.0).abs();
-    /// let abs_difference_x = (v.x() - 4.4543543).abs();
-    /// let abs_difference_y = (v.y() - 8.908709).abs();
-    /// let abs_difference_z = (v.z() - 0.8908708).abs();
+    /// let abs_difference_x = (v.x - 4.4543543).abs();
+    /// let abs_difference_y = (v.y - 8.908709).abs();
+    /// let abs_difference_z = (v.z - 0.8908708).abs();
     ///
     /// assert!(abs_difference_mag <= std::f32::EPSILON);
     /// assert!(abs_difference_x <= std::f32::EPSILON);
@@ -421,17 +355,17 @@ impl Vector {
     /// ```
     pub fn set_mag(&mut self, mag: f32) {
         self.normalize();
-        self.mul_scaler(mag);
+        self.mul(mag);
     }
 
     /// Calculates and returns the dot product with another Vector.
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```
     /// use pix_engine::math::Vector;
     ///
-    /// let v = Vector::create_vector((1, 2, 3));
+    /// let v = Vector::new((1, 2, 3));
     /// let dot_product = v.dot((2, 3, 4));
     /// assert_eq!(dot_product, 20.0);
     /// ```
@@ -442,19 +376,19 @@ impl Vector {
 
     /// Calculates and returns the Vector cross product with another Vector.
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```
     /// use pix_engine::math::Vector;
     ///
-    /// let v1 = Vector::create_vector((1, 2, 3));
-    /// let v2 = Vector::create_vector((1, 2, 3));
+    /// let v1 = Vector::new((1, 2, 3));
+    /// let v2 = Vector::new((1, 2, 3));
     /// let cross = v1.cross(v2);
     /// assert_eq!(cross.get(), (0.0, 0.0, 0.0));
     /// ```
     pub fn cross<V: Into<Vector>>(&self, v: V) -> Self {
         let v = v.into();
-        Self::new(
+        Self::new_3d(
             self.y * v.z - self.z * v.y,
             self.z * v.x - self.x * v.z,
             self.x * v.y - self.y * v.x,
@@ -463,13 +397,13 @@ impl Vector {
 
     /// Calculates the Euclidean distance between the current Vector and another vector.
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```
     /// use pix_engine::math::Vector;
     ///
-    /// let v1 = Vector::create_vector((1, 0, 0));
-    /// let v2 = Vector::create_vector((0, 1, 0));
+    /// let v1 = Vector::new((1, 0, 0));
+    /// let v2 = Vector::new((0, 1, 0));
     /// let dist = v1.dist(v2);
     ///
     /// let abs_difference = (dist - 2f32.sqrt()).abs();
@@ -484,20 +418,20 @@ impl Vector {
 
     /// Normalize the Vector to length 1 making it a unit vector.
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```
     /// use pix_engine::math::Vector;
     ///
-    /// let mut v = Vector::create_vector((10, 20, 2));
+    /// let mut v = Vector::new((10, 20, 2));
     /// v.normalize();
     ///
     /// let abs_difference_mag = (v.mag() - 1.0).abs();
     /// assert!(abs_difference_mag <= std::f32::EPSILON);
     ///
-    /// let abs_difference_x = (v.x() - 0.4454354).abs();
-    /// let abs_difference_y = (v.y() - 0.8908708).abs();
-    /// let abs_difference_z = (v.z() - 0.089087084).abs();
+    /// let abs_difference_x = (v.x - 0.4454354).abs();
+    /// let abs_difference_y = (v.y - 0.8908708).abs();
+    /// let abs_difference_z = (v.z - 0.089087084).abs();
     ///
     /// assert!(abs_difference_x <= std::f32::EPSILON);
     /// assert!(abs_difference_y <= std::f32::EPSILON);
@@ -507,23 +441,23 @@ impl Vector {
         let len = self.mag();
         if len != 0.0 {
             // Multiply by the reciprocol so we don't duploicate a div by zero check
-            self.mul_scaler(1.0 / len);
+            self.mul(1.0 / len);
         }
     }
 
     /// Limit the magnitude (length) of this vector to the value given by max.
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```
     /// use pix_engine::math::Vector;
     ///
-    /// let mut v = Vector::create_vector((10, 20, 2));
+    /// let mut v = Vector::new((10, 20, 2));
     /// v.limit(5.0);
     ///
-    /// let abs_difference_x = (v.x() - 2.2271771).abs();
-    /// let abs_difference_y = (v.y() - 4.4543543).abs();
-    /// let abs_difference_z = (v.z() - 0.4454354).abs();
+    /// let abs_difference_x = (v.x - 2.2271771).abs();
+    /// let abs_difference_y = (v.y - 4.4543543).abs();
+    /// let abs_difference_z = (v.z - 0.4454354).abs();
     ///
     /// assert!(abs_difference_x <= std::f32::EPSILON, "x {}", abs_difference_x);
     /// assert!(abs_difference_y <= std::f32::EPSILON, "y {}", abs_difference_y);
@@ -532,20 +466,20 @@ impl Vector {
     pub fn limit(&mut self, max: f32) {
         let mag_sq = self.mag_sq();
         if mag_sq > max * max {
-            self.div_scaler(mag_sq.sqrt()); // Normalize vector
-            self.mul_scaler(max);
+            self.div(mag_sq.sqrt()); // Normalize vector
+            self.mul(max);
         }
     }
 
     /// Calculate the angle of rotation for a 2D Vector in radians. To convert to degrees you can
     /// call `to_degrees()` on the result.
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```
     /// use pix_engine::math::Vector;
     ///
-    /// let v = Vector::create_vector((10, 10));
+    /// let v = Vector::new((10, 10));
     /// let heading = v.heading();
     /// assert_eq!(heading.to_degrees(), 45.0);
     /// ```
@@ -555,16 +489,16 @@ impl Vector {
 
     /// Rotate a 2D Vector by an angle in radians, magnitude remains the same.
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```
     /// use pix_engine::{constants::HALF_PI, math::Vector};
     ///
-    /// let mut v = Vector::create_vector((10, 20));
+    /// let mut v = Vector::new((10, 20));
     /// v.rotate(HALF_PI);
     ///
-    /// let abs_difference_x = (v.x() - (-20.000002)).abs();
-    /// let abs_difference_y = (v.y() - 9.999998).abs();
+    /// let abs_difference_x = (v.x - (-20.000002)).abs();
+    /// let abs_difference_y = (v.y - 9.999998).abs();
     ///
     /// assert!(abs_difference_x <= std::f32::EPSILON);
     /// assert!(abs_difference_y <= std::f32::EPSILON);
@@ -579,13 +513,13 @@ impl Vector {
 
     /// Calculates and returns the angle between the current Vector and another Vector in radians.
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```
     /// use pix_engine::{constants::HALF_PI, math::Vector};
     ///
-    /// let v1 = Vector::create_vector((1, 0, 0));
-    /// let v2 = Vector::create_vector((0, 1, 0));
+    /// let v1 = Vector::new((1, 0, 0));
+    /// let v2 = Vector::new((0, 1, 0));
     /// let angle = v1.angle_between(v2);
     /// assert_eq!(angle, HALF_PI);
     /// ```
@@ -600,33 +534,81 @@ impl Vector {
     /// Reflect the current Vector about a normal to a line in 2D space, or about a normal to
     /// a plane in 3D space.
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```
     /// use pix_engine::math::Vector;
     ///
-    /// let mut v = Vector::create_vector((4, 6)); // Vector heading right and down
-    /// let n = Vector::create_vector((0, -1)); // Surface normal facing up
+    /// let mut v = Vector::new((4, 6)); // Vector heading right and down
+    /// let n = Vector::new((0, -1)); // Surface normal facing up
     /// v.reflect(n); // Reflect about the surface normal (e.g. the x-axis)
-    /// assert_eq!(v.x(), 4.0);
-    /// assert_eq!(v.y(), -6.0);
+    ///
+    /// assert_eq!(v.x, 4.0);
+    /// assert_eq!(v.y, -6.0);
     ///
     /// ```
     pub fn reflect<V: Into<Vector>>(&mut self, normal: V) {
         let mut normal = normal.into();
-        normal.mul_scaler(2.0 * self.dot(normal));
+        normal.mul(2.0 * self.dot(normal));
         self.sub(normal);
+    }
+
+    /// Linear interpolate the current vector to another vector.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use pix_engine::math::Vector;
+    ///
+    /// let mut v1 = Vector::new((1, 1, 0));
+    /// let v2 = Vector::new((3, 3, 0));
+    /// v1.lerp(v2, 0.5);
+    ///
+    /// assert_eq!(v1.get(), (2.0, 2.0, 0.0));
+    /// ```
+    pub fn lerp<V: Into<Vector>>(&mut self, v: V, amt: f32) {
+        let v = v.into();
+        self.x += (v.x - self.x) * amt;
+        self.y += (v.y - self.y) * amt;
+        self.z += (v.z - self.z) * amt;
+    }
+
+    /// Returns a representation of this vector as a Vec of f32 values. Useful for temporary use.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use pix_engine::math::Vector;
+    ///
+    /// let mut v = Vector::new((1, 1, 0));
+    /// assert_eq!(v.to_vec(), vec![1.0, 1.0, 0.0]);
+    /// ```
+    pub fn to_vec(&self) -> Vec<f32> {
+        vec![self.x, self.y, self.z]
+    }
+
+    /// Gets a Vector as a slice of xyz f32 values.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use pix_engine::math::Vector;
+    ///
+    /// let mut v = Vector::new((1, 1, 0));
+    /// assert_eq!(v.as_slice(), &[1.0, 1.0, 0.0]);
+    /// ```
+    pub fn as_slice(&self) -> &'a [f32] {
+        unsafe { core::slice::from_raw_parts(self as *const Self as *const f32, 3) }
+    }
+
+    /// Gets a Vector as a mutable slice of xyz f32 values.
+    pub fn as_slice_mut(&mut self) -> &'a mut [f32] {
+        unsafe { core::slice::from_raw_parts_mut(self as *mut Self as *mut f32, 3) }
     }
 
     /// Helper function to validate coordinates are finite and defined.
     fn valid_coordinates(x: f32, y: f32, z: f32) -> bool {
         x.is_finite() && y.is_finite() && z.is_finite() && !x.is_nan() && !y.is_nan() && !z.is_nan()
-    }
-}
-
-impl Default for Vector {
-    fn default() -> Self {
-        Self::new(0.0, 0.0, 0.0)
     }
 }
 

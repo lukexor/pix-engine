@@ -26,7 +26,9 @@ impl State {
     ///
     /// Errors if the title contains a nul byte.
     pub fn set_title(&mut self, title: &str) {
-        self.get_window_mut().set_title(title);
+        if let Some(w) = self.get_window_mut() {
+            w.set_title(title);
+        }
     }
 
     /// Rendering
@@ -54,7 +56,7 @@ impl State {
         for window_id in window_ids {
             let _ = self.set_window_target(window_id);
             self.clear();
-            let _ = self.set_window_target(None);
+            let _ = self.revert_window_target();
         }
     }
 

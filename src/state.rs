@@ -7,10 +7,10 @@ use std::{borrow::Cow, error, fmt, vec::Drain};
 use window::Window;
 
 pub mod rendering;
+pub mod window;
 
 mod environment;
 mod setting;
-mod window;
 
 /// Result type for State Errors.
 pub type Result<T> = std::result::Result<T, Error>;
@@ -57,9 +57,7 @@ pub struct State {
     pub(crate) should_loop: bool,
     pub(crate) manual_update: u32, // Used to manually update when should_loop is false
     pub(crate) environment: Environment,
-    primary_window: u32,
-    window_target: u32,
-    window_target_history: Vec<u32>,
+    window_targets: Vec<u32>,
     windows: Vec<Window>,
     // input_states
     // elements
@@ -68,19 +66,16 @@ pub struct State {
 
 impl State {
     /// Creates a new State instance
-    pub fn new(title: &str, width: u32, height: u32) -> Result<Self> {
-        let renderer = renderer::load_renderer(title, width, height)?;
-        let primary_window = renderer.default_window_id();
+    pub fn new() -> Result<Self> {
+        let renderer = renderer::load_renderer()?;
         Ok(Self {
             renderer,
             events: Vec::new(),
             should_loop: true,
             manual_update: 1, // Always loop at least once on start
             environment: Environment::default(),
-            primary_window,
-            window_target: primary_window,
-            window_target_history: Vec::new(),
-            windows: vec![Window::new(primary_window, title)],
+            window_targets: Vec::new(),
+            windows: vec![],
         })
     }
 
@@ -124,56 +119,54 @@ impl State {
     /// Window Management
 
     /// Get a window based on the current window target
-    pub(crate) fn get_window(&self) -> &Window {
-        let target = self.window_target();
-        self.windows
-            .iter()
-            .find(|w| target == w.id())
-            .expect("valid window target")
+    pub(crate) fn get_window(&self) -> Option<&Window> {
+        self.window_target().map(move |target| {
+            self.windows
+                .iter()
+                .find(|w| target == w.id())
+                .expect("valid window target")
+        })
     }
     /// Get a mutable window based on the current window target
-    pub(crate) fn get_window_mut(&mut self) -> &mut Window {
-        let target = self.window_target();
-        self.windows
-            .iter_mut()
-            .find(|w| target == w.id())
-            .expect("valid window target")
+    pub(crate) fn get_window_mut(&mut self) -> Option<&mut Window> {
+        self.window_target().map(move |target| {
+            self.windows
+                .iter_mut()
+                .find(|w| target == w.id())
+                .expect("valid window target")
+        })
     }
 
     /// Get the primary window_id
-    pub fn primary_window(&self) -> u32 {
-        self.primary_window
+    pub fn primary_window(&self) -> Option<u32> {
+        self.windows.first().map(|w| w.id())
     }
     /// Get the window_id of the current window target
-    pub fn window_target(&self) -> u32 {
-        self.window_target
+    pub fn window_target(&self) -> Option<u32> {
+        self.window_targets.last().copied()
     }
 
-    /// Set a new window target. Setting None will revert to the default window.
+    /// Set a new temporary window target. Each call to this function will push a window_id on to
+    /// a window target history stack. Call `State::revert_window_target()` to go back to the
+    /// previous window.
     ///
     /// Errors if the window_id is not a valid window_id.
-    pub fn set_window_target<I: Into<Option<u32>>>(&mut self, window_id: I) -> Result<()> {
-        let window_id = window_id.into();
-        if Some(self.window_target) != window_id {
-            let id = match window_id {
-                Some(id) => {
-                    if self.windows.iter().any(|w| id == w.id()) {
-                        self.window_target_history.push(self.window_target);
-                        id
-                    } else {
-                        return Err(Error::InvalidWindowTarget(id));
-                    }
-                }
-                None => self
-                    .window_target_history
-                    .pop()
-                    .or_else(|| Some(self.windows[0].id()))
-                    .unwrap(),
-            };
-            self.window_target = id;
-            self.renderer.set_window_target(id);
+    pub fn set_window_target(&mut self, window_id: u32) -> Result<()> {
+        let target = self.window_targets.last();
+        if self.windows.iter().any(|w| window_id == w.id()) {
+            self.window_targets.push(window_id);
+            self.renderer.set_window_target(window_id);
+            Ok(())
+        } else {
+            Err(Error::InvalidWindowTarget(window_id))
         }
-        Ok(())
+    }
+
+    /// Reverts window target to the previous target and returns it's window_id. If there is no
+    /// previous window target, `State::window_target()` will return None.
+    pub fn revert_window_target(&mut self) -> Option<u32> {
+        let id = self.window_targets.pop();
+        id
     }
 
     /// Create and open a new window.
@@ -188,8 +181,9 @@ impl State {
     ///
     /// Returns true when all windows are closed.
     pub fn close_window(&mut self) -> bool {
-        let target = self.window_target();
-        self.windows.retain(|w| target != w.id());
+        if let Some(target) = self.window_target() {
+            self.windows.retain(|w| target != w.id());
+        }
         self.renderer.close_window()
     }
 }

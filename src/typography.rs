@@ -1,14 +1,24 @@
-// use std::path::PathBuf;
 use bitflags::bitflags;
+use std::path::PathBuf;
 
 pub const DEFAULT_TEXT_LEADING: u32 = 15;
 pub const DEFAULT_TEXT_SIZE: u32 = 12;
 
-/// Represents a specfic font-family
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum Font {
+#[derive(Default, Debug, Clone)]
+pub struct Font {
+    pub(crate) size: u32,
+    pub(crate) leading: u32,
+    pub(crate) align: TextAlign,
+    pub(crate) style: TextStyle,
+    pub(crate) family: FontFamily,
+}
+
+/// Represents a specfic font-family such as Arial, "Times New Roman", or a custom
+/// family loaded from a `.ttf` file.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum FontFamily {
     Arial,
-    // Custom(String, PathBuf),
+    Custom(String, PathBuf), // Family name, `.ttf` path
 }
 
 bitflags! {
@@ -33,7 +43,7 @@ pub enum TextStyle {
     BoldItalic,
 }
 
-impl Default for Font {
+impl Default for FontFamily {
     fn default() -> Self {
         Self::Arial
     }
@@ -44,7 +54,6 @@ impl Default for TextAlign {
         Self::LEFT | Self::TOP
     }
 }
-
 impl Default for TextStyle {
     fn default() -> Self {
         Self::Normal

@@ -47,12 +47,12 @@ pub(super) mod sdl2;
 pub(super) mod wasm;
 
 #[cfg(all(feature = "sdl2-renderer", not(feature = "wasm-renderer")))]
-pub(crate) fn load_renderer(title: &str, width: u32, height: u32) -> Result<sdl2::Sdl2Renderer> {
-    sdl2::Sdl2Renderer::new(title, width, height)
+pub(crate) fn load_renderer() -> Result<sdl2::Sdl2Renderer> {
+    sdl2::Sdl2Renderer::new()
 }
 #[cfg(all(feature = "wasm-renderer", not(feature = "sdl2-renderer")))]
 pub(crate) fn load_renderer(title: &str, width: u32, height: u32) -> Result<wasm::WasmRenderer> {
-    wasm::WasmRenderer::new(title, width, height)
+    wasm::WasmRenderer::new()
 }
 
 pub(crate) trait Renderer {
@@ -151,14 +151,11 @@ pub(crate) trait Renderer {
 
     /// Window Management
 
-    /// Returns the id of the default window created on instantiation.
-    fn default_window_id(&self) -> u32;
-
     /// Get the id of the current window target.
-    fn window_target(&self) -> u32;
+    fn window_target(&self) -> Option<u32>;
 
     /// Set the current window target.
-    fn set_window_target<I: Into<Option<u32>>>(&mut self, _window_id: I);
+    fn set_window_target(&mut self, window_id: u32);
 
     /// Create and open a new window.
     ///

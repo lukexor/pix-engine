@@ -3,6 +3,7 @@ use crate::gui::CursorType;
 
 const DEFAULT_TARGET_FRAME_RATE: u32 = 60;
 
+#[derive(Default, Debug, Clone)]
 pub(crate) struct Environment {
     /// Number of frames since start of execution
     frame_count: u32,
@@ -26,14 +27,12 @@ impl Environment {
     pub(crate) fn new() -> Self {
         let (width, height, density) = Self::determine_display_dimensions();
         Self {
-            frame_count: 0,
-            frame_rate: 0,
             target_frame_rate: Self::default_target_frame_rate(),
-            delta_time: 0.0,
             display_width: width,
             display_height: height,
             display_density: density,
-            cursor: Some(CursorType::Arrow),
+            cursor: Some(CursorType::default()),
+            ..Default::default()
         }
     }
 
@@ -110,11 +109,5 @@ impl State {
     /// Used by the core update loop to set the delta time
     pub(crate) fn set_delta_time(&mut self, time: f32) {
         self.environment.delta_time = time;
-    }
-}
-
-impl Default for Environment {
-    fn default() -> Self {
-        Self::new()
     }
 }

@@ -1,3 +1,4 @@
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum CursorType {
     Arrow,
     IBeam,
@@ -6,4 +7,10 @@ pub enum CursorType {
     WaitArrow,
     No,
     Hand,
+}
+
+impl Default for CursorType {
+    fn default() -> Self {
+        Self::Arrow
+    }
 }

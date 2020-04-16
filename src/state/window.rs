@@ -1,8 +1,22 @@
 use super::setting::Setting;
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum WindowPos {
+    Centered,
+    Positioned(i32),
+}
+
+impl Default for WindowPos {
+    fn default() -> Self {
+        Self::Centered
+    }
+}
+
+#[derive(Default, Clone)]
 pub(crate) struct Window {
     id: u32,
     title: String,
+    focused: bool,
     pub(crate) setting_stack: Vec<Setting>,
     pub(crate) settings: Setting,
 }
@@ -13,6 +27,7 @@ impl Window {
         Self {
             id,
             title: title.to_owned(),
+            focused: false,
             setting_stack: Vec::new(),
             settings: Setting::default(),
         }
