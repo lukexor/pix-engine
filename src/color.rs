@@ -29,14 +29,14 @@ pub struct Color {
 }
 
 impl<'a> Color {
-    /// Creates a new Rgb Color (same as calling new)
+    /// Creates a new Rgb Color.
     #[inline(always)]
     #[allow(non_snake_case)]
     pub const fn RGB(r: u8, g: u8, b: u8) -> Self {
         Self::RGBA(r, g, b, 255)
     }
 
-    /// Creates a new Rgb Color with alpha
+    /// Creates a new Rgb Color with alpha.
     #[inline(always)]
     #[allow(non_snake_case)]
     pub const fn RGBA(r: u8, g: u8, b: u8, a: u8) -> Self {
@@ -49,8 +49,7 @@ impl<'a> Color {
         }
     }
 
-    /// Creates a new Rgb Color from a u32
-    #[inline(always)]
+    /// Creates a new Color from a u32.
     pub const fn from_u32(color: u32) -> Self {
         Self {
             r: (color >> RED_SHIFT) as u8,
@@ -61,8 +60,7 @@ impl<'a> Color {
         }
     }
 
-    /// Converts a Color to a u32 representation
-    #[inline(always)]
+    /// Converts a Color to a u32 representation.
     pub const fn to_u32(self, color: u32) -> u32 {
         (self.r as u32) << RED_SHIFT
             | (self.g as u32) << GREEN_SHIFT
@@ -70,57 +68,74 @@ impl<'a> Color {
             | (self.a as u32) << ALPHA_SHIFT
     }
 
-    /// Returns an rgb tuple
+    /// Get the rgb value as a tuple.
     #[inline(always)]
     pub const fn rgb(self) -> (u8, u8, u8) {
         (self.r, self.g, self.b)
     }
 
-    /// Returns an rgba tuple
+    /// Get the rgba values as a tuple.
     #[inline(always)]
     pub const fn rgba(self) -> (u8, u8, u8, u8) {
         (self.r, self.g, self.b, self.a)
     }
 
-    /// Get the red value of the color ranging from 0-255
+    /// Set the rgb value.
+    #[inline(always)]
+    pub fn set_rgb(&mut self, r: u8, g: u8, b: u8) {
+        self.r = r;
+        self.g = g;
+        self.b = b;
+    }
+
+    /// Set the rgba value.
+    #[inline(always)]
+    pub fn set_rgba(&mut self, r: u8, g: u8, b: u8, a: u8) {
+        self.r = r;
+        self.g = g;
+        self.b = b;
+        self.a = a;
+    }
+
+    /// Get the red value of the color ranging from 0-255.
     #[inline(always)]
     pub const fn r(self) -> u8 {
         self.r
     }
-    /// Set the red value of the color ranging from 0-255
+    /// Set the red value of the color ranging from 0-255.
     #[inline(always)]
     pub fn set_r(&mut self, r: u8) {
         self.r = r;
     }
 
-    /// Get the green value of the color ranging from 0-255
+    /// Get the green value of the color ranging from 0-255.
     #[inline(always)]
     pub const fn g(self) -> u8 {
         self.g
     }
-    /// Set the green value of the color ranging from 0-255
+    /// Set the green value of the color ranging from 0-255.
     #[inline(always)]
     pub fn set_g(&mut self, g: u8) {
         self.g = g;
     }
 
-    /// Get the blue value of the color ranging from 0-255
+    /// Get the blue value of the color ranging from 0-255.
     #[inline(always)]
     pub const fn b(self) -> u8 {
         self.b
     }
-    /// Set the blue value of the color ranging from 0-255
+    /// Set the blue value of the color ranging from 0-255.
     #[inline(always)]
     pub fn set_b(&mut self, b: u8) {
         self.b = b;
     }
 
-    /// Get the alpha value of the color ranging from 0-255
+    /// Get the alpha value of the color ranging from 0-255.
     #[inline(always)]
     pub const fn a(self) -> u8 {
         self.a
     }
-    /// Set the alpha value of the color ranging from 0-255
+    /// Set the alpha value of the color ranging from 0-255.
     #[inline(always)]
     pub fn set_a(&mut self, a: u8) {
         self.a = a;
@@ -128,13 +143,11 @@ impl<'a> Color {
 
     /// Gets a Color as a slice of rgba values.
     #[allow(clippy::trivially_copy_pass_by_ref)]
-    #[inline(always)]
     pub fn as_slice(&self) -> &'a [u8] {
         unsafe { core::slice::from_raw_parts(self as *const Self as *const u8, 4) }
     }
 
     /// Gets a Color as a mutable slice of rgba values.
-    #[inline(always)]
     pub fn as_slice_mut(&mut self) -> &'a mut [u8] {
         unsafe { core::slice::from_raw_parts_mut(self as *mut Self as *mut u8, 4) }
     }

@@ -68,7 +68,7 @@ pub struct State {
 
 impl State {
     /// Creates a new State instance
-    pub(crate) fn new(title: &str, width: u32, height: u32) -> Result<Self> {
+    pub fn new(title: &str, width: u32, height: u32) -> Result<Self> {
         let renderer = renderer::load_renderer(title, width, height)?;
         let primary_window = renderer.default_window_id();
         Ok(Self {

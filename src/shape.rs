@@ -1,4 +1,5 @@
-use crate::state::State;
+use crate::{math::Vector, state::State};
+use std::fmt;
 
 mod ellipse;
 
@@ -33,6 +34,7 @@ pub struct Rect {
 pub struct Point {
     pub x: i32,
     pub y: i32,
+    pub z: i32,
 }
 
 /// Sets the style for rendering line endings. More noticeable when stroke weight is set greater
@@ -54,15 +56,32 @@ pub enum StrokeJoin {
 }
 
 impl Rect {
-    fn new(x: i32, y: i32, w: u32, h: u32) -> Self {
+    pub fn new(x: i32, y: i32, w: u32, h: u32) -> Self {
         Self { x, y, w, h }
     }
 }
 
 impl Point {
-    fn new(x: i32, y: i32) -> Self {
-        Self { x, y }
+    /// Creates a new Point in 3D space.
+    pub fn new(x: i32, y: i32, z: i32) -> Self {
+        Self { x, y, z }
     }
+
+    /// Creates a new Point in 3D space from a Vector. Any decimal values of the Vector will be
+    /// truncated.
+    pub fn from_vector(v: Vector) -> Self {
+        Self::new(v.x as i32, v.y as i32, v.z as i32)
+    }
+
+    // /// Creates a new random Point in 2D space
+    // pub fn random_2d() -> Self {
+    //     Self::new(x, y, 0)
+    // }
+
+    // /// Creates a new random Point in 3D space
+    // pub fn random_3d() -> Self {
+    //     Self::new(x, y, z)
+    // }
 }
 
 impl Default for RectMode {
@@ -79,27 +98,52 @@ impl Default for Rect {
 
 impl Default for Point {
     fn default() -> Self {
-        Self::new(0, 0)
+        Self::new(0, 0, 0)
     }
 }
 
-/// From tuple of (width, height) to Rect
+/// From tuple of (width, height) to Rect.
 impl From<(u32, u32)> for Rect {
     fn from((w, h): (u32, u32)) -> Self {
         Self::new(0, 0, w, h)
     }
 }
-/// From tuple of (x, y, width, height) to Rect
+/// From tuple of (x, y, width, height) to Rect.
 impl From<(i32, i32, u32, u32)> for Rect {
     fn from((x, y, w, h): (i32, i32, u32, u32)) -> Self {
         Self::new(x, y, w, h)
     }
 }
 
-/// From tuple of (x, y) to Point
+/// From 2D tuple of (x, y) to Point.
 impl From<(i32, i32)> for Point {
     fn from((x, y): (i32, i32)) -> Self {
-        Self::new(x, y)
+        Self::new(x, y, 0)
+    }
+}
+
+/// From 3D tuple of (x, y) to Point.
+impl From<(i32, i32, i32)> for Point {
+    fn from((x, y, z): (i32, i32, i32)) -> Self {
+        Self::new(x, y, z)
+    }
+}
+
+impl From<Vector> for Point {
+    fn from(v: Vector) -> Self {
+        Self::from_vector(v)
+    }
+}
+
+impl fmt::Display for Rect {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({}, {}, {}, {})", self.x, self.y, self.w, self.h)
+    }
+}
+
+impl fmt::Display for Point {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({}, {}, {})", self.x, self.y, self.z)
     }
 }
 
