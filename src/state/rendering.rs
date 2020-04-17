@@ -1,4 +1,4 @@
-use super::State;
+use super::{Result, State};
 use crate::renderer::Renderer;
 
 pub const DEFAULT_BLEND_FACTOR: f32 = 1.0;
@@ -25,10 +25,13 @@ impl State {
     /// Set title for the current window target.
     ///
     /// Errors if the title contains a nul byte.
-    pub fn set_title(&mut self, title: &str) {
-        if let Some(w) = self.get_window_mut() {
-            w.set_title(title);
-        }
+    pub fn set_title(&mut self, title: &str) -> Result<()> {
+        Ok(self.renderer.set_title(title)?)
+    }
+
+    /// Sets the audio sample rate for the audio playback in Hz.
+    pub fn set_audio_sample_rate(&mut self, rate: i32) -> Result<()> {
+        Ok(self.renderer.set_audio_sample_rate(rate)?)
     }
 
     /// Rendering
@@ -46,18 +49,12 @@ impl State {
 
     /// Clears the canvas on the current window target to the current draw color.
     pub fn clear(&mut self) {
-        self.renderer.set_draw_color(self.bg_color());
         self.renderer.clear()
     }
 
     /// Clears all canvases of all windows to their current draw colors.
     pub fn clear_all(&mut self) {
-        let window_ids: Vec<u32> = self.windows.iter().map(|w| w.id()).collect();
-        for window_id in window_ids {
-            let _ = self.set_window_target(window_id);
-            self.clear();
-            let _ = self.revert_window_target();
-        }
+        self.renderer.clear_all();
     }
 
     // /// Get the scale_x and scale_y factors for the current window target.
@@ -70,64 +67,52 @@ impl State {
     //     self.renderer.set_scale(scale_x, scale_y)
     // }
 
-    /// Get the clipping rectangle for the current window target.
-    // pub fn clip_rect(&self){}
+    // /// Get the clipping rectangle for the current window target.
+    // // pub fn clip_rect(&self){}
 
-    /// Set the clipping rectangle for the current window target.
-    // pub fn set_clip_rect<R: Into<Option<Rect>>>(&mut self, rect: R){}
+    // /// Set the clipping rectangle for the current window target.
+    // // pub fn set_clip_rect<R: Into<Option<Rect>>>(&mut self, rect: R){}
 
-    /// Get the viewport rectangle for the current window target.
-    // pub fn viewport(&self) -> Rect{}
+    // /// Get the viewport rectangle for the current window target.
+    // // pub fn viewport(&self) -> Rect{}
 
-    /// Set the viewport rectangle for the current window target.
-    // pub fn set_viewport<R: Into<Option<Rect>>>(&mut self, rect: R){}
+    // /// Set the viewport rectangle for the current window target.
+    // // pub fn set_viewport<R: Into<Option<Rect>>>(&mut self, rect: R){}
 
-    /// Drawing
+    // /// Drawing
 
-    /// Draw a point on the current window target.
-    // pub fn draw_point<P: Into<Point>>(&mut self, point: P){}
+    // /// Draw a point on the current window target.
+    // // pub fn draw_point<P: Into<Point>>(&mut self, point: P){}
 
-    /// Draw multiple points on the current window target.
-    // pub fn draw_points<'a, P: Into<&'a [Point]>>(&mut self, points: P){}
+    // /// Draw multiple points on the current window target.
+    // // pub fn draw_points<'a, P: Into<&'a [Point]>>(&mut self, points: P){}
 
-    /// Draw a line on the current window target.
-    // pub fn draw_line<P1: Into<Point>, P2: Into<Point>>(&mut self, start: P1, end: P2){}
+    // /// Draw a line on the current window target.
+    // // pub fn draw_line<P1: Into<Point>, P2: Into<Point>>(&mut self, start: P1, end: P2){}
 
-    /// Draw a series of lines on the current window target.
-    // pub fn draw_lines<'a, P: Into<&'a [Point]>>(&mut self, points: P){}
+    // /// Draw a series of lines on the current window target.
+    // // pub fn draw_lines<'a, P: Into<&'a [Point]>>(&mut self, points: P){}
 
-    /// Draw a rectangle on the current window target.
-    // pub fn draw_rect<R: Into<Rect>>(&mut self, rect: R){}
+    // /// Draw a rectangle on the current window target.
+    // // pub fn draw_rect<R: Into<Rect>>(&mut self, rect: R){}
 
-    /// Draw multiple rectangles on the current window target.
-    // pub fn draw_rects<'a, R: Into<&'a [Rect]>>(&mut self, rects: R)
+    // /// Draw multiple rectangles on the current window target.
+    // // pub fn draw_rects<'a, R: Into<&'a [Rect]>>(&mut self, rects: R)
 
-    /// Draw a filled rectangle on the current window target. Passing None will fill the entire
-    /// rendering target.
-    // pub fn fill_rect<R: Into<Option<Rect>>>(&mut self, rect: R){}
+    // /// Draw a filled rectangle on the current window target. Passing None will fill the entire
+    // /// rendering target.
+    // // pub fn fill_rect<R: Into<Option<Rect>>>(&mut self, rect: R){}
 
-    /// Draw multiple filled rectangles on the current window target.
-    // pub fn fill_rects<'a, R: Into<&'a [Rect]>>(&mut self, rects: R)
+    // /// Draw multiple filled rectangles on the current window target.
+    // // pub fn fill_rects<'a, R: Into<&'a [Rect]>>(&mut self, rects: R)
 
-    /// Reads pixels from the current window target.
-    /// # Remarks
-    /// WARNING: This is a very slow operation, and should not be used frequently.
-    // pub fn read_pixels<R: Into<Option<Rect>>>(&self, rect: R, format: PixelFormatEnum)
+    // /// Reads pixels from the current window target.
+    // /// # Remarks
+    // /// WARNING: This is a very slow operation, and should not be used frequently.
+    // // pub fn read_pixels<R: Into<Option<Rect>>>(&self, rect: R, format: PixelFormatEnum)
 
-    /// Textures
+    // /// Textures
     // TODO
     // copy
     // copy_ex
-
-    /// Window Management
-
-    /// Hide the current window target.
-    pub fn hide_window(&mut self) {
-        self.renderer.hide_window();
-    }
-
-    /// Show the current window target.
-    pub fn show_window(&mut self) {
-        self.renderer.show_window();
-    }
 }

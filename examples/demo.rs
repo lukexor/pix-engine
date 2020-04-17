@@ -16,8 +16,6 @@ impl Demo {
 
 impl PixApp for Demo {
     fn on_start(&mut self, state: &mut State) -> Result<bool> {
-        self.primary_id = state.window_target().unwrap();
-        self.second_id = state.create_window("Test", 200, 200)?;
         state.no_loop();
         Ok(true)
     }
@@ -26,9 +24,6 @@ impl PixApp for Demo {
     }
     fn on_update(&mut self, state: &mut State) -> Result<bool> {
         state.set_bg_color((255, 0, 0));
-        state.set_window_target(self.second_id)?;
-        state.set_bg_color((255, 255, 0));
-        state.revert_window_target();
         Ok(true)
     }
 }

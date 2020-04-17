@@ -2,7 +2,7 @@ use crate::{
     common::Result,
     event::{PixEvent, WindowEvent},
     renderer::Renderer,
-    state::{window::WindowPos, State},
+    state::State,
     time,
 };
 
@@ -34,27 +34,16 @@ pub trait PixApp {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct PixEngineBuilder<A>
 where
     A: PixApp,
 {
     title: String,
-    app: A,
     width: u32,
     height: u32,
-    scale: u32,
-    x: WindowPos,
-    y: WindowPos,
+    app: A,
     audio_sample_rate: i32,
-    fullscreen: bool,
-    no_vsync: bool,
-    hidden: bool,
-    borderless: bool,
-    resizable: bool,
-    minimized: bool,
-    maximized: bool,
-    input_grabbed: bool,
 }
 
 impl<A> PixEngineBuilder<A>
@@ -65,36 +54,11 @@ where
     pub fn new(title: &str, app: A, width: u32, height: u32) -> Self {
         Self {
             title: title.to_owned(),
-            app,
             width,
             height,
-            scale: 1,
-            x: WindowPos::default(),
-            y: WindowPos::default(),
+            app,
             audio_sample_rate: DEFAULT_SAMPLE_RATE,
-            fullscreen: false,
-            no_vsync: false,
-            hidden: false,
-            borderless: false,
-            resizable: false,
-            minimized: false,
-            maximized: false,
-            input_grabbed: false,
         }
-    }
-
-    /// Sets the window position.
-    pub fn position(&mut self, x: i32, y: i32) -> &mut Self {
-        self.x = WindowPos::Positioned(x);
-        self.y = WindowPos::Positioned(y);
-        self
-    }
-
-    /// Centers the window.
-    pub fn position_centered(&mut self) -> &mut Self {
-        self.x = WindowPos::Centered;
-        self.y = WindowPos::Centered;
-        self
     }
 
     /// Sets the audio sample rate in Hz
@@ -103,63 +67,12 @@ where
         self
     }
 
-    /// Sets the window to fullscreen.
-    pub fn fullscreen(&mut self) -> &mut Self {
-        self.fullscreen = true;
-        self
-    }
-
-    /// Disables vsync.
-    pub fn no_vsync(&mut self) -> &mut Self {
-        self.no_vsync = true;
-        self
-    }
-
-    /// Hides the window.
-    pub fn hidden(&mut self) -> &mut Self {
-        self.hidden = true;
-        self
-    }
-
-    /// Removes the window decoration.
-    pub fn borderless(&mut self) -> &mut Self {
-        self.borderless = true;
-        self
-    }
-
-    /// Sets the window to be resizable.
-    pub fn resizable(&mut self) -> &mut Self {
-        self.resizable = true;
-        self
-    }
-
-    /// Minimizes the window.
-    pub fn minimized(&mut self) -> &mut Self {
-        self.minimized = true;
-        self
-    }
-
-    /// Maximizes the window.
-    pub fn maximized(&mut self) -> &mut Self {
-        self.maximized = true;
-        self
-    }
-
-    /// Sets the window to have grabbed input focus.
-    pub fn input_grabbed(&mut self) -> &mut Self {
-        self.input_grabbed = true;
-        self
-    }
-
+    /// Builds a `PixEngine` instance using the settings from the `PixEngineBuilder` consuming it
+    /// in the process.
     pub fn build(self) -> Result<PixEngine<A>> {
-        let mut state = State::new()?;
-        let id = state.create_window(&self.title, self.width, self.height)?;
-        state.set_window_target(id)?;
-        Ok(PixEngine {
-            app: self.app,
-            should_close: false,
-            state,
-        })
+        let mut state = State::new(&self.title, self.width, self.height)?;
+        state.set_audio_sample_rate(self.audio_sample_rate)?;
+        Ok(PixEngine::new(self.app, state))
     }
 }
 
@@ -177,9 +90,19 @@ impl<A> PixEngine<A>
 where
     A: PixApp,
 {
-    /// Create a new PixEngine instance, consuming the app in the process.
+    /// Create a new `PixEngine` instance via a `PixEngineBuilder`, consuming the app in the
+    /// process.
     pub fn create(title: &str, app: A, width: u32, height: u32) -> PixEngineBuilder<A> {
         PixEngineBuilder::new(title, app, width, height)
+    }
+
+    /// Used by `PixEngineBuilder` to construct a new `PixEngine`.
+    pub fn new(app: A, state: State) -> Self {
+        Self {
+            app,
+            should_close: false,
+            state,
+        }
     }
 
     /// Start the engine loop. This will only exit and return if an error is encountered, the app
@@ -214,18 +137,13 @@ where
                 for event in self.state.renderer.poll_events() {
                     match event {
                         PixEvent::Quit { .. } | PixEvent::AppTerminating { .. } => {
-                            self.should_close = true
+                            self.should_close = true;
+                            break;
                         }
                         PixEvent::Window {
-                            window_id,
                             win_event: WindowEvent::Close,
                             ..
-                        } => {
-                            if self.state.set_window_target(window_id).is_ok() {
-                                self.state.hide_window();
-                                self.state.revert_window_target();
-                            }
-                        }
+                        } => self.should_close = true,
                         _ => (),
                     }
                     self.state.events.push(event);
@@ -237,7 +155,10 @@ where
                         self.state.manual_update -= 1;
                     }
                     match self.app.on_update(&mut self.state) {
-                        Ok(false) => self.should_close = true,
+                        Ok(false) => {
+                            self.should_close = true;
+                            break;
+                        }
                         Err(e) => return Err(e),
                         _ => (), // continue on
                     }
@@ -249,20 +170,13 @@ where
                     frame_timer += self.state.delta_time();
                     frame_count += 1;
                     self.state.inc_frame_count();
-                    if let Some(primary) = self.state.primary_window() {
-                        if frame_timer >= one_second
-                            && self.state.set_window_target(primary).is_ok()
-                        {
-                            self.state.set_frame_rate(frame_count);
-                            if let Some(w) = self.state.get_window() {
-                                let mut title = w.title().to_owned();
-                                title.push_str(&format!("- FPS: {}", frame_count));
-                                self.state.renderer.set_title(&title)?;
-                            };
-                            self.state.revert_window_target();
-                            frame_timer -= one_second;
-                            frame_count = 0;
-                        }
+                    if frame_timer >= one_second {
+                        self.state.set_frame_rate(frame_count);
+                        let mut title = self.state.title.to_owned();
+                        title.push_str(&format!("- FPS: {}", frame_count));
+                        self.state.renderer.set_title(&title)?;
+                        frame_timer -= one_second;
+                        frame_count = 0;
                     }
                 }
             }

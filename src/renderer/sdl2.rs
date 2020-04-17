@@ -18,7 +18,11 @@ pub const DEFAULT_SAMPLE_RATE: i32 = 44_100;
 /// An Sdl2Renderer that handles drawing, input, and audio in a cross-platform way.
 pub(crate) struct Sdl2Renderer {
     context: Sdl,
+    default_window_target: u32,
     window_target: Option<u32>,
+    bg_color: pixels::Color,
+    fill: Option<pixels::Color>,
+    stroke: Option<pixels::Color>,
     canvases: Vec<Canvas<Window>>,
     audio_device: AudioQueue<f32>,
     event_pump: EventPump,
@@ -28,9 +32,8 @@ pub(crate) struct Sdl2Renderer {
 
 impl Sdl2Renderer {
     /// Creates a new instance of an SDL2 Renderer
-    pub fn new() -> Result<Self> {
+    pub fn new(title: &str, width: u32, height: u32) -> Result<Self> {
         let context = sdl2::init()?;
-        // let canvases = vec![Self::new_canvas(&context, title, width, height)?];
 
         // Event pump & controller subsystem
         let event_pump = context.event_pump()?;
@@ -46,10 +49,18 @@ impl Sdl2Renderer {
         let audio_device = audio_sub.open_queue(None, &desired_spec)?;
         audio_device.resume();
 
+        // Create default window
+        let canvas = Self::new_canvas(&context, title, width, height)?;
+        let default_window_target = canvas.window().id();
+
         Ok(Self {
             context,
+            default_window_target,
             window_target: None,
-            canvases: Vec::new(),
+            bg_color: pixels::Color::RGB(0, 0, 0),
+            fill: None,
+            stroke: None,
+            canvases: vec![canvas],
             audio_device,
             event_pump,
             controller_sub,
@@ -58,13 +69,14 @@ impl Sdl2Renderer {
     }
 
     /// Static method to create a new window and associated canvas.
+    // TODO Make Windowbuilder interface for defining position, resizable, vsync, etc
     fn new_canvas(context: &Sdl, title: &str, width: u32, height: u32) -> Result<Canvas<Window>> {
         // Set up the window
         let video_sub = context.video()?;
         let window = video_sub
             .window(title, width, height)
-            .position_centered() // TODO make this an option
-            .resizable() // TODO make this an option
+            .position_centered()
+            .resizable()
             .build()?;
 
         // Set up canvas
@@ -72,30 +84,40 @@ impl Sdl2Renderer {
             .into_canvas()
             .accelerated()
             .target_texture()
-            .present_vsync() // TODO make this an option
+            .present_vsync()
             .build()?;
         canvas.set_logical_size(width, height)?;
         Ok(canvas)
     }
 
     /// Get a canvas based on the current window target.
-    fn get_canvas(&self) -> Option<&Canvas<Window>> {
-        self.window_target().map(move |target| {
-            self.canvases
-                .iter()
-                .find(|c| target == c.window().id())
-                .expect("valid window target")
-        })
+    fn canvas(&self) -> &Canvas<Window> {
+        let target = self.window_target();
+        self.canvases
+            .iter()
+            .find(|c| target == c.window().id())
+            .expect("valid window target")
     }
 
     /// Get a mutable canvas based on the current window target.
-    fn get_canvas_mut(&mut self) -> Option<&mut Canvas<Window>> {
-        self.window_target().map(move |target| {
-            self.canvases
-                .iter_mut()
-                .find(|c| target == c.window().id())
-                .expect("valid window target")
-        })
+    fn canvas_mut(&mut self) -> &mut Canvas<Window> {
+        let target = self.window_target();
+        self.canvases
+            .iter_mut()
+            .find(|c| target == c.window().id())
+            .expect("valid window target")
+    }
+
+    /// Window Management
+
+    /// Returns the window_id of the default window target.
+    fn default_window(&self) -> u32 {
+        self.default_window_target
+    }
+
+    /// Returns the window_id of the current window target.
+    fn window_target(&self) -> u32 {
+        self.window_target.unwrap_or(self.default_window_target)
     }
 }
 
@@ -106,38 +128,48 @@ impl Renderer for Sdl2Renderer {
     ///
     /// Errors if the title contains a nul byte.
     fn set_title(&mut self, title: &str) -> Result<()> {
-        if let Some(c) = self.get_canvas_mut() {
-            c.window_mut().set_title(title)?;
-        }
+        Ok(self.canvas_mut().window_mut().set_title(title)?)
+    }
+
+    /// Sets the audio sample rate for the audio playback in Hz.
+    fn set_audio_sample_rate(&mut self, rate: i32) -> Result<()> {
+        let audio_sub = self.context.audio()?;
+        let desired_spec = AudioSpecDesired {
+            freq: Some(rate),
+            channels: Some(1),
+            samples: None,
+        };
+        self.audio_device = audio_sub.open_queue(None, &desired_spec)?;
+        self.audio_device.resume();
         Ok(())
     }
 
-    /// Get draw color for the current window target.
-    fn draw_color(&self) -> Color {
-        self.get_canvas()
-            .map(|c| c.draw_color().into())
-            .unwrap_or_default()
+    /// Set draw color for drawing operations on the current window target.
+    fn set_bg_color<C: Into<Color>>(&mut self, color: C) {
+        let c = color.into();
+        self.bg_color = c.into();
     }
 
-    /// Set draw color for drawing operations on the current window target.
-    fn set_draw_color<C: Into<Color>>(&mut self, color: C) {
-        if let Some(c) = self.get_canvas_mut() {
-            c.set_draw_color(color.into());
-        }
+    /// Set draw color for the fill operations on the current window target.
+    fn set_fill<C: Into<Option<Color>>>(&mut self, color: C) {
+        let c = color.into();
+        self.fill = c.map(|c| c.into());
+    }
+
+    /// Set draw color for the drawing outlines on the current window target.
+    fn set_stroke<C: Into<Option<Color>>>(&mut self, color: C) {
+        let c = color.into();
+        self.stroke = c.map(|c| c.into());
     }
 
     /// Get the blending mode for the current window target.
     fn blend_mode(&self) -> BlendMode {
-        self.get_canvas()
-            .map(|c| c.blend_mode().into())
-            .unwrap_or_default()
+        self.canvas().blend_mode().into()
     }
 
     /// Set the blending mode for drawing operations on the current window target.
     fn set_blend_mode(&mut self, mode: BlendMode) {
-        if let Some(c) = self.get_canvas_mut() {
-            c.set_blend_mode(mode.into());
-        }
+        self.canvas_mut().set_blend_mode(mode.into());
     }
 
     /// Returns a list of events from the event queue since last time poll_events
@@ -149,9 +181,7 @@ impl Renderer for Sdl2Renderer {
     /// Presents changes made to the canvas on the current window target since present was last
     /// called.
     fn present(&mut self) {
-        if let Some(c) = self.get_canvas_mut() {
-            c.present();
-        }
+        self.canvas_mut().present();
     }
 
     /// Presents changes made to the canvases of all windows since present was last called.
@@ -163,64 +193,19 @@ impl Renderer for Sdl2Renderer {
 
     /// Clears the canvas on the current window target to the current draw color.
     fn clear(&mut self) {
-        if let Some(c) = self.get_canvas_mut() {
-            c.clear();
-        }
+        let c = self.bg_color;
+        let canvas = self.canvas_mut();
+        canvas.set_draw_color(c);
+        canvas.clear();
     }
 
     /// Clears all canvases of all windows to their current draw colors.
     fn clear_all(&mut self) {
+        let c = self.bg_color;
         for canvas in self.canvases.iter_mut() {
+            canvas.set_draw_color(c);
             canvas.clear();
         }
-    }
-
-    /// Window Management
-
-    /// Returns the window_id of the current window target
-    fn window_target(&self) -> Option<u32> {
-        self.window_target
-    }
-
-    /// Set the current window target.
-    fn set_window_target(&mut self, window_id: u32) {
-        self.window_target = Some(window_id);
-    }
-
-    /// Create and open a new window.
-    ///
-    /// Errors if the window can't be created for any reason.
-    fn create_window(&mut self, title: &str, width: u32, height: u32) -> Result<u32> {
-        let canvas = Self::new_canvas(&self.context, title, width, height)?;
-        let window_id = canvas.window().id();
-        self.canvases.push(canvas);
-        Ok(window_id)
-    }
-
-    /// Hide the current window target.
-    ///
-    /// Returns true when all windows are hidden.
-    fn hide_window(&mut self) {
-        if let Some(c) = self.get_canvas_mut() {
-            c.window_mut().hide();
-        }
-    }
-
-    /// Show the current window target.
-    fn show_window(&mut self) {
-        if let Some(c) = self.get_canvas_mut() {
-            c.window_mut().show();
-        }
-    }
-
-    /// Close the current window target.
-    ///
-    /// Returns true when all windows are closed.
-    fn close_window(&mut self) -> bool {
-        if let Some(target) = self.window_target() {
-            self.canvases.retain(|c| target != c.window().id());
-        }
-        self.canvases.is_empty()
     }
 }
 
