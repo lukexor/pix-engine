@@ -34,6 +34,8 @@ pub trait PixApp {
     }
 }
 
+/// Builds an instance of the `PixEngine` by allowing various settings to be defined before
+/// creation.
 #[derive(Clone)]
 pub struct PixEngineBuilder<A>
 where
@@ -191,17 +193,4 @@ where
 
         Ok(())
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn new_engine_test() {
-        let eng = PixEngine::new("Test", app, 100, 100);
-    }
-
-    #[test]
-    fn run_engine_test() {}
 }

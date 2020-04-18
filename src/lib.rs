@@ -1,3 +1,6 @@
+#![allow(unused_variables)]
+// #![warn(missing_docs)]
+
 //! # Getting Started
 //!
 //! ```no_run
@@ -27,14 +30,14 @@
 //!     fn on_start(&mut self, state: &mut State) -> Result<bool> {
 //!         // Setup application state/resources. Called once upon start when `PixEngine::run()` is
 //!         // called.
-//!         state.set_fill((255, 255, 0));
-//!         state.set_show_frame_rate(true);
+//!         state.fill((255, 255, 0));
+//!         state.show_frame_rate(true);
 //!         Ok(true)
 //!     }
 //!     fn on_update(&mut self, state: &mut State) -> Result<bool> {
 //!         // Called every frame (as often as possible by default) but can be changed with
 //!         // `State::set_target_frame_rate()`.
-//!         state.set_background((255, 0, 0));
+//!         state.background((255, 0, 0));
 //!         state.draw_rect(Rect::new(100, 100, 200, 200))?;
 //!         Ok(true)
 //!     }
@@ -45,6 +48,7 @@
 //!     }
 //! }
 //! ```
+
 pub mod color;
 pub mod event;
 pub mod gui;
@@ -60,23 +64,16 @@ mod renderer;
 mod state;
 mod time;
 
-pub use crate::state::State;
+pub(crate) use crate::{common::constants, state::State};
 
+/// Common set of exports for using the `PixEngine`.
 pub mod prelude {
     pub use crate::{
         color::*,
-        common::{Error, Result},
+        common::{constants::*, Result, *},
         core::*,
         math::*,
         shape::*,
         state::*,
     };
-}
-
-pub mod constants {
-    pub use std::f32::consts::{FRAC_PI_2, FRAC_PI_4, PI};
-    pub const QUARTER_PI: f32 = FRAC_PI_2;
-    pub const HALF_PI: f32 = FRAC_PI_2;
-    pub const TWO_PI: f32 = 2.0 * PI;
-    pub const TAU: f32 = TWO_PI;
 }

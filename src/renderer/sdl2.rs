@@ -7,11 +7,14 @@ use crate::{
 };
 use sdl2::{
     audio::{AudioQueue, AudioSpecDesired},
-    controller::GameController,
-    pixels, rect,
+    // controller::GameController,
+    pixels,
+    rect,
     render::Canvas,
     video::{self, Window},
-    EventPump, GameControllerSubsystem, Sdl,
+    EventPump,
+    // GameControllerSubsystem,
+    Sdl,
 };
 
 mod event;
@@ -31,8 +34,8 @@ pub(crate) struct Sdl2Renderer {
     canvases: Vec<Canvas<Window>>,
     audio_device: AudioQueue<f32>,
     event_pump: EventPump,
-    controller_sub: GameControllerSubsystem,
-    controllers: Vec<GameController>,
+    // controller_sub: GameControllerSubsystem,
+    // controllers: Vec<GameController>,
 }
 
 impl Sdl2Renderer {
@@ -42,7 +45,7 @@ impl Sdl2Renderer {
 
         // Event pump & controller subsystem
         let event_pump = context.event_pump()?;
-        let controller_sub = context.game_controller()?;
+        // let controller_sub = context.game_controller()?;
 
         // Set up Audio
         let audio_sub = context.audio()?;
@@ -68,8 +71,8 @@ impl Sdl2Renderer {
             canvases: vec![canvas],
             audio_device,
             event_pump,
-            controller_sub,
-            controllers: Vec::new(),
+            // controller_sub,
+            // controllers: Vec::new(),
         })
     }
 
@@ -114,11 +117,6 @@ impl Sdl2Renderer {
     }
 
     /// Window Management
-
-    /// Returns the window_id of the default window target.
-    fn default_window(&self) -> u32 {
-        self.default_window_target
-    }
 
     /// Returns the window_id of the current window target.
     fn window_target(&self) -> u32 {

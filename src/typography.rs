@@ -1,9 +1,14 @@
+//! Typography creation, manipulation, and drawing routines.
+
 use bitflags::bitflags;
 use std::path::PathBuf;
 
+/// The default leading for `Font`.
 pub const DEFAULT_TEXT_LEADING: u32 = 15;
+/// The default size for `Font`.
 pub const DEFAULT_TEXT_SIZE: u32 = 12;
 
+/// Represents a given Font setting which includes font-family, style, size, etc.
 #[derive(Default, Debug, Clone)]
 pub struct Font {
     pub(crate) size: u32,

@@ -1,3 +1,5 @@
+//! Geometric shape types, manipulation, and drawing routines.
+
 use crate::{math::Vector, state::State};
 use std::fmt;
 

@@ -55,7 +55,6 @@ pub(crate) struct Setting {
 impl Setting {
     pub(crate) fn new() -> Self {
         Self {
-            show_frame_rate: true,
             bg_color: color::TRANSPARENT,
             stroke_weight: shape::DEFAULT_STROKE_WEIGHT,
             blend_factor: DEFAULT_BLEND_FACTOR,
@@ -111,7 +110,7 @@ impl State {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::{Color, State};
+    /// use pix_engine::prelude::*;
     /// let mut state = State::new("State", 100, 100).unwrap();
     ///
     /// state.background((128, 200, 0));
@@ -139,7 +138,7 @@ impl State {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::{Color, State};
+    /// use pix_engine::prelude::*;
     /// let mut state = State::new("State", 100, 100).unwrap();
     ///
     /// state.fill((128, 200, 0));
@@ -156,7 +155,7 @@ impl State {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::{Color, State};
+    /// use pix_engine::prelude::*;
     /// let mut state = State::new("State", 100, 100).unwrap();
     ///
     /// state.fill((128, 200, 0));

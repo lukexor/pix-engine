@@ -12,7 +12,7 @@ pub(crate) struct Environment {
     /// Target frame rate per second
     target_frame_rate: u32,
     /// Time since last frame
-    delta_time: f32,
+    delta_time: f64,
     /// Width of the display screen
     display_width: u32,
     /// Height of the display screen
@@ -70,7 +70,7 @@ impl State {
     }
 
     /// Get the delta time in seconds since the last frame update.
-    pub fn delta_time(&self) -> f32 {
+    pub fn delta_time(&self) -> f64 {
         self.environment.delta_time
     }
 
@@ -107,7 +107,7 @@ impl State {
         self.environment.frame_rate = frame_rate;
     }
     /// Used by the core update loop to set the delta time
-    pub(crate) fn set_delta_time(&mut self, time: f32) {
+    pub(crate) fn set_delta_time(&mut self, time: f64) {
         self.environment.delta_time = time;
     }
 }

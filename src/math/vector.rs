@@ -15,9 +15,9 @@ use std::fmt;
 /// by calling `v1.add(v2)`.
 #[derive(Default, Debug, Copy, Clone, PartialEq)]
 pub struct Vector {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
 }
 
 impl<'a> Vector {
@@ -26,7 +26,7 @@ impl<'a> Vector {
     /// # Examples
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let v1 = Vector::new((1, 2));
     /// assert_eq!(v1.get(), (1.0, 2.0, 0.0));
@@ -47,12 +47,12 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let v = Vector::new((1, 2));
     /// assert_eq!(v.get(), (1.0, 2.0, 0.0));
     /// ```
-    pub fn new_2d(x: f32, y: f32) -> Self {
+    pub fn new_2d(x: f64, y: f64) -> Self {
         Self::new_3d(x, y, 0.0)
     }
 
@@ -61,12 +61,12 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let v = Vector::new((2.1, 3.5, 1.0));
     /// assert_eq!(v.get(), (2.1, 3.5, 1.0));
     /// ```
-    pub fn new_3d(x: f32, y: f32, z: f32) -> Self {
+    pub fn new_3d(x: f64, y: f64, z: f64) -> Self {
         if !Self::valid_coordinates(x, y, z) {
             eprintln!("Vector::new: vector contains components that are either undefined or not finite numbers: {:?}", (x, y, z));
         }
@@ -78,14 +78,14 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::{shape::Point, math::Vector};
+    /// use pix_engine::prelude::*;
     ///
-    /// let p = Point::new(1, 2);
+    /// let p = Point::new((1, 2));
     /// let v = Vector::from_point(p);
     /// assert_eq!(v.get(), (1.0, 2.0, 0.0));
     /// ```
     pub fn from_point(p: Point) -> Self {
-        Self::new_2d(p.x as f32, p.y as f32)
+        Self::new_2d(p.x as f64, p.y as f64)
     }
 
     /// Copies the current Vector into a new Vector.
@@ -93,7 +93,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let v1 = Vector::new((1, 0, 1));
     /// let mut v2 = v1.copy();
@@ -112,17 +112,17 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let v = Vector::from_angle(30.0, 15.0);
     ///
-    /// let abs_difference_x = (v.x - 2.3137717).abs();
-    /// let abs_difference_y = (v.y - (-14.820475)).abs();
+    /// let abs_difference_x = (v.x - 2.3137).abs();
+    /// let abs_difference_y = (v.y - (-14.8204)).abs();
     ///
-    /// assert!(abs_difference_x <= std::f32::EPSILON);
-    /// assert!(abs_difference_y <= std::f32::EPSILON);
+    /// assert!(abs_difference_x <= 1e-4);
+    /// assert!(abs_difference_y <= 1e-4);
     /// ```
-    pub fn from_angle(angle: f32, length: f32) -> Self {
+    pub fn from_angle(angle: f64, length: f64) -> Self {
         let (sin, cos) = angle.sin_cos();
         Self::new_2d(length * cos, length * sin)
     }
@@ -132,7 +132,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let v = Vector::random_2d();
     ///
@@ -142,7 +142,7 @@ impl<'a> Vector {
     /// // (0.6091097, -0.22805278, 0.0)
     /// ```
     pub fn random_2d() -> Self {
-        Self::from_angle(rand::thread_rng().gen::<f32>() * TWO_PI, 1.0)
+        Self::from_angle(rand::thread_rng().gen::<f64>() * TWO_PI, 1.0)
     }
 
     /// Make a random unit Vector in 3D space.
@@ -150,7 +150,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let v = Vector::random_3d();
     ///
@@ -160,8 +160,8 @@ impl<'a> Vector {
     /// // (0.6091097, -0.22805278, -0.7595902)
     /// ```
     pub fn random_3d() -> Self {
-        let (sin, cos) = (rand::thread_rng().gen::<f32>() * TWO_PI).sin_cos();
-        let z = rand::thread_rng().gen::<f32>() * 2.0 - 1.0; // Range from -1.0 to 1.0
+        let (sin, cos) = (rand::thread_rng().gen::<f64>() * TWO_PI).sin_cos();
+        let z = rand::thread_rng().gen::<f64>() * 2.0 - 1.0; // Range from -1.0 to 1.0
         let z_base = (1.0 - z * z).sqrt();
         let x = z_base * cos;
         let y = z_base * sin;
@@ -169,7 +169,7 @@ impl<'a> Vector {
     }
 
     /// Get the xyz coordinates as a tuple.
-    pub const fn get(&self) -> (f32, f32, f32) {
+    pub const fn get(&self) -> (f64, f64, f64) {
         (self.x, self.y, self.z)
     }
 
@@ -186,7 +186,7 @@ impl<'a> Vector {
     /// # Examples
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let mut v = Vector::new((1, 2, 3));
     ///
@@ -208,7 +208,7 @@ impl<'a> Vector {
     /// # Examples
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let mut v = Vector::new((1, 2, 3));
     ///
@@ -230,13 +230,13 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let mut v = Vector::new((1, 2, 3));
     /// v.mul(2.0);
     /// assert_eq!(v.get(), (2.0, 4.0, 6.0));
     /// ```
-    pub fn mul(&mut self, s: f32) {
+    pub fn mul(&mut self, s: f64) {
         if s.is_infinite() || s.is_nan() {
             eprintln!(
                 "Vector::mul: scaler is either undefined or not finite: {}",
@@ -254,13 +254,13 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let mut v = Vector::new((2, 4, 6));
     /// v.div(2.0);
     /// assert_eq!(v.get(), (1.0, 2.0, 3.0));
     /// ```
-    pub fn div(&mut self, s: f32) {
+    pub fn div(&mut self, s: f64) {
         if s == 0.0 || s.is_infinite() || s.is_nan() {
             eprintln!(
                 "Vector::mul: scaler is either zero, undefined or not finite: {}",
@@ -278,7 +278,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let v = Vector::new((3, 4, 5));
     /// let rem = v.rem((2, 3, 3));
@@ -306,13 +306,13 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let v = Vector::new((1, 2, 3));
-    /// let abs_difference = (v.mag() - 3.7416575).abs();
-    /// assert!(abs_difference <= std::f32::EPSILON);
+    /// let abs_difference = (v.mag() - 3.7416).abs();
+    /// assert!(abs_difference <= 1e-4);
     /// ```
-    pub fn mag(&self) -> f32 {
+    pub fn mag(&self) -> f64 {
         self.mag_sq().sqrt()
     }
 
@@ -324,12 +324,12 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let v = Vector::new((1, 2, 3));
     /// assert_eq!(v.mag_sq(), 14.0);
     /// ```
-    pub fn mag_sq(&self) -> f32 {
+    pub fn mag_sq(&self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
@@ -338,22 +338,22 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let mut v = Vector::new((10, 20, 2));
     /// v.set_mag(10.0);
     ///
     /// let abs_difference_mag = (v.mag() - 10.0).abs();
-    /// let abs_difference_x = (v.x - 4.4543543).abs();
-    /// let abs_difference_y = (v.y - 8.908709).abs();
-    /// let abs_difference_z = (v.z - 0.8908708).abs();
+    /// let abs_difference_x = (v.x - 4.4543).abs();
+    /// let abs_difference_y = (v.y - 8.9087).abs();
+    /// let abs_difference_z = (v.z - 0.8908).abs();
     ///
-    /// assert!(abs_difference_mag <= std::f32::EPSILON);
-    /// assert!(abs_difference_x <= std::f32::EPSILON);
-    /// assert!(abs_difference_y <= std::f32::EPSILON);
-    /// assert!(abs_difference_z <= std::f32::EPSILON);
+    /// assert!(abs_difference_mag <= 1e-4);
+    /// assert!(abs_difference_x <= 1e-4);
+    /// assert!(abs_difference_y <= 1e-4);
+    /// assert!(abs_difference_z <= 1e-4);
     /// ```
-    pub fn set_mag(&mut self, mag: f32) {
+    pub fn set_mag(&mut self, mag: f64) {
         self.normalize();
         self.mul(mag);
     }
@@ -363,13 +363,13 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let v = Vector::new((1, 2, 3));
     /// let dot_product = v.dot((2, 3, 4));
     /// assert_eq!(dot_product, 20.0);
     /// ```
-    pub fn dot<V: Into<Vector>>(&self, v: V) -> f32 {
+    pub fn dot<V: Into<Vector>>(&self, v: V) -> f64 {
         let v = v.into();
         self.x * v.x + self.y * v.y + self.z * v.z
     }
@@ -379,7 +379,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let v1 = Vector::new((1, 2, 3));
     /// let v2 = Vector::new((1, 2, 3));
@@ -400,16 +400,16 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let v1 = Vector::new((1, 0, 0));
     /// let v2 = Vector::new((0, 1, 0));
     /// let dist = v1.dist(v2);
     ///
-    /// let abs_difference = (dist - 2f32.sqrt()).abs();
-    /// assert!(abs_difference <= std::f32::EPSILON);
+    /// let abs_difference = (dist - constants::SQRT_2).abs();
+    /// assert!(abs_difference <= 1e-4);
     /// ```
-    pub fn dist<V: Into<Vector>>(&self, v: V) -> f32 {
+    pub fn dist<V: Into<Vector>>(&self, v: V) -> f64 {
         let v = v.into();
         let mut v2 = self.copy();
         v2.sub(v);
@@ -421,21 +421,21 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let mut v = Vector::new((10, 20, 2));
     /// v.normalize();
     ///
     /// let abs_difference_mag = (v.mag() - 1.0).abs();
-    /// assert!(abs_difference_mag <= std::f32::EPSILON);
+    /// assert!(abs_difference_mag <= 1e-4);
     ///
-    /// let abs_difference_x = (v.x - 0.4454354).abs();
-    /// let abs_difference_y = (v.y - 0.8908708).abs();
-    /// let abs_difference_z = (v.z - 0.089087084).abs();
+    /// let abs_difference_x = (v.x - 0.4454).abs();
+    /// let abs_difference_y = (v.y - 0.8908).abs();
+    /// let abs_difference_z = (v.z - 0.0890).abs();
     ///
-    /// assert!(abs_difference_x <= std::f32::EPSILON);
-    /// assert!(abs_difference_y <= std::f32::EPSILON);
-    /// assert!(abs_difference_z <= std::f32::EPSILON);
+    /// assert!(abs_difference_x <= 1e-4);
+    /// assert!(abs_difference_y <= 1e-4);
+    /// assert!(abs_difference_z <= 1e-4);
     /// ```
     pub fn normalize(&mut self) {
         let len = self.mag();
@@ -450,20 +450,20 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let mut v = Vector::new((10, 20, 2));
     /// v.limit(5.0);
     ///
-    /// let abs_difference_x = (v.x - 2.2271771).abs();
-    /// let abs_difference_y = (v.y - 4.4543543).abs();
-    /// let abs_difference_z = (v.z - 0.4454354).abs();
+    /// let abs_difference_x = (v.x - 2.2271).abs();
+    /// let abs_difference_y = (v.y - 4.4543).abs();
+    /// let abs_difference_z = (v.z - 0.4454).abs();
     ///
-    /// assert!(abs_difference_x <= std::f32::EPSILON, "x {}", abs_difference_x);
-    /// assert!(abs_difference_y <= std::f32::EPSILON, "y {}", abs_difference_y);
-    /// assert!(abs_difference_z <= std::f32::EPSILON, "z {}", abs_difference_z);
+    /// assert!(abs_difference_x <= 1e-4, "x {}", abs_difference_x);
+    /// assert!(abs_difference_y <= 1e-4, "y {}", abs_difference_y);
+    /// assert!(abs_difference_z <= 1e-4, "z {}", abs_difference_z);
     /// ```
-    pub fn limit(&mut self, max: f32) {
+    pub fn limit(&mut self, max: f64) {
         let mag_sq = self.mag_sq();
         if mag_sq > max * max {
             self.div(mag_sq.sqrt()); // Normalize vector
@@ -477,13 +477,13 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let v = Vector::new((10, 10));
     /// let heading = v.heading();
     /// assert_eq!(heading.to_degrees(), 45.0);
     /// ```
-    pub fn heading(&self) -> f32 {
+    pub fn heading(&self) -> f64 {
         self.y.atan2(self.x)
     }
 
@@ -492,18 +492,18 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::{constants::HALF_PI, math::Vector};
+    /// use pix_engine::prelude::*;
     ///
     /// let mut v = Vector::new((10, 20));
     /// v.rotate(HALF_PI);
     ///
-    /// let abs_difference_x = (v.x - (-20.000002)).abs();
-    /// let abs_difference_y = (v.y - 9.999998).abs();
+    /// let abs_difference_x = (v.x - (-20.0)).abs();
+    /// let abs_difference_y = (v.y - 10.0).abs();
     ///
-    /// assert!(abs_difference_x <= std::f32::EPSILON);
-    /// assert!(abs_difference_y <= std::f32::EPSILON);
+    /// assert!(abs_difference_x <= 1e-4);
+    /// assert!(abs_difference_y <= 1e-4);
     /// ```
-    pub fn rotate(&mut self, angle: f32) {
+    pub fn rotate(&mut self, angle: f64) {
         let new_heading = self.heading() + angle;
         let mag = self.mag();
         let (sin, cos) = new_heading.sin_cos();
@@ -516,14 +516,14 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::{constants::HALF_PI, math::Vector};
+    /// use pix_engine::prelude::*;
     ///
     /// let v1 = Vector::new((1, 0, 0));
     /// let v2 = Vector::new((0, 1, 0));
     /// let angle = v1.angle_between(v2);
     /// assert_eq!(angle, HALF_PI);
     /// ```
-    pub fn angle_between<V: Into<Vector>>(&self, v: V) -> f32 {
+    pub fn angle_between<V: Into<Vector>>(&self, v: V) -> f64 {
         let v = v.into();
         // This should range from -1.0 to 1.0, inclusive but could possibly land outside this range
         // due to floating-point rounding, so we'll need to clamp it to the correct range.
@@ -537,7 +537,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let mut v = Vector::new((4, 6)); // Vector heading right and down
     /// let n = Vector::new((0, -1)); // Surface normal facing up
@@ -558,7 +558,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let mut v1 = Vector::new((1, 1, 0));
     /// let v2 = Vector::new((3, 3, 0));
@@ -566,48 +566,48 @@ impl<'a> Vector {
     ///
     /// assert_eq!(v1.get(), (2.0, 2.0, 0.0));
     /// ```
-    pub fn lerp<V: Into<Vector>>(&mut self, v: V, amt: f32) {
+    pub fn lerp<V: Into<Vector>>(&mut self, v: V, amt: f64) {
         let v = v.into();
         self.x += (v.x - self.x) * amt;
         self.y += (v.y - self.y) * amt;
         self.z += (v.z - self.z) * amt;
     }
 
-    /// Returns a representation of this vector as a Vec of f32 values. Useful for temporary use.
+    /// Returns a representation of this vector as a Vec of f64 values. Useful for temporary use.
     ///
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let mut v = Vector::new((1, 1, 0));
     /// assert_eq!(v.to_vec(), vec![1.0, 1.0, 0.0]);
     /// ```
-    pub fn to_vec(&self) -> Vec<f32> {
+    pub fn to_vec(&self) -> Vec<f64> {
         vec![self.x, self.y, self.z]
     }
 
-    /// Gets a Vector as a slice of xyz f32 values.
+    /// Gets a Vector as a slice of xyz f64 values.
     ///
     /// # Example
     ///
     /// ```
-    /// use pix_engine::math::Vector;
+    /// use pix_engine::prelude::*;
     ///
     /// let mut v = Vector::new((1, 1, 0));
     /// assert_eq!(v.as_slice(), &[1.0, 1.0, 0.0]);
     /// ```
-    pub fn as_slice(&self) -> &'a [f32] {
-        unsafe { core::slice::from_raw_parts(self as *const Self as *const f32, 3) }
+    pub fn as_slice(&self) -> &'a [f64] {
+        unsafe { core::slice::from_raw_parts(self as *const Self as *const f64, 3) }
     }
 
-    /// Gets a Vector as a mutable slice of xyz f32 values.
-    pub fn as_slice_mut(&mut self) -> &'a mut [f32] {
-        unsafe { core::slice::from_raw_parts_mut(self as *mut Self as *mut f32, 3) }
+    /// Gets a Vector as a mutable slice of xyz f64 values.
+    pub fn as_slice_mut(&mut self) -> &'a mut [f64] {
+        unsafe { core::slice::from_raw_parts_mut(self as *mut Self as *mut f64, 3) }
     }
 
     /// Helper function to validate coordinates are finite and defined.
-    fn valid_coordinates(x: f32, y: f32, z: f32) -> bool {
+    fn valid_coordinates(x: f64, y: f64, z: f64) -> bool {
         x.is_finite() && y.is_finite() && z.is_finite() && !x.is_nan() && !y.is_nan() && !z.is_nan()
     }
 }
@@ -615,34 +615,48 @@ impl<'a> Vector {
 /// From 2D tuple of (x, y) i32 to Vector.
 impl From<(i32, i32)> for Vector {
     fn from((x, y): (i32, i32)) -> Self {
-        Self::new_2d(x as f32, y as f32)
+        Self::new_2d(x as f64, y as f64)
+    }
+}
+
+/// From 2D tuple of (x, y) i64 to Vector.
+impl From<(i64, i64)> for Vector {
+    fn from((x, y): (i64, i64)) -> Self {
+        Self::new_2d(x as f64, y as f64)
     }
 }
 
 /// From 3D tuple of (x, y, z) i32 to Vector.
 impl From<(i32, i32, i32)> for Vector {
     fn from((x, y, z): (i32, i32, i32)) -> Self {
-        Self::new_3d(x as f32, y as f32, z as f32)
+        Self::new_3d(x as f64, y as f64, z as f64)
     }
 }
 
-/// From 2D tuple of (x, y) f32 to Vector.
-impl From<(f32, f32)> for Vector {
-    fn from((x, y): (f32, f32)) -> Self {
+/// From 3D tuple of (x, y, z) i64 to Vector.
+impl From<(i64, i64, i64)> for Vector {
+    fn from((x, y, z): (i64, i64, i64)) -> Self {
+        Self::new_3d(x as f64, y as f64, z as f64)
+    }
+}
+
+/// From 2D tuple of (x, y) f64 to Vector.
+impl From<(f64, f64)> for Vector {
+    fn from((x, y): (f64, f64)) -> Self {
         Self::new_2d(x, y)
     }
 }
 
-/// From 3D tuple of (x, y, z) f32 to Vector.
-impl From<(f32, f32, f32)> for Vector {
-    fn from((x, y, z): (f32, f32, f32)) -> Self {
+/// From 3D tuple of (x, y, z) f64 to Vector.
+impl From<(f64, f64, f64)> for Vector {
+    fn from((x, y, z): (f64, f64, f64)) -> Self {
         Self::new_3d(x, y, z)
     }
 }
 
-/// Convert to f32 tuple of (x, y, z).
-impl Into<(f32, f32, f32)> for Vector {
-    fn into(self) -> (f32, f32, f32) {
+/// Convert to f64 tuple of (x, y, z).
+impl Into<(f64, f64, f64)> for Vector {
+    fn into(self) -> (f64, f64, f64) {
         (self.x, self.y, self.z)
     }
 }

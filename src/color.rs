@@ -1,3 +1,10 @@
+//! Color handling and manipulation used for draw operations.
+//!
+//! Each color stores the color mode it was created with (e.g. Rgb or Hsl). Internally, colors are
+//! stored as RGBA values ranging from 0-255. Other color representations than the initial color
+//! mode are calculated and cached as needed.
+
+use crate::math::random;
 use std::fmt;
 
 const RED_SHIFT: u32 = 24;
@@ -40,7 +47,7 @@ impl<'a> Color {
     /// # Examples
     ///
     /// ```
-    /// use pix_engine::Color;
+    /// use pix_engine::prelude::*;
     ///
     /// let c1 = Color::new((128, 64, 0)); // RGB
     /// assert_eq!(c1.rgba(), (128, 64, 0, 255));
@@ -71,7 +78,7 @@ impl<'a> Color {
     /// # Examples
     ///
     /// ```
-    /// use pix_engine::Color;
+    /// use pix_engine::prelude::*;
     ///
     /// let c = Color::RGB(128, 64, 0);
     /// assert_eq!(c.rgba(), (128, 64, 0, 255));
@@ -87,7 +94,7 @@ impl<'a> Color {
     /// # Examples
     ///
     /// ```
-    /// use pix_engine::Color;
+    /// use pix_engine::prelude::*;
     ///
     /// let c = Color::RGBA(128, 64, 0, 128);
     /// assert_eq!(c.rgba(), (128, 64, 0, 128));
@@ -109,7 +116,7 @@ impl<'a> Color {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::Color;
+    /// use pix_engine::prelude::*;
     ///
     /// let magenta: u32 = (128 << 24) | (128 << 8) | 255;
     /// let c = Color::from_u32(magenta);
@@ -130,7 +137,7 @@ impl<'a> Color {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::Color;
+    /// use pix_engine::prelude::*;
     ///
     /// let c = Color::new((128, 0, 128));
     /// let magenta: u32 = (128 << 24) | (128 << 8) | 255;
@@ -141,6 +148,16 @@ impl<'a> Color {
             | (self.g as u32) << GREEN_SHIFT
             | (self.b as u32) << BLUE_SHIFT
             | (self.a as u32) << ALPHA_SHIFT
+    }
+
+    /// Creates a random RGB color with values ranging from 0-255.
+    pub fn random_rgb() -> Self {
+        Self::RGB(random(255), random(255), random(255))
+    }
+
+    /// Creates a random RGBA color with values ranging from 0-255.
+    pub fn random_rgba() -> Self {
+        Self::RGBA(random(255), random(255), random(255), random(255))
     }
 
     /// Get the rgb value as a tuple.
@@ -223,7 +240,7 @@ impl<'a> Color {
     /// # Examples
     ///
     /// ```
-    /// use pix_engine::Color;
+    /// use pix_engine::prelude::*;
     ///
     /// let mut c1 = Color::new((128, 0, 128));
     /// assert_eq!(c1.to_vec(), vec![128, 0, 128, 255]);
@@ -240,7 +257,7 @@ impl<'a> Color {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::Color;
+    /// use pix_engine::prelude::*;
     ///
     /// let mut c = Color::new((128, 0, 128));
     /// assert_eq!(c.as_slice(), &[128, 0, 128, 255]);
@@ -315,7 +332,7 @@ impl fmt::Display for Color {
     }
 }
 
-/// Color Constants for common colors
+// Color Constants for common colors
 
 // WHITE/BLACK/BLANK
 pub const WHITE: Color = Color::RGB(255, 255, 255);

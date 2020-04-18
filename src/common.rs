@@ -1,6 +1,20 @@
 use crate::{image, renderer, state};
 use std::{borrow::Cow, error, fmt, io};
 
+pub mod constants {
+    //! Commonly used constants like `PI` and `TWO_PI`.
+    pub use std::f64::consts::*;
+    pub use std::f64::*;
+    /// π/4. Clone of `FRAC_PI_4`.
+    pub const QUARTER_PI: f64 = FRAC_PI_4;
+    /// π/2. Clone of `FRAC_PI_2`.
+    pub const HALF_PI: f64 = FRAC_PI_2;
+    /// 2.0 * π
+    pub const TWO_PI: f64 = 2.0 * PI;
+    /// τ (or 2.0 * π). Clone of `TWO_PI`.
+    pub const TAU: f64 = TWO_PI;
+}
+
 /// Result type for `PixEngine` Errors.
 pub type Result<T> = std::result::Result<T, Error>;
 

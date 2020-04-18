@@ -12,32 +12,38 @@ impl Boundary {
             end: Point::new((x2, y2)),
         }
     }
-    fn draw(&self, s: &mut State) {
+    fn draw(&self, s: &mut State) -> Result<()> {
         s.stroke(255);
         s.stroke_weight(2);
-        s.draw_line(self.start, self.end);
+        Ok(s.draw_line(self.start, self.end)?)
     }
 }
 
 struct Light {
     pos: Vector,
+    color: Color,
     rays: Vec<Ray>,
 }
 
 impl Light {
     pub fn new(w: u32, h: u32) -> Self {
-        let pos = Vector::new((w as f32, h as f32));
+        let pos = Vector::new((w as f64, h as f64));
         let mut rays = Vec::with_capacity(360);
         for angle in 0..360 {
-            rays.push(Ray::new((angle as f32).to_radians()));
+            rays.push(Ray::new((angle as f64).to_radians()));
         }
-        Self { pos, rays }
+        Self {
+            pos,
+            color: Color::random_rgba(),
+            rays,
+        }
     }
-    fn draw(&self, s: &mut State) {
-        s.fill(255);
+    fn draw(&self, s: &mut State) -> Result<()> {
+        s.stroke(self.color);
         for ray in self.rays.iter() {
-            ray.draw(self.pos, s);
+            ray.draw(self.pos, s)?;
         }
+        Ok(())
     }
 }
 
@@ -46,20 +52,19 @@ struct Ray {
 }
 
 impl Ray {
-    fn new(angle: f32) -> Self {
+    fn new(angle: f64) -> Self {
         Self {
             looking: Vector::from_angle(angle, 1.0),
         }
     }
-    fn draw(&self, pos: Vector, s: &mut State) {
-        s.stroke((255, 100));
+    fn draw(&self, pos: Vector, s: &mut State) -> Result<()> {
         s.stroke_weight(1);
         // TODO Switch to using translate
         // s.translate(self.pos.x, self.pos.y);
         // s.draw_line((0, 0), Point::from(self.looking));
         let mut looking = self.looking.copy();
         looking.add(pos);
-        s.draw_line(Point::from(pos), Point::from(looking));
+        Ok(s.draw_line(Point::from(pos), Point::from(looking))?)
     }
     fn look_at(&mut self, pos: Vector, point: Vector) {
         self.looking.x = point.x - pos.x;
@@ -67,10 +72,10 @@ impl Ray {
     }
     fn cast(&mut self, pos: Vector, boundary: &Boundary) -> Option<Vector> {
         // Formula: https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
-        let x1 = boundary.start.x as f32;
-        let y1 = boundary.start.y as f32;
-        let x2 = boundary.end.x as f32;
-        let y2 = boundary.end.y as f32;
+        let x1 = boundary.start.x as f64;
+        let y1 = boundary.start.y as f64;
+        let x2 = boundary.end.x as f64;
+        let y2 = boundary.end.y as f64;
 
         let x3 = pos.x;
         let y3 = pos.y;
@@ -115,10 +120,10 @@ impl PixApp for App {
         self.boundaries.push(Boundary::new(-1, 0, -1, h)); // Left
 
         for _ in 0..10 {
-            let x1 = random(w as i32);
-            let y1 = random(h as i32);
-            let x2 = random(w as i32);
-            let y2 = random(h as i32);
+            let x1 = random(w);
+            let y1 = random(h);
+            let x2 = random(w);
+            let y2 = random(h);
             self.boundaries.push(Boundary::new(x1, y1, x2, y2));
         }
         self.light = Light::new(s.width() / 2, s.height() / 2);
@@ -132,7 +137,7 @@ impl PixApp for App {
 
         for ray in self.light.rays.iter_mut() {
             let mut closest = None;
-            let mut closest_dist = std::f32::INFINITY;
+            let mut closest_dist = constants::INFINITY;
             for b in self.boundaries.iter() {
                 if let Some(point) = ray.cast(self.light.pos, b) {
                     let dist = self.light.pos.dist(point);
@@ -148,13 +153,14 @@ impl PixApp for App {
         }
 
         for b in self.boundaries.iter() {
-            b.draw(s);
+            b.draw(s)?;
         }
-        self.light.draw(s);
+        self.light.draw(s)?;
+
         Ok(true)
     }
 
-    fn on_stop(&mut self, s: &mut State) -> Result<bool> {
+    fn on_stop(&mut self, _s: &mut State) -> Result<bool> {
         Ok(true)
     }
 }

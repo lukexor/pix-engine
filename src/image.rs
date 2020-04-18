@@ -1,3 +1,5 @@
+//! Image processing.
+
 use crate::{
     color::Color,
     shape::{Point, Rect},
@@ -321,7 +323,8 @@ impl Image {
     /// Erode: Reduces light areas.
     /// Dilate: Increases light areas.
     pub fn filter(&mut self, filter: ImageFilter, value: Option<f32>) {
-        // TODO
+        // TODO Image::filter()
+        unimplemented!();
     }
 
     /// Applies a filter to the target image, returning a new Image.
@@ -336,52 +339,56 @@ impl Image {
     /// Dilate: Increases light areas.
     pub fn filtered(img: &Image, filter: ImageFilter, value: Option<f32>) -> Self {
         // TODO Image::filtered_image()
-        Self::new(img.width, img.height)
+        unimplemented!();
     }
 
     /// Blends one image onto another using a given blend mode.
     pub fn blend(&mut self, img: &Image, mode: BlendMode) {
         // TODO Image::blend()
+        unimplemented!();
     }
 
     /// Blends one image onto another using a given blend mode, returning a new Image
     pub fn blended(img1: &Image, img2: &Image, mode: BlendMode) -> Self {
         // TODO Image::blended()
-        Self::new(img1.width, img1.height)
+        unimplemented!();
     }
 
     /// Masks one image using the alpha channel from another image
     pub fn mask(&mut self, img: &Image) {
         // TODO Image::mask()
+        unimplemented!();
     }
 
     /// Masks one image using the alpha channel from another image, returning a new Image
     pub fn masked(img1: &Image, img2: &Image) -> Self {
         // TODO Image::masked()
-        Self::new(img1.width, img1.height)
+        unimplemented!();
     }
 
     /// Resizes the image to the target width/height.
     pub fn resize(&mut self, width: u32, height: u32) {
         // TODO Image::resize()
+        unimplemented!();
     }
 
     /// Resizes the target image to the target width/height, returning a new Image.
     pub fn resized(img: &Image, width: u32, height: u32) -> Self {
         // TODO Image::resized_image()
-        Self::new(width, height)
+        unimplemented!();
     }
 
     /// Returns a sub-image from the current image.
     pub fn sub_image<R: Into<Rect>>(&self, rect: R) -> Self {
         let rect: Rect = rect.into();
         // TODO Image::sub_image()
-        Self::new(rect.w, rect.h)
+        unimplemented!();
     }
 
     /// Sets a sub-image within the current image.
     pub fn set_sub_image<P: Into<Point>>(&self, p: P, img: &Image) {
         // TODO Image::set_sub_image()
+        unimplemented!();
     }
 
     /// Create a new image from a PNG file.
@@ -447,27 +454,32 @@ impl State {
     /// Draws a given image to the current window target.
     pub fn draw_image<P: Into<Point>>(&mut self, img: Image, p: P) {
         // TODO State::draw_image()
+        unimplemented!();
     }
 
     /// Saves the current window target to a PNG image given by path.
     pub fn save_canvas<P: AsRef<Path>>(&self, path: P) {
         // TODO State::save_canvas()
+        unimplemented!();
     }
 
     /// Draws a given image to the current window target, resized to target dimensions.
     pub fn draw_image_resized<R: Into<Rect>>(&mut self, img: Image, rect: R) {
         // TODO State::draw_image_resized()
+        unimplemented!();
     }
 
     /// Draws a given image to the current window target with top-left at p1 and bottom-right at
     /// p2.
     pub fn draw_image_corners<P: Into<Point>>(&mut self, img: Image, p1: P, p2: P) {
         // TODO State::draw_image_corners()
+        unimplemented!();
     }
 
     /// Draws a portion of the given image given by dest rectangle to the current window target at
     /// the given src rectangle.
     pub fn draw_image_projected<R: Into<Option<Rect>>>(&mut self, img: Image, dest: R, src: R) {
         // TODO State::draw_image_projected()
+        unimplemented!();
     }
 }

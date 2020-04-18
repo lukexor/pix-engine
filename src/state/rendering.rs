@@ -1,3 +1,6 @@
+//! Renderer-specific functionality. Relies on the underlying renderer chosen (either
+//! `sdl2-renderer` or `wasm-renderer`).
+
 use super::{Result, State};
 use crate::{
     renderer::Renderer,

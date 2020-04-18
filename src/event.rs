@@ -1,7 +1,9 @@
+//! User and system event handling and processing.
+
 use bitflags::bitflags;
 use std::fmt;
 
-// Represents an input event
+/// Represents a user or system event.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PixEvent {
     Quit {
@@ -146,6 +148,7 @@ pub enum PixEvent {
     },
 }
 
+/// A Window-specific event.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum WindowEvent {
     None,
@@ -168,6 +171,7 @@ pub enum WindowEvent {
 }
 
 bitflags! {
+    /// A bitflag for a combination of Key press modifiers (e.g. Ctrl, Shift, etc).
     pub struct KeyMod: u16 {
         const NOMOD = 0x0000;
         const LSHIFTMOD = 0x0001;
@@ -191,7 +195,7 @@ impl fmt::Display for KeyMod {
     }
 }
 
-/// Represents a mouse button
+/// Represents a mouse button.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum MouseButton {
     Left,
@@ -202,7 +206,7 @@ pub enum MouseButton {
     Unknown,
 }
 
-/// Represents a mouse wheel direction
+/// Represents a mouse wheel direction.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum MouseWheelDirection {
     Normal,
@@ -210,7 +214,7 @@ pub enum MouseWheelDirection {
     Unknown(u32),
 }
 
-/// A non-exhaustive list of useful keys to detect
+/// A non-exhaustive list of commonly useful keyboard keys.
 #[rustfmt::skip]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Key {
@@ -232,7 +236,7 @@ pub enum Key {
     Unknown,
 }
 
-/// Controller buttons
+/// Gamepad/Controller buttons.
 #[rustfmt::skip]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Button {
@@ -240,6 +244,7 @@ pub enum Button {
     LeftStick, RightStick, LeftShoulder, RightShoulder,
 }
 
+/// Gamepad/Controller joysticks/triggers.
 #[rustfmt::skip]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Axis {

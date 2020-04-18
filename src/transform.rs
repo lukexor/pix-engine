@@ -1,3 +1,5 @@
+//! Coordinate and Matrix transformation state and manipulation routines.
+
 use crate::State;
 
 /// Contains the current matrix transformation state of the engine
