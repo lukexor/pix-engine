@@ -1,6 +1,8 @@
 use crate::{image, renderer, state};
 use std::{borrow::Cow, error, fmt, io};
 
+pub use constants::*;
+
 pub mod constants {
     //! Commonly used constants like `PI` and `TWO_PI`.
     pub use std::f64::consts::*;

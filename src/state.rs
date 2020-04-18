@@ -3,13 +3,15 @@ use environment::Environment;
 use setting::Setting;
 use std::{borrow::Cow, error, fmt, vec::Drain};
 
+pub use rendering::Drawable;
+
 pub mod rendering;
 
 mod environment;
 mod setting;
 
 /// Result type for State Errors.
-pub type Result<T> = std::result::Result<T, Error>;
+pub type StateResult<T> = std::result::Result<T, Error>;
 
 /// Types of errors State can return in a result.
 #[derive(Debug)]
@@ -68,7 +70,7 @@ pub struct State {
 
 impl State {
     /// Creates a new `State` instance.
-    pub fn new(title: &str, width: u32, height: u32) -> Result<Self> {
+    pub fn new(title: &str, width: u32, height: u32) -> StateResult<Self> {
         let renderer = renderer::load_renderer(title, width, height)?;
         Ok(Self {
             title: title.to_owned(),

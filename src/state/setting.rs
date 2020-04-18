@@ -1,7 +1,7 @@
 use super::{
     renderer::Renderer,
     rendering::{BlendMode, DEFAULT_BLEND_FACTOR},
-    Result, State,
+    State, StateResult,
 };
 use crate::{
     color::{self, Color, ColorMode},
@@ -67,12 +67,12 @@ impl State {
     /// Set title for the current window target.
     ///
     /// Errors if the title contains a nul byte.
-    pub fn title(&mut self, title: &str) -> Result<()> {
+    pub fn title(&mut self, title: &str) -> StateResult<()> {
         Ok(self.renderer.title(title)?)
     }
 
     /// Sets the audio sample rate for the audio playback in Hz.
-    pub fn audio_sample_rate(&mut self, rate: i32) -> Result<()> {
+    pub fn audio_sample_rate(&mut self, rate: i32) -> StateResult<()> {
         Ok(self.renderer.audio_sample_rate(rate)?)
     }
 

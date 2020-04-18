@@ -1,6 +1,9 @@
 use crate::{constants::*, shape::Point, State};
 use rand::{self, Rng};
-use std::fmt;
+use std::{
+    fmt,
+    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign},
+};
 
 /// Represents a Euclidiean (also known as geometric) Vector in 2D or 3D space. A Vector has both a magnitude and a direction,
 /// but this data type stores the components of the vector as (x, y, 0) for 2D or (x, y, z) for 3D.
@@ -11,8 +14,8 @@ use std::fmt;
 /// object or particle.
 ///
 /// Vectors can be combined using "vector" math, so for example two vectors can be added together
-/// to form a new vector using `Vector::add_vectors(v1, v2)` or you can add one vector to another
-/// by calling `v1.add(v2)`.
+/// to form a new vector using `let v3 = v1 + v2` or you can add one vector to another by calling
+/// `v1 += v2`.
 #[derive(Default, Debug, Copy, Clone, PartialEq)]
 pub struct Vector {
     pub x: f64,
@@ -181,98 +184,6 @@ impl<'a> Vector {
         self.z = v.z;
     }
 
-    /// Adds a vector to the current Vector.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use pix_engine::prelude::*;
-    ///
-    /// let mut v = Vector::new((1, 2, 3));
-    ///
-    /// v.add((4, 5));
-    /// assert_eq!(v.get(), (5.0, 7.0, 3.0));
-    ///
-    /// v.add((2, 0, 6));
-    /// assert_eq!(v.get(), (7.0, 7.0, 9.0));
-    /// ```
-    pub fn add<V: Into<Vector>>(&mut self, v: V) {
-        let v = v.into();
-        self.x += v.x;
-        self.y += v.y;
-        self.z += v.z;
-    }
-
-    /// Subtracts a vector from the current Vector.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use pix_engine::prelude::*;
-    ///
-    /// let mut v = Vector::new((1, 2, 3));
-    ///
-    /// v.sub((4, 5));
-    /// assert_eq!(v.get(), (-3.0, -3.0, 3.0));
-    ///
-    /// v.sub((2, 0, 6));
-    /// assert_eq!(v.get(), (-5.0, -3.0, -3.0));
-    /// ```
-    pub fn sub<V: Into<Vector>>(&mut self, v: V) {
-        let v = v.into();
-        self.x -= v.x;
-        self.y -= v.y;
-        self.z -= v.z;
-    }
-
-    /// Multiplies the current Vector by a scaler.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pix_engine::prelude::*;
-    ///
-    /// let mut v = Vector::new((1, 2, 3));
-    /// v.mul(2.0);
-    /// assert_eq!(v.get(), (2.0, 4.0, 6.0));
-    /// ```
-    pub fn mul(&mut self, s: f64) {
-        if s.is_infinite() || s.is_nan() {
-            eprintln!(
-                "Vector::mul: scaler is either undefined or not finite: {}",
-                s
-            );
-        } else {
-            self.x *= s;
-            self.y *= s;
-            self.z *= s;
-        }
-    }
-
-    /// Divides the current Vector by a scaler.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pix_engine::prelude::*;
-    ///
-    /// let mut v = Vector::new((2, 4, 6));
-    /// v.div(2.0);
-    /// assert_eq!(v.get(), (1.0, 2.0, 3.0));
-    /// ```
-    pub fn div(&mut self, s: f64) {
-        if s == 0.0 || s.is_infinite() || s.is_nan() {
-            eprintln!(
-                "Vector::mul: scaler is either zero, undefined or not finite: {}",
-                s
-            );
-        } else {
-            self.x /= s;
-            self.y /= s;
-            self.z /= s;
-        }
-    }
-
     /// Calculates the remainder of a Vector when divided by another Vector.
     ///
     /// # Example
@@ -355,7 +266,7 @@ impl<'a> Vector {
     /// ```
     pub fn set_mag(&mut self, mag: f64) {
         self.normalize();
-        self.mul(mag);
+        *self *= mag;
     }
 
     /// Calculates and returns the dot product with another Vector.
@@ -411,9 +322,7 @@ impl<'a> Vector {
     /// ```
     pub fn dist<V: Into<Vector>>(&self, v: V) -> f64 {
         let v = v.into();
-        let mut v2 = self.copy();
-        v2.sub(v);
-        v2.mag()
+        (*self - v).mag()
     }
 
     /// Normalize the Vector to length 1 making it a unit vector.
@@ -441,7 +350,7 @@ impl<'a> Vector {
         let len = self.mag();
         if len != 0.0 {
             // Multiply by the reciprocol so we don't duploicate a div by zero check
-            self.mul(1.0 / len);
+            *self *= 1.0 / len;
         }
     }
 
@@ -466,8 +375,8 @@ impl<'a> Vector {
     pub fn limit(&mut self, max: f64) {
         let mag_sq = self.mag_sq();
         if mag_sq > max * max {
-            self.div(mag_sq.sqrt()); // Normalize vector
-            self.mul(max);
+            *self /= mag_sq.sqrt();
+            *self *= max;
         }
     }
 
@@ -548,9 +457,8 @@ impl<'a> Vector {
     ///
     /// ```
     pub fn reflect<V: Into<Vector>>(&mut self, normal: V) {
-        let mut normal = normal.into();
-        normal.mul(2.0 * self.dot(normal));
-        self.sub(normal);
+        let normal = normal.into();
+        *self -= normal * 2.0 * self.dot(normal);
     }
 
     /// Linear interpolate the current vector to another vector.
@@ -612,42 +520,174 @@ impl<'a> Vector {
     }
 }
 
-/// From 2D tuple of (x, y) i32 to Vector.
+impl Add for Vector {
+    type Output = Vector;
+    fn add(self, v: Vector) -> Vector {
+        Vector::new_3d(self.x + v.x, self.y + v.y, self.z + v.z)
+    }
+}
+
+impl AddAssign for Vector {
+    fn add_assign(&mut self, v: Vector) {
+        self.x += v.x;
+        self.y += v.y;
+        self.z += v.z;
+    }
+}
+
+impl Sub for Vector {
+    type Output = Vector;
+    fn sub(self, v: Vector) -> Vector {
+        Vector::new_3d(self.x - v.x, self.y - v.y, self.z - v.z)
+    }
+}
+
+impl SubAssign for Vector {
+    fn sub_assign(&mut self, v: Vector) {
+        self.x -= v.x;
+        self.y -= v.y;
+        self.z -= v.z;
+    }
+}
+
+impl Mul<f64> for Vector {
+    type Output = Vector;
+    #[allow(clippy::suspicious_arithmetic_impl)]
+    fn mul(self, s: f64) -> Vector {
+        if s.is_infinite() || s.is_nan() {
+            eprintln!(
+                "Vector::mul: scaler is either undefined or not finite: {}",
+                s
+            );
+            self
+        } else {
+            Vector::new_3d(self.x * s, self.y * s, self.z * s)
+        }
+    }
+}
+
+impl MulAssign<f64> for Vector {
+    #[allow(clippy::suspicious_op_assign_impl)]
+    fn mul_assign(&mut self, s: f64) {
+        if s.is_infinite() || s.is_nan() {
+            eprintln!(
+                "Vector::mul_assign: scaler is either undefined or not finite: {}",
+                s
+            );
+        } else {
+            self.x *= s;
+            self.y *= s;
+            self.z *= s;
+        }
+    }
+}
+
+impl Div<f64> for Vector {
+    type Output = Vector;
+    #[allow(clippy::suspicious_arithmetic_impl)]
+    fn div(self, s: f64) -> Vector {
+        if s == 0.0 || s.is_infinite() || s.is_nan() {
+            eprintln!(
+                "Vector::div: scaler is either zero, undefined or not finite: {}",
+                s
+            );
+            self
+        } else {
+            Vector::new_3d(self.x / s, self.y / s, self.z / s)
+        }
+    }
+}
+
+impl DivAssign<f64> for Vector {
+    #[allow(clippy::suspicious_op_assign_impl)]
+    fn div_assign(&mut self, s: f64) {
+        if s == 0.0 || s.is_infinite() || s.is_nan() {
+            eprintln!(
+                "Vector::div_assin: scaler is either zero, undefined or not finite: {}",
+                s
+            );
+        } else {
+            self.x /= s;
+            self.y /= s;
+            self.z /= s;
+        }
+    }
+}
+
+impl Rem for Vector {
+    type Output = Vector;
+    fn rem(mut self, v: Vector) -> Vector {
+        if v.x != 0.0 {
+            self.x %= v.x;
+        }
+        if v.y != 0.0 {
+            self.y %= v.y;
+        }
+        if v.z != 0.0 {
+            self.z %= v.z;
+        }
+        self
+    }
+}
+
+impl RemAssign for Vector {
+    fn rem_assign(&mut self, v: Vector) {
+        if v.x != 0.0 {
+            self.x %= v.x;
+        }
+        if v.y != 0.0 {
+            self.y %= v.y;
+        }
+        if v.z != 0.0 {
+            self.z %= v.z;
+        }
+    }
+}
+
+/// From 1D tuple of i32 to 3D `Vector` with all the same value.
+impl From<i32> for Vector {
+    fn from(v: i32) -> Self {
+        let v = v as f64;
+        Self::new_3d(v, v, v)
+    }
+}
+
+/// From 2D tuple of (x, y) i32 to `Vector`.
 impl From<(i32, i32)> for Vector {
     fn from((x, y): (i32, i32)) -> Self {
         Self::new_2d(x as f64, y as f64)
     }
 }
 
-/// From 2D tuple of (x, y) i64 to Vector.
+/// From 2D tuple of (x, y) i64 to `Vector`.
 impl From<(i64, i64)> for Vector {
     fn from((x, y): (i64, i64)) -> Self {
         Self::new_2d(x as f64, y as f64)
     }
 }
 
-/// From 3D tuple of (x, y, z) i32 to Vector.
+/// From 3D tuple of (x, y, z) i32 to `Vector`.
 impl From<(i32, i32, i32)> for Vector {
     fn from((x, y, z): (i32, i32, i32)) -> Self {
         Self::new_3d(x as f64, y as f64, z as f64)
     }
 }
 
-/// From 3D tuple of (x, y, z) i64 to Vector.
+/// From 3D tuple of (x, y, z) i64 to `Vector`.
 impl From<(i64, i64, i64)> for Vector {
     fn from((x, y, z): (i64, i64, i64)) -> Self {
         Self::new_3d(x as f64, y as f64, z as f64)
     }
 }
 
-/// From 2D tuple of (x, y) f64 to Vector.
+/// From 2D tuple of (x, y) f64 to `Vector`.
 impl From<(f64, f64)> for Vector {
     fn from((x, y): (f64, f64)) -> Self {
         Self::new_2d(x, y)
     }
 }
 
-/// From 3D tuple of (x, y, z) f64 to Vector.
+/// From 3D tuple of (x, y, z) f64 to `Vector`.
 impl From<(f64, f64, f64)> for Vector {
     fn from((x, y, z): (f64, f64, f64)) -> Self {
         Self::new_3d(x, y, z)
@@ -661,6 +701,7 @@ impl Into<(f64, f64, f64)> for Vector {
     }
 }
 
+/// Convert from a `Point` to a `Vector`.
 impl From<Point> for Vector {
     fn from(p: Point) -> Self {
         Self::from_point(p)

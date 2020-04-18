@@ -1,6 +1,9 @@
 //! Geometric shape types, manipulation, and drawing routines.
 
-use crate::{math::Vector, state::State};
+use crate::{
+    math::Vector,
+    state::{rendering::Drawable, State, StateResult},
+};
 use std::fmt;
 
 mod ellipse;
@@ -245,4 +248,24 @@ impl fmt::Display for Point {
     }
 }
 
-impl State {}
+/// Represents a line in 2D or 3D space.
+pub struct Line {
+    pub start: Point,
+    pub end: Point,
+}
+
+impl Line {
+    /// Creates a new `Line` instance based on a start and end `Point`.
+    pub fn new<P: Into<Point>>(start: P, end: P) -> Self {
+        Line {
+            start: start.into(),
+            end: end.into(),
+        }
+    }
+}
+
+impl Drawable for Line {
+    fn draw(&mut self, s: &mut State) -> StateResult<()> {
+        Ok(s.draw_line(self.start, self.end)?)
+    }
+}

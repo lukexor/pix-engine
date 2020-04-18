@@ -1,13 +1,19 @@
-//! Renderer-specific functionality. Relies on the underlying renderer chosen (either
+//! Drawing and Renderer-specific functionality. Relies on the underlying renderer chosen (either
 //! `sdl2-renderer` or `wasm-renderer`).
 
-use super::{Result, State};
+use super::{State, StateResult};
 use crate::{
     renderer::Renderer,
     shape::{Point, Rect},
 };
 
+/// The default blending factor for rendering operations.
 pub const DEFAULT_BLEND_FACTOR: f32 = 1.0;
+
+/// A trait that allows an object to be drawn to the engine.
+pub trait Drawable {
+    fn draw(&mut self, s: &mut State) -> StateResult<()>;
+}
 
 /// Blend mode used by the renderer for drawing operations
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -52,7 +58,7 @@ impl State {
     }
 
     /// Set the scale_x and scale_y factors for the current window target.
-    pub fn scale(&mut self, scale_x: f32, scale_y: f32) -> Result<()> {
+    pub fn scale(&mut self, scale_x: f32, scale_y: f32) -> StateResult<()> {
         Ok(self.renderer.scale(scale_x, scale_y)?)
     }
 
@@ -79,12 +85,12 @@ impl State {
     /// Drawing
 
     /// Draw a point.
-    pub fn draw_point<P: Into<Point>>(&mut self, point: P) -> Result<()> {
+    pub fn draw_point<P: Into<Point>>(&mut self, point: P) -> StateResult<()> {
         Ok(self.renderer.draw_point(point)?)
     }
 
     /// Draw multiple points.
-    pub fn draw_points<'a, P: Into<&'a [Point]>>(&mut self, points: P) -> Result<()> {
+    pub fn draw_points<'a, P: Into<&'a [Point]>>(&mut self, points: P) -> StateResult<()> {
         Ok(self.renderer.draw_points(points)?)
     }
 
@@ -93,18 +99,18 @@ impl State {
         &mut self,
         start: P1,
         end: P2,
-    ) -> Result<()> {
+    ) -> StateResult<()> {
         Ok(self.renderer.draw_line(start, end)?)
     }
 
     /// Draw a series of lines.
-    pub fn draw_lines<'a, P: Into<&'a [Point]>>(&mut self, points: P) -> Result<()> {
+    pub fn draw_lines<'a, P: Into<&'a [Point]>>(&mut self, points: P) -> StateResult<()> {
         Ok(self.renderer.draw_lines(points)?)
     }
 
     /// Draw a rectangle. If `None` is passed, the entire screen is used as the `Rect`. If both
     /// fill and stroke are set to None, nothing will be drawn.
-    pub fn draw_rect<R: Into<Option<Rect>>>(&mut self, rect: R) -> Result<()> {
+    pub fn draw_rect<R: Into<Option<Rect>>>(&mut self, rect: R) -> StateResult<()> {
         let rect = rect.into();
         self.renderer.fill_rect(rect.clone())?;
         if let Some(rect) = rect {
@@ -114,7 +120,7 @@ impl State {
     }
 
     /// Draw multiple rectangles. If both fill and stroke are set to None, nothing will be drawn.
-    pub fn draw_rects<'a, R: Into<&'a [Rect]>>(&mut self, rects: R) -> Result<()> {
+    pub fn draw_rects<'a, R: Into<&'a [Rect]>>(&mut self, rects: R) -> StateResult<()> {
         self.renderer.fill_rects(rects)?;
         // self.renderer.draw_rects(rects)?;
         Ok(())
@@ -123,7 +129,7 @@ impl State {
     // /// Reads pixels from the current window target.
     // /// # Remarks
     // /// WARNING: This is a very slow operation, and should not be used frequently.
-    // pub fn read_pixels<R: Into<Option<Rect>>>(&self, rect: R, format: PixelFormatEnum) -> Result<()>;
+    // pub fn read_pixels<R: Into<Option<Rect>>>(&self, rect: R, format: PixelFormatEnum) -> StateResult<()>;
 
     // /// Textures
     // TODO

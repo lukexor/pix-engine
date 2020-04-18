@@ -1,24 +1,5 @@
 use pix_engine::prelude::*;
 
-struct Boundary {
-    start: Point,
-    end: Point,
-}
-
-impl Boundary {
-    fn new(x1: i32, y1: i32, x2: i32, y2: i32) -> Self {
-        Self {
-            start: Point::new((x1, y1)),
-            end: Point::new((x2, y2)),
-        }
-    }
-    fn draw(&self, s: &mut State) -> Result<()> {
-        s.stroke(255);
-        s.stroke_weight(2);
-        Ok(s.draw_line(self.start, self.end)?)
-    }
-}
-
 struct Light {
     pos: Vector,
     color: Color,
@@ -26,51 +7,50 @@ struct Light {
 }
 
 impl Light {
-    pub fn new(w: u32, h: u32) -> Self {
-        let pos = Vector::new((w as f64, h as f64));
-        let mut rays = Vec::with_capacity(360);
-        for angle in 0..360 {
-            rays.push(Ray::new((angle as f64).to_radians()));
-        }
+    pub fn new<P: Into<Vector>>(pos: P) -> Self {
         Self {
-            pos,
+            pos: pos.into(),
             color: Color::random_rgba(),
-            rays,
+            rays: (0..360)
+                .into_iter()
+                .map(|angle| Ray::new((angle as f64).to_radians()))
+                .collect(),
         }
     }
-    fn draw(&self, s: &mut State) -> Result<()> {
+}
+
+impl Drawable for Light {
+    fn draw(&mut self, s: &mut State) -> StateResult<()> {
         s.stroke(self.color);
-        for ray in self.rays.iter() {
-            ray.draw(self.pos, s)?;
+        for ray in self.rays.iter_mut() {
+            ray.draw(s)?;
         }
         Ok(())
     }
 }
 
 struct Ray {
+    pos: Vector,
     looking: Vector,
 }
 
 impl Ray {
     fn new(angle: f64) -> Self {
         Self {
+            pos: Vector::new(0),
             looking: Vector::from_angle(angle, 1.0),
         }
     }
-    fn draw(&self, pos: Vector, s: &mut State) -> Result<()> {
-        s.stroke_weight(1);
-        // TODO Switch to using translate
-        // s.translate(self.pos.x, self.pos.y);
-        // s.draw_line((0, 0), Point::from(self.looking));
-        let mut looking = self.looking.copy();
-        looking.add(pos);
-        Ok(s.draw_line(Point::from(pos), Point::from(looking))?)
+
+    fn pos<P: Into<Vector>>(&mut self, pos: P) {
+        self.pos = pos.into();
     }
-    fn look_at(&mut self, pos: Vector, point: Vector) {
-        self.looking.x = point.x - pos.x;
-        self.looking.y = point.y - pos.y;
+
+    fn look_at(&mut self, point: Vector) {
+        self.looking = point - self.pos;
     }
-    fn cast(&mut self, pos: Vector, boundary: &Boundary) -> Option<Vector> {
+
+    fn cast(&mut self, pos: Vector, boundary: &Line) -> Option<Vector> {
         // Formula: https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
         let x1 = boundary.start.x as f64;
         let y1 = boundary.start.y as f64;
@@ -96,8 +76,19 @@ impl Ray {
     }
 }
 
+impl Drawable for Ray {
+    fn draw(&mut self, s: &mut State) -> StateResult<()> {
+        s.stroke_weight(1);
+        // TODO Switch to using translate
+        // s.translate(self.pos.x, self.pos.y);
+        // s.draw_line((0, 0), Point::from(self.looking));
+        let looking = self.looking + self.pos;
+        Ok(s.draw_line(Point::from(self.pos), Point::from(looking))?)
+    }
+}
+
 struct App {
-    boundaries: Vec<Boundary>,
+    boundaries: Vec<Line>,
     light: Light,
 }
 
@@ -105,7 +96,7 @@ impl App {
     fn new() -> Self {
         Self {
             boundaries: Vec::new(),
-            light: Light::new(0, 0),
+            light: Light::new(0),
         }
     }
 }
@@ -114,19 +105,19 @@ impl PixApp for App {
     fn on_start(&mut self, s: &mut State) -> Result<bool> {
         let w = s.width() as i32;
         let h = s.height() as i32;
-        self.boundaries.push(Boundary::new(0, -1, w, -1)); // Top
-        self.boundaries.push(Boundary::new(w, 0, w, h)); // Right
-        self.boundaries.push(Boundary::new(0, h, w, h)); // Bottom
-        self.boundaries.push(Boundary::new(-1, 0, -1, h)); // Left
+        self.boundaries.push(Line::new((0, -1), (w, -1))); // Top
+        self.boundaries.push(Line::new((w, 0), (w, h))); // Right
+        self.boundaries.push(Line::new((0, h), (w, h))); // Bottom
+        self.boundaries.push(Line::new((-1, 0), (-1, h))); // Left
 
         for _ in 0..10 {
             let x1 = random(w);
             let y1 = random(h);
             let x2 = random(w);
             let y2 = random(h);
-            self.boundaries.push(Boundary::new(x1, y1, x2, y2));
+            self.boundaries.push(Line::new((x1, y1), (x2, y2)));
         }
-        self.light = Light::new(s.width() / 2, s.height() / 2);
+        self.light = Light::new((s.width() as f64 / 2.0, s.height() as f64 / 2.0));
         Ok(true)
     }
 
@@ -137,7 +128,7 @@ impl PixApp for App {
 
         for ray in self.light.rays.iter_mut() {
             let mut closest = None;
-            let mut closest_dist = constants::INFINITY;
+            let mut closest_dist = INFINITY;
             for b in self.boundaries.iter() {
                 if let Some(point) = ray.cast(self.light.pos, b) {
                     let dist = self.light.pos.dist(point);
@@ -148,11 +139,14 @@ impl PixApp for App {
                 }
             }
             if let Some(point) = closest {
-                ray.look_at(self.light.pos, point);
+                ray.pos(self.light.pos);
+                ray.look_at(point);
             }
         }
 
-        for b in self.boundaries.iter() {
+        for b in self.boundaries.iter_mut() {
+            s.stroke(255);
+            s.stroke_weight(2);
             b.draw(s)?;
         }
         self.light.draw(s)?;

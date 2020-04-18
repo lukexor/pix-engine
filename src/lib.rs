@@ -70,7 +70,7 @@ pub(crate) use crate::{common::constants, state::State};
 pub mod prelude {
     pub use crate::{
         color::*,
-        common::{constants::*, Result, *},
+        common::{Result, *},
         core::*,
         math::*,
         shape::*,
