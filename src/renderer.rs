@@ -1,4 +1,9 @@
-use crate::{color::Color, event::PixEvent, state::rendering::BlendMode};
+use crate::{
+    color::Color,
+    event::PixEvent,
+    shape::{Point, Rect},
+    state::rendering::BlendMode,
+};
 use std::{borrow::Cow, error, ffi::NulError, fmt};
 
 /// Result type for Renderer Errors.
@@ -100,55 +105,55 @@ pub(crate) trait Renderer {
     /// Clears all canvases of all windows to their current draw colors.
     fn clear_all(&mut self);
 
-    // /// Get the scale_x and scale_y factors for the current window target.
-    // // fn scale(&self) -> (f32, f32);
+    /// Get the scale_x and scale_y factors for the current window target.
+    fn scale(&self) -> (f32, f32);
 
-    // /// Set the scale_x and scale_y factors for the current window target.
-    // // fn set_scale(&mut self, _scale_x: f32, _scale_y: f32);
+    /// Set the scale_x and scale_y factors for the current window target.
+    fn set_scale(&mut self, _scale_x: f32, _scale_y: f32) -> Result<()>;
 
-    // /// Get the clipping rectangle for the current window target.
-    // // fn clip_rect(&self);
+    /// Get the clipping rectangle for the current window target.
+    fn clip_rect(&self) -> Option<Rect>;
 
-    // /// Set the clipping rectangle for the current window target.
-    // // fn set_clip_rect<R: Into<Option<Rect>>>(&mut self, _rect: R);
+    /// Set the clipping rectangle for the current window target.
+    fn set_clip_rect<R: Into<Option<Rect>>>(&mut self, _rect: R);
 
-    // /// Get the viewport rectangle for the current window target.
-    // // fn viewport(&self) -> Rect;
+    /// Get the viewport rectangle for the current window target.
+    fn viewport(&self) -> Rect;
 
-    // /// Set the viewport rectangle for the current window target.
-    // // fn set_viewport<R: Into<Option<Rect>>>(&mut self, _rect: R);
+    /// Set the viewport rectangle for the current window target.
+    fn set_viewport<R: Into<Option<Rect>>>(&mut self, _rect: R);
 
-    // /// Drawing
+    /// Drawing
 
-    // /// Draw a point on the current window target.
-    // // fn draw_point<P: Into<Point>>(&mut self, _point: P);
+    /// Draw a point on the current window target.
+    fn draw_point<P: Into<Point>>(&mut self, _point: P) -> Result<()>;
 
-    // /// Draw multiple points on the current window target.
-    // // fn draw_points<'a, P: Into<&'a [Point]>>(&mut self, _points: P);
+    /// Draw multiple points on the current window target.
+    fn draw_points<'a, P: Into<&'a [Point]>>(&mut self, _points: P) -> Result<()>;
 
-    // /// Draw a line on the current window target.
-    // // fn draw_line<P1: Into<Point>, P2: Into<Point>>(&mut self, _start: P1, _end: P2);
+    /// Draw a line on the current window target.
+    fn draw_line<P1: Into<Point>, P2: Into<Point>>(&mut self, _start: P1, _end: P2) -> Result<()>;
 
-    // /// Draw a series of lines on the current window target.
-    // // fn draw_lines<'a, P: Into<&'a [Point]>>(&mut self, _points: P);
+    /// Draw a series of lines on the current window target.
+    fn draw_lines<'a, P: Into<&'a [Point]>>(&mut self, _points: P) -> Result<()>;
 
-    // /// Draw a rectangle on the current window target.
-    // // fn draw_rect<R: Into<Rect>>(&mut self, _rect: R);
+    /// Draw a rectangle on the current window target.
+    fn draw_rect<R: Into<Rect>>(&mut self, _rect: R) -> Result<()>;
 
-    // /// Draw multiple rectangles on the current window target.
-    // // fn draw_rects<'a, R: Into<&'a [Rect]>>(&mut self, _rects: R)
+    /// Draw multiple rectangles on the current window target.
+    fn draw_rects<'a, R: Into<&'a [Rect]>>(&mut self, _rects: R) -> Result<()>;
 
-    // /// Draw a filled rectangle on the current window target. Passing None will fill the entire
-    // /// rendering target.
-    // // fn fill_rect<R: Into<Option<Rect>>>(&mut self, _rect: R);
+    /// Draw a filled rectangle on the current window target. Passing None will fill the entire
+    /// rendering target.
+    fn fill_rect<R: Into<Option<Rect>>>(&mut self, _rect: R) -> Result<()>;
 
-    // /// Draw multiple filled rectangles on the current window target.
-    // // fn fill_rects<'a, R: Into<&'a [Rect]>>(&mut self, _rects: R)
+    /// Draw multiple filled rectangles on the current window target.
+    fn fill_rects<'a, R: Into<&'a [Rect]>>(&mut self, _rects: R) -> Result<()>;
 
     // /// Reads pixels from the current window target.
     // /// # Remarks
     // /// WARNING: This is a very slow operation, and should not be used frequently.
-    // fn read_pixels<R: Into<Option<Rect>>>(&self, _rect: R)
+    // fn read_pixels<R: Into<Option<Rect>>>(&self, _rect: R) -> Result<()>;
 
     // Textures
     // TODO

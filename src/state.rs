@@ -73,8 +73,8 @@ impl State {
             events: Vec::new(),
             should_loop: true,
             manual_update: 1, // Always loop at least once on start
-            environment: Environment::default(),
-            settings: Setting::default(),
+            environment: Environment::new(),
+            settings: Setting::new(),
             settings_stack: Vec::new(),
         })
     }

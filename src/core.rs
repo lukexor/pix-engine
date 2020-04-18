@@ -127,8 +127,6 @@ where
         while !self.should_close {
             // Extra loop allows on_stop to prevent closing
             while !self.should_close {
-                self.state.clear_all();
-
                 let now = time::now();
                 self.state.set_delta_time(time::sub(now, last_frame_time));
                 last_frame_time = now;
@@ -148,7 +146,6 @@ where
                     }
                     self.state.events.push(event);
                 }
-
                 // Update app
                 if self.state.should_loop || self.state.manual_update > 0 {
                     if self.state.manual_update > 0 {
@@ -162,21 +159,21 @@ where
                         Err(e) => return Err(e),
                         _ => (), // continue on
                     }
-                }
 
-                self.state.present_all();
+                    self.state.present_all();
 
-                if self.state.show_frame_rate() {
-                    frame_timer += self.state.delta_time();
-                    frame_count += 1;
-                    self.state.inc_frame_count();
-                    if frame_timer >= one_second {
-                        self.state.set_frame_rate(frame_count);
-                        let mut title = self.state.title.to_owned();
-                        title.push_str(&format!("- FPS: {}", frame_count));
-                        self.state.renderer.set_title(&title)?;
-                        frame_timer -= one_second;
-                        frame_count = 0;
+                    if self.state.show_frame_rate() {
+                        frame_timer += self.state.delta_time();
+                        frame_count += 1;
+                        self.state.inc_frame_count();
+                        if frame_timer >= one_second {
+                            self.state.set_frame_rate(frame_count);
+                            let mut title = self.state.title.to_owned();
+                            title.push_str(&format!(" - FPS: {}", frame_count));
+                            self.state.renderer.set_title(&title)?;
+                            frame_timer -= one_second;
+                            frame_count = 0;
+                        }
                     }
                 }
             }

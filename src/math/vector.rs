@@ -73,19 +73,19 @@ impl<'a> Vector {
         Self { x, y, z }
     }
 
-    /// Creates a new Vector in 3D space from a Point.
+    /// Creates a new Vector in 2D space from a Point.
     ///
     /// # Example
     ///
     /// ```
     /// use pix_engine::{shape::Point, math::Vector};
     ///
-    /// let p = Point::new(1, 2, 3);
+    /// let p = Point::new(1, 2);
     /// let v = Vector::from_point(p);
-    /// assert_eq!(v.get(), (1.0, 2.0, 3.0));
+    /// assert_eq!(v.get(), (1.0, 2.0, 0.0));
     /// ```
     pub fn from_point(p: Point) -> Self {
-        Self::new_3d(p.x as f32, p.y as f32, p.z as f32)
+        Self::new_2d(p.x as f32, p.y as f32)
     }
 
     /// Copies the current Vector into a new Vector.
@@ -637,6 +637,13 @@ impl From<(f32, f32)> for Vector {
 impl From<(f32, f32, f32)> for Vector {
     fn from((x, y, z): (f32, f32, f32)) -> Self {
         Self::new_3d(x, y, z)
+    }
+}
+
+/// Convert to f32 tuple of (x, y, z).
+impl Into<(f32, f32, f32)> for Vector {
+    fn into(self) -> (f32, f32, f32) {
+        (self.x, self.y, self.z)
     }
 }
 

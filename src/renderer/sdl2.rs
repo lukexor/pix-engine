@@ -1,9 +1,14 @@
 use super::{Error, Renderer, Result};
-use crate::{color::Color, event::PixEvent, state::rendering::BlendMode};
+use crate::{
+    color::Color,
+    event::PixEvent,
+    shape::{Point, Rect},
+    state::rendering::BlendMode,
+};
 use sdl2::{
     audio::{AudioQueue, AudioSpecDesired},
     controller::GameController,
-    pixels,
+    pixels, rect,
     render::Canvas,
     video::{self, Window},
     EventPump, GameControllerSubsystem, Sdl,
@@ -207,6 +212,100 @@ impl Renderer for Sdl2Renderer {
             canvas.clear();
         }
     }
+
+    /// Get the scale_x and scale_y factors for the current window target.
+    fn scale(&self) -> (f32, f32) {
+        self.canvas().scale()
+    }
+
+    /// Set the scale_x and scale_y factors for the current window target.
+    fn set_scale(&mut self, scale_x: f32, scale_y: f32) -> Result<()> {
+        Ok(self.canvas_mut().set_scale(scale_x, scale_y)?)
+    }
+
+    /// Get the clipping rectangle for the current window target.
+    fn clip_rect(&self) -> Option<Rect> {
+        self.canvas().clip_rect().map(|r| r.into())
+    }
+
+    /// Set the clipping rectangle for the current window target.
+    fn set_clip_rect<R: Into<Option<Rect>>>(&mut self, rect: R) {
+        // First convert to Rect, then to rect::Rect
+        let rect = rect.into().map(|r| r.into());
+        self.canvas_mut().set_clip_rect(rect);
+    }
+
+    /// Get the viewport rectangle for the current window target.
+    fn viewport(&self) -> Rect {
+        self.canvas().viewport().into()
+    }
+
+    /// Set the viewport rectangle for the current window target.
+    fn set_viewport<R: Into<Option<Rect>>>(&mut self, rect: R) {
+        // First convert to Rect, then to rect::Rect
+        let rect = rect.into().map(|r| r.into());
+        self.canvas_mut().set_viewport(rect);
+    }
+
+    /// Draw a point on the current window target.
+    fn draw_point<P: Into<Point>>(&mut self, point: P) -> Result<()> {
+        let point: rect::Point = point.into().into();
+        Ok(self.canvas_mut().draw_point(point)?)
+    }
+
+    /// Draw multiple points on the current window target.
+    fn draw_points<'a, P: Into<&'a [Point]>>(&mut self, points: P) -> Result<()> {
+        // TODO
+        Ok(())
+    }
+
+    /// Draw a line on the current window target.
+    fn draw_line<P1: Into<Point>, P2: Into<Point>>(&mut self, start: P1, end: P2) -> Result<()> {
+        let start: rect::Point = start.into().into();
+        let end: rect::Point = end.into().into();
+        Ok(self.canvas_mut().draw_line(start, end)?)
+    }
+
+    /// Draw a series of lines on the current window target.
+    fn draw_lines<'a, P: Into<&'a [Point]>>(&mut self, points: P) -> Result<()> {
+        // TODO
+        Ok(())
+    }
+
+    /// Draw a rectangle on the current window target.
+    fn draw_rect<R: Into<Rect>>(&mut self, rect: R) -> Result<()> {
+        if let Some(c) = self.stroke {
+            let rect: rect::Rect = rect.into().into();
+            let canvas = self.canvas_mut();
+            canvas.set_draw_color(c);
+            canvas.draw_rect(rect)?;
+        }
+        Ok(())
+    }
+
+    /// Draw multiple rectangles on the current window target.
+    fn draw_rects<'a, R: Into<&'a [Rect]>>(&mut self, rects: R) -> Result<()> {
+        // TODO
+        Ok(())
+    }
+
+    /// Draw a filled rectangle on the current window target. Passing None will fill the entire
+    /// rendering target.
+    fn fill_rect<R: Into<Option<Rect>>>(&mut self, rect: R) -> Result<()> {
+        if let Some(c) = self.fill {
+            let rect: Option<rect::Rect> = rect.into().map(|r| r.into());
+            let canvas = self.canvas_mut();
+            canvas.set_draw_color(c);
+            canvas.fill_rect(rect)?;
+        }
+        Ok(())
+    }
+
+    /// Draw multiple filled rectangles on the current window target.
+    fn fill_rects<'a, R: Into<&'a [Rect]>>(&mut self, rects: R) -> Result<()> {
+        // TODO
+        Ok(())
+    }
 }
 
 impl From<video::WindowBuildError> for Error {
@@ -243,8 +342,32 @@ impl From<pixels::Color> for Color {
     }
 }
 
-impl From<Color> for pixels::Color {
-    fn from(color: Color) -> Self {
-        color.rgb().into()
+impl Into<pixels::Color> for Color {
+    fn into(self) -> pixels::Color {
+        self.rgb().into()
+    }
+}
+
+impl From<rect::Rect> for Rect {
+    fn from(rect: rect::Rect) -> Self {
+        Rect::new(rect.x(), rect.y(), rect.width(), rect.height())
+    }
+}
+
+impl Into<rect::Rect> for Rect {
+    fn into(self) -> rect::Rect {
+        rect::Rect::new(self.x, self.y, self.w, self.h)
+    }
+}
+
+impl From<rect::Point> for Point {
+    fn from(point: rect::Point) -> Self {
+        Point::new(point.x(), point.y())
+    }
+}
+
+impl Into<rect::Point> for Point {
+    fn into(self) -> rect::Point {
+        rect::Point::new(self.x, self.y)
     }
 }

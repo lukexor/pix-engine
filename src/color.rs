@@ -256,31 +256,45 @@ impl<'a> Color {
     }
 }
 
-/// From gray value to Color
+/// From gray u8 value to Color.
 impl From<u8> for Color {
     fn from(gray: u8) -> Self {
         Color::RGB(gray, gray, gray)
     }
 }
 
-/// From gray value with alpha to Color
+/// From gray u8 value with alpha u8 to Color.
 impl From<(u8, u8)> for Color {
     fn from((gray, a): (u8, u8)) -> Self {
         Color::RGBA(gray, gray, gray, a)
     }
 }
 
-/// From tuple of (r, g, b) to Color
+/// From a u8 tuple of (r, g, b) to Color.
 impl From<(u8, u8, u8)> for Color {
     fn from((r, g, b): (u8, u8, u8)) -> Self {
         Color::RGB(r, g, b)
     }
 }
 
-/// From tuple of (r, g, b, a) to Color
+/// From a u8 tuple of (r, g, b, a) to Color.
 impl From<(u8, u8, u8, u8)> for Color {
     fn from((r, g, b, a): (u8, u8, u8, u8)) -> Self {
         Color::RGBA(r, g, b, a)
+    }
+}
+
+/// Convert to a u8 tuple of (r, g, b).
+impl Into<(u8, u8, u8)> for Color {
+    fn into(self) -> (u8, u8, u8) {
+        (self.r, self.g, self.b)
+    }
+}
+
+/// Convert to a u8 tuple of (r, g, b, a).
+impl Into<(u8, u8, u8, u8)> for Color {
+    fn into(self) -> (u8, u8, u8, u8) {
+        (self.r, self.g, self.b, self.a)
     }
 }
 

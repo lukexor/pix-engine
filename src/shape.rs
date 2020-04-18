@@ -26,7 +26,7 @@ impl Default for RectMode {
     }
 }
 
-/// Represents a rectangle.
+/// Represents a rectangle shape with (x, y) position and width/height.
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Rect {
     pub x: i32,
@@ -36,8 +36,82 @@ pub struct Rect {
 }
 
 impl Rect {
+    /// Creates a new `Rect` instance.
     pub fn new(x: i32, y: i32, w: u32, h: u32) -> Self {
         Self { x, y, w, h }
+    }
+
+    /// Gets the (width, height) size of the `Rect`.
+    pub fn dimensions(&self) -> (u32, u32) {
+        (self.w, self.h)
+    }
+
+    /// Gets the left x-position of the `Rect`.
+    pub fn left(&self) -> i32 {
+        self.x
+    }
+
+    /// Gets the right x-position of the `Rect`.
+    pub fn right(&self) -> i32 {
+        self.x + self.w as i32
+    }
+
+    /// Gets the top y-position of the `Rect`.
+    pub fn top(&self) -> i32 {
+        self.y
+    }
+
+    /// Gets the bottom y-position of the `Rect`.
+    pub fn bottom(&self) -> i32 {
+        self.y + self.h as i32
+    }
+
+    /// Gets the center position of the `Rect`.
+    pub fn center(&self) -> Point {
+        Point::new(self.x + self.w as i32 / 2, self.y + self.h as i32 / 2)
+    }
+
+    /// Gets the top-left corner of the `Rect`.
+    pub fn top_left(&self) -> Point {
+        Point::new(self.x, self.y)
+    }
+
+    /// Gets the top-right corner of the `Rect`.
+    pub fn top_right(&self) -> Point {
+        Point::new(self.x + self.w as i32, self.y)
+    }
+
+    /// Gets the bottom-left corner of the `Rect`.
+    pub fn bottom_left(&self) -> Point {
+        Point::new(self.x, self.y + self.h as i32)
+    }
+
+    /// Gets the bottom-right corner of the `Rect`.
+    pub fn bottom_right(&self) -> Point {
+        Point::new(self.x + self.w as i32, self.y + self.h as i32)
+    }
+
+    /// Move the center of the `Rect` to a given `Point`.
+    pub fn center_on<P: Into<Point>>(&mut self, p: P) {
+        let p = p.into();
+        self.x = p.x - self.w as i32 / 2;
+        self.y = p.y - self.h as i32 / 2;
+    }
+
+    /// Move the top-left corner of the `Rect` to a given `Point`.
+    pub fn move_to<P: Into<Point>>(&mut self, p: P) {
+        let p = p.into();
+        self.x = p.x;
+        self.y = p.y;
+    }
+
+    /// Checks whether the `Rect` contains a given `Point`.
+    ///
+    /// Points along the right and bottom edges aren't considered inside the `Rect`. This means
+    /// a 1-by-1 rectangle only contains a single `Point`.
+    pub fn contains_point<P: Into<Point>>(&mut self, p: P) -> bool {
+        let p = p.into();
+        p.x >= self.left() && p.x < self.right() && p.y >= self.top() && p.y < self.bottom()
     }
 }
 
@@ -47,10 +121,18 @@ impl From<(u32, u32)> for Rect {
         Self::new(0, 0, w, h)
     }
 }
+
 /// From tuple of (x, y, width, height) to Rect.
 impl From<(i32, i32, u32, u32)> for Rect {
     fn from((x, y, w, h): (i32, i32, u32, u32)) -> Self {
         Self::new(x, y, w, h)
+    }
+}
+
+/// Into a tuple of (x, y, width, height).
+impl Into<(i32, i32, u32, u32)> for Rect {
+    fn into(self) -> (i32, i32, u32, u32) {
+        (self.x, self.y, self.w, self.h)
     }
 }
 
@@ -95,43 +177,38 @@ impl Default for StrokeJoin {
 pub struct Point {
     pub x: i32,
     pub y: i32,
-    pub z: i32,
 }
 
 impl Point {
     /// Creates a new Point in screen space.
-    pub fn new(x: i32, y: i32, z: i32) -> Self {
-        Self { x, y, z }
+    pub fn new(x: i32, y: i32) -> Self {
+        Self { x, y }
     }
 
     /// Creates a new Point in screen space from a 3D Vector. Any decimal values of the Vector will be
-    /// truncated.
+    /// truncated and the z-axis ignored.
     pub fn from_vector(v: Vector) -> Self {
-        Self::new(v.x as i32, v.y as i32, v.z as i32)
+        Self::new(v.x as i32, v.y as i32)
     }
 
     // /// Creates a new random Point in 2D space
+    // TODO needs screen dimensions
     // pub fn random_2d() -> Self {
     //     Self::new(x, y, 0)
     // }
-
-    // /// Creates a new random Point in 3D space
-    // pub fn random_3d() -> Self {
-    //     Self::new(x, y, z)
-    // }
 }
 
-/// From 2D tuple of (x, y) to Point.
+/// From an i32 tuple of (x, y) to Point.
 impl From<(i32, i32)> for Point {
     fn from((x, y): (i32, i32)) -> Self {
-        Self::new(x, y, 0)
+        Self::new(x, y)
     }
 }
 
-/// From 3D tuple of (x, y) to Point.
-impl From<(i32, i32, i32)> for Point {
-    fn from((x, y, z): (i32, i32, i32)) -> Self {
-        Self::new(x, y, z)
+/// Convert to an i32 tuple of (x, y).
+impl Into<(i32, i32)> for Point {
+    fn into(self) -> (i32, i32) {
+        (self.x, self.y)
     }
 }
 
@@ -143,7 +220,7 @@ impl From<Vector> for Point {
 
 impl fmt::Display for Point {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "({}, {}, {})", self.x, self.y, self.z)
+        write!(f, "({}, {})", self.x, self.y)
     }
 }
 

@@ -1,10 +1,10 @@
 use super::{
     renderer::Renderer,
     rendering::{BlendMode, DEFAULT_BLEND_FACTOR},
-    State,
+    Result, State,
 };
 use crate::{
-    color::{Color, ColorMode},
+    color::{self, Color, ColorMode},
     image::ImageMode,
     math::AngleMode,
     shape::{self, ArcMode, EllipseMode, RectMode, StrokeCap, StrokeJoin},
@@ -56,6 +56,7 @@ impl Setting {
     pub(crate) fn new() -> Self {
         Self {
             show_frame_rate: true,
+            bg_color: color::TRANSPARENT,
             stroke_weight: shape::DEFAULT_STROKE_WEIGHT,
             blend_factor: DEFAULT_BLEND_FACTOR,
             ..Default::default()
@@ -64,6 +65,18 @@ impl Setting {
 }
 
 impl State {
+    /// Set title for the current window target.
+    ///
+    /// Errors if the title contains a nul byte.
+    pub fn set_title(&mut self, title: &str) -> Result<()> {
+        Ok(self.renderer.set_title(title)?)
+    }
+
+    /// Sets the audio sample rate for the audio playback in Hz.
+    pub fn set_audio_sample_rate(&mut self, rate: i32) -> Result<()> {
+        Ok(self.renderer.set_audio_sample_rate(rate)?)
+    }
+
     /// Whether to display the frame rate in the title bar.
     pub fn show_frame_rate(&self) -> bool {
         self.settings.show_frame_rate
@@ -84,30 +97,73 @@ impl State {
     }
 
     /// Get the current color used to clear the canvas.
-    pub fn bg_color(&self) -> Color {
+    pub fn background(&self) -> Color {
         self.settings.bg_color
     }
-    /// Set the color used to clear the canvas.
-    pub fn set_bg_color<C: Into<Color>>(&mut self, color: C) {
+
+    /// Set the color used for the background. The default is transparent. This is typically used
+    /// in `State::on_update()` to clear the canvas at the start of each frame but it can also be
+    /// used in `State::on_start()` to set the background for the first frame if using
+    /// `State::no_loop()`. Or it can be used any time if the background needs to be set to a given
+    /// `Color`. To return to a transparent background use `State::no_background()`
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use pix_engine::{Color, State};
+    /// let mut state = State::new("State", 100, 100).unwrap();
+    ///
+    /// state.set_background((128, 200, 0));
+    /// assert_eq!(state.background(), Color::new((128, 200, 0)));
+    /// ```
+    pub fn set_background<C: Into<Color>>(&mut self, color: C) {
         let c = color.into();
         self.settings.bg_color = c;
         self.renderer.set_bg_color(c);
+        self.renderer.clear();
+    }
+
+    pub fn no_background(&mut self) {
+        self.settings.bg_color = color::TRANSPARENT;
     }
 
     /// Get the current color used to fill shapes.
     pub fn fill(&self) -> Option<Color> {
         self.settings.fill
     }
-    /// Set the color used to fill shapes. Pass None to disable filling.
-    pub fn set_fill<C: Into<Option<Color>>>(&mut self, color: C) {
+
+    /// Set the color used to fill shapes.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use pix_engine::{Color, State};
+    /// let mut state = State::new("State", 100, 100).unwrap();
+    ///
+    /// state.set_fill((128, 200, 0));
+    /// assert_eq!(state.fill(), Some(Color::new((128, 200, 0))));
+    /// ```
+    pub fn set_fill<C: Into<Color>>(&mut self, color: C) {
         let c = color.into();
-        self.settings.fill = c;
+        self.settings.fill = Some(c);
         self.renderer.set_fill(c);
     }
+
     /// Disable filling shapes.
-    /// Shortcut for `State::set_fill(None)`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use pix_engine::{Color, State};
+    /// let mut state = State::new("State", 100, 100).unwrap();
+    ///
+    /// state.set_fill((128, 200, 0));
+    /// assert_eq!(state.fill(), Some(Color::new((128, 200, 0))));
+    /// state.no_fill();
+    /// assert_eq!(state.fill(), None);
+    /// ```
     pub fn no_fill(&mut self) {
-        self.set_fill(None);
+        self.settings.fill = None;
         self.renderer.set_fill(None);
     }
 

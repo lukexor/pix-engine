@@ -1,5 +1,8 @@
 use super::{Result, State};
-use crate::renderer::Renderer;
+use crate::{
+    renderer::Renderer,
+    shape::{Point, Rect},
+};
 
 pub const DEFAULT_BLEND_FACTOR: f32 = 1.0;
 
@@ -20,24 +23,7 @@ impl Default for BlendMode {
 }
 
 impl State {
-    /// Settings
-
-    /// Set title for the current window target.
-    ///
-    /// Errors if the title contains a nul byte.
-    pub fn set_title(&mut self, title: &str) -> Result<()> {
-        Ok(self.renderer.set_title(title)?)
-    }
-
-    /// Sets the audio sample rate for the audio playback in Hz.
-    pub fn set_audio_sample_rate(&mut self, rate: i32) -> Result<()> {
-        Ok(self.renderer.set_audio_sample_rate(rate)?)
-    }
-
-    /// Rendering
-
-    /// Presents changes made to the canvas on the current window target since present was last
-    /// called.
+    /// Presents changes made to the canvas since present was last called.
     pub fn present(&mut self) {
         self.renderer.present()
     }
@@ -47,7 +33,7 @@ impl State {
         self.renderer.present_all()
     }
 
-    /// Clears the canvas on the current window target to the current draw color.
+    /// Clears the canvas to the current draw color.
     pub fn clear(&mut self) {
         self.renderer.clear()
     }
@@ -57,59 +43,84 @@ impl State {
         self.renderer.clear_all();
     }
 
-    // /// Get the scale_x and scale_y factors for the current window target.
-    // pub fn scale(&self) -> (f32, f32) {
-    //     self.renderer.scale()
-    // }
+    /// Get the scale_x and scale_y factors for the current window target.
+    pub fn scale(&self) -> (f32, f32) {
+        self.renderer.scale()
+    }
 
-    // /// Set the scale_x and scale_y factors for the current window target.
-    // pub fn set_scale(&mut self, scale_x: f32, scale_y: f32) {
-    //     self.renderer.set_scale(scale_x, scale_y)
-    // }
+    /// Set the scale_x and scale_y factors for the current window target.
+    pub fn set_scale(&mut self, scale_x: f32, scale_y: f32) -> Result<()> {
+        Ok(self.renderer.set_scale(scale_x, scale_y)?)
+    }
 
-    // /// Get the clipping rectangle for the current window target.
-    // // pub fn clip_rect(&self){}
+    /// Get the clipping rectangle for the current window target.
+    pub fn clip_rect(&self) -> Option<Rect> {
+        self.renderer.clip_rect()
+    }
 
-    // /// Set the clipping rectangle for the current window target.
-    // // pub fn set_clip_rect<R: Into<Option<Rect>>>(&mut self, rect: R){}
+    /// Set the clipping rectangle for the current window target.
+    pub fn set_clip_rect<R: Into<Option<Rect>>>(&mut self, rect: R) {
+        self.renderer.set_clip_rect(rect);
+    }
 
-    // /// Get the viewport rectangle for the current window target.
-    // // pub fn viewport(&self) -> Rect{}
+    /// Get the viewport rectangle for the current window target.
+    pub fn viewport(&self) -> Rect {
+        self.renderer.viewport()
+    }
 
-    // /// Set the viewport rectangle for the current window target.
-    // // pub fn set_viewport<R: Into<Option<Rect>>>(&mut self, rect: R){}
+    /// Set the viewport rectangle for the current window target.
+    pub fn set_viewport<R: Into<Option<Rect>>>(&mut self, rect: R) {
+        self.renderer.set_viewport(rect);
+    }
 
-    // /// Drawing
+    /// Drawing
 
-    // /// Draw a point on the current window target.
-    // // pub fn draw_point<P: Into<Point>>(&mut self, point: P){}
+    /// Draw a point.
+    pub fn draw_point<P: Into<Point>>(&mut self, point: P) -> Result<()> {
+        Ok(self.renderer.draw_point(point)?)
+    }
 
-    // /// Draw multiple points on the current window target.
-    // // pub fn draw_points<'a, P: Into<&'a [Point]>>(&mut self, points: P){}
+    /// Draw multiple points.
+    pub fn draw_points<'a, P: Into<&'a [Point]>>(&mut self, points: P) -> Result<()> {
+        Ok(self.renderer.draw_points(points)?)
+    }
 
-    // /// Draw a line on the current window target.
-    // // pub fn draw_line<P1: Into<Point>, P2: Into<Point>>(&mut self, start: P1, end: P2){}
+    /// Draw a line.
+    pub fn draw_line<P1: Into<Point>, P2: Into<Point>>(
+        &mut self,
+        start: P1,
+        end: P2,
+    ) -> Result<()> {
+        Ok(self.renderer.draw_line(start, end)?)
+    }
 
-    // /// Draw a series of lines on the current window target.
-    // // pub fn draw_lines<'a, P: Into<&'a [Point]>>(&mut self, points: P){}
+    /// Draw a series of lines.
+    pub fn draw_lines<'a, P: Into<&'a [Point]>>(&mut self, points: P) -> Result<()> {
+        Ok(self.renderer.draw_lines(points)?)
+    }
 
-    // /// Draw a rectangle on the current window target.
-    // // pub fn draw_rect<R: Into<Rect>>(&mut self, rect: R){}
+    /// Draw a rectangle. If `None` is passed, the entire screen is used as the `Rect`. If both
+    /// fill and stroke are set to None, nothing will be drawn.
+    pub fn draw_rect<R: Into<Option<Rect>>>(&mut self, rect: R) -> Result<()> {
+        let rect = rect.into();
+        self.renderer.fill_rect(rect.clone())?;
+        if let Some(rect) = rect {
+            self.renderer.draw_rect(rect)?;
+        }
+        Ok(())
+    }
 
-    // /// Draw multiple rectangles on the current window target.
-    // // pub fn draw_rects<'a, R: Into<&'a [Rect]>>(&mut self, rects: R)
-
-    // /// Draw a filled rectangle on the current window target. Passing None will fill the entire
-    // /// rendering target.
-    // // pub fn fill_rect<R: Into<Option<Rect>>>(&mut self, rect: R){}
-
-    // /// Draw multiple filled rectangles on the current window target.
-    // // pub fn fill_rects<'a, R: Into<&'a [Rect]>>(&mut self, rects: R)
+    /// Draw multiple rectangles. If both fill and stroke are set to None, nothing will be drawn.
+    pub fn draw_rects<'a, R: Into<&'a [Rect]>>(&mut self, rects: R) -> Result<()> {
+        self.renderer.fill_rects(rects)?;
+        // self.renderer.draw_rects(rects)?;
+        Ok(())
+    }
 
     // /// Reads pixels from the current window target.
     // /// # Remarks
     // /// WARNING: This is a very slow operation, and should not be used frequently.
-    // // pub fn read_pixels<R: Into<Option<Rect>>>(&self, rect: R, format: PixelFormatEnum)
+    // pub fn read_pixels<R: Into<Option<Rect>>>(&self, rect: R, format: PixelFormatEnum) -> Result<()>;
 
     // /// Textures
     // TODO
