@@ -66,25 +66,25 @@ pub(crate) trait Renderer {
     /// Set title for the current window target.
     ///
     /// Errors if the title contains a nul byte.
-    fn set_title(&mut self, _title: &str) -> Result<()>;
+    fn title(&mut self, _title: &str) -> Result<()>;
 
     /// Sets the audio sample rate for the audio playback in Hz.
-    fn set_audio_sample_rate(&mut self, rate: i32) -> Result<()>;
+    fn audio_sample_rate(&mut self, rate: i32) -> Result<()>;
 
     /// Set draw color for the clear operation on the current window target.
-    fn set_bg_color<C: Into<Color>>(&mut self, _color: C);
+    fn background<C: Into<Color>>(&mut self, _color: C);
 
     /// Set draw color for the fill operations on the current window target.
-    fn set_fill<C: Into<Option<Color>>>(&mut self, _color: C);
+    fn fill<C: Into<Option<Color>>>(&mut self, _color: C);
 
     /// Set draw color for the drawing outlines on the current window target.
-    fn set_stroke<C: Into<Option<Color>>>(&mut self, _color: C);
+    fn stroke<C: Into<Option<Color>>>(&mut self, _color: C);
 
     /// Get the blending mode for the current window target.
-    fn blend_mode(&self) -> BlendMode;
+    fn get_blend_mode(&self) -> BlendMode;
 
     /// Set the blending mode for drawing operations on the current window target.
-    fn set_blend_mode(&mut self, _mode: BlendMode);
+    fn blend_mode(&mut self, _mode: BlendMode);
 
     /// Returns a list of events from the event queue since last time poll_events
     /// was called.
@@ -106,22 +106,22 @@ pub(crate) trait Renderer {
     fn clear_all(&mut self);
 
     /// Get the scale_x and scale_y factors for the current window target.
-    fn scale(&self) -> (f32, f32);
+    fn get_scale(&self) -> (f32, f32);
 
     /// Set the scale_x and scale_y factors for the current window target.
-    fn set_scale(&mut self, _scale_x: f32, _scale_y: f32) -> Result<()>;
+    fn scale(&mut self, _scale_x: f32, _scale_y: f32) -> Result<()>;
 
     /// Get the clipping rectangle for the current window target.
-    fn clip_rect(&self) -> Option<Rect>;
+    fn get_clip_rect(&self) -> Option<Rect>;
 
     /// Set the clipping rectangle for the current window target.
-    fn set_clip_rect<R: Into<Option<Rect>>>(&mut self, _rect: R);
+    fn clip_rect<R: Into<Option<Rect>>>(&mut self, _rect: R);
 
     /// Get the viewport rectangle for the current window target.
-    fn viewport(&self) -> Rect;
+    fn get_viewport(&self) -> Rect;
 
     /// Set the viewport rectangle for the current window target.
-    fn set_viewport<R: Into<Option<Rect>>>(&mut self, _rect: R);
+    fn viewport<R: Into<Option<Rect>>>(&mut self, _rect: R);
 
     /// Drawing
 

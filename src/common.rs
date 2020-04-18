@@ -1,17 +1,17 @@
 use crate::{image, renderer, state};
 use std::{borrow::Cow, error, fmt, io};
 
-/// Result type for PixEngine Errors.
+/// Result type for `PixEngine` Errors.
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// Types of errors the PixEngine can return in a result.
+/// Types of errors the `PixEngine` can return in a result.
 #[derive(Debug)]
 pub enum Error {
     IoError(io::Error),
     InvalidSetting {
-        /// Invalid setting which caused the error
+        /// Invalid setting which caused the error.
         setting: Cow<'static, str>,
-        /// Message why the setting is invalid
+        /// Message why the setting is invalid.
         message: Cow<'static, str>,
     },
     ImageError(image::Error),

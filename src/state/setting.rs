@@ -68,36 +68,37 @@ impl State {
     /// Set title for the current window target.
     ///
     /// Errors if the title contains a nul byte.
-    pub fn set_title(&mut self, title: &str) -> Result<()> {
-        Ok(self.renderer.set_title(title)?)
+    pub fn title(&mut self, title: &str) -> Result<()> {
+        Ok(self.renderer.title(title)?)
     }
 
     /// Sets the audio sample rate for the audio playback in Hz.
-    pub fn set_audio_sample_rate(&mut self, rate: i32) -> Result<()> {
-        Ok(self.renderer.set_audio_sample_rate(rate)?)
+    pub fn audio_sample_rate(&mut self, rate: i32) -> Result<()> {
+        Ok(self.renderer.audio_sample_rate(rate)?)
     }
 
-    /// Whether to display the frame rate in the title bar.
-    pub fn show_frame_rate(&self) -> bool {
+    /// Get whether to display the frame rate in the title bar.
+    pub fn get_show_frame_rate(&mut self) -> bool {
         self.settings.show_frame_rate
     }
+
     /// Set whether to display the frame rate in the title bar.
-    pub fn set_show_frame_rate(&mut self, val: bool) {
+    pub fn show_frame_rate(&mut self, val: bool) {
         self.settings.show_frame_rate = val;
     }
 
     /// Get current color mode.
-    pub fn color_mode(&self) -> ColorMode {
+    pub fn get_color_mode(&self) -> ColorMode {
         self.settings.color_mode
     }
     /// Set current color mode.
-    pub fn set_color_mode(&mut self, mode: ColorMode) {
+    pub fn color_mode(&mut self, mode: ColorMode) {
         self.settings.color_mode = mode;
         unimplemented!("only RGB color mode is currently supported.");
     }
 
     /// Get the current color used to clear the canvas.
-    pub fn background(&self) -> Color {
+    pub fn get_background(&self) -> Color {
         self.settings.bg_color
     }
 
@@ -113,22 +114,23 @@ impl State {
     /// use pix_engine::{Color, State};
     /// let mut state = State::new("State", 100, 100).unwrap();
     ///
-    /// state.set_background((128, 200, 0));
-    /// assert_eq!(state.background(), Color::new((128, 200, 0)));
+    /// state.background((128, 200, 0));
+    /// assert_eq!(state.get_background(), Color::new((128, 200, 0)));
     /// ```
-    pub fn set_background<C: Into<Color>>(&mut self, color: C) {
+    pub fn background<C: Into<Color>>(&mut self, color: C) {
         let c = color.into();
         self.settings.bg_color = c;
-        self.renderer.set_bg_color(c);
+        self.renderer.background(c);
         self.renderer.clear();
     }
 
+    /// Disables the background color by setting it to transparent.
     pub fn no_background(&mut self) {
         self.settings.bg_color = color::TRANSPARENT;
     }
 
     /// Get the current color used to fill shapes.
-    pub fn fill(&self) -> Option<Color> {
+    pub fn get_fill(&self) -> Option<Color> {
         self.settings.fill
     }
 
@@ -140,13 +142,13 @@ impl State {
     /// use pix_engine::{Color, State};
     /// let mut state = State::new("State", 100, 100).unwrap();
     ///
-    /// state.set_fill((128, 200, 0));
-    /// assert_eq!(state.fill(), Some(Color::new((128, 200, 0))));
+    /// state.fill((128, 200, 0));
+    /// assert_eq!(state.get_fill(), Some(Color::new((128, 200, 0))));
     /// ```
-    pub fn set_fill<C: Into<Color>>(&mut self, color: C) {
+    pub fn fill<C: Into<Color>>(&mut self, color: C) {
         let c = color.into();
         self.settings.fill = Some(c);
-        self.renderer.set_fill(c);
+        self.renderer.fill(c);
     }
 
     /// Disable filling shapes.
@@ -157,171 +159,171 @@ impl State {
     /// use pix_engine::{Color, State};
     /// let mut state = State::new("State", 100, 100).unwrap();
     ///
-    /// state.set_fill((128, 200, 0));
-    /// assert_eq!(state.fill(), Some(Color::new((128, 200, 0))));
+    /// state.fill((128, 200, 0));
+    /// assert_eq!(state.get_fill(), Some(Color::new((128, 200, 0))));
     /// state.no_fill();
-    /// assert_eq!(state.fill(), None);
+    /// assert_eq!(state.get_fill(), None);
     /// ```
     pub fn no_fill(&mut self) {
         self.settings.fill = None;
-        self.renderer.set_fill(None);
+        self.renderer.fill(None);
     }
 
     /// Get the current color used to outline shapes.
-    pub fn stroke(&self) -> Option<Color> {
+    pub fn get_stroke(&self) -> Option<Color> {
         self.settings.stroke
     }
     /// Set the color used to outline shapes. Pass None to disable outlines.
-    pub fn set_stroke<C: Into<Option<Color>>>(&mut self, color: C) {
+    pub fn stroke<C: Into<Color>>(&mut self, color: C) {
         let c = color.into();
-        self.settings.stroke = c;
-        self.renderer.set_stroke(c);
+        self.settings.stroke = Some(c);
+        self.renderer.stroke(c);
     }
     /// Disable outlining shapes.
     /// Shortcut for `State::set_stroke(None)`.
     pub fn no_stroke(&mut self) {
-        self.set_stroke(None);
-        self.renderer.set_stroke(None);
+        self.settings.stroke = None;
+        self.renderer.stroke(None);
     }
 
     /// Gets the current arc mode for filling arc segments.
-    pub fn arc_mode(&self) -> ArcMode {
+    pub fn get_arc_mode(&self) -> ArcMode {
         self.settings.arc_mode
     }
     /// Sets the current arc mode for filling arc segments.
-    pub fn set_arc_mode(&mut self, mode: ArcMode) {
+    pub fn arc_mode(&mut self, mode: ArcMode) {
         self.settings.arc_mode = mode;
     }
 
     /// Gets the current ellipse mode for drawing ellipses and circles.
-    pub fn ellipse_mode(&self) -> EllipseMode {
+    pub fn get_ellipse_mode(&self) -> EllipseMode {
         self.settings.ellipse_mode
     }
     /// Sets the current ellipse mode for drawing ellipses and circles.
-    pub fn set_ellipse_mode(&mut self, mode: EllipseMode) {
+    pub fn ellipse_mode(&mut self, mode: EllipseMode) {
         self.settings.ellipse_mode = mode;
     }
 
     /// Gets the current rect mode for drawing rects and squares.
-    pub fn rect_mode(&self) -> RectMode {
+    pub fn get_rect_mode(&self) -> RectMode {
         self.settings.rect_mode
     }
     /// Sets the current rect mode for drawing rects and squares.
-    pub fn set_rect_mode(&mut self, mode: RectMode) {
+    pub fn rect_mode(&mut self, mode: RectMode) {
         self.settings.rect_mode = mode;
     }
 
     /// Gets the current stroke weight for drawing lines.
-    pub fn stroke_weight(&self) -> u32 {
+    pub fn get_stroke_weight(&self) -> u32 {
         self.settings.stroke_weight
     }
     /// Sets the current stroke weight for drawing lines.
-    pub fn set_stroke_weight(&mut self, weight: u32) {
+    pub fn stroke_weight(&mut self, weight: u32) {
         self.settings.stroke_weight = weight;
     }
 
     /// Gets the current stroke cap for drawing lines.
-    pub fn stroke_cap(&self) -> StrokeCap {
+    pub fn get_stroke_cap(&self) -> StrokeCap {
         self.settings.stroke_cap
     }
     /// Sets the current stroke cap for drawing lines.
-    pub fn set_stroke_cap(&mut self, mode: StrokeCap) {
+    pub fn stroke_cap(&mut self, mode: StrokeCap) {
         self.settings.stroke_cap = mode;
     }
 
     /// Gets the current stroke join for drawing adjoining lines.
-    pub fn stroke_join(&self) -> StrokeJoin {
+    pub fn get_stroke_join(&self) -> StrokeJoin {
         self.settings.stroke_join
     }
     /// Sets the current stroke join for drawing adjoining lines.
-    pub fn set_stroke_join(&mut self, mode: StrokeJoin) {
+    pub fn stroke_join(&mut self, mode: StrokeJoin) {
         self.settings.stroke_join = mode;
     }
 
     /// Gets the current angle mode used for interpreting angle parameters.
-    pub fn angle_mode(&self) -> AngleMode {
+    pub fn get_angle_mode(&self) -> AngleMode {
         self.settings.angle_mode
     }
     /// Sets the current angle mode used for interpreting angle parameters.
-    pub fn set_angle_mode(&mut self, mode: AngleMode) {
+    pub fn angle_mode(&mut self, mode: AngleMode) {
         self.settings.angle_mode = mode;
     }
 
     /// Gets the current image tint used for drawing images.
-    pub fn image_tint(&self) -> Option<Color> {
+    pub fn get_image_tint(&self) -> Option<Color> {
         self.settings.image_tint
     }
     /// Sets the current image tint used for drawing images.
-    pub fn set_image_tint<C: Into<Option<Color>>>(&mut self, color: C) {
+    pub fn image_tint<C: Into<Option<Color>>>(&mut self, color: C) {
         self.settings.image_tint = color.into();
     }
     /// Disable image tint
     /// Shortcut for `State::set_image_tint(None)`
     pub fn no_image_tint(&mut self) {
-        self.set_image_tint(None)
+        self.image_tint(None)
     }
 
     /// Gets the current image mode used for drawing images.
-    pub fn image_mode(&self) -> ImageMode {
+    pub fn get_image_mode(&self) -> ImageMode {
         self.settings.image_mode
     }
     /// Sets the current image mode used for drawing images.
-    pub fn set_image_mode(&mut self, mode: ImageMode) {
+    pub fn image_mode(&mut self, mode: ImageMode) {
         self.settings.image_mode = mode;
     }
 
     /// Gets the current text alignment for drawing text.
-    pub fn text_align(&self) -> TextAlign {
+    pub fn get_text_align(&self) -> TextAlign {
         self.settings.font.align
     }
     /// Sets the current text alignment for drawing text.
-    pub fn set_text_align(&mut self, align: TextAlign) {
+    pub fn text_align(&mut self, align: TextAlign) {
         self.settings.font.align = align;
     }
 
     /// Gets the current font leading for drawing text.
-    pub fn font_leading(&self) -> u32 {
+    pub fn get_font_leading(&self) -> u32 {
         self.settings.font.leading
     }
     /// Sets the current font leading for drawing text.
-    pub fn set_font_leading(&mut self, leading: u32) {
+    pub fn font_leading(&mut self, leading: u32) {
         self.settings.font.leading = leading;
     }
 
     /// Gets the current font size for drawing text.
-    pub fn font_size(&self) -> u32 {
+    pub fn get_font_size(&self) -> u32 {
         self.settings.font.size
     }
     /// Sets the current font size for drawing text.
-    pub fn set_font_size(&mut self, size: u32) {
+    pub fn font_size(&mut self, size: u32) {
         self.settings.font.size = size;
     }
 
     /// Gets the current font style for drawing text.
-    pub fn font_style(&self) -> TextStyle {
+    pub fn get_font_style(&self) -> TextStyle {
         self.settings.font.style
     }
     /// Sets the current font style for drawing text.
-    pub fn set_font_style(&mut self, style: TextStyle) {
+    pub fn font_style(&mut self, style: TextStyle) {
         self.settings.font.style = style;
     }
 
     /// Gets the current text font for drawing text.
-    pub fn font_family(&self) -> FontFamily {
+    pub fn get_font_family(&self) -> FontFamily {
         self.settings.font.family.clone()
     }
     /// Sets the current text font for drawing text.
-    pub fn set_font_family(&mut self, family: FontFamily) {
+    pub fn font_family(&mut self, family: FontFamily) {
         self.settings.font.family = family;
     }
 
     /// Gets the current blend mode for rendering.
-    pub fn blend_mode(&self) -> BlendMode {
+    pub fn get_blend_mode(&self) -> BlendMode {
         self.settings.blend_mode
     }
     /// Sets the current blend mode for rendering.
-    pub fn set_blend_mode(&mut self, mode: BlendMode) {
+    pub fn blend_mode(&mut self, mode: BlendMode) {
         self.settings.blend_mode = mode;
-        self.renderer.set_blend_mode(mode);
+        self.renderer.blend_mode(mode);
     }
 }

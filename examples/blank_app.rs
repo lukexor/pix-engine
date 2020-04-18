@@ -1,31 +1,28 @@
 use pix_engine::prelude::*;
 
-struct Demo {}
+struct App {}
 
-impl Demo {
+impl App {
     fn new() -> Self {
         Self {}
     }
 }
 
-impl PixApp for Demo {
+impl PixApp for App {
     fn on_start(&mut self, s: &mut State) -> Result<bool> {
-        s.fill((255, 255, 0));
         Ok(true)
     }
     fn on_update(&mut self, s: &mut State) -> Result<bool> {
-        s.background((255, 0, 0));
-        s.draw_rect(Rect::new(100, 100, 200, 200))?;
         Ok(true)
     }
-    fn on_stop(&mut self, _s: &mut State) -> Result<bool> {
+    fn on_stop(&mut self, s: &mut State) -> Result<bool> {
         Ok(true)
     }
 }
 
 fn main() {
-    let demo = Demo::new();
-    PixEngine::create("Demo Example", demo, 800, 600)
+    let app = App::new();
+    PixEngine::create("Blank App", app, 800, 600)
         .build()
         .expect("engine")
         .run()

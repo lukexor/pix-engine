@@ -1,4 +1,4 @@
-use crate::{event::PixEvent, renderer};
+use crate::{event::PixEvent, renderer, shape::Point};
 use environment::Environment;
 use setting::Setting;
 use std::{borrow::Cow, error, fmt, vec::Drain};
@@ -44,10 +44,12 @@ impl From<renderer::Error> for Error {
 
 // TODO Add SDL2 specific functions to manage multiple windows
 
-/// Contains all engine state and methods allowing the enclosed app to interact
-/// with engine state
+/// Contains all engine state and methods allowing the enclosed application which implements the
+/// `PixApp` trait to interact with the engine.
 pub struct State {
     pub(crate) title: String,
+    width: u32,
+    height: u32,
     #[cfg(all(feature = "sdl2-renderer", not(feature = "wasm-renderer")))]
     pub(crate) renderer: renderer::sdl2::Sdl2Renderer,
     #[cfg(all(feature = "wasm-renderer", not(feature = "sdl2-renderer")))]
@@ -55,6 +57,7 @@ pub struct State {
     pub(crate) events: Vec<PixEvent>,
     pub(crate) should_loop: bool,
     pub(crate) manual_update: u32, // Used to manually update when should_loop is false
+    pub(crate) mouse_pos: Point,
     environment: Environment,
     // input_states
     // elements
@@ -64,15 +67,18 @@ pub struct State {
 }
 
 impl State {
-    /// Creates a new State instance
+    /// Creates a new `State` instance.
     pub fn new(title: &str, width: u32, height: u32) -> Result<Self> {
         let renderer = renderer::load_renderer(title, width, height)?;
         Ok(Self {
             title: title.to_owned(),
+            width,
+            height,
             renderer,
             events: Vec::new(),
             should_loop: true,
             manual_update: 1, // Always loop at least once on start
+            mouse_pos: Point::default(),
             environment: Environment::new(),
             settings: Setting::new(),
             settings_stack: Vec::new(),
@@ -95,6 +101,20 @@ impl State {
     /// Sets the engine to stop looping and no longer call `App::on_update()`.
     pub fn no_loop(&mut self) {
         self.should_loop = false;
+    }
+
+    /// Gets the width of the window.
+    pub fn width(&self) -> u32 {
+        self.width
+    }
+    /// Gets the height of the window.
+    pub fn height(&self) -> u32 {
+        self.height
+    }
+
+    /// Gets the current mouse position as a `Point`.
+    pub fn mouse_pos(&self) -> Point {
+        self.mouse_pos
     }
 
     /// Pushes current window settings, saving them for later use with `State::pop()`.

@@ -68,27 +68,27 @@ impl Rect {
 
     /// Gets the center position of the `Rect`.
     pub fn center(&self) -> Point {
-        Point::new(self.x + self.w as i32 / 2, self.y + self.h as i32 / 2)
+        Point::new((self.x + self.w as i32 / 2, self.y + self.h as i32 / 2))
     }
 
     /// Gets the top-left corner of the `Rect`.
     pub fn top_left(&self) -> Point {
-        Point::new(self.x, self.y)
+        Point::new((self.x, self.y))
     }
 
     /// Gets the top-right corner of the `Rect`.
     pub fn top_right(&self) -> Point {
-        Point::new(self.x + self.w as i32, self.y)
+        Point::new((self.x + self.w as i32, self.y))
     }
 
     /// Gets the bottom-left corner of the `Rect`.
     pub fn bottom_left(&self) -> Point {
-        Point::new(self.x, self.y + self.h as i32)
+        Point::new((self.x, self.y + self.h as i32))
     }
 
     /// Gets the bottom-right corner of the `Rect`.
     pub fn bottom_right(&self) -> Point {
-        Point::new(self.x + self.w as i32, self.y + self.h as i32)
+        Point::new((self.x + self.w as i32, self.y + self.h as i32))
     }
 
     /// Move the center of the `Rect` to a given `Point`.
@@ -126,6 +126,13 @@ impl From<(u32, u32)> for Rect {
 impl From<(i32, i32, u32, u32)> for Rect {
     fn from((x, y, w, h): (i32, i32, u32, u32)) -> Self {
         Self::new(x, y, w, h)
+    }
+}
+
+/// From upper-left `Point` to lower-right `Point`.
+impl From<(Point, Point)> for Rect {
+    fn from((p1, p2): (Point, Point)) -> Self {
+        Self::new(p1.x, p1.y, (p2.x - p1.x) as u32, (p2.y - p1.y) as u32)
     }
 }
 
@@ -177,38 +184,50 @@ impl Default for StrokeJoin {
 pub struct Point {
     pub x: i32,
     pub y: i32,
+    pub z: i32,
 }
 
 impl Point {
-    /// Creates a new Point in screen space.
-    pub fn new(x: i32, y: i32) -> Self {
-        Self { x, y }
+    /// Creates a new Point in screen pixel space.
+    pub fn new<P: Into<Point>>(p: P) -> Self {
+        p.into()
+    }
+
+    /// Creates a new 2D Point in screen pixel space.
+    pub fn new_2d(x: i32, y: i32) -> Self {
+        Self::new_3d(x, y, 0)
+    }
+
+    /// Creates a new 3D Point in screen pixel space.
+    pub fn new_3d(x: i32, y: i32, z: i32) -> Self {
+        Self { x, y, z }
     }
 
     /// Creates a new Point in screen space from a 3D Vector. Any decimal values of the Vector will be
     /// truncated and the z-axis ignored.
     pub fn from_vector(v: Vector) -> Self {
-        Self::new(v.x as i32, v.y as i32)
+        Self::new_3d(v.x as i32, v.y as i32, v.z as i32)
     }
-
-    // /// Creates a new random Point in 2D space
-    // TODO needs screen dimensions
-    // pub fn random_2d() -> Self {
-    //     Self::new(x, y, 0)
-    // }
 }
 
 /// From an i32 tuple of (x, y) to Point.
 impl From<(i32, i32)> for Point {
     fn from((x, y): (i32, i32)) -> Self {
-        Self::new(x, y)
+        Self::new_2d(x, y)
     }
 }
 
-/// Convert to an i32 tuple of (x, y).
-impl Into<(i32, i32)> for Point {
-    fn into(self) -> (i32, i32) {
-        (self.x, self.y)
+/// From an i32 tuple of (x, y, z) to Point.
+impl From<(i32, i32, i32)> for Point {
+    fn from((x, y, z): (i32, i32, i32)) -> Self {
+        Self::new_3d(x, y, z)
+    }
+}
+
+/// Convert to an i32 tuple of (x, y, z).
+impl Into<(i32, i32, i32)> for Point {
+    fn into(self) -> (i32, i32, i32) {
+        (self.x, self.y, self.z)
     }
 }
 

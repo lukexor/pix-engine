@@ -132,12 +132,12 @@ impl Renderer for Sdl2Renderer {
     /// Set title for the current window target.
     ///
     /// Errors if the title contains a nul byte.
-    fn set_title(&mut self, title: &str) -> Result<()> {
+    fn title(&mut self, title: &str) -> Result<()> {
         Ok(self.canvas_mut().window_mut().set_title(title)?)
     }
 
     /// Sets the audio sample rate for the audio playback in Hz.
-    fn set_audio_sample_rate(&mut self, rate: i32) -> Result<()> {
+    fn audio_sample_rate(&mut self, rate: i32) -> Result<()> {
         let audio_sub = self.context.audio()?;
         let desired_spec = AudioSpecDesired {
             freq: Some(rate),
@@ -150,30 +150,30 @@ impl Renderer for Sdl2Renderer {
     }
 
     /// Set draw color for drawing operations on the current window target.
-    fn set_bg_color<C: Into<Color>>(&mut self, color: C) {
+    fn background<C: Into<Color>>(&mut self, color: C) {
         let c = color.into();
         self.bg_color = c.into();
     }
 
     /// Set draw color for the fill operations on the current window target.
-    fn set_fill<C: Into<Option<Color>>>(&mut self, color: C) {
+    fn fill<C: Into<Option<Color>>>(&mut self, color: C) {
         let c = color.into();
         self.fill = c.map(|c| c.into());
     }
 
     /// Set draw color for the drawing outlines on the current window target.
-    fn set_stroke<C: Into<Option<Color>>>(&mut self, color: C) {
+    fn stroke<C: Into<Option<Color>>>(&mut self, color: C) {
         let c = color.into();
         self.stroke = c.map(|c| c.into());
     }
 
     /// Get the blending mode for the current window target.
-    fn blend_mode(&self) -> BlendMode {
+    fn get_blend_mode(&self) -> BlendMode {
         self.canvas().blend_mode().into()
     }
 
     /// Set the blending mode for drawing operations on the current window target.
-    fn set_blend_mode(&mut self, mode: BlendMode) {
+    fn blend_mode(&mut self, mode: BlendMode) {
         self.canvas_mut().set_blend_mode(mode.into());
     }
 
@@ -214,34 +214,34 @@ impl Renderer for Sdl2Renderer {
     }
 
     /// Get the scale_x and scale_y factors for the current window target.
-    fn scale(&self) -> (f32, f32) {
+    fn get_scale(&self) -> (f32, f32) {
         self.canvas().scale()
     }
 
     /// Set the scale_x and scale_y factors for the current window target.
-    fn set_scale(&mut self, scale_x: f32, scale_y: f32) -> Result<()> {
+    fn scale(&mut self, scale_x: f32, scale_y: f32) -> Result<()> {
         Ok(self.canvas_mut().set_scale(scale_x, scale_y)?)
     }
 
     /// Get the clipping rectangle for the current window target.
-    fn clip_rect(&self) -> Option<Rect> {
+    fn get_clip_rect(&self) -> Option<Rect> {
         self.canvas().clip_rect().map(|r| r.into())
     }
 
     /// Set the clipping rectangle for the current window target.
-    fn set_clip_rect<R: Into<Option<Rect>>>(&mut self, rect: R) {
+    fn clip_rect<R: Into<Option<Rect>>>(&mut self, rect: R) {
         // First convert to Rect, then to rect::Rect
         let rect = rect.into().map(|r| r.into());
         self.canvas_mut().set_clip_rect(rect);
     }
 
     /// Get the viewport rectangle for the current window target.
-    fn viewport(&self) -> Rect {
+    fn get_viewport(&self) -> Rect {
         self.canvas().viewport().into()
     }
 
     /// Set the viewport rectangle for the current window target.
-    fn set_viewport<R: Into<Option<Rect>>>(&mut self, rect: R) {
+    fn viewport<R: Into<Option<Rect>>>(&mut self, rect: R) {
         // First convert to Rect, then to rect::Rect
         let rect = rect.into().map(|r| r.into());
         self.canvas_mut().set_viewport(rect);
@@ -261,9 +261,14 @@ impl Renderer for Sdl2Renderer {
 
     /// Draw a line on the current window target.
     fn draw_line<P1: Into<Point>, P2: Into<Point>>(&mut self, start: P1, end: P2) -> Result<()> {
-        let start: rect::Point = start.into().into();
-        let end: rect::Point = end.into().into();
-        Ok(self.canvas_mut().draw_line(start, end)?)
+        if let Some(c) = self.stroke {
+            let start: rect::Point = start.into().into();
+            let end: rect::Point = end.into().into();
+            let canvas = self.canvas_mut();
+            canvas.set_draw_color(c);
+            canvas.draw_line(start, end)?;
+        }
+        Ok(())
     }
 
     /// Draw a series of lines on the current window target.
@@ -362,7 +367,7 @@ impl Into<rect::Rect> for Rect {
 
 impl From<rect::Point> for Point {
     fn from(point: rect::Point) -> Self {
-        Point::new(point.x(), point.y())
+        Point::new((point.x(), point.y()))
     }
 }
 

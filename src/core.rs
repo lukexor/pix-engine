@@ -9,27 +9,27 @@ use crate::{
 /// Default audio sampling rate in Hertz
 pub const DEFAULT_SAMPLE_RATE: i32 = 44_100;
 
-/// Defines operations that the engine will call on the enclosed app.
+/// Defines operations that the `PixEngine` can call on the enclosed application.
 pub trait PixApp {
     /// Called once upon engine start (when `PixEngine::run()` is called).
     ///
     /// Return true to continue running.
     /// Reeturn false to shutdown the engine and close the application.
-    fn on_start(&mut self, _state: &mut State) -> Result<bool> {
+    fn on_start(&mut self, _s: &mut State) -> Result<bool> {
         Ok(true)
     }
     /// Called once when the engine detects a close/exit event.
     ///
     /// Return true to continue exiting.
     /// Return false to keep running.
-    fn on_stop(&mut self, _state: &mut State) -> Result<bool> {
+    fn on_stop(&mut self, _s: &mut State) -> Result<bool> {
         Ok(true)
     }
     /// Called every frame based on the target_frame_rate. By default this is as often as possible.
     ///
     /// Return true to continue running.
     /// Return false to shutdown the engine and close the application.
-    fn on_update(&mut self, _state: &mut State) -> Result<bool> {
+    fn on_update(&mut self, _s: &mut State) -> Result<bool> {
         Ok(true)
     }
 }
@@ -71,7 +71,7 @@ where
     /// in the process.
     pub fn build(self) -> Result<PixEngine<A>> {
         let mut state = State::new(&self.title, self.width, self.height)?;
-        state.set_audio_sample_rate(self.audio_sample_rate)?;
+        state.audio_sample_rate(self.audio_sample_rate)?;
         Ok(PixEngine::new(self.app, state))
     }
 }
@@ -142,6 +142,10 @@ where
                             win_event: WindowEvent::Close,
                             ..
                         } => self.should_close = true,
+                        PixEvent::MouseMotion { x, y, .. } => {
+                            self.state.mouse_pos.x = x;
+                            self.state.mouse_pos.y = y;
+                        }
                         _ => (),
                     }
                     self.state.events.push(event);
@@ -162,7 +166,7 @@ where
 
                     self.state.present_all();
 
-                    if self.state.show_frame_rate() {
+                    if self.state.get_show_frame_rate() {
                         frame_timer += self.state.delta_time();
                         frame_count += 1;
                         self.state.inc_frame_count();
@@ -170,7 +174,7 @@ where
                             self.state.set_frame_rate(frame_count);
                             let mut title = self.state.title.to_owned();
                             title.push_str(&format!(" - FPS: {}", frame_count));
-                            self.state.renderer.set_title(&title)?;
+                            self.state.renderer.title(&title)?;
                             frame_timer -= one_second;
                             frame_count = 0;
                         }

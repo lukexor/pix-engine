@@ -44,33 +44,33 @@ impl State {
     }
 
     /// Get the scale_x and scale_y factors for the current window target.
-    pub fn scale(&self) -> (f32, f32) {
-        self.renderer.scale()
+    pub fn get_scale(&self) -> (f32, f32) {
+        self.renderer.get_scale()
     }
 
     /// Set the scale_x and scale_y factors for the current window target.
-    pub fn set_scale(&mut self, scale_x: f32, scale_y: f32) -> Result<()> {
-        Ok(self.renderer.set_scale(scale_x, scale_y)?)
+    pub fn scale(&mut self, scale_x: f32, scale_y: f32) -> Result<()> {
+        Ok(self.renderer.scale(scale_x, scale_y)?)
     }
 
     /// Get the clipping rectangle for the current window target.
-    pub fn clip_rect(&self) -> Option<Rect> {
-        self.renderer.clip_rect()
+    pub fn get_clip_rect(&self) -> Option<Rect> {
+        self.renderer.get_clip_rect()
     }
 
     /// Set the clipping rectangle for the current window target.
-    pub fn set_clip_rect<R: Into<Option<Rect>>>(&mut self, rect: R) {
-        self.renderer.set_clip_rect(rect);
+    pub fn clip_rect<R: Into<Option<Rect>>>(&mut self, rect: R) {
+        self.renderer.clip_rect(rect);
     }
 
     /// Get the viewport rectangle for the current window target.
-    pub fn viewport(&self) -> Rect {
-        self.renderer.viewport()
+    pub fn get_viewport(&self) -> Rect {
+        self.renderer.get_viewport()
     }
 
     /// Set the viewport rectangle for the current window target.
-    pub fn set_viewport<R: Into<Option<Rect>>>(&mut self, rect: R) {
-        self.renderer.set_viewport(rect);
+    pub fn viewport<R: Into<Option<Rect>>>(&mut self, rect: R) {
+        self.renderer.viewport(rect);
     }
 
     /// Drawing

@@ -1,3 +1,5 @@
+use crate::State;
+
 /// Contains the current matrix transformation state of the engine
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub(crate) struct Transform {
@@ -15,4 +17,8 @@ impl Default for Transform {
     fn default() -> Self {
         Self::new()
     }
+}
+
+impl State {
+    pub fn translate(&mut self, x: f32, y: f32) {}
 }
