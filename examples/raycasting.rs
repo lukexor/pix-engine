@@ -7,14 +7,37 @@ struct Light {
 }
 
 impl Light {
-    pub fn new<P: Into<Vector>>(pos: P) -> Self {
+    fn new() -> Self {
         Self {
-            pos: pos.into(),
+            pos: Vector::new(0),
             color: Color::random_rgba(),
             rays: (0..360)
                 .into_iter()
                 .map(|angle| Ray::new((angle as f64).to_radians()))
                 .collect(),
+        }
+    }
+    fn pos<P: Into<Vector>>(&mut self, pos: P) {
+        self.pos = pos.into();
+    }
+    fn update(&mut self, boundaries: &[Line], s: &mut State) {
+        self.pos = s.mouse_pos().into();
+        for ray in self.rays.iter_mut() {
+            ray.pos(self.pos);
+            let mut closest = None;
+            let mut closest_dist = INFINITY;
+            for b in boundaries.iter() {
+                if let Some(point) = ray.cast(b) {
+                    let dist = self.pos.dist(point);
+                    if dist < closest_dist {
+                        closest_dist = dist;
+                        closest = Some(point);
+                    }
+                }
+            }
+            if let Some(point) = closest {
+                ray.look_at(point);
+            }
         }
     }
 }
@@ -50,17 +73,12 @@ impl Ray {
         self.looking = point - self.pos;
     }
 
-    fn cast(&mut self, pos: Vector, boundary: &Line) -> Option<Vector> {
+    fn cast(&mut self, b: &Line) -> Option<Vector> {
         // Formula: https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
-        let x1 = boundary.start.x as f64;
-        let y1 = boundary.start.y as f64;
-        let x2 = boundary.end.x as f64;
-        let y2 = boundary.end.y as f64;
-
-        let x3 = pos.x;
-        let y3 = pos.y;
-        let x4 = pos.x + self.looking.x;
-        let y4 = pos.y + self.looking.y;
+        let (x1, y1): (f64, f64) = b.start.into();
+        let (x2, y2): (f64, f64) = b.end.into();
+        let (x3, y3): (f64, f64) = self.pos.into();
+        let (x4, y4): (f64, f64) = (self.pos + self.looking).into();
 
         let denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
         if denominator == 0.0 {
@@ -79,11 +97,7 @@ impl Ray {
 impl Drawable for Ray {
     fn draw(&mut self, s: &mut State) -> StateResult<()> {
         s.stroke_weight(1);
-        // TODO Switch to using translate
-        // s.translate(self.pos.x, self.pos.y);
-        // s.draw_line((0, 0), Point::from(self.looking));
-        let looking = self.looking + self.pos;
-        Ok(s.draw_line(Point::from(self.pos), Point::from(looking))?)
+        Ok(s.draw_line(self.pos, self.pos + self.looking)?)
     }
 }
 
@@ -96,7 +110,7 @@ impl App {
     fn new() -> Self {
         Self {
             boundaries: Vec::new(),
-            light: Light::new(0),
+            light: Light::new(),
         }
     }
 }
@@ -105,56 +119,34 @@ impl PixApp for App {
     fn on_start(&mut self, s: &mut State) -> Result<bool> {
         let w = s.width() as i32;
         let h = s.height() as i32;
-        self.boundaries.push(Line::new((0, -1), (w, -1))); // Top
-        self.boundaries.push(Line::new((w, 0), (w, h))); // Right
-        self.boundaries.push(Line::new((0, h), (w, h))); // Bottom
-        self.boundaries.push(Line::new((-1, 0), (-1, h))); // Left
+
+        self.boundaries.push(Line::new((-1, -1), (w, -1))); // Top
+        self.boundaries.push(Line::new((w, -1), (w, h))); // Right
+        self.boundaries.push(Line::new((-1, h), (w, h))); // Bottom
+        self.boundaries.push(Line::new((-1, -1), (-1, h))); // Left
 
         for _ in 0..10 {
-            let x1 = random(w);
-            let y1 = random(h);
-            let x2 = random(w);
-            let y2 = random(h);
+            let (x1, y1) = (random(w), random(h));
+            let (x2, y2) = (random(w), random(h));
             self.boundaries.push(Line::new((x1, y1), (x2, y2)));
         }
-        self.light = Light::new((s.width() as f64 / 2.0, s.height() as f64 / 2.0));
+
+        let light_x = s.width() / 2;
+        let light_y = s.height() / 2;
+        self.light.pos((light_x as f64, light_y as f64));
+
         Ok(true)
     }
 
     fn on_update(&mut self, s: &mut State) -> Result<bool> {
         s.background(51);
-
-        self.light.pos = s.mouse_pos().into();
-
-        for ray in self.light.rays.iter_mut() {
-            let mut closest = None;
-            let mut closest_dist = INFINITY;
-            for b in self.boundaries.iter() {
-                if let Some(point) = ray.cast(self.light.pos, b) {
-                    let dist = self.light.pos.dist(point);
-                    if dist < closest_dist {
-                        closest_dist = dist;
-                        closest = Some(point);
-                    }
-                }
-            }
-            if let Some(point) = closest {
-                ray.pos(self.light.pos);
-                ray.look_at(point);
-            }
-        }
-
+        self.light.update(&self.boundaries, s);
         for b in self.boundaries.iter_mut() {
             s.stroke(255);
             s.stroke_weight(2);
             b.draw(s)?;
         }
         self.light.draw(s)?;
-
-        Ok(true)
-    }
-
-    fn on_stop(&mut self, _s: &mut State) -> Result<bool> {
         Ok(true)
     }
 }

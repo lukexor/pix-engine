@@ -694,6 +694,13 @@ impl From<(f64, f64, f64)> for Vector {
     }
 }
 
+/// Convert to f64 tuple of (x, y).
+impl Into<(f64, f64)> for Vector {
+    fn into(self) -> (f64, f64) {
+        (self.x, self.y)
+    }
+}
+
 /// Convert to f64 tuple of (x, y, z).
 impl Into<(f64, f64, f64)> for Vector {
     fn into(self) -> (f64, f64, f64) {

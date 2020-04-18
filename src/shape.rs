@@ -229,10 +229,31 @@ impl From<(i32, i32, i32)> for Point {
     }
 }
 
+/// Convert to an i32 tuple of (x, y).
+impl Into<(i32, i32)> for Point {
+    fn into(self) -> (i32, i32) {
+        (self.x, self.y)
+    }
+}
+
 /// Convert to an i32 tuple of (x, y, z).
 impl Into<(i32, i32, i32)> for Point {
     fn into(self) -> (i32, i32, i32) {
         (self.x, self.y, self.z)
+    }
+}
+
+/// Convert to an f64 tuple of (x, y).
+impl Into<(f64, f64)> for Point {
+    fn into(self) -> (f64, f64) {
+        (self.x as f64, self.y as f64)
+    }
+}
+
+/// Convert to an f64 tuple of (x, y, z).
+impl Into<(f64, f64, f64)> for Point {
+    fn into(self) -> (f64, f64, f64) {
+        (self.x as f64, self.y as f64, self.z as f64)
     }
 }
 
