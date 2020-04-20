@@ -88,3 +88,9 @@ impl From<state::Error> for Error {
         Error::StateError(err)
     }
 }
+
+impl From<image::Error> for Error {
+    fn from(err: image::Error) -> Error {
+        Error::ImageError(err)
+    }
+}

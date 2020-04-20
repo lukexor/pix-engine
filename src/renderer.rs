@@ -1,7 +1,7 @@
 use crate::{
     color::Color,
     event::PixEvent,
-    shape::{Point, Rect},
+    shape::{Line, Point, Rect},
     state::rendering::BlendMode,
 };
 use std::{borrow::Cow, error, ffi::NulError, fmt};
@@ -132,10 +132,10 @@ pub(crate) trait Renderer {
     fn draw_points<'a, P: Into<&'a [Point]>>(&mut self, _points: P) -> Result<()>;
 
     /// Draw a line on the current window target.
-    fn draw_line<P1: Into<Point>, P2: Into<Point>>(&mut self, _start: P1, _end: P2) -> Result<()>;
+    fn draw_line<L: Into<Line>>(&mut self, _line: L) -> Result<()>;
 
     /// Draw a series of lines on the current window target.
-    fn draw_lines<'a, P: Into<&'a [Point]>>(&mut self, _points: P) -> Result<()>;
+    fn draw_lines<'a, L: Into<&'a [Line]>>(&mut self, _lines: L) -> Result<()>;
 
     /// Draw a rectangle on the current window target.
     fn draw_rect<R: Into<Rect>>(&mut self, _rect: R) -> Result<()>;

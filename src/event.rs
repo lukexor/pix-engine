@@ -4,7 +4,7 @@ use bitflags::bitflags;
 use std::fmt;
 
 /// Represents a user or system event.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum PixEvent {
     Quit {
         timestamp: u32,
@@ -149,7 +149,7 @@ pub enum PixEvent {
 }
 
 /// A Window-specific event.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum WindowEvent {
     None,
     Shown,
@@ -196,7 +196,7 @@ impl fmt::Display for KeyMod {
 }
 
 /// Represents a mouse button.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum MouseButton {
     Left,
     Middle,
@@ -207,7 +207,7 @@ pub enum MouseButton {
 }
 
 /// Represents a mouse wheel direction.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum MouseWheelDirection {
     Normal,
     Flipped,
@@ -216,7 +216,7 @@ pub enum MouseWheelDirection {
 
 /// A non-exhaustive list of commonly useful keyboard keys.
 #[rustfmt::skip]
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Key {
     A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
     Num0, Num1, Num2, Num3, Num4, Num5, Num6, Num7, Num8, Num9,
@@ -238,7 +238,7 @@ pub enum Key {
 
 /// Gamepad/Controller buttons.
 #[rustfmt::skip]
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Button {
     A, B, X, Y, Back, Start, Guide, DPadUp, DPadDown, DPadLeft, DPadRight,
     LeftStick, RightStick, LeftShoulder, RightShoulder,
@@ -246,7 +246,7 @@ pub enum Button {
 
 /// Gamepad/Controller joysticks/triggers.
 #[rustfmt::skip]
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Axis {
     LeftX, RightX, LeftY, RightY, TriggerLeft, TriggerRight,
 }

@@ -219,7 +219,7 @@ impl Image {
                 pixel_format: PixelFormat::Rgba,
                 data: pixels
                     .par_iter()
-                    .map(|c| c.as_slice())
+                    .map(|c| &c[..])
                     .flatten()
                     .copied()
                     .collect(),
@@ -237,20 +237,16 @@ impl Image {
     /// Sets the pixel color at the given (x, y) coords.
     pub fn set_pixel<C: Into<Color>, P: Into<Point>>(&mut self, p: P, color: C) {
         let idx = self.get_index(p);
-        self.data[idx..idx + self.channels]
-            .copy_from_slice(&color.into().as_slice()[0..self.channels]);
+        self.data[idx..idx + self.channels].copy_from_slice(&color.into()[0..self.channels]);
     }
 
     /// Loads the pixel data of the image into a pixels array that can be iterated over with
     /// `Image::pixels()` or `Image::pixels_mut()`. This function must be called before operating
     /// on pixels. For operating on raw bytes without calling this function, call `Image::bytes()`.
-    ///
-    /// # Remarks
-    /// This is a slow operation and should not be called often.
     pub fn load_pixels(&mut self) {
         self.pixels = self
             .data
-            .chunks_exact(self.channels)
+            .par_chunks(self.channels)
             .map(|c| c.into())
             .collect();
     }
@@ -266,8 +262,7 @@ impl Image {
         self.data = self
             .pixels
             .par_iter()
-            .map(|c| c.as_slice())
-            .flatten()
+            .flat_map(|c| &c[..self.channels])
             .copied()
             .collect();
     }

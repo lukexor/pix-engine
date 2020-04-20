@@ -1,8 +1,11 @@
+use super::random;
 use crate::{constants::*, shape::Point, State};
-use rand::{self, Rng};
 use std::{
     fmt,
-    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign},
+    ops::{
+        Add, AddAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub,
+        SubAssign,
+    },
 };
 
 /// Represents a Euclidiean (also known as geometric) Vector in 2D or 3D space. A Vector has both a magnitude and a direction,
@@ -16,7 +19,8 @@ use std::{
 /// Vectors can be combined using "vector" math, so for example two vectors can be added together
 /// to form a new vector using `let v3 = v1 + v2` or you can add one vector to another by calling
 /// `v1 += v2`.
-#[derive(Default, Debug, Copy, Clone, PartialEq)]
+#[derive(Default, Debug, Copy, Clone, PartialEq, PartialOrd)]
+#[repr(C)]
 pub struct Vector {
     pub x: f64,
     pub y: f64,
@@ -145,7 +149,7 @@ impl<'a> Vector {
     /// // (0.6091097, -0.22805278, 0.0)
     /// ```
     pub fn random_2d() -> Self {
-        Self::from_angle(rand::thread_rng().gen::<f64>() * TWO_PI, 1.0)
+        Self::from_angle(random(TWO_PI), 1.0)
     }
 
     /// Make a random unit Vector in 3D space.
@@ -163,8 +167,8 @@ impl<'a> Vector {
     /// // (0.6091097, -0.22805278, -0.7595902)
     /// ```
     pub fn random_3d() -> Self {
-        let (sin, cos) = (rand::thread_rng().gen::<f64>() * TWO_PI).sin_cos();
-        let z = rand::thread_rng().gen::<f64>() * 2.0 - 1.0; // Range from -1.0 to 1.0
+        let (sin, cos) = (random(TWO_PI)).sin_cos();
+        let z: f64 = random((-1.0, 1.0)); // Range from -1.0 to 1.0
         let z_base = (1.0 - z * z).sqrt();
         let x = z_base * cos;
         let y = z_base * sin;
@@ -182,32 +186,6 @@ impl<'a> Vector {
         self.x = v.x;
         self.y = v.y;
         self.z = v.z;
-    }
-
-    /// Calculates the remainder of a Vector when divided by another Vector.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pix_engine::prelude::*;
-    ///
-    /// let v = Vector::new((3, 4, 5));
-    /// let rem = v.rem((2, 3, 3));
-    /// assert_eq!(rem.get(), (1.0, 1.0, 2.0));
-    /// ```
-    pub fn rem<V: Into<Vector>>(&self, v: V) -> Vector {
-        let v = v.into();
-        let mut v2 = self.copy();
-        if v.x != 0.0 {
-            v2.x %= v.x;
-        }
-        if v.y != 0.0 {
-            v2.y %= v.y;
-        }
-        if v.z != 0.0 {
-            v2.z %= v.z;
-        }
-        v2
     }
 
     /// Calculates and returns the magnitude (length) of the Vector.
@@ -603,7 +581,7 @@ impl DivAssign<f64> for Vector {
     fn div_assign(&mut self, s: f64) {
         if s == 0.0 || s.is_infinite() || s.is_nan() {
             eprintln!(
-                "Vector::div_assin: scaler is either zero, undefined or not finite: {}",
+                "Vector::div_assign: scaler is either zero, undefined or not finite: {}",
                 s
             );
         } else {
@@ -644,9 +622,30 @@ impl RemAssign for Vector {
     }
 }
 
+impl Deref for Vector {
+    type Target = [f64];
+    fn deref(&self) -> &[f64] {
+        unsafe { ::std::slice::from_raw_parts(self as *const Self as *const f64, 3) }
+    }
+}
+
+impl DerefMut for Vector {
+    fn deref_mut(&mut self) -> &mut [f64] {
+        unsafe { ::std::slice::from_raw_parts_mut(self as *mut Self as *mut f64, 3) }
+    }
+}
+
 /// From 1D tuple of i32 to 3D `Vector` with all the same value.
 impl From<i32> for Vector {
     fn from(v: i32) -> Self {
+        let v = v as f64;
+        Self::new_3d(v, v, v)
+    }
+}
+
+/// From 1D tuple of i64 to 3D `Vector` with all the same value.
+impl From<i64> for Vector {
+    fn from(v: i64) -> Self {
         let v = v as f64;
         Self::new_3d(v, v, v)
     }
@@ -711,7 +710,7 @@ impl Into<(f64, f64, f64)> for Vector {
 /// Convert from a `Point` to a `Vector`.
 impl From<Point> for Vector {
     fn from(p: Point) -> Self {
-        Self::from_point(p)
+        Self::new_3d(p.x as f64, p.y as f64, p.z as f64)
     }
 }
 
@@ -721,4 +720,8 @@ impl fmt::Display for Vector {
     }
 }
 
-impl State {}
+impl State {
+    pub fn create_vector<V: Into<Vector>>(&self, v: V) -> Vector {
+        v.into()
+    }
+}

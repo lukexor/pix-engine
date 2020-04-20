@@ -5,7 +5,10 @@
 //! mode are calculated and cached as needed.
 
 use crate::math::random;
-use std::fmt;
+use std::{
+    fmt,
+    ops::{Deref, DerefMut},
+};
 
 const RED_SHIFT: u32 = 24;
 const GREEN_SHIFT: u32 = 16;
@@ -248,28 +251,25 @@ impl<'a> Color {
     /// let mut c2 = Color::new((128, 0, 128, 64));
     /// assert_eq!(c2.to_vec(), vec![128, 0, 128, 64]);
     /// ```
-    pub fn to_vec(self) -> Vec<u8> {
+    pub fn into_vec(self) -> Vec<u8> {
         vec![self.r, self.g, self.b, self.a]
     }
 
-    /// Gets a Color as a slice of rgba u8 values.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pix_engine::prelude::*;
-    ///
-    /// let mut c = Color::new((128, 0, 128));
-    /// assert_eq!(c.as_slice(), &[128, 0, 128, 255]);
-    /// ```
-    #[allow(clippy::trivially_copy_pass_by_ref)]
-    pub fn as_slice(&self) -> &'a [u8] {
-        unsafe { core::slice::from_raw_parts(self as *const Self as *const u8, 4) }
+    pub fn into_array(self) -> [u8; 4] {
+        [self.r, self.g, self.b, self.a]
     }
+}
 
-    /// Gets a Color as a mutable slice of rgba u8 values.
-    pub fn as_slice_mut(&mut self) -> &'a mut [u8] {
-        unsafe { core::slice::from_raw_parts_mut(self as *mut Self as *mut u8, 4) }
+impl Deref for Color {
+    type Target = [u8];
+    fn deref(&self) -> &[u8] {
+        unsafe { ::std::slice::from_raw_parts(self as *const Self as *const u8, 4) }
+    }
+}
+
+impl DerefMut for Color {
+    fn deref_mut(&mut self) -> &mut [u8] {
+        unsafe { ::std::slice::from_raw_parts_mut(self as *mut Self as *mut u8, 4) }
     }
 }
 

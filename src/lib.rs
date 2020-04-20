@@ -72,6 +72,8 @@ pub mod prelude {
         color::*,
         common::{Result, *},
         core::*,
+        event::*,
+        image::*,
         math::*,
         shape::*,
         state::*,

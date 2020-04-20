@@ -1,7 +1,7 @@
-use crate::{event::PixEvent, renderer, shape::Point};
+use crate::{event::*, renderer, shape::Point};
 use environment::Environment;
 use setting::Setting;
-use std::{borrow::Cow, error, fmt, vec::Drain};
+use std::{borrow::Cow, collections::HashSet, error, fmt, vec::Drain};
 
 pub use rendering::Drawable;
 
@@ -59,11 +59,11 @@ pub struct State {
     pub(crate) events: Vec<PixEvent>,
     pub(crate) should_loop: bool,
     pub(crate) manual_update: u32, // Used to manually update when should_loop is false
-    pub(crate) mouse_pos: Point,
+    pub(crate) mouse_pos: Point,   // Mouse position
+    pub(crate) pmouse_pos: Point,  // Previous mouse position
+    pub(crate) mouse_is_pressed: bool,
+    pub(crate) mouse_buttons: HashSet<MouseButton>, // List of pressed mouse buttons
     environment: Environment,
-    // input_states
-    // elements
-    // loaded_fonts
     settings: Setting,
     settings_stack: Vec<Setting>,
 }
@@ -81,6 +81,9 @@ impl State {
             should_loop: true,
             manual_update: 1, // Always loop at least once on start
             mouse_pos: Point::default(),
+            pmouse_pos: Point::default(),
+            mouse_is_pressed: false,
+            mouse_buttons: HashSet::new(),
             environment: Environment::new(),
             settings: Setting::new(),
             settings_stack: Vec::new(),
@@ -117,6 +120,21 @@ impl State {
     /// Gets the current mouse position as a `Point`.
     pub fn mouse_pos(&self) -> Point {
         self.mouse_pos
+    }
+
+    /// Gets the position of the mouse from the previous frame as a `Point`.
+    pub fn pmouse_pos(&self) -> Point {
+        self.pmouse_pos
+    }
+
+    /// Gets whether a mouse button is currently pressed.
+    pub fn mouse_is_pressed(&self) -> bool {
+        self.mouse_is_pressed
+    }
+
+    /// Gets a list of currently pressed `MouseButton`s.
+    pub fn mouse_buttons(&self) -> &HashSet<MouseButton> {
+        &self.mouse_buttons
     }
 
     /// Pushes current window settings, saving them for later use with `State::pop()`.

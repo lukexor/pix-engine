@@ -2,7 +2,7 @@ use super::{Error, Renderer, Result};
 use crate::{
     color::Color,
     event::PixEvent,
-    shape::{Point, Rect},
+    shape::{Line, Point, Rect},
     state::rendering::BlendMode,
 };
 use sdl2::{
@@ -84,17 +84,12 @@ impl Sdl2Renderer {
         let window = video_sub
             .window(title, width, height)
             .position_centered()
-            .resizable()
             .build()?;
 
         // Set up canvas
-        let mut canvas = window
-            .into_canvas()
-            .accelerated()
-            .target_texture()
-            .present_vsync()
-            .build()?;
+        let mut canvas = window.into_canvas().build()?;
         canvas.set_logical_size(width, height)?;
+        println!("{:?}", canvas.window().subsystem().gl_get_swap_interval());
         Ok(canvas)
     }
 
@@ -258,10 +253,11 @@ impl Renderer for Sdl2Renderer {
     }
 
     /// Draw a line on the current window target.
-    fn draw_line<P1: Into<Point>, P2: Into<Point>>(&mut self, start: P1, end: P2) -> Result<()> {
+    fn draw_line<L: Into<Line>>(&mut self, line: L) -> Result<()> {
         if let Some(c) = self.stroke {
-            let start: rect::Point = start.into().into();
-            let end: rect::Point = end.into().into();
+            let line = line.into();
+            let start: rect::Point = line.start.into();
+            let end: rect::Point = line.end.into();
             let canvas = self.canvas_mut();
             canvas.set_draw_color(c);
             canvas.draw_line(start, end)?;
@@ -270,7 +266,7 @@ impl Renderer for Sdl2Renderer {
     }
 
     /// Draw a series of lines on the current window target.
-    fn draw_lines<'a, P: Into<&'a [Point]>>(&mut self, points: P) -> Result<()> {
+    fn draw_lines<'a, L: Into<&'a [Line]>>(&mut self, lines: L) -> Result<()> {
         // TODO
         Ok(())
     }

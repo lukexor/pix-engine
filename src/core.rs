@@ -18,13 +18,7 @@ pub trait PixApp {
     fn on_start(&mut self, _s: &mut State) -> Result<bool> {
         Ok(true)
     }
-    /// Called once when the engine detects a close/exit event.
-    ///
-    /// Return true to continue exiting.
-    /// Return false to keep running.
-    fn on_stop(&mut self, _s: &mut State) -> Result<bool> {
-        Ok(true)
-    }
+
     /// Called every frame based on the target_frame_rate. By default this is as often as possible.
     ///
     /// Return true to continue running.
@@ -32,6 +26,23 @@ pub trait PixApp {
     fn on_update(&mut self, _s: &mut State) -> Result<bool> {
         Ok(true)
     }
+
+    /// Called once when the engine detects a close/exit event.
+    ///
+    /// Return true to continue exiting.
+    /// Return false to keep running.
+    fn on_stop(&mut self, _s: &mut State) -> Result<bool> {
+        Ok(true)
+    }
+
+    /// Called every time the mouse button is pressed.
+    fn on_mouse_pressed(&mut self, _s: &mut State) {}
+
+    /// Called every time the mouse button is released.
+    fn on_mouse_released(&mut self, _s: &mut State) {}
+
+    /// Called every time the mouse is moved while a mouse button is pressed.
+    fn on_mouse_dragged(&mut self, _s: &mut State) {}
 }
 
 /// Builds an instance of the `PixEngine` by allowing various settings to be defined before
@@ -128,7 +139,7 @@ where
         let mut frame_count = 0;
         while !self.should_close {
             // Extra loop allows on_stop to prevent closing
-            while !self.should_close {
+            'inner: while !self.should_close {
                 let now = time::now();
                 self.state.set_delta_time(time::sub(now, last_frame_time));
                 last_frame_time = now;
@@ -138,33 +149,40 @@ where
                     match event {
                         PixEvent::Quit { .. } | PixEvent::AppTerminating { .. } => {
                             self.should_close = true;
-                            break;
+                            break 'inner;
                         }
                         PixEvent::Window {
                             win_event: WindowEvent::Close,
                             ..
                         } => self.should_close = true,
                         PixEvent::MouseMotion { x, y, .. } => {
-                            self.state.mouse_pos.x = x;
-                            self.state.mouse_pos.y = y;
+                            self.state.pmouse_pos = self.state.mouse_pos;
+                            self.state.mouse_pos = (x, y).into();
+                            if self.state.mouse_is_pressed {
+                                self.app.on_mouse_dragged(&mut self.state);
+                            }
+                        }
+                        PixEvent::MouseButtonDown { mouse_btn, .. } => {
+                            self.state.mouse_is_pressed = true;
+                            self.state.mouse_buttons.insert(mouse_btn);
+                            self.app.on_mouse_pressed(&mut self.state);
+                        }
+                        PixEvent::MouseButtonUp { mouse_btn, .. } => {
+                            self.state.mouse_is_pressed = false;
+                            self.state.mouse_buttons.remove(&mouse_btn);
+                            self.app.on_mouse_released(&mut self.state);
                         }
                         _ => (),
                     }
                     self.state.events.push(event);
                 }
+
                 // Update app
                 if self.state.should_loop || self.state.manual_update > 0 {
                     if self.state.manual_update > 0 {
                         self.state.manual_update -= 1;
                     }
-                    match self.app.on_update(&mut self.state) {
-                        Ok(false) => {
-                            self.should_close = true;
-                            break;
-                        }
-                        Err(e) => return Err(e),
-                        _ => (), // continue on
-                    }
+                    self.should_close = !self.app.on_update(&mut self.state)?;
 
                     self.state.present_all();
 
@@ -184,11 +202,7 @@ where
                 }
             }
 
-            match self.app.on_stop(&mut self.state) {
-                Ok(false) => self.should_close = false,
-                Err(e) => return Err(e),
-                _ => (), // continue on
-            }
+            self.should_close = self.app.on_stop(&mut self.state)?;
         }
 
         Ok(())
