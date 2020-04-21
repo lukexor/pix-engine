@@ -49,6 +49,7 @@
 //! }
 //! ```
 
+#[macro_use]
 pub mod color;
 pub mod event;
 pub mod gui;
@@ -69,6 +70,7 @@ pub(crate) use crate::{common::constants, state::State};
 /// Common set of exports for using the `PixEngine`.
 pub mod prelude {
     pub use crate::{
+        color,
         color::*,
         common::{Result, *},
         core::*,

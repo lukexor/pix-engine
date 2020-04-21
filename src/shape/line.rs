@@ -67,15 +67,9 @@ impl Line {
 
 impl State {
     /// Draw a line.
-    pub fn draw_line<L: Into<Line>>(&mut self, line: L) -> StateResult<()> {
+    pub fn line<L: Into<Line>>(&mut self, line: L) -> StateResult<()> {
         let line = line.into();
-        Ok(self.renderer.draw_line(line)?)
-    }
-
-    /// Draw a series of lines.
-    pub fn draw_lines<'a, L: Into<&'a [Line]>>(&mut self, lines: L) -> StateResult<()> {
-        // TODO change to an array of lines
-        Ok(self.renderer.draw_lines(lines)?)
+        Ok(self.renderer.line(line)?)
     }
 }
 

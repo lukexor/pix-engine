@@ -4,6 +4,7 @@ mod ellipse;
 mod line;
 mod point;
 mod rect;
+mod triangle;
 
 pub use ellipse::{ArcMode, EllipseMode};
 pub use line::{Line, StrokeCap, StrokeJoin, DEFAULT_STROKE_WEIGHT};

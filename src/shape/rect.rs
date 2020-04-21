@@ -1,5 +1,9 @@
 use super::Point;
-use crate::math::Vector;
+use crate::{
+    math::Vector,
+    renderer::Renderer,
+    state::{State, StateResult},
+};
 use std::fmt;
 
 /// Determines the way rect/squares are drawn by changing how the parameters given to
@@ -188,5 +192,20 @@ impl Into<(i32, i32, u32, u32)> for Rect {
 impl fmt::Display for Rect {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "({}, {}, {}, {})", self.x, self.y, self.w, self.h)
+    }
+}
+
+impl State {
+    /// Draw a square. If both fill and stroke are set to None, nothing will be drawn.
+    pub fn square<R: Into<Rect>>(&mut self, sq: R) -> StateResult<()> {
+        self.rect(sq)
+    }
+
+    /// Draw a rectangle. If `None` is passed, the entire screen is used as the `Rect`. If both
+    /// fill and stroke are set to None, nothing will be drawn.
+    pub fn rect<R: Into<Rect>>(&mut self, rect: R) -> StateResult<()> {
+        let rect = rect.into();
+        self.renderer.rect(rect)?;
+        Ok(())
     }
 }

@@ -180,7 +180,7 @@ impl App {
         let o = Vector::from_point(o);
         for &p in points.iter() {
             // s.stroke(WHITE);
-            // s.draw_line(Point::from(o), Point::from(p));
+            // s.line(Point::from(o), Point::from(p));
             // Cast three rays - one at and one off to each side
             for offset in -1..2 {
                 let angle = offset as f64 / 100_000.0;
@@ -189,10 +189,10 @@ impl App {
                 r.rotate(angle);
                 r.set_mag(radius);
                 // s.stroke(ORANGE);
-                // s.draw_line((o, r + o));
+                // s.line((o, r + o));
                 if let Some(intersect) = self.cast_ray(o, r, s) {
                     // s.stroke(CYAN);
-                    // s.draw_line((o, intersect));
+                    // s.line((o, intersect));
                     self.polygons.push((r.heading(), intersect));
                 }
             }
@@ -205,7 +205,7 @@ impl App {
             .dedup_by(|a, b| (a.1.x - b.1.x).abs() < 0.1 && (a.1.y - b.1.y).abs() < 0.1);
     }
 
-    fn cast_ray(&self, o: Vector, r: Vector, st: &mut State) -> Option<Vector> {
+    fn cast_ray(&self, o: Vector, r: Vector, _st: &mut State) -> Option<Vector> {
         let mut intersect = None;
         let mut closest_param = INFINITY;
         for e in self.edges.iter() {
@@ -305,7 +305,7 @@ impl PixApp for App {
 
         s.fill(BLUE);
         for cell in self.cells.iter().filter(|c| c.exists) {
-            s.draw_square((cell.pos, BLOCK_SIZE))?;
+            s.square((cell.pos, BLOCK_SIZE))?;
         }
         s.no_fill();
 
@@ -317,12 +317,12 @@ impl PixApp for App {
             for i in 0..self.polygons.len() - 1 {
                 let p1 = self.polygons[i].1;
                 let p2 = self.polygons[i + 1].1;
-                s.draw_triangle(mouse, p1, p2)?;
+                s.triangle(mouse, p1, p2)?;
             }
             // Draw last triangle, connecting back to first point.
             let p1 = self.polygons.last().unwrap().1;
             let p2 = self.polygons[0].1;
-            s.draw_triangle(mouse, p1, p2)?;
+            s.triangle(mouse, p1, p2)?;
             s.no_fill();
             s.no_stroke();
         }
@@ -330,7 +330,7 @@ impl PixApp for App {
 
         for e in self.edges.iter() {
             s.stroke(RED);
-            s.draw_line((e.start, e.end))?;
+            s.line((e.start, e.end))?;
             s.no_stroke();
         }
 

@@ -45,37 +45,6 @@ pub struct Color {
 }
 
 impl<'a> Color {
-    /// Creates a new Rgb/Rgba Color. Shortcut for `Color::RGB()` or `Color::RGBA()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use pix_engine::prelude::*;
-    ///
-    /// let c1 = Color::new((128, 64, 0)); // RGB
-    /// assert_eq!(c1.rgba(), (128, 64, 0, 255));
-    ///
-    /// let c2 = Color::new((128, 64, 128, 128)); // RGBA
-    /// assert_eq!(c2.rgba(), (128, 64, 128, 128));
-    ///
-    /// let c3 = Color::new(128); // Gray
-    /// assert_eq!(c3.rgba(), (128, 128, 128, 255));
-    ///
-    /// let c4 = Color::new((128, 64)); // Gray with Alpha
-    /// assert_eq!(c4.rgba(), (128, 128, 128, 64));
-    ///
-    /// let c5 = Color::new(&[128u8, 64, 0][..]); // RGB from slice
-    /// assert_eq!(c5.rgba(), (128, 64, 0, 255));
-    ///
-    /// let c6 = Color::new(&[128u8, 64, 0, 128][..]); // RGBA from slice
-    /// assert_eq!(c6.rgba(), (128, 64, 0, 128));
-    /// ```
-    #[inline(always)]
-    pub fn new<C: Into<Color>>(c: C) -> Self {
-        let c = c.into();
-        Color::RGBA(c.r, c.g, c.b, c.a)
-    }
-
     /// Creates a new Rgb Color.
     ///
     /// # Examples
@@ -83,13 +52,13 @@ impl<'a> Color {
     /// ```
     /// use pix_engine::prelude::*;
     ///
-    /// let c = Color::RGB(128, 64, 0);
-    /// assert_eq!(c.rgba(), (128, 64, 0, 255));
+    /// let c = Color::rgb(128, 64, 0);
+    /// assert_eq!(c.values(), (128, 64, 0, 255));
     /// ```
     #[inline(always)]
     #[allow(non_snake_case)]
-    pub const fn RGB(r: u8, g: u8, b: u8) -> Self {
-        Self::RGBA(r, g, b, 255)
+    pub const fn rgb(r: u8, g: u8, b: u8) -> Self {
+        Self::rgba(r, g, b, 255)
     }
 
     /// Creates a new Rgb Color with alpha.
@@ -99,12 +68,12 @@ impl<'a> Color {
     /// ```
     /// use pix_engine::prelude::*;
     ///
-    /// let c = Color::RGBA(128, 64, 0, 128);
-    /// assert_eq!(c.rgba(), (128, 64, 0, 128));
+    /// let c = Color::rgba(128, 64, 0, 128);
+    /// assert_eq!(c.values(), (128, 64, 0, 128));
     /// ```
     #[inline(always)]
     #[allow(non_snake_case)]
-    pub const fn RGBA(r: u8, g: u8, b: u8, a: u8) -> Self {
+    pub const fn rgba(r: u8, g: u8, b: u8, a: u8) -> Self {
         Self {
             r,
             g,
@@ -123,7 +92,7 @@ impl<'a> Color {
     ///
     /// let magenta: u32 = (128 << 24) | (128 << 8) | 255;
     /// let c = Color::from_u32(magenta);
-    /// assert_eq!(c.rgba(), (128, 0, 128, 255));
+    /// assert_eq!(c.values(), (128, 0, 128, 255));
     /// ```
     pub const fn from_u32(val: u32) -> Self {
         Self {
@@ -142,7 +111,7 @@ impl<'a> Color {
     /// ```
     /// use pix_engine::prelude::*;
     ///
-    /// let c = Color::new((128, 0, 128));
+    /// let c = color!(128, 0, 128);
     /// let magenta: u32 = (128 << 24) | (128 << 8) | 255;
     /// assert_eq!(c.to_u32(), magenta);
     /// ```
@@ -155,109 +124,171 @@ impl<'a> Color {
 
     /// Creates a random RGB color with values ranging from 0-255.
     pub fn random_rgb() -> Self {
-        Self::RGB(random(255), random(255), random(255))
+        Self::rgb(random(255), random(255), random(255))
     }
 
     /// Creates a random RGBA color with values ranging from 0-255.
     pub fn random_rgba() -> Self {
-        Self::RGBA(random(255), random(255), random(255), random(255))
-    }
-
-    /// Get the rgb value as a tuple.
-    #[inline(always)]
-    pub const fn rgb(self) -> (u8, u8, u8) {
-        (self.r, self.g, self.b)
-    }
-
-    /// Get the rgba values as a tuple.
-    #[inline(always)]
-    pub const fn rgba(self) -> (u8, u8, u8, u8) {
-        (self.r, self.g, self.b, self.a)
-    }
-
-    /// Set the rgb values. Alpha is unaffected.
-    #[inline(always)]
-    pub fn set_rgb<C: Into<Color>>(&mut self, c: C) {
-        let c = c.into();
-        self.r = c.r;
-        self.g = c.g;
-        self.b = c.b;
-    }
-
-    /// Set the rgba values.
-    #[inline(always)]
-    pub fn set_rgba<C: Into<Color>>(&mut self, c: C) {
-        let c = c.into();
-        self.r = c.r;
-        self.g = c.g;
-        self.b = c.b;
-        self.a = c.a;
+        Self::rgba(random(255), random(255), random(255), random(255))
     }
 
     /// Get the red value of the color ranging from 0-255.
     #[inline(always)]
-    pub const fn r(self) -> u8 {
+    pub const fn red(self) -> u8 {
         self.r
     }
     /// Set the red value of the color ranging from 0-255.
     #[inline(always)]
-    pub fn set_r(&mut self, r: u8) {
+    pub fn set_red(&mut self, r: u8) {
         self.r = r;
     }
 
     /// Get the green value of the color ranging from 0-255.
     #[inline(always)]
-    pub const fn g(self) -> u8 {
+    pub const fn green(self) -> u8 {
         self.g
     }
     /// Set the green value of the color ranging from 0-255.
     #[inline(always)]
-    pub fn set_g(&mut self, g: u8) {
+    pub fn set_green(&mut self, g: u8) {
         self.g = g;
     }
 
     /// Get the blue value of the color ranging from 0-255.
     #[inline(always)]
-    pub const fn b(self) -> u8 {
+    pub const fn blue(self) -> u8 {
         self.b
     }
     /// Set the blue value of the color ranging from 0-255.
     #[inline(always)]
-    pub fn set_b(&mut self, b: u8) {
+    pub fn set_blue(&mut self, b: u8) {
         self.b = b;
     }
 
     /// Get the alpha value of the color ranging from 0-255.
     #[inline(always)]
-    pub const fn a(self) -> u8 {
+    pub const fn alpha(self) -> u8 {
         self.a
     }
     /// Set the alpha value of the color ranging from 0-255.
     #[inline(always)]
-    pub fn set_a(&mut self, a: u8) {
+    pub fn set_alpha(&mut self, a: u8) {
         self.a = a;
     }
 
-    /// Returns a representation of this color as a Vec of u8 values. Useful for temporary use.
+    /// Returns a representation of this color as a Vec of u8 values based on the current
+    /// `State::color_mode`.
+    ///
+    /// - RGB: (red, green, blue, alpha)
+    /// - HSB/HSL: (hue, saturation, brightness/lightness, alpha)
     ///
     /// # Examples
     ///
     /// ```
     /// use pix_engine::prelude::*;
     ///
-    /// let mut c1 = Color::new((128, 0, 128));
-    /// assert_eq!(c1.to_vec(), vec![128, 0, 128, 255]);
+    /// let mut c1 = color!(128, 0, 128);
+    /// assert_eq!(c1.into_vec(), vec![128, 0, 128, 255]);
     ///
-    /// let mut c2 = Color::new((128, 0, 128, 64));
-    /// assert_eq!(c2.to_vec(), vec![128, 0, 128, 64]);
+    /// let mut c2 = color!(128, 0, 128, 64);
+    /// assert_eq!(c2.into_vec(), vec![128, 0, 128, 64]);
     /// ```
     pub fn into_vec(self) -> Vec<u8> {
         vec![self.r, self.g, self.b, self.a]
     }
 
-    pub fn into_array(self) -> [u8; 4] {
-        [self.r, self.g, self.b, self.a]
+    /// Returns a tuple representing the values based on the current `State::color_mode()`.
+    ///
+    /// - RGB: (red, green, blue, alpha)
+    /// - HSB/HSL: (hue, saturation, brightness/lightness, alpha)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use pix_engine::prelude::*;
+    ///
+    /// let mut c1 = color!(128, 0, 128);
+    /// assert_eq!(c1.into_vec(), vec![128, 0, 128, 255]);
+    ///
+    /// let mut c2 = color!(128, 0, 128, 64);
+    /// assert_eq!(c2.into_vec(), vec![128, 0, 128, 64]);
+    /// ```
+    pub fn values(self) -> (u8, u8, u8, u8) {
+        (self.r, self.g, self.b, self.a)
     }
+}
+
+/// Creates a new Color. The parameters are interpreted as either RGB, HSB, or HSL depending on the
+/// current `State::color_mode()`.
+///
+/// The default is RGB with values ranging from 0 to 255. HSB/HSL values range from 0 to 360 for
+/// Hue and Saturation, and 0 to 100 for Brightness/Lightness.
+///
+/// The number of parameters provided alter how they are interpreted:
+///
+/// # Syntax
+///
+/// color!(gray, [alpha]);
+///
+/// color!(v1, v2, v3, [alpha]);
+///
+/// color!(value);
+///
+/// color!(values);
+///
+/// color!(color);
+///
+/// # Parameters
+///
+/// - gray: 0 to 255 value ranging from black to white.
+/// - alpha: Transparency value ranging from 0 to 255 for RGB and 0 to 100 for HSB/HSL (Optional,
+///   defaults to 255)
+/// - v1: Red (0 to 255) or Hue (0 to 360)
+/// - v2: Green (0 to 255) or Saturation (0 to 360)
+/// - v3: Blue (0 to 255) or Brightness/Lightness (0 to 100)
+/// - value: A color string in either text or hexidecimal format
+/// - values: A slice containing rgba or hsba/hsla values.
+/// - color: A `Color` instance.
+///
+/// # Examples
+///
+/// ```
+/// use pix_engine::prelude::*;
+///
+/// let c1 = color!(128, 64, 0); // RGB
+/// assert_eq!(c1.values(), (128, 64, 0, 255));
+///
+/// let c2 = color!(128, 64, 128, 128); // RGBA
+/// assert_eq!(c2.values(), (128, 64, 128, 128));
+///
+/// let c3 = color!(128); // Gray
+/// assert_eq!(c3.values(), (128, 128, 128, 255));
+///
+/// let c4 = color!(128, 64); // Gray with Alpha
+/// assert_eq!(c4.values(), (128, 128, 128, 64));
+///
+/// let vals: Vec<u8> = vec![128, 64, 0];
+/// let c5 = color!(vals.as_slice()); // RGB from slice
+/// assert_eq!(c5.values(), (128, 64, 0, 255));
+///
+/// let vals: [u8; 4] = [128, 64, 0, 128];
+/// let c6 = color!(&vals[..]); // RGBA from slice
+/// assert_eq!(c6.values(), (128, 64, 0, 128));
+/// ```
+#[macro_export]
+macro_rules! color {
+    ($value:expr) => {
+        Color::from($value);
+    };
+    ($gray:expr, $alpha:expr) => {
+        Color::rgba($gray, $gray, $gray, $alpha);
+    };
+    ($red:expr, $green:expr, $blue:expr) => {
+        Color::rgb($red, $green, $blue);
+    };
+    ($red:expr, $green:expr, $blue:expr, $alpha:expr) => {
+        Color::rgba($red, $green, $blue, $alpha);
+    };
 }
 
 impl Deref for Color {
@@ -273,56 +304,31 @@ impl DerefMut for Color {
     }
 }
 
-/// From gray u8 value to Color.
 impl From<u8> for Color {
     fn from(gray: u8) -> Self {
-        Color::RGB(gray, gray, gray)
+        Color::rgb(gray, gray, gray)
     }
 }
 
-/// From gray u8 value with alpha u8 to Color.
-impl From<(u8, u8)> for Color {
-    fn from((gray, a): (u8, u8)) -> Self {
-        Color::RGBA(gray, gray, gray, a)
+impl From<&[u8]> for Color {
+    fn from(slice: &[u8]) -> Self {
+        match slice {
+            [r, g, b] => Color::rgb(*r, *g, *b),
+            [r, g, b, a] => Color::rgba(*r, *g, *b, *a),
+            _ => panic!("invalid color slice"),
+        }
     }
 }
 
-/// From a u8 tuple of (r, g, b) to Color.
-impl From<(u8, u8, u8)> for Color {
-    fn from((r, g, b): (u8, u8, u8)) -> Self {
-        Color::RGB(r, g, b)
-    }
-}
-
-/// From a u8 tuple of (r, g, b, a) to Color.
-impl From<(u8, u8, u8, u8)> for Color {
-    fn from((r, g, b, a): (u8, u8, u8, u8)) -> Self {
-        Color::RGBA(r, g, b, a)
-    }
-}
-
-/// Convert to a u8 tuple of (r, g, b).
 impl Into<(u8, u8, u8)> for Color {
     fn into(self) -> (u8, u8, u8) {
         (self.r, self.g, self.b)
     }
 }
 
-/// Convert to a u8 tuple of (r, g, b, a).
 impl Into<(u8, u8, u8, u8)> for Color {
     fn into(self) -> (u8, u8, u8, u8) {
         (self.r, self.g, self.b, self.a)
-    }
-}
-
-/// From &[u8] to Color
-impl From<&[u8]> for Color {
-    fn from(slice: &[u8]) -> Self {
-        match slice {
-            [r, g, b] => Color::RGB(*r, *g, *b),
-            [r, g, b, a] => Color::RGBA(*r, *g, *b, *a),
-            _ => panic!("invalid color slice"),
-        }
     }
 }
 
@@ -335,46 +341,46 @@ impl fmt::Display for Color {
 // Color Constants for common colors
 
 // WHITE/BLACK/BLANK
-pub const WHITE: Color = Color::RGB(255, 255, 255);
-pub const BLACK: Color = Color::RGB(0, 0, 0);
-pub const TRANSPARENT: Color = Color::RGBA(0, 0, 0, 0);
+pub const WHITE: Color = Color::rgb(255, 255, 255);
+pub const BLACK: Color = Color::rgb(0, 0, 0);
+pub const TRANSPARENT: Color = Color::rgba(0, 0, 0, 0);
 
 // GRAY
-pub const BRIGHT_GRAY: Color = Color::RGB(192, 192, 192);
-pub const GRAY: Color = Color::RGB(128, 128, 128);
-pub const DARK_GRAY: Color = Color::RGB(64, 64, 64);
+pub const BRIGHT_GRAY: Color = Color::rgb(192, 192, 192);
+pub const GRAY: Color = Color::rgb(128, 128, 128);
+pub const DARK_GRAY: Color = Color::rgb(64, 64, 64);
 
 // RED
-pub const BRIGHT_RED: Color = Color::RGB(255, 0, 0);
-pub const RED: Color = Color::RGB(128, 0, 0);
-pub const DARK_RED: Color = Color::RGB(64, 0, 0);
+pub const BRIGHT_RED: Color = Color::rgb(255, 0, 0);
+pub const RED: Color = Color::rgb(128, 0, 0);
+pub const DARK_RED: Color = Color::rgb(64, 0, 0);
 
 // ORANGE
-pub const BRIGHT_ORANGE: Color = Color::RGB(255, 128, 0);
-pub const ORANGE: Color = Color::RGB(128, 64, 0);
-pub const DARK_ORANGE: Color = Color::RGB(64, 32, 0);
+pub const BRIGHT_ORANGE: Color = Color::rgb(255, 128, 0);
+pub const ORANGE: Color = Color::rgb(128, 64, 0);
+pub const DARK_ORANGE: Color = Color::rgb(64, 32, 0);
 
 // YELLOW
-pub const BRIGHT_YELLOW: Color = Color::RGB(255, 255, 0);
-pub const YELLOW: Color = Color::RGB(128, 128, 0);
-pub const DARK_YELLOW: Color = Color::RGB(64, 64, 0);
+pub const BRIGHT_YELLOW: Color = Color::rgb(255, 255, 0);
+pub const YELLOW: Color = Color::rgb(128, 128, 0);
+pub const DARK_YELLOW: Color = Color::rgb(64, 64, 0);
 
 // GREEN
-pub const BRIGHT_GREEN: Color = Color::RGB(0, 255, 0);
-pub const GREEN: Color = Color::RGB(0, 128, 0);
-pub const DARK_GREEN: Color = Color::RGB(0, 64, 0);
+pub const BRIGHT_GREEN: Color = Color::rgb(0, 255, 0);
+pub const GREEN: Color = Color::rgb(0, 128, 0);
+pub const DARK_GREEN: Color = Color::rgb(0, 64, 0);
 
 // CYAN
-pub const BRIGHT_CYAN: Color = Color::RGB(0, 255, 255);
-pub const CYAN: Color = Color::RGB(0, 128, 128);
-pub const DARK_CYAN: Color = Color::RGB(0, 64, 64);
+pub const BRIGHT_CYAN: Color = Color::rgb(0, 255, 255);
+pub const CYAN: Color = Color::rgb(0, 128, 128);
+pub const DARK_CYAN: Color = Color::rgb(0, 64, 64);
 
 // BLUE
-pub const BRIGHT_BLUE: Color = Color::RGB(0, 255, 255);
-pub const BLUE: Color = Color::RGB(0, 0, 128);
-pub const DARK_BLUE: Color = Color::RGB(0, 0, 64);
+pub const BRIGHT_BLUE: Color = Color::rgb(0, 255, 255);
+pub const BLUE: Color = Color::rgb(0, 0, 128);
+pub const DARK_BLUE: Color = Color::rgb(0, 0, 64);
 
 // MAGENTA
-pub const BRIGHT_MAGENTA: Color = Color::RGB(255, 0, 255);
-pub const MAGENTA: Color = Color::RGB(128, 0, 128);
-pub const DARK_MAGENTA: Color = Color::RGB(64, 0, 64);
+pub const BRIGHT_MAGENTA: Color = Color::rgb(255, 0, 255);
+pub const MAGENTA: Color = Color::rgb(128, 0, 128);
+pub const DARK_MAGENTA: Color = Color::rgb(64, 0, 64);

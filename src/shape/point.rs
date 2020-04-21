@@ -1,4 +1,8 @@
-use crate::math::Vector;
+use crate::{
+    math::Vector,
+    renderer::Renderer,
+    state::{State, StateResult},
+};
 use std::fmt;
 
 /// Represents a single point on the screen.
@@ -83,5 +87,12 @@ impl From<Vector> for Point {
 impl fmt::Display for Point {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "({}, {})", self.x, self.y)
+    }
+}
+
+impl State {
+    /// Draw a point.
+    pub fn point<P: Into<Point>>(&mut self, point: P) -> StateResult<()> {
+        Ok(self.renderer.point(point.into())?)
     }
 }

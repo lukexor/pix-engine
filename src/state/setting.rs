@@ -147,7 +147,7 @@ impl State {
     pub fn fill<C: Into<Color>>(&mut self, color: C) {
         let c = color.into();
         self.settings.fill = Some(c);
-        self.renderer.fill(c);
+        self.renderer.fill(self.settings.fill);
     }
 
     /// Disable filling shapes.
@@ -165,7 +165,7 @@ impl State {
     /// ```
     pub fn no_fill(&mut self) {
         self.settings.fill = None;
-        self.renderer.fill(None);
+        self.renderer.fill(self.settings.fill);
     }
 
     /// Get the current color used to outline shapes.
@@ -176,13 +176,13 @@ impl State {
     pub fn stroke<C: Into<Color>>(&mut self, color: C) {
         let c = color.into();
         self.settings.stroke = Some(c);
-        self.renderer.stroke(c);
+        self.renderer.stroke(self.settings.stroke);
     }
     /// Disable outlining shapes.
     /// Shortcut for `State::set_stroke(None)`.
     pub fn no_stroke(&mut self) {
         self.settings.stroke = None;
-        self.renderer.stroke(None);
+        self.renderer.stroke(self.settings.stroke);
     }
 
     /// Gets the current arc mode for filling arc segments.

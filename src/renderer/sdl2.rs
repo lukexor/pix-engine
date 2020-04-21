@@ -3,7 +3,7 @@ use crate::{
     color::Color,
     event::PixEvent,
     shape::{Line, Point, Rect},
-    state::rendering::BlendMode,
+    state::rendering::{BlendMode, Texture},
 };
 use sdl2::{
     audio::{AudioQueue, AudioSpecDesired},
@@ -89,7 +89,6 @@ impl Sdl2Renderer {
         // Set up canvas
         let mut canvas = window.into_canvas().build()?;
         canvas.set_logical_size(width, height)?;
-        println!("{:?}", canvas.window().subsystem().gl_get_swap_interval());
         Ok(canvas)
     }
 
@@ -120,7 +119,7 @@ impl Sdl2Renderer {
 }
 
 impl Renderer for Sdl2Renderer {
-    /// Settings
+    /// # Settings
 
     /// Set title for the current window target.
     ///
@@ -143,21 +142,18 @@ impl Renderer for Sdl2Renderer {
     }
 
     /// Set draw color for drawing operations on the current window target.
-    fn background<C: Into<Color>>(&mut self, color: C) {
-        let c = color.into();
-        self.bg_color = c.into();
+    fn background(&mut self, color: Color) {
+        self.bg_color = color.into();
     }
 
     /// Set draw color for the fill operations on the current window target.
-    fn fill<C: Into<Option<Color>>>(&mut self, color: C) {
-        let c = color.into();
-        self.fill = c.map(|c| c.into());
+    fn fill(&mut self, color: Option<Color>) {
+        self.fill = color.map(|c| c.into());
     }
 
     /// Set draw color for the drawing outlines on the current window target.
-    fn stroke<C: Into<Option<Color>>>(&mut self, color: C) {
-        let c = color.into();
-        self.stroke = c.map(|c| c.into());
+    fn stroke(&mut self, color: Option<Color>) {
+        self.stroke = color.map(|c| c.into());
     }
 
     /// Get the blending mode for the current window target.
@@ -170,11 +166,25 @@ impl Renderer for Sdl2Renderer {
         self.canvas_mut().set_blend_mode(mode.into());
     }
 
+    /// Get the scale_x and scale_y factors for the current window target.
+    fn get_scale(&self) -> (f32, f32) {
+        self.canvas().scale()
+    }
+
+    /// Set the scale_x and scale_y factors for the current window target.
+    fn scale(&mut self, scale_x: f32, scale_y: f32) -> Result<()> {
+        Ok(self.canvas_mut().set_scale(scale_x, scale_y)?)
+    }
+
+    /// # Input
+
     /// Returns a list of events from the event queue since last time poll_events
     /// was called.
     fn poll_events(&mut self) -> Vec<PixEvent> {
         self.sdl_poll_events()
     }
+
+    /// # Rendering
 
     /// Presents changes made to the canvas on the current window target since present was last
     /// called.
@@ -206,25 +216,14 @@ impl Renderer for Sdl2Renderer {
         }
     }
 
-    /// Get the scale_x and scale_y factors for the current window target.
-    fn get_scale(&self) -> (f32, f32) {
-        self.canvas().scale()
-    }
-
-    /// Set the scale_x and scale_y factors for the current window target.
-    fn scale(&mut self, scale_x: f32, scale_y: f32) -> Result<()> {
-        Ok(self.canvas_mut().set_scale(scale_x, scale_y)?)
-    }
-
     /// Get the clipping rectangle for the current window target.
     fn get_clip_rect(&self) -> Option<Rect> {
         self.canvas().clip_rect().map(|r| r.into())
     }
 
     /// Set the clipping rectangle for the current window target.
-    fn clip_rect<R: Into<Option<Rect>>>(&mut self, rect: R) {
-        // First convert to Rect, then to rect::Rect
-        let rect = rect.into().map(|r| r.into());
+    fn clip_rect(&mut self, rect: Option<Rect>) {
+        let rect: Option<rect::Rect> = rect.map(|r| r.into());
         self.canvas_mut().set_clip_rect(rect);
     }
 
@@ -234,65 +233,40 @@ impl Renderer for Sdl2Renderer {
     }
 
     /// Set the viewport rectangle for the current window target.
-    fn viewport<R: Into<Option<Rect>>>(&mut self, rect: R) {
-        // First convert to Rect, then to rect::Rect
-        let rect = rect.into().map(|r| r.into());
+    fn viewport(&mut self, rect: Option<Rect>) {
+        let rect: Option<rect::Rect> = rect.map(|r| r.into());
         self.canvas_mut().set_viewport(rect);
     }
 
-    /// Draw a point on the current window target.
-    fn draw_point<P: Into<Point>>(&mut self, point: P) -> Result<()> {
-        let point: rect::Point = point.into().into();
-        Ok(self.canvas_mut().draw_point(point)?)
-    }
+    /// # Drawing
 
-    /// Draw multiple points on the current window target.
-    fn draw_points<'a, P: Into<&'a [Point]>>(&mut self, points: P) -> Result<()> {
-        // TODO
-        Ok(())
+    /// Draw a point on the current window target.
+    fn point(&mut self, point: Point) -> Result<()> {
+        let p: rect::Point = point.into();
+        Ok(self.canvas_mut().draw_point(p)?)
     }
 
     /// Draw a line on the current window target.
-    fn draw_line<L: Into<Line>>(&mut self, line: L) -> Result<()> {
+    fn line(&mut self, line: Line) -> Result<()> {
         if let Some(c) = self.stroke {
-            let line = line.into();
-            let start: rect::Point = line.start.into();
-            let end: rect::Point = line.end.into();
             let canvas = self.canvas_mut();
             canvas.set_draw_color(c);
-            canvas.draw_line(start, end)?;
+            let p1: rect::Point = line.start.into();
+            let p2: rect::Point = line.end.into();
+            canvas.draw_line(p1, p2)?;
         }
-        Ok(())
-    }
-
-    /// Draw a series of lines on the current window target.
-    fn draw_lines<'a, L: Into<&'a [Line]>>(&mut self, lines: L) -> Result<()> {
-        // TODO
         Ok(())
     }
 
     /// Draw a rectangle on the current window target.
-    fn draw_rect<R: Into<Rect>>(&mut self, rect: R) -> Result<()> {
+    fn rect(&mut self, rect: Rect) -> Result<()> {
+        let rect: rect::Rect = rect.into();
         if let Some(c) = self.stroke {
-            let rect: rect::Rect = rect.into().into();
             let canvas = self.canvas_mut();
             canvas.set_draw_color(c);
             canvas.draw_rect(rect)?;
         }
-        Ok(())
-    }
-
-    /// Draw multiple rectangles on the current window target.
-    fn draw_rects<'a, R: Into<&'a [Rect]>>(&mut self, rects: R) -> Result<()> {
-        // TODO
-        Ok(())
-    }
-
-    /// Draw a filled rectangle on the current window target. Passing None will fill the entire
-    /// rendering target.
-    fn fill_rect<R: Into<Option<Rect>>>(&mut self, rect: R) -> Result<()> {
         if let Some(c) = self.fill {
-            let rect: Option<rect::Rect> = rect.into().map(|r| r.into());
             let canvas = self.canvas_mut();
             canvas.set_draw_color(c);
             canvas.fill_rect(rect)?;
@@ -300,10 +274,25 @@ impl Renderer for Sdl2Renderer {
         Ok(())
     }
 
-    /// Draw multiple filled rectangles on the current window target.
-    fn fill_rects<'a, R: Into<&'a [Rect]>>(&mut self, rects: R) -> Result<()> {
-        // TODO
-        Ok(())
+    /// Reads pixels from the current window target.
+    ///
+    /// # Remarks
+    /// WARNING: This is a very slow operation, and should not be used frequently.
+    fn read_pixels(&self, rect: Rect) -> Result<Vec<u8>> {
+        // Ok(self.canvas_mut().read_pixels(rect.into())?)
+        unimplemented!();
+    }
+
+    /// # Textures
+
+    /// Copy all or a portion of a texture to the current window target.
+    ///
+    /// - If `src` is `None`, the entire texture is copied.
+    /// - If `dst` is `None`, the texture will be stretched to fill the entire target.
+    fn copy(&mut self, texture: Texture, src: Option<Rect>, dst: Option<Rect>) -> Result<()> {
+        // TODO Sdl2Renderer::copy
+        // Ok(self.canvas_mut().copy(texture.into())?)
+        unimplemented!();
     }
 }
 
@@ -337,13 +326,14 @@ impl From<std::ffi::NulError> for Error {
 
 impl From<pixels::Color> for Color {
     fn from(color: pixels::Color) -> Self {
-        color.rgb().into()
+        let (r, g, b) = color.rgb();
+        color!(r, g, b)
     }
 }
 
 impl Into<pixels::Color> for Color {
     fn into(self) -> pixels::Color {
-        self.rgb().into()
+        pixels::Color::RGBA(self.red(), self.green(), self.blue(), self.alpha())
     }
 }
 
