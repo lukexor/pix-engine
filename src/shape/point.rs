@@ -7,6 +7,7 @@ use std::fmt;
 
 /// Represents a single point on the screen.
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(C)]
 pub struct Point {
     pub x: i32,
     pub y: i32,

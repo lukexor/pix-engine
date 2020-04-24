@@ -1,4 +1,5 @@
 use pix_engine::prelude::*;
+use std::cmp::Ordering::Less;
 
 const BLOCK_SIZE: u32 = 16;
 const NORTH: usize = 0;
@@ -25,6 +26,7 @@ impl Edge {
 struct App {
     cells: Vec<Cell>,
     edges: Vec<Edge>,
+    points: Vec<Vector>,
     polygons: Vec<(f64, Vector)>,
     width: u32,
     height: u32,
@@ -42,6 +44,7 @@ impl App {
         Self {
             cells,
             edges: Vec::new(),
+            points: Vec::new(),
             polygons: Vec::new(),
             width: WIDTH,
             height: HEIGHT,
@@ -168,17 +171,18 @@ impl App {
                 }
             }
         }
+
+        self.points = self.edges.iter().flat_map(|e| e.points()).collect();
+        self.points
+            .sort_by(|a, b| a.partial_cmp(&b).unwrap_or(Less));
+        self.points.dedup();
     }
 
     fn calc_visibility_polygons<P: Into<Point>>(&mut self, o: P, radius: f64, s: &mut State) {
         let o = o.into();
         self.polygons.clear();
-
-        let mut points: Vec<Vector> = self.edges.iter().flat_map(|e| e.points()).collect();
-        points.sort_by(|a, b| a.partial_cmp(&b).unwrap());
-        points.dedup();
         let o = Vector::from_point(o);
-        for &p in points.iter() {
+        for &p in self.points.iter() {
             // s.stroke(WHITE);
             // s.line(Point::from(o), Point::from(p));
             // Cast three rays - one at and one off to each side

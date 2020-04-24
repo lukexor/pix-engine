@@ -27,6 +27,7 @@ impl Default for RectMode {
 
 /// Represents a rectangle shape with (x, y) position and width/height.
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
+#[repr(C)]
 pub struct Rect {
     pub x: i32,
     pub y: i32,
@@ -159,26 +160,28 @@ impl From<(Point, u32, u32)> for Rect {
 /// From tuple of (`Vector`, width, height) to `Rect`.
 impl From<(Vector, u32, u32)> for Rect {
     fn from((v, w, h): (Vector, u32, u32)) -> Self {
-        Self::new(v.x as i32, v.y as i32, w, h)
+        let p = Point::from(v);
+        Self::new(p.x, p.y, w, h)
     }
 }
 
 /// From upper-left `Point` to lower-right `Point`.
 impl From<(Point, Point)> for Rect {
     fn from((p1, p2): (Point, Point)) -> Self {
-        Self::new(p1.x, p1.y, (p2.x - p1.x) as u32, (p2.y - p1.y) as u32)
+        let w = p2.x - p1.x;
+        let h = p2.y - p1.y;
+        Self::new(p1.x, p1.y, w as u32, h as u32)
     }
 }
 
 /// From upper-left `Vector` to lower-right `Vector`.
 impl From<(Vector, Vector)> for Rect {
     fn from((v1, v2): (Vector, Vector)) -> Self {
-        Self::new(
-            v1.x as i32,
-            v1.y as i32,
-            (v2.x - v1.x) as u32,
-            (v2.y - v1.y) as u32,
-        )
+        let p1 = Point::from(v1);
+        let p2 = Point::from(v2);
+        let w = p2.x - p1.x;
+        let h = p2.y - p1.y;
+        Self::new(p1.x, p1.y, w as u32, h as u32)
     }
 }
 

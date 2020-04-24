@@ -18,6 +18,7 @@ pub type StateResult<T> = std::result::Result<T, Error>;
 pub enum Error {
     RendererError(renderer::Error),
     InvalidWindowTarget(u32),
+    ConversionError(Cow<'static, str>),
     Other(Cow<'static, str>),
 }
 
@@ -27,7 +28,7 @@ impl fmt::Display for Error {
         match self {
             RendererError(err) => write!(f, "renderer error: {}", &err),
             InvalidWindowTarget(t) => write!(f, "invalid window_target: {}", &t),
-            Other(desc) => write!(f, "{}", &desc),
+            Other(desc) | ConversionError(desc) => write!(f, "{}", &desc),
         }
     }
 }

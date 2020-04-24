@@ -103,7 +103,7 @@ impl<'a> Vector {
     /// use pix_engine::prelude::*;
     ///
     /// let v1 = Vector::new((1, 0, 1));
-    /// let mut v2 = v1.copy();
+    /// let mut v2 = v1.copy;
     /// v2.x = 2.0;
     ///
     /// assert_eq!(v1.get(), (1.0, 0.0, 1.0));

@@ -81,7 +81,7 @@ impl From<png::EncodingError> for Error {
 }
 
 /// Determines the way images are drawn by changing how the parameters given to
-/// `State::draw_image()` are interpreted. The default is Corner.
+/// `State::image()` are interpreted. The default is Corner.
 ///
 /// Corner: Uses x and y as the upper-left corner of the image.
 /// Center: Uses x and y as the center of the image.
@@ -447,8 +447,8 @@ impl State {
     }
 
     /// Draws a given image to the current window target.
-    pub fn draw_image<P: Into<Point>>(&mut self, img: Image, p: P) {
-        // TODO State::draw_image()
+    pub fn image<P: Into<Point>>(&mut self, img: Image, p: P) {
+        // TODO State::image()
         unimplemented!();
     }
 
@@ -459,22 +459,22 @@ impl State {
     }
 
     /// Draws a given image to the current window target, resized to target dimensions.
-    pub fn draw_image_resized<R: Into<Rect>>(&mut self, img: Image, rect: R) {
-        // TODO State::draw_image_resized()
+    pub fn image_resized<R: Into<Rect>>(&mut self, img: Image, rect: R) {
+        // TODO State::image_resized()
         unimplemented!();
     }
 
     /// Draws a given image to the current window target with top-left at p1 and bottom-right at
     /// p2.
-    pub fn draw_image_corners<P: Into<Point>>(&mut self, img: Image, p1: P, p2: P) {
-        // TODO State::draw_image_corners()
+    pub fn image_corners<P: Into<Point>>(&mut self, img: Image, p1: P, p2: P) {
+        // TODO State::image_corners()
         unimplemented!();
     }
 
     /// Draws a portion of the given image given by dest rectangle to the current window target at
     /// the given src rectangle.
-    pub fn draw_image_projected<R: Into<Option<Rect>>>(&mut self, img: Image, dest: R, src: R) {
-        // TODO State::draw_image_projected()
+    pub fn image_projected<R: Into<Option<Rect>>>(&mut self, img: Image, dest: R, src: R) {
+        // TODO State::image_projected()
         unimplemented!();
     }
 }
