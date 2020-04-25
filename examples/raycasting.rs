@@ -182,7 +182,8 @@ impl App {
         let o = o.into();
         self.polygons.clear();
         let o = Vector::from_point(o);
-        for &p in self.points.iter() {
+        for (i, &p) in self.points.iter().enumerate() {
+            // println!("point: {}", i);
             // s.stroke(WHITE);
             // s.line(Point::from(o), Point::from(p));
             // Cast three rays - one at and one off to each side
@@ -192,9 +193,13 @@ impl App {
                 let mut r = p.copy() - o;
                 r.rotate(angle);
                 r.set_mag(radius);
-                // s.stroke(ORANGE);
-                // s.line((o, r + o));
+                s.stroke(WHITE);
+                let op = Point::from(o);
+                let or = Point::from(r + o);
+                // s.line(op.x, op.y, or.x, or.y);
+                // println!("{:?} -> {:?}", Point::from(o), Point::from(r + o));
                 if let Some(intersect) = self.cast_ray(o, r, s) {
+                    // println!("{:?} had intersect with point {:?}"
                     // s.stroke(CYAN);
                     // s.line((o, intersect));
                     self.polygons.push((r.heading(), intersect));
@@ -204,9 +209,10 @@ impl App {
         }
 
         // Could fail with NaN or Infinity
-        self.polygons.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
         self.polygons
-            .dedup_by(|a, b| (a.1.x - b.1.x).abs() < 0.1 && (a.1.y - b.1.y).abs() < 0.1);
+            .sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(Less));
+        self.polygons
+            .dedup_by(|a, b| (a.1.x - b.1.x).abs() < 0.5 && (a.1.y - b.1.y).abs() < 0.5);
     }
 
     fn cast_ray(&self, o: Vector, r: Vector, _st: &mut State) -> Option<Vector> {
@@ -271,11 +277,11 @@ impl PixApp for App {
 
         let w = (self.width * BLOCK_SIZE) as i32 - 1;
         let h = (self.height * BLOCK_SIZE) as i32 - 1;
-        // Random few cells
-        for _ in 0..2 {
-            let i = self.get_cell_index(Point::new_2d(random(w - 1), random(h - 1)));
-            self.cells[i].exists = !self.cells[i].exists;
-        }
+        // // Random few cells
+        // for _ in 0..2 {
+        //     let i = self.get_cell_index(Point::new_2d(random(w - 1), random(h - 1)));
+        //     self.cells[i].exists = !self.cells[i].exists;
+        // }
 
         // Top
         self.edges.push(Edge {
@@ -302,7 +308,7 @@ impl PixApp for App {
     }
 
     fn on_update(&mut self, s: &mut State) -> Result<bool> {
-        s.background(0);
+        s.background(60);
         let mouse = s.mouse_pos();
 
         self.convert_edges((0, 0, self.width, self.height), BLOCK_SIZE, self.width);
@@ -316,17 +322,18 @@ impl PixApp for App {
         // if s.mouse_is_pressed() && s.mouse_buttons().contains(&MouseButton::Right) {
         self.calc_visibility_polygons(mouse, 1000.0, s);
         if !self.polygons.is_empty() {
-            s.stroke(YELLOW);
-            s.fill(YELLOW);
+            s.no_stroke();
+            // s.stroke(RED);
+            s.fill(WHITE);
             for i in 0..self.polygons.len() - 1 {
-                let p1 = self.polygons[i].1;
-                let p2 = self.polygons[i + 1].1;
-                s.triangle(mouse, p1, p2)?;
+                let p1 = Point::from(self.polygons[i].1);
+                let p2 = Point::from(self.polygons[i + 1].1);
+                s.triangle(mouse.x, mouse.y, p1.x, p1.y, p2.x, p2.y)?;
             }
             // Draw last triangle, connecting back to first point.
-            let p1 = self.polygons.last().unwrap().1;
-            let p2 = self.polygons[0].1;
-            s.triangle(mouse, p1, p2)?;
+            let p1 = Point::from(self.polygons.last().unwrap().1);
+            let p2 = Point::from(self.polygons[0].1);
+            s.triangle(mouse.x, mouse.y, p1.x, p1.y, p2.x, p2.y)?;
             s.no_fill();
             s.no_stroke();
         }
@@ -334,7 +341,9 @@ impl PixApp for App {
 
         for e in self.edges.iter() {
             s.stroke(RED);
-            s.line((e.start, e.end))?;
+            let start = Point::from(e.start);
+            let end = Point::from(e.end);
+            s.line(start.x, start.y, end.x, end.y)?;
             s.no_stroke();
         }
 

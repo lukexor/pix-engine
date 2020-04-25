@@ -310,11 +310,45 @@ impl From<u8> for Color {
     }
 }
 
+impl From<(u8, u8)> for Color {
+    fn from((gray, a): (u8, u8)) -> Self {
+        Color::rgba(gray, gray, gray, a)
+    }
+}
+
+impl From<(u8, u8, u8)> for Color {
+    fn from((r, g, b): (u8, u8, u8)) -> Self {
+        Color::rgb(r, g, b)
+    }
+}
+
+impl From<(u8, u8, u8, u8)> for Color {
+    fn from((r, g, b, a): (u8, u8, u8, u8)) -> Self {
+        Color::rgba(r, g, b, a)
+    }
+}
+impl From<[u8; 2]> for Color {
+    fn from(arr: [u8; 2]) -> Self {
+        Color::rgba(arr[0], arr[0], arr[0], arr[1])
+    }
+}
+impl From<[u8; 3]> for Color {
+    fn from(arr: [u8; 3]) -> Self {
+        Color::rgb(arr[0], arr[1], arr[2])
+    }
+}
+impl From<[u8; 4]> for Color {
+    fn from(arr: [u8; 4]) -> Self {
+        Color::rgba(arr[0], arr[1], arr[2], arr[3])
+    }
+}
+
 impl From<&[u8]> for Color {
     fn from(slice: &[u8]) -> Self {
-        match slice {
-            [r, g, b] => Color::rgb(*r, *g, *b),
-            [r, g, b, a] => Color::rgba(*r, *g, *b, *a),
+        match *slice {
+            [gray, a] => Color::rgba(gray, gray, gray, a),
+            [r, g, b] => Color::rgb(r, g, b),
+            [r, g, b, a] => Color::rgba(r, g, b, a),
             _ => panic!("invalid color slice"),
         }
     }

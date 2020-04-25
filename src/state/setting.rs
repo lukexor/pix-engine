@@ -114,7 +114,7 @@ impl State {
     /// let mut state = State::new("State", 100, 100).unwrap();
     ///
     /// state.background((128, 200, 0));
-    /// assert_eq!(state.get_background(), Color::new((128, 200, 0)));
+    /// assert_eq!(state.get_background(), color!(128, 200, 0));
     /// ```
     pub fn background<C: Into<Color>>(&mut self, color: C) {
         let c = color.into();
@@ -142,7 +142,7 @@ impl State {
     /// let mut state = State::new("State", 100, 100).unwrap();
     ///
     /// state.fill((128, 200, 0));
-    /// assert_eq!(state.get_fill(), Some(Color::new((128, 200, 0))));
+    /// assert_eq!(state.get_fill(), Some(color!(128, 200, 0)));
     /// ```
     pub fn fill<C: Into<Color>>(&mut self, color: C) {
         let c = color.into();
@@ -159,7 +159,7 @@ impl State {
     /// let mut state = State::new("State", 100, 100).unwrap();
     ///
     /// state.fill((128, 200, 0));
-    /// assert_eq!(state.get_fill(), Some(Color::new((128, 200, 0))));
+    /// assert_eq!(state.get_fill(), Some(color!(128, 200, 0)));
     /// state.no_fill();
     /// assert_eq!(state.get_fill(), None);
     /// ```

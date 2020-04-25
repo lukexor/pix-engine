@@ -54,3 +54,19 @@ impl<T: Num> From<(T, T)> for Range<T> {
         Range { min, max }
     }
 }
+
+/// Interpolates values for a range of independent values based on depdendent values.
+pub fn interpolate(ind_start: i32, dep_start: i32, ind_end: i32, dep_end: i32) -> Vec<f64> {
+    if ind_start == ind_end {
+        vec![dep_start as f64]
+    } else {
+        let mut values = Vec::new();
+        let a = (dep_end - dep_start) as f64 / (ind_end - ind_start) as f64;
+        let mut d = dep_start as f64;
+        for i in ind_start..ind_end {
+            values.push(d);
+            d += a;
+        }
+        values
+    }
+}

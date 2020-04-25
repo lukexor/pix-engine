@@ -1,7 +1,7 @@
 use crate::{
     color::Color,
     event::PixEvent,
-    shape::{Line, Point, Rect},
+    shape::{Point, Rect},
     state::rendering::{BlendMode, Texture},
 };
 use std::{borrow::Cow, error, ffi::NulError, fmt};
@@ -131,7 +131,7 @@ pub(crate) trait Renderer {
     fn point(&mut self, point: Point) -> Result<()>;
 
     /// Draw a line on the current window target.
-    fn line(&mut self, line: Line) -> Result<()>;
+    fn line(&mut self, x0: i32, y0: i32, x1: i32, y1: i32) -> Result<()>;
 
     /// Draw a rectangle on the current window target.
     fn rect(&mut self, rect: Rect) -> Result<()>;

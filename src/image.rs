@@ -127,6 +127,7 @@ impl From<PixelFormat> for png::ColorType {
 
 /// A filter type that can be applied to an image.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum ImageFilter {
     Threshold,
     Gray,

@@ -2,7 +2,7 @@ use super::{Error, Renderer, Result};
 use crate::{
     color::Color,
     event::PixEvent,
-    shape::{Line, Point, Rect},
+    shape::{Point, Rect},
     state::rendering::{BlendMode, Texture},
 };
 use sdl2::{
@@ -242,17 +242,22 @@ impl Renderer for Sdl2Renderer {
 
     /// Draw a point on the current window target.
     fn point(&mut self, point: Point) -> Result<()> {
-        let p: rect::Point = point.into();
-        Ok(self.canvas_mut().draw_point(p)?)
+        if let Some(c) = self.stroke {
+            let p = rect::Point::from((point.x, point.y));
+            let canvas = self.canvas_mut();
+            canvas.set_draw_color(c);
+            canvas.draw_point(p)?;
+        }
+        Ok(())
     }
 
     /// Draw a line on the current window target.
-    fn line(&mut self, line: Line) -> Result<()> {
+    fn line(&mut self, x0: i32, y0: i32, x1: i32, y1: i32) -> Result<()> {
         if let Some(c) = self.stroke {
             let canvas = self.canvas_mut();
             canvas.set_draw_color(c);
-            let p1: rect::Point = line.start.into();
-            let p2: rect::Point = line.end.into();
+            let p1 = rect::Point::from((x0, y0));
+            let p2 = rect::Point::from((x1, y1));
             canvas.draw_line(p1, p2)?;
         }
         Ok(())

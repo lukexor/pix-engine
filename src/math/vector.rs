@@ -19,7 +19,7 @@ use std::{
 /// Vectors can be combined using "vector" math, so for example two vectors can be added together
 /// to form a new vector using `let v3 = v1 + v2` or you can add one vector to another by calling
 /// `v1 += v2`.
-#[derive(Default, Debug, Copy, Clone, PartialEq, PartialOrd)]
+#[derive(Default, Debug, Copy, Clone, PartialEq)]
 #[repr(C)]
 pub struct Vector {
     pub x: f64,
@@ -103,7 +103,7 @@ impl<'a> Vector {
     /// use pix_engine::prelude::*;
     ///
     /// let v1 = Vector::new((1, 0, 1));
-    /// let mut v2 = v1.copy;
+    /// let mut v2 = v1.copy();
     /// v2.x = 2.0;
     ///
     /// assert_eq!(v1.get(), (1.0, 0.0, 1.0));

@@ -38,7 +38,7 @@
 //!         // Called every frame (as often as possible by default) but can be changed with
 //!         // `State::set_target_frame_rate()`.
 //!         state.background((255, 0, 0));
-//!         state.draw_rect(Rect::new(100, 100, 200, 200))?;
+//!         state.rect(Rect::new(100, 100, 200, 200))?;
 //!         Ok(true)
 //!     }
 //!     fn on_stop(&mut self, _state: &mut State) -> Result<bool> {
