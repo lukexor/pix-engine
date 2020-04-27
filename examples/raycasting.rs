@@ -6,7 +6,7 @@ const NORTH: usize = 0;
 const SOUTH: usize = 1;
 const EAST: usize = 2;
 const WEST: usize = 3;
-const SCALE: f32 = 2.0;
+const SCALE: f32 = 1.0;
 const WIDTH: u32 = 64 / SCALE as u32;
 const HEIGHT: u32 = 48 / SCALE as u32;
 
@@ -78,9 +78,10 @@ impl App {
         for c in self.cells.iter_mut() {
             c.reset();
         }
-        // TODO handle edges
-        for x in 1..s.w - 1 {
-            for y in 1..s.h - 1 {
+        let width = s.w;
+        let height = s.h;
+        for x in 0..width {
+            for y in 0..height {
                 let x_off = x + s.x as u32;
                 let y_off = y + s.y as u32;
                 let i = (y_off * pitch + x_off) as usize; // This
@@ -95,7 +96,7 @@ impl App {
                 // Cell exists, check for edges
                 if self.exists(i) {
                     // No western neighbor, so needs an edge
-                    if !self.exists(w) {
+                    if x > 0 && !self.exists(w) {
                         // Can extend down from northern neighbors WEST edge
                         if self.has_edge(n, WEST) {
                             let edge_id = self.get_edge_index(n, WEST);
@@ -113,7 +114,7 @@ impl App {
                         }
                     }
                     // No eastern neighbor, so needs an edge
-                    if !self.exists(e) {
+                    if x < width && !self.exists(e) {
                         // Can extend down from northern neighbors EAST edge
                         if self.has_edge(n, EAST) {
                             let edge_id = self.get_edge_index(n, EAST);
@@ -132,7 +133,7 @@ impl App {
                         }
                     }
                     // No northern neighbor, so needs an edge
-                    if !self.exists(n) {
+                    if y > 0 && !self.exists(n) {
                         // Can extend from western neighbors NORTH edge
                         if self.has_edge(w, NORTH) {
                             let edge_id = self.get_edge_index(w, NORTH);
@@ -150,7 +151,7 @@ impl App {
                         }
                     }
                     // No southern neighbor, so needs an edge
-                    if !self.exists(s) {
+                    if y < height && !self.exists(s) {
                         // Can extend from western neighbors SOUTH edge
                         if self.has_edge(w, SOUTH) {
                             let edge_id = self.get_edge_index(w, SOUTH);
@@ -182,7 +183,7 @@ impl App {
         let o = o.into();
         self.polygons.clear();
         let o = Vector::from_point(o);
-        for (i, &p) in self.points.iter().enumerate() {
+        for (_, &p) in self.points.iter().enumerate() {
             // println!("point: {}", i);
             // s.stroke(WHITE);
             // s.line(Point::from(o), Point::from(p));
@@ -194,8 +195,8 @@ impl App {
                 r.rotate(angle);
                 r.set_mag(radius);
                 s.stroke(WHITE);
-                let op = Point::from(o);
-                let or = Point::from(r + o);
+                // let op = Point::from(o);
+                // let or = Point::from(r + o);
                 // s.line(op.x, op.y, or.x, or.y);
                 // println!("{:?} -> {:?}", Point::from(o), Point::from(r + o));
                 if let Some(intersect) = self.cast_ray(o, r, s) {
@@ -212,7 +213,7 @@ impl App {
         self.polygons
             .sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(Less));
         self.polygons
-            .dedup_by(|a, b| (a.1.x - b.1.x).abs() < 0.5 && (a.1.y - b.1.y).abs() < 0.5);
+            .dedup_by(|a, b| (a.1.x - b.1.x).abs() < 0.1 && (a.1.y - b.1.y).abs() < 0.1);
     }
 
     fn cast_ray(&self, o: Vector, r: Vector, _st: &mut State) -> Option<Vector> {
@@ -277,11 +278,11 @@ impl PixApp for App {
 
         let w = (self.width * BLOCK_SIZE) as i32 - 1;
         let h = (self.height * BLOCK_SIZE) as i32 - 1;
-        // // Random few cells
-        // for _ in 0..2 {
-        //     let i = self.get_cell_index(Point::new_2d(random(w - 1), random(h - 1)));
-        //     self.cells[i].exists = !self.cells[i].exists;
-        // }
+        // Random few cells
+        for _ in 0..2 {
+            let i = self.get_cell_index(Point::new_2d(random(w - 1), random(h - 1)));
+            self.cells[i].exists = !self.cells[i].exists;
+        }
 
         // Top
         self.edges.push(Edge {
@@ -304,6 +305,7 @@ impl PixApp for App {
             end: (0, h).into(),
         });
 
+        self.convert_edges((0, 0, self.width, self.height), BLOCK_SIZE, self.width);
         Ok(true)
     }
 
@@ -311,41 +313,34 @@ impl PixApp for App {
         s.background(60);
         let mouse = s.mouse_pos();
 
-        self.convert_edges((0, 0, self.width, self.height), BLOCK_SIZE, self.width);
-
-        s.fill(BLUE);
-        for cell in self.cells.iter().filter(|c| c.exists) {
-            s.square((cell.pos, BLOCK_SIZE))?;
-        }
-        s.no_fill();
-
-        // if s.mouse_is_pressed() && s.mouse_buttons().contains(&MouseButton::Right) {
         self.calc_visibility_polygons(mouse, 1000.0, s);
         if !self.polygons.is_empty() {
-            s.no_stroke();
-            // s.stroke(RED);
             s.fill(WHITE);
             for i in 0..self.polygons.len() - 1 {
-                let p1 = Point::from(self.polygons[i].1);
-                let p2 = Point::from(self.polygons[i + 1].1);
-                s.triangle(mouse.x, mouse.y, p1.x, p1.y, p2.x, p2.y)?;
+                let p1 = self.polygons[i].1;
+                let p2 = self.polygons[i + 1].1;
+                s.triangle(mouse.x as f64, mouse.y as f64, p1.x, p1.y, p2.x, p2.y)?;
             }
             // Draw last triangle, connecting back to first point.
-            let p1 = Point::from(self.polygons.last().unwrap().1);
-            let p2 = Point::from(self.polygons[0].1);
-            s.triangle(mouse.x, mouse.y, p1.x, p1.y, p2.x, p2.y)?;
+            let p1 = self.polygons.last().unwrap().1;
+            let p2 = self.polygons[0].1;
+            s.triangle(mouse.x as f64, mouse.y as f64, p1.x, p1.y, p2.x, p2.y)?;
             s.no_fill();
-            s.no_stroke();
         }
-        // }
 
-        for e in self.edges.iter() {
-            s.stroke(RED);
-            let start = Point::from(e.start);
-            let end = Point::from(e.end);
-            s.line(start.x, start.y, end.x, end.y)?;
-            s.no_stroke();
-        }
+        // s.fill(BLUE);
+        // for cell in self.cells.iter().filter(|c| c.exists) {
+        //     s.square((cell.pos, BLOCK_SIZE + 1))?;
+        // }
+        // s.no_fill();
+
+        // for e in self.edges.iter() {
+        //     s.stroke(RED);
+        //     let start = Point::from(e.start);
+        //     let end = Point::from(e.end);
+        //     s.line(start.x, start.y, end.x, end.y)?;
+        //     s.no_stroke();
+        // }
 
         Ok(true)
     }
@@ -356,6 +351,7 @@ impl PixApp for App {
             let i = self.get_cell_index(mouse);
             self.cells[i].exists = !self.cells[i].exists;
             self.drawing = self.cells[i].exists;
+            self.convert_edges((0, 0, self.width, self.height), BLOCK_SIZE, self.width);
         }
     }
 
@@ -367,6 +363,7 @@ impl PixApp for App {
                 let i = self.get_cell_index(mouse);
                 self.cells[i].exists = self.drawing;
             }
+            self.convert_edges((0, 0, self.width, self.height), BLOCK_SIZE, self.width);
         }
     }
 }
@@ -387,6 +384,8 @@ struct Cell {
     exists: bool,
 }
 
+// 0,0 -> 0,0,16,16
+// 1,0 -> 16,0,32,16
 impl Cell {
     pub fn new<P: Into<Vector>>(pos: P) -> Self {
         Self {

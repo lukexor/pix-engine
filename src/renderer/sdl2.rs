@@ -1,12 +1,14 @@
 use super::{Error, Renderer, Result};
 use crate::{
     color::Color,
+    common::Scalar,
     event::PixEvent,
     shape::{Point, Rect},
     state::rendering::{BlendMode, Texture},
 };
 use sdl2::{
     audio::{AudioQueue, AudioSpecDesired},
+    gfx::primitives::{DrawRenderer, ToColor},
     // controller::GameController,
     pixels,
     rect,
@@ -298,6 +300,31 @@ impl Renderer for Sdl2Renderer {
         // TODO Sdl2Renderer::copy
         // Ok(self.canvas_mut().copy(texture.into())?)
         unimplemented!();
+    }
+
+    fn triangle(
+        &mut self,
+        x1: Scalar,
+        y1: Scalar,
+        x2: Scalar,
+        y2: Scalar,
+        x3: Scalar,
+        y3: Scalar,
+        color: Color,
+    ) -> Result<()> {
+        let (x1, y1) = (x1.round() as i16, y1.round() as i16);
+        let (x2, y2) = (x2.round() as i16, y2.round() as i16);
+        let (x3, y3) = (x3.round() as i16, y3.round() as i16);
+        let canvas = self.canvas_mut();
+        canvas.trigon(x1, y1, x2, y2, x3, y3, color)?;
+        canvas.filled_trigon(x1, y1, x2, y2, x3, y3, color)?;
+        Ok(())
+    }
+}
+
+impl ToColor for Color {
+    fn as_rgba(&self) -> (u8, u8, u8, u8) {
+        self.values()
     }
 }
 

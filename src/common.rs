@@ -17,6 +17,8 @@ pub mod constants {
     pub const TAU: f64 = TWO_PI;
 }
 
+pub type Scalar = f64;
+
 /// Result type for `PixEngine` Errors.
 pub type Result<T> = std::result::Result<T, Error>;
 

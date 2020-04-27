@@ -1,5 +1,6 @@
 use crate::{
     color::Color,
+    common::Scalar,
     event::PixEvent,
     shape::{Point, Rect},
     state::rendering::{BlendMode, Texture},
@@ -149,4 +150,16 @@ pub(crate) trait Renderer {
     /// - If `src` is `None`, the entire texture is copied.
     /// - If `dst` is `None`, the texture will be stretched to fill the entire target.
     fn copy(&mut self, texture: Texture, src: Option<Rect>, dst: Option<Rect>) -> Result<()>;
+
+    #[allow(clippy::too_many_arguments)]
+    fn triangle(
+        &mut self,
+        x1: Scalar,
+        y1: Scalar,
+        x2: Scalar,
+        y2: Scalar,
+        x3: Scalar,
+        y3: Scalar,
+        color: Color,
+    ) -> Result<()>;
 }

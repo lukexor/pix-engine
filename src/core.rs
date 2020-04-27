@@ -123,6 +123,11 @@ where
     ///
     /// Errors if the renderer or the app returns an error.
     pub fn run(&mut self) -> Result<()> {
+        // Clear and present once on start
+        self.state.background(0);
+        self.state.clear_all();
+        self.state.present_all();
+
         // Pump event queue once before starting to initialize default window
         let _ = self.state.renderer.poll_events();
 
@@ -139,7 +144,7 @@ where
         let mut frame_count = 0;
         while !self.should_close {
             // Extra loop allows on_stop to prevent closing
-            'inner: while !self.should_close {
+            'main: while !self.should_close {
                 let now = time::now();
                 self.state.set_delta_time(time::sub(now, last_frame_time));
                 last_frame_time = now;
@@ -147,14 +152,15 @@ where
                 self.state.events.clear();
                 for event in self.state.renderer.poll_events() {
                     match event {
-                        PixEvent::Quit { .. } | PixEvent::AppTerminating { .. } => {
-                            self.should_close = true;
-                            break 'inner;
-                        }
-                        PixEvent::Window {
+                        PixEvent::Quit { .. }
+                        | PixEvent::AppTerminating { .. }
+                        | PixEvent::Window {
                             win_event: WindowEvent::Close,
                             ..
-                        } => self.should_close = true,
+                        } => {
+                            self.should_close = true;
+                            break 'main;
+                        }
                         PixEvent::MouseMotion { x, y, .. } => {
                             self.state.pmouse_pos = self.state.mouse_pos;
                             self.state.mouse_pos = (x, y).into();
