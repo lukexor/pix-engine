@@ -1,5 +1,5 @@
 use super::random;
-use crate::{constants::*, shape::Point, State};
+use crate::{constants::*, shape::Point, StateData};
 use std::{
     fmt,
     ops::{
@@ -114,7 +114,7 @@ impl<'a> Vector {
     }
 
     /// Creates a new unit Vector in 2D space from a given angle. Angle is given
-    /// as Radians and is unaffected by `State::angle_mode()`.
+    /// as Radians and is unaffected by `StateData::angle_mode()`.
     ///
     /// # Example
     ///
@@ -295,7 +295,7 @@ impl<'a> Vector {
     /// let v2 = Vector::new((0, 1, 0));
     /// let dist = v1.dist(v2);
     ///
-    /// let abs_difference = (dist - constants::SQRT_2).abs();
+    /// let abs_difference = (dist - SQRT_2).abs();
     /// assert!(abs_difference <= 1e-4);
     /// ```
     pub fn dist<V: Into<Vector>>(&self, v: V) -> f64 {
@@ -720,7 +720,7 @@ impl fmt::Display for Vector {
     }
 }
 
-impl State {
+impl StateData {
     pub fn create_vector<V: Into<Vector>>(&self, v: V) -> Vector {
         v.into()
     }

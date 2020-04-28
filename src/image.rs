@@ -3,8 +3,8 @@
 use crate::{
     color::Color,
     shape::{Point, Rect},
-    state::rendering::BlendMode,
-    State,
+    state_data::rendering::BlendMode,
+    StateData,
 };
 use rayon::prelude::*;
 use std::{
@@ -15,6 +15,10 @@ use std::{
     io::{self, BufReader, BufWriter},
     path::{Path, PathBuf},
 };
+
+pub mod prelude {
+    pub use super::{Image, ImageFilter, ImageMode, PixelFormat};
+}
 
 const RGB_CHANNELS: usize = 3;
 const RGBA_CHANNELS: usize = 4;
@@ -81,7 +85,7 @@ impl From<png::EncodingError> for Error {
 }
 
 /// Determines the way images are drawn by changing how the parameters given to
-/// `State::image()` are interpreted. The default is Corner.
+/// `StateData::image()` are interpreted. The default is Corner.
 ///
 /// Corner: Uses x and y as the upper-left corner of the image.
 /// Center: Uses x and y as the center of the image.
@@ -441,7 +445,7 @@ impl Image {
     }
 }
 
-impl State {
+impl StateData {
     /// Creates a new RGBA image with given dimensions.
     pub fn create_image(&self, width: u32, height: u32) -> Image {
         Image::new(width, height)
@@ -449,33 +453,33 @@ impl State {
 
     /// Draws a given image to the current window target.
     pub fn image<P: Into<Point>>(&mut self, img: Image, p: P) {
-        // TODO State::image()
+        // TODO StateData::image()
         unimplemented!();
     }
 
     /// Saves the current window target to a PNG image given by path.
     pub fn save_canvas<P: AsRef<Path>>(&self, path: P) {
-        // TODO State::save_canvas()
+        // TODO StateData::save_canvas()
         unimplemented!();
     }
 
     /// Draws a given image to the current window target, resized to target dimensions.
     pub fn image_resized<R: Into<Rect>>(&mut self, img: Image, rect: R) {
-        // TODO State::image_resized()
+        // TODO StateData::image_resized()
         unimplemented!();
     }
 
     /// Draws a given image to the current window target with top-left at p1 and bottom-right at
     /// p2.
     pub fn image_corners<P: Into<Point>>(&mut self, img: Image, p1: P, p2: P) {
-        // TODO State::image_corners()
+        // TODO StateData::image_corners()
         unimplemented!();
     }
 
     /// Draws a portion of the given image given by dest rectangle to the current window target at
     /// the given src rectangle.
     pub fn image_projected<R: Into<Option<Rect>>>(&mut self, img: Image, dest: R, src: R) {
-        // TODO State::image_projected()
+        // TODO StateData::image_projected()
         unimplemented!();
     }
 }

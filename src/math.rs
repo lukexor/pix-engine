@@ -4,8 +4,11 @@ use num::Num;
 use rand::{self, distributions::uniform::SampleUniform, Rng};
 
 pub use vector::Vector;
+pub mod prelude {
+    pub use super::{map, random, vector::Vector};
+}
 
-mod vector;
+pub mod vector;
 
 /// The mode used to interpret angle parameters in draw functions. The default is Radians.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -56,14 +59,15 @@ impl<T: Num> From<(T, T)> for Range<T> {
 }
 
 /// Interpolates values for a range of independent values based on depdendent values.
-pub fn interpolate(ind_start: i32, dep_start: i32, ind_end: i32, dep_end: i32) -> Vec<f64> {
-    if ind_start == ind_end {
-        vec![dep_start as f64]
+// TODO make generic
+pub fn map(start1: i32, end1: i32, start2: i32, end2: i32) -> Vec<f64> {
+    if start1 == end1 {
+        vec![start2 as f64]
     } else {
         let mut values = Vec::new();
-        let a = (dep_end - dep_start) as f64 / (ind_end - ind_start) as f64;
-        let mut d = dep_start as f64;
-        for i in ind_start..ind_end {
+        let a = (end2 - start2) as f64 / (end1 - start1) as f64;
+        let mut d = start2 as f64;
+        for i in start1..end1 {
             values.push(d);
             d += a;
         }

@@ -26,22 +26,22 @@
 //!     }
 //! }
 //!
-//! impl PixApp for App {
-//!     fn on_start(&mut self, state: &mut State) -> Result<bool> {
+//! impl State for App {
+//!     fn on_start(&mut self, state: &mut StateData) -> Result<bool> {
 //!         // Setup application state/resources. Called once upon start when `PixEngine::run()` is
 //!         // called.
 //!         state.fill((255, 255, 0));
 //!         state.show_frame_rate(true);
 //!         Ok(true)
 //!     }
-//!     fn on_update(&mut self, state: &mut State) -> Result<bool> {
+//!     fn on_update(&mut self, state: &mut StateData) -> Result<bool> {
 //!         // Called every frame (as often as possible by default) but can be changed with
-//!         // `State::set_target_frame_rate()`.
+//!         // `StateData::set_target_frame_rate()`.
 //!         state.background((255, 0, 0));
 //!         state.rect(Rect::new(100, 100, 200, 200))?;
 //!         Ok(true)
 //!     }
-//!     fn on_stop(&mut self, _state: &mut State) -> Result<bool> {
+//!     fn on_stop(&mut self, _state: &mut StateData) -> Result<bool> {
 //!         // Tear down application state/clean up resources. Called once upon an exit/close
 //!         // event.
 //!         Ok(true)
@@ -62,22 +62,14 @@ pub mod typography;
 mod common;
 mod core;
 mod renderer;
-mod state;
+mod state_data;
 mod time;
 
-pub(crate) use crate::{common::constants, state::State};
-
+pub use crate::{common::constants, state_data::StateData};
 /// Common set of exports for using the `PixEngine`.
 pub mod prelude {
     pub use crate::{
-        color,
-        color::*,
-        common::{Result, *},
-        core::*,
-        event::*,
-        image::*,
-        math::*,
-        shape::*,
-        state::*,
+        color, color::prelude::*, common::prelude::*, core::prelude::*, event::prelude::*,
+        image::prelude::*, math::prelude::*, shape::prelude::*, state_data::prelude::*,
     };
 }

@@ -1,6 +1,6 @@
 //! Coordinate and Matrix transformation state and manipulation routines.
 
-use crate::State;
+use crate::StateData;
 
 /// Contains the current matrix transformation state of the engine
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -21,6 +21,6 @@ impl Default for Transform {
     }
 }
 
-impl State {
+impl StateData {
     pub fn translate(&mut self, x: f32, y: f32) {}
 }

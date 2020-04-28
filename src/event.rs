@@ -3,6 +3,12 @@
 use bitflags::bitflags;
 use std::fmt;
 
+pub mod prelude {
+    pub use super::{
+        Axis, Button, Key, KeyMod, MouseButton, MouseWheelDirection, PixEvent, WindowEvent,
+    };
+}
+
 /// Represents a user or system event.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum PixEvent {

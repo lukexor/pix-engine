@@ -1,7 +1,7 @@
 use super::{
     renderer::Renderer,
     rendering::{BlendMode, DEFAULT_BLEND_FACTOR},
-    State, StateResult,
+    StateData, StateDataResult,
 };
 use crate::{
     color::{self, Color, ColorMode},
@@ -14,8 +14,8 @@ use crate::{
 
 /// Contains all style and transform settings for the engine state.
 ///
-/// When `State::push()` is called, all settings here are pushed onto a stack to be later restored
-/// with `State::pop()`.
+/// When `StateData::push()` is called, all settings here are pushed onto a stack to be later restored
+/// with `StateData::pop()`.
 #[derive(Default, Clone)]
 pub(crate) struct Setting {
     show_frame_rate: bool,
@@ -63,16 +63,16 @@ impl Setting {
     }
 }
 
-impl State {
+impl StateData {
     /// Set title for the current window target.
     ///
     /// Errors if the title contains a nul byte.
-    pub fn title(&mut self, title: &str) -> StateResult<()> {
+    pub fn title(&mut self, title: &str) -> StateDataResult<()> {
         Ok(self.renderer.title(title)?)
     }
 
     /// Sets the audio sample rate for the audio playback in Hz.
-    pub fn audio_sample_rate(&mut self, rate: i32) -> StateResult<()> {
+    pub fn audio_sample_rate(&mut self, rate: i32) -> StateDataResult<()> {
         Ok(self.renderer.audio_sample_rate(rate)?)
     }
 
@@ -102,16 +102,16 @@ impl State {
     }
 
     /// Set the color used for the background. The default is transparent. This is typically used
-    /// in `State::on_update()` to clear the canvas at the start of each frame but it can also be
-    /// used in `State::on_start()` to set the background for the first frame if using
-    /// `State::no_loop()`. Or it can be used any time if the background needs to be set to a given
-    /// `Color`. To return to a transparent background use `State::no_background()`
+    /// in `StateData::on_update()` to clear the canvas at the start of each frame but it can also be
+    /// used in `StateData::on_start()` to set the background for the first frame if using
+    /// `StateData::no_loop()`. Or it can be used any time if the background needs to be set to a given
+    /// `Color`. To return to a transparent background use `StateData::no_background()`
     ///
     /// # Example
     ///
     /// ```
     /// use pix_engine::prelude::*;
-    /// let mut state = State::new("State", 100, 100).unwrap();
+    /// let mut state = StateData::new("State", 100, 100).unwrap();
     ///
     /// state.background((128, 200, 0));
     /// assert_eq!(state.get_background(), color!(128, 200, 0));
@@ -139,7 +139,7 @@ impl State {
     ///
     /// ```
     /// use pix_engine::prelude::*;
-    /// let mut state = State::new("State", 100, 100).unwrap();
+    /// let mut state = StateData::new("State", 100, 100).unwrap();
     ///
     /// state.fill((128, 200, 0));
     /// assert_eq!(state.get_fill(), Some(color!(128, 200, 0)));
@@ -156,7 +156,7 @@ impl State {
     ///
     /// ```
     /// use pix_engine::prelude::*;
-    /// let mut state = State::new("State", 100, 100).unwrap();
+    /// let mut state = StateData::new("State", 100, 100).unwrap();
     ///
     /// state.fill((128, 200, 0));
     /// assert_eq!(state.get_fill(), Some(color!(128, 200, 0)));
@@ -179,7 +179,7 @@ impl State {
         self.renderer.stroke(self.settings.stroke);
     }
     /// Disable outlining shapes.
-    /// Shortcut for `State::set_stroke(None)`.
+    /// Shortcut for `StateData::set_stroke(None)`.
     pub fn no_stroke(&mut self) {
         self.settings.stroke = None;
         self.renderer.stroke(self.settings.stroke);
@@ -257,7 +257,7 @@ impl State {
         self.settings.image_tint = color.into();
     }
     /// Disable image tint
-    /// Shortcut for `State::set_image_tint(None)`
+    /// Shortcut for `StateData::set_image_tint(None)`
     pub fn no_image_tint(&mut self) {
         self.image_tint(None)
     }

@@ -1,7 +1,9 @@
-use crate::{image, renderer, state};
+use crate::{image, renderer, state_data};
 use std::{borrow::Cow, error, fmt, io};
 
-pub use constants::*;
+pub mod prelude {
+    pub use super::{constants::*, Error, Result};
+}
 
 pub mod constants {
     //! Commonly used constants like `PI` and `TWO_PI`.
@@ -34,7 +36,7 @@ pub enum Error {
     },
     ImageError(image::Error),
     RendererError(renderer::Error),
-    StateError(state::Error),
+    StateError(state_data::Error),
     Other(Cow<'static, str>),
 }
 
@@ -85,8 +87,8 @@ impl From<renderer::Error> for Error {
     }
 }
 
-impl From<state::Error> for Error {
-    fn from(err: state::Error) -> Error {
+impl From<state_data::Error> for Error {
+    fn from(err: state_data::Error) -> Error {
         Error::StateError(err)
     }
 }

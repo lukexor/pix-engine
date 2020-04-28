@@ -6,9 +6,18 @@ const NORTH: usize = 0;
 const SOUTH: usize = 1;
 const EAST: usize = 2;
 const WEST: usize = 3;
-const SCALE: f32 = 1.0;
+const SCALE: f32 = 2.0;
 const WIDTH: u32 = 64 / SCALE as u32;
 const HEIGHT: u32 = 48 / SCALE as u32;
+
+fn main() {
+    let app = App::new();
+    PixEngine::create("Raycasting", app, 1024, 768)
+        .build()
+        .expect("engine")
+        .run()
+        .expect("ran");
+}
 
 struct Edge {
     start: Vector,
@@ -179,7 +188,7 @@ impl App {
         self.points.dedup();
     }
 
-    fn calc_visibility_polygons<P: Into<Point>>(&mut self, o: P, radius: f64, s: &mut State) {
+    fn calc_visibility_polygons<P: Into<Point>>(&mut self, o: P, radius: f64, s: &mut StateData) {
         let o = o.into();
         self.polygons.clear();
         let o = Vector::from_point(o);
@@ -216,7 +225,7 @@ impl App {
             .dedup_by(|a, b| (a.1.x - b.1.x).abs() < 0.1 && (a.1.y - b.1.y).abs() < 0.1);
     }
 
-    fn cast_ray(&self, o: Vector, r: Vector, _st: &mut State) -> Option<Vector> {
+    fn cast_ray(&self, o: Vector, r: Vector, _st: &mut StateData) -> Option<Vector> {
         let mut intersect = None;
         let mut closest_param = INFINITY;
         for e in self.edges.iter() {
@@ -271,8 +280,8 @@ impl App {
     }
 }
 
-impl PixApp for App {
-    fn on_start(&mut self, s: &mut State) -> Result<bool> {
+impl State for App {
+    fn on_start(&mut self, s: &mut StateData) -> Result<bool> {
         s.scale(SCALE, SCALE)?;
         s.show_frame_rate(true);
 
@@ -309,7 +318,7 @@ impl PixApp for App {
         Ok(true)
     }
 
-    fn on_update(&mut self, s: &mut State) -> Result<bool> {
+    fn on_update(&mut self, s: &mut StateData) -> Result<bool> {
         s.background(60);
         let mouse = s.mouse_pos();
 
@@ -328,11 +337,11 @@ impl PixApp for App {
             s.no_fill();
         }
 
-        // s.fill(BLUE);
-        // for cell in self.cells.iter().filter(|c| c.exists) {
-        //     s.square((cell.pos, BLOCK_SIZE + 1))?;
-        // }
-        // s.no_fill();
+        s.fill(BLUE);
+        for cell in self.cells.iter().filter(|c| c.exists) {
+            s.square((cell.pos, BLOCK_SIZE + 1))?;
+        }
+        s.no_fill();
 
         // for e in self.edges.iter() {
         //     s.stroke(RED);
@@ -345,7 +354,7 @@ impl PixApp for App {
         Ok(true)
     }
 
-    fn on_mouse_pressed(&mut self, s: &mut State) {
+    fn on_mouse_pressed(&mut self, s: &mut StateData) {
         if !s.mouse_buttons().contains(&MouseButton::Right) {
             let mouse = s.mouse_pos();
             let i = self.get_cell_index(mouse);
@@ -355,7 +364,7 @@ impl PixApp for App {
         }
     }
 
-    fn on_mouse_dragged(&mut self, s: &mut State) {
+    fn on_mouse_dragged(&mut self, s: &mut StateData) {
         if !s.mouse_buttons().contains(&MouseButton::Right) {
             let mouse = s.mouse_pos();
             let pmouse = s.pmouse_pos();
@@ -366,15 +375,6 @@ impl PixApp for App {
             self.convert_edges((0, 0, self.width, self.height), BLOCK_SIZE, self.width);
         }
     }
-}
-
-fn main() {
-    let app = App::new();
-    PixEngine::create("Raycasting", app, 1024, 768)
-        .build()
-        .expect("engine")
-        .run()
-        .expect("ran");
 }
 
 #[derive(Debug)]

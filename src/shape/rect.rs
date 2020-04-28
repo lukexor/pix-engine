@@ -2,12 +2,12 @@ use super::Point;
 use crate::{
     math::Vector,
     renderer::Renderer,
-    state::{State, StateResult},
+    state_data::{StateData, StateDataResult},
 };
 use std::fmt;
 
 /// Determines the way rect/squares are drawn by changing how the parameters given to
-/// `State::draw_rect()` and `State::draw_square()` are interpreted. The default is Corner.
+/// `StateData::draw_rect()` and `StateData::draw_square()` are interpreted. The default is Corner.
 ///
 /// Corner: Uses x and y as the upper-left corner of the shape.
 /// Center: Uses x and y as the center of the shape.
@@ -198,15 +198,15 @@ impl fmt::Display for Rect {
     }
 }
 
-impl State {
+impl StateData {
     /// Draw a square. If both fill and stroke are set to None, nothing will be drawn.
-    pub fn square<R: Into<Rect>>(&mut self, sq: R) -> StateResult<()> {
+    pub fn square<R: Into<Rect>>(&mut self, sq: R) -> StateDataResult<()> {
         self.rect(sq)
     }
 
     /// Draw a rectangle. If `None` is passed, the entire screen is used as the `Rect`. If both
     /// fill and stroke are set to None, nothing will be drawn.
-    pub fn rect<R: Into<Rect>>(&mut self, rect: R) -> StateResult<()> {
+    pub fn rect<R: Into<Rect>>(&mut self, rect: R) -> StateDataResult<()> {
         let rect = rect.into();
         self.renderer.rect(rect)?;
         Ok(())

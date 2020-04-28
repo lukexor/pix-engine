@@ -4,7 +4,7 @@ use pix_engine::prelude::*;
 
 struct App {}
 
-impl PixApp for App {}
+impl State for App {}
 
 fn create_engine() -> Result<PixEngine<App>> {
     let app = App {};

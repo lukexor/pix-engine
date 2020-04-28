@@ -1,7 +1,7 @@
 use crate::{
     math::Vector,
     renderer::Renderer,
-    state::{State, StateResult},
+    state_data::{StateData, StateDataResult},
 };
 use std::fmt;
 
@@ -91,9 +91,9 @@ impl fmt::Display for Point {
     }
 }
 
-impl State {
+impl StateData {
     /// Draw a point.
-    pub fn point<P: Into<Point>>(&mut self, point: P) -> StateResult<()> {
+    pub fn point<P: Into<Point>>(&mut self, point: P) -> StateDataResult<()> {
         Ok(self.renderer.point(point.into())?)
     }
 }

@@ -1,7 +1,7 @@
 //! Drawing and Renderer-specific functionality. Relies on the underlying renderer chosen (either
 //! `sdl2-renderer` or `wasm-renderer`).
 
-use super::{State, StateResult};
+use super::{StateData, StateDataResult};
 use crate::{image::Image, renderer::Renderer, shape::Rect};
 
 /// The default blending factor for rendering operations.
@@ -9,7 +9,7 @@ pub const DEFAULT_BLEND_FACTOR: f32 = 1.0;
 
 /// A trait that allows an object to be drawn to the engine.
 pub trait Drawable {
-    fn draw(&mut self, s: &mut State) -> StateResult<()>;
+    fn draw(&mut self, s: &mut StateData) -> StateDataResult<()>;
 }
 
 /// Blend mode used by the renderer for drawing operations
@@ -35,7 +35,7 @@ pub struct Texture {
     image: Image,
 }
 
-impl State {
+impl StateData {
     /// Presents changes made to the canvas since present was last called.
     pub fn present(&mut self) {
         self.renderer.present()
@@ -62,7 +62,7 @@ impl State {
     }
 
     /// Set the scale_x and scale_y factors for the current window target.
-    pub fn scale(&mut self, scale_x: f32, scale_y: f32) -> StateResult<()> {
+    pub fn scale(&mut self, scale_x: f32, scale_y: f32) -> StateDataResult<()> {
         Ok(self.renderer.scale(scale_x, scale_y)?)
     }
 

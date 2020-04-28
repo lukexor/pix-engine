@@ -10,6 +10,11 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
+pub mod prelude {
+    pub use super::{constants::*, Color, ColorMode};
+}
+pub use constants::*;
+
 const RED_SHIFT: u32 = 24;
 const GREEN_SHIFT: u32 = 16;
 const BLUE_SHIFT: u32 = 8;
@@ -281,13 +286,13 @@ macro_rules! color {
         Color::from($value);
     };
     ($gray:expr, $alpha:expr) => {
-        Color::rgba($gray, $gray, $gray, $alpha);
+        Color::from(($gray, $gray, $gray, $alpha));
     };
     ($red:expr, $green:expr, $blue:expr) => {
-        Color::rgb($red, $green, $blue);
+        Color::from(($red, $green, $blue));
     };
     ($red:expr, $green:expr, $blue:expr, $alpha:expr) => {
-        Color::rgba($red, $green, $blue, $alpha);
+        Color::from(($red, $green, $blue, $alpha));
     };
 }
 
@@ -297,7 +302,6 @@ impl Deref for Color {
         unsafe { ::std::slice::from_raw_parts(self as *const Self as *const u8, 4) }
     }
 }
-
 impl DerefMut for Color {
     fn deref_mut(&mut self) -> &mut [u8] {
         unsafe { ::std::slice::from_raw_parts_mut(self as *mut Self as *mut u8, 4) }
@@ -309,19 +313,16 @@ impl From<u8> for Color {
         Color::rgb(gray, gray, gray)
     }
 }
-
 impl From<(u8, u8)> for Color {
     fn from((gray, a): (u8, u8)) -> Self {
         Color::rgba(gray, gray, gray, a)
     }
 }
-
 impl From<(u8, u8, u8)> for Color {
     fn from((r, g, b): (u8, u8, u8)) -> Self {
         Color::rgb(r, g, b)
     }
 }
-
 impl From<(u8, u8, u8, u8)> for Color {
     fn from((r, g, b, a): (u8, u8, u8, u8)) -> Self {
         Color::rgba(r, g, b, a)
@@ -342,7 +343,6 @@ impl From<[u8; 4]> for Color {
         Color::rgba(arr[0], arr[1], arr[2], arr[3])
     }
 }
-
 impl From<&[u8]> for Color {
     fn from(slice: &[u8]) -> Self {
         match *slice {
@@ -353,13 +353,17 @@ impl From<&[u8]> for Color {
         }
     }
 }
+impl From<&str> for Color {
+    fn from(colorstring: &str) -> Self {
+        unimplemented!()
+    }
+}
 
 impl Into<(u8, u8, u8)> for Color {
     fn into(self) -> (u8, u8, u8) {
         (self.r, self.g, self.b)
     }
 }
-
 impl Into<(u8, u8, u8, u8)> for Color {
     fn into(self) -> (u8, u8, u8, u8) {
         (self.r, self.g, self.b, self.a)
@@ -374,47 +378,51 @@ impl fmt::Display for Color {
 
 // Color Constants for common colors
 
-// WHITE/BLACK/BLANK
-pub const WHITE: Color = Color::rgb(255, 255, 255);
-pub const BLACK: Color = Color::rgb(0, 0, 0);
-pub const TRANSPARENT: Color = Color::rgba(0, 0, 0, 0);
+pub mod constants {
+    use super::Color;
 
-// GRAY
-pub const BRIGHT_GRAY: Color = Color::rgb(192, 192, 192);
-pub const GRAY: Color = Color::rgb(128, 128, 128);
-pub const DARK_GRAY: Color = Color::rgb(64, 64, 64);
+    // WHITE/BLACK/BLANK
+    pub const WHITE: Color = Color::rgb(255, 255, 255);
+    pub const BLACK: Color = Color::rgb(0, 0, 0);
+    pub const TRANSPARENT: Color = Color::rgba(0, 0, 0, 0);
 
-// RED
-pub const BRIGHT_RED: Color = Color::rgb(255, 0, 0);
-pub const RED: Color = Color::rgb(128, 0, 0);
-pub const DARK_RED: Color = Color::rgb(64, 0, 0);
+    // GRAY
+    pub const BRIGHT_GRAY: Color = Color::rgb(192, 192, 192);
+    pub const GRAY: Color = Color::rgb(128, 128, 128);
+    pub const DARK_GRAY: Color = Color::rgb(64, 64, 64);
 
-// ORANGE
-pub const BRIGHT_ORANGE: Color = Color::rgb(255, 128, 0);
-pub const ORANGE: Color = Color::rgb(128, 64, 0);
-pub const DARK_ORANGE: Color = Color::rgb(64, 32, 0);
+    // RED
+    pub const BRIGHT_RED: Color = Color::rgb(255, 0, 0);
+    pub const RED: Color = Color::rgb(128, 0, 0);
+    pub const DARK_RED: Color = Color::rgb(64, 0, 0);
 
-// YELLOW
-pub const BRIGHT_YELLOW: Color = Color::rgb(255, 255, 0);
-pub const YELLOW: Color = Color::rgb(128, 128, 0);
-pub const DARK_YELLOW: Color = Color::rgb(64, 64, 0);
+    // ORANGE
+    pub const BRIGHT_ORANGE: Color = Color::rgb(255, 128, 0);
+    pub const ORANGE: Color = Color::rgb(128, 64, 0);
+    pub const DARK_ORANGE: Color = Color::rgb(64, 32, 0);
 
-// GREEN
-pub const BRIGHT_GREEN: Color = Color::rgb(0, 255, 0);
-pub const GREEN: Color = Color::rgb(0, 128, 0);
-pub const DARK_GREEN: Color = Color::rgb(0, 64, 0);
+    // YELLOW
+    pub const BRIGHT_YELLOW: Color = Color::rgb(255, 255, 0);
+    pub const YELLOW: Color = Color::rgb(128, 128, 0);
+    pub const DARK_YELLOW: Color = Color::rgb(64, 64, 0);
 
-// CYAN
-pub const BRIGHT_CYAN: Color = Color::rgb(0, 255, 255);
-pub const CYAN: Color = Color::rgb(0, 128, 128);
-pub const DARK_CYAN: Color = Color::rgb(0, 64, 64);
+    // GREEN
+    pub const BRIGHT_GREEN: Color = Color::rgb(0, 255, 0);
+    pub const GREEN: Color = Color::rgb(0, 128, 0);
+    pub const DARK_GREEN: Color = Color::rgb(0, 64, 0);
 
-// BLUE
-pub const BRIGHT_BLUE: Color = Color::rgb(0, 255, 255);
-pub const BLUE: Color = Color::rgb(0, 0, 128);
-pub const DARK_BLUE: Color = Color::rgb(0, 0, 64);
+    // CYAN
+    pub const BRIGHT_CYAN: Color = Color::rgb(0, 255, 255);
+    pub const CYAN: Color = Color::rgb(0, 128, 128);
+    pub const DARK_CYAN: Color = Color::rgb(0, 64, 64);
 
-// MAGENTA
-pub const BRIGHT_MAGENTA: Color = Color::rgb(255, 0, 255);
-pub const MAGENTA: Color = Color::rgb(128, 0, 128);
-pub const DARK_MAGENTA: Color = Color::rgb(64, 0, 64);
+    // BLUE
+    pub const BRIGHT_BLUE: Color = Color::rgb(0, 255, 255);
+    pub const BLUE: Color = Color::rgb(0, 0, 128);
+    pub const DARK_BLUE: Color = Color::rgb(0, 0, 64);
+
+    // MAGENTA
+    pub const BRIGHT_MAGENTA: Color = Color::rgb(255, 0, 255);
+    pub const MAGENTA: Color = Color::rgb(128, 0, 128);
+    pub const DARK_MAGENTA: Color = Color::rgb(64, 0, 64);
+}

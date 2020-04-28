@@ -3,7 +3,7 @@ use crate::{
     common::Scalar,
     event::PixEvent,
     shape::{Point, Rect},
-    state::rendering::{BlendMode, Texture},
+    state_data::rendering::{BlendMode, Texture},
 };
 use std::{borrow::Cow, error, ffi::NulError, fmt};
 

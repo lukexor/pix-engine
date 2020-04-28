@@ -1,4 +1,4 @@
-use super::State;
+use super::StateData;
 use crate::gui::CursorType;
 
 const DEFAULT_TARGET_FRAME_RATE: u32 = 60;
@@ -49,7 +49,7 @@ impl Environment {
     }
 }
 
-impl State {
+impl StateData {
     /// Get the frame count since execution started.
     pub fn frame_count(&self) -> u32 {
         self.environment.frame_count

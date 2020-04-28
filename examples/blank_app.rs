@@ -8,14 +8,14 @@ impl App {
     }
 }
 
-impl PixApp for App {
-    fn on_start(&mut self, _s: &mut State) -> Result<bool> {
+impl State for App {
+    fn on_start(&mut self, _s: &mut StateData) -> Result<bool> {
         Ok(true)
     }
-    fn on_update(&mut self, _s: &mut State) -> Result<bool> {
+    fn on_update(&mut self, _s: &mut StateData) -> Result<bool> {
         Ok(true)
     }
-    fn on_stop(&mut self, _s: &mut State) -> Result<bool> {
+    fn on_stop(&mut self, _s: &mut StateData) -> Result<bool> {
         Ok(true)
     }
 }

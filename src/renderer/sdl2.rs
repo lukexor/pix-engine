@@ -4,7 +4,7 @@ use crate::{
     common::Scalar,
     event::PixEvent,
     shape::{Point, Rect},
-    state::rendering::{BlendMode, Texture},
+    state_data::rendering::{BlendMode, Texture},
 };
 use sdl2::{
     audio::{AudioQueue, AudioSpecDesired},

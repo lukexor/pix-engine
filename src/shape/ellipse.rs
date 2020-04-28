@@ -1,7 +1,7 @@
-use crate::state::State;
+use crate::state_data::StateData;
 
 /// Determines the way ellipses/circles are drawn by changing how the parameters given to
-/// `State::draw_ellipse()` and `State::draw_circle()` are interpreted. The default is Center.
+/// `StateData::draw_ellipse()` and `StateData::draw_circle()` are interpreted. The default is Center.
 ///
 /// Center: Uses x and y as the center of the shape.
 /// Radius: Uses x and y as the center, but the w/h or d values as half the shape's width/height.
@@ -37,4 +37,4 @@ impl Default for ArcMode {
     }
 }
 
-impl State {}
+impl StateData {}

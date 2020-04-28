@@ -1,19 +1,22 @@
-use crate::{event::*, renderer, shape::Point};
+use crate::{event::prelude::*, renderer, shape::Point};
 use environment::Environment;
 use setting::Setting;
 use std::{borrow::Cow, collections::HashSet, error, fmt, vec::Drain};
 
 pub use rendering::Drawable;
 
-pub mod rendering;
+pub mod prelude {
+    pub use super::{StateData, StateDataResult};
+}
 
 mod environment;
+pub mod rendering;
 mod setting;
 
-/// Result type for State Errors.
-pub type StateResult<T> = std::result::Result<T, Error>;
+/// Result type for StateData Errors.
+pub type StateDataResult<T> = std::result::Result<T, Error>;
 
-/// Types of errors State can return in a result.
+/// Types of errors StateData can return in a result.
 #[derive(Debug)]
 pub enum Error {
     RendererError(renderer::Error),
@@ -49,7 +52,7 @@ impl From<renderer::Error> for Error {
 
 /// Contains all engine state and methods allowing the enclosed application which implements the
 /// `PixApp` trait to interact with the engine.
-pub struct State {
+pub struct StateData {
     pub(crate) title: String,
     width: u32,
     height: u32,
@@ -69,9 +72,9 @@ pub struct State {
     settings_stack: Vec<Setting>,
 }
 
-impl State {
-    /// Creates a new `State` instance.
-    pub fn new(title: &str, width: u32, height: u32) -> StateResult<Self> {
+impl StateData {
+    /// Creates a new `StateData` instance.
+    pub fn new(title: &str, width: u32, height: u32) -> StateDataResult<Self> {
         let renderer = renderer::load_renderer(title, width, height)?;
         Ok(Self {
             title: title.to_owned(),
@@ -91,11 +94,11 @@ impl State {
         })
     }
 
-    /// Returns an iterator of events from the event queue
+    /// Returns a single event from the event queue, or `None` if the queue is empty.
     pub fn poll_event(&mut self) -> Option<PixEvent> {
         self.events.pop()
     }
-    /// Returns an iterator of PixEvents from the event queue.
+    /// Returns a draining iterator of PixEvents from the event queue.
     pub fn poll_iter(&mut self) -> Drain<PixEvent> {
         self.events.drain(..)
     }
@@ -138,7 +141,7 @@ impl State {
         &self.mouse_buttons
     }
 
-    /// Pushes current window settings, saving them for later use with `State::pop()`.
+    /// Pushes current window settings, saving them for later use with `StateData::pop()`.
     pub fn push(&mut self) {
         self.settings_stack.push(self.settings.clone());
     }
@@ -149,8 +152,8 @@ impl State {
         }
     }
 
-    /// Calls `State::on_update()` a number of times based on the parameter passed in.
-    /// Useful for updating when `State::no_loop()` is enabled.
+    /// Calls `StateData::on_update()` a number of times based on the parameter passed in.
+    /// Useful for updating when `StateData::no_loop()` is enabled.
     pub fn update(&mut self, n: u32) {
         self.manual_update = n;
     }
