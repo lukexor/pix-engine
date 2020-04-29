@@ -1,7 +1,8 @@
 //! Math related types, constants and utility functions.
 
-use num::Num;
+use num::{traits::real::Real, Num};
 use rand::{self, distributions::uniform::SampleUniform, Rng};
+use std::cmp;
 
 pub use vector::Vector;
 pub mod prelude {
@@ -73,4 +74,14 @@ pub fn map(start1: i32, end1: i32, start2: i32, end2: i32) -> Vec<f64> {
         }
         values
     }
+}
+
+/// Constraints a number value between a minimum and maximum value.
+pub fn constrain<T: Ord>(val: T, min: T, max: T) -> T {
+    cmp::max(min, cmp::min(val, max))
+}
+
+/// Constraints a floating point value between a minimum and maximum value.
+pub fn constrainf<T: Real>(val: T, min: T, max: T) -> T {
+    val.min(max).max(min)
 }

@@ -4,7 +4,7 @@ use super::{
     StateData, StateDataResult,
 };
 use crate::{
-    color::{self, Color, ColorMode},
+    color::{self, Color, ColorMaxes, ColorMode},
     image::ImageMode,
     math::AngleMode,
     shape::{self, ArcMode, EllipseMode, RectMode, StrokeCap, StrokeJoin},
@@ -22,6 +22,7 @@ pub(crate) struct Setting {
 
     /// Colors
     color_mode: ColorMode,
+    color_maxes: ColorMaxes,
     bg_color: Color,
     fill: Option<Color>,
     stroke: Option<Color>,
@@ -55,7 +56,7 @@ pub(crate) struct Setting {
 impl Setting {
     pub(crate) fn new() -> Self {
         Self {
-            bg_color: color::TRANSPARENT,
+            bg_color: color::transparent(),
             stroke_weight: shape::DEFAULT_STROKE_WEIGHT,
             blend_factor: DEFAULT_BLEND_FACTOR,
             ..Default::default()
@@ -93,7 +94,28 @@ impl StateData {
     /// Set current color mode.
     pub fn color_mode(&mut self, mode: ColorMode) {
         self.settings.color_mode = mode;
-        unimplemented!("only RGB color mode is currently supported.");
+    }
+
+    /// Get color maxes for the current mode.
+    pub fn get_color_maxes(&self) -> ColorMaxes {
+        self.settings.color_maxes
+    }
+    /// Set color maxes for the current color mode.
+    pub fn color_maxes(&mut self, max1: u16, max2: u16, max3: u8, max_alpha: u8) {
+        match self.get_color_mode() {
+            ColorMode::Rgb => {
+                self.settings.color_maxes.rgb =
+                    [max1 as f64, max2 as f64, max3 as f64, max_alpha as f64]
+            }
+            ColorMode::Hsb => {
+                self.settings.color_maxes.hsb =
+                    [max1 as f64, max2 as f64, max3 as f64, max_alpha as f64]
+            }
+            ColorMode::Hsl => {
+                self.settings.color_maxes.hsl =
+                    [max1 as f64, max2 as f64, max3 as f64, max_alpha as f64]
+            }
+        }
     }
 
     /// Get the current color used to clear the canvas.
@@ -111,10 +133,10 @@ impl StateData {
     ///
     /// ```
     /// use pix_engine::prelude::*;
-    /// let mut state = StateData::new("State", 100, 100).unwrap();
+    /// # let mut state = StateData::new("State", 100, 100).unwrap();
     ///
-    /// state.background((128, 200, 0));
-    /// assert_eq!(state.get_background(), color!(128, 200, 0));
+    /// state.background([128, 200, 0]);
+    /// assert_eq!(state.get_background(), Color::from([128, 200, 0]));
     /// ```
     pub fn background<C: Into<Color>>(&mut self, color: C) {
         let c = color.into();
@@ -125,7 +147,7 @@ impl StateData {
 
     /// Disables the background color by setting it to transparent.
     pub fn no_background(&mut self) {
-        self.settings.bg_color = color::TRANSPARENT;
+        self.settings.bg_color = color::transparent();
     }
 
     /// Get the current color used to fill shapes.
@@ -141,8 +163,8 @@ impl StateData {
     /// use pix_engine::prelude::*;
     /// let mut state = StateData::new("State", 100, 100).unwrap();
     ///
-    /// state.fill((128, 200, 0));
-    /// assert_eq!(state.get_fill(), Some(color!(128, 200, 0)));
+    /// state.fill([128, 200, 0]);
+    /// assert_eq!(state.get_fill(), Some(Color::from([128, 200, 0])));
     /// ```
     pub fn fill<C: Into<Color>>(&mut self, color: C) {
         let c = color.into();
@@ -158,8 +180,8 @@ impl StateData {
     /// use pix_engine::prelude::*;
     /// let mut state = StateData::new("State", 100, 100).unwrap();
     ///
-    /// state.fill((128, 200, 0));
-    /// assert_eq!(state.get_fill(), Some(color!(128, 200, 0)));
+    /// state.fill([128, 200, 0]);
+    /// assert_eq!(state.get_fill(), Some(Color::from([128, 200, 0])));
     /// state.no_fill();
     /// assert_eq!(state.get_fill(), None);
     /// ```

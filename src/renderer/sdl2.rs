@@ -324,7 +324,12 @@ impl Renderer for Sdl2Renderer {
 
 impl ToColor for Color {
     fn as_rgba(&self) -> (u8, u8, u8, u8) {
-        self.values()
+        (
+            self.red().round() as u8,
+            self.green().round() as u8,
+            self.blue().round() as u8,
+            self.alpha().round() as u8,
+        )
     }
 }
 
@@ -359,13 +364,18 @@ impl From<std::ffi::NulError> for Error {
 impl From<pixels::Color> for Color {
     fn from(color: pixels::Color) -> Self {
         let (r, g, b) = color.rgb();
-        color!(r, g, b)
+        [r, g, b].into()
     }
 }
 
 impl Into<pixels::Color> for Color {
     fn into(self) -> pixels::Color {
-        pixels::Color::RGBA(self.red(), self.green(), self.blue(), self.alpha())
+        pixels::Color::RGBA(
+            self.red().round() as u8,
+            self.green().round() as u8,
+            self.blue().round() as u8,
+            self.alpha().round() as u8,
+        )
     }
 }
 

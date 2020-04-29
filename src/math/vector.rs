@@ -658,6 +658,13 @@ impl From<(i32, i32)> for Vector {
     }
 }
 
+/// From 2D tuple of (x, y) u32 to `Vector`.
+impl From<(u32, u32)> for Vector {
+    fn from((x, y): (u32, u32)) -> Self {
+        Self::new_2d(x as f64, y as f64)
+    }
+}
+
 /// From 2D tuple of (x, y) i64 to `Vector`.
 impl From<(i64, i64)> for Vector {
     fn from((x, y): (i64, i64)) -> Self {

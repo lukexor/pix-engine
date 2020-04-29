@@ -128,7 +128,7 @@ where
     /// Errors if the renderer or the state returns an error.
     pub fn run(&mut self) -> Result<()> {
         // Clear and present once on start
-        self.data.background(0);
+        // self.data.background(0);
         self.data.clear_all();
         self.data.present_all();
 

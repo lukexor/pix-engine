@@ -200,14 +200,29 @@ impl fmt::Display for Rect {
 
 impl StateData {
     /// Draw a square. If both fill and stroke are set to None, nothing will be drawn.
-    pub fn square<R: Into<Rect>>(&mut self, sq: R) -> StateDataResult<()> {
-        self.rect(sq)
+    pub fn square<P>(&mut self, pos: P, s: u32) -> StateDataResult<()>
+    where
+        P: Into<Vector>,
+    {
+        let pos = pos.into();
+        self.rect(pos, (s - pos.x as u32, s - pos.y as u32))
     }
 
     /// Draw a rectangle. If `None` is passed, the entire screen is used as the `Rect`. If both
     /// fill and stroke are set to None, nothing will be drawn.
-    pub fn rect<R: Into<Rect>>(&mut self, rect: R) -> StateDataResult<()> {
-        let rect = rect.into();
+    pub fn rect<P, D>(&mut self, pos: P, dim: D) -> StateDataResult<()>
+    where
+        P: Into<Vector>,
+        D: Into<Vector>,
+    {
+        let pos = pos.into();
+        let dim = dim.into();
+        let rect = Rect::new(
+            pos.x as i32,
+            pos.y as i32,
+            (pos.x + dim.x) as u32,
+            (pos.y + dim.y) as u32,
+        );
         self.renderer.rect(rect)?;
         Ok(())
     }

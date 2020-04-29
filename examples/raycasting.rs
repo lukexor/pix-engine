@@ -1,14 +1,14 @@
 use pix_engine::prelude::*;
 use std::cmp::Ordering::Less;
 
-const BLOCK_SIZE: u32 = 16;
+const BLOCK_SIZE: u32 = 32;
 const NORTH: usize = 0;
 const SOUTH: usize = 1;
 const EAST: usize = 2;
 const WEST: usize = 3;
-const SCALE: f32 = 2.0;
-const WIDTH: u32 = 64 / SCALE as u32;
-const HEIGHT: u32 = 48 / SCALE as u32;
+const SCALE: f32 = 1.0;
+const WIDTH: u32 = 128 / SCALE as u32;
+const HEIGHT: u32 = 96 / SCALE as u32;
 
 fn main() {
     let app = App::new();
@@ -194,7 +194,7 @@ impl App {
         let o = Vector::from_point(o);
         for (_, &p) in self.points.iter().enumerate() {
             // println!("point: {}", i);
-            // s.stroke(WHITE);
+            // s.stroke("white");
             // s.line(Point::from(o), Point::from(p));
             // Cast three rays - one at and one off to each side
             for offset in -1..2 {
@@ -203,7 +203,7 @@ impl App {
                 let mut r = p.copy() - o;
                 r.rotate(angle);
                 r.set_mag(radius);
-                s.stroke(WHITE);
+                s.stroke("white");
                 // let op = Point::from(o);
                 // let or = Point::from(r + o);
                 // s.line(op.x, op.y, or.x, or.y);
@@ -324,7 +324,7 @@ impl State for App {
 
         self.calc_visibility_polygons(mouse, 1000.0, s);
         if !self.polygons.is_empty() {
-            s.fill(WHITE);
+            s.fill("white");
             for i in 0..self.polygons.len() - 1 {
                 let p1 = self.polygons[i].1;
                 let p2 = self.polygons[i + 1].1;
@@ -337,9 +337,9 @@ impl State for App {
             s.no_fill();
         }
 
-        s.fill(BLUE);
+        s.fill("blue");
         for cell in self.cells.iter().filter(|c| c.exists) {
-            s.square((cell.pos, BLOCK_SIZE + 1))?;
+            s.square(cell.pos, BLOCK_SIZE + 1)?;
         }
         s.no_fill();
 

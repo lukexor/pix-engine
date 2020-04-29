@@ -4,31 +4,29 @@
 //! stored as RGBA values ranging from 0-255. Other color representations than the initial color
 //! mode are calculated and cached as needed.
 
-use crate::math::random;
-use std::{
-    fmt,
-    ops::{Deref, DerefMut},
-};
+use crate::{math::constrainf, StateData};
+use conversion::ColorLevels;
+use std::fmt;
 
 pub mod prelude {
     pub use super::{constants::*, Color, ColorMode};
 }
 pub use constants::*;
 
-const RED_SHIFT: u32 = 24;
-const GREEN_SHIFT: u32 = 16;
-const BLUE_SHIFT: u32 = 8;
-const ALPHA_SHIFT: u32 = 0;
+mod constants;
+mod conversion;
 
 /// ColoreMode changes the way PixEngine interprets color data. The default is Rgb.
 ///
 /// RGB values range from 0-255 for red, green, blue, and alpha
-/// HSB instead ranges from 0-360 for hue, and 0-100 for saturation and brightness
+/// HSB values range from 0-360 for hue, and 0-100 for saturation and brightness
+/// HSL values range from 0-360 for hue, and 0-100 for saturation and lightness
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[repr(C)]
 pub enum ColorMode {
     Rgb,
-    Hsb, // TODO ColorMode::HSB
+    Hsb,
+    Hsl,
 }
 
 impl Default for ColorMode {
@@ -37,392 +35,363 @@ impl Default for ColorMode {
     }
 }
 
+/// ColorMaxes limits the maximum levels the color will have per-channel based on the ColorMode.
+/// The default is 0-255 for red, green, blue, and alpha, 0-360 for hue, and 0-100 for saturation,
+/// brightness, and lightness.
+#[derive(Debug, Copy, Clone, PartialEq)]
+#[repr(C)]
+pub struct ColorMaxes {
+    pub rgb: [f64; 4],
+    pub hsb: [f64; 4],
+    pub hsl: [f64; 4],
+}
+
+impl Default for ColorMaxes {
+    fn default() -> Self {
+        Self {
+            rgb: [255.0, 255.0, 255.0, 255.0],
+            hsb: [360.0, 100.0, 100.0, 100.0],
+            hsl: [360.0, 100.0, 100.0, 100.0],
+        }
+    }
+}
+
 /// Represents a color (by default stored as RGBA values ranging from 0-255).  The default is
 /// black.
-#[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Copy, Clone)]
 #[repr(C)]
 pub struct Color {
-    r: u8,
-    g: u8,
-    b: u8,
-    a: u8,
-    color_mode: ColorMode,
+    values: [f64; 4],
+    hsba: Option<[f64; 4]>,
+    hsla: Option<[f64; 4]>,
+    levels: [u8; 4],
+    mode: ColorMode,
+    maxes: ColorMaxes,
 }
 
 impl<'a> Color {
-    /// Creates a new Rgb Color.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use pix_engine::prelude::*;
-    ///
-    /// let c = Color::rgb(128, 64, 0);
-    /// assert_eq!(c.values(), (128, 64, 0, 255));
-    /// ```
+    /// Creates a Color instance from an array of color levels with a given ColorMode and
+    /// ColorMaxes. Primarily used internally for the From/Into traits.
     #[inline(always)]
-    #[allow(non_snake_case)]
-    pub const fn rgb(r: u8, g: u8, b: u8) -> Self {
-        Self::rgba(r, g, b, 255)
-    }
+    fn from_levels<L: Into<ColorLevels>>(levels: L, mode: ColorMode, maxes: ColorMaxes) -> Self {
+        let levels = levels.into();
+        let mut values = [0f64; 4];
+        let mode_maxes = match mode {
+            ColorMode::Hsb => maxes.hsb,
+            ColorMode::Hsl => maxes.hsl,
+            ColorMode::Rgb => maxes.rgb,
+        };
 
-    /// Creates a new Rgb Color with alpha.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use pix_engine::prelude::*;
-    ///
-    /// let c = Color::rgba(128, 64, 0, 128);
-    /// assert_eq!(c.values(), (128, 64, 0, 128));
-    /// ```
-    #[inline(always)]
-    #[allow(non_snake_case)]
-    pub const fn rgba(r: u8, g: u8, b: u8, a: u8) -> Self {
-        Self {
-            r,
-            g,
-            b,
-            a,
-            color_mode: ColorMode::Rgb,
+        // Normalize from 0 to 1
+        for i in 0..4 {
+            values[i] = constrainf(levels[i] / mode_maxes[i], 0.0, 1.0);
         }
-    }
 
-    /// Creates a new Color from a u32.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pix_engine::prelude::*;
-    ///
-    /// let magenta: u32 = (128 << 24) | (128 << 8) | 255;
-    /// let c = Color::from_u32(magenta);
-    /// assert_eq!(c.values(), (128, 0, 128, 255));
-    /// ```
-    pub const fn from_u32(val: u32) -> Self {
-        Self {
-            r: (val >> RED_SHIFT) as u8,
-            g: (val >> GREEN_SHIFT) as u8,
-            b: (val >> BLUE_SHIFT) as u8,
-            a: (val >> ALPHA_SHIFT) as u8,
-            color_mode: ColorMode::Rgb,
-        }
-    }
+        let values = match mode {
+            ColorMode::Hsb => Color::hsba_to_rgba(values),
+            ColorMode::Hsl => Color::hsla_to_rgba(values),
+            ColorMode::Rgb => values,
+        };
 
-    /// Converts a Color to a u32 representation.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use pix_engine::prelude::*;
-    ///
-    /// let c = color!(128, 0, 128);
-    /// let magenta: u32 = (128 << 24) | (128 << 8) | 255;
-    /// assert_eq!(c.to_u32(), magenta);
-    /// ```
-    pub const fn to_u32(self) -> u32 {
-        (self.r as u32) << RED_SHIFT
-            | (self.g as u32) << GREEN_SHIFT
-            | (self.b as u32) << BLUE_SHIFT
-            | (self.a as u32) << ALPHA_SHIFT
-    }
-
-    /// Creates a random RGB color with values ranging from 0-255.
-    pub fn random_rgb() -> Self {
-        Self::rgb(random(255), random(255), random(255))
-    }
-
-    /// Creates a random RGBA color with values ranging from 0-255.
-    pub fn random_rgba() -> Self {
-        Self::rgba(random(255), random(255), random(255), random(255))
+        let mut color = Self {
+            values,
+            mode,
+            maxes,
+            ..Default::default()
+        };
+        color.calculate_levels();
+        color
     }
 
     /// Get the red value of the color ranging from 0-255.
     #[inline(always)]
-    pub const fn red(self) -> u8 {
-        self.r
+    pub fn red(self) -> f64 {
+        self.values[0] * self.maxes.rgb[0] as f64
     }
     /// Set the red value of the color ranging from 0-255.
     #[inline(always)]
     pub fn set_red(&mut self, r: u8) {
-        self.r = r;
+        self.values[0] = r as f64 / self.maxes.rgb[0];
+        self.calculate_levels();
     }
 
     /// Get the green value of the color ranging from 0-255.
     #[inline(always)]
-    pub const fn green(self) -> u8 {
-        self.g
+    pub fn green(self) -> f64 {
+        self.values[1] * self.maxes.rgb[1] as f64
     }
     /// Set the green value of the color ranging from 0-255.
     #[inline(always)]
     pub fn set_green(&mut self, g: u8) {
-        self.g = g;
+        self.values[1] = g as f64 / self.maxes.rgb[1];
+        self.calculate_levels();
     }
 
     /// Get the blue value of the color ranging from 0-255.
     #[inline(always)]
-    pub const fn blue(self) -> u8 {
-        self.b
+    pub fn blue(self) -> f64 {
+        self.values[2] * self.maxes.rgb[2] as f64
     }
     /// Set the blue value of the color ranging from 0-255.
     #[inline(always)]
     pub fn set_blue(&mut self, b: u8) {
-        self.b = b;
+        self.values[2] = b as f64 / self.maxes.rgb[2];
+        self.calculate_levels();
     }
 
     /// Get the alpha value of the color ranging from 0-255.
     #[inline(always)]
-    pub const fn alpha(self) -> u8 {
-        self.a
+    pub fn alpha(self) -> f64 {
+        self.values[3] * self.maxes.rgb[3]
     }
     /// Set the alpha value of the color ranging from 0-255.
     #[inline(always)]
     pub fn set_alpha(&mut self, a: u8) {
-        self.a = a;
+        self.values[3] = a as f64 / self.maxes.rgb[3];
+        self.calculate_levels();
     }
 
-    /// Returns a representation of this color as a Vec of u8 values based on the current
-    /// `State::color_mode`.
-    ///
-    /// - RGB: (red, green, blue, alpha)
-    /// - HSB/HSL: (hue, saturation, brightness/lightness, alpha)
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use pix_engine::prelude::*;
-    ///
-    /// let mut c1 = color!(128, 0, 128);
-    /// assert_eq!(c1.into_vec(), vec![128, 0, 128, 255]);
-    ///
-    /// let mut c2 = color!(128, 0, 128, 64);
-    /// assert_eq!(c2.into_vec(), vec![128, 0, 128, 64]);
-    /// ```
-    pub fn into_vec(self) -> Vec<u8> {
-        vec![self.r, self.g, self.b, self.a]
-    }
-
-    /// Returns a tuple representing the values based on the current `State::color_mode()`.
-    ///
-    /// - RGB: (red, green, blue, alpha)
-    /// - HSB/HSL: (hue, saturation, brightness/lightness, alpha)
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use pix_engine::prelude::*;
-    ///
-    /// let mut c1 = color!(128, 0, 128);
-    /// assert_eq!(c1.into_vec(), vec![128, 0, 128, 255]);
-    ///
-    /// let mut c2 = color!(128, 0, 128, 64);
-    /// assert_eq!(c2.into_vec(), vec![128, 0, 128, 64]);
-    /// ```
-    pub fn values(self) -> (u8, u8, u8, u8) {
-        (self.r, self.g, self.b, self.a)
-    }
-}
-
-/// Creates a new Color. The parameters are interpreted as either RGB, HSB, or HSL depending on the
-/// current `State::color_mode()`.
-///
-/// The default is RGB with values ranging from 0 to 255. HSB/HSL values range from 0 to 360 for
-/// Hue and Saturation, and 0 to 100 for Brightness/Lightness.
-///
-/// The number of parameters provided alter how they are interpreted:
-///
-/// # Syntax
-///
-/// color!(gray, [alpha]);
-///
-/// color!(v1, v2, v3, [alpha]);
-///
-/// color!(value);
-///
-/// color!(values);
-///
-/// color!(color);
-///
-/// # Parameters
-///
-/// - gray: 0 to 255 value ranging from black to white.
-/// - alpha: Transparency value ranging from 0 to 255 for RGB and 0 to 100 for HSB/HSL (Optional,
-///   defaults to 255)
-/// - v1: Red (0 to 255) or Hue (0 to 360)
-/// - v2: Green (0 to 255) or Saturation (0 to 360)
-/// - v3: Blue (0 to 255) or Brightness/Lightness (0 to 100)
-/// - value: A color string in either text or hexidecimal format
-/// - values: A slice containing rgba or hsba/hsla values.
-/// - color: A `Color` instance.
-///
-/// # Examples
-///
-/// ```
-/// use pix_engine::prelude::*;
-///
-/// let c1 = color!(128, 64, 0); // RGB
-/// assert_eq!(c1.values(), (128, 64, 0, 255));
-///
-/// let c2 = color!(128, 64, 128, 128); // RGBA
-/// assert_eq!(c2.values(), (128, 64, 128, 128));
-///
-/// let c3 = color!(128); // Gray
-/// assert_eq!(c3.values(), (128, 128, 128, 255));
-///
-/// let c4 = color!(128, 64); // Gray with Alpha
-/// assert_eq!(c4.values(), (128, 128, 128, 64));
-///
-/// let vals: Vec<u8> = vec![128, 64, 0];
-/// let c5 = color!(vals.as_slice()); // RGB from slice
-/// assert_eq!(c5.values(), (128, 64, 0, 255));
-///
-/// let vals: [u8; 4] = [128, 64, 0, 128];
-/// let c6 = color!(&vals[..]); // RGBA from slice
-/// assert_eq!(c6.values(), (128, 64, 0, 128));
-/// ```
-#[macro_export]
-macro_rules! color {
-    ($value:expr) => {
-        Color::from($value);
-    };
-    ($gray:expr, $alpha:expr) => {
-        Color::from(($gray, $gray, $gray, $alpha));
-    };
-    ($red:expr, $green:expr, $blue:expr) => {
-        Color::from(($red, $green, $blue));
-    };
-    ($red:expr, $green:expr, $blue:expr, $alpha:expr) => {
-        Color::from(($red, $green, $blue, $alpha));
-    };
-}
-
-impl Deref for Color {
-    type Target = [u8];
-    fn deref(&self) -> &[u8] {
-        unsafe { ::std::slice::from_raw_parts(self as *const Self as *const u8, 4) }
-    }
-}
-impl DerefMut for Color {
-    fn deref_mut(&mut self) -> &mut [u8] {
-        unsafe { ::std::slice::from_raw_parts_mut(self as *mut Self as *mut u8, 4) }
-    }
-}
-
-impl From<u8> for Color {
-    fn from(gray: u8) -> Self {
-        Color::rgb(gray, gray, gray)
-    }
-}
-impl From<(u8, u8)> for Color {
-    fn from((gray, a): (u8, u8)) -> Self {
-        Color::rgba(gray, gray, gray, a)
-    }
-}
-impl From<(u8, u8, u8)> for Color {
-    fn from((r, g, b): (u8, u8, u8)) -> Self {
-        Color::rgb(r, g, b)
-    }
-}
-impl From<(u8, u8, u8, u8)> for Color {
-    fn from((r, g, b, a): (u8, u8, u8, u8)) -> Self {
-        Color::rgba(r, g, b, a)
-    }
-}
-impl From<[u8; 2]> for Color {
-    fn from(arr: [u8; 2]) -> Self {
-        Color::rgba(arr[0], arr[0], arr[0], arr[1])
-    }
-}
-impl From<[u8; 3]> for Color {
-    fn from(arr: [u8; 3]) -> Self {
-        Color::rgb(arr[0], arr[1], arr[2])
-    }
-}
-impl From<[u8; 4]> for Color {
-    fn from(arr: [u8; 4]) -> Self {
-        Color::rgba(arr[0], arr[1], arr[2], arr[3])
-    }
-}
-impl From<&[u8]> for Color {
-    fn from(slice: &[u8]) -> Self {
-        match *slice {
-            [gray, a] => Color::rgba(gray, gray, gray, a),
-            [r, g, b] => Color::rgb(r, g, b),
-            [r, g, b, a] => Color::rgba(r, g, b, a),
-            _ => panic!("invalid color slice"),
+    /// Get the hue value of the color ranging from 0-360.
+    #[inline(always)]
+    pub fn hue(&mut self) -> f64 {
+        if self.mode == ColorMode::Hsb {
+            if self.hsba.is_none() {
+                self.hsba = Some(Color::rgba_to_hsba(self.values));
+            }
+            (self.hsba.unwrap())[0] * self.maxes.hsb[0]
+        } else {
+            if self.hsla.is_none() {
+                self.hsla = Some(Color::rgba_to_hsla(self.values));
+            }
+            (self.hsla.unwrap())[0] * self.maxes.hsl[0]
         }
     }
-}
-impl From<&str> for Color {
-    fn from(colorstring: &str) -> Self {
-        unimplemented!()
-    }
-}
 
-impl Into<(u8, u8, u8)> for Color {
-    fn into(self) -> (u8, u8, u8) {
-        (self.r, self.g, self.b)
+    /// Get the saturation value of the color ranging from 0-360.
+    #[inline(always)]
+    pub fn saturation(&mut self) -> f64 {
+        if self.mode == ColorMode::Hsb {
+            if self.hsba.is_none() {
+                self.hsba = Some(Color::rgba_to_hsba(self.values));
+            }
+            (self.hsba.unwrap())[1] * self.maxes.hsb[1]
+        } else {
+            if self.hsla.is_none() {
+                self.hsla = Some(Color::rgba_to_hsla(self.values));
+            }
+            (self.hsla.unwrap())[1] * self.maxes.hsl[1]
+        }
     }
-}
-impl Into<(u8, u8, u8, u8)> for Color {
-    fn into(self) -> (u8, u8, u8, u8) {
-        (self.r, self.g, self.b, self.a)
+
+    /// Get the brightness value of the color ranging from 0-100.
+    #[inline(always)]
+    pub fn brightness(&mut self) -> f64 {
+        if self.hsba.is_none() {
+            self.hsba = Some(Color::rgba_to_hsba(self.values));
+        }
+        (self.hsba.unwrap())[2] * self.maxes.hsb[2]
+    }
+
+    /// Get the lightness value of the color ranging from 0-100.
+    #[inline(always)]
+    pub fn lightness(&mut self) -> f64 {
+        if self.hsla.is_none() {
+            self.hsla = Some(Color::rgba_to_hsla(self.values));
+        }
+        (self.hsla.unwrap())[2] * self.maxes.hsl[2]
+    }
+
+    /// Get the ColorMode of this color.
+    pub fn get_mode(&self) -> ColorMode {
+        self.mode
+    }
+
+    /// Get the ColorMaxes for this color.
+    pub fn get_maxes(&self) -> ColorMaxes {
+        self.maxes
+    }
+
+    /// Returns an array containing the RGBA values.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use pix_engine::prelude::*;
+    /// # let mut state = StateData::new("State", 100, 100).unwrap();
+    ///
+    /// let mut c1 = state.color([128, 0, 128]);
+    /// assert_eq!(c1.levels(), [128, 0, 128, 255]);
+    ///
+    /// let mut c2 = state.color([128, 0, 128, 64]);
+    /// assert_eq!(c2.levels(), [128, 0, 128, 64]);
+    /// ```
+    pub fn levels(self) -> [u8; 4] {
+        self.levels
+    }
+    pub fn norm_levels(self) -> [f64; 4] {
+        [
+            self.levels[0] as f64 / 255.0,
+            self.levels[1] as f64 / 255.0,
+            self.levels[2] as f64 / 255.0,
+            self.levels[3] as f64 / 255.0,
+        ]
+    }
+
+    /// Calculates and stores the closest RGBA screen levels.
+    fn calculate_levels(&mut self) {
+        for (i, v) in self.values.iter().enumerate() {
+            self.levels[i] = (v * 255.0).round() as u8;
+        }
     }
 }
 
 impl fmt::Display for Color {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "({}, {}, {}, {})", self.r, self.g, self.b, self.a)
+        write!(f, "{:?}", self.levels)
     }
 }
 
-// Color Constants for common colors
+impl PartialEq for Color {
+    fn eq(&self, other: &Self) -> bool {
+        self.levels() == other.levels()
+    }
+}
+impl Eq for Color {}
 
-pub mod constants {
-    use super::Color;
+impl StateData {
+    /// Creates a new Color. The parameters are interpreted as either RGB, HSB, or HSL depending on the
+    /// current `State::color_mode()`.
+    ///
+    /// The default is RGB with values ranging from 0 to 255. HSB/HSL values range from 0 to 360 for
+    /// Hue and Saturation, and 0 to 100 for Brightness/Lightness.
+    ///
+    /// The number of parameters provided alter how they are interpreted:
+    ///
+    /// # Syntax
+    ///
+    /// state.color(gray, [alpha]);
+    ///
+    /// state.color(v1, v2, v3, [alpha]);
+    ///
+    /// state.color(value);
+    ///
+    /// state.color(values);
+    ///
+    /// state.color(color);
+    ///
+    /// # Parameters
+    ///
+    /// - gray: 0 to 255 value ranging from black to white.
+    /// - alpha: Transparency value ranging from 0 to 255 for RGB and 0 to 100 for HSB/HSL (Optional,
+    ///   defaults to 255)
+    /// - v1: Red (0 to 255) or Hue (0 to 360)
+    /// - v2: Green (0 to 255) or Saturation (0 to 360)
+    /// - v3: Blue (0 to 255) or Brightness/Lightness (0 to 100)
+    /// - value: A color string in either text or hexidecimal format
+    /// - values: A slice containing rgba or hsba/hsla values.
+    /// - color: A `Color` instance.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use pix_engine::prelude::*;
+    /// # let mut state = StateData::new("State", 100, 100).unwrap();
+    ///
+    /// let c = state.color([128, 64, 0]); // RGB
+    /// assert_eq!(c.levels(), [128, 64, 0, 255]);
+    ///
+    /// let c = state.color([128, 64, 128, 128]); // RGBA
+    /// assert_eq!(c.levels(), [128, 64, 128, 128]);
+    ///
+    /// let c = state.color([128]); // Gray
+    /// assert_eq!(c.levels(), [128, 128, 128, 255]);
+    ///
+    /// let c = state.color([128, 64]); // Gray with Alpha
+    /// assert_eq!(c.levels(), [128, 128, 128, 64]);
+    ///
+    /// let vals: Vec<u8> = vec![128, 64, 0];
+    /// let c = state.color(&vals); // RGB from slice
+    /// assert_eq!(c.levels(), [128, 64, 0, 255]);
+    ///
+    /// let vals: [u8; 4] = [128, 64, 0, 128];
+    /// let c = state.color(&vals[..]); // RGBA from slice
+    /// assert_eq!(c.levels(), [128, 64, 0, 128]);
+    ///
+    /// let c = state.color("aliceblue"); // Named color string
+    /// assert_eq!(c.levels(), [240, 248, 255, 255]);
+    ///
+    /// let c = state.color("#F0F"); // 3-digit Hex string
+    /// assert_eq!(c.levels(), [255, 0, 255, 255]);
+    ///
+    /// let c = state.color("#F0F5"); // 4-digit Hex string
+    /// assert_eq!(c.levels(), [255, 0, 255, 85]);
+    ///
+    /// let c = state.color("#F0F5BF"); // 6-digit Hex string
+    /// assert_eq!(c.levels(), [240, 245, 191, 255]);
+    ///
+    /// let c = state.color("#F0F5BF5F"); // 8-digit Hex string
+    /// assert_eq!(c.levels(), [240, 245, 191, 95]);
+    /// ```
+    pub fn color<L: Into<ColorLevels>>(&self, levels: L) -> Color {
+        let mode = self.get_color_mode();
+        let maxes = self.get_color_maxes();
+        Color::from_levels(levels, mode, maxes)
+    }
 
-    // WHITE/BLACK/BLANK
-    pub const WHITE: Color = Color::rgb(255, 255, 255);
-    pub const BLACK: Color = Color::rgb(0, 0, 0);
-    pub const TRANSPARENT: Color = Color::rgba(0, 0, 0, 0);
+    /// Creates a new Color by linear interpolating between two colors by a given amount.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use pix_engine::prelude::*;
+    /// # let mut state = StateData::new("State", 100, 100).unwrap();
+    ///
+    /// let from = Color::from([255, 0, 0]);
+    /// let to = Color::from([0, 100, 255]);
+    /// let lerped = state.lerp_color(from, to, 0.5);
+    /// assert_eq!(lerped.levels(), [128, 50, 128, 255]);
+    /// ```
+    #[inline(always)]
+    pub fn lerp_color<C1, C2>(&self, c1: C1, c2: C2, amt: f64) -> Color
+    where
+        C1: Into<Color>,
+        C2: Into<Color>,
+    {
+        let mut c1 = c1.into();
+        let mut c2 = c2.into();
 
-    // GRAY
-    pub const BRIGHT_GRAY: Color = Color::rgb(192, 192, 192);
-    pub const GRAY: Color = Color::rgb(128, 128, 128);
-    pub const DARK_GRAY: Color = Color::rgb(64, 64, 64);
+        let (from, to) = match self.get_color_mode() {
+            ColorMode::Rgb => (c1.norm_levels(), c2.norm_levels()),
+            ColorMode::Hsb => {
+                c1.hue(); // Ensure values exist in cache
+                c2.hue();
+                (c1.hsba.unwrap(), c2.hsba.unwrap())
+            }
+            ColorMode::Hsl => {
+                c1.hue(); // Ensure values exist in cache
+                c2.hue();
+                (c1.hsla.unwrap(), c2.hsla.unwrap())
+            }
+        };
 
-    // RED
-    pub const BRIGHT_RED: Color = Color::rgb(255, 0, 0);
-    pub const RED: Color = Color::rgb(128, 0, 0);
-    pub const DARK_RED: Color = Color::rgb(64, 0, 0);
+        let amt = constrainf(amt, 0.0, 1.0);
 
-    // ORANGE
-    pub const BRIGHT_ORANGE: Color = Color::rgb(255, 128, 0);
-    pub const ORANGE: Color = Color::rgb(128, 64, 0);
-    pub const DARK_ORANGE: Color = Color::rgb(64, 32, 0);
+        let lerp = |start, stop, amt| amt * (stop - start) + start;
 
-    // YELLOW
-    pub const BRIGHT_YELLOW: Color = Color::rgb(255, 255, 0);
-    pub const YELLOW: Color = Color::rgb(128, 128, 0);
-    pub const DARK_YELLOW: Color = Color::rgb(64, 64, 0);
+        let mode = self.get_color_mode();
+        let maxes = self.get_color_maxes();
+        let mode_maxes = match mode {
+            ColorMode::Hsb => maxes.hsb,
+            ColorMode::Hsl => maxes.hsl,
+            ColorMode::Rgb => maxes.rgb,
+        };
 
-    // GREEN
-    pub const BRIGHT_GREEN: Color = Color::rgb(0, 255, 0);
-    pub const GREEN: Color = Color::rgb(0, 128, 0);
-    pub const DARK_GREEN: Color = Color::rgb(0, 64, 0);
+        let l0 = lerp(from[0], to[0], amt) * mode_maxes[0] as f64;
+        let l1 = lerp(from[1], to[1], amt) * mode_maxes[1] as f64;
+        let l2 = lerp(from[2], to[2], amt) * mode_maxes[2] as f64;
+        let l3 = lerp(from[3], to[3], amt) * mode_maxes[3] as f64;
 
-    // CYAN
-    pub const BRIGHT_CYAN: Color = Color::rgb(0, 255, 255);
-    pub const CYAN: Color = Color::rgb(0, 128, 128);
-    pub const DARK_CYAN: Color = Color::rgb(0, 64, 64);
-
-    // BLUE
-    pub const BRIGHT_BLUE: Color = Color::rgb(0, 255, 255);
-    pub const BLUE: Color = Color::rgb(0, 0, 128);
-    pub const DARK_BLUE: Color = Color::rgb(0, 0, 64);
-
-    // MAGENTA
-    pub const BRIGHT_MAGENTA: Color = Color::rgb(255, 0, 255);
-    pub const MAGENTA: Color = Color::rgb(128, 0, 128);
-    pub const DARK_MAGENTA: Color = Color::rgb(64, 0, 64);
+        let levels = ColorLevels::from([l0, l1, l2, l3]);
+        Color::from_levels(levels, mode, maxes)
+    }
 }
