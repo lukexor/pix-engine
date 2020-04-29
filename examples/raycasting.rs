@@ -324,7 +324,7 @@ impl State for App {
 
         self.calc_visibility_polygons(mouse, 1000.0, s);
         if !self.polygons.is_empty() {
-            s.fill("white");
+            s.fill("firebrick");
             for i in 0..self.polygons.len() - 1 {
                 let p1 = self.polygons[i].1;
                 let p2 = self.polygons[i + 1].1;
@@ -337,7 +337,7 @@ impl State for App {
             s.no_fill();
         }
 
-        s.fill("blue");
+        s.fill(60);
         for cell in self.cells.iter().filter(|c| c.exists) {
             s.square(cell.pos, BLOCK_SIZE + 1)?;
         }

@@ -43,7 +43,7 @@
 //!         fn on_update(&mut self, state: &mut StateData) -> Result<bool> {
 //!             // Called every frame (as often as possible by default) but can be changed. e.g.
 //!             // `state.set_target_frame_rate(30)`.
-//!             state.background([255, 0, 0]);
+//!             state.background("darkgray");
 //!             state.rect((100, 100), (200, 200))?;
 //!             Ok(true)
 //!         }

@@ -1,12 +1,8 @@
-use super::Color;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 
-pub fn transparent() -> Color {
-    Color::from([0, 0, 0, 0])
-}
-
 lazy_static! {
+    /// A list of known named colors and their hexadecimal equivalents.
     pub static ref NAMED_COLORS: HashMap<&'static str, &'static str> = {
         let mut colors = HashMap::new();
         colors.insert("aliceblue", "#f0f8ff");
@@ -148,6 +144,7 @@ lazy_static! {
         colors.insert("steelblue", "#4682b4");
         colors.insert("tan", "#d2b48c");
         colors.insert("teal", "#008080");
+        colors.insert("transparent", "#00000000");
         colors.insert("thistle", "#d8bfd8");
         colors.insert("tomato", "#ff6347");
         colors.insert("turquoise", "#40e0d0");

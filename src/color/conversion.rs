@@ -4,33 +4,6 @@ use regex::Regex;
 use std::ops::{Deref, DerefMut};
 
 impl Color {
-    /// Returns a representation of this color as a Vec of u16 values based on the current
-    /// `State::color_mode`.
-    ///
-    /// - RGB: (red, green, blue, alpha)
-    /// - HSB/HSL: (hue, saturation, brightness/lightness, alpha)
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use pix_engine::prelude::*;
-    /// # let mut state = StateData::new("State", 100, 100).unwrap();
-    ///
-    /// let mut c1 = state.color([128, 0, 128]);
-    /// assert_eq!(c1.into_vec(), vec![128, 0, 128, 255]);
-    ///
-    /// let mut c2 = state.color([128, 0, 128, 64]);
-    /// assert_eq!(c2.into_vec(), vec![128, 0, 128, 64]);
-    /// ```
-    pub fn into_vec(self) -> Vec<u16> {
-        vec![
-            self.red() as u16,
-            self.green() as u16,
-            self.blue() as u16,
-            self.alpha() as u16,
-        ]
-    }
-
     #[allow(dead_code)]
     pub(super) fn hsba_to_hsla(values: [f64; 4]) -> [f64; 4] {
         let hue = values[0];
@@ -252,17 +225,31 @@ impl DerefMut for Color {
 
 // Represents 3 color channels and an optional alpha channel.
 #[derive(Debug, Copy, Clone, PartialEq)]
-pub struct ColorLevels([f64; 4]);
+pub struct ColorLevels {
+    pub(crate) levels: [f64; 4],
+    pub(crate) mode: ColorMode,
+    pub(crate) maxes: ColorMaxes,
+}
+
+impl ColorLevels {
+    pub fn new(levels: [f64; 4], mode: ColorMode, maxes: ColorMaxes) -> Self {
+        Self {
+            levels,
+            mode,
+            maxes,
+        }
+    }
+}
 
 impl Deref for ColorLevels {
     type Target = [f64];
     fn deref(&self) -> &[f64] {
-        &self.0
+        &self.levels
     }
 }
 impl DerefMut for ColorLevels {
     fn deref_mut(&mut self) -> &mut [f64] {
-        &mut self.0
+        &mut self.levels
     }
 }
 
@@ -272,14 +259,22 @@ macro_rules! impl_color_level_from {
             #[inline]
             fn from(level: $T) -> Self {
                 let level = level as f64;
-                ColorLevels([level, level, level, 255.0])
+                Self::new(
+                    [level, level, level, 255.0],
+                    ColorMode::Rgb,
+                    ColorMaxes::default(),
+                )
             }
         }
         impl From<[$T; 1]> for ColorLevels {
             #[inline]
             fn from(arr: [$T; 1]) -> Self {
                 let level = arr[0] as f64;
-                ColorLevels([level, level, level, 255.0])
+                Self::new(
+                    [level, level, level, 255.0],
+                    ColorMode::Rgb,
+                    ColorMaxes::default(),
+                )
             }
         }
         impl From<[$T; 2]> for ColorLevels {
@@ -287,7 +282,11 @@ macro_rules! impl_color_level_from {
             fn from(arr: [$T; 2]) -> Self {
                 let level = arr[0] as f64;
                 let alpha = arr[1] as f64;
-                ColorLevels([level, level, level, alpha])
+                Self::new(
+                    [level, level, level, alpha],
+                    ColorMode::Rgb,
+                    ColorMaxes::default(),
+                )
             }
         }
         impl From<[$T; 3]> for ColorLevels {
@@ -296,7 +295,7 @@ macro_rules! impl_color_level_from {
                 let l0 = arr[0] as f64;
                 let l1 = arr[1] as f64;
                 let l2 = arr[2] as f64;
-                ColorLevels([l0, l1, l2, 255.0])
+                Self::new([l0, l1, l2, 255.0], ColorMode::Rgb, ColorMaxes::default())
             }
         }
         impl From<[$T; 4]> for ColorLevels {
@@ -306,7 +305,7 @@ macro_rules! impl_color_level_from {
                 let l1 = arr[1] as f64;
                 let l2 = arr[2] as f64;
                 let alpha = arr[3] as f64;
-                ColorLevels([l0, l1, l2, alpha])
+                Self::new([l0, l1, l2, alpha], ColorMode::Rgb, ColorMaxes::default())
             }
         }
         impl From<&[$T]> for ColorLevels {
@@ -403,7 +402,28 @@ impl From<&str> for ColorLevels {
                 }
             }
         }
-        Self(levels)
+        Self::new(levels, ColorMode::Rgb, ColorMaxes::default())
+    }
+}
+
+impl From<Color> for ColorLevels {
+    fn from(mut color: Color) -> Self {
+        let levels = match color.mode {
+            ColorMode::Rgb => [color.red(), color.green(), color.blue(), color.alpha()],
+            ColorMode::Hsb => [
+                color.hue(),
+                color.saturation(),
+                color.brightness(),
+                color.alpha(),
+            ],
+            ColorMode::Hsl => [
+                color.hue(),
+                color.saturation(),
+                color.lightness(),
+                color.alpha(),
+            ],
+        };
+        Self::new(levels, color.mode, color.maxes)
     }
 }
 
@@ -412,47 +432,43 @@ macro_rules! impl_color_from {
         impl From<$T> for Color {
             #[inline]
             fn from(level: $T) -> Self {
-                Color::from_levels(level, ColorMode::default(), ColorMaxes::default())
+                Color::from_levels(level)
             }
         }
         impl From<[$T; 1]> for Color {
             #[inline]
             fn from(levels: [$T; 1]) -> Self {
-                Color::from_levels(levels, ColorMode::default(), ColorMaxes::default())
+                Color::from_levels(levels)
             }
         }
         impl From<[$T; 2]> for Color {
             #[inline]
             fn from(levels: [$T; 2]) -> Self {
-                Color::from_levels(levels, ColorMode::default(), ColorMaxes::default())
+                Color::from_levels(levels)
             }
         }
         impl From<[$T; 3]> for Color {
             #[inline]
             fn from(levels: [$T; 3]) -> Self {
-                Color::from_levels(levels, ColorMode::default(), ColorMaxes::default())
+                Color::from_levels(levels)
             }
         }
         impl From<[$T; 4]> for Color {
             #[inline]
             fn from(levels: [$T; 4]) -> Self {
-                Color::from_levels(levels, ColorMode::default(), ColorMaxes::default())
+                Color::from_levels(levels)
             }
         }
         impl From<&[$T]> for Color {
             #[inline]
             fn from(levels: &[$T]) -> Self {
-                Color::from_levels(levels, ColorMode::default(), ColorMaxes::default())
+                Color::from_levels(levels)
             }
         }
         impl From<&Vec<$T>> for Color {
             #[inline]
             fn from(vector: &Vec<$T>) -> Self {
-                Color::from_levels(
-                    vector.as_slice(),
-                    ColorMode::default(),
-                    ColorMaxes::default(),
-                )
+                Color::from_levels(vector.as_slice())
             }
         }
     };
@@ -473,6 +489,6 @@ impl_color_from!(f64);
 
 impl From<&str> for Color {
     fn from(string: &str) -> Self {
-        Color::from_levels(string, ColorMode::default(), ColorMaxes::default())
+        Color::from_levels(string)
     }
 }

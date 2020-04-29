@@ -33,7 +33,7 @@ impl<'a> Vector {
     /// # Examples
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let v1 = Vector::new((1, 2));
     /// assert_eq!(v1.get(), (1.0, 2.0, 0.0));
@@ -54,7 +54,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let v = Vector::new((1, 2));
     /// assert_eq!(v.get(), (1.0, 2.0, 0.0));
@@ -68,7 +68,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let v = Vector::new((2.1, 3.5, 1.0));
     /// assert_eq!(v.get(), (2.1, 3.5, 1.0));
@@ -85,7 +85,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let p = Point::new((1, 2));
     /// let v = Vector::from_point(p);
@@ -100,7 +100,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let v1 = Vector::new((1, 0, 1));
     /// let mut v2 = v1.copy();
@@ -119,7 +119,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let v = Vector::from_angle(30.0, 15.0);
     ///
@@ -139,7 +139,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let v = Vector::random_2d();
     ///
@@ -157,7 +157,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let v = Vector::random_3d();
     ///
@@ -195,7 +195,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let v = Vector::new((1, 2, 3));
     /// let abs_difference = (v.mag() - 3.7416).abs();
@@ -213,7 +213,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let v = Vector::new((1, 2, 3));
     /// assert_eq!(v.mag_sq(), 14.0);
@@ -227,7 +227,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let mut v = Vector::new((10, 20, 2));
     /// v.set_mag(10.0);
@@ -252,7 +252,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let v = Vector::new((1, 2, 3));
     /// let dot_product = v.dot((2, 3, 4));
@@ -268,7 +268,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let v1 = Vector::new((1, 2, 3));
     /// let v2 = Vector::new((1, 2, 3));
@@ -289,7 +289,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let v1 = Vector::new((1, 0, 0));
     /// let v2 = Vector::new((0, 1, 0));
@@ -308,7 +308,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let mut v = Vector::new((10, 20, 2));
     /// v.normalize();
@@ -337,7 +337,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let mut v = Vector::new((10, 20, 2));
     /// v.limit(5.0);
@@ -364,7 +364,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let v = Vector::new((10, 10));
     /// let heading = v.heading();
@@ -379,7 +379,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let mut v = Vector::new((10, 20));
     /// v.rotate(HALF_PI);
@@ -403,7 +403,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let v1 = Vector::new((1, 0, 0));
     /// let v2 = Vector::new((0, 1, 0));
@@ -424,7 +424,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let mut v = Vector::new((4, 6)); // Vector heading right and down
     /// let n = Vector::new((0, -1)); // Surface normal facing up
@@ -444,7 +444,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let mut v1 = Vector::new((1, 1, 0));
     /// let v2 = Vector::new((3, 3, 0));
@@ -464,7 +464,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let mut v = Vector::new((1, 1, 0));
     /// assert_eq!(v.to_vec(), vec![1.0, 1.0, 0.0]);
@@ -478,7 +478,7 @@ impl<'a> Vector {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let mut v = Vector::new((1, 1, 0));
     /// assert_eq!(v.as_slice(), &[1.0, 1.0, 0.0]);

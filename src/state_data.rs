@@ -81,16 +81,16 @@ impl StateData {
             width,
             height,
             renderer,
-            events: Vec::new(),
+            events: Vec::default(),
             should_loop: true,
-            manual_update: 1, // Always loop at least once on start
+            manual_update: 1,
             mouse_pos: Point::default(),
             pmouse_pos: Point::default(),
             mouse_is_pressed: false,
-            mouse_buttons: HashSet::new(),
+            mouse_buttons: HashSet::default(),
             environment: Environment::new(),
             settings: Setting::new(),
-            settings_stack: Vec::new(),
+            settings_stack: Vec::default(),
         })
     }
 
@@ -156,5 +156,26 @@ impl StateData {
     /// Useful for updating when `StateData::no_loop()` is enabled.
     pub fn update(&mut self, n: u32) {
         self.manual_update = n;
+    }
+}
+
+impl Default for StateData {
+    fn default() -> Self {
+        Self {
+            title: String::default(),
+            width: 256,
+            height: 240,
+            renderer: renderer::load_renderer("", 256, 240).unwrap(),
+            events: Vec::default(),
+            should_loop: true,
+            manual_update: 1,
+            mouse_pos: Point::default(),
+            pmouse_pos: Point::default(),
+            mouse_is_pressed: false,
+            mouse_buttons: HashSet::default(),
+            environment: Environment::new(),
+            settings: Setting::new(),
+            settings_stack: Vec::default(),
+        }
     }
 }

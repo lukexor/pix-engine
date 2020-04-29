@@ -4,7 +4,7 @@ use super::{
     StateData, StateDataResult,
 };
 use crate::{
-    color::{self, Color, ColorMaxes, ColorMode},
+    color::{Color, ColorMaxes, ColorMode},
     image::ImageMode,
     math::AngleMode,
     shape::{self, ArcMode, EllipseMode, RectMode, StrokeCap, StrokeJoin},
@@ -56,7 +56,6 @@ pub(crate) struct Setting {
 impl Setting {
     pub(crate) fn new() -> Self {
         Self {
-            bg_color: color::transparent(),
             stroke_weight: shape::DEFAULT_STROKE_WEIGHT,
             blend_factor: DEFAULT_BLEND_FACTOR,
             ..Default::default()
@@ -133,7 +132,7 @@ impl StateData {
     ///
     /// ```
     /// use pix_engine::prelude::*;
-    /// # let mut state = StateData::new("State", 100, 100).unwrap();
+    /// # let mut state = StateData::default();
     ///
     /// state.background([128, 200, 0]);
     /// assert_eq!(state.get_background(), Color::from([128, 200, 0]));
@@ -147,7 +146,7 @@ impl StateData {
 
     /// Disables the background color by setting it to transparent.
     pub fn no_background(&mut self) {
-        self.settings.bg_color = color::transparent();
+        self.settings.bg_color = Color::from("transparent");
     }
 
     /// Get the current color used to fill shapes.
@@ -161,7 +160,7 @@ impl StateData {
     ///
     /// ```
     /// use pix_engine::prelude::*;
-    /// let mut state = StateData::new("State", 100, 100).unwrap();
+    /// let mut state = StateData::default();
     ///
     /// state.fill([128, 200, 0]);
     /// assert_eq!(state.get_fill(), Some(Color::from([128, 200, 0])));
@@ -178,7 +177,7 @@ impl StateData {
     ///
     /// ```
     /// use pix_engine::prelude::*;
-    /// let mut state = StateData::new("State", 100, 100).unwrap();
+    /// let mut state = StateData::default();
     ///
     /// state.fill([128, 200, 0]);
     /// assert_eq!(state.get_fill(), Some(Color::from([128, 200, 0])));
