@@ -268,15 +268,15 @@ impl Renderer for Sdl2Renderer {
     /// Draw a rectangle on the current window target.
     fn rect(&mut self, rect: Rect) -> Result<()> {
         let rect: rect::Rect = rect.into();
-        if let Some(c) = self.stroke {
-            let canvas = self.canvas_mut();
-            canvas.set_draw_color(c);
-            canvas.draw_rect(rect)?;
-        }
         if let Some(c) = self.fill {
             let canvas = self.canvas_mut();
             canvas.set_draw_color(c);
             canvas.fill_rect(rect)?;
+        }
+        if let Some(c) = self.stroke {
+            let canvas = self.canvas_mut();
+            canvas.set_draw_color(c);
+            canvas.draw_rect(rect)?;
         }
         Ok(())
     }

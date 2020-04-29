@@ -319,12 +319,12 @@ impl State for App {
     }
 
     fn on_update(&mut self, s: &mut StateData) -> Result<bool> {
-        s.background(60);
+        s.background("darkgray");
         let mouse = s.mouse_pos();
 
         self.calc_visibility_polygons(mouse, 1000.0, s);
         if !self.polygons.is_empty() {
-            s.fill("firebrick");
+            s.fill("yellow");
             for i in 0..self.polygons.len() - 1 {
                 let p1 = self.polygons[i].1;
                 let p2 = self.polygons[i + 1].1;
@@ -337,19 +337,19 @@ impl State for App {
             s.no_fill();
         }
 
-        s.fill(60);
+        s.fill("black");
         for cell in self.cells.iter().filter(|c| c.exists) {
             s.square(cell.pos, BLOCK_SIZE + 1)?;
         }
         s.no_fill();
 
-        // for e in self.edges.iter() {
-        //     s.stroke(RED);
-        //     let start = Point::from(e.start);
-        //     let end = Point::from(e.end);
-        //     s.line(start.x, start.y, end.x, end.y)?;
-        //     s.no_stroke();
-        // }
+        for e in self.edges.iter() {
+            s.stroke("firebrick");
+            let start = Point::from(e.start);
+            let end = Point::from(e.end);
+            s.line(start.x, start.y, end.x, end.y)?;
+            s.no_stroke();
+        }
 
         Ok(true)
     }
