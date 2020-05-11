@@ -402,7 +402,7 @@ impl Color {
     ///
     /// let mut c = Color::hsl([300, 90, 30]);
     /// c.set_hue(260.0);
-    /// assert_eq!(c.levels(), [54, 8, 145, 255]);
+    /// assert_eq!(c.levels(), [61, 8, 145, 255]);
     /// assert_eq!(c.hue(), 260.0);
     /// assert_eq!(c.saturation(), 90.0);
     /// assert_eq!(c.lightness(), 30.0);

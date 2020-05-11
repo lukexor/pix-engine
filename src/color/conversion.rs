@@ -367,8 +367,7 @@ impl From<&str> for ColorLevels {
 
         let mut levels = [0f64; 4];
         if HEX3.is_match(&s) {
-            for (i, cap) in HEX3.captures_iter(&s).enumerate() {
-                eprintln!("{:?}", cap);
+            for cap in HEX3.captures_iter(&s) {
                 for i in 0..3 {
                     let c = cap.get(i + 1).unwrap();
                     let color = format!("{}{}", c.as_str(), c.as_str());
@@ -377,7 +376,7 @@ impl From<&str> for ColorLevels {
             }
             levels[3] = 255.0;
         } else if HEX6.is_match(&s) {
-            for (i, cap) in HEX6.captures_iter(&s).enumerate() {
+            for cap in HEX6.captures_iter(&s) {
                 for i in 0..3 {
                     let c = cap.get(i + 1).unwrap();
                     levels[i] = parse_hex(c.as_str()) as f64;
@@ -385,7 +384,7 @@ impl From<&str> for ColorLevels {
             }
             levels[3] = 255.0;
         } else if HEX4.is_match(&s) {
-            for (i, cap) in HEX4.captures_iter(&s).enumerate() {
+            for cap in HEX4.captures_iter(&s) {
                 for i in 0..4 {
                     let c = cap.get(i + 1).unwrap();
                     let color = parse_hex(c.as_str());
@@ -395,7 +394,7 @@ impl From<&str> for ColorLevels {
                 }
             }
         } else if HEX8.is_match(&s) {
-            for (i, cap) in HEX8.captures_iter(&s).enumerate() {
+            for cap in HEX8.captures_iter(&s) {
                 for i in 0..4 {
                     let c = cap.get(i + 1).unwrap();
                     levels[i] = parse_hex(c.as_str()) as f64;

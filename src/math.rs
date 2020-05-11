@@ -68,7 +68,7 @@ pub fn map(start1: i32, end1: i32, start2: i32, end2: i32) -> Vec<f64> {
         let mut values = Vec::new();
         let a = (end2 - start2) as f64 / (end1 - start1) as f64;
         let mut d = start2 as f64;
-        for i in start1..end1 {
+        for _ in start1..end1 {
             values.push(d);
             d += a;
         }

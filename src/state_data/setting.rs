@@ -86,20 +86,27 @@ impl StateData {
         self.settings.show_frame_rate = val;
     }
 
-    /// Get current color mode.
+    /// Get current `ColorMode` for creating new colors.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// ```
     pub fn get_color_mode(&self) -> ColorMode {
         self.settings.color_mode
     }
-    /// Set current color mode.
+
+    /// Set current `ColorMode` for creating new colors.
     pub fn color_mode(&mut self, mode: ColorMode) {
         self.settings.color_mode = mode;
     }
 
-    /// Get color maxes for the current mode.
+    /// Get `ColorMaxes` for all color modes.
     pub fn get_color_maxes(&self) -> ColorMaxes {
         self.settings.color_maxes
     }
-    /// Set color maxes for the current color mode.
+
+    /// Set `ColorMaxes` for the current `ColorMode`.
     pub fn color_maxes(&mut self, max1: u16, max2: u16, max3: u8, max_alpha: u8) {
         match self.get_color_mode() {
             ColorMode::Rgb => {
@@ -122,20 +129,19 @@ impl StateData {
         self.settings.bg_color
     }
 
-    /// Set the color used for the background. The default is transparent. This is typically used
-    /// in `StateData::on_update()` to clear the canvas at the start of each frame but it can also be
-    /// used in `StateData::on_start()` to set the background for the first frame if using
-    /// `StateData::no_loop()`. Or it can be used any time if the background needs to be set to a given
-    /// `Color`. To return to a transparent background use `StateData::no_background()`
+    /// Set the color used for the background. The default is "transparent". This is typically used
+    /// in `StateData::on_update()` to clear the canvas at the start of each frame but it can also
+    /// be used in `StateData::on_start()` to set the background for the first frame if using
+    /// `StateData::no_loop()`. Or it can be used any time if the background needs to be set to
+    /// a given color. To return to a transparent background use `StateData::no_background()`.
     ///
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     /// # let mut state = StateData::default();
-    ///
     /// state.background([128, 200, 0]);
-    /// assert_eq!(state.get_background(), Color::from([128, 200, 0]));
+    /// assert_eq!(state.get_background(), state.color([128, 200, 0]));
     /// ```
     pub fn background<C: Into<Color>>(&mut self, color: C) {
         let c = color.into();
@@ -144,26 +150,44 @@ impl StateData {
         self.renderer.clear();
     }
 
-    /// Disables the background color by setting it to transparent.
-    pub fn no_background(&mut self) {
-        self.settings.bg_color = Color::from("transparent");
-    }
-
-    /// Get the current color used to fill shapes.
-    pub fn get_fill(&self) -> Option<Color> {
-        self.settings.fill
-    }
-
-    /// Set the color used to fill shapes.
+    /// Disables the background color by setting it back to the default of "transparent".
     ///
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
-    /// let mut state = StateData::default();
+    /// # use pix_engine::prelude::*;
+    /// # let mut state = StateData::default();
+    /// state.no_background();
+    /// assert_eq!(state.get_background(), state.color("transparent"));
+    /// ```
+    pub fn no_background(&mut self) {
+        self.settings.bg_color = Color::from("transparent");
+    }
+
+    /// Get the current color used to fill shapes during draw operations. The default is `None`.
+    /// Use `StateData::fill()` to set a fill color.
     ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # let mut state = StateData::default();
     /// state.fill([128, 200, 0]);
-    /// assert_eq!(state.get_fill(), Some(Color::from([128, 200, 0])));
+    /// assert_eq!(state.get_fill(), Some(state.color([128, 200, 0])));
+    /// ```
+    pub fn get_fill(&self) -> Option<Color> {
+        self.settings.fill
+    }
+
+    /// Set the color used to fill shapes during draw operations.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # let mut state = StateData::default();
+    /// state.fill([128, 200, 0]);
+    /// assert_eq!(state.get_fill(), Some(state.color([128, 200, 0])));
     /// ```
     pub fn fill<C: Into<Color>>(&mut self, color: C) {
         let c = color.into();
@@ -171,16 +195,16 @@ impl StateData {
         self.renderer.fill(self.settings.fill);
     }
 
-    /// Disable filling shapes.
+    /// Disable filling shapes during draw operations by setting it back to `None`.
     ///
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
-    /// let mut state = StateData::default();
+    /// # use pix_engine::prelude::*;
+    /// # let mut state = StateData::default();
     ///
     /// state.fill([128, 200, 0]);
-    /// assert_eq!(state.get_fill(), Some(Color::from([128, 200, 0])));
+    /// assert_eq!(state.get_fill(), Some(state.color([128, 200, 0])));
     /// state.no_fill();
     /// assert_eq!(state.get_fill(), None);
     /// ```
@@ -189,18 +213,49 @@ impl StateData {
         self.renderer.fill(self.settings.fill);
     }
 
-    /// Get the current color used to outline shapes.
+    /// Get the current color used to outline shapes during draw operations. The default is `None`.
+    /// Use `StateData::stroke()` to set a fill color.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # let mut state = StateData::default();
+    /// state.stroke([128, 200, 0]);
+    /// assert_eq!(state.get_stroke(), Some(state.color([128, 200, 0])));
+    /// ```
     pub fn get_stroke(&self) -> Option<Color> {
         self.settings.stroke
     }
-    /// Set the color used to outline shapes. Pass None to disable outlines.
+
+    /// Set the color used to outline shapes during draw operations.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # let mut state = StateData::default();
+    /// state.stroke([128, 200, 0]);
+    /// assert_eq!(state.get_stroke(), Some(state.color([128, 200, 0])));
+    /// ```
     pub fn stroke<C: Into<Color>>(&mut self, color: C) {
         let c = color.into();
         self.settings.stroke = Some(c);
         self.renderer.stroke(self.settings.stroke);
     }
-    /// Disable outlining shapes.
-    /// Shortcut for `StateData::set_stroke(None)`.
+
+    /// Disable outlining shapes during draw operations by setting it back to `None`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # let mut state = StateData::default();
+    /// state.stroke([128, 200, 0]);
+    /// assert_eq!(state.get_stroke(), Some(state.color([128, 200, 0])));
+    /// state.no_stroke();
+    /// assert_eq!(state.get_stroke(), None);
+    /// ```
     pub fn no_stroke(&mut self) {
         self.settings.stroke = None;
         self.renderer.stroke(self.settings.stroke);

@@ -1,5 +1,4 @@
-#![allow(unused_variables)]
-// #![warn(missing_docs)]
+// #![deny(warnings, missing_docs)]
 
 //! # Getting Started
 //!
