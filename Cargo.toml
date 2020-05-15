@@ -1,8 +1,10 @@
 [package]
 name = "pix-engine"
 version = "0.3.3"
-license = "GPL-3.0-or-later"
+license = "MIT/Apache-2.0"
 description = "A simple, cross-platform graphics/UI engine framework with a minimal interface."
+categories = ["graphics", "gui", "multimedia", "rendering"]
+keywords = ["graphics", "ui", "gui", "rendering"]
 authors = ["Luke Petherbridge <me@lukeworks.tech>"]
 readme = "README.md"
 documentation = "https://github.com/lukexor/pix-engine"
