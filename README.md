@@ -14,14 +14,14 @@ A simple, cross-platform graphics/UI engine framework with a minimal interface.
 Update your `Cargo.toml` file to include pix-engine:
 
 ```
-pix-engine = "0.3.3"
+pix-engine = "0.3.4"
 ```
 
 The default driver is sdl2. Future versions will support wasm. To use it:
 
 ```
 pix-engine = {
-  version = "0.3.3",
+  version = "0.3.4",
   default-features = false,
   features = ["wasm-driver"],
 }

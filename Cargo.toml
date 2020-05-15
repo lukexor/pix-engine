@@ -1,6 +1,6 @@
 [package]
 name = "pix-engine"
-version = "0.3.3"
+version = "0.3.4"
 license = "MIT/Apache-2.0"
 description = "A simple, cross-platform graphics/UI engine framework with a minimal interface."
 categories = ["graphics", "gui", "multimedia", "rendering"]
