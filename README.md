@@ -11,22 +11,6 @@ A simple, cross-platform graphics/UI engine framework with a minimal interface.
 
 ## Usage
 
-Update your `Cargo.toml` file to include pix-engine:
-
-```
-pix-engine = "0.3.4"
-```
-
-The default driver is sdl2. Future versions will support wasm. To use it:
-
-```
-pix-engine = {
-  version = "0.3.4",
-  default-features = false,
-  features = ["wasm-driver"],
-}
-```
-
 In order to use the PixEngine, you need to implement the `State` interface on your
 application struct. There are three methods, only one of which is required:
 
