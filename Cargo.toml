@@ -1,6 +1,6 @@
 [package]
 name = "pix-engine"
-version = "0.3.5"
+version = "0.4.0"
 license = "MIT/Apache-2.0"
 description = "A simple, cross-platform graphics/UI engine framework with a minimal interface."
 categories = ["graphics", "gui", "multimedia", "rendering"]
@@ -12,17 +12,6 @@ repository = "https://github.com/lukexor/pix-engine.git"
 homepage = "https://github.com/lukexor/pix-engine"
 edition = "2018"
 
-[lib]
-name = "pix_engine"
-path = "src/lib.rs"
-
 [dependencies]
-png = "0.16.1"
-rand = "0.7.3"
-sdl2 = { version = "0.33.0", default-features = false, features = ["unsafe_textures"], optional = true }
-wasm-bindgen = { version = "0.2.59", optional = true }
-
-[features]
-default = ["sdl2-driver"]
-sdl2-driver = ["sdl2"]
-wasm-driver = ["wasm-bindgen"]
+rand = "0.7"
+sdl2 = { version = "0.34", features = ["gfx", "image", "mixer", "ttf"] }
