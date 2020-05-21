@@ -13,4 +13,17 @@
 //! TODO
 //!
 
+#[macro_use]
 pub mod color;
+#[macro_use]
+pub mod math;
+
+/// Re-exports most commonly used structs, traits, and functions.
+pub mod prelude {
+    use super::*;
+    pub use color::{constants::*, Hsv, Rgb};
+    pub use hsv;
+    pub use math::*;
+    pub use random;
+    pub use rgb;
+}
