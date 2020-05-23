@@ -302,9 +302,7 @@ impl Rgb {
     /// ```
     pub fn lerp(self, c2: Rgb, amt: f32) -> Rgb {
         let amt = constrainf(amt, 0.0, 1.0);
-
         let lerp = |start, stop, amt| amt * (stop as f32 - start as f32) + start as f32;
-
         let r = lerp(self.r, c2.r, amt).round();
         let g = lerp(self.g, c2.g, amt).round();
         let b = lerp(self.b, c2.b, amt).round();
