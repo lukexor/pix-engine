@@ -165,7 +165,7 @@ impl Image {
     }
 
     /// Saves a image out to a png file
-    pub fn save_to_file(&mut self, file: &str) -> PixEngineResult<()> {
+    pub fn save_to_file(&self, file: &str) -> PixEngineResult<()> {
         use std::path::PathBuf;
         let path = PathBuf::from(file);
         let png_file = BufWriter::new(std::fs::File::create(&path)?);
