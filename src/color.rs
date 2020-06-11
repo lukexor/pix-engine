@@ -6,14 +6,15 @@
 //! Values can be provided as either integer or floating point. Floating point values will be
 //! rounded to the nearest RGBA screen color for drawing.
 //!
-//! The number of parameters provided alter how they are interpreted:
+//! The number of parameters provided alter how they are interpreted. Optional values are in square
+//! brackets:
 //!
 //! # Syntax
 //!
 //! ```text
 //! rgb!(gray);
 //! rgb!(gray, [alpha]);
-//! rgb!(v1, v2, v3, [alpha]);
+//! rgb!(red, green, blue, [alpha]);
 //! rgb!(hexidecimal);
 //! rgb!(array_slice);
 //! NAMED_COLOR;
@@ -32,6 +33,8 @@
 //! - **hexidecimal**: A hexadecimal string value (in 3, 4, 6, or 8 digit formats, e.g. '#FF0000').
 //! - **slice**: An array slice containing red, green, blue or hue, saturation, value channels, and
 //!   optionally alpha.
+//!
+//! There are also methods to create randomized colors. See `Other Examples` for details.
 //!
 //! # Grayscale Examples
 //!
@@ -114,12 +117,42 @@
 //! let c = Rgb::from_slice(&vals[..]).unwrap(); // RGBA slice
 //! assert_eq!(c.channels(), (128, 64, 0, 128));
 //! ```
+//!
+//! # Other Examples
+//!
+//! ```
+//! use pix_engine::prelude::*;
+//!
+//! let c = Rgb::random();
+//! // `c.channels()` will return something like:
+//! // (207, 12, 217, 255)
+//!
+//! let c = Rgb::random_alpha();
+//! // `c.channels()` will return something like:
+//! // (132, 159, 233, 76)
+//!
+//! let c = Hsv::random();
+//! // `c.channels()` will return something like:
+//! // (153.0565, 0.8440677, 0.7508346, 1.0)
+//! assert!(c.hue() >= 0.0 && c.hue() <= 360.0);
+//! assert!(c.saturation() >= 0.0 && c.saturation() <= 1.0);
+//! assert!(c.value() >= 0.0 && c.value() <= 1.0);
+//! assert_eq!(c.alpha(), 1.0);
+//!
+//! let c = Hsv::random_alpha();
+//! // `c.channels()` will return something like:
+//! // (268.85184, 0.8359635, 0.004390478, 0.5656874)
+//! assert!(c.hue() >= 0.0 && c.hue() <= 360.0);
+//! assert!(c.saturation() >= 0.0 && c.saturation() <= 1.0);
+//! assert!(c.value() >= 0.0 && c.value() <= 1.0);
+//! assert!(c.alpha() >= 0.0 && c.alpha() <= 1.0);
+//! ```
 
-use crate::math::constrainf;
+use crate::{math::constrainf, random, randomf};
 use approx::AbsDiffEq;
-use std::{error, fmt, str::FromStr};
+use std::{convert::TryFrom, error, fmt, str::FromStr};
 
-/// # Create an RGB Color.
+/// # Create an `Rgb` Color.
 ///
 /// ```
 /// use pix_engine::prelude::*;
@@ -143,7 +176,7 @@ macro_rules! rgb {
     };
 }
 
-/// # Create an HSV Color.
+/// # Create an `Hsv` Color.
 ///
 /// ```
 /// use pix_engine::prelude::*;
@@ -168,6 +201,83 @@ macro_rules! hsv {
     };
 }
 
+/// A general `Color` in a specific format like Rgb or Hsv.
+///
+/// # Examples
+/// ```
+/// use pix_engine::prelude::*;
+/// use std::convert::TryFrom;
+///
+/// let c = Color::Rgb(rgb!(255, 0, 0));
+/// if let Color::Rgb(rgb) = c {
+///     assert_eq!(rgb.channels(), (255, 0, 0, 255));
+/// }
+///
+/// let c = Color::try_from("#fff").unwrap();
+/// if let Color::Rgb(rgb) = c {
+///     assert_eq!(rgb.channels(), (255, 255, 255, 255));
+/// }
+/// ```
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum Color {
+    /// An Rgb instance of `Color`.
+    Rgb(Rgb),
+    /// A Hsv instance of `Color.
+    Hsv(Hsv),
+}
+
+impl FromStr for Color {
+    type Err = ColorError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Color::Rgb(Rgb::from_str(s)?))
+    }
+}
+
+impl TryFrom<&str> for Color {
+    type Error = ColorError;
+
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        Color::from_str(s)
+    }
+}
+
+impl Default for Color {
+    fn default() -> Self {
+        Self::Rgb(constants::TRANSPARENT)
+    }
+}
+
+impl From<Rgb> for Color {
+    fn from(rgb: Rgb) -> Self {
+        Color::Rgb(rgb)
+    }
+}
+
+impl From<Hsv> for Color {
+    fn from(hsv: Hsv) -> Self {
+        Color::Hsv(hsv)
+    }
+}
+
+impl From<Color> for Rgb {
+    fn from(color: Color) -> Self {
+        match color {
+            Color::Rgb(rgb) => rgb,
+            Color::Hsv(hsv) => hsv.to_rgb(),
+        }
+    }
+}
+
+impl From<Color> for Hsv {
+    fn from(color: Color) -> Self {
+        match color {
+            Color::Rgb(rgb) => rgb.to_hsv(),
+            Color::Hsv(hsv) => hsv,
+        }
+    }
+}
+
 /// An `Rgb` Color containing Red, Green, Blue, and Alpha channels.
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Rgb {
@@ -179,13 +289,39 @@ pub struct Rgb {
 
 impl Rgb {
     /// Creates a new `Rgb` Color.
+    ///
+    /// # Example
+    /// ```
+    /// use pix_engine::prelude::*;
+    ///
+    /// let c = Rgb::rgb(128, 64, 0);
+    /// assert_eq!(c.channels(), (128, 64, 0, 255));
+    /// ```
     pub const fn rgb(r: u8, g: u8, b: u8) -> Self {
         Self::rgba(r, g, b, 255)
     }
 
     /// Creates a new `Rgb` Color with Alpha.
+    ///
+    /// # Example
+    /// ```
+    /// use pix_engine::prelude::*;
+    ///
+    /// let c = Rgb::rgba(128, 64, 128, 128);
+    /// assert_eq!(c.channels(), (128, 64, 128, 128));
+    /// ```
     pub const fn rgba(r: u8, g: u8, b: u8, a: u8) -> Self {
         Self { r, g, b, a }
+    }
+
+    /// Creates a new `Rgb` Color with random red, green, and blue with alpha of 255.
+    pub fn random() -> Self {
+        Self::rgb(random!(255), random!(255), random!(255))
+    }
+
+    /// Creates a new `Rgb` Color with random red, green, blue and alpha.
+    pub fn random_alpha() -> Self {
+        Self::rgba(random!(255), random!(255), random!(255), random!(255))
     }
 
     /// Create a new `Rgb` Color from an array slice.
@@ -354,6 +490,14 @@ impl FromStr for Rgb {
     }
 }
 
+impl TryFrom<&str> for Rgb {
+    type Error = ColorError;
+
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        Rgb::from_str(s)
+    }
+}
+
 /// A `Hsv` Color containing Hue, Saturation, Value, and Alpha channels.
 #[derive(Default, Debug, Copy, Clone, PartialEq)]
 pub struct Hsv {
@@ -377,6 +521,16 @@ impl Hsv {
             v: constrainf(v, 0.0, 1.0),
             a: constrainf(a, 0.0, 1.0),
         }
+    }
+
+    /// Creates a new `Hsv` Color with random hue, saturation, and value with alpha of 1.0.
+    pub fn random() -> Self {
+        Self::hsv(randomf!(360.0), randomf!(1.0), randomf!(1.0))
+    }
+
+    /// Creates a new `Hsv` Color with random hue, saturation, value and alpha.
+    pub fn random_alpha() -> Self {
+        Self::hsva(randomf!(360.0), randomf!(1.0), randomf!(1.0), randomf!(1.0))
     }
 
     /// Get the Hue channel

@@ -1,6 +1,6 @@
 //! Math related types, constants and utility functions.
 
-use num_traits::{real::Real, Num};
+use num_traits::{real::Real, Num, NumCast};
 use rand::{self, distributions::uniform::SampleUniform, Rng};
 use std::{
     cmp,
@@ -26,11 +26,84 @@ pub fn random<T: Num + SampleUniform, V: Into<Range<T>>>(val: V) -> T {
 #[macro_export]
 macro_rules! random {
     ($v:expr) => {
-        $crate::prelude::random(0..$v);
+        $crate::math::random(0..$v);
     };
     ($s:expr, $e:expr) => {
-        $crate::prelude::random($s..$e);
+        $crate::math::random($s..$e);
     };
+}
+
+/// Returns a random floating point number within a range.
+///
+/// # Examples
+///
+/// ```
+/// use pix_engine::prelude::*;
+///
+/// let x = randomf!(100.0); // x will range from (0.0..100.0]
+/// let y = randomf!(20.0, 50.0); // x will range from (20.0..50.0]
+/// ```
+#[macro_export]
+macro_rules! randomf {
+    ($v:expr) => {
+        $crate::math::random(0.0..$v);
+    };
+    ($s:expr, $e:expr) => {
+        $crate::math::random($s..$e);
+    };
+}
+
+/// Remaps a number from one range to another
+///
+/// # Example
+///
+/// ```
+/// use pix_engine::prelude::*;
+///
+/// let value = 25;
+/// let m = map(value, 0, 100, 0, 800);
+/// assert_eq!(m, Some(200));
+///
+/// let value = 50.0;
+/// let m = map(value, 0.0, 100.0, 0.0, 1.0);
+/// assert_eq!(m, Some(0.5));
+/// ```
+pub fn map<T>(value: T, start1: T, end1: T, start2: T, end2: T) -> Option<T>
+where
+    T: Copy + NumCast + PartialOrd + AddAssign,
+{
+    let value = <f64 as NumCast>::from(value)?;
+    let start1 = <f64 as NumCast>::from(start1)?;
+    let end1 = <f64 as NumCast>::from(end1)?;
+    let start2 = <f64 as NumCast>::from(start2)?;
+    let end2 = <f64 as NumCast>::from(end2)?;
+    let new_val = (value - start1) / (end1 - start1) * (end2 - start2) + start2;
+    let map = if start2 < end2 {
+        constrainf(new_val, start2, end2)
+    } else {
+        constrainf(new_val, end2, start2)
+    };
+    T::from(map)
+}
+
+/// Linear interpolates between two values by a given amount.
+///
+/// # Examples
+///
+/// ```
+/// use pix_engine::math::lerp;
+///
+/// let start = 0.0;
+/// let end = 5.0;
+/// let amount = 0.5;
+/// let value = lerp(start, end, amount);
+/// assert_eq!(value, 2.5);
+/// ```
+pub fn lerp<T>(start: T, end: T, amount: T) -> T
+where
+    T: Copy + Num + PartialOrd,
+{
+    (T::one() - amount) * start + amount * end
 }
 
 /// Linear interpolates values for a range of independent values based on depdendent values.
@@ -38,7 +111,14 @@ macro_rules! random {
 /// # Examples
 ///
 /// ```
-/// use pix_engine::prelude::*;
+/// use pix_engine::math::lerp_map;
+///
+/// let x1 = 0;
+/// let x2 = 5;
+/// let y1 = 0;
+/// let y2 = 10;
+/// let values = lerp_map(x1, x2, y1, y2);
+/// assert_eq!(values, vec![0, 2, 4, 6, 8, 10]);
 ///
 /// let x1 = 0.0;
 /// let x2 = 4.0;
@@ -99,4 +179,16 @@ pub fn constrain<T: Ord>(val: T, min: T, max: T) -> T {
 /// ```
 pub fn constrainf<T: Real>(val: T, min: T, max: T) -> T {
     val.min(max).max(min)
+}
+
+#[allow(missing_docs)]
+pub mod constants {
+    pub const INFINITY: f64 = std::f64::INFINITY;
+    pub const SQRT_2: f64 = std::f64::consts::SQRT_2;
+
+    pub const HALF_PI: f64 = std::f64::consts::PI / 2.0;
+    pub const PI: f64 = std::f64::consts::PI;
+    pub const QUARTER_PI: f64 = std::f64::consts::PI / 4.0;
+    pub const TAU: f64 = 2.0 * std::f64::consts::PI;
+    pub const TWO_PI: f64 = TAU;
 }

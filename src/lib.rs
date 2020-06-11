@@ -17,13 +17,31 @@
 pub mod color;
 #[macro_use]
 pub mod math;
+pub mod audio;
+pub mod draw;
+pub mod engine;
+pub mod event;
+pub mod image;
+pub mod renderer;
+pub mod state;
+#[macro_use]
+pub mod vector;
+
+mod common;
+
+pub use prelude::{PixEngine, PixError, PixResult, State, Stateful};
 
 /// Re-exports most commonly used structs, traits, and functions.
 pub mod prelude {
     use super::*;
-    pub use color::{constants::*, Hsv, Rgb};
-    pub use hsv;
-    pub use math::*;
-    pub use random;
-    pub use rgb;
+    pub use color::{constants::*, Color, Hsv, Rgb};
+    pub use common::{Error as PixError, Result as PixResult};
+    pub use draw::Rect;
+    pub use engine::PixEngine;
+    pub use event::*;
+    pub use image::Image;
+    pub use math::{constants::*, constrain, constrainf, map};
+    pub use state::{State, Stateful};
+    pub use vector::Vector;
+    pub use {hsv, random, randomf, rgb, vector};
 }
