@@ -72,6 +72,11 @@ impl State {
         &self.keys
     }
 
+    /// Returns if a key is currently being held.
+    pub fn key_pressed(&self, key: Keycode) -> bool {
+        self.keys.contains(&key)
+    }
+
     /// Returns the a list of the current mouse buttons being held.
     pub fn mouse_buttons(&self) -> &HashSet<MouseButton> {
         &self.mouse_buttons

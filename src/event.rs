@@ -3,7 +3,7 @@
 use crate::renderer::sdl::*;
 
 /// Wrapper around a concrete EventIterator.
-pub(crate) type EventIterator<'a> = SdlEventIterator<'a>;
+pub type EventIterator<'a> = SdlEventIterator<'a>;
 
 /// Wrapper around a concrete System or User Event.
 pub type Event = SdlEvent;

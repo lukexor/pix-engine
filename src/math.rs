@@ -181,6 +181,15 @@ pub fn constrainf<T: Real>(val: T, min: T, max: T) -> T {
     val.min(max).max(min)
 }
 
+/// Collision specific utility functions.
+pub mod collision {
+    /// Collision detection for basic circle shapes
+    /// Detects whether a 2D point (x, y) lies inside circle located at (cx, cy) of radius r.
+    pub fn inside_circle(x: i32, y: i32, cx: i32, cy: i32, r: u32) -> bool {
+        ((x - cx).pow(2) + (y - cy).pow(2)) < r.pow(2) as i32
+    }
+}
+
 #[allow(missing_docs)]
 pub mod constants {
     pub const INFINITY: f64 = std::f64::INFINITY;

@@ -17,6 +17,13 @@ pub enum Error {
     Other(Cow<'static, str>),
 }
 
+impl Error {
+    /// Creates a renderer error from anything that implements Display.
+    pub fn renderer<E: std::fmt::Display>(err: E) -> Self {
+        Self::Other(Cow::from(err.to_string()))
+    }
+}
+
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use Error::*;
@@ -34,6 +41,13 @@ impl std::error::Error for Error {
         None
     }
 }
+
+impl From<String> for Error {
+    fn from(err: String) -> Error {
+        Error::Other(Cow::from(err))
+    }
+}
+
 impl From<std::num::TryFromIntError> for Error {
     fn from(err: std::num::TryFromIntError) -> Error {
         Error::Other(Cow::from(err.to_string()))

@@ -8,11 +8,13 @@ use crate::{
 use sdl2::{
     gfx::primitives::{DrawRenderer, ToColor},
     pixels::PixelFormatEnum,
-    render::{Canvas, Texture, TextureCreator},
+    rect::Rect,
+    render::{Canvas, Texture, TextureCreator, TextureQuery},
+    ttf,
     video::{FullscreenType, Window, WindowContext},
-    EventPump, Sdl,
+    EventPump,
 };
-use std::{borrow::Cow, convert::TryFrom};
+use std::convert::TryFrom;
 
 /// Wrapper for Sdl2 EventPollIterator
 pub type SdlEventIterator<'a> = sdl2::event::EventPollIterator<'a>;
@@ -30,7 +32,8 @@ pub type SdlKeycode = sdl2::keyboard::Keycode;
 /// An SDL renderer implementation.
 pub struct SdlRenderer {
     title: String,
-    context: Sdl,
+    // context: Sdl,
+    ttf_context: ttf::Sdl2TtfContext,
     event_pump: EventPump,
     canvas: Canvas<Window>,
     texture_creator: TextureCreator<WindowContext>,
@@ -48,9 +51,10 @@ impl Rendering for SdlRenderer {
     fn init(settings: &RendererSettings) -> Result<Self> {
         let s = settings;
 
-        let context = sdl2::init()?;
-        let video_subsys = context.video()?;
-        let event_pump = context.event_pump()?;
+        let context = sdl2::init().map_err(Error::renderer)?;
+        let ttf_context = ttf::init().map_err(Error::renderer)?;
+        let video_subsys = context.video().map_err(Error::renderer)?;
+        let event_pump = context.event_pump().map_err(Error::renderer)?;
 
         // Set up window with options
         let win_width = (s.scale_x * s.width as f32).floor() as u32;
@@ -73,31 +77,38 @@ impl Rendering for SdlRenderer {
         }
 
         let mut canvas_builder = window_builder
-            .build()?
+            .build()
+            .map_err(Error::renderer)?
             .into_canvas()
             .accelerated()
             .target_texture();
         if s.vsync {
             canvas_builder = canvas_builder.present_vsync();
         }
-        let mut canvas = canvas_builder.build()?;
-        canvas.set_logical_size(win_width, win_height)?;
-        canvas.set_scale(s.scale_x, s.scale_y)?;
+        let mut canvas = canvas_builder.build().map_err(Error::renderer)?;
+        canvas
+            .set_logical_size(win_width, win_height)
+            .map_err(Error::renderer)?;
+        canvas
+            .set_scale(s.scale_x, s.scale_y)
+            .map_err(Error::renderer)?;
 
         let texture_creator: TextureCreator<WindowContext> = canvas.texture_creator();
-        let textures = vec![texture_creator.create_texture_streaming(
-            PixelFormatEnum::ARGB8888,
-            s.width,
-            s.height,
-        )?];
+        let textures = vec![texture_creator
+            .create_texture_streaming(PixelFormatEnum::ARGB8888, s.width, s.height)
+            .map_err(Error::renderer)?];
+
+        // let font = ttf_context.load_font("static/emulogic.ttf", 16)?;
 
         Ok(Self {
             title: s.title.to_owned(),
-            context,
+            // context,
+            ttf_context,
             event_pump,
             canvas,
             texture_creator,
             textures,
+            // font,
         })
     }
 
@@ -133,7 +144,10 @@ impl Rendering for SdlRenderer {
 
     /// Set the current window title.
     fn set_title(&mut self, title: &str) -> Result<()> {
-        self.canvas.window_mut().set_title(title)?;
+        self.canvas
+            .window_mut()
+            .set_title(title)
+            .map_err(Error::renderer)?;
         Ok(())
     }
 
@@ -179,15 +193,43 @@ impl Rendering for SdlRenderer {
     fn create_texture(&mut self, width: u32, height: u32) -> Result<usize> {
         let texture = self
             .texture_creator
-            .create_texture_streaming(None, width, height)?;
+            .create_texture_streaming(None, width, height)
+            .map_err(Error::renderer)?;
         self.textures.push(texture);
         Ok(self.textures.len())
     }
 
     /// Draw an array of pixels to the canvas.
     fn draw_pixels(&mut self, pixels: &[u8], pitch: usize) -> Result<()> {
-        self.textures[0].update(None, pixels, pitch)?;
-        self.canvas.copy(&self.textures[0], None, None)?;
+        self.textures[0]
+            .update(None, pixels, pitch)
+            .map_err(Error::renderer)?;
+        self.canvas
+            .copy(&self.textures[0], None, None)
+            .map_err(Error::renderer)?;
+        Ok(())
+    }
+
+    /// Draw text to the current canvas.
+    fn text(
+        &mut self,
+        text: &str,
+        x: i32,
+        y: i32,
+        fill: Option<Color>,
+        _stroke: Option<Color>,
+    ) -> Result<()> {
+        let font = self.ttf_context.load_font("static/emulogic.ttf", 16)?;
+        if let Some(fill) = fill {
+            let surface = font.render(text).blended(fill).map_err(Error::renderer)?;
+            let texture = self
+                .texture_creator
+                .create_texture_from_surface(&surface)
+                .map_err(Error::renderer)?;
+            let TextureQuery { width, height, .. } = texture.query();
+            self.canvas
+                .copy(&texture, None, Some(Rect::new(x, y, width, height)))?;
+        }
         Ok(())
     }
 
@@ -252,6 +294,29 @@ impl Rendering for SdlRenderer {
         }
         Ok(())
     }
+
+    /// Draw a ellipse to the current canvas.
+    fn ellipse(
+        &mut self,
+        x: i32,
+        y: i32,
+        width: u32,
+        height: u32,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()> {
+        let x = i16::try_from(x)?;
+        let y = i16::try_from(y)?;
+        let w = i16::try_from(width)?;
+        let h = i16::try_from(height)?;
+        if let Some(stroke) = stroke {
+            self.canvas.ellipse(x, y, w, h, stroke)?;
+        }
+        if let Some(fill) = fill {
+            self.canvas.filled_ellipse(x, y, w, h, fill)?;
+        }
+        Ok(())
+    }
 }
 
 impl ToColor for Color {
@@ -263,36 +328,6 @@ impl ToColor for Color {
     }
 }
 
-impl From<sdl2::video::WindowBuildError> for Error {
-    fn from(err: sdl2::video::WindowBuildError) -> Error {
-        Error::Other(Cow::from(err.to_string()))
-    }
-}
-impl From<sdl2::IntegerOrSdlError> for Error {
-    fn from(err: sdl2::IntegerOrSdlError) -> Error {
-        Error::Other(Cow::from(err.to_string()))
-    }
-}
-impl From<std::ffi::NulError> for Error {
-    fn from(err: std::ffi::NulError) -> Error {
-        Error::Other(Cow::from(err.to_string()))
-    }
-}
-impl From<sdl2::render::TextureValueError> for Error {
-    fn from(err: sdl2::render::TextureValueError) -> Error {
-        Error::Other(Cow::from(err.to_string()))
-    }
-}
-impl From<sdl2::render::UpdateTextureError> for Error {
-    fn from(err: sdl2::render::UpdateTextureError) -> Error {
-        Error::Other(Cow::from(err.to_string()))
-    }
-}
-impl From<String> for Error {
-    fn from(err: String) -> Error {
-        Error::Other(Cow::from(err))
-    }
-}
 impl From<Color> for sdl2::pixels::Color {
     fn from(color: Color) -> Self {
         let rgb = match color {

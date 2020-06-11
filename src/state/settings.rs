@@ -1,15 +1,37 @@
 //! Settings for the current engine State.
 
 use super::State;
-use crate::{color::Color, common::Result, renderer::Rendering};
+use crate::{
+    color::{constants::*, Color},
+    common::Result,
+    draw::DrawMode,
+    renderer::Rendering,
+};
 
 /// Several settings used to change various functionality of the engine.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub(crate) struct Settings {
     pub(crate) background: Color,
     pub(crate) fill: Option<Color>,
     pub(crate) stroke: Option<Color>,
+    pub(crate) text_size: u32,
     pub(crate) show_frame_rate: bool,
+    pub(crate) rect_mode: DrawMode,
+    pub(crate) ellipse_mode: DrawMode,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            background: Color::Rgb(TRANSPARENT),
+            fill: Some(Color::Rgb(BLACK)),
+            stroke: None,
+            text_size: 16,
+            show_frame_rate: false,
+            rect_mode: DrawMode::Corner,
+            ellipse_mode: DrawMode::Corner,
+        }
+    }
 }
 
 impl State {
@@ -46,5 +68,20 @@ impl State {
     /// Change the rendering scale of the current canvas.
     pub fn set_scale(&mut self, x: f32, y: f32) -> Result<()> {
         self.renderer.set_scale(x, y)
+    }
+
+    /// Change the text size for drawing to the current canvas.
+    pub fn text_size(&mut self, size: u32) {
+        self.settings.text_size = size;
+    }
+
+    /// Change the way parameters are interpreted for drawing squares and rectangles.
+    pub fn rect_mode(&mut self, mode: DrawMode) {
+        self.settings.rect_mode = mode;
+    }
+
+    /// Change the way parameters are interpreted for drawing circles and ellipses.
+    pub fn ellipse_mode(&mut self, mode: DrawMode) {
+        self.settings.ellipse_mode = mode;
     }
 }

@@ -109,6 +109,16 @@ pub(crate) trait Rendering {
     /// Draw an array of pixels to the current canvas.
     fn draw_pixels(&mut self, pixels: &[u8], pitch: usize) -> Result<()>;
 
+    /// Draw text to the current canvas.
+    fn text(
+        &mut self,
+        text: &str,
+        x: i32,
+        y: i32,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()>;
+
     /// Draw a line to the current canvas.
     fn line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, stroke: Option<Color>) -> Result<()>;
 
@@ -128,6 +138,17 @@ pub(crate) trait Rendering {
 
     /// Draw a rectangle to the current canvas.
     fn rect(
+        &mut self,
+        x: i32,
+        y: i32,
+        width: u32,
+        height: u32,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()>;
+
+    /// Draw a ellipse to the current canvas.
+    fn ellipse(
         &mut self,
         x: i32,
         y: i32,
