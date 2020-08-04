@@ -201,6 +201,16 @@ impl Stateful for Asteroids {
         } else if s.keys().contains(&Keycode::Right) {
             self.ship.angle += 5.0 * elapsed;
         }
+        if s.key_pressed(Keycode::Space) {
+            self.bullets.push(SpaceObj::new(
+                0,
+                self.ship.x,
+                self.ship.y,
+                BULLET_SPEED * self.ship.angle.sin(),
+                BULLET_SPEED * -self.ship.angle.cos(),
+                0.0,
+            ));
+        }
 
         // Thrust
         if s.key_pressed(Keycode::Up) {

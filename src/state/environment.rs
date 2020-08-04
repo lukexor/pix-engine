@@ -82,6 +82,11 @@ impl State {
         &self.mouse_buttons
     }
 
+    /// Returns if a mouse button is currently being held.
+    pub fn mouse_pressed(&self, btn: MouseButton) -> bool {
+        self.mouse_buttons.contains(&btn)
+    }
+
     /// Returns the current mouse position coordinates as (x, y).
     pub fn mouse_pos(&self) -> (i32, i32) {
         self.mouse_pos

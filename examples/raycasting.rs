@@ -6,7 +6,7 @@ const NORTH: usize = 0;
 const SOUTH: usize = 1;
 const EAST: usize = 2;
 const WEST: usize = 3;
-const SCALE: f32 = 2.0;
+const SCALE: f32 = 1.0;
 const WIDTH: u32 = 1024;
 const HEIGHT: u32 = 768;
 
@@ -36,6 +36,7 @@ struct RayScene {
     cells: Vec<Cell>,
     edges: Vec<Edge>,
     points: Vec<Vector>,
+    source: [(i32, i32); 11],
     polygons: Vec<(f64, Vector)>,
     xcells: u32,
     ycells: u32,
@@ -56,6 +57,7 @@ impl RayScene {
             cells,
             edges: Vec::new(),
             points: Vec::new(),
+            source: [(0, 0); 11],
             polygons: Vec::new(),
             xcells: xcells as u32,
             ycells: ycells as u32,
@@ -261,6 +263,46 @@ impl RayScene {
         // Return the POINT OF INTERSECTION
         Some((Vector::new_2d(r_px + r_dx * t1, r_py + r_dy * t1), t1))
     }
+
+    fn draw_visibility_polygons(
+        &mut self,
+        x: i32,
+        y: i32,
+        color: Rgb,
+        s: &mut State,
+    ) -> PixResult<bool> {
+        self.calc_visibility_polygons((x, y).into());
+
+        if !self.polygons.is_empty() {
+            s.fill(color);
+            s.no_stroke();
+            // s.stroke(color);
+            for i in 0..self.polygons.len() - 1 {
+                let p1 = self.polygons[i].1;
+                let p2 = self.polygons[i + 1].1;
+                s.triangle(
+                    x,
+                    y,
+                    p1.x.round() as i32,
+                    p1.y.round() as i32,
+                    p2.x.round() as i32,
+                    p2.y.round() as i32,
+                )?;
+            }
+            // Draw last triangle, connecting back to first point.
+            let p1 = self.polygons.last().unwrap().1;
+            let p2 = self.polygons[0].1;
+            s.triangle(
+                x,
+                y,
+                p1.x.round() as i32,
+                p1.y.round() as i32,
+                p2.x.round() as i32,
+                p2.y.round() as i32,
+            )?;
+        }
+        Ok(true)
+    }
 }
 
 impl Stateful for RayScene {
@@ -306,47 +348,40 @@ impl Stateful for RayScene {
     }
 
     fn on_update(&mut self, s: &mut State) -> PixResult<bool> {
-        s.background(DARK_GRAY);
-        let (mx, my) = s.mouse_pos();
-        self.calc_visibility_polygons((mx, my).into());
+        s.background(BLACK);
 
-        if !self.polygons.is_empty() {
-            s.fill(YELLOW);
-            s.stroke(YELLOW);
-            for i in 0..self.polygons.len() - 1 {
-                let p1 = self.polygons[i].1;
-                let p2 = self.polygons[i + 1].1;
-                s.triangle(
-                    mx,
-                    my,
-                    p1.x.round() as i32,
-                    p1.y.round() as i32,
-                    p2.x.round() as i32,
-                    p2.y.round() as i32,
-                )?;
-            }
-            // Draw last triangle, connecting back to first point.
-            let p1 = self.polygons.last().unwrap().1;
-            let p2 = self.polygons[0].1;
-            s.triangle(
-                mx,
-                my,
-                p1.x.round() as i32,
-                p1.y.round() as i32,
-                p2.x.round() as i32,
-                p2.y.round() as i32,
+        let fuzzy_radius = 10.0;
+        self.source[0] = s.mouse_pos();
+
+        for i in 0..10 {
+            let (sin, cos) = (i as f64 * (TWO_PI / 10.0)).sin_cos();
+            let dx = (cos * fuzzy_radius).round() as i32;
+            let dy = (sin * fuzzy_radius).round() as i32;
+            self.source[i + 1] = (dx, dy);
+            self.draw_visibility_polygons(
+                self.source[0].0 + dx,
+                self.source[0].1 + dy,
+                rgb!(255, 255, 255, 50),
+                s,
             )?;
         }
 
-        // s.fill(BLUE);
-        // s.no_stroke();
-        // for cell in self.cells.iter().filter(|c| c.exists) {
-        //     s.square(
-        //         cell.pos.x.round() as i32,
-        //         cell.pos.y.round() as i32,
-        //         BLOCK_SIZE + 1,
-        //     )?;
-        // }
+        self.draw_visibility_polygons(self.source[0].0, self.source[0].1, WHITE, s)?;
+
+        s.fill(RED);
+        for source in self.source.iter() {
+            s.circle(source.0, source.1, 1)?;
+        }
+
+        s.fill(BLUE);
+        s.no_stroke();
+        for cell in self.cells.iter().filter(|c| c.exists) {
+            s.square(
+                cell.pos.x.round() as i32,
+                cell.pos.y.round() as i32,
+                BLOCK_SIZE + 1,
+            )?;
+        }
 
         for e in self.edges.iter() {
             s.stroke(FIRE_BRICK);
