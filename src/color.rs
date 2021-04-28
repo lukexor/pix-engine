@@ -172,7 +172,7 @@ macro_rules! rgb {
         rgb!($r, $g, $b, 255)
     };
     ($r:expr, $g:expr, $b:expr, $a:expr) => {
-        $crate::prelude::Rgb::rgba($r as u8, $g as u8, $b as u8, $a as u8)
+        $crate::prelude::Rgb::rgba($r, $g, $b, $a)
     };
 }
 
@@ -197,7 +197,7 @@ macro_rules! hsv {
         hsv!($h, $s, $v, 1.0)
     };
     ($h:expr, $s:expr, $v:expr, $a:expr) => {
-        $crate::prelude::Hsv::hsva($h as f32, $s as f32, $v as f32, $a as f32)
+        $crate::prelude::Hsv::hsva($h, $s, $v, $a)
     };
 }
 
@@ -337,10 +337,10 @@ impl Rgb {
 
     /// Create a new `Rgb` Color from a u32 value.
     pub fn from_hex(hex: u32) -> Self {
-        let r = hex >> 16 & 0xFF;
-        let g = hex >> 8 & 0xFF;
-        let b = hex & 0xFF;
-        Self::rgba(r as u8, g as u8, b as u8, 255)
+        let r = (hex >> 16 & 0xFF) as u8;
+        let g = (hex >> 8 & 0xFF) as u8;
+        let b = (hex & 0xFF) as u8;
+        Self::rgba(r, g, b, 255)
     }
 
     /// Get the Red channel
@@ -395,7 +395,7 @@ impl Rgb {
     /// ```
     /// use pix_engine::prelude::*;
     ///
-    /// assert_eq!(rgb!(0, 0, 255).to_hsv(), hsv!(240, 1, 1)); // Blue
+    /// assert_eq!(rgb!(0, 0, 255).to_hsv(), hsv!(240.0, 1.0, 1.0)); // Blue
     /// ```
     pub fn to_hsv(self) -> Hsv {
         let r1 = self.r as f32 / 255.0;
@@ -419,7 +419,7 @@ impl Rgb {
             let s = chr / c_max;
             hsv!(h, s, c_max)
         } else {
-            hsv!(0, 0, c_max)
+            hsv!(0.0, 0.0, c_max)
         }
     }
 
@@ -439,10 +439,10 @@ impl Rgb {
     pub fn lerp(self, c2: Rgb, amt: f32) -> Rgb {
         let amt = constrainf(amt, 0.0, 1.0);
         let lerp = |start, stop, amt| amt * (stop as f32 - start as f32) + start as f32;
-        let r = lerp(self.r, c2.r, amt).round();
-        let g = lerp(self.g, c2.g, amt).round();
-        let b = lerp(self.b, c2.b, amt).round();
-        let a = lerp(self.a, c2.a, amt).round();
+        let r = lerp(self.r, c2.r, amt).round() as u8;
+        let g = lerp(self.g, c2.g, amt).round() as u8;
+        let b = lerp(self.b, c2.b, amt).round() as u8;
+        let a = lerp(self.a, c2.a, amt).round() as u8;
 
         rgb!(r, g, b, a)
     }
@@ -585,7 +585,7 @@ impl Hsv {
     /// ```
     /// use pix_engine::prelude::*;
     ///
-    /// assert_eq!(hsv!(240, 1, 1).to_rgb(), rgb!(0, 0, 255)); // Blue
+    /// assert_eq!(hsv!(240.0, 1.0, 1.0).to_rgb(), rgb!(0, 0, 255)); // Blue
     /// ```
     #[allow(clippy::many_single_char_names)]
     pub fn to_rgb(&self) -> Rgb {
@@ -596,10 +596,10 @@ impl Hsv {
             rgb!(gray, gray, gray)
         } else {
             let chroma = self.v * self.s;
-            let hue_six = self.h as f32 / 60.0;
+            let hue_six = self.h / 60.0;
             let x = chroma * (1.0 - (hue_six % 2.0 - 1.0).abs());
             let (r1, g1, b1) = match hue_six.floor() as usize {
-                0 => (chroma, x, 0.0),
+                0 | 6 => (chroma, x, 0.0),
                 1 => (x, chroma, 0.0),
                 2 => (0.0, chroma, x),
                 3 => (0.0, x, chroma),
@@ -624,8 +624,8 @@ impl Hsv {
     /// ```
     /// use pix_engine::prelude::*;
     ///
-    /// let from = hsv!(255, 0, 0);
-    /// let to = hsv!(0, 1, 1);
+    /// let from = hsv!(255.0, 0.0, 0.0);
+    /// let to = hsv!(0.0, 1.0, 1.0);
     /// let lerped = from.lerp(to, 0.5);
     /// assert_eq!(lerped.channels(), (127.5, 0.5, 0.5, 1.0));
     /// ```
@@ -839,44 +839,44 @@ pub mod constants {
 mod tests {
     #[test]
     fn test_hsv_to_rgb() {
-        assert_eq!(hsv!(0, 0, 0).to_rgb(), rgb!(0, 0, 0)); // Black
-        assert_eq!(hsv!(0, 0, 1).to_rgb(), rgb!(255, 255, 255)); // White
-        assert_eq!(hsv!(0, 1, 1).to_rgb(), rgb!(255, 0, 0)); // Red
-        assert_eq!(hsv!(120, 1, 1).to_rgb(), rgb!(0, 255, 0)); // Lime
-        assert_eq!(hsv!(240, 1, 1).to_rgb(), rgb!(0, 0, 255)); // Blue
-        assert_eq!(hsv!(60, 1, 1).to_rgb(), rgb!(255, 255, 0)); // Yellow
-        assert_eq!(hsv!(180, 1, 1).to_rgb(), rgb!(0, 255, 255)); // Cyan
-        assert_eq!(hsv!(300, 1, 1).to_rgb(), rgb!(255, 0, 255)); // Magenta
-        assert_eq!(hsv!(0, 0, 0.75).to_rgb(), rgb!(191, 191, 191)); // Silver
-        assert_eq!(hsv!(0, 0, 0.5).to_rgb(), rgb!(128, 128, 128)); // Gray
-        assert_eq!(hsv!(0, 1, 0.5).to_rgb(), rgb!(128, 0, 0)); // Maroon
-        assert_eq!(hsv!(60, 1, 0.5).to_rgb(), rgb!(128, 128, 0)); // Olive
-        assert_eq!(hsv!(120, 1, 0.5).to_rgb(), rgb!(0, 128, 0)); // Green
-        assert_eq!(hsv!(300, 1, 0.5).to_rgb(), rgb!(128, 0, 128)); // Purple
-        assert_eq!(hsv!(180, 1, 0.5).to_rgb(), rgb!(0, 128, 128)); // Teal
-        assert_eq!(hsv!(240, 1, 0.5).to_rgb(), rgb!(0, 0, 128)); // Navy
+        assert_eq!(hsv!(0.0, 0.0, 0.0).to_rgb(), rgb!(0, 0, 0)); // Black
+        assert_eq!(hsv!(0.0, 0.0, 1.0).to_rgb(), rgb!(255, 255, 255)); // White
+        assert_eq!(hsv!(0.0, 1.0, 1.0).to_rgb(), rgb!(255, 0, 0)); // Red
+        assert_eq!(hsv!(120.0, 1.0, 1.0).to_rgb(), rgb!(0, 255, 0)); // Lime
+        assert_eq!(hsv!(240.0, 1.0, 1.0).to_rgb(), rgb!(0, 0, 255)); // Blue
+        assert_eq!(hsv!(60.0, 1.0, 1.0).to_rgb(), rgb!(255, 255, 0)); // Yellow
+        assert_eq!(hsv!(180.0, 1.0, 1.0).to_rgb(), rgb!(0, 255, 255)); // Cyan
+        assert_eq!(hsv!(300.0, 1.0, 1.0).to_rgb(), rgb!(255, 0, 255)); // Magenta
+        assert_eq!(hsv!(0.0, 0.0, 0.75).to_rgb(), rgb!(191, 191, 191)); // Silver
+        assert_eq!(hsv!(0.0, 0.0, 0.5).to_rgb(), rgb!(128, 128, 128)); // Gray
+        assert_eq!(hsv!(0.0, 1.0, 0.5).to_rgb(), rgb!(128, 0, 0)); // Maroon
+        assert_eq!(hsv!(60.0, 1.0, 0.5).to_rgb(), rgb!(128, 128, 0)); // Olive
+        assert_eq!(hsv!(120.0, 1.0, 0.5).to_rgb(), rgb!(0, 128, 0)); // Green
+        assert_eq!(hsv!(300.0, 1.0, 0.5).to_rgb(), rgb!(128, 0, 128)); // Purple
+        assert_eq!(hsv!(180.0, 1.0, 0.5).to_rgb(), rgb!(0, 128, 128)); // Teal
+        assert_eq!(hsv!(240.0, 1.0, 0.5).to_rgb(), rgb!(0, 0, 128)); // Navy
     }
 
     #[test]
     fn test_rgb_to_hsv() {
         use approx::abs_diff_eq;
 
-        assert_eq!(rgb!(0, 0, 0).to_hsv(), hsv!(0, 0, 0)); // Black
-        assert_eq!(rgb!(255, 255, 255).to_hsv(), hsv!(0, 0, 1)); // White
-        assert_eq!(rgb!(255, 0, 0).to_hsv(), hsv!(0, 1, 1)); // Red
-        assert_eq!(rgb!(0, 255, 0).to_hsv(), hsv!(120, 1, 1)); // Lime
-        assert_eq!(rgb!(0, 0, 255).to_hsv(), hsv!(240, 1, 1)); // Blue
-        assert_eq!(rgb!(255, 255, 0).to_hsv(), hsv!(60, 1, 1)); // Yellow
-        assert_eq!(rgb!(0, 255, 255).to_hsv(), hsv!(180, 1, 1)); // Cyan
+        assert_eq!(rgb!(0, 0, 0).to_hsv(), hsv!(0.0, 0.0, 0.0)); // Black
+        assert_eq!(rgb!(255, 255, 255).to_hsv(), hsv!(0.0, 0.0, 1.0)); // White
+        assert_eq!(rgb!(255, 0, 0).to_hsv(), hsv!(0.0, 1.0, 1.0)); // Red
+        assert_eq!(rgb!(0, 255, 0).to_hsv(), hsv!(120.0, 1.0, 1.0)); // Lime
+        assert_eq!(rgb!(0, 0, 255).to_hsv(), hsv!(240.0, 1.0, 1.0)); // Blue
+        assert_eq!(rgb!(255, 255, 0).to_hsv(), hsv!(60.0, 1.0, 1.0)); // Yellow
+        assert_eq!(rgb!(0, 255, 255).to_hsv(), hsv!(180.0, 1.0, 1.0)); // Cyan
 
-        assert_eq!(rgb!(255, 0, 255).to_hsv(), hsv!(300, 1, 1)); // Magenta
-        abs_diff_eq!(rgb!(191, 191, 191).to_hsv(), hsv!(0, 0, 0.75)); // Silver
-        abs_diff_eq!(rgb!(128, 128, 128).to_hsv(), hsv!(0, 0, 0.5)); // Gray
-        abs_diff_eq!(rgb!(128, 0, 0).to_hsv(), hsv!(0, 1, 0.5)); // Maroon
-        abs_diff_eq!(rgb!(128, 128, 0).to_hsv(), hsv!(60, 1, 0.5)); // Olive
-        abs_diff_eq!(rgb!(0, 128, 0).to_hsv(), hsv!(120, 1, 0.5)); // Green
-        abs_diff_eq!(rgb!(128, 0, 128).to_hsv(), hsv!(300, 1, 0.5)); // Purple
-        abs_diff_eq!(rgb!(0, 128, 128).to_hsv(), hsv!(180, 1, 0.5)); // Teal
-        abs_diff_eq!(rgb!(0, 0, 128).to_hsv(), hsv!(240, 1, 0.5)); // Navy
+        assert_eq!(rgb!(255, 0, 255).to_hsv(), hsv!(300.0, 1.0, 1.0)); // Magenta
+        abs_diff_eq!(rgb!(191, 191, 191).to_hsv(), hsv!(0.0, 0.0, 0.75)); // Silver
+        abs_diff_eq!(rgb!(128, 128, 128).to_hsv(), hsv!(0.0, 0.0, 0.5)); // Gray
+        abs_diff_eq!(rgb!(128, 0, 0).to_hsv(), hsv!(0.0, 1.0, 0.5)); // Maroon
+        abs_diff_eq!(rgb!(128, 128, 0).to_hsv(), hsv!(60.0, 1.0, 0.5)); // Olive
+        abs_diff_eq!(rgb!(0, 128, 0).to_hsv(), hsv!(120.0, 1.0, 0.5)); // Green
+        abs_diff_eq!(rgb!(128, 0, 128).to_hsv(), hsv!(300.0, 1.0, 0.5)); // Purple
+        abs_diff_eq!(rgb!(0, 128, 128).to_hsv(), hsv!(180.0, 1.0, 0.5)); // Teal
+        abs_diff_eq!(rgb!(0, 0, 128).to_hsv(), hsv!(240.0, 1.0, 0.5)); // Navy
     }
 }
