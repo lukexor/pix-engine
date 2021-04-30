@@ -60,6 +60,11 @@ impl State {
         self.settings.stroke = None;
     }
 
+    /// Set whether the cursor is shown or not.
+    pub fn show_cursor(&mut self, show: bool) {
+        self.renderer.show_cursor(show);
+    }
+
     /// Set whether to show the current frame rate per second in the title or not.
     pub fn show_frame_rate(&mut self, show: bool) {
         self.settings.show_frame_rate = show;

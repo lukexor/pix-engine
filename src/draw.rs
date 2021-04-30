@@ -35,6 +35,11 @@ impl State {
         self.renderer.text(text, x, y, s.fill, s.stroke)
     }
 
+    /// Draw a point to the current canvas.
+    pub fn pixel(&mut self, x: i32, y: i32) -> Result<()> {
+        self.renderer.pixel(x, y, self.settings.stroke)
+    }
+
     /// Draw a triangle to the current canvas.
     pub fn line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32) -> Result<()> {
         self.renderer.line(x1, y1, x2, y2, self.settings.stroke)
@@ -54,6 +59,7 @@ impl State {
 
     /// Draw a rectangle to the current canvas.
     pub fn rect(&mut self, x: i32, y: i32, width: u32, height: u32) -> Result<()> {
+        self.env.render = true;
         // TODO Add rect_mode
         let s = &self.settings;
         self.renderer.rect(x, y, width, height, s.fill, s.stroke)

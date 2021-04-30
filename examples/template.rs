@@ -1,5 +1,6 @@
 use pix_engine::prelude::*;
 
+const TITLE: &str = "Example App";
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;
 
@@ -16,20 +17,23 @@ impl Stateful for App {
         s.show_frame_rate(true);
         Ok(true)
     }
+
     fn on_update(&mut self, _s: &mut State) -> PixResult<bool> {
         Ok(true)
     }
+
     fn on_stop(&mut self, _s: &mut State) -> PixResult<bool> {
         Ok(true)
     }
 }
 
 pub fn main() {
-    let mut engine = PixEngine::create("Window Title", WIDTH, HEIGHT)
+    let mut engine = PixEngine::create(TITLE, WIDTH, HEIGHT)
         .position_centered()
-        .vsync_enabled()
         .build()
         .expect("valid engine");
+
     let mut app = App::new();
+
     engine.run(&mut app).expect("ran successfully");
 }

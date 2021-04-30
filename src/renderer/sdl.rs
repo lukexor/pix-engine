@@ -12,7 +12,7 @@ use sdl2::{
     render::{Canvas, Texture, TextureCreator, TextureQuery},
     ttf,
     video::{FullscreenType, Window, WindowContext},
-    EventPump,
+    EventPump, Sdl,
 };
 use std::convert::TryFrom;
 
@@ -32,7 +32,7 @@ pub type SdlKeycode = sdl2::keyboard::Keycode;
 /// An SDL renderer implementation.
 pub struct SdlRenderer {
     title: String,
-    // context: Sdl,
+    context: Sdl,
     ttf_context: ttf::Sdl2TtfContext,
     event_pump: EventPump,
     canvas: Canvas<Window>,
@@ -102,7 +102,7 @@ impl Rendering for SdlRenderer {
 
         Ok(Self {
             title: s.title.to_owned(),
-            // context,
+            context,
             ttf_context,
             event_pump,
             canvas,
@@ -115,6 +115,11 @@ impl Rendering for SdlRenderer {
     /// Clears the canvas to the current clear color.
     fn clear(&mut self) {
         self.canvas.clear();
+    }
+
+    /// Set whether the cursor is shown or not.
+    fn show_cursor(&mut self, show: bool) {
+        self.context.mouse().show_cursor(show);
     }
 
     /// Sets the color used by the renderer to draw to the current canvas.
@@ -154,13 +159,15 @@ impl Rendering for SdlRenderer {
     /// Width of the current canvas.
     fn width(&self) -> u32 {
         let (width, _) = self.canvas.output_size().unwrap_or((0, 0));
-        width
+        let (scale_x, _) = self.canvas.scale();
+        ((width as f32) / scale_x) as u32
     }
 
     /// Height of the current canvas.
     fn height(&self) -> u32 {
         let (_, height) = self.canvas.output_size().unwrap_or((0, 0));
-        height
+        let (_, scale_y) = self.canvas.scale();
+        ((height as f32) / scale_y) as u32
     }
 
     /// Scale the current canvas.
@@ -229,6 +236,16 @@ impl Rendering for SdlRenderer {
             let TextureQuery { width, height, .. } = texture.query();
             self.canvas
                 .copy(&texture, None, Some(Rect::new(x, y, width, height)))?;
+        }
+        Ok(())
+    }
+
+    /// Draw a pixel to the current canvas.
+    fn pixel(&mut self, x: i32, y: i32, stroke: Option<Color>) -> Result<()> {
+        let x = i16::try_from(x)?;
+        let y = i16::try_from(y)?;
+        if let Some(stroke) = stroke {
+            self.canvas.pixel(x, y, stroke)?;
         }
         Ok(())
     }

@@ -1,4 +1,9 @@
-#![warn(missing_debug_implementations, rust_2018_idioms, missing_docs)]
+#![warn(
+    rust_2018_idioms,
+    missing_copy_implementations,
+    missing_debug_implementations,
+    missing_docs
+)]
 
 //! # Pix-Engine
 //!
@@ -15,6 +20,7 @@
 
 use include_dir::{include_dir, Dir};
 
+// Bundles static binary assets with crate
 const _STATIC_DIR: Dir<'_> = include_dir!("./static");
 
 #[macro_use]
@@ -27,6 +33,7 @@ pub mod engine;
 pub mod event;
 pub mod image;
 pub mod renderer;
+pub mod shape;
 pub mod state;
 #[macro_use]
 pub mod vector;
@@ -44,8 +51,9 @@ pub mod prelude {
     pub use engine::PixEngine;
     pub use event::*;
     pub use image::Image;
-    pub use math::{collision, constants::*, constrain, constrainf, map};
+    pub use math::{constants::*, map, Scalar};
+    pub use shape::Circle;
     pub use state::{State, Stateful};
     pub use vector::Vector;
-    pub use {hsv, random, randomf, rgb, vector};
+    pub use {hsv, random, rgb, vector};
 }

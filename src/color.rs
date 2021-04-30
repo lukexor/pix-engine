@@ -148,9 +148,14 @@
 //! assert!(c.alpha() >= 0.0 && c.alpha() <= 1.0);
 //! ```
 
-use crate::{math::constrainf, random, randomf};
+use crate::random;
 use approx::AbsDiffEq;
-use std::{convert::TryFrom, error, fmt, str::FromStr};
+use std::{
+    convert::TryFrom,
+    error, fmt,
+    ops::{Deref, DerefMut},
+    str::FromStr,
+};
 
 /// # Create an `Rgb` Color.
 ///
@@ -224,6 +229,31 @@ pub enum Color {
     Rgb(Rgb),
     /// A Hsv instance of `Color.
     Hsv(Hsv),
+}
+
+impl Color {
+    /// Creates a new `Rgb` Color with random red, green, and blue with alpha of 255.
+    pub fn random() -> Self {
+        Color::Rgb(Rgb::random())
+    }
+
+    /// Creates a new `Rgb` Color with random red, green, blue and alpha.
+    pub fn random_alpha() -> Self {
+        Color::Rgb(Rgb::random_alpha())
+    }
+}
+
+impl Deref for Color {
+    type Target = Self;
+    fn deref(&self) -> &Self::Target {
+        self
+    }
+}
+
+impl DerefMut for Color {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self
+    }
 }
 
 impl FromStr for Color {
@@ -437,7 +467,7 @@ impl Rgb {
     /// assert_eq!(lerped.channels(), (128, 50, 128, 255));
     /// ```
     pub fn lerp(self, c2: Rgb, amt: f32) -> Rgb {
-        let amt = constrainf(amt, 0.0, 1.0);
+        let amt = amt.clamp(0.0, 1.0);
         let lerp = |start, stop, amt| amt * (stop as f32 - start as f32) + start as f32;
         let r = lerp(self.r, c2.r, amt).round() as u8;
         let g = lerp(self.g, c2.g, amt).round() as u8;
@@ -516,21 +546,21 @@ impl Hsv {
     /// Creates a new `Hsv` Color with Alpha.
     pub fn hsva(h: f32, s: f32, v: f32, a: f32) -> Self {
         Self {
-            h: constrainf(h, 0.0, 360.0),
-            s: constrainf(s, 0.0, 1.0),
-            v: constrainf(v, 0.0, 1.0),
-            a: constrainf(a, 0.0, 1.0),
+            h: h.clamp(0.0, 360.0),
+            s: s.clamp(0.0, 1.0),
+            v: v.clamp(0.0, 1.0),
+            a: a.clamp(0.0, 1.0),
         }
     }
 
     /// Creates a new `Hsv` Color with random hue, saturation, and value with alpha of 1.0.
     pub fn random() -> Self {
-        Self::hsv(randomf!(360.0), randomf!(1.0), randomf!(1.0))
+        Self::hsv(random!(360.0), random!(1.0), random!(1.0))
     }
 
     /// Creates a new `Hsv` Color with random hue, saturation, value and alpha.
     pub fn random_alpha() -> Self {
-        Self::hsva(randomf!(360.0), randomf!(1.0), randomf!(1.0), randomf!(1.0))
+        Self::hsva(random!(360.0), random!(1.0), random!(1.0), random!(1.0))
     }
 
     /// Get the Hue channel
@@ -630,7 +660,7 @@ impl Hsv {
     /// assert_eq!(lerped.channels(), (127.5, 0.5, 0.5, 1.0));
     /// ```
     pub fn lerp(&self, c2: Hsv, amt: f32) -> Hsv {
-        let amt = constrainf(amt, 0.0, 1.0);
+        let amt = amt.clamp(0.0, 1.0);
 
         let lerp = |start, stop, amt| amt * (stop - start) + start;
 
@@ -659,7 +689,7 @@ impl AbsDiffEq for Hsv {
 }
 
 /// Types of errors creating/converting colors can return.
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum ColorError {
     /// Result when attempting to create a Rgb/Hsv color from an invalid slice of values.
     InvalidSlice,

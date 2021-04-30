@@ -1,16 +1,28 @@
 //! Math related types, constants and utility functions.
 
-use num_traits::{real::Real, Num, NumCast};
+use num_traits::{Num, NumCast};
 use rand::{self, distributions::uniform::SampleUniform, Rng};
-use std::{
-    cmp,
-    ops::{AddAssign, Range},
-};
+use std::ops::{AddAssign, Range};
+
+/// Default type for math calculations
+pub type Scalar = f64;
 
 /// Returns a random number within a range.
-pub fn random<T: Num + SampleUniform, V: Into<Range<T>>>(val: V) -> T {
+pub fn random<T, V>(val: V) -> T
+where
+    T: Num + SampleUniform + PartialOrd,
+    V: Into<Range<T>>,
+{
     let val = val.into();
-    rand::thread_rng().gen_range(val.start, val.end)
+    rand::thread_rng().gen_range(val)
+}
+
+/// Returns a random number between zero and the given value.
+pub fn random_z<T>(val: T) -> T
+where
+    T: Num + SampleUniform + PartialOrd,
+{
+    random(T::zero()..val)
 }
 
 /// Returns a random number within a range.
@@ -22,38 +34,24 @@ pub fn random<T: Num + SampleUniform, V: Into<Range<T>>>(val: V) -> T {
 ///
 /// let x = random!(100); // x will range from (0..100]
 /// let y = random!(20, 50); // x will range from (20..50]
+///
+/// let x = random!(100.0); // x will range from (0.0..100.0]
+/// let y = random!(20.0, 50.0); // x will range from (20.0..50.0]
 /// ```
 #[macro_export]
 macro_rules! random {
     ($v:expr) => {
-        $crate::math::random(0..$v);
+        $crate::math::random_z($v);
     };
     ($s:expr, $e:expr) => {
         $crate::math::random($s..$e);
     };
 }
 
-/// Returns a random floating point number within a range.
+/// Remaps a number from one range to another.
 ///
-/// # Examples
-///
-/// ```
-/// use pix_engine::prelude::*;
-///
-/// let x = randomf!(100.0); // x will range from (0.0..100.0]
-/// let y = randomf!(20.0, 50.0); // x will range from (20.0..50.0]
-/// ```
-#[macro_export]
-macro_rules! randomf {
-    ($v:expr) => {
-        $crate::math::random(0.0..$v);
-    };
-    ($s:expr, $e:expr) => {
-        $crate::math::random($s..$e);
-    };
-}
-
-/// Remaps a number from one range to another
+/// Map range defaults to 0.0...Scalar::MAX in the event casting to Scalar fails.
+/// NaN will result in the max mapped value.
 ///
 /// # Example
 ///
@@ -62,28 +60,41 @@ macro_rules! randomf {
 ///
 /// let value = 25;
 /// let m = map(value, 0, 100, 0, 800);
-/// assert_eq!(m, Some(200));
+/// assert_eq!(m, 200);
 ///
 /// let value = 50.0;
 /// let m = map(value, 0.0, 100.0, 0.0, 1.0);
-/// assert_eq!(m, Some(0.5));
+/// assert_eq!(m, 0.5);
+///
+/// let value = Scalar::NAN;
+/// let m = map(value, 0.0, 100.0, 0.0, 1.0);
+/// assert_eq!(m, 0.0);
+///
+/// let value = Scalar::INFINITY;
+/// let m = map(value, 0.0, 100.0, 0.0, 1.0);
+/// assert_eq!(m, 1.0);
+///
+/// let value = Scalar::NEG_INFINITY;
+/// let m = map(value, 0.0, 100.0, 0.0, 1.0);
+/// assert_eq!(m, 0.0);
 /// ```
-pub fn map<T>(value: T, start1: T, end1: T, start2: T, end2: T) -> Option<T>
+pub fn map<T>(value: T, start1: T, end1: T, start2: T, end2: T) -> T
 where
     T: Copy + NumCast + PartialOrd + AddAssign,
 {
-    let value = <f64 as NumCast>::from(value)?;
-    let start1 = <f64 as NumCast>::from(start1)?;
-    let end1 = <f64 as NumCast>::from(end1)?;
-    let start2 = <f64 as NumCast>::from(start2)?;
-    let end2 = <f64 as NumCast>::from(end2)?;
+    let default = end1;
+    let start1: Scalar = NumCast::from(start1).unwrap_or(0.0);
+    let end1: Scalar = NumCast::from(end1).unwrap_or(Scalar::MAX);
+    let start2: Scalar = NumCast::from(start2).unwrap_or(0.0);
+    let end2: Scalar = NumCast::from(end2).unwrap_or(Scalar::MAX);
+    let value: Scalar = NumCast::from(value).unwrap_or(start1);
     let new_val = (value - start1) / (end1 - start1) * (end2 - start2) + start2;
-    let map = if start2 < end2 {
-        constrainf(new_val, start2, end2)
+    let mapped_val = if start2 < end2 {
+        new_val.clamp(start2, end2)
     } else {
-        constrainf(new_val, end2, start2)
+        new_val.clamp(end2, start2)
     };
-    T::from(map)
+    T::from(mapped_val).unwrap_or(default)
 }
 
 /// Linear interpolates between two values by a given amount.
@@ -129,12 +140,13 @@ where
 /// ```
 pub fn lerp_map<T>(start1: T, end1: T, start2: T, end2: T) -> Vec<T>
 where
-    T: Copy + Num + PartialOrd + AddAssign,
+    T: Copy + Num + NumCast + PartialOrd + AddAssign,
 {
     if start1 == end1 {
         vec![start2]
     } else {
-        let mut values = Vec::new();
+        let size: usize = NumCast::from(end1 - start1).unwrap_or(4);
+        let mut values = Vec::with_capacity(size);
         let a = (end2 - start2) / (end1 - start1);
         let mut d = start2;
         let mut i = start1;
@@ -147,57 +159,16 @@ where
     }
 }
 
-/// Constraints an integer value between a minimum and maximum value.
-///
-/// # Examples
-///
-/// ```
-/// use pix_engine::prelude::*;
-///
-/// let v = 15;
-/// assert_eq!(constrain(v, 0, 10), 10);
-///
-/// let v = -5;
-/// assert_eq!(constrain(v, 0, 10), 0);
-/// ```
-pub fn constrain<T: Ord>(val: T, min: T, max: T) -> T {
-    cmp::max(min, cmp::min(val, max))
-}
-
-/// Constraints a floating point value between a minimum and maximum value.
-///
-/// # Examples
-///
-/// ```
-/// use pix_engine::prelude::*;
-///
-/// let v = 1.5;
-/// assert_eq!(constrainf(v, 0.0, 1.0), 1.0);
-///
-/// let v = -2.0;
-/// assert_eq!(constrainf(v, 0.0, 1.0), 0.0);
-/// ```
-pub fn constrainf<T: Real>(val: T, min: T, max: T) -> T {
-    val.min(max).max(min)
-}
-
 /// Collision specific utility functions.
-pub mod collision {
-    /// Collision detection for basic circle shapes
-    /// Detects whether a 2D point (x, y) lies inside circle located at (cx, cy) of radius r.
-    pub fn inside_circle(x: i32, y: i32, cx: i32, cy: i32, r: u32) -> bool {
-        ((x - cx).pow(2) + (y - cy).pow(2)) < r.pow(2) as i32
-    }
-}
+pub mod collision {}
 
 #[allow(missing_docs)]
 pub mod constants {
-    pub const INFINITY: f64 = std::f64::INFINITY;
-    pub const SQRT_2: f64 = std::f64::consts::SQRT_2;
+    pub use std::f64::consts::*;
+    pub use std::f64::INFINITY;
+    pub use std::f64::NAN;
 
-    pub const HALF_PI: f64 = std::f64::consts::PI / 2.0;
-    pub const PI: f64 = std::f64::consts::PI;
-    pub const QUARTER_PI: f64 = std::f64::consts::PI / 4.0;
-    pub const TAU: f64 = 2.0 * std::f64::consts::PI;
+    pub const HALF_PI: f64 = std::f64::consts::FRAC_PI_2;
+    pub const QUARTER_PI: f64 = std::f64::consts::FRAC_PI_4;
     pub const TWO_PI: f64 = TAU;
 }

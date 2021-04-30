@@ -11,6 +11,8 @@ use std::{
     time::{Duration, Instant},
 };
 
+const ONE_SECOND: Duration = Duration::from_secs(1);
+
 /// Builds a `PixEngine` instance by providing several optional modifiers.
 #[derive(Debug, Default)]
 pub struct PixEngineBuilder {
@@ -114,7 +116,6 @@ impl PixEngine {
                 'running: loop {
                     // TODO: Add state.loop() and state.no_loop() checks
                     // Ensure update is run at least once
-                    self.state.clear();
                     if !self.handle_events(app)? || !app.on_update(&mut self.state)? {
                         break 'running;
                     }
@@ -215,14 +216,13 @@ impl PixEngine {
     /// Updates the average frame rate and the window title if setting is enabled.
     fn update_frame_rate(&mut self) -> Result<()> {
         let now = Instant::now();
-        let one_second = Duration::from_secs(1);
         self.state.env.delta_time = now - self.last_frame_time;
         self.last_frame_time = now;
         if self.state.settings.show_frame_rate {
             self.frame_timer += self.state.env.delta_time;
             self.frame_counter += 1;
             self.state.env.frame_count += 1;
-            if self.frame_timer >= one_second {
+            if self.frame_timer >= ONE_SECOND {
                 self.state.env.frame_rate = self.frame_counter;
                 let title = format!(
                     "{} - FPS: {}",
@@ -230,7 +230,7 @@ impl PixEngine {
                     self.state.env.frame_rate
                 );
                 self.state.set_title(&title)?;
-                self.frame_timer -= one_second;
+                self.frame_timer -= ONE_SECOND;
                 self.frame_counter = 0;
             }
         }

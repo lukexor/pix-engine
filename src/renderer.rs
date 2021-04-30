@@ -24,7 +24,7 @@ pub(crate) enum Position {
 
 impl Default for Position {
     fn default() -> Self {
-        Self::Positioned(0)
+        Self::Centered
     }
 }
 
@@ -47,10 +47,10 @@ impl Default for RendererSettings {
     fn default() -> Self {
         Self {
             title: String::new(),
-            width: 200,
-            height: 200,
-            x: Position::Positioned(0),
-            y: Position::Positioned(0),
+            x: Position::default(),
+            y: Position::default(),
+            width: 400,
+            height: 400,
             fullscreen: false,
             vsync: false,
             resizable: false,
@@ -61,14 +61,15 @@ impl Default for RendererSettings {
 }
 
 /// A common interface all renderers must implement
-pub(crate) trait Rendering {
+pub(crate) trait Rendering: Sized {
     /// Creates a new `Renderer` instance.
-    fn init(settings: &RendererSettings) -> Result<Self>
-    where
-        Self: Sized;
+    fn init(settings: &RendererSettings) -> Result<Self>;
 
     /// Clears the current canvas to the given clear color.
     fn clear(&mut self);
+
+    /// Set whether the cursor is shown or not.
+    fn show_cursor(&mut self, show: bool);
 
     /// Sets the color used by the renderer to draw the current canvas.
     fn set_draw_color(&mut self, color: Color);
@@ -118,6 +119,9 @@ pub(crate) trait Rendering {
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()>;
+
+    /// Draw a pixel to the current canvas.
+    fn pixel(&mut self, x: i32, y: i32, stroke: Option<Color>) -> Result<()>;
 
     /// Draw a line to the current canvas.
     fn line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, stroke: Option<Color>) -> Result<()>;

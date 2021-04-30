@@ -80,9 +80,9 @@ impl SpaceObj {
             size: ASTEROID_SIZE,
             x,
             y,
-            dx: randomf!(-0.5, 0.5) * 2.0 * MAX_ASTEROID_SPEED,
-            dy: randomf!(-0.5, 0.5) * 2.0 * MAX_ASTEROID_SPEED,
-            angle: randomf!(360.0),
+            dx: random!(-0.5, 0.5) * 2.0 * MAX_ASTEROID_SPEED,
+            dy: random!(-0.5, 0.5) * 2.0 * MAX_ASTEROID_SPEED,
+            angle: random!(360.0),
             destroyed: false,
         }
     }
@@ -169,7 +169,7 @@ impl Stateful for Asteroids {
 
         self.ship_model = vec![(0.0, -5.0), (-2.5, 2.5), (2.5, 2.5)];
         for i in 0..20 {
-            let noise = randomf!(0.8, 1.2);
+            let noise = random!(0.8, 1.2);
             let a = (i as f64 / 20.0) * 2.0 * PI;
             let x = noise * a.sin();
             let y = noise * a.cos();
@@ -280,8 +280,8 @@ impl Stateful for Asteroids {
 
                     if a.size > MIN_ASTEROID_SIZE {
                         // Break into two
-                        let a1 = randomf!(TWO_PI);
-                        let a2 = randomf!(TWO_PI);
+                        let a1 = random!(TWO_PI);
+                        let a2 = random!(TWO_PI);
                         new_asteroids.push(SpaceObj::new(
                             a.size >> 1,
                             a.x,

@@ -13,6 +13,7 @@ pub(crate) struct Environment {
     pub(crate) delta_time: Duration,
     pub(crate) frame_rate: u64,
     pub(crate) frame_count: u64,
+    pub(crate) render: bool,
 }
 
 impl Default for Environment {
@@ -22,6 +23,7 @@ impl Default for Environment {
             delta_time: Duration::from_secs(0),
             frame_rate: 0,
             frame_count: 0,
+            render: false,
         }
     }
 }

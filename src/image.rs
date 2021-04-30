@@ -4,7 +4,7 @@ use crate::common::Result;
 use std::path::Path;
 
 /// Represents a buffer of pixel color values.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct Image {}
 
 impl Image {

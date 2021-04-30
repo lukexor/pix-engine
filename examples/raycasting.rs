@@ -1,23 +1,16 @@
 use pix_engine::prelude::*;
 use std::cmp::Ordering::Less;
 
-const BLOCK_SIZE: u32 = 32;
+const TITLE: &str = "Raycasting";
+const WIDTH: u32 = 800;
+const HEIGHT: u32 = 600;
+const SCALE: u32 = 1;
+
+const BLOCK_SIZE: u32 = 40;
 const NORTH: usize = 0;
 const SOUTH: usize = 1;
 const EAST: usize = 2;
 const WEST: usize = 3;
-const SCALE: f32 = 1.0;
-const WIDTH: u32 = 1024;
-const HEIGHT: u32 = 768;
-
-fn main() {
-    let mut engine = PixEngine::create("Window Title", WIDTH, HEIGHT)
-        .position_centered()
-        .build()
-        .expect("valid engine");
-    let mut app = RayScene::new();
-    engine.run(&mut app).expect("ran successfully");
-}
 
 struct Edge {
     start: Vector,
@@ -25,10 +18,10 @@ struct Edge {
 }
 
 impl Edge {
-    pub fn points(&self) -> impl Iterator<Item = Vector> {
-        let s = std::iter::once(self.start);
-        let e = std::iter::once(self.end);
-        s.chain(e)
+    pub fn new<V: Into<Vector>>(start: V, end: V) -> Self {
+        let start = start.into();
+        let end = end.into();
+        Self { start, end }
     }
 }
 
@@ -36,7 +29,7 @@ struct RayScene {
     cells: Vec<Cell>,
     edges: Vec<Edge>,
     points: Vec<Vector>,
-    source: [(i32, i32); 11],
+    sources: [(i32, i32, Color); 10],
     polygons: Vec<(f64, Vector)>,
     xcells: u32,
     ycells: u32,
@@ -45,22 +38,22 @@ struct RayScene {
 
 impl RayScene {
     fn new() -> Self {
-        let xcells = WIDTH / (BLOCK_SIZE as f32 * SCALE) as u32;
-        let ycells = HEIGHT / (BLOCK_SIZE as f32 * SCALE) as u32;
+        let xcells = WIDTH / (BLOCK_SIZE * SCALE);
+        let ycells = HEIGHT / (BLOCK_SIZE * SCALE);
         let mut cells = Vec::with_capacity((xcells * ycells) as usize);
         for y in 0..ycells {
             for x in 0..xcells {
-                cells.push(Cell::new((x as i32, y as i32)));
+                cells.push(Cell::new((x, y)));
             }
         }
         Self {
             cells,
-            edges: Vec::new(),
-            points: Vec::new(),
-            source: [(0, 0); 11],
+            edges: Vec::with_capacity(20),
+            points: Vec::with_capacity(40),
+            sources: [(0, 0, WHITE.into()); 10],
             polygons: Vec::new(),
-            xcells: xcells as u32,
-            ycells: ycells as u32,
+            xcells,
+            ycells,
             drawing: false,
         }
     }
@@ -182,7 +175,11 @@ impl RayScene {
             }
         }
 
-        self.points = self.edges.iter().flat_map(|e| e.points()).collect();
+        self.points.clear();
+        for edge in &self.edges {
+            self.points.push(edge.start);
+            self.points.push(edge.end);
+        }
         self.points
             .sort_by(|a, b| a.partial_cmp(&b).unwrap_or(Less));
         self.points.dedup();
@@ -264,19 +261,19 @@ impl RayScene {
         Some((Vector::new_2d(r_px + r_dx * t1, r_py + r_dy * t1), t1))
     }
 
+    // TODO: See about performance tweaks
     fn draw_visibility_polygons(
         &mut self,
         x: i32,
         y: i32,
-        color: Rgb,
+        color: Color,
         s: &mut State,
     ) -> PixResult<bool> {
         self.calc_visibility_polygons((x, y).into());
 
         if !self.polygons.is_empty() {
             s.fill(color);
-            s.no_stroke();
-            // s.stroke(color);
+            s.stroke(color);
             for i in 0..self.polygons.len() - 1 {
                 let p1 = self.polygons[i].1;
                 let p2 = self.polygons[i + 1].1;
@@ -307,89 +304,73 @@ impl RayScene {
 
 impl Stateful for RayScene {
     fn on_start(&mut self, s: &mut State) -> PixResult<bool> {
-        s.set_scale(SCALE, SCALE)?;
+        s.background(BLACK);
+        s.set_scale(SCALE as f32, SCALE as f32)?;
+        s.show_cursor(false);
         s.show_frame_rate(true);
 
         let w = (self.xcells * BLOCK_SIZE) as i32 - 1;
         let h = (self.ycells * BLOCK_SIZE) as i32 - 1;
-        // Random few cells
-        for _ in 0..2 {
+
+        // Random scattered cells to start with
+        for _ in 0..50 {
             let i = self.get_cell_index(random!(w - 1), random!(h - 1));
             self.cells[i].exists = !self.cells[i].exists;
         }
 
-        // Top
-        self.edges.push(Edge {
-            start: (0, 0).into(),
-            end: (w, 0).into(),
-        });
-        // Right
-        self.edges.push(Edge {
-            start: (w, 0).into(),
-            end: (w, h).into(),
-        });
-        // Bottom
-        self.edges.push(Edge {
-            start: (0, h).into(),
-            end: (w, h).into(),
-        });
-        // Left
-        self.edges.push(Edge {
-            start: (0, 0).into(),
-            end: (0, h).into(),
-        });
+        // Screen Edges
+        self.edges.push(Edge::new((0, 0), (w, 0))); // Top
+        self.edges.push(Edge::new((w, 0), (w, h))); // Right
+        self.edges.push(Edge::new((0, h), (w, h))); // Bottom
+        self.edges.push(Edge::new((0, 0), (0, h))); // Left
 
         self.convert_edges(
             (0, 0, self.xcells, self.ycells),
             BLOCK_SIZE,
             self.xcells as i32,
         );
+
+        // let fuzzy_radius = 10.0;
+        // for (i, source) in self.sources.iter_mut().enumerate() {
+        //     let (sin, cos) = (i as f64 * (TWO_PI / 10.0)).sin_cos();
+        //     let dx = (cos * fuzzy_radius).round() as i32;
+        //     let dy = (sin * fuzzy_radius).round() as i32;
+        //     let g = rgb!(i as u8 * 20, 100);
+        //     println!("{}, {}, {:?}", dx, dy, g);
+        //     *source = (dx, dy, g.into());
+        // }
         Ok(true)
     }
 
     fn on_update(&mut self, s: &mut State) -> PixResult<bool> {
-        s.background(BLACK);
+        s.clear();
 
-        let fuzzy_radius = 10.0;
-        self.source[0] = s.mouse_pos();
-
-        for i in 0..10 {
-            let (sin, cos) = (i as f64 * (TWO_PI / 10.0)).sin_cos();
-            let dx = (cos * fuzzy_radius).round() as i32;
-            let dy = (sin * fuzzy_radius).round() as i32;
-            self.source[i + 1] = (dx, dy);
-            self.draw_visibility_polygons(
-                self.source[0].0 + dx,
-                self.source[0].1 + dy,
-                rgb!(255, 255, 255, 50),
-                s,
-            )?;
-        }
-
-        self.draw_visibility_polygons(self.source[0].0, self.source[0].1, WHITE, s)?;
-
+        let (x, y) = s.mouse_pos();
+        // for i in 0..self.sources.len() {
+        //     let (dx, dy, g) = self.sources[i];
+        //     self.draw_visibility_polygons(x + dx, y + dy, g, s)?;
+        // }
+        self.draw_visibility_polygons(x, y, WHITE.into(), s)?;
         s.fill(RED);
-        for source in self.source.iter() {
-            s.circle(source.0, source.1, 1)?;
+        s.stroke(RED);
+        for i in 0..self.sources.len() {
+            let (dx, dy, _) = self.sources[i];
+            s.circle(x + dx, y + dy, 1)?;
         }
 
         s.fill(BLUE);
-        s.no_stroke();
+        s.stroke(BLUE);
         for cell in self.cells.iter().filter(|c| c.exists) {
-            s.square(
-                cell.pos.x.round() as i32,
-                cell.pos.y.round() as i32,
-                BLOCK_SIZE + 1,
-            )?;
+            s.square(cell.pos.x as i32, cell.pos.y as i32, BLOCK_SIZE + 1)?;
         }
 
+        s.no_stroke();
         for e in self.edges.iter() {
-            s.stroke(FIRE_BRICK);
             s.line(
-                e.start.x.round() as i32,
-                e.start.y.round() as i32,
-                e.end.x.round() as i32,
-                e.end.y.round() as i32,
+                e.start.x as i32,
+                e.start.y as i32,
+                e.end.x as i32,
+                e.end.y as i32,
             )?;
         }
 
@@ -448,4 +429,13 @@ impl Cell {
     fn reset(&mut self) {
         self.edges = [(false, 0); 4];
     }
+}
+
+fn main() {
+    let mut engine = PixEngine::create(TITLE, WIDTH, HEIGHT)
+        .position_centered()
+        .build()
+        .expect("valid engine");
+    let mut app = RayScene::new();
+    engine.run(&mut app).expect("ran successfully");
 }
