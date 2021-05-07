@@ -1,27 +1,27 @@
 //! State management for the engine.
 
 use crate::{
-    common,
+    common::{PixError, PixResult},
     event::{Keycode, MouseButton},
-    renderer::{self, Renderer, Rendering},
+    renderer::{Renderer, RendererError, Rendering},
 };
 use environment::Environment;
 use settings::Settings;
-use std::{borrow::Cow, collections::HashSet};
+use std::{borrow::Cow, collections::HashSet, error, fmt, io, result};
 
 pub mod environment;
 pub mod settings;
 
 /// `State` Result
-type Result<T> = std::result::Result<T, Error>;
+type StateResult<T> = result::Result<T, StateError>;
 
-/// Types of errors the `Stateful` trait can return in a `Result`.
+/// Types of errors the `Stateful` trait can return in a `StateResult`.
 #[derive(Debug)]
-pub enum Error {
+pub enum StateError {
     /// IO specific errors.
-    IoError(std::io::Error),
+    IoError(io::Error),
     /// Renderer specific errors.
-    RendererError(renderer::Error),
+    RendererError(RendererError),
     /// Unknown errors.
     Other(Cow<'static, str>),
 }
@@ -32,7 +32,7 @@ pub trait Stateful {
     ///
     /// Return `Ok(true)` to continue running.
     /// Return `Err` or `Ok(false)` to shutdown the engine and close the application.
-    fn on_start(&mut self, _s: &mut State) -> common::Result<bool> {
+    fn on_start(&mut self, _s: &mut State) -> PixResult<bool> {
         Ok(true)
     }
 
@@ -40,13 +40,13 @@ pub trait Stateful {
     ///
     /// Return `Ok(true)` to continue running.
     /// Return `Err` or `Ok(false)` to shutdown the engine and close the application.
-    fn on_update(&mut self, _s: &mut State) -> common::Result<bool>;
+    fn on_update(&mut self, _s: &mut State) -> PixResult<bool>;
 
     /// Called once when the engine detects a close/exit event.
     ///
     /// Return `Ok(true)` to continue shutting down the engine and closing the application.
     /// Return `Err` or `Ok(false)` to abort exiting.
-    fn on_stop(&mut self, _s: &mut State) -> common::Result<bool> {
+    fn on_stop(&mut self, _s: &mut State) -> PixResult<bool> {
         Ok(true)
     }
 
@@ -108,37 +108,31 @@ impl State {
     }
 
     /// Set the current window title.
-    pub fn set_title(&mut self, title: &str) -> Result<()> {
+    pub fn set_title(&mut self, title: &str) -> StateResult<()> {
         self.renderer.set_title(title)?;
         Ok(())
     }
 }
 
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use Error::*;
+impl fmt::Display for StateError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use StateError::*;
         match self {
-            IoError(e) => e.fmt(f),
-            RendererError(e) => e.fmt(f),
-            Other(e) => write!(f, "Unknown error: {}", e),
+            IoError(err) => err.fmt(f),
+            RendererError(err) => err.fmt(f),
+            Other(err) => write!(f, "Unknown error: {}", err),
         }
     }
 }
 
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+impl error::Error for StateError {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         None
     }
 }
 
-impl From<renderer::Error> for Error {
-    fn from(err: renderer::Error) -> Self {
-        Self::RendererError(err)
-    }
-}
-
-impl From<Error> for common::Error {
-    fn from(err: Error) -> Self {
+impl From<StateError> for PixError {
+    fn from(err: StateError) -> Self {
         Self::StateError(err)
     }
 }

@@ -1,18 +1,19 @@
 //! SDL Renderer implementation
 
-use super::{Error, Position, RendererSettings, Rendering, Result};
+use super::{Position, RendererError, RendererResult, RendererSettings, Rendering};
 use crate::{color::Color, image::Image, shape::Rect};
 use sdl2::{
     gfx::primitives::{DrawRenderer, ToColor},
     pixels::PixelFormatEnum,
-    render::{Canvas, Texture, TextureCreator, TextureQuery},
-    ttf,
+    render::{
+        Canvas, Texture, TextureCreator, TextureQuery, TextureValueError, UpdateTextureError,
+    },
+    ttf::{self, FontError, InitError},
+    video::WindowBuildError,
     video::{FullscreenType, Window, WindowContext},
-    EventPump, Sdl,
+    EventPump, IntegerOrSdlError, Sdl,
 };
-use std::convert::TryFrom;
-
-// TODO handle errors better than mapping them
+use std::{borrow::Cow, convert::TryFrom, ffi::NulError};
 
 /// Wrapper for Sdl2 Color
 pub type SdlColor = sdl2::pixels::Color;
@@ -48,11 +49,11 @@ impl std::fmt::Debug for SdlRenderer {
 
 impl Rendering for SdlRenderer {
     /// Initializes the Sdl2Renderer using the given settings and opens a new window.
-    fn init(settings: &RendererSettings) -> Result<Self> {
+    fn init(settings: &RendererSettings) -> RendererResult<Self> {
         let s = settings;
 
         let context = sdl2::init()?;
-        let ttf_context = ttf::init().map_err(Error::renderer)?;
+        let ttf_context = ttf::init()?;
         let video_subsys = context.video()?;
         let event_pump = context.event_pump()?;
 
@@ -67,7 +68,7 @@ impl Rendering for SdlRenderer {
             (Position::Positioned(x), Position::Positioned(y)) => {
                 let _ = window_builder.position(x, y);
             }
-            _ => return Err(Error::InvalidSetting),
+            _ => return Err(RendererError::InvalidPosition(s.x, s.y)),
         };
         if s.fullscreen {
             let _ = window_builder.fullscreen();
@@ -77,21 +78,16 @@ impl Rendering for SdlRenderer {
         }
 
         let mut canvas_builder = window_builder
-            .build()
-            .map_err(Error::renderer)?
+            .build()?
             .into_canvas()
             .accelerated()
             .target_texture();
         if s.vsync {
             canvas_builder = canvas_builder.present_vsync();
         }
-        let mut canvas = canvas_builder.build().map_err(Error::renderer)?;
-        canvas
-            .set_logical_size(win_width, win_height)
-            .map_err(Error::renderer)?;
-        canvas
-            .set_scale(s.scale_x, s.scale_y)
-            .map_err(Error::renderer)?;
+        let mut canvas = canvas_builder.build()?;
+        canvas.set_logical_size(win_width, win_height)?;
+        canvas.set_scale(s.scale_x, s.scale_y)?;
 
         let texture_creator: TextureCreator<WindowContext> = canvas.texture_creator();
 
@@ -152,11 +148,8 @@ impl Rendering for SdlRenderer {
     }
 
     /// Set the current window title.
-    fn set_title(&mut self, title: &str) -> Result<()> {
-        self.canvas
-            .window_mut()
-            .set_title(title)
-            .map_err(Error::renderer)?;
+    fn set_title(&mut self, title: &str) -> RendererResult<()> {
+        self.canvas.window_mut().set_title(title)?;
         Ok(())
     }
 
@@ -175,7 +168,7 @@ impl Rendering for SdlRenderer {
     }
 
     /// Scale the current canvas.
-    fn set_scale(&mut self, x: f32, y: f32) -> Result<()> {
+    fn set_scale(&mut self, x: f32, y: f32) -> RendererResult<()> {
         self.canvas.set_scale(x, y)?;
         Ok(())
     }
@@ -201,20 +194,17 @@ impl Rendering for SdlRenderer {
     }
 
     /// Create a texture to render to.
-    fn create_texture(&mut self, width: u32, height: u32) -> Result<usize> {
+    fn create_texture(&mut self, width: u32, height: u32) -> RendererResult<usize> {
         let texture = self
             .texture_creator
-            .create_texture_streaming(None, width, height)
-            .map_err(Error::renderer)?;
+            .create_texture_streaming(None, width, height)?;
         self.textures.push(texture);
         Ok(self.textures.len())
     }
 
     /// Draw an array of pixels to the canvas.
-    fn draw_pixels(&mut self, pixels: &[u8], pitch: usize) -> Result<()> {
-        self.textures[0]
-            .update(None, pixels, pitch)
-            .map_err(Error::renderer)?;
+    fn draw_pixels(&mut self, pixels: &[u8], pitch: usize) -> RendererResult<()> {
+        self.textures[0].update(None, pixels, pitch)?;
         self.canvas.copy(&self.textures[0], None, None)?;
         Ok(())
     }
@@ -227,14 +217,11 @@ impl Rendering for SdlRenderer {
         y: i32,
         fill: Option<Color>,
         _stroke: Option<Color>,
-    ) -> Result<()> {
+    ) -> RendererResult<()> {
         let font = self.ttf_context.load_font("static/emulogic.ttf", 16)?;
         if let Some(fill) = fill {
-            let surface = font.render(text).blended(fill).map_err(Error::renderer)?;
-            let texture = self
-                .texture_creator
-                .create_texture_from_surface(&surface)
-                .map_err(Error::renderer)?;
+            let surface = font.render(text).blended(fill)?;
+            let texture = self.texture_creator.create_texture_from_surface(&surface)?;
             let TextureQuery { width, height, .. } = texture.query();
             self.canvas
                 .copy(&texture, None, Some(SdlRect::new(x, y, width, height)))?;
@@ -243,7 +230,7 @@ impl Rendering for SdlRenderer {
     }
 
     /// Draw a pixel to the current canvas.
-    fn pixel(&mut self, x: i32, y: i32, stroke: Option<Color>) -> Result<()> {
+    fn pixel(&mut self, x: i32, y: i32, stroke: Option<Color>) -> RendererResult<()> {
         let x = i16::try_from(x)?;
         let y = i16::try_from(y)?;
         if let Some(stroke) = stroke {
@@ -253,7 +240,14 @@ impl Rendering for SdlRenderer {
     }
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, stroke: Option<Color>) -> Result<()> {
+    fn line(
+        &mut self,
+        x1: i32,
+        y1: i32,
+        x2: i32,
+        y2: i32,
+        stroke: Option<Color>,
+    ) -> RendererResult<()> {
         let x1 = i16::try_from(x1)?;
         let y1 = i16::try_from(y1)?;
         let x2 = i16::try_from(x2)?;
@@ -275,7 +269,7 @@ impl Rendering for SdlRenderer {
         y3: i32,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> Result<()> {
+    ) -> RendererResult<()> {
         let x1 = i16::try_from(x1)?;
         let y1 = i16::try_from(y1)?;
         let x2 = i16::try_from(x2)?;
@@ -300,7 +294,7 @@ impl Rendering for SdlRenderer {
         height: u32,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> Result<()> {
+    ) -> RendererResult<()> {
         let x = i16::try_from(x)?;
         let y = i16::try_from(y)?;
         let w = i16::try_from(width)?;
@@ -323,7 +317,7 @@ impl Rendering for SdlRenderer {
         height: u32,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> Result<()> {
+    ) -> RendererResult<()> {
         let x = i16::try_from(x)?;
         let y = i16::try_from(y)?;
         let w = i16::try_from(width)?;
@@ -339,36 +333,40 @@ impl Rendering for SdlRenderer {
 
     // TODO: Move texture creation into image object?
     /// Draw an image to the current canvas.
-    fn image(&mut self, x: i32, y: i32, img: &Image) -> Result<()> {
-        let mut texture = self
-            .texture_creator
-            .create_texture_streaming(PixelFormatEnum::RGB24, img.width, img.height)
-            .map_err(Error::renderer)?;
-        texture
-            .update(None, &img.data, 3 * img.width as usize)
-            .map_err(Error::renderer)?;
+    fn image(&mut self, x: i32, y: i32, img: &Image) -> RendererResult<()> {
+        let mut texture = self.texture_creator.create_texture_streaming(
+            PixelFormatEnum::RGB24,
+            img.width,
+            img.height,
+        )?;
+        texture.update(None, &img.data, 3 * img.width as usize)?;
         texture.set_blend_mode(sdl2::render::BlendMode::Mod);
         let dst = SdlRect::new(x, y, img.width, img.height);
-        self.canvas
-            .copy(&texture, None, dst)
-            .map_err(Error::renderer)
+        self.canvas.copy(&texture, None, dst)?;
+        Ok(())
     }
 }
 
+/*
+ * Type Conversions
+ */
+
 impl ToColor for Color {
     fn as_rgba(&self) -> (u8, u8, u8, u8) {
+        use Color::*;
         match self {
-            Color::Rgb(rgb) => rgb.channels(),
-            Color::Hsv(hsv) => hsv.to_rgb().channels(),
+            Rgb(rgb) => rgb.channels(),
+            Hsv(hsv) => hsv.to_rgb().channels(),
         }
     }
 }
 
 impl From<Color> for SdlColor {
     fn from(color: Color) -> Self {
+        use Color::*;
         let rgb = match color {
-            Color::Rgb(rgb) => rgb,
-            Color::Hsv(hsv) => hsv.to_rgb(),
+            Rgb(rgb) => rgb,
+            Hsv(hsv) => hsv.to_rgb(),
         };
         Self::RGBA(rgb.red(), rgb.green(), rgb.blue(), rgb.alpha())
     }
@@ -377,5 +375,102 @@ impl From<Color> for SdlColor {
 impl From<Rect> for SdlRect {
     fn from(rect: Rect) -> Self {
         Self::new(rect.x, rect.y, rect.w, rect.h)
+    }
+}
+
+/*
+ * Error Conversions
+ */
+
+impl From<String> for RendererError {
+    fn from(err: String) -> Self {
+        Self::Other(Cow::from(err))
+    }
+}
+
+impl From<InitError> for RendererError {
+    fn from(err: InitError) -> Self {
+        use InitError::*;
+        match err {
+            InitializationError(err) => Self::IoError(err),
+            AlreadyInitializedError => Self::InitError,
+        }
+    }
+}
+
+impl From<FontError> for RendererError {
+    fn from(err: FontError) -> Self {
+        use FontError::*;
+        match err {
+            InvalidLatin1Text(e) => Self::InvalidText("invalid latin1 text", e),
+            SdlError(s) => Self::Other(Cow::from(s)),
+        }
+    }
+}
+
+impl From<WindowBuildError> for RendererError {
+    fn from(err: WindowBuildError) -> Self {
+        use WindowBuildError::*;
+        match err {
+            HeightOverflows(h) => Self::Overflow(Cow::from("window height"), h),
+            WidthOverflows(w) => Self::Overflow(Cow::from("window width"), w),
+            InvalidTitle(e) => Self::InvalidText("invalid title", e),
+            SdlError(s) => Self::Other(Cow::from(s)),
+        }
+    }
+}
+
+impl From<IntegerOrSdlError> for RendererError {
+    fn from(err: IntegerOrSdlError) -> Self {
+        use IntegerOrSdlError::*;
+        match err {
+            IntegerOverflows(s, v) => Self::Overflow(Cow::from(s), v),
+            SdlError(s) => Self::Other(Cow::from(s)),
+        }
+    }
+}
+
+impl From<TextureValueError> for RendererError {
+    fn from(err: TextureValueError) -> Self {
+        use TextureValueError::*;
+        match err {
+            HeightOverflows(h) => Self::Overflow(Cow::from("texture height"), h),
+            WidthOverflows(w) => Self::Overflow(Cow::from("texture width"), w),
+            WidthMustBeMultipleOfTwoForFormat(_, _) => {
+                Self::Other(Cow::from("width must be multiple of 2"))
+            }
+            SdlError(s) => Self::Other(Cow::from(s)),
+        }
+    }
+}
+
+impl From<UpdateTextureError> for RendererError {
+    fn from(err: UpdateTextureError) -> Self {
+        use UpdateTextureError::*;
+        match err {
+            PitchOverflows(p) => Self::Overflow(Cow::from("pitch"), p as u32),
+            PitchMustBeMultipleOfTwoForFormat(_, _) => {
+                Self::Other(Cow::from("pitch must be multiple of 2"))
+            }
+            XMustBeMultipleOfTwoForFormat(_, _) => {
+                Self::Other(Cow::from("x must be multiple of 2"))
+            }
+            YMustBeMultipleOfTwoForFormat(_, _) => {
+                Self::Other(Cow::from("y must be multiple of 2"))
+            }
+            WidthMustBeMultipleOfTwoForFormat(_, _) => {
+                Self::Other(Cow::from("width must be multiple of 2"))
+            }
+            HeightMustBeMultipleOfTwoForFormat(_, _) => {
+                Self::Other(Cow::from("height must be multiple of 2"))
+            }
+            SdlError(s) => Self::Other(Cow::from(s)),
+        }
+    }
+}
+
+impl From<NulError> for RendererError {
+    fn from(err: NulError) -> Self {
+        Self::InvalidText("Unknown nul error", err)
     }
 }

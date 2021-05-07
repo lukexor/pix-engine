@@ -2,7 +2,7 @@
 
 use crate::{
     image::Image,
-    renderer::{Rendering, Result},
+    renderer::{RendererResult, Rendering},
     state::State,
 };
 
@@ -21,17 +21,17 @@ pub enum DrawMode {
 
 impl State {
     /// Draw an array of pixels to the current canvas.
-    pub fn draw_pixels(&mut self, pixels: &[u8], pitch: usize) -> Result<()> {
+    pub fn draw_pixels(&mut self, pixels: &[u8], pitch: usize) -> RendererResult<()> {
         self.renderer.draw_pixels(pixels, pitch)
     }
 
     /// Create a texture to render to.
-    pub fn create_texture(&mut self, width: u32, height: u32) -> Result<usize> {
+    pub fn create_texture(&mut self, width: u32, height: u32) -> RendererResult<usize> {
         self.renderer.create_texture(width, height)
     }
 
     /// Draw text to the current canvas.
-    pub fn text(&mut self, text: &str, x: i32, y: i32) -> Result<()> {
+    pub fn text(&mut self, text: &str, x: i32, y: i32) -> RendererResult<()> {
         let s = &self.settings;
         // TODO Add rect_mode
         // TODO Add text_size
@@ -39,29 +39,37 @@ impl State {
     }
 
     /// Draw a point to the current canvas.
-    pub fn pixel(&mut self, x: i32, y: i32) -> Result<()> {
+    pub fn pixel(&mut self, x: i32, y: i32) -> RendererResult<()> {
         self.renderer.pixel(x, y, self.settings.stroke)
     }
 
     /// Draw a triangle to the current canvas.
-    pub fn line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32) -> Result<()> {
+    pub fn line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32) -> RendererResult<()> {
         self.renderer.line(x1, y1, x2, y2, self.settings.stroke)
     }
 
     /// Draw a triangle to the current canvas.
-    pub fn triangle(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, x3: i32, y3: i32) -> Result<()> {
+    pub fn triangle(
+        &mut self,
+        x1: i32,
+        y1: i32,
+        x2: i32,
+        y2: i32,
+        x3: i32,
+        y3: i32,
+    ) -> RendererResult<()> {
         let s = &self.settings;
         self.renderer
             .triangle(x1, y1, x2, y2, x3, y3, s.fill, s.stroke)
     }
 
     /// Draw a square to the current canvas.
-    pub fn square(&mut self, x: i32, y: i32, s: u32) -> Result<()> {
+    pub fn square(&mut self, x: i32, y: i32, s: u32) -> RendererResult<()> {
         self.rect(x, y, s, s)
     }
 
     /// Draw a rectangle to the current canvas.
-    pub fn rect(&mut self, x: i32, y: i32, width: u32, height: u32) -> Result<()> {
+    pub fn rect(&mut self, x: i32, y: i32, width: u32, height: u32) -> RendererResult<()> {
         self.env.render = true;
         // TODO Add rect_mode
         let s = &self.settings;
@@ -69,19 +77,19 @@ impl State {
     }
 
     /// Draw a circle to the current canvas.
-    pub fn circle(&mut self, x: i32, y: i32, radius: u32) -> Result<()> {
+    pub fn circle(&mut self, x: i32, y: i32, radius: u32) -> RendererResult<()> {
         self.ellipse(x, y, radius, radius)
     }
 
     /// Draw a ellipse to the current canvas.
-    pub fn ellipse(&mut self, x: i32, y: i32, width: u32, height: u32) -> Result<()> {
+    pub fn ellipse(&mut self, x: i32, y: i32, width: u32, height: u32) -> RendererResult<()> {
         // TODO Add ellipse_mode
         let s = &self.settings;
         self.renderer.ellipse(x, y, width, height, s.fill, s.stroke)
     }
 
     /// Draw an image to the current canvas.
-    pub fn image(&mut self, x: i32, y: i32, img: &Image) -> Result<()> {
+    pub fn image(&mut self, x: i32, y: i32, img: &Image) -> RendererResult<()> {
         self.renderer.image(x, y, img)
     }
 
@@ -93,7 +101,7 @@ impl State {
         y: i32,
         angle: f64,
         scale: f64,
-    ) -> Result<()> {
+    ) -> RendererResult<()> {
         let x = x as f64;
         let y = y as f64;
         let mut transformed_verts = vertexes.to_vec();

@@ -1,29 +1,26 @@
-use crate::{image, renderer, state};
-use std::borrow::Cow;
+use crate::{image::ImageError, renderer::RendererError, state::StateError};
+use std::{borrow::Cow, error, fmt, result};
 
-/// Result wrapper for `PixEngine` Errors.
-pub type Result<T> = std::result::Result<T, Error>;
+/// `PixEngine` Result.
+pub type PixResult<T> = result::Result<T, PixError>;
 
-/// Types of errors the `PixEngine` can return in a `Result`.
+/// `PixEngine` errors returned in `PixResult`.
 #[derive(Debug)]
-pub enum Error {
-    /// Indicates an invalid `PixEngineBuilder` setting.
-    InvalidSetting,
+pub enum PixError {
     /// An error from the underlying `Renderer`.
-    RendererError(renderer::Error),
+    RendererError(RendererError),
     /// An error from the `Stateful` application.
-    StateError(state::Error),
+    StateError(StateError),
     /// An error from 'Image'
-    ImageError(image::Error),
+    ImageError(ImageError),
     /// Unknown errors.
     Other(Cow<'static, str>),
 }
 
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use Error::*;
+impl fmt::Display for PixError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use PixError::*;
         match self {
-            InvalidSetting => write!(f, "invalid PixEngine setting"), // TODO add setting to this
             RendererError(e) => e.fmt(f),
             StateError(e) => e.fmt(f),
             ImageError(e) => e.fmt(f),
@@ -32,8 +29,8 @@ impl std::fmt::Display for Error {
     }
 }
 
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+impl error::Error for PixError {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         None
     }
 }

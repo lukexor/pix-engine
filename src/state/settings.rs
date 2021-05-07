@@ -1,10 +1,10 @@
 //! Settings for the current engine State.
 
-use super::{Result, State};
+use super::State;
 use crate::{
     color::{constants::*, Color},
     draw::DrawMode,
-    renderer::Rendering,
+    renderer::{RendererResult, Rendering},
     shape::Rect,
 };
 
@@ -81,8 +81,8 @@ impl State {
     }
 
     /// Change the rendering scale of the current canvas.
-    pub fn set_scale(&mut self, x: f32, y: f32) -> Result<()> {
-        Ok(self.renderer.set_scale(x, y)?)
+    pub fn set_scale(&mut self, x: f32, y: f32) -> RendererResult<()> {
+        self.renderer.set_scale(x, y)
     }
 
     /// Change the text size for drawing to the current canvas.

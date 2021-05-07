@@ -2,28 +2,33 @@
 
 use crate::{
     color::Color,
-    common,
+    common::PixError,
     event::{Event, EventIterator},
     image::Image,
     shape::Rect,
+    state::StateError,
 };
 use sdl::SdlRenderer;
-use std::borrow::Cow;
+use std::{borrow::Cow, error, ffi::NulError, fmt, io, result};
 
 pub(crate) mod sdl;
 
 /// `Renderer` Result
-pub type Result<T> = std::result::Result<T, Error>;
+pub type RendererResult<T> = result::Result<T, RendererError>;
 
 /// Types of errors the `Rendering` trait can return in a `Result`.
 #[derive(Debug)]
-pub enum Error {
-    /// Indicates an invalid `Renderer` setting.
-    InvalidSetting,
-    /// Renderer error
-    Renderer,
-    /// Error when an invalid (x, y) screen position is encountered.
-    InvalidPosition,
+pub enum RendererError {
+    /// Renderer initialization errors.
+    InitError,
+    /// Renderer I/O errors.
+    IoError(io::Error),
+    /// Invalid text.
+    InvalidText(&'static str, NulError),
+    /// Invalid (x, y) window position.
+    InvalidPosition(Position, Position),
+    /// An overflow occurred
+    Overflow(Cow<'static, str>, u32),
     /// Any other unknown error as a string.
     Other(Cow<'static, str>),
 }
@@ -33,7 +38,7 @@ pub(crate) type Renderer = SdlRenderer;
 
 /// Represents a possible screen position.
 #[derive(Debug, Copy, Clone)]
-pub(crate) enum Position {
+pub enum Position {
     /// A positioned (x, y) coordinate.
     Positioned(i32),
     /// A coordinate placed in the center of the display.
@@ -81,7 +86,7 @@ impl Default for RendererSettings {
 /// A common interface all renderers must implement
 pub(crate) trait Rendering: Sized {
     /// Creates a new `Renderer` instance.
-    fn init(settings: &RendererSettings) -> Result<Self>;
+    fn init(settings: &RendererSettings) -> RendererResult<Self>;
 
     /// Clears the current canvas to the given clear color.
     fn clear(&mut self);
@@ -108,7 +113,7 @@ pub(crate) trait Rendering: Sized {
     fn title(&self) -> &str;
 
     /// Set the current window title.
-    fn set_title(&mut self, title: &str) -> Result<()>;
+    fn set_title(&mut self, title: &str) -> RendererResult<()>;
 
     /// Width of the current canvas.
     fn width(&self) -> u32;
@@ -117,7 +122,7 @@ pub(crate) trait Rendering: Sized {
     fn height(&self) -> u32;
 
     /// Scale the current canvas.
-    fn set_scale(&mut self, x: f32, y: f32) -> Result<()>;
+    fn set_scale(&mut self, x: f32, y: f32) -> RendererResult<()>;
 
     /// Returns whether the application is fullscreen or not.
     fn fullscreen(&self) -> bool;
@@ -126,10 +131,10 @@ pub(crate) trait Rendering: Sized {
     fn set_fullscreen(&mut self, val: bool);
 
     /// Create a texture to render to.
-    fn create_texture(&mut self, width: u32, height: u32) -> Result<usize>;
+    fn create_texture(&mut self, width: u32, height: u32) -> RendererResult<usize>;
 
     /// Draw an array of pixels to the current canvas.
-    fn draw_pixels(&mut self, pixels: &[u8], pitch: usize) -> Result<()>;
+    fn draw_pixels(&mut self, pixels: &[u8], pitch: usize) -> RendererResult<()>;
 
     /// Draw text to the current canvas.
     fn text(
@@ -139,13 +144,20 @@ pub(crate) trait Rendering: Sized {
         y: i32,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> Result<()>;
+    ) -> RendererResult<()>;
 
     /// Draw a pixel to the current canvas.
-    fn pixel(&mut self, x: i32, y: i32, stroke: Option<Color>) -> Result<()>;
+    fn pixel(&mut self, x: i32, y: i32, stroke: Option<Color>) -> RendererResult<()>;
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, stroke: Option<Color>) -> Result<()>;
+    fn line(
+        &mut self,
+        x1: i32,
+        y1: i32,
+        x2: i32,
+        y2: i32,
+        stroke: Option<Color>,
+    ) -> RendererResult<()>;
 
     /// Draw a triangle to the current canvas.
     #[allow(clippy::too_many_arguments)]
@@ -159,7 +171,7 @@ pub(crate) trait Rendering: Sized {
         y3: i32,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> Result<()>;
+    ) -> RendererResult<()>;
 
     /// Draw a rectangle to the current canvas.
     fn rect(
@@ -170,7 +182,7 @@ pub(crate) trait Rendering: Sized {
         height: u32,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> Result<()>;
+    ) -> RendererResult<()>;
 
     /// Draw a ellipse to the current canvas.
     fn ellipse(
@@ -181,50 +193,52 @@ pub(crate) trait Rendering: Sized {
         height: u32,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> Result<()>;
+    ) -> RendererResult<()>;
 
     /// Draw an image to the current canvas.
-    fn image(&mut self, x: i32, y: i32, img: &Image) -> Result<()>;
+    fn image(&mut self, x: i32, y: i32, img: &Image) -> RendererResult<()>;
 }
 
-impl Error {
+impl RendererError {
     /// Creates a renderer error from anything that implements Display.
-    pub fn renderer<E: std::fmt::Display>(err: E) -> Self {
+    pub fn renderer<E: fmt::Display>(err: E) -> Self {
         Self::Other(Cow::from(err.to_string()))
     }
 }
 
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use Error::*;
+impl fmt::Display for RendererError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use RendererError::*;
         match self {
-            InvalidSetting => write!(f, "invalid Renderer setting"), // TODO add setting to this
-            Renderer => write!(f, "Renderer error"),                 // TODO: make this more robust
-            InvalidPosition => write!(f, "Invalid window position"),
-            Other(e) => write!(f, "Renderer Error: {}", e),
+            InitError => write!(f, "Renderer initialization error"),
+            IoError(err) => err.fmt(f),
+            InvalidText(msg, err) => write!(f, "Invalid text: {}, {}", msg, err),
+            InvalidPosition(x, y) => write!(f, "Invalid window position: {:?}", (x, y)),
+            Overflow(err, val) => write!(f, "{}: {}", err, val),
+            Other(err) => write!(f, "Unknown renderer error: {}", err),
         }
     }
 }
 
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+impl error::Error for RendererError {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         None
     }
 }
 
-impl From<Error> for common::Error {
-    fn from(err: Error) -> Self {
+impl From<RendererError> for PixError {
+    fn from(err: RendererError) -> Self {
         Self::RendererError(err)
     }
 }
 
-impl From<String> for Error {
-    fn from(err: String) -> Self {
-        Self::Other(Cow::from(err))
+impl From<RendererError> for StateError {
+    fn from(err: RendererError) -> Self {
+        Self::RendererError(err)
     }
 }
 
-impl From<std::num::TryFromIntError> for Error {
+impl From<std::num::TryFromIntError> for RendererError {
     fn from(err: std::num::TryFromIntError) -> Self {
         Self::Other(Cow::from(err.to_string()))
     }

@@ -1,22 +1,25 @@
 //! Image related operations and functionality.
 
-use crate::common;
+use crate::common::PixError;
 use std::{
     borrow::Cow,
-    ffi::OsStr,
+    error,
+    ffi::{OsStr, OsString},
+    fmt,
     fs::File,
     io::{self, BufReader},
     path::Path,
+    result,
 };
 
-/// Image Result
-pub type Result<T> = std::result::Result<T, Error>;
+/// `Image` Result
+pub type ImageResult<T> = result::Result<T, ImageError>;
 
 /// Types of errors `Image` can return in a `Result`.
 #[derive(Debug)]
-pub enum Error {
+pub enum ImageError {
     /// Invalid file type.
-    InvalidFileType,
+    InvalidFileType(Option<OsString>),
     /// IO specific errors.
     IoError(io::Error),
     /// Decoding specific errors.
@@ -57,11 +60,11 @@ impl Image {
     }
 
     /// Create a new `Image` by loading it from a `png` file.
-    pub fn load<P: AsRef<Path>>(path: P) -> Result<Self> {
+    pub fn load<P: AsRef<Path>>(path: P) -> ImageResult<Self> {
         let path = path.as_ref();
-        if path.extension() != Some(OsStr::new("png")) {
-            // TODO: Add extension/filename to error
-            return Err(Error::InvalidFileType);
+        let ext = path.extension();
+        if ext != Some(OsStr::new("png")) {
+            return Err(ImageError::InvalidFileType(ext.map(|e| e.to_os_string())));
         }
 
         let png_file = BufReader::new(File::open(&path)?);
@@ -90,42 +93,42 @@ impl Image {
     }
 
     /// Save an `Image` to a `png` file.
-    pub fn save<P: AsRef<Path>>(&self, _path: P) -> Result<()> {
+    pub fn save<P: AsRef<Path>>(&self, _path: P) -> ImageResult<()> {
         unimplemented!("TODO save image");
     }
 }
 
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use Error::*;
+impl std::fmt::Display for ImageError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use ImageError::*;
         match self {
-            IoError(e) => e.fmt(f),
-            DecodingError(e) => e.fmt(f),
-            InvalidFileType => write!(f, "invalid file type"),
-            Other(e) => write!(f, "Renderer Error: {}", e),
+            IoError(err) => err.fmt(f),
+            DecodingError(err) => err.fmt(f),
+            InvalidFileType(ext) => write!(f, "Invalid file type: {:?}", ext),
+            Other(err) => write!(f, "Renderer Error: {}", err),
         }
     }
 }
 
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+impl error::Error for ImageError {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         None
     }
 }
 
-impl From<Error> for common::Error {
-    fn from(err: Error) -> Self {
+impl From<ImageError> for PixError {
+    fn from(err: ImageError) -> Self {
         Self::ImageError(err)
     }
 }
 
-impl From<io::Error> for Error {
+impl From<io::Error> for ImageError {
     fn from(err: io::Error) -> Self {
         Self::IoError(err)
     }
 }
 
-impl From<png::DecodingError> for Error {
+impl From<png::DecodingError> for ImageError {
     fn from(err: png::DecodingError) -> Self {
         Self::DecodingError(err)
     }

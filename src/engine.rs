@@ -1,7 +1,7 @@
 //! The core `PixEngine` functionality.
 
 use crate::{
-    common::Result,
+    common::PixResult,
     event::{Event, WindowEvent},
     renderer::{Position, Renderer, RendererSettings, Rendering},
     state::{State, Stateful},
@@ -80,7 +80,7 @@ impl PixEngineBuilder {
     /// Convert the `PixEngineBuilder` to a `PixEngine` instance.
     ///
     /// Returns `Err` if any options provided are invalid.
-    pub fn build(&self) -> Result<PixEngine> {
+    pub fn build(&self) -> PixResult<PixEngine> {
         let renderer = Renderer::init(&self.settings)?;
         Ok(PixEngine {
             state: State::init(renderer),
@@ -107,7 +107,7 @@ impl PixEngine {
     }
 
     /// Starts the `PixEngine` and begins executing the frame loop.
-    pub fn run<A: Stateful>(&mut self, app: &mut A) -> Result<()> {
+    pub fn run<A: Stateful>(&mut self, app: &mut A) -> PixResult<()> {
         if self.start(app)? {
             self.last_frame_time = Instant::now();
             // on_stop loop enables on_stop to prevent application close if necessary
@@ -141,7 +141,7 @@ impl PixEngine {
     }
 
     /// Setup at the start of running the engine.
-    fn start<A: Stateful>(&mut self, app: &mut A) -> Result<bool> {
+    fn start<A: Stateful>(&mut self, app: &mut A) -> PixResult<bool> {
         // Clear and present once on start
         self.state.clear();
         self.state.renderer.present();
@@ -151,7 +151,7 @@ impl PixEngine {
     }
 
     /// Handle events from the event pump.
-    fn handle_events<A: Stateful>(&mut self, app: &mut A) -> Result<bool> {
+    fn handle_events<A: Stateful>(&mut self, app: &mut A) -> PixResult<bool> {
         // TODO Clear/reset key/mouse states for this frame
         while let Some(event) = self.state.renderer.poll_event() {
             match event {
@@ -214,7 +214,7 @@ impl PixEngine {
     }
 
     /// Updates the average frame rate and the window title if setting is enabled.
-    fn update_frame_rate(&mut self) -> Result<()> {
+    fn update_frame_rate(&mut self) -> PixResult<()> {
         let now = Instant::now();
         self.state.env.delta_time = now - self.last_frame_time;
         self.last_frame_time = now;

@@ -46,7 +46,7 @@ pub use prelude::{PixEngine, PixError, PixResult, State, Stateful};
 pub mod prelude {
     use super::*;
     pub use color::{constants::*, Color, Hsv, Rgb};
-    pub use common::{Error as PixError, Result as PixResult};
+    pub use common::{PixError, PixResult};
     pub use draw::DrawMode::*;
     pub use engine::PixEngine;
     pub use event::*;
