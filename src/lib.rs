@@ -47,12 +47,12 @@ pub mod prelude {
     use super::*;
     pub use color::{constants::*, Color, Hsv, Rgb};
     pub use common::{Error as PixError, Result as PixResult};
-    pub use draw::{DrawMode::*, Rect};
+    pub use draw::DrawMode::*;
     pub use engine::PixEngine;
     pub use event::*;
     pub use image::Image;
     pub use math::{constants::*, map, Scalar};
-    pub use shape::Circle;
+    pub use shape::{Circle, Rect};
     pub use state::{State, Stateful};
     pub use vector::Vector;
     pub use {hsv, random, rgb, vector};

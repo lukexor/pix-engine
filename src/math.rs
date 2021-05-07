@@ -68,7 +68,7 @@ macro_rules! random {
 ///
 /// let value = Scalar::NAN;
 /// let m = map(value, 0.0, 100.0, 0.0, 1.0);
-/// assert_eq!(m, 0.0);
+/// assert!(m.is_nan());
 ///
 /// let value = Scalar::INFINITY;
 /// let m = map(value, 0.0, 100.0, 0.0, 1.0);

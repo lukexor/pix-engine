@@ -2,8 +2,8 @@ use pix_engine::prelude::*;
 use std::cmp::Ordering::Less;
 
 const TITLE: &str = "Raycasting";
-const WIDTH: u32 = 800;
-const HEIGHT: u32 = 600;
+const WIDTH: u32 = 1024;
+const HEIGHT: u32 = 768;
 const SCALE: u32 = 1;
 
 const BLOCK_SIZE: u32 = 40;
@@ -29,11 +29,11 @@ struct RayScene {
     cells: Vec<Cell>,
     edges: Vec<Edge>,
     points: Vec<Vector>,
-    sources: [(i32, i32, Color); 10],
     polygons: Vec<(f64, Vector)>,
     xcells: u32,
     ycells: u32,
     drawing: bool,
+    light: Image,
 }
 
 impl RayScene {
@@ -50,11 +50,11 @@ impl RayScene {
             cells,
             edges: Vec::with_capacity(20),
             points: Vec::with_capacity(40),
-            sources: [(0, 0, WHITE.into()); 10],
             polygons: Vec::new(),
             xcells,
             ycells,
             drawing: false,
+            light: Image::new(0, 0),
         }
     }
 
@@ -77,15 +77,17 @@ impl RayScene {
     }
 
     #[allow(clippy::many_single_char_names)]
-    fn convert_edges<R: Into<Rect>>(&mut self, s: R, block_size: u32, pitch: i32) {
-        let s = s.into();
+    fn convert_edges_to_poly_map(&mut self) {
+        let s = Rect::new(0, 0, self.xcells, self.ycells);
+        let pitch = self.xcells as i32;
+        let block_size = BLOCK_SIZE as i32;
         // Reset edges state, keeping only the window boundaries
         self.edges.truncate(4);
         for c in self.cells.iter_mut() {
             c.reset();
         }
-        let width = s.w;
-        let height = s.h;
+        let width = s.w as i32;
+        let height = s.h as i32;
         for x in 0..width {
             for y in 0..height {
                 let x_off = x + s.x;
@@ -96,9 +98,6 @@ impl RayScene {
                 let w = (y_off * pitch + (x_off - 1)) as usize; // Western neighbor
                 let e = (y_off * pitch + (x_off + 1)) as usize; // Eastern neighbor
 
-                let x_off = x_off as i32;
-                let y_off = y_off as i32;
-                let block_size = block_size as i32;
                 // Cell exists, check for edges
                 if self.exists(i) {
                     // No western neighbor, so needs an edge
@@ -262,18 +261,14 @@ impl RayScene {
     }
 
     // TODO: See about performance tweaks
-    fn draw_visibility_polygons(
-        &mut self,
-        x: i32,
-        y: i32,
-        color: Color,
-        s: &mut State,
-    ) -> PixResult<bool> {
+    fn draw_visibility_polygons(&mut self, s: &mut State) -> PixResult<bool> {
+        let (x, y) = s.mouse_pos();
+
         self.calc_visibility_polygons((x, y).into());
 
         if !self.polygons.is_empty() {
-            s.fill(color);
-            s.stroke(color);
+            s.fill(WHITE);
+            s.stroke(WHITE);
             for i in 0..self.polygons.len() - 1 {
                 let p1 = self.polygons[i].1;
                 let p2 = self.polygons[i + 1].1;
@@ -298,6 +293,10 @@ impl RayScene {
                 p2.y.round() as i32,
             )?;
         }
+
+        s.fill(RED);
+        s.no_stroke();
+        s.circle(x, y, 2)?;
         Ok(true)
     }
 }
@@ -324,21 +323,10 @@ impl Stateful for RayScene {
         self.edges.push(Edge::new((0, h), (w, h))); // Bottom
         self.edges.push(Edge::new((0, 0), (0, h))); // Left
 
-        self.convert_edges(
-            (0, 0, self.xcells, self.ycells),
-            BLOCK_SIZE,
-            self.xcells as i32,
-        );
+        self.convert_edges_to_poly_map();
 
-        // let fuzzy_radius = 10.0;
-        // for (i, source) in self.sources.iter_mut().enumerate() {
-        //     let (sin, cos) = (i as f64 * (TWO_PI / 10.0)).sin_cos();
-        //     let dx = (cos * fuzzy_radius).round() as i32;
-        //     let dy = (sin * fuzzy_radius).round() as i32;
-        //     let g = rgb!(i as u8 * 20, 100);
-        //     println!("{}, {}, {:?}", dx, dy, g);
-        //     *source = (dx, dy, g.into());
-        // }
+        self.light = Image::load("static/light.png")?;
+
         Ok(true)
     }
 
@@ -346,17 +334,20 @@ impl Stateful for RayScene {
         s.clear();
 
         let (x, y) = s.mouse_pos();
-        // for i in 0..self.sources.len() {
-        //     let (dx, dy, g) = self.sources[i];
-        //     self.draw_visibility_polygons(x + dx, y + dy, g, s)?;
-        // }
-        self.draw_visibility_polygons(x, y, WHITE.into(), s)?;
-        s.fill(RED);
-        s.stroke(RED);
-        for i in 0..self.sources.len() {
-            let (dx, dy, _) = self.sources[i];
-            s.circle(x + dx, y + dy, 1)?;
-        }
+
+        let (cx, cw) = if x - 255 < 0 {
+            (0, (x + 256) as u32)
+        } else {
+            (x - 255, 512)
+        };
+        let (cy, ch) = if y - 255 < 0 {
+            (0, (y + 256) as u32)
+        } else {
+            (y - 255, 512)
+        };
+        s.set_clip(cx, cy, cw, ch);
+
+        self.draw_visibility_polygons(s)?;
 
         s.fill(BLUE);
         s.stroke(BLUE);
@@ -364,15 +355,7 @@ impl Stateful for RayScene {
             s.square(cell.pos.x as i32, cell.pos.y as i32, BLOCK_SIZE + 1)?;
         }
 
-        s.no_stroke();
-        for e in self.edges.iter() {
-            s.line(
-                e.start.x as i32,
-                e.start.y as i32,
-                e.end.x as i32,
-                e.end.y as i32,
-            )?;
-        }
+        s.image(x - 255, y - 255, &self.light)?;
 
         Ok(true)
     }
@@ -383,11 +366,7 @@ impl Stateful for RayScene {
             let i = self.get_cell_index(mx, my);
             self.cells[i].exists = !self.cells[i].exists;
             self.drawing = self.cells[i].exists;
-            self.convert_edges(
-                (0, 0, self.xcells, self.ycells),
-                BLOCK_SIZE,
-                self.xcells as i32,
-            );
+            self.convert_edges_to_poly_map();
         }
     }
 
@@ -399,11 +378,7 @@ impl Stateful for RayScene {
                 let i = self.get_cell_index(mx, my);
                 self.cells[i].exists = self.drawing;
             }
-            self.convert_edges(
-                (0, 0, self.xcells, self.ycells),
-                BLOCK_SIZE,
-                self.xcells as i32,
-            );
+            self.convert_edges_to_poly_map();
         }
     }
 }

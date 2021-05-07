@@ -2,7 +2,7 @@ use pix_engine::prelude::*;
 
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;
-const SHIP_SCALE: f32 = 4.0;
+const SHIP_SCALE: f64 = 4.0;
 const ASTEROID_SIZE: u32 = 64;
 const MIN_ASTEROID_SIZE: u32 = 16;
 const SHIP_THRUST: f64 = 150.0;
@@ -24,7 +24,7 @@ struct Asteroids {
     asteroids: Vec<SpaceObj>,
     bullets: Vec<SpaceObj>,
     ship: SpaceObj,
-    level: u32,
+    level: usize,
     lives: u32,
     score: i32,
     ship_model: Vec<(f64, f64)>,
@@ -57,7 +57,7 @@ impl SpaceObj {
         }
     }
     fn rand_asteroid(ship: &SpaceObj, s: &State) -> Self {
-        let mut x = random!(s.width()) as f64;
+        let mut x = random!(s.width() as f64);
         if x > (ship.x - ASTEROID_SAFE_RADIUS) && x < (ship.x + ASTEROID_SAFE_RADIUS) {
             let diff = ASTEROID_SAFE_RADIUS - (ship.x - x).abs();
             if ship.x > x {
@@ -66,7 +66,7 @@ impl SpaceObj {
                 x += diff;
             }
         }
-        let mut y = random!(s.height()) as f64;
+        let mut y = random!(s.height() as f64);
         if y > (ship.y - ASTEROID_SAFE_RADIUS) && y < (ship.y + ASTEROID_SAFE_RADIUS) {
             let diff = ASTEROID_SAFE_RADIUS - (ship.y - y).abs();
             if ship.y > y {
@@ -125,14 +125,14 @@ impl Asteroids {
     }
 
     fn spawn_new_ship(&mut self, s: &State) {
-        self.ship.x = s.width() as f64 / 2.0;
-        self.ship.y = s.height() as f64 / 2.0;
+        self.ship.x = (s.width() / 2) as f64;
+        self.ship.y = (s.height() / 2) as f64;
         self.ship.dx = 0.0;
         self.ship.dy = 0.0;
         self.ship.angle = 0.0;
 
         let asteroid_count = if !self.asteroids.is_empty() {
-            std::cmp::min(self.level + 2, self.asteroids.len() as u32)
+            std::cmp::min(self.level + 2, self.asteroids.len())
         } else {
             self.level + 2
         };
@@ -180,11 +180,15 @@ impl Stateful for Asteroids {
     }
 
     fn on_update(&mut self, s: &mut State) -> PixResult<bool> {
+        s.clear();
+
+        let width = s.width() as i32;
+        let height = s.height() as i32;
         if self.paused {
             return Ok(true);
         } else if self.gameover {
-            let x = s.width() as i32 / 2 - 80;
-            let y = s.height() as i32 / 2 - 24;
+            let x = width / 2 - 80;
+            let y = height / 2 - 24;
             s.fill(WHITE);
             s.text_size(32);
             s.text("GAME OVER", x, y)?;
@@ -232,13 +236,9 @@ impl Stateful for Asteroids {
         // Draw asteroids
         for a in self.asteroids.iter_mut() {
             // Ship collision
-            if collision::inside_circle(
-                self.ship.x.round() as i32,
-                self.ship.y.round() as i32,
-                a.x.round() as i32,
-                a.y.round() as i32,
-                a.size,
-            ) {
+            if Circle::new(a.x as i32, a.y as i32, a.size)
+                .contains(self.ship.x as i32, self.ship.y as i32)
+            {
                 self.exploded(s);
                 return Ok(true);
             }
@@ -252,8 +252,8 @@ impl Stateful for Asteroids {
             s.stroke(YELLOW);
             s.wireframe(
                 &self.asteroid_model,
-                a.x.round() as i32,
-                a.y.round() as i32,
+                a.x as i32,
+                a.y as i32,
                 a.angle,
                 a.size as f64,
             )?;
@@ -268,13 +268,7 @@ impl Stateful for Asteroids {
             b.angle -= 1.0 * elapsed;
 
             for a in self.asteroids.iter_mut() {
-                if collision::inside_circle(
-                    b.x.round() as i32,
-                    b.y.round() as i32,
-                    a.x.round() as i32,
-                    a.y.round() as i32,
-                    a.size,
-                ) {
+                if Circle::new(a.x as i32, a.y as i32, a.size).contains(b.x as i32, b.y as i32) {
                     // Asteroid hit
                     b.destroyed = true; // Removes bullet
 
@@ -308,11 +302,7 @@ impl Stateful for Asteroids {
 
         // Remove offscreen/destroyed bullets
         self.bullets.retain(|b| {
-            !b.destroyed
-                && b.x >= 1.0
-                && b.x < s.width() as f64
-                && b.y >= 1.0
-                && b.y < s.height() as f64
+            !b.destroyed && b.x >= 1.0 && b.x < width as f64 && b.y >= 1.0 && b.y < height as f64
         });
         // Remove destroyed asteroids
         self.asteroids.retain(|a| !a.destroyed);
@@ -321,16 +311,16 @@ impl Stateful for Asteroids {
         s.fill(WHITE);
         s.stroke(WHITE);
         for b in self.bullets.iter() {
-            s.circle(b.x.round() as i32, b.y.round() as i32, 1)?;
+            s.circle(b.x as i32, b.y as i32, 1)?;
         }
 
         // Draw ship
         s.wireframe(
             &self.ship_model,
-            self.ship.x.round() as i32,
-            self.ship.y.round() as i32,
+            self.ship.x as i32,
+            self.ship.y as i32,
             self.ship.angle,
-            SHIP_SCALE as f64,
+            SHIP_SCALE,
         )?;
 
         // Win level

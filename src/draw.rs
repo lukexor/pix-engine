@@ -1,9 +1,12 @@
 //! Drawing functions
 
-use crate::{common::Result, renderer::sdl::SdlRect, renderer::Rendering, state::State};
+use crate::{
+    image::Image,
+    renderer::{Rendering, Result},
+    state::State,
+};
 
-/// Wrapper for SdlRect.
-pub type Rect = SdlRect;
+// TODO: Instead of (x, y) take a positioned argument?
 
 /// Drawing mode which changes how (x, y) coordinates are interpreted.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -75,6 +78,11 @@ impl State {
         // TODO Add ellipse_mode
         let s = &self.settings;
         self.renderer.ellipse(x, y, width, height, s.fill, s.stroke)
+    }
+
+    /// Draw an image to the current canvas.
+    pub fn image(&mut self, x: i32, y: i32, img: &Image) -> Result<()> {
+        self.renderer.image(x, y, img)
     }
 
     /// Draw a wireframe to the current canvas.

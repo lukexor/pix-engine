@@ -1,11 +1,11 @@
 //! Settings for the current engine State.
 
-use super::State;
+use super::{Result, State};
 use crate::{
     color::{constants::*, Color},
-    common::Result,
     draw::DrawMode,
     renderer::Rendering,
+    shape::Rect,
 };
 
 /// Several settings used to change various functionality of the engine.
@@ -60,6 +60,16 @@ impl State {
         self.settings.stroke = None;
     }
 
+    /// Sets the clip rect used by the renderer to draw to the current canvas.
+    pub fn set_clip(&mut self, x: i32, y: i32, w: u32, h: u32) {
+        self.renderer.set_clip_rect(Some(Rect::new(x, y, w, h)));
+    }
+
+    /// Sets the clip rect used by the renderer to draw to the current canvas.
+    pub fn no_clip(&mut self) {
+        self.renderer.set_clip_rect(None);
+    }
+
     /// Set whether the cursor is shown or not.
     pub fn show_cursor(&mut self, show: bool) {
         self.renderer.show_cursor(show);
@@ -72,7 +82,7 @@ impl State {
 
     /// Change the rendering scale of the current canvas.
     pub fn set_scale(&mut self, x: f32, y: f32) -> Result<()> {
-        self.renderer.set_scale(x, y)
+        Ok(self.renderer.set_scale(x, y)?)
     }
 
     /// Change the text size for drawing to the current canvas.

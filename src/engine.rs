@@ -1,10 +1,10 @@
 //! The core `PixEngine` functionality.
 
 use crate::{
-    common::{Error, Result},
+    common::Result,
     event::{Event, WindowEvent},
-    renderer::{self, Position, Renderer, RendererSettings, Rendering},
-    state::{self, State, Stateful},
+    renderer::{Position, Renderer, RendererSettings, Rendering},
+    state::{State, Stateful},
 };
 use std::{
     path::Path,
@@ -83,7 +83,7 @@ impl PixEngineBuilder {
     pub fn build(&self) -> Result<PixEngine> {
         let renderer = Renderer::init(&self.settings)?;
         Ok(PixEngine {
-            state: State::init(renderer)?,
+            state: State::init(renderer),
             last_frame_time: Instant::now(),
             frame_timer: Duration::from_secs(1),
             frame_counter: 0,
@@ -235,16 +235,5 @@ impl PixEngine {
             }
         }
         Ok(())
-    }
-}
-
-impl From<state::Error> for Error {
-    fn from(err: state::Error) -> Error {
-        Error::StateError(err)
-    }
-}
-impl From<renderer::Error> for Error {
-    fn from(err: renderer::Error) -> Error {
-        Error::RendererError(err)
     }
 }

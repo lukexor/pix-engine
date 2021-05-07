@@ -1,14 +1,10 @@
 //! SDL Renderer implementation
 
-use super::{Position, RendererSettings, Rendering};
-use crate::{
-    color::Color,
-    common::{Error, Result},
-};
+use super::{Error, Position, RendererSettings, Rendering, Result};
+use crate::{color::Color, image::Image, shape::Rect};
 use sdl2::{
     gfx::primitives::{DrawRenderer, ToColor},
     pixels::PixelFormatEnum,
-    rect::Rect,
     render::{Canvas, Texture, TextureCreator, TextureQuery},
     ttf,
     video::{FullscreenType, Window, WindowContext},
@@ -16,6 +12,10 @@ use sdl2::{
 };
 use std::convert::TryFrom;
 
+// TODO handle errors better than mapping them
+
+/// Wrapper for Sdl2 Color
+pub type SdlColor = sdl2::pixels::Color;
 /// Wrapper for Sdl2 EventPollIterator
 pub type SdlEventIterator<'a> = sdl2::event::EventPollIterator<'a>;
 /// Wrapper for Sdl2 Event
@@ -51,10 +51,10 @@ impl Rendering for SdlRenderer {
     fn init(settings: &RendererSettings) -> Result<Self> {
         let s = settings;
 
-        let context = sdl2::init().map_err(Error::renderer)?;
+        let context = sdl2::init()?;
         let ttf_context = ttf::init().map_err(Error::renderer)?;
-        let video_subsys = context.video().map_err(Error::renderer)?;
-        let event_pump = context.event_pump().map_err(Error::renderer)?;
+        let video_subsys = context.video()?;
+        let event_pump = context.event_pump()?;
 
         // Set up window with options
         let win_width = (s.scale_x * s.width as f32).floor() as u32;
@@ -94,10 +94,8 @@ impl Rendering for SdlRenderer {
             .map_err(Error::renderer)?;
 
         let texture_creator: TextureCreator<WindowContext> = canvas.texture_creator();
-        let textures = vec![texture_creator
-            .create_texture_streaming(PixelFormatEnum::ARGB8888, s.width, s.height)
-            .map_err(Error::renderer)?];
 
+        // TODO font context
         // let font = ttf_context.load_font("static/emulogic.ttf", 16)?;
 
         Ok(Self {
@@ -107,7 +105,7 @@ impl Rendering for SdlRenderer {
             event_pump,
             canvas,
             texture_creator,
-            textures,
+            textures: Vec::new(),
             // font,
         })
     }
@@ -125,6 +123,12 @@ impl Rendering for SdlRenderer {
     /// Sets the color used by the renderer to draw to the current canvas.
     fn set_draw_color(&mut self, color: Color) {
         self.canvas.set_draw_color(color);
+    }
+
+    /// Sets the clip rect used by the renderer to draw to the current canvas.
+    fn set_clip_rect(&mut self, rect: Option<Rect>) {
+        let rect = rect.map(|rect| rect.into());
+        self.canvas.set_clip_rect(rect);
     }
 
     /// Returns a single event or None if the event pump is empty.
@@ -211,9 +215,7 @@ impl Rendering for SdlRenderer {
         self.textures[0]
             .update(None, pixels, pitch)
             .map_err(Error::renderer)?;
-        self.canvas
-            .copy(&self.textures[0], None, None)
-            .map_err(Error::renderer)?;
+        self.canvas.copy(&self.textures[0], None, None)?;
         Ok(())
     }
 
@@ -235,7 +237,7 @@ impl Rendering for SdlRenderer {
                 .map_err(Error::renderer)?;
             let TextureQuery { width, height, .. } = texture.query();
             self.canvas
-                .copy(&texture, None, Some(Rect::new(x, y, width, height)))?;
+                .copy(&texture, None, Some(SdlRect::new(x, y, width, height)))?;
         }
         Ok(())
     }
@@ -334,6 +336,23 @@ impl Rendering for SdlRenderer {
         }
         Ok(())
     }
+
+    // TODO: Move texture creation into image object?
+    /// Draw an image to the current canvas.
+    fn image(&mut self, x: i32, y: i32, img: &Image) -> Result<()> {
+        let mut texture = self
+            .texture_creator
+            .create_texture_streaming(PixelFormatEnum::RGB24, img.width, img.height)
+            .map_err(Error::renderer)?;
+        texture
+            .update(None, &img.data, 3 * img.width as usize)
+            .map_err(Error::renderer)?;
+        texture.set_blend_mode(sdl2::render::BlendMode::Mod);
+        let dst = SdlRect::new(x, y, img.width, img.height);
+        self.canvas
+            .copy(&texture, None, dst)
+            .map_err(Error::renderer)
+    }
 }
 
 impl ToColor for Color {
@@ -345,12 +364,18 @@ impl ToColor for Color {
     }
 }
 
-impl From<Color> for sdl2::pixels::Color {
+impl From<Color> for SdlColor {
     fn from(color: Color) -> Self {
         let rgb = match color {
             Color::Rgb(rgb) => rgb,
             Color::Hsv(hsv) => hsv.to_rgb(),
         };
         Self::RGBA(rgb.red(), rgb.green(), rgb.blue(), rgb.alpha())
+    }
+}
+
+impl From<Rect> for SdlRect {
+    fn from(rect: Rect) -> Self {
+        Self::new(rect.x, rect.y, rect.w, rect.h)
     }
 }

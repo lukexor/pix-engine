@@ -2,13 +2,31 @@
 
 use crate::{
     color::Color,
-    common::Result,
+    common,
     event::{Event, EventIterator},
+    image::Image,
+    shape::Rect,
 };
 use sdl::SdlRenderer;
 use std::borrow::Cow;
 
 pub(crate) mod sdl;
+
+/// `Renderer` Result
+pub type Result<T> = std::result::Result<T, Error>;
+
+/// Types of errors the `Rendering` trait can return in a `Result`.
+#[derive(Debug)]
+pub enum Error {
+    /// Indicates an invalid `Renderer` setting.
+    InvalidSetting,
+    /// Renderer error
+    Renderer,
+    /// Error when an invalid (x, y) screen position is encountered.
+    InvalidPosition,
+    /// Any other unknown error as a string.
+    Other(Cow<'static, str>),
+}
 
 /// Wrapper around a concrete renderer.
 pub(crate) type Renderer = SdlRenderer;
@@ -73,6 +91,9 @@ pub(crate) trait Rendering: Sized {
 
     /// Sets the color used by the renderer to draw the current canvas.
     fn set_draw_color(&mut self, color: Color);
+
+    /// Sets the clip rect used by the renderer to draw to the current canvas.
+    fn set_clip_rect(&mut self, rect: Option<Rect>);
 
     /// Returns a single event or None if the event pump is empty.
     fn poll_event(&mut self) -> Option<Event>;
@@ -161,23 +182,26 @@ pub(crate) trait Rendering: Sized {
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()>;
+
+    /// Draw an image to the current canvas.
+    fn image(&mut self, x: i32, y: i32, img: &Image) -> Result<()>;
 }
 
-/// Types of errors the `Rendering` trait can return in a `Result`.
-#[derive(Debug)]
-pub enum Error {
-    /// Error when an invalid (x, y) screen position is encountered.
-    InvalidPosition,
-    /// Any other unknown error as a string.
-    Other(Cow<'static, str>),
+impl Error {
+    /// Creates a renderer error from anything that implements Display.
+    pub fn renderer<E: std::fmt::Display>(err: E) -> Self {
+        Self::Other(Cow::from(err.to_string()))
+    }
 }
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use Error::*;
         match self {
+            InvalidSetting => write!(f, "invalid Renderer setting"), // TODO add setting to this
+            Renderer => write!(f, "Renderer error"),                 // TODO: make this more robust
             InvalidPosition => write!(f, "Invalid window position"),
-            Error::Other(e) => write!(f, "Renderer Error: {}", e),
+            Other(e) => write!(f, "Renderer Error: {}", e),
         }
     }
 }
@@ -188,8 +212,20 @@ impl std::error::Error for Error {
     }
 }
 
+impl From<Error> for common::Error {
+    fn from(err: Error) -> Self {
+        Self::RendererError(err)
+    }
+}
+
 impl From<String> for Error {
-    fn from(err: String) -> Error {
-        Error::Other(Cow::from(err))
+    fn from(err: String) -> Self {
+        Self::Other(Cow::from(err))
+    }
+}
+
+impl From<std::num::TryFromIntError> for Error {
+    fn from(err: std::num::TryFromIntError) -> Self {
+        Self::Other(Cow::from(err.to_string()))
     }
 }

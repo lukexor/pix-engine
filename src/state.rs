@@ -1,7 +1,7 @@
 //! State management for the engine.
 
 use crate::{
-    common::Result,
+    common,
     event::{Keycode, MouseButton},
     renderer::{self, Renderer, Rendering},
 };
@@ -12,13 +12,27 @@ use std::{borrow::Cow, collections::HashSet};
 pub mod environment;
 pub mod settings;
 
+/// `State` Result
+type Result<T> = std::result::Result<T, Error>;
+
+/// Types of errors the `Stateful` trait can return in a `Result`.
+#[derive(Debug)]
+pub enum Error {
+    /// IO specific errors.
+    IoError(std::io::Error),
+    /// Renderer specific errors.
+    RendererError(renderer::Error),
+    /// Unknown errors.
+    Other(Cow<'static, str>),
+}
+
 /// Defines state changing operations that are called while the `PixEngine` is running.
 pub trait Stateful {
     /// Called once upon engine start when `PixEngine::run()` is called.
     ///
     /// Return `Ok(true)` to continue running.
     /// Return `Err` or `Ok(false)` to shutdown the engine and close the application.
-    fn on_start(&mut self, _s: &mut State) -> Result<bool> {
+    fn on_start(&mut self, _s: &mut State) -> common::Result<bool> {
         Ok(true)
     }
 
@@ -26,13 +40,13 @@ pub trait Stateful {
     ///
     /// Return `Ok(true)` to continue running.
     /// Return `Err` or `Ok(false)` to shutdown the engine and close the application.
-    fn on_update(&mut self, _s: &mut State) -> Result<bool>;
+    fn on_update(&mut self, _s: &mut State) -> common::Result<bool>;
 
     /// Called once when the engine detects a close/exit event.
     ///
     /// Return `Ok(true)` to continue shutting down the engine and closing the application.
     /// Return `Err` or `Ok(false)` to abort exiting.
-    fn on_stop(&mut self, _s: &mut State) -> Result<bool> {
+    fn on_stop(&mut self, _s: &mut State) -> common::Result<bool> {
         Ok(true)
     }
 
@@ -68,8 +82,8 @@ pub struct State {
 
 impl State {
     /// Creates a new `State` instance with a given `Renderer`.
-    pub fn init(renderer: Renderer) -> Result<Self> {
-        Ok(Self {
+    pub fn init(renderer: Renderer) -> Self {
+        Self {
             renderer,
             env: Environment::default(),
             settings: Settings::default(),
@@ -79,7 +93,7 @@ impl State {
             pmouse_pos: (0, 0),
             keys: HashSet::new(),
             mouse_buttons: HashSet::new(),
-        })
+        }
     }
 
     /// Clears the render target to the current background color set by `State::background()`.
@@ -100,17 +114,6 @@ impl State {
     }
 }
 
-/// Types of errors the `Stateful` trait can return in a `Result`.
-#[derive(Debug)]
-pub enum Error {
-    /// IO specific errors.
-    IoError(std::io::Error),
-    /// Renderer specific errors.
-    RendererError(renderer::Error),
-    /// Unknown errors.
-    Other(Cow<'static, str>),
-}
-
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use Error::*;
@@ -129,7 +132,13 @@ impl std::error::Error for Error {
 }
 
 impl From<renderer::Error> for Error {
-    fn from(err: renderer::Error) -> Error {
-        Error::RendererError(err)
+    fn from(err: renderer::Error) -> Self {
+        Self::RendererError(err)
+    }
+}
+
+impl From<Error> for common::Error {
+    fn from(err: Error) -> Self {
+        Self::StateError(err)
     }
 }

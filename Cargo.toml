@@ -16,6 +16,7 @@ edition = "2018"
 approx = "0.4"
 include_dir = "0.6"
 num-traits = "0.2"
+png = "0.16"
 rand = "0.8"
 rng = "0.1"
 
