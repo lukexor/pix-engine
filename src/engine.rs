@@ -47,8 +47,8 @@ impl PixEngineBuilder {
     }
 
     /// Set a window icon.
-    pub fn icon<P: AsRef<Path>>(&mut self, _path: P) -> &mut Self {
-        // TODO icon
+    pub fn icon<P: AsRef<Path>>(&mut self, path: P) -> &mut Self {
+        self.settings.icon = Some(path.as_ref().to_owned());
         self
     }
 

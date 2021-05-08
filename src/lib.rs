@@ -1,17 +1,23 @@
-#![warn(
+#![deny(
     rust_2018_idioms,
     missing_copy_implementations,
     missing_debug_implementations,
-    missing_docs
+    missing_docs,
+    broken_intra_doc_links
 )]
 
 //! # Pix-Engine
 //!
 //! ## Summary
 //!
-//! A simple, cross-platform graphics/UI engine framework with a minimal interface.
+//! A cross-platform graphics/UI engine framework for simple games, visualizations, and graphics
+//! demos.
 //!
-//! TODO
+//! The goal of this library is to be simpler to setup and use for graphics or algorithm
+//! exploration than larger graphics libraries.
+//!
+//! This is more than just a toy project, however, and can be used to drive powerful
+//! applications. The primary use of this project is in the [`Tetanes`] NES emulator project.
 //!
 //! ## Usage
 //!

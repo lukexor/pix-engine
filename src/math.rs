@@ -8,7 +8,7 @@ use std::ops::{AddAssign, Range};
 pub type Scalar = f64;
 
 /// Returns a random number within a range.
-pub fn random<T, V>(val: V) -> T
+pub fn random_rng<T, V>(val: V) -> T
 where
     T: Num + SampleUniform + PartialOrd,
     V: Into<Range<T>>,
@@ -18,11 +18,11 @@ where
 }
 
 /// Returns a random number between zero and the given value.
-pub fn random_z<T>(val: T) -> T
+pub fn random<T>(val: T) -> T
 where
     T: Num + SampleUniform + PartialOrd,
 {
-    random(T::zero()..val)
+    random_rng(T::zero()..val)
 }
 
 /// Returns a random number within a range.
@@ -41,10 +41,10 @@ where
 #[macro_export]
 macro_rules! random {
     ($v:expr) => {
-        $crate::math::random_z($v);
+        $crate::math::random($v);
     };
     ($s:expr, $e:expr) => {
-        $crate::math::random($s..$e);
+        $crate::math::random_rng($s..$e);
     };
 }
 
@@ -159,16 +159,16 @@ where
     }
 }
 
-/// Collision specific utility functions.
-pub mod collision {}
-
-#[allow(missing_docs)]
+/// Math constants
 pub mod constants {
     pub use std::f64::consts::*;
     pub use std::f64::INFINITY;
     pub use std::f64::NAN;
 
+    /// PI / 2
     pub const HALF_PI: f64 = std::f64::consts::FRAC_PI_2;
+    /// PI / 4
     pub const QUARTER_PI: f64 = std::f64::consts::FRAC_PI_4;
+    /// 2 PI
     pub const TWO_PI: f64 = TAU;
 }

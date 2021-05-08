@@ -23,7 +23,10 @@ rng = "0.1"
 [dependencies.sdl2]
 version = "0.34"
 default_features = false
-features = ["gfx", "image", "mixer", "ttf", "unsafe_textures"]
+features = ["gfx", "image", "mixer", "ttf"]
+
+[profile.dev]
+opt-level = 2
 
 [profile.release]
 lto = true

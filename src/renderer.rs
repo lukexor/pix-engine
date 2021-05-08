@@ -9,7 +9,7 @@ use crate::{
     state::StateError,
 };
 use sdl::SdlRenderer;
-use std::{borrow::Cow, error, ffi::NulError, fmt, io, result};
+use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
 
 pub(crate) mod sdl;
 
@@ -37,7 +37,7 @@ pub enum RendererError {
 pub(crate) type Renderer = SdlRenderer;
 
 /// Represents a possible screen position.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Position {
     /// A positioned (x, y) coordinate.
     Positioned(i32),
@@ -55,6 +55,7 @@ impl Default for Position {
 #[derive(Debug)]
 pub(crate) struct RendererSettings {
     pub(crate) title: String,
+    pub(crate) icon: Option<PathBuf>,
     pub(crate) x: Position,
     pub(crate) y: Position,
     pub(crate) width: u32,
@@ -70,6 +71,7 @@ impl Default for RendererSettings {
     fn default() -> Self {
         Self {
             title: String::new(),
+            icon: None,
             x: Position::default(),
             y: Position::default(),
             width: 400,
@@ -142,6 +144,7 @@ pub(crate) trait Rendering: Sized {
         text: &str,
         x: i32,
         y: i32,
+        size: u32,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> RendererResult<()>;

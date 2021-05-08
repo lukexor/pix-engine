@@ -6,17 +6,13 @@ use crate::{
     state::State,
 };
 
-// TODO: Instead of (x, y) take a positioned argument?
-
 /// Drawing mode which changes how (x, y) coordinates are interpreted.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum DrawMode {
-    /// Use (x, y) as the top-left corner.
+    /// Use (x, y) as the top-left corner. Default.
     Corner,
     /// Use (x, y) as the center.
     Center,
-    /// Use (x, y) as the center and size, width, height as the radius.
-    Radius,
 }
 
 impl State {
@@ -33,9 +29,13 @@ impl State {
     /// Draw text to the current canvas.
     pub fn text(&mut self, text: &str, x: i32, y: i32) -> RendererResult<()> {
         let s = &self.settings;
-        // TODO Add rect_mode
-        // TODO Add text_size
-        self.renderer.text(text, x, y, s.fill, s.stroke)
+        let width = text.len() as u32 * s.text_size;
+        let (x, y) = match s.rect_mode {
+            DrawMode::Corner => (x, y),
+            DrawMode::Center => (x - width as i32 / 2, y - s.text_size as i32 / 2),
+        };
+        self.renderer
+            .text(text, x, y, s.text_size, s.fill, s.stroke)
     }
 
     /// Draw a point to the current canvas.
@@ -70,9 +70,11 @@ impl State {
 
     /// Draw a rectangle to the current canvas.
     pub fn rect(&mut self, x: i32, y: i32, width: u32, height: u32) -> RendererResult<()> {
-        self.env.render = true;
-        // TODO Add rect_mode
         let s = &self.settings;
+        let (x, y) = match s.rect_mode {
+            DrawMode::Corner => (x, y),
+            DrawMode::Center => (x - width as i32 / 2, y - height as i32 / 2),
+        };
         self.renderer.rect(x, y, width, height, s.fill, s.stroke)
     }
 
@@ -83,8 +85,11 @@ impl State {
 
     /// Draw a ellipse to the current canvas.
     pub fn ellipse(&mut self, x: i32, y: i32, width: u32, height: u32) -> RendererResult<()> {
-        // TODO Add ellipse_mode
         let s = &self.settings;
+        let (x, y) = match s.ellipse_mode {
+            DrawMode::Corner => (x, y),
+            DrawMode::Center => (x - width as i32 / 2, y - height as i32 / 2),
+        };
         self.renderer.ellipse(x, y, width, height, s.fill, s.stroke)
     }
 

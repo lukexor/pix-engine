@@ -190,7 +190,6 @@ impl RayScene {
             // Cast three rays - one at and one off to each side
             for offset in -1..2 {
                 let angle = offset as f64 / 10_000.0;
-                // TODO This sub could be better served by a translate to o
                 let mut r = p.copy() - o;
                 r.rotate(angle);
                 if let Some(intersect) = self.cast_ray(o, r) {
@@ -260,7 +259,6 @@ impl RayScene {
         Some((Vector::new_2d(r_px + r_dx * t1, r_py + r_dy * t1), t1))
     }
 
-    // TODO: See about performance tweaks
     fn draw_visibility_polygons(&mut self, s: &mut State) -> PixResult<bool> {
         let (x, y) = s.mouse_pos();
 
@@ -409,6 +407,7 @@ impl Cell {
 fn main() {
     let mut engine = PixEngine::create(TITLE, WIDTH, HEIGHT)
         .position_centered()
+        .icon("static/light.png")
         .build()
         .expect("valid engine");
     let mut app = RayScene::new();

@@ -4,13 +4,12 @@ use super::{Position, RendererError, RendererResult, RendererSettings, Rendering
 use crate::{color::Color, image::Image, shape::Rect};
 use sdl2::{
     gfx::primitives::{DrawRenderer, ToColor},
+    image::LoadSurface,
     pixels::PixelFormatEnum,
-    render::{
-        Canvas, Texture, TextureCreator, TextureQuery, TextureValueError, UpdateTextureError,
-    },
+    render::{Canvas, TextureCreator, TextureQuery, TextureValueError, UpdateTextureError},
+    surface::Surface,
     ttf::{self, FontError, InitError},
-    video::WindowBuildError,
-    video::{FullscreenType, Window, WindowContext},
+    video::{FullscreenType, Window, WindowBuildError, WindowContext},
     EventPump, IntegerOrSdlError, Sdl,
 };
 use std::{borrow::Cow, convert::TryFrom, ffi::NulError};
@@ -38,7 +37,6 @@ pub struct SdlRenderer {
     event_pump: EventPump,
     canvas: Canvas<Window>,
     texture_creator: TextureCreator<WindowContext>,
-    textures: Vec<Texture>,
 }
 
 impl std::fmt::Debug for SdlRenderer {
@@ -89,10 +87,12 @@ impl Rendering for SdlRenderer {
         canvas.set_logical_size(win_width, win_height)?;
         canvas.set_scale(s.scale_x, s.scale_y)?;
 
-        let texture_creator: TextureCreator<WindowContext> = canvas.texture_creator();
+        if let Some(icon) = &s.icon {
+            let surface = Surface::from_file(icon)?;
+            canvas.window_mut().set_icon(surface);
+        }
 
-        // TODO font context
-        // let font = ttf_context.load_font("static/emulogic.ttf", 16)?;
+        let texture_creator: TextureCreator<WindowContext> = canvas.texture_creator();
 
         Ok(Self {
             title: s.title.to_owned(),
@@ -101,8 +101,6 @@ impl Rendering for SdlRenderer {
             event_pump,
             canvas,
             texture_creator,
-            textures: Vec::new(),
-            // font,
         })
     }
 
@@ -194,18 +192,19 @@ impl Rendering for SdlRenderer {
     }
 
     /// Create a texture to render to.
-    fn create_texture(&mut self, width: u32, height: u32) -> RendererResult<usize> {
-        let texture = self
-            .texture_creator
-            .create_texture_streaming(None, width, height)?;
-        self.textures.push(texture);
-        Ok(self.textures.len())
+    fn create_texture(&mut self, _width: u32, _height: u32) -> RendererResult<usize> {
+        // TODO: Handle textures
+        // Ok(self
+        //     .texture_creator
+        //     .create_texture_streaming(None, width, height)?)
+        Ok(0)
     }
 
     /// Draw an array of pixels to the canvas.
-    fn draw_pixels(&mut self, pixels: &[u8], pitch: usize) -> RendererResult<()> {
-        self.textures[0].update(None, pixels, pitch)?;
-        self.canvas.copy(&self.textures[0], None, None)?;
+    fn draw_pixels(&mut self, _pixels: &[u8], _pitch: usize) -> RendererResult<()> {
+        // TODO: Handle drawing pixels to textures
+        // self.textures[0].update(None, pixels, pitch)?;
+        // self.canvas.copy(&self.textures[0], None, None)?;
         Ok(())
     }
 
@@ -215,10 +214,14 @@ impl Rendering for SdlRenderer {
         text: &str,
         x: i32,
         y: i32,
+        size: u32,
         fill: Option<Color>,
         _stroke: Option<Color>,
     ) -> RendererResult<()> {
-        let font = self.ttf_context.load_font("static/emulogic.ttf", 16)?;
+        // TODO: Figure out how to store this
+        let font = self
+            .ttf_context
+            .load_font("static/emulogic.ttf", size as u16)?;
         if let Some(fill) = fill {
             let surface = font.render(text).blended(fill)?;
             let texture = self.texture_creator.create_texture_from_surface(&surface)?;
