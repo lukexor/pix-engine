@@ -2,8 +2,8 @@ use pix_engine::prelude::*;
 use std::cmp::Ordering::Less;
 
 const TITLE: &str = "Raycasting";
-const WIDTH: u32 = 1024;
-const HEIGHT: u32 = 768;
+const WIDTH: u32 = 1000;
+const HEIGHT: u32 = 800;
 const SCALE: u32 = 1;
 
 const BLOCK_SIZE: u32 = 40;
@@ -261,6 +261,9 @@ impl RayScene {
 
     fn draw_visibility_polygons(&mut self, s: &mut State) -> PixResult<bool> {
         let (x, y) = s.mouse_pos();
+        if x <= 0 || x > s.width() as i32 || y <= 0 || y > s.height() as i32 {
+            return Ok(true);
+        }
 
         self.calc_visibility_polygons((x, y).into());
 
@@ -300,7 +303,7 @@ impl RayScene {
 }
 
 impl Stateful for RayScene {
-    fn on_start(&mut self, s: &mut State) -> PixResult<bool> {
+    fn on_start(&mut self, s: &mut State) -> PixResult<()> {
         s.background(BLACK);
         s.set_scale(SCALE as f32, SCALE as f32)?;
         s.show_cursor(false);
@@ -325,23 +328,23 @@ impl Stateful for RayScene {
 
         self.light = Image::load("static/light.png")?;
 
-        Ok(true)
+        Ok(())
     }
 
-    fn on_update(&mut self, s: &mut State) -> PixResult<bool> {
+    fn on_update(&mut self, s: &mut State) -> PixResult<()> {
         s.clear();
 
         let (x, y) = s.mouse_pos();
 
-        let (cx, cw) = if x - 255 < 0 {
-            (0, (x + 256) as u32)
+        let (cx, cw) = if x - 254 < 0 {
+            (0, (x + 255) as u32)
         } else {
-            (x - 255, 512)
+            (x - 254, 511)
         };
-        let (cy, ch) = if y - 255 < 0 {
-            (0, (y + 256) as u32)
+        let (cy, ch) = if y - 254 < 0 {
+            (0, (y + 255) as u32)
         } else {
-            (y - 255, 512)
+            (y - 254, 511)
         };
         s.set_clip(cx, cy, cw, ch);
 
@@ -355,16 +358,18 @@ impl Stateful for RayScene {
 
         s.image(x - 255, y - 255, &self.light)?;
 
-        Ok(true)
+        Ok(())
     }
 
     fn on_mouse_pressed(&mut self, s: &mut State, btn: MouseButton) {
         if btn == MouseButton::Left {
             let (mx, my) = s.mouse_pos();
-            let i = self.get_cell_index(mx, my);
-            self.cells[i].exists = !self.cells[i].exists;
-            self.drawing = self.cells[i].exists;
-            self.convert_edges_to_poly_map();
+            if mx > 0 && mx <= s.width() as i32 && my > 0 && my <= s.height() as i32 {
+                let i = self.get_cell_index(mx, my);
+                self.cells[i].exists = !self.cells[i].exists;
+                self.drawing = self.cells[i].exists;
+                self.convert_edges_to_poly_map();
+            }
         }
     }
 
@@ -372,11 +377,13 @@ impl Stateful for RayScene {
         if s.mouse_buttons().contains(&MouseButton::Left) {
             let (mx, my) = s.mouse_pos();
             let (px, py) = s.pmouse_pos();
-            if (mx, my) != (px, py) {
-                let i = self.get_cell_index(mx, my);
-                self.cells[i].exists = self.drawing;
+            if mx > 0 && mx <= s.width() as i32 && my > 0 && my <= s.height() as i32 {
+                if (mx, my) != (px, py) {
+                    let i = self.get_cell_index(mx, my);
+                    self.cells[i].exists = self.drawing;
+                }
+                self.convert_edges_to_poly_map();
             }
-            self.convert_edges_to_poly_map();
         }
     }
 }
@@ -405,9 +412,11 @@ impl Cell {
 }
 
 fn main() {
-    let mut engine = PixEngine::create(TITLE, WIDTH, HEIGHT)
+    let mut engine = PixEngine::create(WIDTH, HEIGHT)
+        .with_title(TITLE)
         .position_centered()
         .icon("static/light.png")
+        .resizable()
         .build()
         .expect("valid engine");
     let mut app = RayScene::new();

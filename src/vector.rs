@@ -65,7 +65,7 @@ use std::{fmt, ops::*};
 /// Vectors can be combined using "vector" math, so for example two vectors can be added together
 /// to form a new vector using `let v3 = v1 + v2` or you can add one vector to another by calling
 /// `v1 += v2`.
-#[derive(Default, Debug, Copy, Clone, PartialEq)]
+#[derive(Default, Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub struct Vector {
     /// X magnitude
     pub x: Scalar,
@@ -714,19 +714,6 @@ impl RemAssign for Vector {
         if v.z != 0.0 {
             self.z %= v.z;
         }
-    }
-}
-
-impl Deref for Vector {
-    type Target = [Scalar];
-    fn deref(&self) -> &[Scalar] {
-        unsafe { ::std::slice::from_raw_parts(self as *const Self as *const Scalar, 3) }
-    }
-}
-
-impl DerefMut for Vector {
-    fn deref_mut(&mut self) -> &mut [Scalar] {
-        unsafe { ::std::slice::from_raw_parts_mut(self as *mut Self as *mut Scalar, 3) }
     }
 }
 

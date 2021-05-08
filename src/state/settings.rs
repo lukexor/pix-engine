@@ -15,6 +15,7 @@ pub(crate) struct Settings {
     pub(crate) fill: Option<Color>,
     pub(crate) stroke: Option<Color>,
     pub(crate) text_size: u32,
+    pub(crate) loop_enabled: bool,
     pub(crate) show_frame_rate: bool,
     pub(crate) rect_mode: DrawMode,
     pub(crate) ellipse_mode: DrawMode,
@@ -27,6 +28,7 @@ impl Default for Settings {
             fill: Some(Color::Rgb(BLACK)),
             stroke: None,
             text_size: 16,
+            loop_enabled: true,
             show_frame_rate: false,
             rect_mode: DrawMode::Corner,
             ellipse_mode: DrawMode::Corner,
@@ -73,6 +75,11 @@ impl State {
     /// Set whether the cursor is shown or not.
     pub fn show_cursor(&mut self, show: bool) {
         self.renderer.show_cursor(show);
+    }
+
+    /// Set `PixEngine` to pause or continue the game loop.
+    pub fn set_loop(&mut self, enabled: bool) {
+        self.settings.loop_enabled = enabled;
     }
 
     /// Set whether to show the current frame rate per second in the title or not.

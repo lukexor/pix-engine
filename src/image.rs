@@ -16,10 +16,13 @@ use std::{
 pub type ImageResult<T> = result::Result<T, ImageError>;
 
 /// Types of errors `Image` can return in a `Result`.
+#[non_exhaustive]
 #[derive(Debug)]
 pub enum ImageError {
     /// Invalid file type.
     InvalidFileType(Option<OsString>),
+    /// Invalid bit depth.
+    InvalidBitDepth(png::BitDepth),
     /// IO specific errors.
     IoError(io::Error),
     /// Decoding specific errors.
@@ -32,11 +35,11 @@ pub enum ImageError {
 #[derive(Debug, Default, Clone)]
 pub struct Image {
     /// Width of the image
-    pub width: u32,
+    width: u32,
     /// Height of the image
-    pub height: u32,
+    height: u32,
     /// RGB values
-    pub data: Vec<u8>,
+    data: Vec<u8>,
     // TODO: tint, flip, rgb
 }
 
@@ -48,6 +51,21 @@ impl Image {
             height,
             data: vec![0x00; (4 * width * height) as usize],
         }
+    }
+
+    /// The image width.
+    pub fn width(&self) -> u32 {
+        self.width
+    }
+
+    /// The image height.
+    pub fn height(&self) -> u32 {
+        self.height
+    }
+
+    /// The image data as a u8 slice.
+    pub fn bytes(&self) -> &[u8] {
+        &self.data
     }
 
     /// Create a new `Image` from an array of u8 bytes representing RGBA values.
@@ -71,17 +89,9 @@ impl Image {
         let png = png::Decoder::new(png_file);
         let (info, mut reader) = png.read_info()?;
 
-        // assert_eq!(
-        //     info.color_type,
-        //     png::ColorType::RGBA,
-        //     "Only RGBA formats supported right now."
-        // );
-        // TODO: Change to return error
-        assert_eq!(
-            info.bit_depth,
-            png::BitDepth::Eight,
-            "Only 8-bit formats supported right now."
-        );
+        if info.bit_depth != png::BitDepth::Eight {
+            return Err(ImageError::InvalidBitDepth(info.bit_depth));
+        }
 
         let mut data = vec![0x00; info.buffer_size()];
         reader.next_frame(&mut data).unwrap();
@@ -94,7 +104,7 @@ impl Image {
 
     /// Save an `Image` to a `png` file.
     pub fn save<P: AsRef<Path>>(&self, _path: P) -> ImageResult<()> {
-        unimplemented!("TODO save image");
+        todo!("save image");
     }
 }
 
@@ -102,9 +112,10 @@ impl std::fmt::Display for ImageError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use ImageError::*;
         match self {
+            InvalidFileType(ext) => write!(f, "Invalid file type: {:?}", ext),
+            InvalidBitDepth(depth) => write!(f, "Invalid bit depth: {:?}", depth),
             IoError(err) => err.fmt(f),
             DecodingError(err) => err.fmt(f),
-            InvalidFileType(ext) => write!(f, "Invalid file type: {:?}", ext),
             Other(err) => write!(f, "Renderer Error: {}", err),
         }
     }

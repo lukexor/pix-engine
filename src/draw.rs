@@ -7,6 +7,7 @@ use crate::{
 };
 
 /// Drawing mode which changes how (x, y) coordinates are interpreted.
+#[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum DrawMode {
     /// Use (x, y) as the top-left corner. Default.

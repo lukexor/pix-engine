@@ -17,6 +17,7 @@ pub(crate) mod sdl;
 pub type RendererResult<T> = result::Result<T, RendererError>;
 
 /// Types of errors the `Rendering` trait can return in a `Result`.
+#[non_exhaustive]
 #[derive(Debug)]
 pub enum RendererError {
     /// Renderer initialization errors.

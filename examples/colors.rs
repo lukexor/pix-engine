@@ -1,17 +1,9 @@
 use pix_engine::{math::map, prelude::*};
 
+const TITLE: &str = "Colors";
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;
 const SIZE: u32 = 4;
-
-pub fn main() {
-    let mut engine = PixEngine::create("Colors", WIDTH, HEIGHT)
-        .position_centered()
-        .build()
-        .expect("valid engine");
-    let mut app = Colors::new();
-    engine.run(&mut app).expect("ran successfully");
-}
 
 struct Colors {
     h: f32,
@@ -23,7 +15,7 @@ impl Colors {
         Self { h: 0.0, auto: true }
     }
 
-    fn draw_gradient(&mut self, state: &mut State) -> PixResult<bool> {
+    fn draw_gradient(&mut self, state: &mut State) -> PixResult<()> {
         for x in (0..WIDTH / SIZE).into_iter() {
             for y in (0..HEIGHT / SIZE).into_iter() {
                 let s = map((SIZE * x) as f32, 0.0, WIDTH as f32, 0.0, 1.0);
@@ -39,7 +31,7 @@ impl Colors {
             100,
         )?;
         state.text("Press Escape to return to demo mode.", 20, 132)?;
-        Ok(true)
+        Ok(())
     }
 
     fn modify_hue(&mut self, change: f32, auto: bool) {
@@ -52,17 +44,17 @@ impl Colors {
 }
 
 impl Stateful for Colors {
-    fn on_start(&mut self, s: &mut State) -> PixResult<bool> {
+    fn on_start(&mut self, s: &mut State) -> PixResult<()> {
         s.show_frame_rate(true);
-        Ok(true)
+        Ok(())
     }
 
-    fn on_update(&mut self, s: &mut State) -> PixResult<bool> {
+    fn on_update(&mut self, s: &mut State) -> PixResult<()> {
         if self.auto && s.frame_count() % 4 == 0 {
             self.modify_hue(1.0, true);
         }
         self.draw_gradient(s)?;
-        Ok(true)
+        Ok(())
     }
 
     fn on_key_pressed(&mut self, _s: &mut State, key: Keycode) {
@@ -75,4 +67,14 @@ impl Stateful for Colors {
             _ => (),
         }
     }
+}
+
+pub fn main() {
+    let mut engine = PixEngine::create(WIDTH, HEIGHT)
+        .with_title(TITLE)
+        .position_centered()
+        .build()
+        .expect("valid engine");
+    let mut app = Colors::new();
+    engine.run(&mut app).expect("ran successfully");
 }

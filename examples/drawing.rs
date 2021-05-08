@@ -1,5 +1,6 @@
 use pix_engine::prelude::*;
 
+const TITLE: &str = "Drawing";
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;
 
@@ -12,20 +13,21 @@ impl App {
 }
 
 impl Stateful for App {
-    fn on_start(&mut self, s: &mut State) -> PixResult<bool> {
+    fn on_start(&mut self, s: &mut State) -> PixResult<()> {
         s.show_frame_rate(true);
-        Ok(true)
+        Ok(())
     }
-    fn on_update(&mut self, _s: &mut State) -> PixResult<bool> {
-        Ok(true)
+    fn on_update(&mut self, _s: &mut State) -> PixResult<()> {
+        Ok(())
     }
-    fn on_stop(&mut self, _s: &mut State) -> PixResult<bool> {
-        Ok(true)
+    fn on_stop(&mut self, _s: &mut State) -> PixResult<()> {
+        Ok(())
     }
 }
 
 pub fn main() {
-    let mut engine = PixEngine::create("Window Title", WIDTH, HEIGHT)
+    let mut engine = PixEngine::create(WIDTH, HEIGHT)
+        .with_title(TITLE)
         .position_centered()
         .vsync_enabled()
         .build()

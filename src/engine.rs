@@ -21,15 +21,20 @@ pub struct PixEngineBuilder {
 
 impl PixEngineBuilder {
     /// Creates a new `PixEngineBuilder` instance.
-    pub fn new(title: &str, width: u32, height: u32) -> Self {
+    pub fn new(width: u32, height: u32) -> Self {
         Self {
             settings: RendererSettings {
-                title: title.to_owned(),
                 width,
                 height,
                 ..Default::default()
             },
         }
+    }
+
+    /// Set a window title.
+    pub fn with_title(&mut self, title: &str) -> &mut Self {
+        self.settings.title = title.to_owned();
+        self
     }
 
     /// Position the window at the given (x, y) coordinates of the display.
@@ -101,30 +106,43 @@ pub struct PixEngine {
 }
 
 impl PixEngine {
-    /// Creates a new `PixEngineBuilder` which can create a `PixEngine` instance.
-    pub fn create(title: &str, width: u32, height: u32) -> PixEngineBuilder {
-        PixEngineBuilder::new(title, width, height)
+    /// Creates a default `PixEngineBuilder` which can create a `PixEngine` instance.
+    pub fn builder() -> PixEngineBuilder {
+        PixEngineBuilder::default()
+    }
+
+    /// Creates a new `PixEngineBuilder` with width/height which can create a `PixEngine` instance.
+    pub fn create(width: u32, height: u32) -> PixEngineBuilder {
+        PixEngineBuilder::new(width, height)
     }
 
     /// Starts the `PixEngine` and begins executing the frame loop.
     pub fn run<A: Stateful>(&mut self, app: &mut A) -> PixResult<()> {
-        if self.start(app)? {
-            self.last_frame_time = Instant::now();
-            // on_stop loop enables on_stop to prevent application close if necessary
-            'on_stop: loop {
-                // running loop continues until an event or on_update returns false or errors
-                'running: loop {
-                    // TODO: Add state.loop() and state.no_loop() checks
-                    // Ensure update is run at least once
-                    if !self.handle_events(app)? || !app.on_update(&mut self.state)? {
-                        break 'running;
-                    }
+        self.start(app)?;
+        if self.state.env.quit {
+            return Ok(());
+        }
+
+        self.last_frame_time = Instant::now();
+        // on_stop loop enables on_stop to prevent application close if necessary
+        'on_stop: loop {
+            // running loop continues until an event or on_update returns false or errors
+            'running: loop {
+                self.handle_events(app);
+                if self.state.env.quit {
+                    break 'running;
+                }
+                if self.state.settings.loop_enabled {
+                    app.on_update(&mut self.state)?;
                     self.state.renderer.present();
                     self.update_frame_rate()?;
+                } else {
+                    std::thread::sleep(Duration::from_millis(16));
                 }
-                if app.on_stop(&mut self.state)? {
-                    break 'on_stop;
-                }
+            }
+            app.on_stop(&mut self.state)?;
+            if self.state.env.quit {
+                break 'on_stop;
             }
         }
         Ok(())
@@ -141,50 +159,42 @@ impl PixEngine {
     }
 
     /// Setup at the start of running the engine.
-    fn start<A: Stateful>(&mut self, app: &mut A) -> PixResult<bool> {
+    fn start<A: Stateful>(&mut self, app: &mut A) -> PixResult<()> {
         // Clear and present once on start
         self.state.clear();
         self.state.renderer.present();
         // Handle events before on_start to initialize window
-        let _ = self.handle_events(app)?;
+        self.handle_events(app);
         Ok(app.on_start(&mut self.state)?)
     }
 
     /// Handle events from the event pump.
-    fn handle_events<A: Stateful>(&mut self, app: &mut A) -> PixResult<bool> {
-        // TODO Clear/reset key/mouse states for this frame
+    fn handle_events<A: Stateful>(&mut self, app: &mut A) {
         while let Some(event) = self.state.renderer.poll_event() {
             match event {
-                Event::Quit { .. } | Event::AppTerminating { .. } => return Ok(false),
+                Event::Quit { .. } | Event::AppTerminating { .. } => self.state.quit(),
                 Event::Window { win_event, .. } => match win_event {
                     WindowEvent::FocusGained => self.state.env.focused = true,
                     WindowEvent::FocusLost => self.state.env.focused = false,
-                    WindowEvent::Resized(_, _) => {
-                        // TODO: Handle window resized
-                    }
+                    WindowEvent::Resized(_, _) => app.on_window_resized(&mut self.state),
                     _ => (),
                 },
-                Event::KeyDown { keycode, .. } => {
-                    if let Some(key) = keycode {
-                        self.state.key_down = true;
-                        self.state.keys.insert(key);
-                        app.on_key_pressed(&mut self.state, key);
-                    }
+                Event::KeyDown {
+                    keycode: Some(key), ..
+                } => {
+                    self.state.key_down = true;
+                    self.state.keys.insert(key);
+                    app.on_key_pressed(&mut self.state, key);
                 }
-                Event::KeyUp { keycode, .. } => {
-                    if let Some(key) = keycode {
-                        self.state.key_down = false;
-                        self.state.keys.remove(&key);
-                        app.on_key_released(&mut self.state, key);
-                    }
+                Event::KeyUp {
+                    keycode: Some(key), ..
+                } => {
+                    self.state.key_down = false;
+                    self.state.keys.remove(&key);
+                    app.on_key_released(&mut self.state, key);
                 }
-                Event::TextEditing { .. } => {
-                    // TODO: Handle text editing
-                    // input text boxes, text areas
-                }
-                Event::TextInput { .. } => {
-                    // TODO: Handle text input
-                    // input text boxes, text areas
+                Event::TextInput { text, .. } => {
+                    app.on_key_typed(&mut self.state, &text);
                 }
                 Event::MouseMotion { x, y, .. } => {
                     self.state.pmouse_pos = self.state.mouse_pos;
@@ -203,14 +213,12 @@ impl PixEngine {
                     self.state.mouse_buttons.remove(&mouse_btn);
                     app.on_mouse_released(&mut self.state, mouse_btn);
                 }
-                Event::MouseWheel { .. } => {
-                    // TODO: Handle mouse wheel
-                    // scrolling
+                Event::MouseWheel { x, y, .. } => {
+                    app.on_mouse_wheel(&mut self.state, x, y);
                 }
                 _ => (),
             }
         }
-        Ok(true)
     }
 
     /// Updates the average frame rate and the window title if setting is enabled.

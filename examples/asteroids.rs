@@ -1,5 +1,6 @@
 use pix_engine::prelude::*;
 
+const TITLE: &str = "Asteroids";
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;
 const SHIP_SCALE: f64 = 4.0;
@@ -10,15 +11,6 @@ const MAX_ASTEROID_SPEED: f64 = 50.0;
 const SHATTERED_ASTEROID_SPEED: f64 = 80.0;
 const BULLET_SPEED: f64 = 200.0;
 const ASTEROID_SAFE_RADIUS: f64 = 80.0; // So asteroids don't spawn near player
-
-pub fn main() {
-    let mut engine = PixEngine::create("Asteroids", WIDTH, HEIGHT)
-        .position_centered()
-        .build()
-        .expect("valid engine");
-    let mut app = Asteroids::new();
-    engine.run(&mut app).expect("ran successfully");
-}
 
 struct Asteroids {
     asteroids: Vec<SpaceObj>,
@@ -164,7 +156,7 @@ impl Asteroids {
 }
 
 impl Stateful for Asteroids {
-    fn on_start(&mut self, s: &mut State) -> PixResult<bool> {
+    fn on_start(&mut self, s: &mut State) -> PixResult<()> {
         s.show_frame_rate(true);
 
         self.ship_model = vec![(0.0, -5.0), (-2.5, 2.5), (2.5, 2.5)];
@@ -176,16 +168,16 @@ impl Stateful for Asteroids {
             self.asteroid_model.push((x, y));
         }
         self.spawn_new_ship(s);
-        Ok(true)
+        Ok(())
     }
 
-    fn on_update(&mut self, s: &mut State) -> PixResult<bool> {
+    fn on_update(&mut self, s: &mut State) -> PixResult<()> {
         s.clear();
 
         let width = s.width() as i32;
         let height = s.height() as i32;
         if self.paused {
-            return Ok(true);
+            return Ok(());
         } else if self.gameover {
             let x = width / 2 - 80;
             let y = height / 2 - 24;
@@ -194,7 +186,7 @@ impl Stateful for Asteroids {
             s.text("GAME OVER", x, y)?;
             s.text_size(16);
             s.text("PRESS SPACE TO RESTART", x - 100, y + 24)?;
-            return Ok(true);
+            return Ok(());
         }
 
         let elapsed = s.delta_time();
@@ -240,7 +232,7 @@ impl Stateful for Asteroids {
                 .contains(self.ship.x as i32, self.ship.y as i32)
             {
                 self.exploded(s);
-                return Ok(true);
+                return Ok(());
             }
 
             a.x += a.dx * elapsed;
@@ -333,7 +325,7 @@ impl Stateful for Asteroids {
             }
         }
 
-        Ok(true)
+        Ok(())
     }
 
     fn on_key_pressed(&mut self, s: &mut State, key: Keycode) {
@@ -362,4 +354,14 @@ impl Stateful for Asteroids {
             _ => (),
         }
     }
+}
+
+pub fn main() {
+    let mut engine = PixEngine::create(WIDTH, HEIGHT)
+        .with_title(TITLE)
+        .position_centered()
+        .build()
+        .expect("valid engine");
+    let mut app = Asteroids::new();
+    engine.run(&mut app).expect("ran successfully");
 }

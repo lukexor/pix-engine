@@ -5,6 +5,7 @@ use std::{borrow::Cow, error, fmt, result};
 pub type PixResult<T> = result::Result<T, PixError>;
 
 /// `PixEngine` errors returned in `PixResult`.
+#[non_exhaustive]
 #[derive(Debug)]
 pub enum PixError {
     /// An error from the underlying `Renderer`.

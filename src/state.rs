@@ -16,6 +16,7 @@ pub mod settings;
 type StateResult<T> = result::Result<T, StateError>;
 
 /// Types of errors the `Stateful` trait can return in a `StateResult`.
+#[non_exhaustive]
 #[derive(Debug)]
 pub enum StateError {
     /// IO specific errors.
@@ -29,25 +30,16 @@ pub enum StateError {
 /// Defines state changing operations that are called while the `PixEngine` is running.
 pub trait Stateful {
     /// Called once upon engine start when `PixEngine::run()` is called.
-    ///
-    /// Return `Ok(true)` to continue running.
-    /// Return `Err` or `Ok(false)` to shutdown the engine and close the application.
-    fn on_start(&mut self, _s: &mut State) -> PixResult<bool> {
-        Ok(true)
+    fn on_start(&mut self, _s: &mut State) -> PixResult<()> {
+        Ok(())
     }
 
     /// Called every frame based on the target_frame_rate. By default this is as often as possible.
-    ///
-    /// Return `Ok(true)` to continue running.
-    /// Return `Err` or `Ok(false)` to shutdown the engine and close the application.
-    fn on_update(&mut self, _s: &mut State) -> PixResult<bool>;
+    fn on_update(&mut self, _s: &mut State) -> PixResult<()>;
 
     /// Called once when the engine detects a close/exit event.
-    ///
-    /// Return `Ok(true)` to continue shutting down the engine and closing the application.
-    /// Return `Err` or `Ok(false)` to abort exiting.
-    fn on_stop(&mut self, _s: &mut State) -> PixResult<bool> {
-        Ok(true)
+    fn on_stop(&mut self, _s: &mut State) -> PixResult<()> {
+        Ok(())
     }
 
     /// Called each time a key is pressed.
@@ -55,6 +47,9 @@ pub trait Stateful {
 
     /// Called each time a key is released.
     fn on_key_released(&mut self, _s: &mut State, _key: Keycode) {}
+
+    /// Called each time a key is typed. Ignores special keys like Backspace.
+    fn on_key_typed(&mut self, _s: &mut State, _text: &str) {}
 
     /// Called each time a mouse button is pressed.
     fn on_mouse_dragged(&mut self, _s: &mut State) {}
@@ -64,6 +59,12 @@ pub trait Stateful {
 
     /// Called each time a mouse button is released.
     fn on_mouse_released(&mut self, _s: &mut State, _btn: MouseButton) {}
+
+    /// Called each time the mouse wheel is scrolled.
+    fn on_mouse_wheel(&mut self, _s: &mut State, _x_delta: i32, _y_delta: i32) {}
+
+    /// Called each time the window is resized.
+    fn on_window_resized(&mut self, _s: &mut State) {}
 }
 
 /// Represents all engine-specific state and methods.

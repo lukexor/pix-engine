@@ -154,15 +154,13 @@ impl Rendering for SdlRenderer {
     /// Width of the current canvas.
     fn width(&self) -> u32 {
         let (width, _) = self.canvas.output_size().unwrap_or((0, 0));
-        let (scale_x, _) = self.canvas.scale();
-        ((width as f32) / scale_x) as u32
+        width
     }
 
     /// Height of the current canvas.
     fn height(&self) -> u32 {
         let (_, height) = self.canvas.output_size().unwrap_or((0, 0));
-        let (_, scale_y) = self.canvas.scale();
-        ((height as f32) / scale_y) as u32
+        height
     }
 
     /// Scale the current canvas.
@@ -174,10 +172,7 @@ impl Rendering for SdlRenderer {
     /// Returns whether the application is fullscreen or not.
     fn fullscreen(&self) -> bool {
         use FullscreenType::*;
-        match self.canvas.window().fullscreen_state() {
-            True | Desktop => true,
-            _ => false,
-        }
+        matches!(self.canvas.window().fullscreen_state(), True | Desktop)
     }
 
     /// Set the application to fullscreen or not.
@@ -339,12 +334,12 @@ impl Rendering for SdlRenderer {
     fn image(&mut self, x: i32, y: i32, img: &Image) -> RendererResult<()> {
         let mut texture = self.texture_creator.create_texture_streaming(
             PixelFormatEnum::RGB24,
-            img.width,
-            img.height,
+            img.width(),
+            img.height(),
         )?;
-        texture.update(None, &img.data, 3 * img.width as usize)?;
+        texture.update(None, img.bytes(), 3 * img.width() as usize)?;
         texture.set_blend_mode(sdl2::render::BlendMode::Mod);
-        let dst = SdlRect::new(x, y, img.width, img.height);
+        let dst = SdlRect::new(x, y, img.width(), img.height());
         self.canvas.copy(&texture, None, dst)?;
         Ok(())
     }

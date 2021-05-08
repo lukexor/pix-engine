@@ -149,13 +149,8 @@
 //! ```
 
 use crate::random;
-use approx::AbsDiffEq;
-use std::{
-    convert::TryFrom,
-    error, fmt,
-    ops::{Deref, DerefMut},
-    str::FromStr,
-};
+use approx::{AbsDiffEq, RelativeEq};
+use std::{convert::TryFrom, error, fmt, str::FromStr};
 
 /// # Create an `Rgb` Color.
 ///
@@ -223,6 +218,8 @@ macro_rules! hsv {
 ///     assert_eq!(rgb.channels(), (255, 255, 255, 255));
 /// }
 /// ```
+#[allow(variant_size_differences)]
+#[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Color {
     /// An Rgb instance of `Color`.
@@ -240,19 +237,6 @@ impl Color {
     /// Creates a new `Rgb` Color with random red, green, blue and alpha.
     pub fn random_alpha() -> Self {
         Color::Rgb(Rgb::random_alpha())
-    }
-}
-
-impl Deref for Color {
-    type Target = Self;
-    fn deref(&self) -> &Self::Target {
-        self
-    }
-}
-
-impl DerefMut for Color {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self
     }
 }
 
@@ -617,7 +601,6 @@ impl Hsv {
     ///
     /// assert_eq!(hsv!(240.0, 1.0, 1.0).to_rgb(), rgb!(0, 0, 255)); // Blue
     /// ```
-    #[allow(clippy::many_single_char_names)]
     pub fn to_rgb(&self) -> Rgb {
         if self.v == 0.0 {
             rgb!(0, 0, 0)
@@ -627,20 +610,20 @@ impl Hsv {
         } else {
             let chroma = self.v * self.s;
             let hue_six = self.h / 60.0;
-            let x = chroma * (1.0 - (hue_six % 2.0 - 1.0).abs());
+            let value = chroma * (1.0 - (hue_six % 2.0 - 1.0).abs());
             let (r1, g1, b1) = match hue_six.floor() as usize {
-                0 | 6 => (chroma, x, 0.0),
-                1 => (x, chroma, 0.0),
-                2 => (0.0, chroma, x),
-                3 => (0.0, x, chroma),
-                4 => (x, 0.0, chroma),
-                5 => (chroma, 0.0, x),
+                0 | 6 => (chroma, value, 0.0),
+                1 => (value, chroma, 0.0),
+                2 => (0.0, chroma, value),
+                3 => (0.0, value, chroma),
+                4 => (value, 0.0, chroma),
+                5 => (chroma, 0.0, value),
                 _ => unreachable!(),
             };
-            let m = self.v - chroma;
-            let r = ((r1 + m) * 255.0).round() as u8;
-            let g = ((g1 + m) * 255.0).round() as u8;
-            let b = ((b1 + m) * 255.0).round() as u8;
+            let add = self.v - chroma;
+            let r = ((r1 + add) * 255.0).round() as u8;
+            let g = ((g1 + add) * 255.0).round() as u8;
+            let b = ((b1 + add) * 255.0).round() as u8;
             let a = (self.a * 255.0).round() as u8;
             rgb!(r, g, b, a)
         }
@@ -677,7 +660,7 @@ impl AbsDiffEq for Hsv {
     type Epsilon = <f32 as AbsDiffEq>::Epsilon;
 
     fn default_epsilon() -> Self::Epsilon {
-        f32::default_epsilon()
+        f32::EPSILON
     }
 
     fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
@@ -688,7 +671,26 @@ impl AbsDiffEq for Hsv {
     }
 }
 
+impl RelativeEq for Hsv {
+    fn default_max_relative() -> Self::Epsilon {
+        f32::EPSILON
+    }
+
+    fn relative_eq(
+        &self,
+        other: &Self,
+        epsilon: Self::Epsilon,
+        max_relative: Self::Epsilon,
+    ) -> bool {
+        f32::relative_eq(&self.h, &other.h, epsilon, max_relative)
+            && f32::relative_eq(&self.s, &other.s, epsilon, max_relative)
+            && f32::relative_eq(&self.v, &other.v, epsilon, max_relative)
+            && f32::relative_eq(&self.a, &other.a, epsilon, max_relative)
+    }
+}
+
 /// Types of errors creating/converting colors can return.
+#[non_exhaustive]
 #[derive(Debug, Copy, Clone)]
 pub enum ColorError {
     /// Result when attempting to create a Rgb/Hsv color from an invalid slice of values.
@@ -889,7 +891,7 @@ mod tests {
 
     #[test]
     fn test_rgb_to_hsv() {
-        use approx::abs_diff_eq;
+        use approx::assert_relative_eq;
 
         assert_eq!(rgb!(0, 0, 0).to_hsv(), hsv!(0.0, 0.0, 0.0)); // Black
         assert_eq!(rgb!(255, 255, 255).to_hsv(), hsv!(0.0, 0.0, 1.0)); // White
@@ -900,14 +902,14 @@ mod tests {
         assert_eq!(rgb!(0, 255, 255).to_hsv(), hsv!(180.0, 1.0, 1.0)); // Cyan
         assert_eq!(rgb!(255, 0, 255).to_hsv(), hsv!(300.0, 1.0, 1.0)); // Magenta
 
-        // TODO
-        let _ = abs_diff_eq!(rgb!(191, 191, 191).to_hsv(), hsv!(0.0, 0.0, 0.75)); // Silver
-        let _ = abs_diff_eq!(rgb!(128, 128, 128).to_hsv(), hsv!(0.0, 0.0, 0.5)); // Gray
-        let _ = abs_diff_eq!(rgb!(128, 0, 0).to_hsv(), hsv!(0.0, 1.0, 0.5)); // Maroon
-        let _ = abs_diff_eq!(rgb!(128, 128, 0).to_hsv(), hsv!(60.0, 1.0, 0.5)); // Olive
-        let _ = abs_diff_eq!(rgb!(0, 128, 0).to_hsv(), hsv!(120.0, 1.0, 0.5)); // Green
-        let _ = abs_diff_eq!(rgb!(128, 0, 128).to_hsv(), hsv!(300.0, 1.0, 0.5)); // Purple
-        let _ = abs_diff_eq!(rgb!(0, 128, 128).to_hsv(), hsv!(180.0, 1.0, 0.5)); // Teal
-        let _ = abs_diff_eq!(rgb!(0, 0, 128).to_hsv(), hsv!(240.0, 1.0, 0.5)); // Navy
+        assert_relative_eq!(rgb!(191, 191, 191).to_hsv(), hsv!(0.0, 0.0, 0.7490196)); // Silver
+        assert_relative_eq!(rgb!(128, 128, 128).to_hsv(), hsv!(0.0, 0.0, 0.5019608)); // Gray
+        assert_relative_eq!(rgb!(128, 0, 0).to_hsv(), hsv!(0.0, 1.0, 0.5019608)); // Maroon
+        assert_relative_eq!(rgb!(128, 128, 0).to_hsv(), hsv!(60.0, 1.0, 0.5019608)); // Olive
+        assert_relative_eq!(rgb!(0, 128, 0).to_hsv(), hsv!(120.0, 1.0, 0.5019608)); // Green
+        assert_relative_eq!(rgb!(128, 0, 128).to_hsv(), hsv!(300.0, 1.0, 0.5019608)); // Purple
+        assert_relative_eq!(rgb!(0, 128, 128).to_hsv(), hsv!(180.0, 1.0, 0.5019608)); // Teal
+                                                                                      // Navy
+        assert_relative_eq!(rgb!(0, 0, 128).to_hsv(), hsv!(240.0, 1.0, 0.5019608));
     }
 }

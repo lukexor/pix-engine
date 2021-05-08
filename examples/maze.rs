@@ -131,12 +131,12 @@ impl Maze {
 }
 
 impl Stateful for Maze {
-    fn on_start(&mut self, s: &mut State) -> PixResult<bool> {
+    fn on_start(&mut self, s: &mut State) -> PixResult<()> {
         s.show_frame_rate(true);
-        Ok(true)
+        Ok(())
     }
 
-    fn on_update(&mut self, s: &mut State) -> PixResult<bool> {
+    fn on_update(&mut self, s: &mut State) -> PixResult<()> {
         thread::sleep(Duration::from_millis(10));
         if self.visited < self.size {
             if self.has_neighbors() {
@@ -170,16 +170,13 @@ impl Stateful for Maze {
             s.fill(GREEN);
             s.square(top.0 * (SIZE + 1), top.1 * (SIZE + 1), SIZE as u32)?;
         }
-        Ok(true)
-    }
-
-    fn on_stop(&mut self, _s: &mut State) -> PixResult<bool> {
-        Ok(true)
+        Ok(())
     }
 }
 
 pub fn main() {
-    let mut engine = PixEngine::create(TITLE, WIDTH, HEIGHT)
+    let mut engine = PixEngine::create(WIDTH, HEIGHT)
+        .with_title(TITLE)
         .scale(SCALE, SCALE)
         .position_centered()
         .build()

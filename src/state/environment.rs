@@ -13,7 +13,7 @@ pub(crate) struct Environment {
     pub(crate) delta_time: Duration,
     pub(crate) frame_rate: u64,
     pub(crate) frame_count: u64,
-    pub(crate) render: bool,
+    pub(crate) quit: bool,
 }
 
 impl Default for Environment {
@@ -23,7 +23,7 @@ impl Default for Environment {
             delta_time: Duration::from_secs(0),
             frame_rate: 0,
             frame_count: 0,
-            render: false,
+            quit: false,
         }
     }
 }
@@ -57,6 +57,16 @@ impl State {
     /// The height of the current canvas.
     pub fn height(&self) -> u32 {
         self.renderer.height()
+    }
+
+    /// Trigger exiting of the game loop.
+    pub fn quit(&mut self) {
+        self.env.quit = true;
+    }
+
+    /// Abort exiting of the game loop.
+    pub fn abort_quit(&mut self) {
+        self.env.quit = false;
     }
 
     /// Returns whether the application is fullscreen or not.
