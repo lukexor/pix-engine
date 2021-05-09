@@ -10,41 +10,43 @@ use pix_engine::prelude::*;
 
 #[derive(Default, Debug)]
 struct App {
-    start_return: bool,
-    update_return: bool,
-    stop_return: bool,
+    quit_on_start: bool,
+    quit_on_update: bool,
+    abort_quit_on_stop: bool,
     start_count: u32,
     update_count: u32,
     stop_count: u32,
 }
 
 impl Stateful for App {
-    fn on_start(&mut self, _s: &mut State) -> PixResult<bool> {
+    fn on_start(&mut self, s: &mut State) -> PixResult<()> {
         self.start_count += 1;
-        Ok(self.start_return)
-    }
-    fn on_update(&mut self, _s: &mut State) -> PixResult<bool> {
-        // Ensures we don't loop forever
-        if self.update_count >= 2 {
-            Ok(false)
-        } else {
-            self.update_count += 1;
-            Ok(self.update_return)
+        if self.quit_on_start {
+            s.quit();
         }
+        Ok(())
     }
-    fn on_stop(&mut self, _s: &mut State) -> PixResult<bool> {
-        // Ensures we exit eventually
-        if self.stop_count >= 2 {
-            Ok(true)
-        } else {
-            self.stop_count += 1;
-            Ok(self.stop_return)
+    fn on_update(&mut self, s: &mut State) -> PixResult<()> {
+        self.update_count += 1;
+        if self.quit_on_update || self.update_count > 2 {
+            s.quit();
         }
+        Ok(())
+    }
+    fn on_stop(&mut self, s: &mut State) -> PixResult<()> {
+        self.stop_count += 1;
+        if self.abort_quit_on_stop {
+            self.abort_quit_on_stop = false;
+            self.quit_on_update = true;
+            s.abort_quit();
+        }
+        Ok(())
     }
 }
 
 fn create_engine() -> PixResult<PixEngine> {
-    PixEngine::create("Test App", 800, 600)
+    PixEngine::create(800, 600)
+        .with_title("Test App")
         .position_centered()
         .vsync_enabled()
         .build()
@@ -62,9 +64,9 @@ fn test_engine_create() {
 #[ignore]
 fn test_run_engine_start() {
     let mut eng = create_engine().unwrap();
-    // Returning false from on_start should return early and not call any other methods
+    // Quitting from on_start should exit the game loop early
     let mut app = App::default();
-    app.start_return = false;
+    app.quit_on_start = true;
     let _ = eng.run(&mut app);
     assert_eq!(app.start_count, 1, "on_start was called");
     assert_eq!(app.update_count, 0, "on_update was not called");
@@ -75,11 +77,9 @@ fn test_run_engine_start() {
 #[ignore]
 fn test_run_engine_update() {
     let mut eng = create_engine().unwrap();
-    // Returning false from on_update should exit run and still call on_stop
+    // Quitting from on_update should exit but still run on_stop
     let mut app = App::default();
-    app.start_return = true;
-    app.update_return = false;
-    app.stop_return = true;
+    app.quit_on_update = true;
     let _ = eng.run(&mut app);
     assert_eq!(app.start_count, 1, "on_start was called");
     assert_eq!(app.update_count, 1, "on_update was called");
@@ -90,11 +90,10 @@ fn test_run_engine_update() {
 #[ignore]
 fn test_run_engine_stop() {
     let mut eng = create_engine().unwrap();
-    // Returning false from on_stop should prevent exiting run until it returns true
+    // Aborting quit from on_stop should resume game loop
     let mut app = App::default();
-    app.start_return = true;
-    app.update_return = true;
-    app.stop_return = false;
+    app.quit_on_update = true;
+    app.abort_quit_on_stop = true;
     let _ = eng.run(&mut app);
     assert_eq!(app.start_count, 1, "on_start was called");
     // Accounts for the initial run, plus 1 more for on_stop being cancelled
@@ -107,15 +106,17 @@ fn test_run_engine_stop() {
 fn test_engine_state_env() {
     let mut eng = create_engine().unwrap();
     let mut app = App::default();
-    app.start_return = false;
 
     assert_eq!(eng.state().focused(), false, "not focused before run");
+
     let _ = eng.run(&mut app);
     assert_eq!(eng.state().focused(), true, "focused after run");
     assert_eq!(eng.state().width(), 800, "valid width");
     assert_eq!(eng.state().height(), 600, "valid heeight");
     assert_eq!(eng.state().fullscreen(), false, "start windowed");
+
     eng.state_mut().set_fullscreen(true);
     assert_eq!(eng.state().fullscreen(), true, "now fullscreen");
+
     eng.state_mut().set_fullscreen(false);
 }

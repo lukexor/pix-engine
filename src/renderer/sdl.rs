@@ -1,7 +1,12 @@
 //! SDL Renderer implementation
 
 use super::{Position, RendererError, RendererResult, RendererSettings, Rendering};
-use crate::{color::Color, image::Image, shape::Rect};
+use crate::{
+    color::Color,
+    event::{Axis, Button, Event, Keycode, MouseButton, WindowEvent},
+    image::Image,
+    shape::Rect,
+};
 use sdl2::{
     gfx::primitives::{DrawRenderer, ToColor},
     image::LoadSurface,
@@ -14,22 +19,16 @@ use sdl2::{
 };
 use std::{borrow::Cow, convert::TryFrom, ffi::NulError};
 
-/// Wrapper for Sdl2 Color
-pub type SdlColor = sdl2::pixels::Color;
-/// Wrapper for Sdl2 EventPollIterator
-pub type SdlEventIterator<'a> = sdl2::event::EventPollIterator<'a>;
-/// Wrapper for Sdl2 Event
-pub type SdlEvent = sdl2::event::Event;
-/// Wrapper for Sdl2 WindowEvent
-pub type SdlWindowEvent = sdl2::event::WindowEvent;
-/// Wrapper for Sdl2 Rect
-pub type SdlRect = sdl2::rect::Rect;
-/// Wrapper for Sdl2 MouseButton
-pub type SdlMouseButton = sdl2::mouse::MouseButton;
-/// Wrapper for Sdl2 Keycode
-pub type SdlKeycode = sdl2::keyboard::Keycode;
+type SdlAxis = sdl2::controller::Axis;
+type SdlButton = sdl2::controller::Button;
+type SdlMouseButton = sdl2::mouse::MouseButton;
+type SdlKeycode = sdl2::keyboard::Keycode;
+type SdlWindowEvent = sdl2::event::WindowEvent;
+type SdlEvent = sdl2::event::Event;
+type SdlColor = sdl2::pixels::Color;
+type SdlRect = sdl2::rect::Rect;
 
-/// An SDL renderer implementation.
+/// An SDL [`Renderer`] implementation.
 pub struct SdlRenderer {
     title: String,
     context: Sdl,
@@ -39,17 +38,9 @@ pub struct SdlRenderer {
     texture_creator: TextureCreator<WindowContext>,
 }
 
-impl std::fmt::Debug for SdlRenderer {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "SdlRenderer {{}}")
-    }
-}
-
 impl Rendering for SdlRenderer {
     /// Initializes the Sdl2Renderer using the given settings and opens a new window.
-    fn init(settings: &RendererSettings) -> RendererResult<Self> {
-        let s = settings;
-
+    fn init(s: &RendererSettings) -> RendererResult<Self> {
         let context = sdl2::init()?;
         let ttf_context = ttf::init()?;
         let video_subsys = context.video()?;
@@ -126,13 +117,8 @@ impl Rendering for SdlRenderer {
     }
 
     /// Returns a single event or None if the event pump is empty.
-    fn poll_event(&mut self) -> Option<SdlEvent> {
-        self.event_pump.poll_event()
-    }
-
-    /// Returns an iterator over events in the event pump.
-    fn poll_event_iter(&mut self) -> SdlEventIterator<'_> {
-        self.event_pump.poll_iter()
+    fn poll_event(&mut self) -> Option<Event> {
+        self.event_pump.poll_event().map(|evt| evt.into())
     }
 
     /// Updates the canvas from the current back buffer.
@@ -192,15 +178,7 @@ impl Rendering for SdlRenderer {
         // Ok(self
         //     .texture_creator
         //     .create_texture_streaming(None, width, height)?)
-        Ok(0)
-    }
-
-    /// Draw an array of pixels to the canvas.
-    fn draw_pixels(&mut self, _pixels: &[u8], _pitch: usize) -> RendererResult<()> {
-        // TODO: Handle drawing pixels to textures
-        // self.textures[0].update(None, pixels, pitch)?;
-        // self.canvas.copy(&self.textures[0], None, None)?;
-        Ok(())
+        todo!("create_texture")
     }
 
     /// Draw text to the current canvas.
@@ -235,6 +213,14 @@ impl Rendering for SdlRenderer {
             self.canvas.pixel(x, y, stroke)?;
         }
         Ok(())
+    }
+
+    /// Draw an array of pixels to the canvas.
+    fn pixels(&mut self, _pixels: &[u8], _pitch: usize) -> RendererResult<()> {
+        // TODO: Handle drawing pixels to textures
+        // self.textures[0].update(None, pixels, pitch)?;
+        // self.canvas.copy(&self.textures[0], None, None)?;
+        todo!("pixels")
     }
 
     /// Draw a line to the current canvas.
@@ -345,9 +331,346 @@ impl Rendering for SdlRenderer {
     }
 }
 
+impl std::fmt::Debug for SdlRenderer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // TODO: Add some fields
+        write!(f, "SdlRenderer {{}}")
+    }
+}
+
 /*
  * Type Conversions
  */
+
+impl From<SdlEvent> for Event {
+    fn from(event: SdlEvent) -> Self {
+        use Event::*;
+        match event {
+            SdlEvent::Quit { .. } => Quit,
+            SdlEvent::AppTerminating { .. } => AppTerminating,
+            SdlEvent::Window { win_event, .. } => Window {
+                win_event: win_event.into(),
+            },
+            SdlEvent::KeyDown {
+                keycode, repeat, ..
+            } => KeyDown {
+                keycode: keycode.map(|k| k.into()),
+                repeat,
+            },
+            SdlEvent::KeyUp {
+                keycode, repeat, ..
+            } => KeyUp {
+                keycode: keycode.map(|k| k.into()),
+                repeat,
+            },
+            SdlEvent::TextInput { text, .. } => TextInput { text },
+            SdlEvent::MouseMotion {
+                x, y, xrel, yrel, ..
+            } => MouseMotion { x, y, xrel, yrel },
+            SdlEvent::MouseButtonDown {
+                mouse_btn, x, y, ..
+            } => MouseButtonDown {
+                mouse_btn: mouse_btn.into(),
+                x,
+                y,
+            },
+            SdlEvent::MouseButtonUp {
+                mouse_btn, x, y, ..
+            } => MouseButtonUp {
+                mouse_btn: mouse_btn.into(),
+                x,
+                y,
+            },
+            SdlEvent::MouseWheel { x, y, .. } => MouseWheel { x, y },
+            SdlEvent::JoyAxisMotion {
+                which,
+                axis_idx,
+                value,
+                ..
+            } => JoyAxisMotion {
+                which,
+                axis_idx,
+                value,
+            },
+            SdlEvent::JoyBallMotion {
+                which,
+                ball_idx,
+                xrel,
+                yrel,
+                ..
+            } => JoyBallMotion {
+                which,
+                ball_idx,
+                xrel,
+                yrel,
+            },
+            SdlEvent::JoyButtonDown {
+                which, button_idx, ..
+            } => JoyButtonDown { which, button_idx },
+            SdlEvent::JoyButtonUp {
+                which, button_idx, ..
+            } => JoyButtonUp { which, button_idx },
+            SdlEvent::JoyDeviceAdded { which, .. } => JoyDeviceAdded { which },
+            SdlEvent::JoyDeviceRemoved { which, .. } => JoyDeviceRemoved { which },
+            SdlEvent::ControllerAxisMotion {
+                which, axis, value, ..
+            } => ControllerAxisMotion {
+                which,
+                axis: axis.into(),
+                value,
+            },
+            SdlEvent::ControllerButtonDown { which, button, .. } => ControllerButtonDown {
+                which,
+                button: button.into(),
+            },
+            SdlEvent::ControllerButtonUp { which, button, .. } => ControllerButtonUp {
+                which,
+                button: button.into(),
+            },
+            SdlEvent::ControllerDeviceAdded { which, .. } => ControllerDeviceAdded { which },
+            SdlEvent::ControllerDeviceRemoved { which, .. } => ControllerDeviceRemoved { which },
+            SdlEvent::ControllerDeviceRemapped { which, .. } => ControllerDeviceRemapped { which },
+            SdlEvent::FingerDown {
+                touch_id,
+                finger_id,
+                x,
+                y,
+                dx,
+                dy,
+                pressure,
+                ..
+            } => FingerDown {
+                touch_id,
+                finger_id,
+                x,
+                y,
+                dx,
+                dy,
+                pressure,
+            },
+            SdlEvent::FingerUp {
+                touch_id,
+                finger_id,
+                x,
+                y,
+                dx,
+                dy,
+                pressure,
+                ..
+            } => FingerUp {
+                touch_id,
+                finger_id,
+                x,
+                y,
+                dx,
+                dy,
+                pressure,
+            },
+            SdlEvent::FingerMotion {
+                touch_id,
+                finger_id,
+                x,
+                y,
+                dx,
+                dy,
+                pressure,
+                ..
+            } => FingerMotion {
+                touch_id,
+                finger_id,
+                x,
+                y,
+                dx,
+                dy,
+                pressure,
+            },
+            _ => Self::Unknown,
+        }
+    }
+}
+
+impl From<SdlWindowEvent> for WindowEvent {
+    fn from(win_event: SdlWindowEvent) -> Self {
+        use WindowEvent::*;
+        match win_event {
+            SdlWindowEvent::Shown => Shown,
+            SdlWindowEvent::Hidden => Hidden,
+            SdlWindowEvent::Moved(x, y) => Moved(x, y),
+            SdlWindowEvent::Resized(w, h) | SdlWindowEvent::SizeChanged(w, h) => Resized(w, h),
+            SdlWindowEvent::Minimized => Minimized,
+            SdlWindowEvent::Maximized => Maximized,
+            SdlWindowEvent::Restored => Restored,
+            SdlWindowEvent::Enter => Enter,
+            SdlWindowEvent::Leave => Leave,
+            SdlWindowEvent::FocusGained => FocusGained,
+            SdlWindowEvent::FocusLost => FocusLost,
+            SdlWindowEvent::Close => Close,
+            _ => Unknown,
+        }
+    }
+}
+
+impl From<SdlKeycode> for Keycode {
+    fn from(keycode: SdlKeycode) -> Self {
+        use Keycode::*;
+        match keycode {
+            SdlKeycode::Backspace => Backspace,
+            SdlKeycode::Tab => Tab,
+            SdlKeycode::Return => Return,
+            SdlKeycode::Escape => Escape,
+            SdlKeycode::Space => Space,
+            SdlKeycode::Exclaim => Exclaim,
+            SdlKeycode::Quotedbl => Quotedbl,
+            SdlKeycode::Hash => Hash,
+            SdlKeycode::Dollar => Dollar,
+            SdlKeycode::Percent => Percent,
+            SdlKeycode::Ampersand => Ampersand,
+            SdlKeycode::Quote => Quote,
+            SdlKeycode::LeftParen => LeftParen,
+            SdlKeycode::RightParen => RightParen,
+            SdlKeycode::Asterisk => Asterisk,
+            SdlKeycode::Plus => Plus,
+            SdlKeycode::Comma => Comma,
+            SdlKeycode::Minus => Minus,
+            SdlKeycode::Period => Period,
+            SdlKeycode::Slash => Slash,
+            SdlKeycode::Num0 => Num0,
+            SdlKeycode::Num1 => Num1,
+            SdlKeycode::Num2 => Num2,
+            SdlKeycode::Num3 => Num3,
+            SdlKeycode::Num4 => Num4,
+            SdlKeycode::Num5 => Num5,
+            SdlKeycode::Num6 => Num6,
+            SdlKeycode::Num7 => Num7,
+            SdlKeycode::Num8 => Num8,
+            SdlKeycode::Num9 => Num9,
+            SdlKeycode::Colon => Colon,
+            SdlKeycode::Semicolon => Semicolon,
+            SdlKeycode::Less => Less,
+            SdlKeycode::Equals => Equals,
+            SdlKeycode::Greater => Greater,
+            SdlKeycode::Question => Question,
+            SdlKeycode::At => At,
+            SdlKeycode::LeftBracket => LeftBracket,
+            SdlKeycode::Backslash => Backslash,
+            SdlKeycode::RightBracket => RightBracket,
+            SdlKeycode::Caret => Caret,
+            SdlKeycode::Underscore => Underscore,
+            SdlKeycode::Backquote => Backquote,
+            SdlKeycode::A => A,
+            SdlKeycode::B => B,
+            SdlKeycode::C => C,
+            SdlKeycode::D => D,
+            SdlKeycode::E => E,
+            SdlKeycode::F => F,
+            SdlKeycode::G => G,
+            SdlKeycode::H => H,
+            SdlKeycode::I => I,
+            SdlKeycode::J => J,
+            SdlKeycode::K => K,
+            SdlKeycode::L => L,
+            SdlKeycode::M => M,
+            SdlKeycode::N => N,
+            SdlKeycode::O => O,
+            SdlKeycode::P => P,
+            SdlKeycode::Q => Q,
+            SdlKeycode::R => R,
+            SdlKeycode::S => S,
+            SdlKeycode::T => T,
+            SdlKeycode::U => U,
+            SdlKeycode::V => V,
+            SdlKeycode::W => W,
+            SdlKeycode::X => X,
+            SdlKeycode::Y => Y,
+            SdlKeycode::Z => Z,
+            SdlKeycode::Delete => Delete,
+            SdlKeycode::CapsLock => CapsLock,
+            SdlKeycode::F1 => F1,
+            SdlKeycode::F2 => F2,
+            SdlKeycode::F3 => F3,
+            SdlKeycode::F4 => F4,
+            SdlKeycode::F5 => F5,
+            SdlKeycode::F6 => F6,
+            SdlKeycode::F7 => F7,
+            SdlKeycode::F8 => F8,
+            SdlKeycode::F9 => F9,
+            SdlKeycode::F10 => F10,
+            SdlKeycode::F11 => F11,
+            SdlKeycode::F12 => F12,
+            SdlKeycode::PrintScreen => PrintScreen,
+            SdlKeycode::ScrollLock => ScrollLock,
+            SdlKeycode::Pause => Pause,
+            SdlKeycode::Insert => Insert,
+            SdlKeycode::Home => Home,
+            SdlKeycode::PageUp => PageUp,
+            SdlKeycode::End => End,
+            SdlKeycode::PageDown => PageDown,
+            SdlKeycode::Right => Right,
+            SdlKeycode::Left => Left,
+            SdlKeycode::Down => Down,
+            SdlKeycode::Up => Up,
+            SdlKeycode::NumLockClear => NumLock,
+            SdlKeycode::LCtrl => LCtrl,
+            SdlKeycode::LShift => LShift,
+            SdlKeycode::LAlt => LAlt,
+            SdlKeycode::LGui => LGui,
+            SdlKeycode::RCtrl => RCtrl,
+            SdlKeycode::RShift => RShift,
+            SdlKeycode::RAlt => RAlt,
+            SdlKeycode::RGui => RGui,
+            _ => Unknown,
+        }
+    }
+}
+
+impl From<SdlMouseButton> for MouseButton {
+    fn from(button: SdlMouseButton) -> Self {
+        use MouseButton::*;
+        match button {
+            SdlMouseButton::Left => Left,
+            SdlMouseButton::Middle => Middle,
+            SdlMouseButton::Right => Right,
+            _ => Unknown,
+        }
+    }
+}
+
+impl From<SdlButton> for Button {
+    fn from(button: SdlButton) -> Self {
+        use Button::*;
+        match button {
+            SdlButton::A => A,
+            SdlButton::B => B,
+            SdlButton::X => X,
+            SdlButton::Y => Y,
+            SdlButton::Back => Back,
+            SdlButton::Guide => Guide,
+            SdlButton::Start => Start,
+            SdlButton::LeftStick => LeftStick,
+            SdlButton::RightStick => RightStick,
+            SdlButton::LeftShoulder => LeftShoulder,
+            SdlButton::RightShoulder => RightShoulder,
+            SdlButton::DPadUp => DPadUp,
+            SdlButton::DPadDown => DPadDown,
+            SdlButton::DPadLeft => DPadLeft,
+            SdlButton::DPadRight => DPadRight,
+        }
+    }
+}
+
+impl From<SdlAxis> for Axis {
+    fn from(axis: SdlAxis) -> Self {
+        use Axis::*;
+        match axis {
+            SdlAxis::LeftX => LeftX,
+            SdlAxis::LeftY => LeftY,
+            SdlAxis::RightX => RightX,
+            SdlAxis::RightY => RightY,
+            SdlAxis::TriggerLeft => TriggerLeft,
+            SdlAxis::TriggerRight => TriggerRight,
+        }
+    }
+}
 
 impl ToColor for Color {
     fn as_rgba(&self) -> (u8, u8, u8, u8) {

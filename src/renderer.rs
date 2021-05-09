@@ -1,17 +1,18 @@
 //! Generic graphics renderer interfaces
 
 use crate::{
-    color::Color,
-    common::PixError,
-    event::{Event, EventIterator},
-    image::Image,
-    shape::Rect,
-    state::StateError,
+    color::Color, common::PixError, event::Event, image::Image, shape::Rect, state::StateError,
 };
+#[cfg(all(feature = "sdl2", not(feature = "wasm")))]
 use sdl::SdlRenderer;
 use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
+#[cfg(all(feature = "wasm", not(feature = "sdl2")))]
+use wasm::WasmRenderer;
 
+#[cfg(all(feature = "sdl2", not(feature = "wasm")))]
 pub(crate) mod sdl;
+#[cfg(all(feature = "wasm", not(feature = "sdl2")))]
+pub(crate) mod wasm;
 
 /// `Renderer` Result
 pub type RendererResult<T> = result::Result<T, RendererError>;
@@ -35,7 +36,10 @@ pub enum RendererError {
 }
 
 /// Wrapper around a concrete renderer.
+#[cfg(all(feature = "sdl2", not(feature = "wasm")))]
 pub(crate) type Renderer = SdlRenderer;
+#[cfg(all(feature = "wasm", not(feature = "sdl2")))]
+pub(crate) type Renderer = WasmRenderer;
 
 /// Represents a possible screen position.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -106,9 +110,6 @@ pub(crate) trait Rendering: Sized {
     /// Returns a single event or None if the event pump is empty.
     fn poll_event(&mut self) -> Option<Event>;
 
-    /// Returns an iterator over events from the event pump.
-    fn poll_event_iter(&mut self) -> EventIterator<'_>;
-
     /// Updates the canvas from the current back buffer.
     fn present(&mut self);
 
@@ -136,9 +137,6 @@ pub(crate) trait Rendering: Sized {
     /// Create a texture to render to.
     fn create_texture(&mut self, width: u32, height: u32) -> RendererResult<usize>;
 
-    /// Draw an array of pixels to the current canvas.
-    fn draw_pixels(&mut self, pixels: &[u8], pitch: usize) -> RendererResult<()>;
-
     /// Draw text to the current canvas.
     fn text(
         &mut self,
@@ -152,6 +150,9 @@ pub(crate) trait Rendering: Sized {
 
     /// Draw a pixel to the current canvas.
     fn pixel(&mut self, x: i32, y: i32, stroke: Option<Color>) -> RendererResult<()>;
+
+    /// Draw an array of pixels to the current canvas.
+    fn pixels(&mut self, pixels: &[u8], pitch: usize) -> RendererResult<()>;
 
     /// Draw a line to the current canvas.
     fn line(

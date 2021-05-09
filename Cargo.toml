@@ -2,9 +2,9 @@
 name = "pix-engine"
 version = "0.5.0"
 license = "MIT/Apache-2.0"
-description = "A simple, cross-platform graphics/UI engine framework with a minimal interface."
-categories = ["graphics", "gui", "multimedia", "rendering"]
-keywords = ["graphics", "ui", "gui", "rendering"]
+description = "A cross-platform graphics/UI engine framework for simple games, visualizations, and graphics demos."
+categories = ["game-development", "game-engines", "graphics", "gui", "multimedia", "rendering", "web-assembly"]
+keywords = ["game-engine", "graphics", "ui", "gui", "rendering", "web-assembly", "sdl"]
 authors = ["Luke Petherbridge <me@lukeworks.tech>"]
 readme = "README.md"
 documentation = "https://github.com/lukexor/pix-engine"
@@ -12,18 +12,31 @@ repository = "https://github.com/lukexor/pix-engine.git"
 homepage = "https://github.com/lukexor/pix-engine"
 edition = "2018"
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
-approx = "0.4"
 include_dir = "0.6"
 num-traits = "0.2"
 png = "0.16"
 rand = "0.8"
+getrandom = { version = "0.2", features=["js"] }
 rng = "0.1"
+wasm-bindgen = { version = "0.2", optional = true }
+console_error_panic_hook = { version = "0.1", optional = true }
 
 [dependencies.sdl2]
 version = "0.34"
 default_features = false
 features = ["gfx", "image", "mixer", "ttf"]
+optional = true
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
+
+[features]
+default = ["sdl2"]
+wasm = ["wasm-bindgen"]
 
 [profile.dev]
 opt-level = 2

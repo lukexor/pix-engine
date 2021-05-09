@@ -51,6 +51,7 @@ pub mod state;
 pub mod vector;
 
 mod common;
+mod utils;
 
 pub use prelude::{PixEngine, PixError, PixResult, State, Stateful};
 

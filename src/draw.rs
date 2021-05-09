@@ -17,11 +17,6 @@ pub enum DrawMode {
 }
 
 impl State {
-    /// Draw an array of pixels to the current canvas.
-    pub fn draw_pixels(&mut self, pixels: &[u8], pitch: usize) -> RendererResult<()> {
-        self.renderer.draw_pixels(pixels, pitch)
-    }
-
     /// Create a texture to render to.
     pub fn create_texture(&mut self, width: u32, height: u32) -> RendererResult<usize> {
         self.renderer.create_texture(width, height)
@@ -42,6 +37,11 @@ impl State {
     /// Draw a point to the current canvas.
     pub fn pixel(&mut self, x: i32, y: i32) -> RendererResult<()> {
         self.renderer.pixel(x, y, self.settings.stroke)
+    }
+
+    /// Draw an array of pixels to the current canvas.
+    pub fn pixels(&mut self, pixels: &[u8], pitch: usize) -> RendererResult<()> {
+        self.renderer.pixels(pixels, pitch)
     }
 
     /// Draw a triangle to the current canvas.

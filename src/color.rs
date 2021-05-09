@@ -149,7 +149,6 @@
 //! ```
 
 use crate::random;
-use approx::{AbsDiffEq, RelativeEq};
 use std::{convert::TryFrom, error, fmt, str::FromStr};
 
 /// # Create an `Rgb` Color.
@@ -656,39 +655,6 @@ impl Hsv {
     }
 }
 
-impl AbsDiffEq for Hsv {
-    type Epsilon = <f32 as AbsDiffEq>::Epsilon;
-
-    fn default_epsilon() -> Self::Epsilon {
-        f32::EPSILON
-    }
-
-    fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-        f32::abs_diff_eq(&self.h, &other.h, epsilon)
-            && f32::abs_diff_eq(&self.s, &other.s, epsilon)
-            && f32::abs_diff_eq(&self.v, &other.v, epsilon)
-            && f32::abs_diff_eq(&self.a, &other.a, epsilon)
-    }
-}
-
-impl RelativeEq for Hsv {
-    fn default_max_relative() -> Self::Epsilon {
-        f32::EPSILON
-    }
-
-    fn relative_eq(
-        &self,
-        other: &Self,
-        epsilon: Self::Epsilon,
-        max_relative: Self::Epsilon,
-    ) -> bool {
-        f32::relative_eq(&self.h, &other.h, epsilon, max_relative)
-            && f32::relative_eq(&self.s, &other.s, epsilon, max_relative)
-            && f32::relative_eq(&self.v, &other.v, epsilon, max_relative)
-            && f32::relative_eq(&self.a, &other.a, epsilon, max_relative)
-    }
-}
-
 /// Types of errors creating/converting colors can return.
 #[non_exhaustive]
 #[derive(Debug, Copy, Clone)]
@@ -891,8 +857,6 @@ mod tests {
 
     #[test]
     fn test_rgb_to_hsv() {
-        use approx::assert_relative_eq;
-
         assert_eq!(rgb!(0, 0, 0).to_hsv(), hsv!(0.0, 0.0, 0.0)); // Black
         assert_eq!(rgb!(255, 255, 255).to_hsv(), hsv!(0.0, 0.0, 1.0)); // White
         assert_eq!(rgb!(255, 0, 0).to_hsv(), hsv!(0.0, 1.0, 1.0)); // Red
@@ -902,14 +866,13 @@ mod tests {
         assert_eq!(rgb!(0, 255, 255).to_hsv(), hsv!(180.0, 1.0, 1.0)); // Cyan
         assert_eq!(rgb!(255, 0, 255).to_hsv(), hsv!(300.0, 1.0, 1.0)); // Magenta
 
-        assert_relative_eq!(rgb!(191, 191, 191).to_hsv(), hsv!(0.0, 0.0, 0.7490196)); // Silver
-        assert_relative_eq!(rgb!(128, 128, 128).to_hsv(), hsv!(0.0, 0.0, 0.5019608)); // Gray
-        assert_relative_eq!(rgb!(128, 0, 0).to_hsv(), hsv!(0.0, 1.0, 0.5019608)); // Maroon
-        assert_relative_eq!(rgb!(128, 128, 0).to_hsv(), hsv!(60.0, 1.0, 0.5019608)); // Olive
-        assert_relative_eq!(rgb!(0, 128, 0).to_hsv(), hsv!(120.0, 1.0, 0.5019608)); // Green
-        assert_relative_eq!(rgb!(128, 0, 128).to_hsv(), hsv!(300.0, 1.0, 0.5019608)); // Purple
-        assert_relative_eq!(rgb!(0, 128, 128).to_hsv(), hsv!(180.0, 1.0, 0.5019608)); // Teal
-                                                                                      // Navy
-        assert_relative_eq!(rgb!(0, 0, 128).to_hsv(), hsv!(240.0, 1.0, 0.5019608));
+        assert_eq!(rgb!(191, 191, 191).to_hsv(), hsv!(0.0, 0.0, 0.7490196)); // Silver
+        assert_eq!(rgb!(128, 128, 128).to_hsv(), hsv!(0.0, 0.0, 0.5019608)); // Gray
+        assert_eq!(rgb!(128, 0, 0).to_hsv(), hsv!(0.0, 1.0, 0.5019608)); // Maroon
+        assert_eq!(rgb!(128, 128, 0).to_hsv(), hsv!(60.0, 1.0, 0.5019608)); // Olive
+        assert_eq!(rgb!(0, 128, 0).to_hsv(), hsv!(120.0, 1.0, 0.5019608)); // Green
+        assert_eq!(rgb!(128, 0, 128).to_hsv(), hsv!(300.0, 1.0, 0.5019608)); // Purple
+        assert_eq!(rgb!(0, 128, 128).to_hsv(), hsv!(180.0, 1.0, 0.5019608)); // Teal
+        assert_eq!(rgb!(0, 0, 128).to_hsv(), hsv!(240.0, 1.0, 0.5019608)); // Navy
     }
 }
