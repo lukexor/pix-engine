@@ -3,7 +3,7 @@
 use crate::{
     image::Image,
     renderer::{RendererResult, Rendering},
-    state::State,
+    state::PixState,
 };
 
 /// Drawing mode which changes how (x, y) coordinates are interpreted.
@@ -16,7 +16,7 @@ pub enum DrawMode {
     Center,
 }
 
-impl State {
+impl PixState {
     /// Create a texture to render to.
     pub fn create_texture(&mut self, width: u32, height: u32) -> RendererResult<usize> {
         self.renderer.create_texture(width, height)

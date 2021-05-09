@@ -1,17 +1,15 @@
 //! Environment related information of the engine.
 
-use super::State;
-use crate::{
-    event::{Keycode, MouseButton},
-    renderer::Rendering,
-};
-use std::{collections::HashSet, time::Duration};
+use super::PixState;
+use crate::renderer::Rendering;
+use std::time::Duration;
 
 #[derive(Debug, Clone)]
 pub(crate) struct Environment {
     pub(crate) focused: bool,
     pub(crate) delta_time: Duration,
     pub(crate) frame_rate: u64,
+    pub(crate) target_frame_rate: u64,
     pub(crate) frame_count: u64,
     pub(crate) quit: bool,
 }
@@ -22,13 +20,14 @@ impl Default for Environment {
             focused: false,
             delta_time: Duration::from_secs(0),
             frame_rate: 0,
+            target_frame_rate: 60, // TODO: target_frame_rate
             frame_count: 0,
             quit: false,
         }
     }
 }
 
-impl State {
+impl PixState {
     /// Whether the application has focus or not.
     pub fn focused(&self) -> bool {
         self.env.focused
@@ -69,43 +68,18 @@ impl State {
         self.env.quit = false;
     }
 
-    /// Returns whether the application is fullscreen or not.
-    pub fn fullscreen(&self) -> bool {
-        self.renderer.fullscreen()
+    /// The display width of the primary monitor.
+    pub fn display_width(&self) -> u32 {
+        todo!("display_width")
     }
 
-    /// Set the application to fullscreen or not.
-    pub fn set_fullscreen(&mut self, val: bool) {
-        self.renderer.set_fullscreen(val)
+    /// The display height of the primary monitor.
+    pub fn display_height(&self) -> u32 {
+        todo!("display_height")
     }
 
-    /// Returns the a list of the current keys being held.
-    pub fn keys(&self) -> &HashSet<Keycode> {
-        &self.keys
-    }
-
-    /// Returns if a key is currently being held.
-    pub fn key_pressed(&self, key: Keycode) -> bool {
-        self.keys.contains(&key)
-    }
-
-    /// Returns the a list of the current mouse buttons being held.
-    pub fn mouse_buttons(&self) -> &HashSet<MouseButton> {
-        &self.mouse_buttons
-    }
-
-    /// Returns if a mouse button is currently being held.
-    pub fn mouse_pressed(&self, btn: MouseButton) -> bool {
-        self.mouse_buttons.contains(&btn)
-    }
-
-    /// Returns the current mouse position coordinates as (x, y).
-    pub fn mouse_pos(&self) -> (i32, i32) {
-        self.mouse_pos
-    }
-
-    /// Returns the previous mouse position coordinates last frame as (x, y).
-    pub fn pmouse_pos(&self) -> (i32, i32) {
-        self.pmouse_pos
+    /// The display pixel density of the primary monitor.
+    pub fn display_density(&self) -> u32 {
+        todo!("display_density")
     }
 }

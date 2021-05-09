@@ -48,7 +48,7 @@ impl SpaceObj {
             destroyed: false,
         }
     }
-    fn rand_asteroid(ship: &SpaceObj, s: &State) -> Self {
+    fn rand_asteroid(ship: &SpaceObj, s: &PixState) -> Self {
         let mut x = random!(s.width() as f64);
         if x > (ship.x - ASTEROID_SAFE_RADIUS) && x < (ship.x + ASTEROID_SAFE_RADIUS) {
             let diff = ASTEROID_SAFE_RADIUS - (ship.x - x).abs();
@@ -79,7 +79,7 @@ impl SpaceObj {
         }
     }
 
-    fn wrap_coords(s: &State, x: f64, y: f64) -> (f64, f64) {
+    fn wrap_coords(s: &PixState, x: f64, y: f64) -> (f64, f64) {
         let width = s.width() as f64;
         let height = s.height() as f64;
         let ox = if x < 0.0 {
@@ -116,7 +116,7 @@ impl Asteroids {
         }
     }
 
-    fn spawn_new_ship(&mut self, s: &State) {
+    fn spawn_new_ship(&mut self, s: &PixState) {
         self.ship.x = (s.width() / 2) as f64;
         self.ship.y = (s.height() / 2) as f64;
         self.ship.dx = 0.0;
@@ -135,7 +135,7 @@ impl Asteroids {
         }
     }
 
-    fn exploded(&mut self, s: &State) {
+    fn exploded(&mut self, s: &PixState) {
         if self.lives > 0 {
             self.lives -= 1;
             self.score -= 500;
@@ -145,7 +145,7 @@ impl Asteroids {
         }
     }
 
-    fn reset(&mut self, s: &State) {
+    fn reset(&mut self, s: &PixState) {
         self.paused = false;
         self.spawn_new_ship(s);
         self.level = 1;
@@ -155,8 +155,8 @@ impl Asteroids {
     }
 }
 
-impl Stateful for Asteroids {
-    fn on_start(&mut self, s: &mut State) -> PixResult<()> {
+impl AppState for Asteroids {
+    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         s.show_frame_rate(true);
 
         self.ship_model = vec![(0.0, -5.0), (-2.5, 2.5), (2.5, 2.5)];
@@ -171,7 +171,7 @@ impl Stateful for Asteroids {
         Ok(())
     }
 
-    fn on_update(&mut self, s: &mut State) -> PixResult<()> {
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         s.clear();
 
         let width = s.width() as i32;
@@ -328,7 +328,7 @@ impl Stateful for Asteroids {
         Ok(())
     }
 
-    fn on_key_pressed(&mut self, s: &mut State, key: Keycode) {
+    fn on_key_pressed(&mut self, s: &mut PixState, key: Keycode) {
         match key {
             Keycode::Escape => self.paused = !self.paused,
             Keycode::R => self.reset(s),
@@ -339,7 +339,7 @@ impl Stateful for Asteroids {
         }
     }
 
-    fn on_key_released(&mut self, _s: &mut State, key: Keycode) {
+    fn on_key_released(&mut self, _s: &mut PixState, key: Keycode) {
         match key {
             Keycode::Space if !self.gameover => {
                 self.bullets.push(SpaceObj::new(

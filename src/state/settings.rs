@@ -1,12 +1,13 @@
-//! Settings for the current engine State.
+//! Settings for the current engine `PixState`.
 
-use super::State;
+use super::PixState;
 use crate::{
     color::{constants::*, Color},
     draw::DrawMode,
     renderer::{RendererResult, Rendering},
     shape::Rect,
 };
+use std::path::Path;
 
 /// Several settings used to change various functionality of the engine.
 #[derive(Debug, Clone)]
@@ -15,7 +16,7 @@ pub(crate) struct Settings {
     pub(crate) fill: Option<Color>,
     pub(crate) stroke: Option<Color>,
     pub(crate) text_size: u32,
-    pub(crate) loop_enabled: bool,
+    pub(crate) paused: bool,
     pub(crate) show_frame_rate: bool,
     pub(crate) rect_mode: DrawMode,
     pub(crate) ellipse_mode: DrawMode,
@@ -28,7 +29,7 @@ impl Default for Settings {
             fill: Some(Color::Rgb(BLACK)),
             stroke: None,
             text_size: 16,
-            loop_enabled: true,
+            paused: false,
             show_frame_rate: false,
             rect_mode: DrawMode::Corner,
             ellipse_mode: DrawMode::Corner,
@@ -36,14 +37,20 @@ impl Default for Settings {
     }
 }
 
-impl State {
+impl PixState {
     /// Sets the `Color` value used to clear the canvas.
-    pub fn background<C: Into<Color>>(&mut self, color: C) {
+    pub fn background<C>(&mut self, color: C)
+    where
+        C: Into<Color>,
+    {
         self.settings.background = color.into();
     }
 
     /// Sets the `Color` value used to fill shapes drawn on the canvas.
-    pub fn fill<C: Into<Color>>(&mut self, color: C) {
+    pub fn fill<C>(&mut self, color: C)
+    where
+        C: Into<Color>,
+    {
         self.settings.fill = Some(color.into());
     }
 
@@ -53,7 +60,10 @@ impl State {
     }
 
     /// Sets the `Color` value used to outline shapes drawn on the canvas.
-    pub fn stroke<C: Into<Color>>(&mut self, color: C) {
+    pub fn stroke<C>(&mut self, color: C)
+    where
+        C: Into<Color>,
+    {
         self.settings.stroke = Some(color.into());
     }
 
@@ -63,23 +73,44 @@ impl State {
     }
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    pub fn set_clip(&mut self, x: i32, y: i32, w: u32, h: u32) {
-        self.renderer.set_clip_rect(Some(Rect::new(x, y, w, h)));
+    pub fn clip<R>(&mut self, rect: R)
+    where
+        R: Into<Rect>,
+    {
+        self.renderer.set_clip_rect(Some(rect.into()));
     }
 
-    /// Sets the clip rect used by the renderer to draw to the current canvas.
+    /// Clears the clip rect used by the renderer to draw to the current canvas.
     pub fn no_clip(&mut self) {
         self.renderer.set_clip_rect(None);
     }
 
+    /// Set the application to fullscreen or not.
+    pub fn fullscreen(&mut self, val: bool) {
+        self.renderer.set_fullscreen(val)
+    }
+
     /// Set whether the cursor is shown or not.
-    pub fn show_cursor(&mut self, show: bool) {
+    pub fn cursor(&mut self, show: bool) {
         self.renderer.show_cursor(show);
     }
 
-    /// Set `PixEngine` to pause or continue the game loop.
-    pub fn set_loop(&mut self, enabled: bool) {
-        self.settings.loop_enabled = enabled;
+    /// Set the cursor icon.
+    pub fn cursor_icon<P>(&mut self, _path: P)
+    where
+        P: AsRef<Path>,
+    {
+        todo!("cursor_icon");
+    }
+
+    /// Whether the game look is paused or not.
+    pub fn paused(&mut self) -> bool {
+        self.settings.paused
+    }
+
+    /// Pause the game loop or not.
+    pub fn pause(&mut self, paused: bool) {
+        self.settings.paused = paused;
     }
 
     /// Set whether to show the current frame rate per second in the title or not.
@@ -88,7 +119,7 @@ impl State {
     }
 
     /// Change the rendering scale of the current canvas.
-    pub fn set_scale(&mut self, x: f32, y: f32) -> RendererResult<()> {
+    pub fn scale(&mut self, x: f32, y: f32) -> RendererResult<()> {
         self.renderer.set_scale(x, y)
     }
 

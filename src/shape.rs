@@ -1,27 +1,7 @@
 //! Shape types and functions for [`Point`], [`Circle`], [`Rectangle`], [`Triangle`]
 
 /// A `Point`.
-#[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
-pub struct Point {
-    /// x-coord
-    pub x: i32,
-    /// Y-coord
-    pub y: i32,
-}
-
-impl Point {
-    /// Creates a new `Point`.
-    pub fn new(x: i32, y: i32) -> Self {
-        Self { x, y }
-    }
-}
-
-/// From tuple of (x, y) to `Point`.
-impl From<(i32, i32)> for Point {
-    fn from((x, y): (i32, i32)) -> Self {
-        Self::new(x, y)
-    }
-}
+pub type Point = (i32, i32);
 
 /// A `Circle`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
@@ -58,6 +38,13 @@ impl From<(i32, i32, u32)> for Circle {
     }
 }
 
+/// From tuple of (Point, r) to `Circle`.
+impl From<(Point, u32)> for Circle {
+    fn from(((x, y), r): (Point, u32)) -> Self {
+        Self::new(x, y, r)
+    }
+}
+
 /// A `Rectangle`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Rect {
@@ -90,6 +77,13 @@ impl From<(i32, i32, u32, u32)> for Rect {
     }
 }
 
+/// From tuple of (Point, w, h) to `Rect`.
+impl From<(Point, u32, u32)> for Rect {
+    fn from(((x, y), w, h): (Point, u32, u32)) -> Self {
+        Self::new(x, y, w, h)
+    }
+}
+
 /// A `Triangle`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Triangle {
@@ -116,5 +110,12 @@ impl Triangle {
 impl From<(i32, i32, i32, i32, i32, i32)> for Triangle {
     fn from((x1, y1, x2, y2, x3, y3): (i32, i32, i32, i32, i32, i32)) -> Self {
         Self::new((x1, y1), (x2, y2), (x3, y3))
+    }
+}
+
+/// From tuple of (Point1, Point2, Point3) to `Triangle`.
+impl From<(Point, Point, Point)> for Triangle {
+    fn from((p1, p2, p3): (Point, Point, Point)) -> Self {
+        Self::new(p1, p2, p3)
     }
 }

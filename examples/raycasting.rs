@@ -180,7 +180,7 @@ impl RayScene {
             self.points.push(edge.end);
         }
         self.points
-            .sort_by(|a, b| a.partial_cmp(&b).unwrap_or(Less));
+            .sort_unstable_by(|a, b| a.partial_cmp(&b).unwrap_or(Less));
         self.points.dedup();
     }
 
@@ -200,7 +200,7 @@ impl RayScene {
 
         // Could fail with NaN or Infinity
         self.polygons
-            .sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(Less));
+            .sort_unstable_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(Less));
         self.polygons
             .dedup_by(|a, b| (a.1.x - b.1.x).abs() <= 0.1 && (a.1.y - b.1.y).abs() <= 0.1);
     }
@@ -259,7 +259,7 @@ impl RayScene {
         Some((Vector::new_2d(r_px + r_dx * t1, r_py + r_dy * t1), t1))
     }
 
-    fn draw_visibility_polygons(&mut self, s: &mut State) -> PixResult<bool> {
+    fn draw_visibility_polygons(&mut self, s: &mut PixState) -> PixResult<bool> {
         let (x, y) = s.mouse_pos();
         if x <= 0 || x > s.width() as i32 || y <= 0 || y > s.height() as i32 {
             return Ok(true);
@@ -302,11 +302,11 @@ impl RayScene {
     }
 }
 
-impl Stateful for RayScene {
-    fn on_start(&mut self, s: &mut State) -> PixResult<()> {
+impl AppState for RayScene {
+    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         s.background(BLACK);
-        s.set_scale(SCALE as f32, SCALE as f32)?;
-        s.show_cursor(false);
+        s.scale(SCALE as f32, SCALE as f32)?;
+        s.cursor(false);
         s.show_frame_rate(true);
 
         let w = (self.xcells * BLOCK_SIZE) as i32 - 1;
@@ -331,7 +331,7 @@ impl Stateful for RayScene {
         Ok(())
     }
 
-    fn on_update(&mut self, s: &mut State) -> PixResult<()> {
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         s.clear();
 
         let (x, y) = s.mouse_pos();
@@ -346,7 +346,7 @@ impl Stateful for RayScene {
         } else {
             (y - 254, 511)
         };
-        s.set_clip(cx, cy, cw, ch);
+        s.clip((cx, cy, cw, ch));
 
         self.draw_visibility_polygons(s)?;
 
@@ -361,7 +361,7 @@ impl Stateful for RayScene {
         Ok(())
     }
 
-    fn on_mouse_pressed(&mut self, s: &mut State, btn: MouseButton) {
+    fn on_mouse_pressed(&mut self, s: &mut PixState, btn: MouseButton) {
         if btn == MouseButton::Left {
             let (mx, my) = s.mouse_pos();
             if mx > 0 && mx <= s.width() as i32 && my > 0 && my <= s.height() as i32 {
@@ -373,7 +373,7 @@ impl Stateful for RayScene {
         }
     }
 
-    fn on_mouse_dragged(&mut self, s: &mut State) {
+    fn on_mouse_dragged(&mut self, s: &mut PixState) {
         if s.mouse_buttons().contains(&MouseButton::Left) {
             let (mx, my) = s.mouse_pos();
             let (px, py) = s.pmouse_pos();

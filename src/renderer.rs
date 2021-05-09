@@ -1,7 +1,7 @@
 //! Generic graphics renderer interfaces
 
 use crate::{
-    color::Color, common::PixError, event::Event, image::Image, shape::Rect, state::StateError,
+    color::Color, common::PixError, event::Event, image::Image, shape::Rect, state::PixStateError,
 };
 #[cfg(all(feature = "sdl2", not(feature = "wasm")))]
 use sdl::SdlRenderer;
@@ -57,7 +57,7 @@ impl Default for Position {
 }
 
 /// Settings used to set up the renderer.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct RendererSettings {
     pub(crate) title: String,
     pub(crate) icon: Option<PathBuf>,
@@ -93,7 +93,7 @@ impl Default for RendererSettings {
 /// A common interface all renderers must implement
 pub(crate) trait Rendering: Sized {
     /// Creates a new `Renderer` instance.
-    fn init(settings: &RendererSettings) -> RendererResult<Self>;
+    fn init(settings: RendererSettings) -> RendererResult<Self>;
 
     /// Clears the current canvas to the given clear color.
     fn clear(&mut self);
@@ -204,13 +204,6 @@ pub(crate) trait Rendering: Sized {
     fn image(&mut self, x: i32, y: i32, img: &Image) -> RendererResult<()>;
 }
 
-impl RendererError {
-    /// Creates a renderer error from anything that implements Display.
-    pub fn renderer<E: fmt::Display>(err: E) -> Self {
-        Self::Other(Cow::from(err.to_string()))
-    }
-}
-
 impl fmt::Display for RendererError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use RendererError::*;
@@ -237,7 +230,7 @@ impl From<RendererError> for PixError {
     }
 }
 
-impl From<RendererError> for StateError {
+impl From<RendererError> for PixStateError {
     fn from(err: RendererError) -> Self {
         Self::RendererError(err)
     }

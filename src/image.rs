@@ -78,7 +78,10 @@ impl Image {
     }
 
     /// Create a new `Image` by loading it from a `png` file.
-    pub fn load<P: AsRef<Path>>(path: P) -> ImageResult<Self> {
+    pub fn load<P>(path: P) -> ImageResult<Self>
+    where
+        P: AsRef<Path>,
+    {
         let path = path.as_ref();
         let ext = path.extension();
         if ext != Some(OsStr::new("png")) {
@@ -103,7 +106,10 @@ impl Image {
     }
 
     /// Save an `Image` to a `png` file.
-    pub fn save<P: AsRef<Path>>(&self, _path: P) -> ImageResult<()> {
+    pub fn save<P>(&self, _path: P) -> ImageResult<()>
+    where
+        P: AsRef<Path>,
+    {
         todo!("save image");
     }
 }

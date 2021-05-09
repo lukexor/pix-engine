@@ -1,4 +1,4 @@
-use crate::{image::ImageError, renderer::RendererError, state::StateError};
+use crate::{image::ImageError, renderer::RendererError, state::PixStateError};
 use std::{borrow::Cow, error, fmt, result};
 
 /// `PixEngine` Result.
@@ -10,8 +10,8 @@ pub type PixResult<T> = result::Result<T, PixError>;
 pub enum PixError {
     /// An error from the underlying `Renderer`.
     RendererError(RendererError),
-    /// An error from the `Stateful` application.
-    StateError(StateError),
+    /// An error from `PixState`.
+    StateError(PixStateError),
     /// An error from 'Image'
     ImageError(ImageError),
     /// Unknown errors.

@@ -7,16 +7,12 @@ use crate::{
 };
 
 /// A Web-Assembly [`Renderer`] implementation.
-pub struct WasmRenderer {
-    title: String,
-}
+pub struct WasmRenderer {}
 
 impl Rendering for WasmRenderer {
     /// Creates a new `Renderer` instance.
-    fn init(s: &RendererSettings) -> RendererResult<Self> {
-        Ok(Self {
-            title: s.title.to_owned(),
-        })
+    fn init(s: RendererSettings) -> RendererResult<Self> {
+        Ok(Self { })
     }
 
     /// Clears the current canvas to the given clear color.
@@ -51,13 +47,12 @@ impl Rendering for WasmRenderer {
 
     /// Get the current window title.
     fn title(&self) -> &str {
-        &self.title
+        todo!("title)"
     }
 
     /// Set the current window title.
     fn set_title(&mut self, title: &str) -> RendererResult<()> {
-        self.title = title.to_owned();
-        Ok(())
+        todo!("set_title)"
     }
 
     /// Width of the current canvas.

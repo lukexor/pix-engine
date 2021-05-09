@@ -15,7 +15,7 @@ impl Colors {
         Self { h: 0.0, auto: true }
     }
 
-    fn draw_gradient(&mut self, state: &mut State) -> PixResult<()> {
+    fn draw_gradient(&mut self, state: &mut PixState) -> PixResult<()> {
         for x in (0..WIDTH / SIZE).into_iter() {
             for y in (0..HEIGHT / SIZE).into_iter() {
                 let s = map((SIZE * x) as f32, 0.0, WIDTH as f32, 0.0, 1.0);
@@ -43,13 +43,13 @@ impl Colors {
     }
 }
 
-impl Stateful for Colors {
-    fn on_start(&mut self, s: &mut State) -> PixResult<()> {
+impl AppState for Colors {
+    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         s.show_frame_rate(true);
         Ok(())
     }
 
-    fn on_update(&mut self, s: &mut State) -> PixResult<()> {
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         if self.auto && s.frame_count() % 4 == 0 {
             self.modify_hue(1.0, true);
         }
@@ -57,7 +57,7 @@ impl Stateful for Colors {
         Ok(())
     }
 
-    fn on_key_pressed(&mut self, _s: &mut State, key: Keycode) {
+    fn on_key_pressed(&mut self, _s: &mut PixState, key: Keycode) {
         match key {
             Keycode::Escape => self.auto = true,
             Keycode::Up => self.modify_hue(2.0, false),

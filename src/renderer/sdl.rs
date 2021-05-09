@@ -30,7 +30,6 @@ type SdlRect = sdl2::rect::Rect;
 
 /// An SDL [`Renderer`] implementation.
 pub struct SdlRenderer {
-    title: String,
     context: Sdl,
     ttf_context: ttf::Sdl2TtfContext,
     event_pump: EventPump,
@@ -40,7 +39,7 @@ pub struct SdlRenderer {
 
 impl Rendering for SdlRenderer {
     /// Initializes the Sdl2Renderer using the given settings and opens a new window.
-    fn init(s: &RendererSettings) -> RendererResult<Self> {
+    fn init(s: RendererSettings) -> RendererResult<Self> {
         let context = sdl2::init()?;
         let ttf_context = ttf::init()?;
         let video_subsys = context.video()?;
@@ -86,7 +85,6 @@ impl Rendering for SdlRenderer {
         let texture_creator: TextureCreator<WindowContext> = canvas.texture_creator();
 
         Ok(Self {
-            title: s.title.to_owned(),
             context,
             ttf_context,
             event_pump,
@@ -128,7 +126,7 @@ impl Rendering for SdlRenderer {
 
     /// Get the current window title.
     fn title(&self) -> &str {
-        &self.title
+        self.canvas.window().title()
     }
 
     /// Set the current window title.

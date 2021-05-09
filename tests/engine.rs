@@ -18,22 +18,22 @@ struct App {
     stop_count: u32,
 }
 
-impl Stateful for App {
-    fn on_start(&mut self, s: &mut State) -> PixResult<()> {
+impl AppState for App {
+    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         self.start_count += 1;
         if self.quit_on_start {
             s.quit();
         }
         Ok(())
     }
-    fn on_update(&mut self, s: &mut State) -> PixResult<()> {
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         self.update_count += 1;
         if self.quit_on_update || self.update_count > 2 {
             s.quit();
         }
         Ok(())
     }
-    fn on_stop(&mut self, s: &mut State) -> PixResult<()> {
+    fn on_stop(&mut self, s: &mut PixState) -> PixResult<()> {
         self.stop_count += 1;
         if self.abort_quit_on_stop {
             self.abort_quit_on_stop = false;
@@ -112,11 +112,8 @@ fn test_engine_state_env() {
     let _ = eng.run(&mut app);
     assert_eq!(eng.state().focused(), true, "focused after run");
     assert_eq!(eng.state().width(), 800, "valid width");
-    assert_eq!(eng.state().height(), 600, "valid heeight");
-    assert_eq!(eng.state().fullscreen(), false, "start windowed");
+    assert_eq!(eng.state().height(), 600, "valid height");
 
-    eng.state_mut().set_fullscreen(true);
-    assert_eq!(eng.state().fullscreen(), true, "now fullscreen");
-
-    eng.state_mut().set_fullscreen(false);
+    eng.state_mut().fullscreen(true);
+    eng.state_mut().fullscreen(false);
 }

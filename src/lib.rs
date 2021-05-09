@@ -53,7 +53,7 @@ pub mod vector;
 mod common;
 mod utils;
 
-pub use prelude::{PixEngine, PixError, PixResult, State, Stateful};
+pub use prelude::{AppState, PixEngine, PixError, PixResult, PixState};
 
 /// Re-exports most commonly used structs, traits, and functions.
 pub mod prelude {
@@ -66,7 +66,7 @@ pub mod prelude {
     pub use image::Image;
     pub use math::{constants::*, map, Scalar};
     pub use shape::{Circle, Rect};
-    pub use state::{State, Stateful};
+    pub use state::{AppState, PixState};
     pub use vector::Vector;
     pub use {hsv, random, rgb, vector};
 }

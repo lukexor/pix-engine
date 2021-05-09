@@ -168,7 +168,7 @@ impl Vector {
     }
 
     /// Creates a new unit Vector in 2D space from a given angle. Angle is given
-    /// as Radians and is unaffected by `StateData::angle_mode()`.
+    /// as Radians and is unaffected by `angle_mode`.
     ///
     /// # Example
     ///

@@ -4,7 +4,7 @@ use crate::{
     common::PixResult,
     event::{Event, WindowEvent},
     renderer::{Position, Renderer, RendererSettings, Rendering},
-    state::{State, Stateful},
+    state::{AppState, PixState},
 };
 use std::{
     path::Path,
@@ -52,7 +52,10 @@ impl PixEngineBuilder {
     }
 
     /// Set a window icon.
-    pub fn icon<P: AsRef<Path>>(&mut self, path: P) -> &mut Self {
+    pub fn icon<P>(&mut self, path: P) -> &mut Self
+    where
+        P: AsRef<Path>,
+    {
         self.settings.icon = Some(path.as_ref().to_owned());
         self
     }
@@ -86,9 +89,9 @@ impl PixEngineBuilder {
     ///
     /// Returns `Err` if any options provided are invalid.
     pub fn build(&self) -> PixResult<PixEngine> {
-        let renderer = Renderer::init(&self.settings)?;
+        let renderer = Renderer::init(self.settings.clone())?;
         Ok(PixEngine {
-            state: State::init(renderer),
+            state: PixState::init(&self.settings.title, renderer),
             last_frame_time: Instant::now(),
             frame_timer: Duration::from_secs(1),
             frame_counter: 0,
@@ -99,7 +102,7 @@ impl PixEngineBuilder {
 /// The core engine that maintains the frame loop, event handling, etc.
 #[derive(Debug)]
 pub struct PixEngine {
-    state: State,
+    state: PixState,
     frame_timer: Duration,
     last_frame_time: Instant,
     frame_counter: u64,
@@ -117,7 +120,10 @@ impl PixEngine {
     }
 
     /// Starts the `PixEngine` and begins executing the frame loop.
-    pub fn run<A: Stateful>(&mut self, app: &mut A) -> PixResult<()> {
+    pub fn run<A>(&mut self, app: &mut A) -> PixResult<()>
+    where
+        A: AppState,
+    {
         self.start(app)?;
         if self.state.env.quit {
             return Ok(());
@@ -131,14 +137,14 @@ impl PixEngine {
                 self.handle_events(app);
                 if self.state.env.quit {
                     break 'running;
-                }
-                if self.state.settings.loop_enabled {
-                    app.on_update(&mut self.state)?;
-                    self.state.renderer.present();
-                    self.update_frame_rate()?;
-                } else {
+                } else if self.state.settings.paused {
                     std::thread::sleep(Duration::from_millis(16));
+                    continue;
                 }
+
+                app.on_update(&mut self.state)?;
+                self.state.renderer.present();
+                self.update_frame_rate()?;
             }
             app.on_stop(&mut self.state)?;
             if self.state.env.quit {
@@ -148,18 +154,21 @@ impl PixEngine {
         Ok(())
     }
 
-    /// Returns a reference to the `PixEngine` `State`.
-    pub fn state(&self) -> &State {
+    /// Returns a reference to `PixState`.
+    pub fn state(&self) -> &PixState {
         &self.state
     }
 
-    /// Returns a mutable reference to the `PixEngine` `State`.
-    pub fn state_mut(&mut self) -> &mut State {
+    /// Returns a mutable reference to the `PixState`.
+    pub fn state_mut(&mut self) -> &mut PixState {
         &mut self.state
     }
 
     /// Setup at the start of running the engine.
-    fn start<A: Stateful>(&mut self, app: &mut A) -> PixResult<()> {
+    fn start<A>(&mut self, app: &mut A) -> PixResult<()>
+    where
+        A: AppState,
+    {
         // Clear and present once on start
         self.state.clear();
         self.state.renderer.present();
@@ -169,7 +178,10 @@ impl PixEngine {
     }
 
     /// Handle events from the event pump.
-    fn handle_events<A: Stateful>(&mut self, app: &mut A) {
+    fn handle_events<A>(&mut self, app: &mut A)
+    where
+        A: AppState,
+    {
         while let Some(event) = self.state.renderer.poll_event() {
             match event {
                 Event::Quit { .. } | Event::AppTerminating { .. } => self.state.quit(),

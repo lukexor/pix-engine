@@ -12,17 +12,17 @@ impl App {
     }
 }
 
-impl Stateful for App {
-    fn on_start(&mut self, s: &mut State) -> PixResult<()> {
+impl AppState for App {
+    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         s.show_frame_rate(true);
         Ok(())
     }
 
-    fn on_update(&mut self, _s: &mut State) -> PixResult<()> {
+    fn on_update(&mut self, _s: &mut PixState) -> PixResult<()> {
         Ok(())
     }
 
-    fn on_stop(&mut self, _s: &mut State) -> PixResult<()> {
+    fn on_stop(&mut self, _s: &mut PixState) -> PixResult<()> {
         Ok(())
     }
 }

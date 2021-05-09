@@ -130,13 +130,13 @@ impl Maze {
     }
 }
 
-impl Stateful for Maze {
-    fn on_start(&mut self, s: &mut State) -> PixResult<()> {
+impl AppState for Maze {
+    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         s.show_frame_rate(true);
         Ok(())
     }
 
-    fn on_update(&mut self, s: &mut State) -> PixResult<()> {
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         thread::sleep(Duration::from_millis(10));
         if self.visited < self.size {
             if self.has_neighbors() {
