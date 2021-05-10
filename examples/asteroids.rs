@@ -183,9 +183,9 @@ impl AppState for Asteroids {
             let y = height / 2 - 24;
             s.fill(WHITE);
             s.text_size(32);
-            s.text("GAME OVER", x, y)?;
+            s.text(x, y, "GAME OVER")?;
             s.text_size(16);
-            s.text("PRESS SPACE TO RESTART", x - 100, y + 24)?;
+            s.text(x - 100, y + 24, "PRESS SPACE TO RESTART")?;
             return Ok(());
         }
 
@@ -207,9 +207,9 @@ impl AppState for Asteroids {
         s.text_size(16);
         s.fill(WHITE);
         s.text(
+            4,
+            4,
             &format!("LEVEL: {}  SCORE: {}", self.level, self.score),
-            4,
-            4,
         )?;
 
         s.stroke(WHITE);

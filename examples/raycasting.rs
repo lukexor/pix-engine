@@ -260,7 +260,8 @@ impl RayScene {
     }
 
     fn draw_visibility_polygons(&mut self, s: &mut PixState) -> PixResult<bool> {
-        let (x, y) = s.mouse_pos();
+        let mouse_pos = s.mouse_pos();
+        let (x, y) = mouse_pos.into();
         if x <= 0 || x > s.width() as i32 || y <= 0 || y > s.height() as i32 {
             return Ok(true);
         }
@@ -271,28 +272,14 @@ impl RayScene {
             s.fill(WHITE);
             s.stroke(WHITE);
             for i in 0..self.polygons.len() - 1 {
-                let p1 = self.polygons[i].1;
-                let p2 = self.polygons[i + 1].1;
-                s.triangle(
-                    x,
-                    y,
-                    p1.x.round() as i32,
-                    p1.y.round() as i32,
-                    p2.x.round() as i32,
-                    p2.y.round() as i32,
-                )?;
+                let p1: Point = self.polygons[i].1.into();
+                let p2: Point = self.polygons[i + 1].1.into();
+                s.triangle((mouse_pos, p1, p2))?;
             }
             // Draw last triangle, connecting back to first point.
-            let p1 = self.polygons.last().unwrap().1;
-            let p2 = self.polygons[0].1;
-            s.triangle(
-                x,
-                y,
-                p1.x.round() as i32,
-                p1.y.round() as i32,
-                p2.x.round() as i32,
-                p2.y.round() as i32,
-            )?;
+            let p1: Point = self.polygons.last().unwrap().1.into();
+            let p2: Point = self.polygons[0].1.into();
+            s.triangle((mouse_pos, p1, p2))?;
         }
 
         s.fill(RED);
@@ -334,7 +321,7 @@ impl AppState for RayScene {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         s.clear();
 
-        let (x, y) = s.mouse_pos();
+        let (x, y) = s.mouse_pos().into();
 
         let (cx, cw) = if x - 254 < 0 {
             (0, (x + 255) as u32)
@@ -363,7 +350,7 @@ impl AppState for RayScene {
 
     fn on_mouse_pressed(&mut self, s: &mut PixState, btn: MouseButton) {
         if btn == MouseButton::Left {
-            let (mx, my) = s.mouse_pos();
+            let (mx, my) = s.mouse_pos().into();
             if mx > 0 && mx <= s.width() as i32 && my > 0 && my <= s.height() as i32 {
                 let i = self.get_cell_index(mx, my);
                 self.cells[i].exists = !self.cells[i].exists;
@@ -375,8 +362,8 @@ impl AppState for RayScene {
 
     fn on_mouse_dragged(&mut self, s: &mut PixState) {
         if s.mouse_buttons().contains(&MouseButton::Left) {
-            let (mx, my) = s.mouse_pos();
-            let (px, py) = s.pmouse_pos();
+            let (mx, my) = s.mouse_pos().into();
+            let (px, py) = s.pmouse_pos().into();
             if mx > 0 && mx <= s.width() as i32 && my > 0 && my <= s.height() as i32 {
                 if (mx, my) != (px, py) {
                     let i = self.get_cell_index(mx, my);

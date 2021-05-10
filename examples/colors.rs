@@ -26,11 +26,11 @@ impl Colors {
         }
         state.fill(WHITE);
         state.text(
-            &format!("Press arrow keys to change Hue: {}", self.h),
             20,
             100,
+            &format!("Press arrow keys to change Hue: {}", self.h),
         )?;
-        state.text("Press Escape to return to demo mode.", 20, 132)?;
+        state.text(20, 132, "Press Escape to return to demo mode.")?;
         Ok(())
     }
 

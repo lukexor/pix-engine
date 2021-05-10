@@ -4,7 +4,7 @@ use super::PixState;
 use crate::{
     color::{constants::*, Color},
     draw::DrawMode,
-    renderer::{RendererResult, Rendering},
+    renderer::{self, Rendering},
     shape::Rect,
 };
 use std::path::Path;
@@ -20,7 +20,26 @@ pub(crate) struct Settings {
     pub(crate) show_frame_rate: bool,
     pub(crate) rect_mode: DrawMode,
     pub(crate) ellipse_mode: DrawMode,
+    // TODO: arc_mode: default ArcMode::Pie
+    // TODO: stroke_weight: u32, default 1
+    // TODO: stroke_cap: StrokeCap, Default StrokeCap::Round
+    // TODO: stroke_join: StrokeJoin, StrokeJoin::Miter
+    // TODO: angle_mode: AngleMode, Default AngleMode::Radians
+    // TODO: image_tint: Option<Color>, Default None
+    // TODO: image_mode: DrawMode, default DrawMode::Corner
+    // TODO: text_align_hori: TextAlignHori, Default TextAlignHori::Left
+    // TODO: text_align_vert: TextAlignVert, TextAlignVert::Top
+    // TODO: text_style: TextStyle, Default TextStyle::Normal
+    // TODO: text_font: Font, Default emulogic - Add attribution
+    // TODO: blend_mode: Option<BlendMode, Default BlendMode::None
+    // TODO: blend_factor: f32, Default 1.0
+    // TODO: transformation: Option<Transform>, Default None
 }
+
+// TODO: TextAlignHori { Left, Center, Right }
+// TODO: TextAlignVert { Top, Center, Bottom, Baseline }
+// TODO: TextStyle { Normal, Italic, Bold, BoldItalic }
+// TODO: Font { Arial, .., Custom(String, PathBuf) }
 
 impl Default for Settings {
     fn default() -> Self {
@@ -77,22 +96,27 @@ impl PixState {
     where
         R: Into<Rect>,
     {
-        self.renderer.set_clip_rect(Some(rect.into()));
+        self.renderer.clip(Some(rect.into()));
     }
 
     /// Clears the clip rect used by the renderer to draw to the current canvas.
     pub fn no_clip(&mut self) {
-        self.renderer.set_clip_rect(None);
+        self.renderer.clip(None);
+    }
+
+    /// Returns whether the application is fullscreen or not.
+    pub fn is_fullscreen(&mut self) -> bool {
+        self.renderer.is_fullscreen()
     }
 
     /// Set the application to fullscreen or not.
     pub fn fullscreen(&mut self, val: bool) {
-        self.renderer.set_fullscreen(val)
+        self.renderer.fullscreen(val)
     }
 
     /// Set whether the cursor is shown or not.
     pub fn cursor(&mut self, show: bool) {
-        self.renderer.show_cursor(show);
+        self.renderer.cursor(show);
     }
 
     /// Set the cursor icon.
@@ -118,12 +142,12 @@ impl PixState {
         self.settings.show_frame_rate = show;
     }
 
-    /// Change the rendering scale of the current canvas.
-    pub fn scale(&mut self, x: f32, y: f32) -> RendererResult<()> {
-        self.renderer.set_scale(x, y)
+    /// Set the rendering scale of the current canvas.
+    pub fn scale(&mut self, x: f32, y: f32) -> renderer::Result<()> {
+        self.renderer.scale(x, y)
     }
 
-    /// Change the text size for drawing to the current canvas.
+    /// Set the text size for drawing to the current canvas.
     pub fn text_size(&mut self, size: u32) {
         self.settings.text_size = size;
     }
@@ -136,5 +160,15 @@ impl PixState {
     /// Change the way parameters are interpreted for drawing circles and ellipses.
     pub fn ellipse_mode(&mut self, mode: DrawMode) {
         self.settings.ellipse_mode = mode;
+    }
+
+    /// Saves the current draw settings and transforms.
+    pub fn push(&mut self) {
+        todo!("push");
+    }
+
+    /// Restores the current draw settings and transforms.
+    pub fn pop(&mut self) {
+        todo!("push");
     }
 }

@@ -1,6 +1,6 @@
 //! Image related operations and functionality.
 
-use crate::common::PixError;
+use crate::common;
 use std::{
     borrow::Cow,
     error,
@@ -13,12 +13,12 @@ use std::{
 };
 
 /// `Image` Result
-pub type ImageResult<T> = result::Result<T, ImageError>;
+pub type Result<T> = result::Result<T, Error>;
 
 /// Types of errors `Image` can return in a `Result`.
 #[non_exhaustive]
 #[derive(Debug)]
-pub enum ImageError {
+pub enum Error {
     /// Invalid file type.
     InvalidFileType(Option<OsString>),
     /// Invalid bit depth.
@@ -40,10 +40,38 @@ pub struct Image {
     height: u32,
     /// RGB values
     data: Vec<u8>,
-    // TODO: tint, flip, rgb
+    // TODO: channels: usize, (3 or 4)
+    // TODO: pixel_format: PixelFormat
+    // TODO: tint, flip
 }
 
+// TODO: Texture { id, image, quad, uv, uv_scale, w }
+// texture!()
+
 impl Image {
+    // TODO:
+    // rgb(w: u32, h: u32), rgba(w, h)
+    // from_bytes(w: u32, h: u32, pixel_format: PixelFormat, bytes: &[u8])
+    // from_pixels(w: u32, h: u32, pixels: &[Color])
+    // pixel(x i32, y: i32) -> Color
+    // set_pixel(x i32, y: i32, pixel: Color)
+    // pixel_format() -> PixelFormat
+    // dimensions() -> (u32, u32)
+    // pixels() -> &[Color]
+    // pixels_mut() -> & mut[Color]
+    // get_index(x: i32, y: i32) -> usize
+    // filter(filter: ImageFilter)
+    // sub_image(x: i32, y: i32, w: u32, h: u32) -> Image
+    // set_sub_image(x: i32, y: i32, image: &Image)
+    // resize(w: u32, h: u32)
+    // blend(image: &Image, mode: BlendMode)
+    // mask(image: &Image)
+    // Image.filtered(image: Image, filter: ImageFilter) -> Image
+    // Image.resized(image: Image, w: u32, h: u32) -> Image
+    // Image.blended(image: &Image, mode: BlendMode) -> Image
+    // Image.mask(image: &Image) -> Image
+    // image!(w, h)
+
     /// Create a blank `Image` with a given width/height.
     pub fn new(width: u32, height: u32) -> Self {
         Self {
@@ -68,6 +96,11 @@ impl Image {
         &self.data
     }
 
+    /// The image data as a mutable u8 slice.
+    pub fn bytes_mut(&mut self) -> &mut [u8] {
+        &mut self.data
+    }
+
     /// Create a new `Image` from an array of u8 bytes representing RGBA values.
     pub fn from_bytes(width: u32, height: u32, bytes: &[u8]) -> Self {
         Self {
@@ -78,14 +111,14 @@ impl Image {
     }
 
     /// Create a new `Image` by loading it from a `png` file.
-    pub fn load<P>(path: P) -> ImageResult<Self>
+    pub fn load<P>(path: P) -> Result<Self>
     where
         P: AsRef<Path>,
     {
         let path = path.as_ref();
         let ext = path.extension();
         if ext != Some(OsStr::new("png")) {
-            return Err(ImageError::InvalidFileType(ext.map(|e| e.to_os_string())));
+            return Err(Error::InvalidFileType(ext.map(|e| e.to_os_string())));
         }
 
         let png_file = BufReader::new(File::open(&path)?);
@@ -93,7 +126,7 @@ impl Image {
         let (info, mut reader) = png.read_info()?;
 
         if info.bit_depth != png::BitDepth::Eight {
-            return Err(ImageError::InvalidBitDepth(info.bit_depth));
+            return Err(Error::InvalidBitDepth(info.bit_depth));
         }
 
         let mut data = vec![0x00; info.buffer_size()];
@@ -106,7 +139,7 @@ impl Image {
     }
 
     /// Save an `Image` to a `png` file.
-    pub fn save<P>(&self, _path: P) -> ImageResult<()>
+    pub fn save<P>(&self, _path: P) -> Result<()>
     where
         P: AsRef<Path>,
     {
@@ -114,9 +147,9 @@ impl Image {
     }
 }
 
-impl std::fmt::Display for ImageError {
+impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use ImageError::*;
+        use Error::*;
         match self {
             InvalidFileType(ext) => write!(f, "Invalid file type: {:?}", ext),
             InvalidBitDepth(depth) => write!(f, "Invalid bit depth: {:?}", depth),
@@ -127,25 +160,30 @@ impl std::fmt::Display for ImageError {
     }
 }
 
-impl error::Error for ImageError {
+impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        None
+        use Error::*;
+        match self {
+            IoError(err) => err.source(),
+            DecodingError(err) => err.source(),
+            _ => None,
+        }
     }
 }
 
-impl From<ImageError> for PixError {
-    fn from(err: ImageError) -> Self {
+impl From<Error> for common::Error {
+    fn from(err: Error) -> Self {
         Self::ImageError(err)
     }
 }
 
-impl From<io::Error> for ImageError {
+impl From<io::Error> for Error {
     fn from(err: io::Error) -> Self {
         Self::IoError(err)
     }
 }
 
-impl From<png::DecodingError> for ImageError {
+impl From<png::DecodingError> for Error {
     fn from(err: png::DecodingError) -> Self {
         Self::DecodingError(err)
     }

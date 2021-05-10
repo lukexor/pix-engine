@@ -49,6 +49,7 @@ pub mod shape;
 pub mod state;
 #[macro_use]
 pub mod vector;
+// TODO: Vertex { x, y, z, u, v }
 
 mod common;
 mod utils;
@@ -59,13 +60,13 @@ pub use prelude::{AppState, PixEngine, PixError, PixResult, PixState};
 pub mod prelude {
     use super::*;
     pub use color::{constants::*, Color, Hsv, Rgb};
-    pub use common::{PixError, PixResult};
+    pub use common::{Error as PixError, Result as PixResult};
     pub use draw::DrawMode::*;
     pub use engine::PixEngine;
     pub use event::*;
     pub use image::Image;
     pub use math::{constants::*, map, Scalar};
-    pub use shape::{Circle, Rect};
+    pub use shape::*;
     pub use state::{AppState, PixState};
     pub use vector::Vector;
     pub use {hsv, random, rgb, vector};

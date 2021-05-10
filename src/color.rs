@@ -361,24 +361,14 @@ impl Rgb {
         self.r
     }
 
-    /// Get the Green channel
-    pub const fn green(self) -> u8 {
-        self.g
-    }
-
-    /// Get the Blue channel
-    pub const fn blue(self) -> u8 {
-        self.b
-    }
-
-    /// Get the Alpha channel
-    pub const fn alpha(self) -> u8 {
-        self.a
-    }
-
     /// Set the Red channel
     pub fn set_red(&mut self, val: u8) {
         self.r = val;
+    }
+
+    /// Get the Green channel
+    pub const fn green(self) -> u8 {
+        self.g
     }
 
     /// Set the Green channel
@@ -386,9 +376,19 @@ impl Rgb {
         self.g = val;
     }
 
+    /// Get the Blue channel
+    pub const fn blue(self) -> u8 {
+        self.b
+    }
+
     /// Set the Blue channel
     pub fn set_blue(&mut self, val: u8) {
         self.b = val;
+    }
+
+    /// Get the Alpha channel
+    pub const fn alpha(self) -> u8 {
+        self.a
     }
 
     /// Set the Alpha channel
@@ -551,24 +551,14 @@ impl Hsv {
         self.h
     }
 
-    /// Get the Saturation channel
-    pub const fn saturation(self) -> f32 {
-        self.s
-    }
-
-    /// Get the Value channel
-    pub const fn value(self) -> f32 {
-        self.v
-    }
-
-    /// Get the Alpha channel
-    pub const fn alpha(self) -> f32 {
-        self.a
-    }
-
     /// Set the Hue channel
     pub fn set_hue(&mut self, val: f32) {
         self.h = val;
+    }
+
+    /// Get the Saturation channel
+    pub const fn saturation(self) -> f32 {
+        self.s
     }
 
     /// Set the Saturation channel
@@ -576,9 +566,19 @@ impl Hsv {
         self.s = val;
     }
 
+    /// Get the Value channel
+    pub const fn value(self) -> f32 {
+        self.v
+    }
+
     /// Set the Value channel
     pub fn set_value(&mut self, val: f32) {
         self.v = val;
+    }
+
+    /// Get the Alpha channel
+    pub const fn alpha(self) -> f32 {
+        self.a
     }
 
     /// Set the Alpha channel

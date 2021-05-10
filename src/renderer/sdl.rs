@@ -1,6 +1,6 @@
 //! SDL Renderer implementation
 
-use super::{Position, RendererError, RendererResult, RendererSettings, Rendering};
+use super::{Error, Position, RendererSettings, Rendering, Result};
 use crate::{
     color::Color,
     event::{Axis, Button, Event, Keycode, MouseButton, WindowEvent},
@@ -29,7 +29,7 @@ type SdlColor = sdl2::pixels::Color;
 type SdlRect = sdl2::rect::Rect;
 
 /// An SDL [`Renderer`] implementation.
-pub struct SdlRenderer {
+pub struct Renderer {
     context: Sdl,
     ttf_context: ttf::Sdl2TtfContext,
     event_pump: EventPump,
@@ -37,9 +37,9 @@ pub struct SdlRenderer {
     texture_creator: TextureCreator<WindowContext>,
 }
 
-impl Rendering for SdlRenderer {
+impl Rendering for Renderer {
     /// Initializes the Sdl2Renderer using the given settings and opens a new window.
-    fn init(s: RendererSettings) -> RendererResult<Self> {
+    fn init(s: RendererSettings) -> Result<Self> {
         let context = sdl2::init()?;
         let ttf_context = ttf::init()?;
         let video_subsys = context.video()?;
@@ -56,7 +56,7 @@ impl Rendering for SdlRenderer {
             (Position::Positioned(x), Position::Positioned(y)) => {
                 let _ = window_builder.position(x, y);
             }
-            _ => return Err(RendererError::InvalidPosition(s.x, s.y)),
+            _ => return Err(Error::InvalidPosition(s.x, s.y)),
         };
         if s.fullscreen {
             let _ = window_builder.fullscreen();
@@ -99,17 +99,17 @@ impl Rendering for SdlRenderer {
     }
 
     /// Set whether the cursor is shown or not.
-    fn show_cursor(&mut self, show: bool) {
+    fn cursor(&mut self, show: bool) {
         self.context.mouse().show_cursor(show);
     }
 
     /// Sets the color used by the renderer to draw to the current canvas.
-    fn set_draw_color(&mut self, color: Color) {
+    fn draw_color(&mut self, color: Color) {
         self.canvas.set_draw_color(color);
     }
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    fn set_clip_rect(&mut self, rect: Option<Rect>) {
+    fn clip(&mut self, rect: Option<Rect>) {
         let rect = rect.map(|rect| rect.into());
         self.canvas.set_clip_rect(rect);
     }
@@ -130,8 +130,11 @@ impl Rendering for SdlRenderer {
     }
 
     /// Set the current window title.
-    fn set_title(&mut self, title: &str) -> RendererResult<()> {
-        self.canvas.window_mut().set_title(title)?;
+    fn set_title<S>(&mut self, title: S) -> Result<()>
+    where
+        S: AsRef<str>,
+    {
+        self.canvas.window_mut().set_title(title.as_ref())?;
         Ok(())
     }
 
@@ -148,19 +151,19 @@ impl Rendering for SdlRenderer {
     }
 
     /// Scale the current canvas.
-    fn set_scale(&mut self, x: f32, y: f32) -> RendererResult<()> {
+    fn scale(&mut self, x: f32, y: f32) -> Result<()> {
         self.canvas.set_scale(x, y)?;
         Ok(())
     }
 
     /// Returns whether the application is fullscreen or not.
-    fn fullscreen(&self) -> bool {
+    fn is_fullscreen(&self) -> bool {
         use FullscreenType::*;
         matches!(self.canvas.window().fullscreen_state(), True | Desktop)
     }
 
     /// Set the application to fullscreen or not.
-    fn set_fullscreen(&mut self, val: bool) {
+    fn fullscreen(&mut self, val: bool) {
         let fullscreen_type = if val {
             FullscreenType::True
         } else {
@@ -170,66 +173,68 @@ impl Rendering for SdlRenderer {
         let _ = self.canvas.window_mut().set_fullscreen(fullscreen_type);
     }
 
-    /// Create a texture to render to.
-    fn create_texture(&mut self, _width: u32, _height: u32) -> RendererResult<usize> {
-        // TODO: Handle textures
-        // Ok(self
-        //     .texture_creator
-        //     .create_texture_streaming(None, width, height)?)
-        todo!("create_texture")
-    }
+    // /// Create a texture to render to.
+    // fn create_texture(&mut self, _width: u32, _height: u32) -> Result<usize> {
+    //     // TODO: Handle textures
+    //     // Ok(self
+    //     //     .texture_creator
+    //     //     .create_texture_streaming(None, width, height)?)
+    //     todo!("create_texture")
+    // }
 
     /// Draw text to the current canvas.
-    fn text(
+    fn text<S>(
         &mut self,
-        text: &str,
+        text: S,
         x: i32,
         y: i32,
         size: u32,
         fill: Option<Color>,
         _stroke: Option<Color>,
-    ) -> RendererResult<()> {
+    ) -> Result<()>
+    where
+        S: AsRef<str>,
+    {
         // TODO: Figure out how to store this
         let font = self
             .ttf_context
             .load_font("static/emulogic.ttf", size as u16)?;
         if let Some(fill) = fill {
-            let surface = font.render(text).blended(fill)?;
+            let surface = font.render(text.as_ref()).blended(fill)?;
             let texture = self.texture_creator.create_texture_from_surface(&surface)?;
             let TextureQuery { width, height, .. } = texture.query();
             self.canvas
                 .copy(&texture, None, Some(SdlRect::new(x, y, width, height)))?;
         }
+        // TODO: Explore more
+        // if let Some(fill) = fill {
+        //     let x = i16::try_from(x)?;
+        //     let y = i16::try_from(y)?;
+        //     self.canvas.string(x, y, text, fill)?;
+        // }
         Ok(())
     }
 
     /// Draw a pixel to the current canvas.
-    fn pixel(&mut self, x: i32, y: i32, stroke: Option<Color>) -> RendererResult<()> {
-        let x = i16::try_from(x)?;
-        let y = i16::try_from(y)?;
+    fn point(&mut self, x: i32, y: i32, stroke: Option<Color>) -> Result<()> {
         if let Some(stroke) = stroke {
+            let x = i16::try_from(x)?;
+            let y = i16::try_from(y)?;
             self.canvas.pixel(x, y, stroke)?;
         }
         Ok(())
     }
 
     /// Draw an array of pixels to the canvas.
-    fn pixels(&mut self, _pixels: &[u8], _pitch: usize) -> RendererResult<()> {
+    fn points(&mut self, _pixels: &[u8], _pitch: usize) -> Result<()> {
         // TODO: Handle drawing pixels to textures
         // self.textures[0].update(None, pixels, pitch)?;
         // self.canvas.copy(&self.textures[0], None, None)?;
-        todo!("pixels")
+        todo!("points")
     }
 
     /// Draw a line to the current canvas.
-    fn line(
-        &mut self,
-        x1: i32,
-        y1: i32,
-        x2: i32,
-        y2: i32,
-        stroke: Option<Color>,
-    ) -> RendererResult<()> {
+    fn line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, stroke: Option<Color>) -> Result<()> {
         let x1 = i16::try_from(x1)?;
         let y1 = i16::try_from(y1)?;
         let x2 = i16::try_from(x2)?;
@@ -251,7 +256,7 @@ impl Rendering for SdlRenderer {
         y3: i32,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> RendererResult<()> {
+    ) -> Result<()> {
         let x1 = i16::try_from(x1)?;
         let y1 = i16::try_from(y1)?;
         let x2 = i16::try_from(x2)?;
@@ -276,7 +281,7 @@ impl Rendering for SdlRenderer {
         height: u32,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> RendererResult<()> {
+    ) -> Result<()> {
         let x = i16::try_from(x)?;
         let y = i16::try_from(y)?;
         let w = i16::try_from(width)?;
@@ -299,7 +304,7 @@ impl Rendering for SdlRenderer {
         height: u32,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> RendererResult<()> {
+    ) -> Result<()> {
         let x = i16::try_from(x)?;
         let y = i16::try_from(y)?;
         let w = i16::try_from(width)?;
@@ -315,7 +320,7 @@ impl Rendering for SdlRenderer {
 
     // TODO: Move texture creation into image object?
     /// Draw an image to the current canvas.
-    fn image(&mut self, x: i32, y: i32, img: &Image) -> RendererResult<()> {
+    fn image(&mut self, x: i32, y: i32, img: &Image) -> Result<()> {
         let mut texture = self.texture_creator.create_texture_streaming(
             PixelFormatEnum::RGB24,
             img.width(),
@@ -329,7 +334,7 @@ impl Rendering for SdlRenderer {
     }
 }
 
-impl std::fmt::Debug for SdlRenderer {
+impl std::fmt::Debug for Renderer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // TODO: Add some fields
         write!(f, "SdlRenderer {{}}")
@@ -701,13 +706,13 @@ impl From<Rect> for SdlRect {
  * Error Conversions
  */
 
-impl From<String> for RendererError {
+impl From<String> for Error {
     fn from(err: String) -> Self {
         Self::Other(Cow::from(err))
     }
 }
 
-impl From<InitError> for RendererError {
+impl From<InitError> for Error {
     fn from(err: InitError) -> Self {
         use InitError::*;
         match err {
@@ -717,7 +722,7 @@ impl From<InitError> for RendererError {
     }
 }
 
-impl From<FontError> for RendererError {
+impl From<FontError> for Error {
     fn from(err: FontError) -> Self {
         use FontError::*;
         match err {
@@ -727,7 +732,7 @@ impl From<FontError> for RendererError {
     }
 }
 
-impl From<WindowBuildError> for RendererError {
+impl From<WindowBuildError> for Error {
     fn from(err: WindowBuildError) -> Self {
         use WindowBuildError::*;
         match err {
@@ -739,7 +744,7 @@ impl From<WindowBuildError> for RendererError {
     }
 }
 
-impl From<IntegerOrSdlError> for RendererError {
+impl From<IntegerOrSdlError> for Error {
     fn from(err: IntegerOrSdlError) -> Self {
         use IntegerOrSdlError::*;
         match err {
@@ -749,7 +754,7 @@ impl From<IntegerOrSdlError> for RendererError {
     }
 }
 
-impl From<TextureValueError> for RendererError {
+impl From<TextureValueError> for Error {
     fn from(err: TextureValueError) -> Self {
         use TextureValueError::*;
         match err {
@@ -763,7 +768,7 @@ impl From<TextureValueError> for RendererError {
     }
 }
 
-impl From<UpdateTextureError> for RendererError {
+impl From<UpdateTextureError> for Error {
     fn from(err: UpdateTextureError) -> Self {
         use UpdateTextureError::*;
         match err {
@@ -788,7 +793,7 @@ impl From<UpdateTextureError> for RendererError {
     }
 }
 
-impl From<NulError> for RendererError {
+impl From<NulError> for Error {
     fn from(err: NulError) -> Self {
         Self::InvalidText("Unknown nul error", err)
     }

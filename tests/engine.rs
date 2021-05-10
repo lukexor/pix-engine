@@ -53,7 +53,7 @@ fn create_engine() -> PixResult<PixEngine> {
 }
 
 #[test]
-#[ignore]
+#[ignore = "engine can only be tested in the main thread. --test-threads=1"]
 fn test_engine_create() {
     // Nominal use case
     let eng = create_engine();
@@ -61,7 +61,7 @@ fn test_engine_create() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "engine can only be tested in the main thread. --test-threads=1"]
 fn test_run_engine_start() {
     let mut eng = create_engine().unwrap();
     // Quitting from on_start should exit the game loop early
@@ -74,7 +74,7 @@ fn test_run_engine_start() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "engine can only be tested in the main thread. --test-threads=1"]
 fn test_run_engine_update() {
     let mut eng = create_engine().unwrap();
     // Quitting from on_update should exit but still run on_stop
@@ -87,7 +87,7 @@ fn test_run_engine_update() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "engine can only be tested in the main thread. --test-threads=1"]
 fn test_run_engine_stop() {
     let mut eng = create_engine().unwrap();
     // Aborting quit from on_stop should resume game loop
@@ -102,7 +102,7 @@ fn test_run_engine_stop() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "engine can only be tested in the main thread. --test-threads=1"]
 fn test_engine_state_env() {
     let mut eng = create_engine().unwrap();
     let mut app = App::default();

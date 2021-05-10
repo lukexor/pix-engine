@@ -1,26 +1,21 @@
 //! Generic graphics renderer interfaces
 
-use crate::{
-    color::Color, common::PixError, event::Event, image::Image, shape::Rect, state::PixStateError,
-};
-#[cfg(all(feature = "sdl2", not(feature = "wasm")))]
-use sdl::SdlRenderer;
+use crate::{color::Color, common, event::Event, image::Image, shape::Rect, state};
 use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
-#[cfg(all(feature = "wasm", not(feature = "sdl2")))]
-use wasm::WasmRenderer;
 
-#[cfg(all(feature = "sdl2", not(feature = "wasm")))]
-pub(crate) mod sdl;
-#[cfg(all(feature = "wasm", not(feature = "sdl2")))]
-pub(crate) mod wasm;
+#[cfg_attr(feature = "sdl2", path = "renderer/sdl.rs")]
+#[cfg_attr(feature = "wasm", path = "renderer/wasm.rs")]
+pub(crate) mod renderer_impl;
 
-/// `Renderer` Result
-pub type RendererResult<T> = result::Result<T, RendererError>;
+pub use renderer_impl::Renderer;
 
-/// Types of errors the `Rendering` trait can return in a `Result`.
+/// The result type for [`Renderer`] operations.
+pub type Result<T> = result::Result<T, Error>;
+
+/// The error type for [`Renderer`] operations.
 #[non_exhaustive]
 #[derive(Debug)]
-pub enum RendererError {
+pub enum Error {
     /// Renderer initialization errors.
     InitError,
     /// Renderer I/O errors.
@@ -34,12 +29,6 @@ pub enum RendererError {
     /// Any other unknown error as a string.
     Other(Cow<'static, str>),
 }
-
-/// Wrapper around a concrete renderer.
-#[cfg(all(feature = "sdl2", not(feature = "wasm")))]
-pub(crate) type Renderer = SdlRenderer;
-#[cfg(all(feature = "wasm", not(feature = "sdl2")))]
-pub(crate) type Renderer = WasmRenderer;
 
 /// Represents a possible screen position.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -93,19 +82,19 @@ impl Default for RendererSettings {
 /// A common interface all renderers must implement
 pub(crate) trait Rendering: Sized {
     /// Creates a new `Renderer` instance.
-    fn init(settings: RendererSettings) -> RendererResult<Self>;
+    fn init(settings: RendererSettings) -> Result<Self>;
 
     /// Clears the current canvas to the given clear color.
     fn clear(&mut self);
 
     /// Set whether the cursor is shown or not.
-    fn show_cursor(&mut self, show: bool);
+    fn cursor(&mut self, show: bool);
 
     /// Sets the color used by the renderer to draw the current canvas.
-    fn set_draw_color(&mut self, color: Color);
+    fn draw_color(&mut self, color: Color);
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    fn set_clip_rect(&mut self, rect: Option<Rect>);
+    fn clip(&mut self, rect: Option<Rect>);
 
     /// Returns a single event or None if the event pump is empty.
     fn poll_event(&mut self) -> Option<Event>;
@@ -117,7 +106,9 @@ pub(crate) trait Rendering: Sized {
     fn title(&self) -> &str;
 
     /// Set the current window title.
-    fn set_title(&mut self, title: &str) -> RendererResult<()>;
+    fn set_title<S>(&mut self, title: S) -> Result<()>
+    where
+        S: AsRef<str>;
 
     /// Width of the current canvas.
     fn width(&self) -> u32;
@@ -126,43 +117,35 @@ pub(crate) trait Rendering: Sized {
     fn height(&self) -> u32;
 
     /// Scale the current canvas.
-    fn set_scale(&mut self, x: f32, y: f32) -> RendererResult<()>;
+    fn scale(&mut self, x: f32, y: f32) -> Result<()>;
 
     /// Returns whether the application is fullscreen or not.
-    fn fullscreen(&self) -> bool;
+    fn is_fullscreen(&self) -> bool;
 
     /// Set the application to fullscreen or not.
-    fn set_fullscreen(&mut self, val: bool);
-
-    /// Create a texture to render to.
-    fn create_texture(&mut self, width: u32, height: u32) -> RendererResult<usize>;
+    fn fullscreen(&mut self, val: bool);
 
     /// Draw text to the current canvas.
-    fn text(
+    fn text<S>(
         &mut self,
-        text: &str,
+        text: S,
         x: i32,
         y: i32,
         size: u32,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> RendererResult<()>;
+    ) -> Result<()>
+    where
+        S: AsRef<str>;
 
     /// Draw a pixel to the current canvas.
-    fn pixel(&mut self, x: i32, y: i32, stroke: Option<Color>) -> RendererResult<()>;
+    fn point(&mut self, x: i32, y: i32, stroke: Option<Color>) -> Result<()>;
 
     /// Draw an array of pixels to the current canvas.
-    fn pixels(&mut self, pixels: &[u8], pitch: usize) -> RendererResult<()>;
+    fn points(&mut self, pixels: &[u8], pitch: usize) -> Result<()>;
 
     /// Draw a line to the current canvas.
-    fn line(
-        &mut self,
-        x1: i32,
-        y1: i32,
-        x2: i32,
-        y2: i32,
-        stroke: Option<Color>,
-    ) -> RendererResult<()>;
+    fn line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, stroke: Option<Color>) -> Result<()>;
 
     /// Draw a triangle to the current canvas.
     #[allow(clippy::too_many_arguments)]
@@ -176,7 +159,7 @@ pub(crate) trait Rendering: Sized {
         y3: i32,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> RendererResult<()>;
+    ) -> Result<()>;
 
     /// Draw a rectangle to the current canvas.
     fn rect(
@@ -187,7 +170,7 @@ pub(crate) trait Rendering: Sized {
         height: u32,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> RendererResult<()>;
+    ) -> Result<()>;
 
     /// Draw a ellipse to the current canvas.
     fn ellipse(
@@ -198,15 +181,15 @@ pub(crate) trait Rendering: Sized {
         height: u32,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> RendererResult<()>;
+    ) -> Result<()>;
 
     /// Draw an image to the current canvas.
-    fn image(&mut self, x: i32, y: i32, img: &Image) -> RendererResult<()>;
+    fn image(&mut self, x: i32, y: i32, img: &Image) -> Result<()>;
 }
 
-impl fmt::Display for RendererError {
+impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use RendererError::*;
+        use Error::*;
         match self {
             InitError => write!(f, "Renderer initialization error"),
             IoError(err) => err.fmt(f),
@@ -218,25 +201,29 @@ impl fmt::Display for RendererError {
     }
 }
 
-impl error::Error for RendererError {
+impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        None
+        use Error::*;
+        match self {
+            IoError(err) => err.source(),
+            _ => None,
+        }
     }
 }
 
-impl From<RendererError> for PixError {
-    fn from(err: RendererError) -> Self {
+impl From<Error> for common::Error {
+    fn from(err: Error) -> Self {
         Self::RendererError(err)
     }
 }
 
-impl From<RendererError> for PixStateError {
-    fn from(err: RendererError) -> Self {
+impl From<Error> for state::Error {
+    fn from(err: Error) -> Self {
         Self::RendererError(err)
     }
 }
 
-impl From<std::num::TryFromIntError> for RendererError {
+impl From<std::num::TryFromIntError> for Error {
     fn from(err: std::num::TryFromIntError) -> Self {
         Self::Other(Cow::from(err.to_string()))
     }

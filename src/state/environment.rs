@@ -48,6 +48,9 @@ impl PixState {
         self.env.frame_rate
     }
 
+    // TODO
+    // dimensions() -> (u32, u32)
+
     /// The width of the current canvas.
     pub fn width(&self) -> u32 {
         self.renderer.width()

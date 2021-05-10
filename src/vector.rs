@@ -51,6 +51,7 @@
 use crate::{
     math::{constants::*, Scalar},
     random,
+    shape::Point,
 };
 use std::{fmt, ops::*};
 
@@ -110,7 +111,10 @@ impl Vector {
     /// let v2 = Vector::new((2.1, 3.5, 1.0));
     /// assert_eq!(v2.get(), (2.1, 3.5, 1.0));
     /// ```
-    pub fn new<V: Into<Vector>>(v: V) -> Self {
+    pub fn new<V>(v: V) -> Self
+    where
+        V: Into<Vector>,
+    {
         let v = v.into();
         if !Self::valid_coordinates(v.x, v.y, v.z) {
             eprintln!("Vector::new: vector contains components that are either undefined or not finite numbers: {}", v);
@@ -779,6 +783,24 @@ impl From<(f64, f64)> for Vector {
 impl From<(f64, f64, f64)> for Vector {
     fn from((x, y, z): (f64, f64, f64)) -> Self {
         Self::new_3d(x, y, z)
+    }
+}
+
+/// From [`Point`] to [`Vector`].
+impl From<Point> for Vector {
+    fn from(point: Point) -> Self {
+        Self::new_3d(point.x as f64, point.y as f64, point.z as f64)
+    }
+}
+
+/// Into [`Point`] from [`Vector`].
+impl Into<Point> for Vector {
+    fn into(self) -> Point {
+        Point::new_3d(
+            self.x.round() as i32,
+            self.y.round() as i32,
+            self.z.round() as i32,
+        )
     }
 }
 

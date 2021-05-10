@@ -1,7 +1,7 @@
 //! The core `PixEngine` functionality.
 
 use crate::{
-    common::PixResult,
+    common::Result,
     event::{Event, WindowEvent},
     renderer::{Position, Renderer, RendererSettings, Rendering},
     state::{AppState, PixState},
@@ -32,8 +32,11 @@ impl PixEngineBuilder {
     }
 
     /// Set a window title.
-    pub fn with_title(&mut self, title: &str) -> &mut Self {
-        self.settings.title = title.to_owned();
+    pub fn with_title<S>(&mut self, title: S) -> &mut Self
+    where
+        S: AsRef<str>,
+    {
+        self.settings.title = title.as_ref().to_owned();
         self
     }
 
@@ -88,7 +91,7 @@ impl PixEngineBuilder {
     /// Convert the `PixEngineBuilder` to a `PixEngine` instance.
     ///
     /// Returns `Err` if any options provided are invalid.
-    pub fn build(&self) -> PixResult<PixEngine> {
+    pub fn build(&self) -> Result<PixEngine> {
         let renderer = Renderer::init(self.settings.clone())?;
         Ok(PixEngine {
             state: PixState::init(&self.settings.title, renderer),
@@ -120,7 +123,7 @@ impl PixEngine {
     }
 
     /// Starts the `PixEngine` and begins executing the frame loop.
-    pub fn run<A>(&mut self, app: &mut A) -> PixResult<()>
+    pub fn run<A>(&mut self, app: &mut A) -> Result<()>
     where
         A: AppState,
     {
@@ -165,7 +168,7 @@ impl PixEngine {
     }
 
     /// Setup at the start of running the engine.
-    fn start<A>(&mut self, app: &mut A) -> PixResult<()>
+    fn start<A>(&mut self, app: &mut A) -> Result<()>
     where
         A: AppState,
     {
@@ -188,7 +191,9 @@ impl PixEngine {
                 Event::Window { win_event, .. } => match win_event {
                     WindowEvent::FocusGained => self.state.env.focused = true,
                     WindowEvent::FocusLost => self.state.env.focused = false,
-                    WindowEvent::Resized(_, _) => app.on_window_resized(&mut self.state),
+                    WindowEvent::Resized(_, _) | WindowEvent::SizeChanged(_, _) => {
+                        app.on_window_resized(&mut self.state)
+                    }
                     _ => (),
                 },
                 Event::KeyDown {
@@ -210,7 +215,7 @@ impl PixEngine {
                 }
                 Event::MouseMotion { x, y, .. } => {
                     self.state.pmouse_pos = self.state.mouse_pos;
-                    self.state.mouse_pos = (x, y);
+                    self.state.mouse_pos = (x, y).into();
                     if self.state.mouse_down {
                         app.on_mouse_dragged(&mut self.state);
                     }
@@ -234,7 +239,7 @@ impl PixEngine {
     }
 
     /// Updates the average frame rate and the window title if setting is enabled.
-    fn update_frame_rate(&mut self) -> PixResult<()> {
+    fn update_frame_rate(&mut self) -> Result<()> {
         let now = Instant::now();
         self.state.env.delta_time = now - self.last_frame_time;
         self.last_frame_time = now;
@@ -249,7 +254,7 @@ impl PixEngine {
                     self.state.title(),
                     self.state.env.frame_rate
                 );
-                self.state.set_title(&title)?;
+                self.state.renderer.set_title(&title)?;
                 self.frame_timer -= ONE_SECOND;
                 self.frame_counter = 0;
             }

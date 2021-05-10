@@ -1,18 +1,13 @@
-use super::{Position, RendererError, RendererResult, RendererSettings, Rendering};
-use crate::{
-    color::Color,
-    event::{Axis, Button, Event, Keycode, MouseButton, WindowEvent},
-    image::Image,
-    shape::Rect,
-};
+use super::{RendererResult, RendererSettings, Rendering};
+use crate::{color::Color, event::Event, image::Image, shape::Rect};
 
 /// A Web-Assembly [`Renderer`] implementation.
-pub struct WasmRenderer {}
+pub struct Renderer {}
 
-impl Rendering for WasmRenderer {
+impl Rendering for Renderer {
     /// Creates a new `Renderer` instance.
-    fn init(s: RendererSettings) -> RendererResult<Self> {
-        Ok(Self { })
+    fn init(_s: RendererSettings) -> RendererResult<Self> {
+        Ok(Self {})
     }
 
     /// Clears the current canvas to the given clear color.
@@ -21,17 +16,17 @@ impl Rendering for WasmRenderer {
     }
 
     /// Set whether the cursor is shown or not.
-    fn show_cursor(&mut self, show: bool) {
+    fn cursor(&mut self, _show: bool) {
         todo!("show_cursor")
     }
 
     /// Sets the color used by the renderer to draw the current canvas.
-    fn set_draw_color(&mut self, color: Color) {
+    fn draw_color(&mut self, _color: Color) {
         todo!("set_draw_color")
     }
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    fn set_clip_rect(&mut self, rect: Option<Rect>) {
+    fn clip(&mut self, _rect: Option<Rect>) {
         todo!("set_clip_rect")
     }
 
@@ -47,12 +42,15 @@ impl Rendering for WasmRenderer {
 
     /// Get the current window title.
     fn title(&self) -> &str {
-        todo!("title)"
+        todo!("title")
     }
 
     /// Set the current window title.
-    fn set_title(&mut self, title: &str) -> RendererResult<()> {
-        todo!("set_title)"
+    fn set_title<S>(&mut self, _title: S) -> RendererResult<()>
+    where
+        S: AsRef<str>,
+    {
+        todo!("set_title")
     }
 
     /// Width of the current canvas.
@@ -66,45 +64,43 @@ impl Rendering for WasmRenderer {
     }
 
     /// Scale the current canvas.
-    fn set_scale(&mut self, x: f32, y: f32) -> RendererResult<()> {
+    fn scale(&mut self, _x: f32, _y: f32) -> RendererResult<()> {
         todo!("set_scale")
     }
 
     /// Returns whether the application is fullscreen or not.
-    fn fullscreen(&self) -> bool {
+    fn is_fullscreen(&self) -> bool {
         todo!("fullscreen")
     }
 
     /// Set the application to fullscreen or not.
-    fn set_fullscreen(&mut self, val: bool) {
+    fn fullscreen(&mut self, _val: bool) {
         todo!("set_fullscreen")
     }
 
-    /// Create a texture to render to.
-    fn create_texture(&mut self, width: u32, height: u32) -> RendererResult<usize> {
-        todo!("create_texture")
-    }
-
     /// Draw text to the current canvas.
-    fn text(
+    fn text<S>(
         &mut self,
-        text: &str,
+        text: S,
         x: i32,
         y: i32,
         size: u32,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> RendererResult<()> {
+    ) -> RendererResult<()>
+    where
+        S: AsRef<str>,
+    {
         todo!("text")
     }
 
     /// Draw a pixel to the current canvas.
-    fn pixel(&mut self, x: i32, y: i32, stroke: Option<Color>) -> RendererResult<()> {
+    fn point(&mut self, x: i32, y: i32, stroke: Option<Color>) -> RendererResult<()> {
         todo!("pixel")
     }
 
     /// Draw an array of pixels to the current canvas.
-    fn pixels(&mut self, pixels: &[u8], pitch: usize) -> RendererResult<()> {
+    fn points(&mut self, pixels: &[u8], pitch: usize) -> RendererResult<()> {
         todo!("pixels")
     }
 
@@ -168,7 +164,7 @@ impl Rendering for WasmRenderer {
     }
 }
 
-impl std::fmt::Debug for WasmRenderer {
+impl std::fmt::Debug for Renderer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // TODO: Add some fields
         write!(f, "WasmRenderer {{}}")
