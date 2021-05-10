@@ -1,5 +1,7 @@
 //! Shape types and functions for [`Point`], [`Circle`], [`Rectangle`], [`Triangle`]
 
+use std::ops::{Index, IndexMut};
+
 /// A `Point`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Point {
@@ -28,6 +30,29 @@ impl Point {
     /// Create new 3D `Point`.
     pub fn new_3d(x: i32, y: i32, z: i32) -> Self {
         Self { x, y, z }
+    }
+}
+
+impl Index<usize> for Point {
+    type Output = i32;
+    fn index(&self, idx: usize) -> &Self::Output {
+        match idx {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
+            _ => panic!("index out of bounds: the len is 3 but the index is {}", idx),
+        }
+    }
+}
+
+impl IndexMut<usize> for Point {
+    fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
+        match idx {
+            0 => &mut self.x,
+            1 => &mut self.y,
+            2 => &mut self.z,
+            _ => panic!("index out of bounds: the len is 3 but the index is {}", idx),
+        }
     }
 }
 

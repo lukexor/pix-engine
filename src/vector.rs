@@ -556,6 +556,29 @@ impl Vector {
     }
 }
 
+impl Index<usize> for Vector {
+    type Output = f64;
+    fn index(&self, idx: usize) -> &Self::Output {
+        match idx {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
+            _ => panic!("index out of bounds: the len is 3 but the index is {}", idx),
+        }
+    }
+}
+
+impl IndexMut<usize> for Vector {
+    fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
+        match idx {
+            0 => &mut self.x,
+            1 => &mut self.y,
+            2 => &mut self.z,
+            _ => panic!("index out of bounds: the len is 3 but the index is {}", idx),
+        }
+    }
+}
+
 impl Add for Vector {
     type Output = Self;
 

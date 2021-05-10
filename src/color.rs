@@ -149,7 +149,13 @@
 //! ```
 
 use crate::random;
-use std::{convert::TryFrom, error, fmt, str::FromStr};
+use std::{
+    convert::TryFrom,
+    error,
+    fmt::{self, LowerHex, UpperHex},
+    ops::{Index, IndexMut},
+    str::FromStr,
+};
 
 /// # Create an `Rgb` Color.
 ///
@@ -239,6 +245,12 @@ impl Color {
     }
 }
 
+impl Default for Color {
+    fn default() -> Self {
+        Self::Rgb(constants::TRANSPARENT)
+    }
+}
+
 impl FromStr for Color {
     type Err = ColorError;
 
@@ -252,12 +264,6 @@ impl TryFrom<&str> for Color {
 
     fn try_from(s: &str) -> Result<Self, Self::Error> {
         Color::from_str(s)
-    }
-}
-
-impl Default for Color {
-    fn default() -> Self {
-        Self::Rgb(constants::TRANSPARENT)
     }
 }
 
@@ -461,6 +467,43 @@ impl Rgb {
     }
 }
 
+impl Index<usize> for Rgb {
+    type Output = u8;
+    fn index(&self, idx: usize) -> &Self::Output {
+        match idx {
+            0 => &self.r,
+            1 => &self.g,
+            2 => &self.b,
+            3 => &self.a,
+            _ => panic!("index out of bounds: the len is 4 but the index is {}", idx),
+        }
+    }
+}
+
+impl IndexMut<usize> for Rgb {
+    fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
+        match idx {
+            0 => &mut self.r,
+            1 => &mut self.g,
+            2 => &mut self.b,
+            3 => &mut self.a,
+            _ => panic!("index out of bounds: the len is 4 but the index is {}", idx),
+        }
+    }
+}
+
+impl LowerHex for Rgb {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "#{:x}{:x}{:x}{:x}", self.r, self.g, self.b, self.a)
+    }
+}
+
+impl UpperHex for Rgb {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "#{:X}{:X}{:X}{:X}", self.r, self.g, self.b, self.a)
+    }
+}
+
 impl FromStr for Rgb {
     type Err = ColorError;
 
@@ -652,6 +695,31 @@ impl Hsv {
         let a = lerp(self.a, c2.a, amt);
 
         hsv!(h, s, v, a)
+    }
+}
+
+impl Index<usize> for Hsv {
+    type Output = f32;
+    fn index(&self, idx: usize) -> &Self::Output {
+        match idx {
+            0 => &self.h,
+            1 => &self.s,
+            2 => &self.v,
+            3 => &self.a,
+            _ => panic!("index out of bounds: the len is 4 but the index is {}", idx),
+        }
+    }
+}
+
+impl IndexMut<usize> for Hsv {
+    fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
+        match idx {
+            0 => &mut self.h,
+            1 => &mut self.s,
+            2 => &mut self.v,
+            3 => &mut self.a,
+            _ => panic!("index out of bounds: the len is 4 but the index is {}", idx),
+        }
     }
 }
 
