@@ -1,11 +1,22 @@
 //! Math related types, constants and utility functions.
 
+use crate::PixState;
 use num_traits::{Num, NumCast};
 use rand::{self, distributions::uniform::SampleUniform, Rng};
 use std::ops::{AddAssign, Range};
 
 /// Default type for math calculations
 pub type Scalar = f64;
+
+const PERLIN_YWRAPB: usize = 4;
+const PERLIN_YWRAP: usize = 1 << PERLIN_YWRAPB;
+const PERLIN_ZWRAPB: usize = 8;
+const PERLIN_ZWRAP: usize = 1 << PERLIN_ZWRAPB;
+const PERLIN_SIZE: usize = 4095;
+
+fn scaled_cosine(i: f64) -> f64 {
+    0.5 * (1.0 - (i * constants::PI).cos())
+}
 
 /// Returns a random number within a range.
 pub fn random_rng<T, V>(val: V) -> T
@@ -22,7 +33,90 @@ pub fn random<T>(val: T) -> T
 where
     T: Num + SampleUniform + PartialOrd,
 {
-    random_rng(T::zero()..val)
+    if val > T::zero() {
+        random_rng(T::zero()..val)
+    } else {
+        random_rng(val..T::zero())
+    }
+}
+
+/// Returns the Perlin noise value at specified coordinates.
+pub fn noise(s: &mut PixState, x: f64, y: f64, z: f64) -> f64 {
+    if s.perlin.is_none() {
+        let mut perlin = Vec::with_capacity(PERLIN_SIZE + 1);
+        for _ in 0..PERLIN_SIZE + 1 {
+            perlin.push(random(1.0));
+        }
+        s.perlin = Some(perlin);
+    }
+
+    let x = x.abs();
+    let y = y.abs();
+    let z = z.abs();
+
+    let mut xi = x.floor() as usize;
+    let mut yi = y.floor() as usize;
+    let mut zi = z.floor() as usize;
+
+    let mut xf = x - xi as f64;
+    let mut yf = y - yi as f64;
+    let mut zf = z - zi as f64;
+    let (mut rxf, mut ryf);
+
+    let mut r = 0.0;
+    let mut ampl = 0.5;
+
+    let (mut n1, mut n2, mut n3);
+
+    if let Some(ref perlin) = s.perlin {
+        // TODO: Make a state setting
+        let perlin_octaves = 4; // default to medium smooth
+        let perlin_amp_falloff = 0.5; // 50% reduction/octave
+        for _ in 0..perlin_octaves {
+            let mut of = xi + (yi << PERLIN_YWRAPB) + (zi << PERLIN_ZWRAPB);
+
+            rxf = scaled_cosine(xf);
+            ryf = scaled_cosine(yf);
+
+            n1 = perlin[of & PERLIN_SIZE];
+            n1 += rxf * (perlin[(of + 1) & PERLIN_SIZE] - n1);
+            n2 = perlin[(of + PERLIN_YWRAP) & PERLIN_SIZE];
+            n2 += rxf * (perlin[(of + PERLIN_YWRAP + 1) & PERLIN_SIZE] - n2);
+            n1 += ryf * (n2 - n1);
+
+            of += PERLIN_ZWRAP;
+            n2 = perlin[of & PERLIN_SIZE];
+            n2 += rxf * (perlin[(of + 1) & PERLIN_SIZE] - n2);
+            n3 = perlin[(of + PERLIN_YWRAP) & PERLIN_SIZE];
+            n3 += rxf * (perlin[(of + PERLIN_YWRAP + 1) & PERLIN_SIZE] - n3);
+            n2 += ryf * (n3 - n2);
+
+            n1 += scaled_cosine(zf) * (n2 - n1);
+
+            r += n1 * ampl;
+            ampl *= perlin_amp_falloff;
+            xi <<= 1;
+            xf *= 2.0;
+            yi <<= 1;
+            yf *= 2.0;
+            zi <<= 1;
+            zf *= 2.0;
+
+            if xf >= 1.0 {
+                xi += 1;
+                xf -= 1.0;
+            }
+            if yf >= 1.0 {
+                yi += 1;
+                yf -= 1.0;
+            }
+            if zf >= 1.0 {
+                zi += 1;
+                zf -= 1.0;
+            }
+        }
+    }
+    r
 }
 
 /// Returns a random number within a range.
@@ -41,10 +135,37 @@ where
 #[macro_export]
 macro_rules! random {
     ($v:expr) => {
-        $crate::math::random($v);
+        $crate::math::random($v)
     };
-    ($s:expr, $e:expr) => {
-        $crate::math::random_rng($s..$e);
+    ($s:expr, $e:expr) => {{
+        // TODO: move this into a function
+        let s = $s;
+        let e = $e;
+        if s == e {
+            $crate::math::random(s)
+        } else if s > e {
+            $crate::math::random_rng(e..s)
+        } else {
+            $crate::math::random_rng(s..e)
+        }
+    }};
+}
+
+/// Returns the Perlin noise value at specified coordinates.
+///
+/// # Examples
+///
+/// TODO
+#[macro_export]
+macro_rules! noise {
+    ($s:expr, $x:expr) => {
+        $crate::math::noise($s, $x, 0.0, 0.0)
+    };
+    ($s:expr, $x:expr, $y:expr) => {
+        $crate::math::noise($s, $x, $y, 0.0)
+    };
+    ($s:expr, $x:expr, $y:expr, $z:expr) => {
+        $crate::math::noise($s, $x, $y, $z)
     };
 }
 

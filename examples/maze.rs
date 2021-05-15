@@ -131,11 +131,6 @@ impl Maze {
 }
 
 impl AppState for Maze {
-    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.show_frame_rate(true);
-        Ok(())
-    }
-
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         thread::sleep(Duration::from_millis(10));
         if self.visited < self.size {
@@ -177,6 +172,7 @@ impl AppState for Maze {
 pub fn main() {
     let mut engine = PixEngine::create(WIDTH, HEIGHT)
         .with_title(TITLE)
+        .with_frame_rate()
         .scale(SCALE, SCALE)
         .position_centered()
         .build()

@@ -43,6 +43,7 @@ pub trait AppState {
         Ok(())
     }
 
+    // TODO: Make on calls return result
     /// Called each time a key is pressed.
     fn on_key_pressed(&mut self, _s: &mut PixState, _key: Keycode) {}
 
@@ -84,6 +85,7 @@ pub struct PixState {
     pub(crate) mouse_buttons: HashSet<MouseButton>,
     pub(crate) key_down: bool,
     pub(crate) keys: HashSet<Keycode>,
+    pub(crate) perlin: Option<Vec<f64>>,
     // TODO: state_stack for push/pop
 }
 
@@ -104,6 +106,8 @@ impl PixState {
             mouse_buttons: HashSet::new(),
             key_down: false,
             keys: HashSet::new(),
+            // TODO: move to cache object
+            perlin: None,
         }
     }
 

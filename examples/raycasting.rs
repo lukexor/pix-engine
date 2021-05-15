@@ -294,7 +294,6 @@ impl AppState for RayScene {
         s.background(BLACK);
         s.scale(SCALE as f32, SCALE as f32)?;
         s.cursor(false);
-        s.show_frame_rate(true);
 
         let w = (self.xcells * BLOCK_SIZE) as i32 - 1;
         let h = (self.ycells * BLOCK_SIZE) as i32 - 1;
@@ -314,6 +313,7 @@ impl AppState for RayScene {
         self.convert_edges_to_poly_map();
 
         self.light = Image::load("static/light.png")?;
+        s.blend_mode(BlendMode::Mod);
 
         Ok(())
     }
@@ -401,6 +401,7 @@ impl Cell {
 fn main() {
     let mut engine = PixEngine::create(WIDTH, HEIGHT)
         .with_title(TITLE)
+        .with_frame_rate()
         .position_centered()
         .icon("static/light.png")
         .resizable()

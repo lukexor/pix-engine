@@ -1,6 +1,6 @@
 //! SDL Renderer implementation
 
-use super::{Error, Position, RendererSettings, Rendering, Result};
+use super::{state::settings::BlendMode, Error, Position, RendererSettings, Rendering, Result};
 use crate::{
     color::Color,
     event::{Axis, Button, Event, Keycode, MouseButton, WindowEvent},
@@ -27,6 +27,7 @@ type SdlWindowEvent = sdl2::event::WindowEvent;
 type SdlEvent = sdl2::event::Event;
 type SdlColor = sdl2::pixels::Color;
 type SdlRect = sdl2::rect::Rect;
+type SdlBlendMode = sdl2::render::BlendMode;
 
 /// An SDL [`Renderer`] implementation.
 pub struct Renderer {
@@ -35,6 +36,7 @@ pub struct Renderer {
     event_pump: EventPump,
     canvas: Canvas<Window>,
     texture_creator: TextureCreator<WindowContext>,
+    blend_mode: SdlBlendMode,
 }
 
 impl Rendering for Renderer {
@@ -90,6 +92,7 @@ impl Rendering for Renderer {
             event_pump,
             canvas,
             texture_creator,
+            blend_mode: SdlBlendMode::None,
         })
     }
 
@@ -112,6 +115,11 @@ impl Rendering for Renderer {
     fn clip(&mut self, rect: Option<Rect>) {
         let rect = rect.map(|rect| rect.into());
         self.canvas.set_clip_rect(rect);
+    }
+
+    /// Sets the blend mode used by the renderer to draw textures.
+    fn blend_mode(&mut self, mode: BlendMode) {
+        self.blend_mode = mode.into();
     }
 
     /// Returns a single event or None if the event pump is empty.
@@ -327,7 +335,7 @@ impl Rendering for Renderer {
             img.height(),
         )?;
         texture.update(None, img.bytes(), 3 * img.width() as usize)?;
-        texture.set_blend_mode(sdl2::render::BlendMode::Mod);
+        texture.set_blend_mode(self.blend_mode);
         let dst = SdlRect::new(x, y, img.width(), img.height());
         self.canvas.copy(&texture, None, dst)?;
         Ok(())
@@ -699,6 +707,18 @@ impl From<Color> for SdlColor {
 impl From<Rect> for SdlRect {
     fn from(rect: Rect) -> Self {
         Self::new(rect.x, rect.y, rect.w, rect.h)
+    }
+}
+
+impl From<BlendMode> for SdlBlendMode {
+    fn from(mode: BlendMode) -> Self {
+        use BlendMode::*;
+        match mode {
+            None => SdlBlendMode::None,
+            Blend => SdlBlendMode::Blend,
+            Add => SdlBlendMode::Add,
+            Mod => SdlBlendMode::Mod,
+        }
     }
 }
 

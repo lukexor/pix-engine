@@ -3,11 +3,48 @@
 use super::PixState;
 use crate::{
     color::{constants::*, Color},
-    draw::DrawMode,
     renderer::{self, Rendering},
     shape::Rect,
 };
 use std::path::Path;
+
+/// Drawing mode which changes how (x, y) coordinates are interpreted.
+#[non_exhaustive]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum DrawMode {
+    /// Use (x, y) as the top-left corner. Default.
+    Corner,
+    /// Use (x, y) as the center.
+    Center,
+}
+
+/// Drawing mode which changes how arcs are drawn.
+#[non_exhaustive]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum ArcMode {
+    /// Draws arc with fill as an open pie segment.
+    None,
+    /// Draws arc with fill as an closed pie segment.
+    Pie,
+    /// Draws arc with fill as an open semi-circle.
+    Open,
+    /// Draws arc with fill as a closed semi-circle.
+    Chord,
+}
+
+/// Drawing mode which changes how textures are blended together.
+#[non_exhaustive]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum BlendMode {
+    /// Disable blending
+    None,
+    /// Alpha blending
+    Blend,
+    /// Additive blending
+    Add,
+    /// Color modulate
+    Mod,
+}
 
 /// Several settings used to change various functionality of the engine.
 #[derive(Debug, Clone)]
@@ -20,6 +57,7 @@ pub(crate) struct Settings {
     pub(crate) show_frame_rate: bool,
     pub(crate) rect_mode: DrawMode,
     pub(crate) ellipse_mode: DrawMode,
+    pub(crate) blend_mode: BlendMode,
     // TODO: arc_mode: default ArcMode::Pie
     // TODO: stroke_weight: u32, default 1
     // TODO: stroke_cap: StrokeCap, Default StrokeCap::Round
@@ -31,7 +69,6 @@ pub(crate) struct Settings {
     // TODO: text_align_vert: TextAlignVert, TextAlignVert::Top
     // TODO: text_style: TextStyle, Default TextStyle::Normal
     // TODO: text_font: Font, Default emulogic - Add attribution
-    // TODO: blend_mode: Option<BlendMode, Default BlendMode::None
     // TODO: blend_factor: f32, Default 1.0
     // TODO: transformation: Option<Transform>, Default None
 }
@@ -52,6 +89,7 @@ impl Default for Settings {
             show_frame_rate: false,
             rect_mode: DrawMode::Corner,
             ellipse_mode: DrawMode::Corner,
+            blend_mode: BlendMode::None,
         }
     }
 }
@@ -160,6 +198,12 @@ impl PixState {
     /// Change the way parameters are interpreted for drawing circles and ellipses.
     pub fn ellipse_mode(&mut self, mode: DrawMode) {
         self.settings.ellipse_mode = mode;
+    }
+
+    /// Change the way textures are blended together.
+    pub fn blend_mode(&mut self, mode: BlendMode) {
+        self.settings.blend_mode = mode;
+        self.renderer.blend_mode(mode);
     }
 
     /// Saves the current draw settings and transforms.

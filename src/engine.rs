@@ -40,6 +40,12 @@ impl PixEngineBuilder {
         self
     }
 
+    /// Enables frame rate in title.
+    pub fn with_frame_rate(&mut self) -> &mut Self {
+        self.settings.show_frame_rate = true;
+        self
+    }
+
     /// Position the window at the given (x, y) coordinates of the display.
     pub fn position(&mut self, x: i32, y: i32) -> &mut Self {
         self.settings.x = Position::Positioned(x);
@@ -93,8 +99,10 @@ impl PixEngineBuilder {
     /// Returns `Err` if any options provided are invalid.
     pub fn build(&self) -> Result<PixEngine> {
         let renderer = Renderer::init(self.settings.clone())?;
+        let mut state = PixState::init(&self.settings.title, renderer);
+        state.show_frame_rate(self.settings.show_frame_rate);
         Ok(PixEngine {
-            state: PixState::init(&self.settings.title, renderer),
+            state,
             last_frame_time: Instant::now(),
             frame_timer: Duration::from_secs(1),
             frame_counter: 0,

@@ -13,8 +13,7 @@ impl App {
 }
 
 impl AppState for App {
-    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.show_frame_rate(true);
+    fn on_start(&mut self, _s: &mut PixState) -> PixResult<()> {
         Ok(())
     }
 
@@ -30,6 +29,7 @@ impl AppState for App {
 pub fn main() {
     let mut engine = PixEngine::create(WIDTH, HEIGHT)
         .with_title(TITLE)
+        .with_frame_rate()
         .position_centered()
         .build()
         .expect("valid engine");

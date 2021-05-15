@@ -1,6 +1,13 @@
 //! Generic graphics renderer interfaces
 
-use crate::{color::Color, common, event::Event, image::Image, shape::Rect, state};
+use crate::{
+    color::Color,
+    common,
+    event::Event,
+    image::Image,
+    shape::Rect,
+    state::{self, settings::BlendMode},
+};
 use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
 
 #[cfg_attr(feature = "sdl2", path = "renderer/sdl.rs")]
@@ -54,11 +61,12 @@ pub(crate) struct RendererSettings {
     pub(crate) y: Position,
     pub(crate) width: u32,
     pub(crate) height: u32,
+    pub(crate) scale_x: f32,
+    pub(crate) scale_y: f32,
     pub(crate) fullscreen: bool,
     pub(crate) vsync: bool,
     pub(crate) resizable: bool,
-    pub(crate) scale_x: f32,
-    pub(crate) scale_y: f32,
+    pub(crate) show_frame_rate: bool,
 }
 
 impl Default for RendererSettings {
@@ -70,11 +78,12 @@ impl Default for RendererSettings {
             y: Position::default(),
             width: 400,
             height: 400,
+            scale_x: 1.0,
+            scale_y: 1.0,
             fullscreen: false,
             vsync: false,
             resizable: false,
-            scale_x: 1.0,
-            scale_y: 1.0,
+            show_frame_rate: false,
         }
     }
 }
@@ -95,6 +104,9 @@ pub(crate) trait Rendering: Sized {
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
     fn clip(&mut self, rect: Option<Rect>);
+
+    /// Sets the blend mode used by the renderer to draw textures.
+    fn blend_mode(&mut self, mode: BlendMode);
 
     /// Returns a single event or None if the event pump is empty.
     fn poll_event(&mut self) -> Option<Event>;

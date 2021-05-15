@@ -5,7 +5,6 @@
     missing_docs,
     nonstandard_style,
     rust_2018_idioms,
-    rustdoc,
     trivial_casts,
     trivial_numeric_casts,
     unused,
@@ -61,13 +60,15 @@ pub mod prelude {
     use super::*;
     pub use color::{constants::*, Color, Hsv, Rgb};
     pub use common::{Error as PixError, Result as PixResult};
-    pub use draw::DrawMode::*;
     pub use engine::PixEngine;
     pub use event::*;
     pub use image::Image;
     pub use math::{constants::*, map, Scalar};
     pub use shape::*;
-    pub use state::{AppState, PixState};
+    pub use state::{
+        settings::{ArcMode, BlendMode, DrawMode},
+        AppState, PixState,
+    };
     pub use vector::Vector;
     pub use {hsv, random, rgb, vector};
 }

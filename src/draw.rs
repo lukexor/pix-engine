@@ -4,39 +4,13 @@ use crate::{
     image::Image,
     renderer::{self, Rendering},
     shape::{Line, Point, Triangle},
-    state::PixState,
+    state::{settings::DrawMode, PixState},
 };
-
-/// Drawing mode which changes how (x, y) coordinates are interpreted.
-#[non_exhaustive]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub enum DrawMode {
-    /// Use (x, y) as the top-left corner. Default.
-    Corner,
-    /// Use (x, y) as the center.
-    Center,
-}
-
-/// Drawing mode which changes how arcs are drawn.
-#[non_exhaustive]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub enum ArcMode {
-    /// Draws arc with fill as an open pie segment.
-    None,
-    /// Draws arc with fill as an closed pie segment.
-    Pie,
-    /// Draws arc with fill as an open semi-circle.
-    Open,
-    /// Draws arc with fill as a closed semi-circle.
-    Chord,
-}
 
 // TODO: StrokeCap { Round, Square, PRoject }
 // TODO: StrokeJoin { Miter, Bevel, Round }
 // TODO: AngleMode { Radians, Degrees }
-// TODO: BlendMode { Blend, Add, Replace, .. }
 //   Blend: A * factor + B
-//   DARKEST, LIGHTEST, DIFFERENCE, EXCLUSION, MULTIPLY, SCREEN, REMOVE, OVERLAY, HARD_LIGHT, SOFT_LIGHT, DODGE, BURN, SUBTRACT
 
 impl PixState {
     // TODO:

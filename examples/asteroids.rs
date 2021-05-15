@@ -157,8 +157,6 @@ impl Asteroids {
 
 impl AppState for Asteroids {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.show_frame_rate(true);
-
         self.ship_model = vec![(0.0, -5.0), (-2.5, 2.5), (2.5, 2.5)];
         for i in 0..20 {
             let noise = random!(0.8, 1.2);
@@ -359,6 +357,7 @@ impl AppState for Asteroids {
 pub fn main() {
     let mut engine = PixEngine::create(WIDTH, HEIGHT)
         .with_title(TITLE)
+        .with_frame_rate()
         .position_centered()
         .build()
         .expect("valid engine");
