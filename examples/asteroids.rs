@@ -23,80 +23,42 @@ struct Asteroids {
     asteroid_model: Vec<(f64, f64)>,
     paused: bool,
     gameover: bool,
+    origin: Vector,
+    max_pos: Vector,
 }
 
 #[derive(Default)]
 struct SpaceObj {
     size: u32,
-    x: f64,
-    y: f64,
-    dx: f64,
-    dy: f64,
+    pos: Vector,
+    vel: Vector,
     angle: f64,
     destroyed: bool,
 }
 
 impl SpaceObj {
-    fn new(size: u32, x: f64, y: f64, dx: f64, dy: f64, angle: f64) -> Self {
+    fn new<V>(size: u32, pos: V, vel: V, angle: f64) -> Self
+    where
+        V: Into<Vector>,
+    {
         Self {
             size,
-            x,
-            y,
-            dx,
-            dy,
+            pos: pos.into(),
+            vel: vel.into(),
             angle,
             destroyed: false,
         }
     }
     fn rand_asteroid(ship: &SpaceObj, s: &PixState) -> Self {
-        let mut x = random!(s.width() as f64);
-        if x > (ship.x - ASTEROID_SAFE_RADIUS) && x < (ship.x + ASTEROID_SAFE_RADIUS) {
-            let diff = ASTEROID_SAFE_RADIUS - (ship.x - x).abs();
-            if ship.x > x {
-                x -= diff;
-            } else {
-                x += diff;
-            }
-        }
-        let mut y = random!(s.height() as f64);
-        if y > (ship.y - ASTEROID_SAFE_RADIUS) && y < (ship.y + ASTEROID_SAFE_RADIUS) {
-            let diff = ASTEROID_SAFE_RADIUS - (ship.y - y).abs();
-            if ship.y > y {
-                y -= diff;
-            } else {
-                y += diff;
-            }
+        let (ship_x, ship_y) = ship.pos.into();
+        let mut pos = vector!(random!(s.width()), random!(s.height()));
+        if circle!(ship_x, ship_y, ASTEROID_SAFE_RADIUS).contains(pos) {
+            pos -= ship.pos
         }
 
-        Self {
-            size: ASTEROID_SIZE,
-            x,
-            y,
-            dx: random!(-0.5, 0.5) * 2.0 * MAX_ASTEROID_SPEED,
-            dy: random!(-0.5, 0.5) * 2.0 * MAX_ASTEROID_SPEED,
-            angle: random!(360.0),
-            destroyed: false,
-        }
-    }
-
-    fn wrap_coords(s: &PixState, x: f64, y: f64) -> (f64, f64) {
-        let width = s.width() as f64;
-        let height = s.height() as f64;
-        let ox = if x < 0.0 {
-            x + width
-        } else if x >= width {
-            x - width
-        } else {
-            x
-        };
-        let oy = if y < 0.0 {
-            y + height
-        } else if y >= height {
-            y - height
-        } else {
-            y
-        };
-        (ox, oy)
+        let vel = vector!(random!(-MAX_ASTEROID_SPEED, MAX_ASTEROID_SPEED));
+        let angle = random!(360.0);
+        Self::new(ASTEROID_SIZE, pos, vel, angle)
     }
 }
 
@@ -113,14 +75,14 @@ impl Asteroids {
             asteroid_model: Vec::new(),
             paused: false,
             gameover: false,
+            origin: vector!(),
+            max_pos: vector!(),
         }
     }
 
     fn spawn_new_ship(&mut self, s: &PixState) {
-        self.ship.x = (s.width() / 2) as f64;
-        self.ship.y = (s.height() / 2) as f64;
-        self.ship.dx = 0.0;
-        self.ship.dy = 0.0;
+        self.ship.pos = vector!(s.width() / 2, s.height() / 2);
+        self.ship.vel.set_mag(0.0);
         self.ship.angle = 0.0;
 
         let asteroid_count = if !self.asteroids.is_empty() {
@@ -157,7 +119,8 @@ impl Asteroids {
 
 impl AppState for Asteroids {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        self.ship_model = vec![(0.0, -5.0), (-2.5, 2.5), (2.5, 2.5)];
+        self.max_pos = (s.width(), s.height()).into();
+        self.ship_model = vec![(5.0, 0.0), (-2.5, -2.5), (-2.5, 2.5)];
         for i in 0..20 {
             let noise = random!(0.8, 1.2);
             let a = (i as f64 / 20.0) * 2.0 * PI;
@@ -181,9 +144,9 @@ impl AppState for Asteroids {
             let y = height / 2 - 24;
             s.fill(WHITE);
             s.text_size(32);
-            s.text(x, y, "GAME OVER")?;
+            s.text((x, y), "GAME OVER")?;
             s.text_size(16);
-            s.text(x - 100, y + 24, "PRESS SPACE TO RESTART")?;
+            s.text((x - 100, y + 24), "PRESS SPACE TO RESTART")?;
             return Ok(());
         }
 
@@ -197,68 +160,49 @@ impl AppState for Asteroids {
         }
         // Thrust
         if s.key_pressed(Keycode::Up) {
-            self.ship.dx += self.ship.angle.sin() * SHIP_THRUST * elapsed;
-            self.ship.dy += -self.ship.angle.cos() * SHIP_THRUST * elapsed;
+            self.ship.vel += Vector::from_angle(self.ship.angle, SHIP_THRUST * elapsed);
         }
 
         // Draw Level, Lives, & Score
         s.text_size(16);
         s.fill(WHITE);
         s.text(
-            4,
-            4,
+            (4, 4),
             &format!("LEVEL: {}  SCORE: {}", self.level, self.score),
         )?;
 
         s.stroke(WHITE);
         for i in 0..self.lives {
-            s.wireframe(&self.ship_model, 12 + (i as i32 * 14), 36, 0.0, 2.0)?;
+            s.wireframe(&self.ship_model, (12 + (i * 14), 36), -HALF_PI, 2.0)?;
         }
 
-        self.ship.x += self.ship.dx * elapsed;
-        self.ship.y += self.ship.dy * elapsed;
-
-        // Keep ship in game space
-        let ship_pos = SpaceObj::wrap_coords(s, self.ship.x, self.ship.y);
-        self.ship.x = ship_pos.0;
-        self.ship.y = ship_pos.1;
+        self.ship.pos += self.ship.vel * elapsed;
+        self.ship.pos.wrap_2d(s.width() as f64, s.height() as f64);
 
         // Draw asteroids
         for a in self.asteroids.iter_mut() {
             // Ship collision
-            if Circle::new(a.x as i32, a.y as i32, a.size)
-                .contains(self.ship.x as i32, self.ship.y as i32)
-            {
+            if circle!(a.pos.x, a.pos.y, a.size).contains(self.ship.pos) {
                 self.exploded(s);
                 return Ok(());
             }
 
-            a.x += a.dx * elapsed;
-            a.y += a.dy * elapsed;
+            a.pos += a.vel * elapsed;
+            a.pos.wrap_2d(s.width() as f64, s.height() as f64);
             a.angle += 0.5 * elapsed; // Give some twirl
-            let a_pos = SpaceObj::wrap_coords(s, a.x, a.y);
-            a.x = a_pos.0;
-            a.y = a_pos.1;
             s.stroke(YELLOW);
-            s.wireframe(
-                &self.asteroid_model,
-                a.x as i32,
-                a.y as i32,
-                a.angle,
-                a.size as f64,
-            )?;
+            s.wireframe(&self.asteroid_model, a.pos, a.angle, a.size as f64)?;
         }
 
         let mut new_asteroids = Vec::new();
 
         // Update bullet and check collisions
         for b in self.bullets.iter_mut() {
-            b.x += b.dx * elapsed;
-            b.y += b.dy * elapsed;
+            b.pos += b.vel * elapsed;
             b.angle -= 1.0 * elapsed;
 
             for a in self.asteroids.iter_mut() {
-                if Circle::new(a.x as i32, a.y as i32, a.size).contains(b.x as i32, b.y as i32) {
+                if circle!(a.pos.x, a.pos.y, a.size).contains(b.pos) {
                     // Asteroid hit
                     b.destroyed = true; // Removes bullet
 
@@ -268,18 +212,14 @@ impl AppState for Asteroids {
                         let a2 = random!(TWO_PI);
                         new_asteroids.push(SpaceObj::new(
                             a.size >> 1,
-                            a.x,
-                            a.y,
-                            SHATTERED_ASTEROID_SPEED * a1.sin(),
-                            SHATTERED_ASTEROID_SPEED * a1.cos(),
+                            a.pos,
+                            Vector::from_angle(a1, SHATTERED_ASTEROID_SPEED),
                             0.0,
                         ));
                         new_asteroids.push(SpaceObj::new(
                             a.size >> 1,
-                            a.x,
-                            a.y,
-                            SHATTERED_ASTEROID_SPEED * a2.sin(),
-                            SHATTERED_ASTEROID_SPEED * a2.cos(),
+                            a.pos,
+                            Vector::from_angle(a2, SHATTERED_ASTEROID_SPEED),
                             0.0,
                         ));
                     }
@@ -291,9 +231,10 @@ impl AppState for Asteroids {
         self.asteroids.append(&mut new_asteroids);
 
         // Remove offscreen/destroyed bullets
-        self.bullets.retain(|b| {
-            !b.destroyed && b.x >= 1.0 && b.x < width as f64 && b.y >= 1.0 && b.y < height as f64
-        });
+        let origin = self.origin;
+        let max_pos = self.max_pos;
+        self.bullets
+            .retain(|b| !b.destroyed && b.pos >= origin && b.pos < max_pos);
         // Remove destroyed asteroids
         self.asteroids.retain(|a| !a.destroyed);
 
@@ -301,17 +242,11 @@ impl AppState for Asteroids {
         s.fill(WHITE);
         s.stroke(WHITE);
         for b in self.bullets.iter() {
-            s.circle(b.x as i32, b.y as i32, 1)?;
+            s.circle((b.pos, 1))?;
         }
 
         // Draw ship
-        s.wireframe(
-            &self.ship_model,
-            self.ship.x as i32,
-            self.ship.y as i32,
-            self.ship.angle,
-            SHIP_SCALE,
-        )?;
+        s.wireframe(&self.ship_model, self.ship.pos, self.ship.angle, SHIP_SCALE)?;
 
         // Win level
         if self.asteroids.is_empty() {
@@ -342,10 +277,8 @@ impl AppState for Asteroids {
             Keycode::Space if !self.gameover => {
                 self.bullets.push(SpaceObj::new(
                     0,
-                    self.ship.x,
-                    self.ship.y,
-                    BULLET_SPEED * self.ship.angle.sin(),
-                    BULLET_SPEED * -self.ship.angle.cos(),
+                    self.ship.pos,
+                    Vector::from_angle(self.ship.angle, BULLET_SPEED),
                     0.0,
                 ));
             }

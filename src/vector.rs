@@ -18,6 +18,9 @@
 //! ```
 //! use pix_engine::prelude::*;
 //!
+//! let v = vector!(); // New Vector placed at the origin (0.0, 0.0)
+//! assert_eq!(v.values(), [0.0, 0.0, 0.0]);
+//!
 //! let v = vector!(5); // Vector parallel with the X-axis, magnitude of 5
 //! assert_eq!(v.values(), [5.0, 0.0, 0.0]);
 //!
@@ -76,7 +79,7 @@ pub struct Vector {
     pub z: Scalar,
 }
 
-/// # Create an `Vector`.
+/// # Create an [`Vector`].
 ///
 /// ```
 /// use pix_engine::prelude::*;
@@ -86,6 +89,9 @@ pub struct Vector {
 /// ```
 #[macro_export]
 macro_rules! vector {
+    () => {
+        vector!(0.0, 0.0, 0.0)
+    };
     ($x:expr) => {
         vector!($x, 0.0, 0.0)
     };
@@ -201,6 +207,10 @@ impl Vector {
     ///
     /// let v = Vector::random_2d();
     ///
+    /// assert!(v.x > -1.0 && v.x < 1.0);
+    /// assert!(v.y > -1.0 && v.y < 1.0);
+    /// assert_eq!(v.z, 0.0);
+    ///
     /// // May make v's (x, y, z) values something like:
     /// // (0.61554617, -0.51195765, 0.0) or
     /// // (-0.4695841, -0.14366731, 0.0) or
@@ -218,6 +228,10 @@ impl Vector {
     /// # use pix_engine::prelude::*;
     ///
     /// let v = Vector::random_3d();
+    ///
+    /// assert!(v.x > -1.0 && v.x < 1.0);
+    /// assert!(v.y > -1.0 && v.y < 1.0);
+    /// assert!(v.z > -1.0 && v.z < 1.0);
     ///
     /// // May make v's (x, y, z) values something like:
     /// // (0.61554617, -0.51195765, 0.599168) or
@@ -497,6 +511,21 @@ impl Vector {
         *self -= normal * 2.0 * self.dot(normal);
     }
 
+    /// Wraps vector around given values
+    /// TODO: provide examples
+    pub fn wrap_2d(&mut self, width: f64, height: f64) {
+        if self.x > width {
+            self.x = 0.0;
+        } else if self.x < 0.0 {
+            self.x = width;
+        }
+        if self.y > height {
+            self.y = 0.0;
+        } else if self.y < 0.0 {
+            self.y = height;
+        }
+    }
+
     /// Linear interpolate the current vector to another vector.
     ///
     /// # Example
@@ -524,7 +553,7 @@ impl Vector {
     /// ```
     /// # use pix_engine::prelude::*;
     ///
-    /// let mut v = vector!(1, 1, 0);
+    /// let v = vector!(1, 1, 0);
     /// assert_eq!(v.to_vec(), vec![1.0, 1.0, 0.0]);
     /// ```
     pub fn to_vec(&self) -> Vec<Scalar> {
@@ -538,7 +567,7 @@ impl Vector {
     /// ```
     /// # use pix_engine::prelude::*;
     ///
-    /// let mut v = vector!(1, 1, 0);
+    /// let v = vector!(1, 1, 0);
     /// assert_eq!(v.values(), [1.0, 1.0, 0.0]);
     /// ```
     pub fn values(&self) -> [Scalar; 3] {
@@ -624,11 +653,10 @@ impl Mul<Scalar> for Vector {
 
     fn mul(self, s: Scalar) -> Self::Output {
         if s.is_infinite() || s.is_nan() {
-            eprintln!(
+            panic!(
                 "Vector::mul: scaler is either undefined or not finite: {}",
                 s
             );
-            self
         } else {
             Vector::new_3d(self.x * s, self.y * s, self.z * s)
         }
@@ -640,11 +668,10 @@ impl Mul<Vector> for Scalar {
 
     fn mul(self, v: Vector) -> Self::Output {
         if self.is_infinite() || self.is_nan() {
-            eprintln!(
+            panic!(
                 "Vector::mul: scaler is either undefined or not finite: {}",
                 self
             );
-            v
         } else {
             Vector::new_3d(self * v.x, self * v.x, self * v.z)
         }
@@ -654,7 +681,7 @@ impl Mul<Vector> for Scalar {
 impl MulAssign<Scalar> for Vector {
     fn mul_assign(&mut self, s: Scalar) {
         if s.is_infinite() || s.is_nan() {
-            eprintln!(
+            panic!(
                 "Vector::mul_assign: scaler is either undefined or not finite: {}",
                 s
             );
@@ -671,11 +698,10 @@ impl Div<Scalar> for Vector {
 
     fn div(self, s: Scalar) -> Self::Output {
         if s == 0.0 || s.is_infinite() || s.is_nan() {
-            eprintln!(
+            panic!(
                 "Vector::div: scaler is either zero, undefined or not finite: {}",
                 s
             );
-            self
         } else {
             Vector::new_3d(self.x / s, self.y / s, self.z / s)
         }
@@ -687,11 +713,10 @@ impl Div<Vector> for Scalar {
 
     fn div(self, v: Vector) -> Self::Output {
         if self.is_infinite() || self.is_nan() {
-            eprintln!(
+            panic!(
                 "Vector::div: scaler is either undefined or not finite: {}",
                 self
             );
-            v
         } else {
             Vector::new_3d(self / v.x, self / v.x, self / v.z)
         }
@@ -701,7 +726,7 @@ impl Div<Vector> for Scalar {
 impl DivAssign<Scalar> for Vector {
     fn div_assign(&mut self, s: Scalar) {
         if s == 0.0 || s.is_infinite() || s.is_nan() {
-            eprintln!(
+            panic!(
                 "Vector::div_assign: scaler is either zero, undefined or not finite: {}",
                 s
             );

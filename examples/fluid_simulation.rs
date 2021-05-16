@@ -238,8 +238,7 @@ impl Fluid {
                 let f = m * d;
                 if f > 15.0 {
                     s.fill(rgb!(f.floor() as u8, (f / 3.0).floor() as u8, 0, 220));
-                    // s.image(x, y, &self.flame)?;
-                    s.square(x, y, SCALE)?;
+                    s.square((x, y, SCALE))?;
                 }
             }
         }
@@ -260,23 +259,21 @@ impl Fluid {
 }
 
 struct App {
-    pub w: u32,
-    pub h: u32,
-    pub fluid: Fluid,
-    pub t: f64,
-    pub xs: [f64; COUNT],
-    pub ys: [f64; COUNT],
+    fluid: Fluid,
+    t: f64,
+    xs: [f64; COUNT],
+    ys: [f64; COUNT],
+    base: Rect,
 }
 
 impl App {
     fn new() -> Self {
         Self {
-            w: N as u32,
-            h: N as u32,
             fluid: Fluid::new(),
             t: 0.0,
             xs: [0.0; COUNT],
             ys: [0.0; COUNT],
+            base: rect!(0, HEIGHT as i32 - 10, WIDTH * SCALE, 20),
         }
     }
 
@@ -321,7 +318,7 @@ impl AppState for App {
 
         for i in 0..COUNT {
             self.xs[i] = (i * SPACING) as f64;
-            self.ys[i] = self.h as f64;
+            self.ys[i] = N as f64;
         }
 
         Ok(())
@@ -337,7 +334,7 @@ impl AppState for App {
         self.t += TIME_INC;
         self.fluid.on_update(s)?;
         s.fill(DARK_SLATE_GRAY);
-        s.rect(0, HEIGHT as i32 - 10, WIDTH * SCALE, 20)?;
+        s.rect(self.base)?;
         Ok(())
     }
 
@@ -351,6 +348,7 @@ pub fn main() {
         .with_title(TITLE)
         .with_frame_rate()
         .position_centered()
+        .vsync_enabled()
         .build()
         .expect("valid engine");
 

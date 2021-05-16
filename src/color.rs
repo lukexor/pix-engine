@@ -267,9 +267,57 @@ impl TryFrom<&str> for Color {
     }
 }
 
+impl From<u8> for Color {
+    fn from(gray: u8) -> Self {
+        Color::Rgb(rgb!(gray))
+    }
+}
+
+impl From<(u8, u8)> for Color {
+    fn from((gray, a): (u8, u8)) -> Self {
+        Color::Rgb(rgb!(gray, a))
+    }
+}
+
+impl From<(u8, u8, u8)> for Color {
+    fn from((r, g, b): (u8, u8, u8)) -> Self {
+        Color::Rgb(rgb!(r, g, b))
+    }
+}
+
+impl From<(u8, u8, u8, u8)> for Color {
+    fn from((r, g, b, a): (u8, u8, u8, u8)) -> Self {
+        Color::Rgb(rgb!(r, g, b, a))
+    }
+}
+
 impl From<Rgb> for Color {
     fn from(rgb: Rgb) -> Self {
         Color::Rgb(rgb)
+    }
+}
+
+impl From<f32> for Color {
+    fn from(gray: f32) -> Self {
+        Color::Hsv(hsv!(gray))
+    }
+}
+
+impl From<(f32, f32)> for Color {
+    fn from((gray, a): (f32, f32)) -> Self {
+        Color::Hsv(hsv!(gray, a))
+    }
+}
+
+impl From<(f32, f32, f32)> for Color {
+    fn from((h, s, v): (f32, f32, f32)) -> Self {
+        Color::Hsv(hsv!(h, s, v))
+    }
+}
+
+impl From<(f32, f32, f32, f32)> for Color {
+    fn from((h, s, v, a): (f32, f32, f32, f32)) -> Self {
+        Color::Hsv(hsv!(h, s, v, a))
     }
 }
 

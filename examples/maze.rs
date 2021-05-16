@@ -5,8 +5,8 @@ use pix_engine::prelude::*;
 const TITLE: &str = "Maze";
 const WIDTH: u32 = 300;
 const HEIGHT: u32 = 240;
-const SIZE: i32 = 3;
-const SCALE: f32 = 4.0;
+const SIZE: i32 = 4;
+const SCALE: f32 = 3.0;
 
 const PATH_N: i32 = 0x01;
 const PATH_E: i32 = 0x02;
@@ -151,19 +151,19 @@ impl AppState for Maze {
                 } else {
                     s.fill(BLUE);
                 }
-                s.square(x * (SIZE + 1), y * (SIZE + 1), SIZE as u32)?;
+                s.square((x * (SIZE + 1), y * (SIZE + 1), SIZE as u32))?;
                 if cell & PATH_S > 0 {
-                    s.rect(x * (SIZE + 1), y * (SIZE + 1) + SIZE, SIZE as u32, 1)?;
+                    s.rect((x * (SIZE + 1), y * (SIZE + 1) + SIZE, SIZE as u32, 1))?;
                 }
                 if cell & PATH_E > 0 {
-                    s.rect(x * (SIZE + 1) + SIZE, y * (SIZE + 1), 1, SIZE as u32)?;
+                    s.rect((x * (SIZE + 1) + SIZE, y * (SIZE + 1), 1, SIZE as u32))?;
                 }
             }
         }
 
         if let Some(top) = self.stack.last() {
             s.fill(GREEN);
-            s.square(top.0 * (SIZE + 1), top.1 * (SIZE + 1), SIZE as u32)?;
+            s.square((top.0 * (SIZE + 1), top.1 * (SIZE + 1), SIZE as u32))?;
         }
         Ok(())
     }
@@ -175,6 +175,7 @@ pub fn main() {
         .with_frame_rate()
         .scale(SCALE, SCALE)
         .position_centered()
+        .vsync_enabled()
         .build()
         .expect("valid engine");
 

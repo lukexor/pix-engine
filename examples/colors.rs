@@ -21,16 +21,15 @@ impl Colors {
                 let s = map((SIZE * x) as f32, 0.0, WIDTH as f32, 0.0, 1.0);
                 let v = map((SIZE * y) as f32, 0.0, HEIGHT as f32, 0.0, 1.0);
                 state.fill(hsv!(self.h, s, v));
-                state.rect((SIZE * x) as i32, (SIZE * y) as i32, SIZE, SIZE)?;
+                state.rect(((SIZE * x) as i32, (SIZE * y) as i32, SIZE, SIZE))?;
             }
         }
         state.fill(WHITE);
         state.text(
-            20,
-            100,
+            (20, 100),
             &format!("Press arrow keys to change Hue: {}", self.h),
         )?;
-        state.text(20, 132, "Press Escape to return to demo mode.")?;
+        state.text((20, 132), "Press Escape to return to demo mode.")?;
         Ok(())
     }
 
@@ -69,6 +68,7 @@ pub fn main() {
         .with_title(TITLE)
         .with_frame_rate()
         .position_centered()
+        .vsync_enabled()
         .build()
         .expect("valid engine");
     let mut app = Colors::new();

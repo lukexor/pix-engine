@@ -284,7 +284,7 @@ impl RayScene {
 
         s.fill(RED);
         s.no_stroke();
-        s.circle(x, y, 2)?;
+        s.circle((x, y, 2))?;
         Ok(true)
     }
 }
@@ -340,7 +340,7 @@ impl AppState for RayScene {
         s.fill(BLUE);
         s.stroke(BLUE);
         for cell in self.cells.iter().filter(|c| c.exists) {
-            s.square(cell.pos.x as i32, cell.pos.y as i32, BLOCK_SIZE + 1)?;
+            s.square((cell.pos, BLOCK_SIZE + 1))?;
         }
 
         s.image(x - 255, y - 255, &self.light)?;
@@ -403,6 +403,7 @@ fn main() {
         .with_title(TITLE)
         .with_frame_rate()
         .position_centered()
+        .vsync_enabled()
         .icon("static/light.png")
         .resizable()
         .build()

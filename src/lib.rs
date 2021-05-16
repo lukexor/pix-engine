@@ -44,6 +44,7 @@ pub mod engine;
 pub mod event;
 pub mod image;
 pub mod renderer;
+#[macro_use]
 pub mod shape;
 pub mod state;
 #[macro_use]
@@ -56,6 +57,7 @@ mod utils;
 pub use prelude::{AppState, PixEngine, PixError, PixResult, PixState};
 
 /// Re-exports most commonly used structs, traits, and functions.
+#[macro_use]
 pub mod prelude {
     use super::*;
     pub use color::{constants::*, Color, Hsv, Rgb};
@@ -70,5 +72,10 @@ pub mod prelude {
         AppState, PixState,
     };
     pub use vector::Vector;
-    pub use {hsv, random, rgb, vector};
+    // Color macros
+    pub use {hsv, rgb};
+    // Math macros
+    pub use {random, vector};
+    // Shape macros
+    pub use {circle, ellipse, point, rect, square};
 }

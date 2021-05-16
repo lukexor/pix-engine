@@ -1,6 +1,6 @@
 //! Math related types, constants and utility functions.
 
-use crate::PixState;
+use crate::{vector::Vector, PixState};
 use num_traits::{Num, NumCast};
 use rand::{self, distributions::uniform::SampleUniform, Rng};
 use std::ops::{AddAssign, Range};
@@ -41,7 +41,12 @@ where
 }
 
 /// Returns the Perlin noise value at specified coordinates.
-pub fn noise(s: &mut PixState, x: f64, y: f64, z: f64) -> f64 {
+#[allow(clippy::many_single_char_names)]
+pub fn noise<V>(s: &mut PixState, v: V) -> f64
+where
+    V: Into<Vector>,
+{
+    let v = v.into();
     if s.perlin.is_none() {
         let mut perlin = Vec::with_capacity(PERLIN_SIZE + 1);
         for _ in 0..PERLIN_SIZE + 1 {
@@ -50,9 +55,9 @@ pub fn noise(s: &mut PixState, x: f64, y: f64, z: f64) -> f64 {
         s.perlin = Some(perlin);
     }
 
-    let x = x.abs();
-    let y = y.abs();
-    let z = z.abs();
+    let x = v.x.abs();
+    let y = v.y.abs();
+    let z = v.z.abs();
 
     let mut xi = x.floor() as usize;
     let mut yi = y.floor() as usize;
@@ -63,7 +68,7 @@ pub fn noise(s: &mut PixState, x: f64, y: f64, z: f64) -> f64 {
     let mut zf = z - zi as f64;
     let (mut rxf, mut ryf);
 
-    let mut r = 0.0;
+    let mut noise_result = 0.0;
     let mut ampl = 0.5;
 
     let (mut n1, mut n2, mut n3);
@@ -93,7 +98,7 @@ pub fn noise(s: &mut PixState, x: f64, y: f64, z: f64) -> f64 {
 
             n1 += scaled_cosine(zf) * (n2 - n1);
 
-            r += n1 * ampl;
+            noise_result += n1 * ampl;
             ampl *= perlin_amp_falloff;
             xi <<= 1;
             xf *= 2.0;
@@ -116,7 +121,7 @@ pub fn noise(s: &mut PixState, x: f64, y: f64, z: f64) -> f64 {
             }
         }
     }
-    r
+    noise_result
 }
 
 /// Returns a random number within a range.
@@ -126,14 +131,24 @@ pub fn noise(s: &mut PixState, x: f64, y: f64, z: f64) -> f64 {
 /// ```
 /// use pix_engine::prelude::*;
 ///
+/// let x = random!(); // x will range from (0.0..1.0]
+/// assert!(x >= 0.0 && x < 1.0);
+///
 /// let x = random!(100); // x will range from (0..100]
+/// assert!(x >= 0 && x < 100);
 /// let y = random!(20, 50); // x will range from (20..50]
+/// assert!(y >= 20 && y < 50);
 ///
 /// let x = random!(100.0); // x will range from (0.0..100.0]
+/// assert!(x >= 0.0 && x < 100.0);
 /// let y = random!(20.0, 50.0); // x will range from (20.0..50.0]
+/// assert!(y >= 20.0 && y < 50.0);
 /// ```
 #[macro_export]
 macro_rules! random {
+    () => {
+        $crate::math::random(1.0)
+    };
     ($v:expr) => {
         $crate::math::random($v)
     };
