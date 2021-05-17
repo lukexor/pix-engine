@@ -1,7 +1,7 @@
 //! 2D/3D Point type used for drawing.
 
 use crate::math::Scalar;
-use std::ops::{Index, IndexMut};
+use std::ops::*;
 
 /// A `Point`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
@@ -91,6 +91,125 @@ impl IndexMut<usize> for Point {
             1 => &mut self.y,
             2 => &mut self.z,
             _ => panic!("index out of bounds: the len is 3 but the index is {}", idx),
+        }
+    }
+}
+
+impl Add for Point {
+    type Output = Self;
+
+    fn add(self, v: Point) -> Self::Output {
+        Point::new_3d(self.x + v.x, self.y + v.y, self.z + v.z)
+    }
+}
+
+impl AddAssign for Point {
+    fn add_assign(&mut self, v: Point) {
+        self.x += v.x;
+        self.y += v.y;
+        self.z += v.z;
+    }
+}
+
+impl Sub for Point {
+    type Output = Self;
+
+    fn sub(self, v: Point) -> Self::Output {
+        Point::new_3d(self.x - v.x, self.y - v.y, self.z - v.z)
+    }
+}
+
+impl Neg for Point {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Point::new_3d(-self.x, -self.y, -self.z)
+    }
+}
+
+impl SubAssign for Point {
+    fn sub_assign(&mut self, v: Point) {
+        self.x -= v.x;
+        self.y -= v.y;
+        self.z -= v.z;
+    }
+}
+
+impl Mul<i32> for Point {
+    type Output = Self;
+
+    fn mul(self, s: i32) -> Self::Output {
+        Point::new_3d(self.x * s, self.y * s, self.z * s)
+    }
+}
+
+impl Mul<Point> for i32 {
+    type Output = Point;
+
+    fn mul(self, v: Point) -> Self::Output {
+        Point::new_3d(self * v.x, self * v.x, self * v.z)
+    }
+}
+
+impl MulAssign<i32> for Point {
+    fn mul_assign(&mut self, s: i32) {
+        self.x *= s;
+        self.y *= s;
+        self.z *= s;
+    }
+}
+
+impl Div<i32> for Point {
+    type Output = Self;
+
+    fn div(self, s: i32) -> Self::Output {
+        Point::new_3d(self.x / s, self.y / s, self.z / s)
+    }
+}
+
+impl Div<Point> for i32 {
+    type Output = Point;
+
+    fn div(self, v: Point) -> Self::Output {
+        Point::new_3d(self / v.x, self / v.x, self / v.z)
+    }
+}
+
+impl DivAssign<i32> for Point {
+    fn div_assign(&mut self, s: i32) {
+        self.x /= s;
+        self.y /= s;
+        self.z /= s;
+    }
+}
+
+impl Rem for Point {
+    type Output = Self;
+
+    fn rem(mut self, v: Point) -> Self::Output {
+        if v.x != 0 {
+            self.x %= v.x;
+        }
+        if v.y != 0 {
+            self.y %= v.y;
+        }
+        if v.z != 0 {
+            self.z %= v.z;
+        }
+        self
+    }
+}
+
+impl RemAssign for Point {
+    fn rem_assign(&mut self, v: Point) {
+        if v.x != 0 {
+            self.x %= v.x;
+        }
+        if v.y != 0 {
+            self.y %= v.y;
+        }
+        if v.z != 0 {
+            self.z %= v.z;
         }
     }
 }
