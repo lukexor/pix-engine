@@ -348,7 +348,7 @@ impl AppState for RayScene {
         Ok(())
     }
 
-    fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse) {
+    fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse) -> PixResult<()> {
         if btn == Mouse::Left {
             let (mx, my) = s.mouse_pos().into();
             if mx > 0 && mx <= s.width() as i32 && my > 0 && my <= s.height() as i32 {
@@ -358,9 +358,10 @@ impl AppState for RayScene {
                 self.convert_edges_to_poly_map();
             }
         }
+        Ok(())
     }
 
-    fn on_mouse_dragged(&mut self, s: &mut PixState) {
+    fn on_mouse_dragged(&mut self, s: &mut PixState) -> PixResult<()> {
         if s.mouse_buttons().contains(&Mouse::Left) {
             let (mx, my) = s.mouse_pos().into();
             let (px, py) = s.pmouse_pos().into();
@@ -372,6 +373,7 @@ impl AppState for RayScene {
                 self.convert_edges_to_poly_map();
             }
         }
+        Ok(())
     }
 }
 

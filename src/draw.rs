@@ -71,7 +71,7 @@ impl PixState {
     }
 
     /// Draw an array of pixels to the current canvas.
-    pub fn pixels<P>(&mut self, pixels: &[u8], pitch: usize) -> renderer::Result<()> {
+    pub fn pixels(&mut self, pixels: &[u8], pitch: usize) -> renderer::Result<()> {
         self.renderer.points(pixels, pitch)
     }
 
@@ -149,6 +149,18 @@ impl PixState {
     /// Draw an image to the current canvas.
     pub fn image(&mut self, x: i32, y: i32, img: &Image) -> renderer::Result<()> {
         self.renderer.image(x, y, img)
+    }
+
+    /// Draw a resized image to the current canvas.
+    pub fn image_resized(
+        &mut self,
+        x: i32,
+        y: i32,
+        w: u32,
+        h: u32,
+        img: &Image,
+    ) -> renderer::Result<()> {
+        self.renderer.image_resized(x, y, w, h, img)
     }
 
     /// Draw a wireframe to the current canvas.

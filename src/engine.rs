@@ -95,7 +95,7 @@ impl PixEngineBuilder {
     }
 
     /// Set audio sample rate.
-    pub fn audio_sample_rate<'a>(&'a mut self, sample_rate: f32) -> &'a mut Self {
+    pub fn audio_sample_rate<'a>(&'a mut self, sample_rate: i32) -> &'a mut Self {
         self.settings.audio_sample_rate = sample_rate;
         self
     }
@@ -151,7 +151,7 @@ impl PixEngine {
         'on_stop: loop {
             // running loop continues until an event or on_update returns false or errors
             'running: loop {
-                self.handle_events(app);
+                self.handle_events(app)?;
                 if self.state.env.quit {
                     break 'running;
                 } else if self.state.settings.paused {
@@ -190,12 +190,13 @@ impl PixEngine {
         self.state.clear();
         self.state.renderer.present();
         // Handle events before on_start to initialize window
-        self.handle_events(app);
-        Ok(app.on_start(&mut self.state)?)
+        self.handle_events(app)?;
+        app.on_start(&mut self.state)?;
+        Ok(())
     }
 
     /// Handle events from the event pump.
-    fn handle_events<A>(&mut self, app: &mut A)
+    fn handle_events<A>(&mut self, app: &mut A) -> Result<()>
     where
         A: AppState,
     {
@@ -206,46 +207,53 @@ impl PixEngine {
                     WindowEvent::FocusGained => self.state.env.focused = true,
                     WindowEvent::FocusLost => self.state.env.focused = false,
                     WindowEvent::Resized(_, _) | WindowEvent::SizeChanged(_, _) => {
-                        app.on_window_resized(&mut self.state)
+                        app.on_window_resized(&mut self.state)?
                     }
                     _ => (),
                 },
-                Event::KeyDown { key: Some(key), .. } => {
+                Event::KeyDown {
+                    key: Some(key),
+                    repeat,
+                } => {
                     self.state.key_down = true;
                     self.state.keys.insert(key);
-                    app.on_key_pressed(&mut self.state, key);
+                    app.on_key_pressed(&mut self.state, key, repeat)?;
                 }
-                Event::KeyUp { key: Some(key), .. } => {
+                Event::KeyUp {
+                    key: Some(key),
+                    repeat,
+                } => {
                     self.state.key_down = false;
                     self.state.keys.remove(&key);
-                    app.on_key_released(&mut self.state, key);
+                    app.on_key_released(&mut self.state, key, repeat)?;
                 }
                 Event::TextInput { text, .. } => {
-                    app.on_key_typed(&mut self.state, &text);
+                    app.on_key_typed(&mut self.state, &text)?;
                 }
                 Event::MouseMotion { x, y, .. } => {
                     self.state.pmouse_pos = self.state.mouse_pos;
                     self.state.mouse_pos = (x, y).into();
                     if self.state.mouse_down {
-                        app.on_mouse_dragged(&mut self.state);
+                        app.on_mouse_dragged(&mut self.state)?;
                     }
                 }
                 Event::MouseDown { button, .. } => {
                     self.state.mouse_down = true;
                     self.state.mouse_buttons.insert(button);
-                    app.on_mouse_pressed(&mut self.state, button);
+                    app.on_mouse_pressed(&mut self.state, button)?;
                 }
                 Event::MouseUp { button, .. } => {
                     self.state.mouse_down = false;
                     self.state.mouse_buttons.remove(&button);
-                    app.on_mouse_released(&mut self.state, button);
+                    app.on_mouse_released(&mut self.state, button)?;
                 }
                 Event::MouseWheel { x, y, .. } => {
-                    app.on_mouse_wheel(&mut self.state, x, y);
+                    app.on_mouse_wheel(&mut self.state, x, y)?;
                 }
                 _ => (),
             }
         }
+        Ok(())
     }
 
     /// Updates the average frame rate and the window title if setting is enabled.

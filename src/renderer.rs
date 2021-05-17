@@ -63,7 +63,7 @@ pub(crate) struct RendererSettings {
     pub(crate) height: u32,
     pub(crate) scale_x: f32,
     pub(crate) scale_y: f32,
-    pub(crate) audio_sample_rate: f32,
+    pub(crate) audio_sample_rate: i32,
     pub(crate) fullscreen: bool,
     pub(crate) vsync: bool,
     pub(crate) resizable: bool,
@@ -81,7 +81,7 @@ impl Default for RendererSettings {
             height: 400,
             scale_x: 1.0,
             scale_y: 1.0,
-            audio_sample_rate: 44_100.0,
+            audio_sample_rate: 44_100,
             fullscreen: false,
             vsync: false,
             resizable: false,
@@ -205,6 +205,12 @@ pub(crate) trait Rendering: Sized {
 
     /// Draw an image to the current canvas.
     fn image(&mut self, x: i32, y: i32, img: &Image) -> Result<()>;
+
+    /// Draw a resized image to the current canvas.
+    fn image_resized(&mut self, x: i32, y: i32, w: u32, h: u32, img: &Image) -> Result<()>;
+
+    /// Add audio samples to the audio buffer queue.
+    fn enqueue_audio(&mut self, samples: &[f32]);
 }
 
 impl fmt::Display for Error {

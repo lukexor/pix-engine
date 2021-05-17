@@ -21,6 +21,8 @@ pub type Result<T> = result::Result<T, Error>;
 pub enum Error {
     /// Invalid file type.
     InvalidFileType(Option<OsString>),
+    /// Invalid color type.
+    InvalidColorType(png::ColorType),
     /// Invalid bit depth.
     InvalidBitDepth(png::BitDepth),
     /// IO specific errors.
@@ -40,9 +42,8 @@ pub struct Image {
     height: u32,
     /// RGB values
     data: Vec<u8>,
-    // TODO: channels: usize, (3 or 4)
-    // TODO: pixel_format: PixelFormat
-    // TODO: tint, flip
+    channels: usize, // TODO: pixel_format: PixelFormat
+                     // TODO: tint, flip
 }
 
 // TODO: Texture { id, image, quad, uv, uv_scale, w }
@@ -74,19 +75,23 @@ impl Image {
 
     /// Create a blank RGBA `Image` with a given width/height.
     pub fn new(width: u32, height: u32) -> Self {
+        let channels = 4;
         Self {
             width,
             height,
-            data: vec![0x00; (4 * width * height) as usize],
+            data: vec![0x00; channels * (width * height) as usize],
+            channels,
         }
     }
 
     /// Create a blank RGB `Image` with a given width/height.
     pub fn rgb(width: u32, height: u32) -> Self {
+        let channels = 3;
         Self {
             width,
             height,
-            data: vec![0x00; (4 * width * height) as usize],
+            data: vec![0x00; channels * (width * height) as usize],
+            channels,
         }
     }
 
@@ -110,13 +115,24 @@ impl Image {
         &mut self.data
     }
 
-    /// Create a new `Image` from an array of u8 bytes representing RGBA values.
-    pub fn from_bytes(width: u32, height: u32, bytes: &[u8]) -> Self {
+    /// The number of color channels.
+    pub fn channels(&self) -> usize {
+        self.channels
+    }
+
+    /// Create a new `Image` from an array of u8 bytes representing RGB/A values.
+    pub fn from_bytes(width: u32, height: u32, bytes: &[u8], channels: usize) -> Self {
         Self {
             width,
             height,
             data: bytes.to_vec(),
+            channels,
         }
+    }
+
+    /// Update `Image` with an array of u8 bytes representing RGB/A values.
+    pub fn update_bytes(&mut self, bytes: &[u8]) {
+        self.data.clone_from_slice(bytes);
     }
 
     /// Create a new `Image` by loading it from a `png` file.
@@ -134,6 +150,14 @@ impl Image {
         let png = png::Decoder::new(png_file);
         let (info, mut reader) = png.read_info()?;
 
+        let channels = match info.color_type {
+            png::ColorType::Grayscale => 1,
+            png::ColorType::GrayscaleAlpha => 2,
+            png::ColorType::RGB => 3,
+            png::ColorType::RGBA => 4,
+            _ => return Err(Error::InvalidColorType(info.color_type)),
+        };
+
         if info.bit_depth != png::BitDepth::Eight {
             return Err(Error::InvalidBitDepth(info.bit_depth));
         }
@@ -144,6 +168,7 @@ impl Image {
             width: info.width,
             height: info.height,
             data,
+            channels,
         })
     }
 
@@ -161,6 +186,7 @@ impl std::fmt::Display for Error {
         use Error::*;
         match self {
             InvalidFileType(ext) => write!(f, "Invalid file type: {:?}", ext),
+            InvalidColorType(color_type) => write!(f, "Invalid color type: {:?}", color_type),
             InvalidBitDepth(depth) => write!(f, "Invalid bit depth: {:?}", depth),
             IoError(err) => err.fmt(f),
             DecodingError(err) => err.fmt(f),

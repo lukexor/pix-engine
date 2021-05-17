@@ -45,31 +45,63 @@ pub trait AppState {
 
     // TODO: Make on calls return result
     /// Called each time a key is pressed.
-    fn on_key_pressed(&mut self, _s: &mut PixState, _key: Key) {}
+    fn on_key_pressed(
+        &mut self,
+        _s: &mut PixState,
+        _key: Key,
+        _repeat: bool,
+    ) -> common::Result<()> {
+        Ok(())
+    }
 
     /// Called each time a key is released.
-    fn on_key_released(&mut self, _s: &mut PixState, _key: Key) {}
+    fn on_key_released(
+        &mut self,
+        _s: &mut PixState,
+        _key: Key,
+        _repeat: bool,
+    ) -> common::Result<()> {
+        Ok(())
+    }
 
     /// Called each time a key is typed. Ignores special keys like Backspace.
-    fn on_key_typed(&mut self, _s: &mut PixState, _text: &str) {}
+    fn on_key_typed(&mut self, _s: &mut PixState, _text: &str) -> common::Result<()> {
+        Ok(())
+    }
 
     /// Called each time a mouse button is pressed.
-    fn on_mouse_dragged(&mut self, _s: &mut PixState) {}
+    fn on_mouse_dragged(&mut self, _s: &mut PixState) -> common::Result<()> {
+        Ok(())
+    }
 
     /// Called each time a mouse button is pressed.
-    fn on_mouse_pressed(&mut self, _s: &mut PixState, _btn: Mouse) {}
+    fn on_mouse_pressed(&mut self, _s: &mut PixState, _btn: Mouse) -> common::Result<()> {
+        Ok(())
+    }
 
     // TODO: on_mouse_clicked - Press followed by release
     // TODO: on_mouse_dbl_clicked - 2 clicks
+    // TODO: on_mouse_motion
 
     /// Called each time a mouse button is released.
-    fn on_mouse_released(&mut self, _s: &mut PixState, _btn: Mouse) {}
+    fn on_mouse_released(&mut self, _s: &mut PixState, _btn: Mouse) -> common::Result<()> {
+        Ok(())
+    }
 
     /// Called each time the mouse wheel is scrolled.
-    fn on_mouse_wheel(&mut self, _s: &mut PixState, _x_delta: i32, _y_delta: i32) {}
+    fn on_mouse_wheel(
+        &mut self,
+        _s: &mut PixState,
+        _x_delta: i32,
+        _y_delta: i32,
+    ) -> common::Result<()> {
+        Ok(())
+    }
 
     /// Called each time the window is resized.
-    fn on_window_resized(&mut self, _s: &mut PixState) {}
+    fn on_window_resized(&mut self, _s: &mut PixState) -> common::Result<()> {
+        Ok(())
+    }
 }
 
 /// Represents all engine-specific state and methods.

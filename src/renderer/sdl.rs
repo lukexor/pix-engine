@@ -11,6 +11,7 @@ use crate::{
     shape::Rect,
 };
 use sdl2::{
+    audio::{AudioQueue, AudioSpecDesired},
     gfx::primitives::{DrawRenderer, ToColor},
     image::LoadSurface,
     pixels::PixelFormatEnum,
@@ -39,6 +40,7 @@ pub struct Renderer {
     event_pump: EventPump,
     window_id: WindowId,
     canvas: Canvas<Window>,
+    audio_device: AudioQueue<f32>,
     texture_creator: TextureCreator<WindowContext>,
     blend_mode: SdlBlendMode,
 }
@@ -88,12 +90,23 @@ impl Rendering for Renderer {
 
         let texture_creator: TextureCreator<WindowContext> = canvas.texture_creator();
 
+        // Set up Audio
+        let audio_sub = context.audio()?;
+        let desired_spec = AudioSpecDesired {
+            freq: Some(s.audio_sample_rate),
+            channels: Some(1), // TODO: Add stereo option
+            samples: None,
+        };
+        let audio_device = audio_sub.open_queue(None, &desired_spec)?;
+        audio_device.resume();
+
         Ok(Self {
             context,
             ttf_context,
             event_pump,
             window_id,
             canvas,
+            audio_device,
             texture_creator,
             blend_mode: SdlBlendMode::None,
         })
@@ -217,6 +230,7 @@ impl Rendering for Renderer {
         S: AsRef<str>,
     {
         // TODO: Figure out how to store this
+        // TODO: This path only works locally
         let font = self
             .ttf_context
             .load_font("static/emulogic.ttf", size as u16)?;
@@ -353,6 +367,30 @@ impl Rendering for Renderer {
         self.canvas.copy(&texture, None, dst)?;
         Ok(())
     }
+
+    /// Draw an image to the current canvas.
+    fn image_resized(&mut self, x: i32, y: i32, w: u32, h: u32, img: &Image) -> Result<()> {
+        let mut texture = self.texture_creator.create_texture_streaming(
+            PixelFormatEnum::RGB24,
+            img.width(),
+            img.height(),
+        )?;
+        texture.update(None, img.bytes(), img.channels() * img.width() as usize)?;
+        texture.set_blend_mode(self.blend_mode);
+        let dst = SdlRect::new(x, y, w, h);
+        self.canvas.copy(&texture, None, dst)?;
+        Ok(())
+    }
+
+    /// Add audio samples to the audio buffer queue.
+    fn enqueue_audio(&mut self, samples: &[f32]) {
+        // Don't let queue overflow
+        let sample_rate = self.audio_device.spec().freq as u32;
+        while self.audio_device.size() > sample_rate {
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+        self.audio_device.queue(samples);
+    }
 }
 
 impl std::fmt::Debug for Renderer {
@@ -361,6 +399,18 @@ impl std::fmt::Debug for Renderer {
         write!(f, "SdlRenderer {{}}")
     }
 }
+
+// impl AudioCallback for Audio {
+//     type Channel = f32;
+
+//     fn callback(&mut self, out: &mut [f32]) {
+//         for x in out.iter_mut() {
+//             if let Some(sample) = self.samples.pop_front() {
+//                 *x = sample;
+//             }
+//         }
+//     }
+// }
 
 /*
  * Type Conversions
