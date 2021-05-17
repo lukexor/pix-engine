@@ -95,10 +95,10 @@ macro_rules! vector {
     ($x:expr) => {
         vector!($x, 0.0, 0.0)
     };
-    ($x:expr, $y:expr) => {
+    ($x:expr, $y:expr$(,)?) => {
         vector!($x, $y, 0.0)
     };
-    ($x:expr, $y:expr, $z:expr) => {
+    ($x:expr, $y:expr, $z:expr$(,)?) => {
         $crate::prelude::Vector::new_3d($x as Scalar, $y as Scalar, $z as Scalar)
     };
 }
@@ -624,6 +624,22 @@ impl AddAssign for Vector {
     }
 }
 
+impl Add<Scalar> for Vector {
+    type Output = Self;
+
+    fn add(self, val: Scalar) -> Self::Output {
+        Vector::new_3d(self.x + val, self.y + val, self.z + val)
+    }
+}
+
+impl AddAssign<Scalar> for Vector {
+    fn add_assign(&mut self, val: Scalar) {
+        self.x += val;
+        self.y += val;
+        self.z += val;
+    }
+}
+
 impl Sub for Vector {
     type Output = Self;
 
@@ -632,19 +648,35 @@ impl Sub for Vector {
     }
 }
 
-impl Neg for Vector {
-    type Output = Self;
-
-    fn neg(self) -> Self::Output {
-        Vector::new_3d(-self.x, -self.y, -self.z)
-    }
-}
-
 impl SubAssign for Vector {
     fn sub_assign(&mut self, v: Vector) {
         self.x -= v.x;
         self.y -= v.y;
         self.z -= v.z;
+    }
+}
+
+impl Sub<Scalar> for Vector {
+    type Output = Self;
+
+    fn sub(self, val: Scalar) -> Self::Output {
+        Vector::new_3d(self.x - val, self.y - val, self.z - val)
+    }
+}
+
+impl SubAssign<Scalar> for Vector {
+    fn sub_assign(&mut self, val: Scalar) {
+        self.x -= val;
+        self.y -= val;
+        self.z -= val;
+    }
+}
+
+impl Neg for Vector {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Vector::new_3d(-self.x, -self.y, -self.z)
     }
 }
 

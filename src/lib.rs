@@ -64,12 +64,14 @@ pub mod prelude {
     pub use common::{Error as PixError, Result as PixResult};
     pub use engine::PixEngine;
     pub use event::*;
-    pub use image::Image;
+    pub use image::{Error as ImageError, Image};
     pub use math::{constants::*, map, Scalar};
+    pub use renderer::Error as RendererError;
     pub use shape::*;
     pub use state::{
+        environment::WindowId,
         settings::{ArcMode, BlendMode, DrawMode},
-        AppState, PixState,
+        AppState, Error as StateError, PixState,
     };
     pub use vector::Vector;
     // Color macros

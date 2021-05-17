@@ -152,13 +152,11 @@ macro_rules! random {
     ($v:expr) => {
         $crate::math::random($v)
     };
-    ($s:expr, $e:expr) => {{
+    ($s:expr, $e:expr$(,)?) => {{
         // TODO: move this into a function
         let s = $s;
         let e = $e;
-        if s == e {
-            $crate::math::random(s)
-        } else if s > e {
+        if s > e {
             $crate::math::random_rng(e..s)
         } else {
             $crate::math::random_rng(s..e)
@@ -173,13 +171,13 @@ macro_rules! random {
 /// TODO
 #[macro_export]
 macro_rules! noise {
-    ($s:expr, $x:expr) => {
+    ($s:expr, $x:expr$(,)?) => {
         $crate::math::noise($s, $x, 0.0, 0.0)
     };
-    ($s:expr, $x:expr, $y:expr) => {
+    ($s:expr, $x:expr, $y:expr$(,)?) => {
         $crate::math::noise($s, $x, $y, 0.0)
     };
-    ($s:expr, $x:expr, $y:expr, $z:expr) => {
+    ($s:expr, $x:expr, $y:expr, $z:expr$(,)?) => {
         $crate::math::noise($s, $x, $y, $z)
     };
 }

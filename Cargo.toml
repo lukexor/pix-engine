@@ -36,7 +36,7 @@ wasm-bindgen-test = "0.3"
 
 [features]
 default = ["sdl2"]
-wasm = ["wasm-bindgen"]
+wasm = ["wasm-bindgen", "console_error_panic_hook"]
 
 [profile.dev]
 opt-level = 2

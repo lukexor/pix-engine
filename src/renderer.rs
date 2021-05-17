@@ -6,7 +6,7 @@ use crate::{
     event::Event,
     image::Image,
     shape::Rect,
-    state::{self, settings::BlendMode},
+    state::{self, environment::WindowId, settings::BlendMode},
 };
 use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
 
@@ -63,6 +63,7 @@ pub(crate) struct RendererSettings {
     pub(crate) height: u32,
     pub(crate) scale_x: f32,
     pub(crate) scale_y: f32,
+    pub(crate) audio_sample_rate: f32,
     pub(crate) fullscreen: bool,
     pub(crate) vsync: bool,
     pub(crate) resizable: bool,
@@ -80,6 +81,7 @@ impl Default for RendererSettings {
             height: 400,
             scale_x: 1.0,
             scale_y: 1.0,
+            audio_sample_rate: 44_100.0,
             fullscreen: false,
             vsync: false,
             resizable: false,
@@ -92,6 +94,9 @@ impl Default for RendererSettings {
 pub(crate) trait Rendering: Sized {
     /// Creates a new `Renderer` instance.
     fn init(settings: RendererSettings) -> Result<Self>;
+
+    /// Get the primary window id.
+    fn window_id(&self) -> WindowId;
 
     /// Clears the current canvas to the given clear color.
     fn clear(&mut self);

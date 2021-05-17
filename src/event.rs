@@ -118,6 +118,12 @@ pub enum Event {
     Unknown,
 }
 
+impl Default for Event {
+    fn default() -> Self {
+        Self::Unknown
+    }
+}
+
 /// Wrapper around a concrete Window Event.
 #[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -138,6 +144,12 @@ pub enum WindowEvent {
     Unknown,
 }
 
+impl Default for WindowEvent {
+    fn default() -> Self {
+        Self::Unknown
+    }
+}
+
 /// Wrapper around a concrete Mouse Button type.
 #[allow(missing_docs)]
 #[non_exhaustive]
@@ -147,6 +159,12 @@ pub enum Mouse {
     Middle,
     Right,
     Unknown,
+}
+
+impl Default for Mouse {
+    fn default() -> Self {
+        Self::Unknown
+    }
 }
 
 /// Wrapper around a concrete Key type.
@@ -164,6 +182,12 @@ pub enum Key {
     Right, Left, Down, Up, NumLock, LCtrl, LShift, LAlt, LGui, RCtrl, RShift, RAlt, RGui, Unknown
 }
 
+impl Default for Key {
+    fn default() -> Self {
+        Self::Unknown
+    }
+}
+
 /// A Joystick axis
 #[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -174,6 +198,13 @@ pub enum Axis {
     RightY,
     TriggerLeft,
     TriggerRight,
+    Unknown,
+}
+
+impl Default for Axis {
+    fn default() -> Self {
+        Self::Unknown
+    }
 }
 
 /// A Controller button
@@ -195,4 +226,11 @@ pub enum Button {
     DPadDown,
     DPadLeft,
     DPadRight,
+    Unknown,
+}
+
+impl Default for Button {
+    fn default() -> Self {
+        Self::Unknown
+    }
 }

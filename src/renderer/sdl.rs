@@ -1,6 +1,9 @@
 //! SDL Renderer implementation
 
-use super::{state::settings::BlendMode, Error, Position, RendererSettings, Rendering, Result};
+use super::{
+    state::{environment::WindowId, settings::BlendMode},
+    Error, Position, RendererSettings, Rendering, Result,
+};
 use crate::{
     color::Color,
     event::{Axis, Button, Event, Key, Mouse, WindowEvent},
@@ -34,6 +37,7 @@ pub struct Renderer {
     context: Sdl,
     ttf_context: ttf::Sdl2TtfContext,
     event_pump: EventPump,
+    window_id: WindowId,
     canvas: Canvas<Window>,
     texture_creator: TextureCreator<WindowContext>,
     blend_mode: SdlBlendMode,
@@ -53,25 +57,23 @@ impl Rendering for Renderer {
         let mut window_builder = video_subsys.window(&s.title, win_width, win_height);
         match (s.x, s.y) {
             (Position::Centered, Position::Centered) => {
-                let _ = window_builder.position_centered();
+                window_builder.position_centered();
             }
             (Position::Positioned(x), Position::Positioned(y)) => {
-                let _ = window_builder.position(x, y);
+                window_builder.position(x, y);
             }
             _ => return Err(Error::InvalidPosition(s.x, s.y)),
         };
         if s.fullscreen {
-            let _ = window_builder.fullscreen();
+            window_builder.fullscreen();
         }
         if s.resizable {
-            let _ = window_builder.resizable();
+            window_builder.resizable();
         }
 
-        let mut canvas_builder = window_builder
-            .build()?
-            .into_canvas()
-            .accelerated()
-            .target_texture();
+        let window = window_builder.build()?;
+        let window_id = window.id();
+        let mut canvas_builder = window.into_canvas().accelerated().target_texture();
         if s.vsync {
             canvas_builder = canvas_builder.present_vsync();
         }
@@ -90,10 +92,16 @@ impl Rendering for Renderer {
             context,
             ttf_context,
             event_pump,
+            window_id,
             canvas,
             texture_creator,
             blend_mode: SdlBlendMode::None,
         })
+    }
+
+    /// Get the primary window id.
+    fn window_id(&self) -> WindowId {
+        self.window_id
     }
 
     /// Clears the canvas to the current clear color.

@@ -1,9 +1,10 @@
 //! Environment related information of the engine.
 
 use super::PixState;
-use crate::renderer::Rendering;
+use crate::{common::Result, renderer::Rendering};
 use std::time::Duration;
 
+/// Environment values for [`PixState`]
 #[derive(Debug, Clone)]
 pub(crate) struct Environment {
     pub(crate) focused: bool,
@@ -31,6 +32,21 @@ impl PixState {
     /// Whether the application has focus or not.
     pub fn focused(&self) -> bool {
         self.env.focused
+    }
+
+    /// Get the primary window id.
+    pub fn window_id(&self) -> WindowId {
+        self.renderer.window_id()
+    }
+
+    /// Creates a new WindowBuilder.
+    pub fn create_window(&self, width: u32, height: u32) -> WindowBuilder {
+        WindowBuilder::new(width, height)
+    }
+
+    /// Closes an open window.
+    pub fn close_window(&self, _window_id: WindowId) -> Result<()> {
+        todo!("close_window");
     }
 
     /// The time elapsed since last frame.
@@ -84,5 +100,53 @@ impl PixState {
     /// The display pixel density of the primary monitor.
     pub fn display_density(&self) -> u32 {
         todo!("display_density")
+    }
+}
+
+/// Window Identifier
+pub type WindowId = u32;
+
+/// WindowBuilder
+#[derive(Debug, Clone)]
+pub struct WindowBuilder {
+    title: String,
+    width: u32,
+    height: u32,
+}
+
+impl WindowBuilder {
+    /// Creates a new `WindowBuilder` instance.
+    pub fn new(width: u32, height: u32) -> Self {
+        Self {
+            width,
+            height,
+            ..Default::default()
+        }
+    }
+
+    /// Set a window title.
+    pub fn with_title<'a, S>(&'a mut self, title: S) -> &'a mut Self
+    where
+        S: AsRef<str>,
+    {
+        self.title = title.as_ref().to_owned();
+        self
+    }
+
+    /// Create a new window from the `WindowBuilder` and return its id.
+    ///
+    /// Returns `Err` if any options provided are invalid.
+    pub fn build(&self) -> Result<WindowId> {
+        todo!("WindowBuilder::build");
+    }
+}
+
+impl Default for WindowBuilder {
+    fn default() -> Self {
+        Self {
+            title: String::new(),
+            width: 400,
+            height: 400,
+        }
     }
 }

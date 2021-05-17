@@ -32,13 +32,13 @@ macro_rules! rect {
     () => {
         rect!(0, 0)
     };
-    ($x:expr, $y:expr) => {
+    ($x:expr, $y:expr$(,)?) => {
         rect!($x, $y, 100, 100)
     };
-    ($x:expr, $y:expr, $w:expr) => {
+    ($x:expr, $y:expr, $w:expr$(,)?) => {
         rect!($x, $y, $w, $w)
     };
-    ($x:expr, $y:expr, $w:expr, $h:expr) => {
+    ($x:expr, $y:expr, $w:expr, $h:expr$(,)?) => {
         $crate::prelude::Rect::new($x as i32, $y as i32, $w as u32, $h as u32)
     };
 }
@@ -104,10 +104,10 @@ macro_rules! square {
     () => {
         square!(0, 0)
     };
-    ($x:expr, $y:expr) => {
+    ($x:expr, $y:expr$(,)?) => {
         square!($x, $y, 100)
     };
-    ($x:expr, $y:expr, $s:expr) => {
+    ($x:expr, $y:expr, $s:expr$(,)?) => {
         $crate::prelude::Square::new($x as i32, $y as i32, $s as u32)
     };
 }

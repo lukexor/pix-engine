@@ -72,8 +72,17 @@ impl Image {
     // Image.mask(image: &Image) -> Image
     // image!(w, h)
 
-    /// Create a blank `Image` with a given width/height.
+    /// Create a blank RGBA `Image` with a given width/height.
     pub fn new(width: u32, height: u32) -> Self {
+        Self {
+            width,
+            height,
+            data: vec![0x00; (4 * width * height) as usize],
+        }
+    }
+
+    /// Create a blank RGB `Image` with a given width/height.
+    pub fn rgb(width: u32, height: u32) -> Self {
         Self {
             width,
             height,

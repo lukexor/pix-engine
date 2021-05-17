@@ -170,13 +170,13 @@ macro_rules! rgb {
     ($gray:expr) => {
         rgb!($gray, $gray, $gray)
     };
-    ($gray:expr, $a:expr) => {
+    ($gray:expr, $a:expr$(,)?) => {
         rgb!($gray, $gray, $gray, $a)
     };
-    ($r:expr, $g:expr, $b:expr) => {
+    ($r:expr, $g:expr, $b:expr$(,)?) => {
         rgb!($r, $g, $b, 255)
     };
-    ($r:expr, $g:expr, $b:expr, $a:expr) => {
+    ($r:expr, $g:expr, $b:expr, $a:expr$(,)?) => {
         $crate::prelude::Rgb::rgba($r, $g, $b, $a)
     };
 }
@@ -195,13 +195,13 @@ macro_rules! hsv {
     ($gray:expr) => {
         hsv!($gray, $gray, $gray)
     };
-    ($gray:expr, $a:expr) => {
+    ($gray:expr, $a:expr$(,)?) => {
         hsv!($gray, $gray, $gray, $a)
     };
-    ($h:expr, $s:expr, $v:expr) => {
+    ($h:expr, $s:expr, $v:expr$(,)?) => {
         hsv!($h, $s, $v, 1.0)
     };
-    ($h:expr, $s:expr, $v:expr, $a:expr) => {
+    ($h:expr, $s:expr, $v:expr, $a:expr$(,)?) => {
         $crate::prelude::Hsv::hsva($h, $s, $v, $a)
     };
 }

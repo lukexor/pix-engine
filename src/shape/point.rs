@@ -4,7 +4,7 @@ use crate::math::Scalar;
 use std::ops::*;
 
 /// A `Point`.
-#[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Point {
     /// X-coord
     pub x: i32,
@@ -30,10 +30,10 @@ macro_rules! point {
     ($x:expr) => {
         point!($x, 0, 0)
     };
-    ($x:expr, $y:expr) => {
+    ($x:expr, $y:expr$(,)?) => {
         point!($x, $y, 0)
     };
-    ($x:expr, $y:expr, $z:expr) => {
+    ($x:expr, $y:expr, $z:expr$(,)?) => {
         $crate::prelude::Point::new_3d($x as i32, $y as i32, $z as i32)
     };
 }
@@ -98,24 +98,64 @@ impl IndexMut<usize> for Point {
 impl Add for Point {
     type Output = Self;
 
-    fn add(self, v: Point) -> Self::Output {
-        Point::new_3d(self.x + v.x, self.y + v.y, self.z + v.z)
+    fn add(self, p: Point) -> Self::Output {
+        Point::new_3d(self.x + p.x, self.y + p.y, self.z + p.z)
     }
 }
 
 impl AddAssign for Point {
-    fn add_assign(&mut self, v: Point) {
-        self.x += v.x;
-        self.y += v.y;
-        self.z += v.z;
+    fn add_assign(&mut self, p: Point) {
+        self.x += p.x;
+        self.y += p.y;
+        self.z += p.z;
+    }
+}
+
+impl Add<i32> for Point {
+    type Output = Self;
+
+    fn add(self, val: i32) -> Self::Output {
+        Point::new_3d(self.x + val, self.y + val, self.z + val)
+    }
+}
+
+impl AddAssign<i32> for Point {
+    fn add_assign(&mut self, val: i32) {
+        self.x += val;
+        self.y += val;
+        self.z += val;
     }
 }
 
 impl Sub for Point {
     type Output = Self;
 
-    fn sub(self, v: Point) -> Self::Output {
-        Point::new_3d(self.x - v.x, self.y - v.y, self.z - v.z)
+    fn sub(self, p: Point) -> Self::Output {
+        Point::new_3d(self.x - p.x, self.y - p.y, self.z - p.z)
+    }
+}
+
+impl SubAssign for Point {
+    fn sub_assign(&mut self, p: Point) {
+        self.x -= p.x;
+        self.y -= p.y;
+        self.z -= p.z;
+    }
+}
+
+impl Sub<i32> for Point {
+    type Output = Self;
+
+    fn sub(self, val: i32) -> Self::Output {
+        Point::new_3d(self.x - val, self.y - val, self.z - val)
+    }
+}
+
+impl SubAssign<i32> for Point {
+    fn sub_assign(&mut self, val: i32) {
+        self.x -= val;
+        self.y -= val;
+        self.z -= val;
     }
 }
 
@@ -124,14 +164,6 @@ impl Neg for Point {
 
     fn neg(self) -> Self::Output {
         Point::new_3d(-self.x, -self.y, -self.z)
-    }
-}
-
-impl SubAssign for Point {
-    fn sub_assign(&mut self, v: Point) {
-        self.x -= v.x;
-        self.y -= v.y;
-        self.z -= v.z;
     }
 }
 
@@ -146,8 +178,8 @@ impl Mul<i32> for Point {
 impl Mul<Point> for i32 {
     type Output = Point;
 
-    fn mul(self, v: Point) -> Self::Output {
-        Point::new_3d(self * v.x, self * v.x, self * v.z)
+    fn mul(self, p: Point) -> Self::Output {
+        Point::new_3d(self * p.x, self * p.x, self * p.z)
     }
 }
 
@@ -170,8 +202,8 @@ impl Div<i32> for Point {
 impl Div<Point> for i32 {
     type Output = Point;
 
-    fn div(self, v: Point) -> Self::Output {
-        Point::new_3d(self / v.x, self / v.x, self / v.z)
+    fn div(self, p: Point) -> Self::Output {
+        Point::new_3d(self / p.x, self / p.x, self / p.z)
     }
 }
 
@@ -186,30 +218,30 @@ impl DivAssign<i32> for Point {
 impl Rem for Point {
     type Output = Self;
 
-    fn rem(mut self, v: Point) -> Self::Output {
-        if v.x != 0 {
-            self.x %= v.x;
+    fn rem(mut self, p: Point) -> Self::Output {
+        if p.x != 0 {
+            self.x %= p.x;
         }
-        if v.y != 0 {
-            self.y %= v.y;
+        if p.y != 0 {
+            self.y %= p.y;
         }
-        if v.z != 0 {
-            self.z %= v.z;
+        if p.z != 0 {
+            self.z %= p.z;
         }
         self
     }
 }
 
 impl RemAssign for Point {
-    fn rem_assign(&mut self, v: Point) {
-        if v.x != 0 {
-            self.x %= v.x;
+    fn rem_assign(&mut self, p: Point) {
+        if p.x != 0 {
+            self.x %= p.x;
         }
-        if v.y != 0 {
-            self.y %= v.y;
+        if p.y != 0 {
+            self.y %= p.y;
         }
-        if v.z != 0 {
-            self.z %= v.z;
+        if p.z != 0 {
+            self.z %= p.z;
         }
     }
 }

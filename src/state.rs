@@ -2,7 +2,7 @@
 
 use crate::{
     common,
-    event::{Key, Mouse},
+    event::{Event, Key, Mouse},
     renderer::{self, Renderer, Rendering},
     shape::Point,
 };
@@ -176,6 +176,16 @@ impl PixState {
     /// Returns if a key is currently being held.
     pub fn key_pressed(&self, key: Key) -> bool {
         self.keys.contains(&key)
+    }
+
+    /// Returns a single event or None if the event pump is empty.
+    pub fn poll_event(&mut self) -> Option<Event> {
+        self.renderer.poll_event()
+    }
+
+    /// Returns an iterator of events from the event pump.
+    pub fn poll_events(&mut self) -> Vec<Event> {
+        self.renderer.poll_events()
     }
 }
 

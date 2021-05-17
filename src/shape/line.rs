@@ -32,6 +32,13 @@ impl From<(i32, i32, i32, i32)> for Line {
     }
 }
 
+/// From tuple of (x1, y1, x2, y2) to `Line`.
+impl From<(u32, u32, u32, u32)> for Line {
+    fn from((x1, y1, x2, y2): (u32, u32, u32, u32)) -> Self {
+        Self::new((x1 as i32, y1 as i32), (x2 as i32, y2 as i32))
+    }
+}
+
 /// From tuple of (`Point`, `Point`) to `Line`.
 impl From<(Point, Point)> for Line {
     fn from((p1, p2): (Point, Point)) -> Self {

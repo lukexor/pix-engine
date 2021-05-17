@@ -32,13 +32,13 @@ macro_rules! ellipse {
     () => {
         ellipse!(0, 0)
     };
-    ($x:expr, $y:expr) => {
+    ($x:expr, $y:expr$(,)?) => {
         ellipse!($x, $y, 100)
     };
-    ($x:expr, $y:expr, $s:expr) => {
+    ($x:expr, $y:expr, $s:expr$(,)?) => {
         ellipse!($x, $y, $s, $s)
     };
-    ($x:expr, $y:expr, $w:expr, $h:expr) => {
+    ($x:expr, $y:expr, $w:expr, $h:expr$(,)?) => {
         $crate::prelude::Ellipse::new($x as i32, $y as i32, $w as u32, $h as u32)
     };
 }
@@ -125,10 +125,10 @@ macro_rules! circle {
     () => {
         circle!(0, 0)
     };
-    ($x:expr, $y:expr) => {
+    ($x:expr, $y:expr$(,)?) => {
         circle!($x, $y, 100)
     };
-    ($x:expr, $y:expr, $r:expr) => {
+    ($x:expr, $y:expr, $r:expr$(,)?) => {
         $crate::prelude::Circle::new($x as i32, $y as i32, $r as u32)
     };
 }
