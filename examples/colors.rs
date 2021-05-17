@@ -51,13 +51,13 @@ impl AppState for Colors {
         Ok(())
     }
 
-    fn on_key_pressed(&mut self, _s: &mut PixState, key: Keycode) {
+    fn on_key_pressed(&mut self, _s: &mut PixState, key: Key) {
         match key {
-            Keycode::Escape => self.auto = true,
-            Keycode::Up => self.modify_hue(2.0, false),
-            Keycode::Down => self.modify_hue(-2.0, false),
-            Keycode::Left => self.modify_hue(-10.0, false),
-            Keycode::Right => self.modify_hue(10.0, false),
+            Key::Escape => self.auto = true,
+            Key::Up => self.modify_hue(2.0, false),
+            Key::Down => self.modify_hue(-2.0, false),
+            Key::Left => self.modify_hue(-10.0, false),
+            Key::Right => self.modify_hue(10.0, false),
             _ => (),
         }
     }

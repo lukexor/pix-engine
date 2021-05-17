@@ -2,7 +2,7 @@
 
 use crate::{
     common,
-    event::{Keycode, MouseButton},
+    event::{Key, Mouse},
     renderer::{self, Renderer, Rendering},
     shape::Point,
 };
@@ -45,10 +45,10 @@ pub trait AppState {
 
     // TODO: Make on calls return result
     /// Called each time a key is pressed.
-    fn on_key_pressed(&mut self, _s: &mut PixState, _key: Keycode) {}
+    fn on_key_pressed(&mut self, _s: &mut PixState, _key: Key) {}
 
     /// Called each time a key is released.
-    fn on_key_released(&mut self, _s: &mut PixState, _key: Keycode) {}
+    fn on_key_released(&mut self, _s: &mut PixState, _key: Key) {}
 
     /// Called each time a key is typed. Ignores special keys like Backspace.
     fn on_key_typed(&mut self, _s: &mut PixState, _text: &str) {}
@@ -57,13 +57,13 @@ pub trait AppState {
     fn on_mouse_dragged(&mut self, _s: &mut PixState) {}
 
     /// Called each time a mouse button is pressed.
-    fn on_mouse_pressed(&mut self, _s: &mut PixState, _btn: MouseButton) {}
+    fn on_mouse_pressed(&mut self, _s: &mut PixState, _btn: Mouse) {}
 
     // TODO: on_mouse_clicked - Press followed by release
     // TODO: on_mouse_dbl_clicked - 2 clicks
 
     /// Called each time a mouse button is released.
-    fn on_mouse_released(&mut self, _s: &mut PixState, _btn: MouseButton) {}
+    fn on_mouse_released(&mut self, _s: &mut PixState, _btn: Mouse) {}
 
     /// Called each time the mouse wheel is scrolled.
     fn on_mouse_wheel(&mut self, _s: &mut PixState, _x_delta: i32, _y_delta: i32) {}
@@ -82,9 +82,9 @@ pub struct PixState {
     pub(crate) mouse_pos: Point,
     pub(crate) pmouse_pos: Point,
     pub(crate) mouse_down: bool,
-    pub(crate) mouse_buttons: HashSet<MouseButton>,
+    pub(crate) mouse_buttons: HashSet<Mouse>,
     pub(crate) key_down: bool,
-    pub(crate) keys: HashSet<Keycode>,
+    pub(crate) keys: HashSet<Key>,
     pub(crate) perlin: Option<Vec<f64>>,
     // TODO: state_stack for push/pop
 }
@@ -159,22 +159,22 @@ impl PixState {
     }
 
     /// Returns if a mouse button is currently being held.
-    pub fn mouse_pressed(&self, btn: MouseButton) -> bool {
+    pub fn mouse_pressed(&self, btn: Mouse) -> bool {
         self.mouse_buttons.contains(&btn)
     }
 
     /// Returns the a list of the current mouse buttons being held.
-    pub fn mouse_buttons(&self) -> &HashSet<MouseButton> {
+    pub fn mouse_buttons(&self) -> &HashSet<Mouse> {
         &self.mouse_buttons
     }
 
     /// Returns the a list of the current keys being held.
-    pub fn keys(&self) -> &HashSet<Keycode> {
+    pub fn keys(&self) -> &HashSet<Key> {
         &self.keys
     }
 
     /// Returns if a key is currently being held.
-    pub fn key_pressed(&self, key: Keycode) -> bool {
+    pub fn key_pressed(&self, key: Key) -> bool {
         self.keys.contains(&key)
     }
 }

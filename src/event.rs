@@ -7,14 +7,15 @@ pub enum Event {
     Quit,
     AppTerminating,
     Window {
+        window_id: u32,
         win_event: WindowEvent,
     },
     KeyDown {
-        keycode: Option<Keycode>,
+        key: Option<Key>,
         repeat: bool,
     },
     KeyUp {
-        keycode: Option<Keycode>,
+        key: Option<Key>,
         repeat: bool,
     },
     TextInput {
@@ -26,13 +27,13 @@ pub enum Event {
         xrel: i32,
         yrel: i32,
     },
-    MouseButtonDown {
-        mouse_btn: MouseButton,
+    MouseDown {
+        button: Mouse,
         x: i32,
         y: i32,
     },
-    MouseButtonUp {
-        mouse_btn: MouseButton,
+    MouseUp {
+        button: Mouse,
         x: i32,
         y: i32,
     },
@@ -41,51 +42,51 @@ pub enum Event {
         y: i32,
     },
     JoyAxisMotion {
-        which: u32,
+        joy_id: u32,
         axis_idx: u8,
         value: i16,
     },
     JoyBallMotion {
-        which: u32,
+        joy_id: u32,
         ball_idx: u8,
         xrel: i16,
         yrel: i16,
     },
-    JoyButtonDown {
-        which: u32,
+    JoyDown {
+        joy_id: u32,
         button_idx: u8,
     },
-    JoyButtonUp {
-        which: u32,
+    JoyUp {
+        joy_id: u32,
         button_idx: u8,
     },
     JoyDeviceAdded {
-        which: u32,
+        joy_id: u32,
     },
     JoyDeviceRemoved {
-        which: u32,
+        joy_id: u32,
     },
     ControllerAxisMotion {
-        which: u32,
+        controller_id: u32,
         axis: Axis,
         value: i16,
     },
-    ControllerButtonDown {
-        which: u32,
+    ControllerDown {
+        controller_id: u32,
         button: Button,
     },
-    ControllerButtonUp {
-        which: u32,
+    ControllerUp {
+        controller_id: u32,
         button: Button,
     },
-    ControllerDeviceAdded {
-        which: u32,
+    ControllerAdded {
+        controller_id: u32,
     },
-    ControllerDeviceRemoved {
-        which: u32,
+    ControllerRemoved {
+        controller_id: u32,
     },
-    ControllerDeviceRemapped {
-        which: u32,
+    ControllerRemapped {
+        controller_id: u32,
     },
     FingerDown {
         touch_id: i64,
@@ -141,19 +142,19 @@ pub enum WindowEvent {
 #[allow(missing_docs)]
 #[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub enum MouseButton {
+pub enum Mouse {
     Left,
     Middle,
     Right,
     Unknown,
 }
 
-/// Wrapper around a concrete Keycode type.
+/// Wrapper around a concrete Key type.
 #[allow(missing_docs)]
 #[non_exhaustive]
 #[rustfmt::skip]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub enum Keycode {
+pub enum Key {
     Backspace, Tab, Return, Escape, Space, Exclaim, Quotedbl, Hash, Dollar, Percent, Ampersand,
     Quote, LeftParen, RightParen, Asterisk, Plus, Comma, Minus, Period, Slash, Num0, Num1, Num2,
     Num3, Num4, Num5, Num6, Num7, Num8, Num9, Colon, Semicolon, Less, Equals, Greater, Question,

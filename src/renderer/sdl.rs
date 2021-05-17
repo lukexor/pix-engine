@@ -3,7 +3,7 @@
 use super::{state::settings::BlendMode, Error, Position, RendererSettings, Rendering, Result};
 use crate::{
     color::Color,
-    event::{Axis, Button, Event, Keycode, MouseButton, WindowEvent},
+    event::{Axis, Button, Event, Key, Mouse, WindowEvent},
     image::Image,
     shape::Rect,
 };
@@ -125,6 +125,11 @@ impl Rendering for Renderer {
     /// Returns a single event or None if the event pump is empty.
     fn poll_event(&mut self) -> Option<Event> {
         self.event_pump.poll_event().map(|evt| evt.into())
+    }
+
+    /// Returns a single event or None if the event pump is empty.
+    fn poll_events(&mut self) -> Vec<Event> {
+        self.event_pump.poll_iter().map(|evt| evt.into()).collect()
     }
 
     /// Updates the canvas from the current back buffer.
@@ -359,19 +364,24 @@ impl From<SdlEvent> for Event {
         match event {
             SdlEvent::Quit { .. } => Quit,
             SdlEvent::AppTerminating { .. } => AppTerminating,
-            SdlEvent::Window { win_event, .. } => Window {
+            SdlEvent::Window {
+                window_id,
+                win_event,
+                ..
+            } => Window {
+                window_id,
                 win_event: win_event.into(),
             },
             SdlEvent::KeyDown {
                 keycode, repeat, ..
             } => KeyDown {
-                keycode: keycode.map(|k| k.into()),
+                key: keycode.map(|k| k.into()),
                 repeat,
             },
             SdlEvent::KeyUp {
                 keycode, repeat, ..
             } => KeyUp {
-                keycode: keycode.map(|k| k.into()),
+                key: keycode.map(|k| k.into()),
                 repeat,
             },
             SdlEvent::TextInput { text, .. } => TextInput { text },
@@ -380,15 +390,15 @@ impl From<SdlEvent> for Event {
             } => MouseMotion { x, y, xrel, yrel },
             SdlEvent::MouseButtonDown {
                 mouse_btn, x, y, ..
-            } => MouseButtonDown {
-                mouse_btn: mouse_btn.into(),
+            } => MouseDown {
+                button: mouse_btn.into(),
                 x,
                 y,
             },
             SdlEvent::MouseButtonUp {
                 mouse_btn, x, y, ..
-            } => MouseButtonUp {
-                mouse_btn: mouse_btn.into(),
+            } => MouseUp {
+                button: mouse_btn.into(),
                 x,
                 y,
             },
@@ -399,7 +409,7 @@ impl From<SdlEvent> for Event {
                 value,
                 ..
             } => JoyAxisMotion {
-                which,
+                joy_id: which,
                 axis_idx,
                 value,
             },
@@ -410,37 +420,49 @@ impl From<SdlEvent> for Event {
                 yrel,
                 ..
             } => JoyBallMotion {
-                which,
+                joy_id: which,
                 ball_idx,
                 xrel,
                 yrel,
             },
             SdlEvent::JoyButtonDown {
                 which, button_idx, ..
-            } => JoyButtonDown { which, button_idx },
+            } => JoyDown {
+                joy_id: which,
+                button_idx,
+            },
             SdlEvent::JoyButtonUp {
                 which, button_idx, ..
-            } => JoyButtonUp { which, button_idx },
-            SdlEvent::JoyDeviceAdded { which, .. } => JoyDeviceAdded { which },
-            SdlEvent::JoyDeviceRemoved { which, .. } => JoyDeviceRemoved { which },
+            } => JoyUp {
+                joy_id: which,
+                button_idx,
+            },
+            SdlEvent::JoyDeviceAdded { which, .. } => JoyDeviceAdded { joy_id: which },
+            SdlEvent::JoyDeviceRemoved { which, .. } => JoyDeviceRemoved { joy_id: which },
             SdlEvent::ControllerAxisMotion {
                 which, axis, value, ..
             } => ControllerAxisMotion {
-                which,
+                controller_id: which,
                 axis: axis.into(),
                 value,
             },
-            SdlEvent::ControllerButtonDown { which, button, .. } => ControllerButtonDown {
-                which,
+            SdlEvent::ControllerButtonDown { which, button, .. } => ControllerDown {
+                controller_id: which,
                 button: button.into(),
             },
-            SdlEvent::ControllerButtonUp { which, button, .. } => ControllerButtonUp {
-                which,
+            SdlEvent::ControllerButtonUp { which, button, .. } => ControllerUp {
+                controller_id: which,
                 button: button.into(),
             },
-            SdlEvent::ControllerDeviceAdded { which, .. } => ControllerDeviceAdded { which },
-            SdlEvent::ControllerDeviceRemoved { which, .. } => ControllerDeviceRemoved { which },
-            SdlEvent::ControllerDeviceRemapped { which, .. } => ControllerDeviceRemapped { which },
+            SdlEvent::ControllerDeviceAdded { which, .. } => ControllerAdded {
+                controller_id: which,
+            },
+            SdlEvent::ControllerDeviceRemoved { which, .. } => ControllerRemoved {
+                controller_id: which,
+            },
+            SdlEvent::ControllerDeviceRemapped { which, .. } => ControllerRemapped {
+                controller_id: which,
+            },
             SdlEvent::FingerDown {
                 touch_id,
                 finger_id,
@@ -521,9 +543,9 @@ impl From<SdlWindowEvent> for WindowEvent {
     }
 }
 
-impl From<SdlKeycode> for Keycode {
+impl From<SdlKeycode> for Key {
     fn from(keycode: SdlKeycode) -> Self {
-        use Keycode::*;
+        use Key::*;
         match keycode {
             SdlKeycode::Backspace => Backspace,
             SdlKeycode::Tab => Tab,
@@ -634,9 +656,9 @@ impl From<SdlKeycode> for Keycode {
     }
 }
 
-impl From<SdlMouseButton> for MouseButton {
+impl From<SdlMouseButton> for Mouse {
     fn from(button: SdlMouseButton) -> Self {
-        use MouseButton::*;
+        use Mouse::*;
         match button {
             SdlMouseButton::Left => Left,
             SdlMouseButton::Middle => Middle,

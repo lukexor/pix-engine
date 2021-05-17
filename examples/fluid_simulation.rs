@@ -327,7 +327,7 @@ impl AppState for App {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         s.background(BLACK);
         s.clear();
-        if s.mouse_pressed(MouseButton::Left) {
+        if s.mouse_pressed(Mouse::Left) {
             self.drag(s)?;
         }
         self.flame_on(s)?;

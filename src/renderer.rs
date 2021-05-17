@@ -111,6 +111,9 @@ pub(crate) trait Rendering: Sized {
     /// Returns a single event or None if the event pump is empty.
     fn poll_event(&mut self) -> Option<Event>;
 
+    /// Returns an iterator of events from the event pump.
+    fn poll_events(&mut self) -> Vec<Event>;
+
     /// Updates the canvas from the current back buffer.
     fn present(&mut self);
 

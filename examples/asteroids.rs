@@ -153,13 +153,13 @@ impl AppState for Asteroids {
         let elapsed = s.delta_time();
 
         // Steer
-        if s.key_pressed(Keycode::Left) {
+        if s.key_pressed(Key::Left) {
             self.ship.angle -= 5.0 * elapsed;
-        } else if s.keys().contains(&Keycode::Right) {
+        } else if s.keys().contains(&Key::Right) {
             self.ship.angle += 5.0 * elapsed;
         }
         // Thrust
-        if s.key_pressed(Keycode::Up) {
+        if s.key_pressed(Key::Up) {
             self.ship.vel += Vector::from_angle(self.ship.angle, SHIP_THRUST * elapsed);
         }
 
@@ -261,20 +261,20 @@ impl AppState for Asteroids {
         Ok(())
     }
 
-    fn on_key_pressed(&mut self, s: &mut PixState, key: Keycode) {
+    fn on_key_pressed(&mut self, s: &mut PixState, key: Key) {
         match key {
-            Keycode::Escape => self.paused = !self.paused,
-            Keycode::R => self.reset(s),
-            Keycode::Space if self.gameover => {
+            Key::Escape => self.paused = !self.paused,
+            Key::R => self.reset(s),
+            Key::Space if self.gameover => {
                 self.reset(s);
             }
             _ => (),
         }
     }
 
-    fn on_key_released(&mut self, _s: &mut PixState, key: Keycode) {
+    fn on_key_released(&mut self, _s: &mut PixState, key: Key) {
         match key {
-            Keycode::Space if !self.gameover => {
+            Key::Space if !self.gameover => {
                 self.bullets.push(SpaceObj::new(
                     0,
                     self.ship.pos,

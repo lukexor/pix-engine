@@ -348,8 +348,8 @@ impl AppState for RayScene {
         Ok(())
     }
 
-    fn on_mouse_pressed(&mut self, s: &mut PixState, btn: MouseButton) {
-        if btn == MouseButton::Left {
+    fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse) {
+        if btn == Mouse::Left {
             let (mx, my) = s.mouse_pos().into();
             if mx > 0 && mx <= s.width() as i32 && my > 0 && my <= s.height() as i32 {
                 let i = self.get_cell_index(mx, my);
@@ -361,7 +361,7 @@ impl AppState for RayScene {
     }
 
     fn on_mouse_dragged(&mut self, s: &mut PixState) {
-        if s.mouse_buttons().contains(&MouseButton::Left) {
+        if s.mouse_buttons().contains(&Mouse::Left) {
             let (mx, my) = s.mouse_pos().into();
             let (px, py) = s.pmouse_pos().into();
             if mx > 0 && mx <= s.width() as i32 && my > 0 && my <= s.height() as i32 {

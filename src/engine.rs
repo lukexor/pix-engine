@@ -204,16 +204,12 @@ impl PixEngine {
                     }
                     _ => (),
                 },
-                Event::KeyDown {
-                    keycode: Some(key), ..
-                } => {
+                Event::KeyDown { key: Some(key), .. } => {
                     self.state.key_down = true;
                     self.state.keys.insert(key);
                     app.on_key_pressed(&mut self.state, key);
                 }
-                Event::KeyUp {
-                    keycode: Some(key), ..
-                } => {
+                Event::KeyUp { key: Some(key), .. } => {
                     self.state.key_down = false;
                     self.state.keys.remove(&key);
                     app.on_key_released(&mut self.state, key);
@@ -228,15 +224,15 @@ impl PixEngine {
                         app.on_mouse_dragged(&mut self.state);
                     }
                 }
-                Event::MouseButtonDown { mouse_btn, .. } => {
+                Event::MouseDown { button, .. } => {
                     self.state.mouse_down = true;
-                    self.state.mouse_buttons.insert(mouse_btn);
-                    app.on_mouse_pressed(&mut self.state, mouse_btn);
+                    self.state.mouse_buttons.insert(button);
+                    app.on_mouse_pressed(&mut self.state, button);
                 }
-                Event::MouseButtonUp { mouse_btn, .. } => {
+                Event::MouseUp { button, .. } => {
                     self.state.mouse_down = false;
-                    self.state.mouse_buttons.remove(&mouse_btn);
-                    app.on_mouse_released(&mut self.state, mouse_btn);
+                    self.state.mouse_buttons.remove(&button);
+                    app.on_mouse_released(&mut self.state, button);
                 }
                 Event::MouseWheel { x, y, .. } => {
                     app.on_mouse_wheel(&mut self.state, x, y);
