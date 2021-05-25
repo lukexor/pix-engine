@@ -1,12 +1,6 @@
 //! Drawing functions
 
-use crate::{
-    image::Image,
-    renderer::{self, Rendering},
-    shape::{Circle, Ellipse, Line, Point, Rect, Square, Triangle},
-    state::{settings::DrawMode, PixState},
-    vector::Vector,
-};
+use crate::{prelude::*, renderer::Rendering};
 
 // TODO: StrokeCap { Round, Square, PRoject }
 // TODO: StrokeJoin { Miter, Bevel, Round }
@@ -38,13 +32,48 @@ impl PixState {
     // image_projected(img: Image, dx: i32, dy: i32, dw: u32, dh: u32, sx: i32, sy: i32, sw: u32, sh: u32)
 
     /// Create a texture to render to.
-    pub fn create_texture(&mut self, _width: u32, _height: u32) -> renderer::Result<usize> {
-        todo!("create_texture");
-        // self.renderer.create_texture(width, height)
+    pub fn create_texture<F>(&mut self, format: F, width: u32, height: u32) -> RendererResult<usize>
+    where
+        F: Into<Option<PixelFormat>>,
+    {
+        self.renderer.create_texture(format.into(), width, height)
+    }
+
+    /// Delete a texture.
+    pub fn delete_texture(&mut self, texture_id: usize) -> RendererResult<()> {
+        self.renderer.delete_texture(texture_id)
+    }
+
+    /// Update texture with pixel data.
+    pub fn update_texture<R>(
+        &mut self,
+        texture_id: usize,
+        rect: Option<R>,
+        pixels: &[u8],
+        pitch: usize,
+    ) -> RendererResult<()>
+    where
+        R: Into<Rect>,
+    {
+        self.renderer
+            .update_texture(texture_id, rect, pixels, pitch)
+    }
+
+    /// Draw texture canvas.
+    pub fn draw_texture<R>(
+        &mut self,
+        texture_id: usize,
+        src: Option<R>,
+        dst: Option<R>,
+    ) -> RendererResult<()>
+    where
+        R: Into<Rect>,
+    {
+        self.renderer.draw_texture(texture_id, src, dst)
     }
 
     /// Draw text to the current canvas.
-    pub fn text<S, P>(&mut self, p: P, text: S) -> renderer::Result<()>
+    pub fn text<S, P>(&mut self, p: P, text: S) -> RendererResult<()>
     where
         S: AsRef<str>,
         P: Into<Point>,
@@ -62,7 +91,7 @@ impl PixState {
     }
 
     /// Draw a point to the current canvas.
-    pub fn point<P>(&mut self, p: P) -> renderer::Result<()>
+    pub fn point<P>(&mut self, p: P) -> RendererResult<()>
     where
         P: Into<Point>,
     {
@@ -71,12 +100,12 @@ impl PixState {
     }
 
     /// Draw an array of pixels to the current canvas.
-    pub fn pixels(&mut self, pixels: &[u8], pitch: usize) -> renderer::Result<()> {
-        self.renderer.points(pixels, pitch)
+    pub fn pixels(&mut self, pixels: &[u8], pitch: usize) -> RendererResult<()> {
+        self.renderer.pixels(pixels, pitch)
     }
 
     /// Draw a line to the current canvas.
-    pub fn line<L>(&mut self, line: L) -> renderer::Result<()>
+    pub fn line<L>(&mut self, line: L) -> RendererResult<()>
     where
         L: Into<Line>,
     {
@@ -87,7 +116,7 @@ impl PixState {
     }
 
     /// Draw a triangle to the current canvas.
-    pub fn triangle<T>(&mut self, triangle: T) -> renderer::Result<()>
+    pub fn triangle<T>(&mut self, triangle: T) -> RendererResult<()>
     where
         T: Into<Triangle>,
     {
@@ -101,7 +130,7 @@ impl PixState {
     }
 
     /// Draw a square to the current canvas.
-    pub fn square<S>(&mut self, s: S) -> renderer::Result<()>
+    pub fn square<S>(&mut self, s: S) -> RendererResult<()>
     where
         S: Into<Square>,
     {
@@ -110,7 +139,7 @@ impl PixState {
     }
 
     /// Draw a rectangle to the current canvas.
-    pub fn rect<R>(&mut self, r: R) -> renderer::Result<()>
+    pub fn rect<R>(&mut self, r: R) -> RendererResult<()>
     where
         R: Into<Rect>,
     {
@@ -123,8 +152,14 @@ impl PixState {
         self.renderer.rect(x, y, r.w, r.h, s.fill, s.stroke)
     }
 
+    /// Draw a polygon to the current canvas.
+    pub fn polygon(&mut self, vx: &[i16], vy: &[i16]) -> RendererResult<()> {
+        let s = &self.settings;
+        self.renderer.polygon(vx, vy, s.fill, s.stroke)
+    }
+
     /// Draw a circle to the current canvas.
-    pub fn circle<C>(&mut self, c: C) -> renderer::Result<()>
+    pub fn circle<C>(&mut self, c: C) -> RendererResult<()>
     where
         C: Into<Circle>,
     {
@@ -133,7 +168,7 @@ impl PixState {
     }
 
     /// Draw a ellipse to the current canvas.
-    pub fn ellipse<E>(&mut self, e: E) -> renderer::Result<()>
+    pub fn ellipse<E>(&mut self, e: E) -> RendererResult<()>
     where
         E: Into<Ellipse>,
     {
@@ -147,7 +182,7 @@ impl PixState {
     }
 
     /// Draw an image to the current canvas.
-    pub fn image(&mut self, x: i32, y: i32, img: &Image) -> renderer::Result<()> {
+    pub fn image(&mut self, x: i32, y: i32, img: &Image) -> RendererResult<()> {
         self.renderer.image(x, y, img)
     }
 
@@ -159,7 +194,7 @@ impl PixState {
         w: u32,
         h: u32,
         img: &Image,
-    ) -> renderer::Result<()> {
+    ) -> RendererResult<()> {
         self.renderer.image_resized(x, y, w, h, img)
     }
 
@@ -170,7 +205,7 @@ impl PixState {
         p: P,
         angle: f64,
         scale: f64,
-    ) -> renderer::Result<()>
+    ) -> RendererResult<()>
     where
         P: Into<Vector>,
     {
@@ -179,32 +214,17 @@ impl PixState {
             return Ok(());
         }
         // TODO: cache?
-        let mut transformed_verts = vertexes.to_vec();
         let (sin, cos) = angle.sin_cos();
-        for (i, vertex) in transformed_verts.iter_mut().enumerate() {
-            // Rotate
-            vertex.0 = vertexes[i].0 * cos - vertexes[i].1 * sin;
-            vertex.1 = vertexes[i].0 * sin + vertexes[i].1 * cos;
-
-            // Scale
-            vertex.0 *= scale;
-            vertex.1 *= scale;
-
-            // Translate
-            vertex.0 += p.x;
-            vertex.1 += p.y;
+        let mut tx = Vec::with_capacity(vertexes.len());
+        let mut ty = Vec::with_capacity(vertexes.len());
+        for vertex in vertexes.iter() {
+            // Rotate / Scale / Translate
+            let (vx, vy) = vertex;
+            let x = (vx * cos - vy * sin) * scale + p.x;
+            let y = (vx * sin + vy * cos) * scale + p.y;
+            tx.push(x.round() as i16);
+            ty.push(y.round() as i16);
         }
-
-        // Draw
-        for i in 0..transformed_verts.len() - 1 {
-            let p1: Point = transformed_verts[i].into();
-            let p2: Point = transformed_verts[i + 1].into();
-            self.line((p1, p2))?;
-        }
-        let p1: Point = transformed_verts[transformed_verts.len() - 1].into();
-        let p2: Point = transformed_verts[0].into();
-        self.line((p1, p2))?;
-
-        Ok(())
+        Ok(self.polygon(&tx, &ty)?)
     }
 }

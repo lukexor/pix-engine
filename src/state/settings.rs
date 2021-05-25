@@ -46,6 +46,16 @@ pub enum BlendMode {
     Mod,
 }
 
+/// PixelFormat for interpreting bytes when using textures.
+#[non_exhaustive]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum PixelFormat {
+    /// 8-bit Red, Green, Blue
+    Rgb,
+    /// 8-bit Red, Green, Blue, Alpha
+    Rgba,
+}
+
 /// Several settings used to change various functionality of the engine.
 #[derive(Debug, Clone)]
 pub(crate) struct Settings {

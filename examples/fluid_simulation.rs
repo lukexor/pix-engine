@@ -351,8 +351,6 @@ pub fn main() {
         .vsync_enabled()
         .build()
         .expect("valid engine");
-
     let mut app = App::new();
-
     engine.run(&mut app).expect("ran successfully");
 }

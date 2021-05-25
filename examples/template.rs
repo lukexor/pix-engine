@@ -33,8 +33,6 @@ pub fn main() {
         .position_centered()
         .build()
         .expect("valid engine");
-
     let mut app = App::new();
-
     engine.run(&mut app).expect("ran successfully");
 }

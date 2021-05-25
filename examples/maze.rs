@@ -178,8 +178,6 @@ pub fn main() {
         .vsync_enabled()
         .build()
         .expect("valid engine");
-
     let mut app = Maze::new();
-
     engine.run(&mut app).expect("ran successfully");
 }

@@ -10,6 +10,7 @@
     unused,
     variant_size_differences
 )]
+// TODO: Fix intra-doc links
 
 //! # Pix-Engine
 //!
@@ -64,14 +65,14 @@ pub mod prelude {
     pub use common::{Error as PixError, Result as PixResult};
     pub use engine::PixEngine;
     pub use event::*;
-    pub use image::{Error as ImageError, Image};
+    pub use image::{Error as ImageError, Image, Result as ImageResult};
     pub use math::{constants::*, map, Scalar};
-    pub use renderer::Error as RendererError;
+    pub use renderer::{Error as RendererError, Position, Result as RendererResult};
     pub use shape::*;
     pub use state::{
         environment::WindowId,
-        settings::{ArcMode, BlendMode, DrawMode},
-        AppState, Error as StateError, PixState,
+        settings::{ArcMode, BlendMode, DrawMode, PixelFormat},
+        AppState, Error as StateError, PixState, Result as StateResult,
     };
     pub use vector::Vector;
     // Color macros

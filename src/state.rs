@@ -1,10 +1,8 @@
 //! State management for `PixEngine`.
 
 use crate::{
-    common,
-    event::{Event, Key, Mouse},
-    renderer::{self, Renderer, Rendering},
-    shape::Point,
+    prelude::*,
+    renderer::{Renderer, Rendering},
 };
 use environment::Environment;
 use settings::Settings;
@@ -14,7 +12,7 @@ pub mod environment;
 pub mod settings;
 
 /// The result type for [`PixState`] operations.
-type Result<T> = result::Result<T, Error>;
+pub type Result<T> = result::Result<T, Error>;
 
 /// The error type for [`PixState`] operations.
 #[non_exhaustive]
@@ -23,7 +21,7 @@ pub enum Error {
     /// IO specific errors.
     IoError(io::Error),
     /// Renderer specific errors.
-    RendererError(renderer::Error),
+    RendererError(RendererError),
     /// Unknown errors.
     Other(Cow<'static, str>),
 }
@@ -31,51 +29,41 @@ pub enum Error {
 /// Defines state changing operations that are called while the `PixEngine` is running.
 pub trait AppState {
     /// Called once upon engine start when `PixEngine::run()` is called.
-    fn on_start(&mut self, _s: &mut PixState) -> common::Result<()> {
+    fn on_start(&mut self, _s: &mut PixState) -> PixResult<()> {
         Ok(())
     }
 
     /// Called every frame based on the target_frame_rate. By default this is as often as possible.
-    fn on_update(&mut self, _s: &mut PixState) -> common::Result<()>;
+    fn on_update(&mut self, _s: &mut PixState) -> PixResult<()>;
 
     /// Called once when the engine detects a close/exit event.
-    fn on_stop(&mut self, _s: &mut PixState) -> common::Result<()> {
+    fn on_stop(&mut self, _s: &mut PixState) -> PixResult<()> {
         Ok(())
     }
 
     // TODO: Make on calls return result
     /// Called each time a key is pressed.
-    fn on_key_pressed(
-        &mut self,
-        _s: &mut PixState,
-        _key: Key,
-        _repeat: bool,
-    ) -> common::Result<()> {
+    fn on_key_pressed(&mut self, _s: &mut PixState, _key: Key, _repeat: bool) -> PixResult<()> {
         Ok(())
     }
 
     /// Called each time a key is released.
-    fn on_key_released(
-        &mut self,
-        _s: &mut PixState,
-        _key: Key,
-        _repeat: bool,
-    ) -> common::Result<()> {
+    fn on_key_released(&mut self, _s: &mut PixState, _key: Key, _repeat: bool) -> PixResult<()> {
         Ok(())
     }
 
     /// Called each time a key is typed. Ignores special keys like Backspace.
-    fn on_key_typed(&mut self, _s: &mut PixState, _text: &str) -> common::Result<()> {
+    fn on_key_typed(&mut self, _s: &mut PixState, _text: &str) -> PixResult<()> {
         Ok(())
     }
 
     /// Called each time a mouse button is pressed.
-    fn on_mouse_dragged(&mut self, _s: &mut PixState) -> common::Result<()> {
+    fn on_mouse_dragged(&mut self, _s: &mut PixState) -> PixResult<()> {
         Ok(())
     }
 
     /// Called each time a mouse button is pressed.
-    fn on_mouse_pressed(&mut self, _s: &mut PixState, _btn: Mouse) -> common::Result<()> {
+    fn on_mouse_pressed(&mut self, _s: &mut PixState, _btn: Mouse) -> PixResult<()> {
         Ok(())
     }
 
@@ -84,22 +72,17 @@ pub trait AppState {
     // TODO: on_mouse_motion
 
     /// Called each time a mouse button is released.
-    fn on_mouse_released(&mut self, _s: &mut PixState, _btn: Mouse) -> common::Result<()> {
+    fn on_mouse_released(&mut self, _s: &mut PixState, _btn: Mouse) -> PixResult<()> {
         Ok(())
     }
 
     /// Called each time the mouse wheel is scrolled.
-    fn on_mouse_wheel(
-        &mut self,
-        _s: &mut PixState,
-        _x_delta: i32,
-        _y_delta: i32,
-    ) -> common::Result<()> {
+    fn on_mouse_wheel(&mut self, _s: &mut PixState, _x_delta: i32, _y_delta: i32) -> PixResult<()> {
         Ok(())
     }
 
     /// Called each time the window is resized.
-    fn on_window_resized(&mut self, _s: &mut PixState) -> common::Result<()> {
+    fn on_window_resized(&mut self, _s: &mut PixState) -> PixResult<()> {
         Ok(())
     }
 }
@@ -118,7 +101,7 @@ pub struct PixState {
     pub(crate) key_down: bool,
     pub(crate) keys: HashSet<Key>,
     pub(crate) perlin: Option<Vec<f64>>,
-    // TODO: state_stack for push/pop
+    pub(crate) setting_stack: Vec<Settings>,
 }
 
 impl PixState {
@@ -140,6 +123,7 @@ impl PixState {
             keys: HashSet::new(),
             // TODO: move to cache object
             perlin: None,
+            setting_stack: Vec::new(),
         }
     }
 
@@ -209,16 +193,6 @@ impl PixState {
     pub fn key_pressed(&self, key: Key) -> bool {
         self.keys.contains(&key)
     }
-
-    /// Returns a single event or None if the event pump is empty.
-    pub fn poll_event(&mut self) -> Option<Event> {
-        self.renderer.poll_event()
-    }
-
-    /// Returns an iterator of events from the event pump.
-    pub fn poll_events(&mut self) -> Vec<Event> {
-        self.renderer.poll_events()
-    }
 }
 
 impl fmt::Display for Error {
@@ -243,7 +217,7 @@ impl error::Error for Error {
     }
 }
 
-impl From<Error> for common::Error {
+impl From<Error> for PixError {
     fn from(err: Error) -> Self {
         Self::StateError(err)
     }

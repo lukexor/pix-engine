@@ -100,20 +100,3 @@ fn test_run_engine_stop() {
     assert_eq!(app.update_count, 2, "on_update was called");
     assert_eq!(app.stop_count, 2, "on_stop was called");
 }
-
-#[test]
-#[ignore = "engine can only be tested in the main thread. --test-threads=1"]
-fn test_engine_state_env() {
-    let mut eng = create_engine().unwrap();
-    let mut app = App::default();
-
-    assert_eq!(eng.state().focused(), false, "not focused before run");
-
-    let _ = eng.run(&mut app);
-    assert_eq!(eng.state().focused(), true, "focused after run");
-    assert_eq!(eng.state().width(), 800, "valid width");
-    assert_eq!(eng.state().height(), 600, "valid height");
-
-    eng.state_mut().fullscreen(true);
-    eng.state_mut().fullscreen(false);
-}

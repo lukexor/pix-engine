@@ -104,11 +104,8 @@ impl PixEngineBuilder {
     ///
     /// Returns `Err` if any options provided are invalid.
     pub fn build(&self) -> Result<PixEngine> {
-        let renderer = Renderer::init(self.settings.clone())?;
-        let mut state = PixState::init(&self.settings.title, renderer);
-        state.show_frame_rate(self.settings.show_frame_rate);
         Ok(PixEngine {
-            state,
+            settings: self.settings.clone(),
             last_frame_time: Instant::now(),
             frame_timer: Duration::from_secs(1),
             frame_counter: 0,
@@ -119,7 +116,7 @@ impl PixEngineBuilder {
 /// The core engine that maintains the frame loop, event handling, etc.
 #[derive(Debug)]
 pub struct PixEngine {
-    state: PixState,
+    settings: RendererSettings,
     frame_timer: Duration,
     last_frame_time: Instant,
     frame_counter: u64,
@@ -141,8 +138,19 @@ impl PixEngine {
     where
         A: AppState,
     {
-        self.start(app)?;
-        if self.state.env.quit {
+        let renderer = Renderer::init(self.settings.clone())?;
+        let mut state = PixState::init(&self.settings.title, renderer);
+        state.show_frame_rate(self.settings.show_frame_rate);
+
+        // Clear and present once on start
+        state.clear();
+        state.renderer.present();
+
+        // Handle events before on_start to initialize window
+        self.handle_events(&mut state, app)?;
+
+        app.on_start(&mut state)?;
+        if state.env.quit {
             return Ok(());
         }
 
@@ -151,63 +159,39 @@ impl PixEngine {
         'on_stop: loop {
             // running loop continues until an event or on_update returns false or errors
             'running: loop {
-                self.handle_events(app)?;
-                if self.state.env.quit {
+                self.handle_events(&mut state, app)?;
+                if state.env.quit {
                     break 'running;
-                } else if self.state.settings.paused {
+                } else if state.settings.paused {
                     std::thread::sleep(Duration::from_millis(16));
                     continue;
                 }
 
-                app.on_update(&mut self.state)?;
-                self.state.renderer.present();
-                self.update_frame_rate()?;
+                app.on_update(&mut state)?;
+                state.renderer.present();
+                self.update_frame_rate(&mut state)?;
             }
-            app.on_stop(&mut self.state)?;
-            if self.state.env.quit {
+            app.on_stop(&mut state)?;
+            if state.env.quit {
                 break 'on_stop;
             }
         }
         Ok(())
     }
 
-    /// Returns a reference to `PixState`.
-    pub fn state(&self) -> &PixState {
-        &self.state
-    }
-
-    /// Returns a mutable reference to the `PixState`.
-    pub fn state_mut(&mut self) -> &mut PixState {
-        &mut self.state
-    }
-
-    /// Setup at the start of running the engine.
-    fn start<A>(&mut self, app: &mut A) -> Result<()>
-    where
-        A: AppState,
-    {
-        // Clear and present once on start
-        self.state.clear();
-        self.state.renderer.present();
-        // Handle events before on_start to initialize window
-        self.handle_events(app)?;
-        app.on_start(&mut self.state)?;
-        Ok(())
-    }
-
     /// Handle events from the event pump.
-    fn handle_events<A>(&mut self, app: &mut A) -> Result<()>
+    fn handle_events<A>(&mut self, state: &mut PixState, app: &mut A) -> Result<()>
     where
         A: AppState,
     {
-        while let Some(event) = self.state.renderer.poll_event() {
+        while let Some(event) = state.renderer.poll_event() {
             match event {
-                Event::Quit { .. } | Event::AppTerminating { .. } => self.state.quit(),
+                Event::Quit { .. } | Event::AppTerminating { .. } => state.quit(),
                 Event::Window { win_event, .. } => match win_event {
-                    WindowEvent::FocusGained => self.state.env.focused = true,
-                    WindowEvent::FocusLost => self.state.env.focused = false,
+                    WindowEvent::FocusGained => state.env.focused = true,
+                    WindowEvent::FocusLost => state.env.focused = false,
                     WindowEvent::Resized(_, _) | WindowEvent::SizeChanged(_, _) => {
-                        app.on_window_resized(&mut self.state)?
+                        app.on_window_resized(state)?
                     }
                     _ => (),
                 },
@@ -215,40 +199,40 @@ impl PixEngine {
                     key: Some(key),
                     repeat,
                 } => {
-                    self.state.key_down = true;
-                    self.state.keys.insert(key);
-                    app.on_key_pressed(&mut self.state, key, repeat)?;
+                    state.key_down = true;
+                    state.keys.insert(key);
+                    app.on_key_pressed(state, key, repeat)?;
                 }
                 Event::KeyUp {
                     key: Some(key),
                     repeat,
                 } => {
-                    self.state.key_down = false;
-                    self.state.keys.remove(&key);
-                    app.on_key_released(&mut self.state, key, repeat)?;
+                    state.key_down = false;
+                    state.keys.remove(&key);
+                    app.on_key_released(state, key, repeat)?;
                 }
                 Event::TextInput { text, .. } => {
-                    app.on_key_typed(&mut self.state, &text)?;
+                    app.on_key_typed(state, &text)?;
                 }
                 Event::MouseMotion { x, y, .. } => {
-                    self.state.pmouse_pos = self.state.mouse_pos;
-                    self.state.mouse_pos = (x, y).into();
-                    if self.state.mouse_down {
-                        app.on_mouse_dragged(&mut self.state)?;
+                    state.pmouse_pos = state.mouse_pos;
+                    state.mouse_pos = (x, y).into();
+                    if state.mouse_down {
+                        app.on_mouse_dragged(state)?;
                     }
                 }
                 Event::MouseDown { button, .. } => {
-                    self.state.mouse_down = true;
-                    self.state.mouse_buttons.insert(button);
-                    app.on_mouse_pressed(&mut self.state, button)?;
+                    state.mouse_down = true;
+                    state.mouse_buttons.insert(button);
+                    app.on_mouse_pressed(state, button)?;
                 }
                 Event::MouseUp { button, .. } => {
-                    self.state.mouse_down = false;
-                    self.state.mouse_buttons.remove(&button);
-                    app.on_mouse_released(&mut self.state, button)?;
+                    state.mouse_down = false;
+                    state.mouse_buttons.remove(&button);
+                    app.on_mouse_released(state, button)?;
                 }
                 Event::MouseWheel { x, y, .. } => {
-                    app.on_mouse_wheel(&mut self.state, x, y)?;
+                    app.on_mouse_wheel(state, x, y)?;
                 }
                 _ => (),
             }
@@ -257,22 +241,18 @@ impl PixEngine {
     }
 
     /// Updates the average frame rate and the window title if setting is enabled.
-    fn update_frame_rate(&mut self) -> Result<()> {
+    fn update_frame_rate(&mut self, state: &mut PixState) -> Result<()> {
         let now = Instant::now();
-        self.state.env.delta_time = now - self.last_frame_time;
+        state.env.delta_time = now - self.last_frame_time;
         self.last_frame_time = now;
-        if self.state.settings.show_frame_rate {
-            self.frame_timer += self.state.env.delta_time;
+        if state.settings.show_frame_rate {
+            self.frame_timer += state.env.delta_time;
             self.frame_counter += 1;
-            self.state.env.frame_count += 1;
+            state.env.frame_count += 1;
             if self.frame_timer >= ONE_SECOND {
-                self.state.env.frame_rate = self.frame_counter;
-                let title = format!(
-                    "{} - FPS: {}",
-                    self.state.title(),
-                    self.state.env.frame_rate
-                );
-                self.state.renderer.set_title(&title)?;
+                state.env.frame_rate = self.frame_counter;
+                let title = format!("{} - FPS: {}", state.title(), state.env.frame_rate);
+                state.renderer.set_title(&title)?;
                 self.frame_timer -= ONE_SECOND;
                 self.frame_counter = 0;
             }

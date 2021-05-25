@@ -1,20 +1,17 @@
 //! Generic graphics renderer interfaces
 
-use crate::{
-    color::Color,
-    common,
-    event::Event,
-    image::Image,
-    shape::Rect,
-    state::{self, environment::WindowId, settings::BlendMode},
-};
+use crate::prelude::*;
 use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
 
-#[cfg_attr(feature = "sdl2", path = "renderer/sdl.rs")]
-#[cfg_attr(feature = "wasm", path = "renderer/wasm.rs")]
-pub(crate) mod renderer_impl;
+#[cfg(not(target_arch = "wasm32"))]
+pub(crate) mod sdl;
+#[cfg(not(target_arch = "wasm32"))]
+pub use sdl::Renderer;
 
-pub use renderer_impl::Renderer;
+#[cfg(target_arch = "wasm32")]
+pub(crate) mod wasm;
+#[cfg(target_arch = "wasm32")]
+pub use wasm::Renderer;
 
 /// The result type for [`Renderer`] operations.
 pub type Result<T> = result::Result<T, Error>;
@@ -31,6 +28,8 @@ pub enum Error {
     InvalidText(&'static str, NulError),
     /// Invalid (x, y) window position.
     InvalidPosition(Position, Position),
+    /// Invalid Texture.
+    InvalidTexture(usize),
     /// An overflow occurred
     Overflow(Cow<'static, str>, u32),
     /// Any other unknown error as a string.
@@ -145,6 +144,33 @@ pub(crate) trait Rendering: Sized {
     /// Set the application to fullscreen or not.
     fn fullscreen(&mut self, val: bool);
 
+    /// Create a texture to draw to.
+    fn create_texture(
+        &mut self,
+        format: Option<PixelFormat>,
+        width: u32,
+        height: u32,
+    ) -> Result<usize>;
+
+    /// Delete a texture.
+    fn delete_texture(&mut self, texture_id: usize) -> Result<()>;
+
+    /// Update texture with pixel data.
+    fn update_texture<R>(
+        &mut self,
+        texture_id: usize,
+        rect: Option<R>,
+        pixels: &[u8],
+        pitch: usize,
+    ) -> Result<()>
+    where
+        R: Into<Rect>;
+
+    /// Draw texture canvas.
+    fn draw_texture<R>(&mut self, texture_id: usize, src: Option<R>, dst: Option<R>) -> Result<()>
+    where
+        R: Into<Rect>;
+
     /// Draw text to the current canvas.
     fn text<S>(
         &mut self,
@@ -162,7 +188,7 @@ pub(crate) trait Rendering: Sized {
     fn point(&mut self, x: i32, y: i32, stroke: Option<Color>) -> Result<()>;
 
     /// Draw an array of pixels to the current canvas.
-    fn points(&mut self, pixels: &[u8], pitch: usize) -> Result<()>;
+    fn pixels(&mut self, pixels: &[u8], pitch: usize) -> Result<()>;
 
     /// Draw a line to the current canvas.
     fn line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, stroke: Option<Color>) -> Result<()>;
@@ -188,6 +214,15 @@ pub(crate) trait Rendering: Sized {
         y: i32,
         width: u32,
         height: u32,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()>;
+
+    /// Draw a polygon to the current canvas.
+    fn polygon(
+        &mut self,
+        vx: &[i16],
+        vy: &[i16],
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()>;
@@ -221,6 +256,7 @@ impl fmt::Display for Error {
             IoError(err) => err.fmt(f),
             InvalidText(msg, err) => write!(f, "Invalid text: {}, {}", msg, err),
             InvalidPosition(x, y) => write!(f, "Invalid window position: {:?}", (x, y)),
+            InvalidTexture(id) => write!(f, "Invalid texture_id: {}", id),
             Overflow(err, val) => write!(f, "{}: {}", err, val),
             Other(err) => write!(f, "Unknown renderer error: {}", err),
         }
@@ -237,13 +273,13 @@ impl error::Error for Error {
     }
 }
 
-impl From<Error> for common::Error {
+impl From<Error> for PixError {
     fn from(err: Error) -> Self {
         Self::RendererError(err)
     }
 }
 
-impl From<Error> for state::Error {
+impl From<Error> for StateError {
     fn from(err: Error) -> Self {
         Self::RendererError(err)
     }

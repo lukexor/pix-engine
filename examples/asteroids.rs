@@ -163,19 +163,6 @@ impl AppState for Asteroids {
             self.ship.vel += Vector::from_angle(self.ship.angle, SHIP_THRUST * elapsed);
         }
 
-        // Draw Level, Lives, & Score
-        s.text_size(16);
-        s.fill(WHITE);
-        s.text(
-            (4, 4),
-            &format!("LEVEL: {}  SCORE: {}", self.level, self.score),
-        )?;
-
-        s.stroke(WHITE);
-        for i in 0..self.lives {
-            s.wireframe(&self.ship_model, (12 + (i * 14), 36), -HALF_PI, 2.0)?;
-        }
-
         self.ship.pos += self.ship.vel * elapsed;
         self.ship.pos.wrap_2d(s.width() as f64, s.height() as f64);
 
@@ -190,6 +177,7 @@ impl AppState for Asteroids {
             a.pos += a.vel * elapsed;
             a.pos.wrap_2d(s.width() as f64, s.height() as f64);
             a.angle += 0.5 * elapsed; // Give some twirl
+            s.fill(BLACK);
             s.stroke(YELLOW);
             s.wireframe(&self.asteroid_model, a.pos, a.angle, a.size as f64)?;
         }
@@ -239,7 +227,7 @@ impl AppState for Asteroids {
         self.asteroids.retain(|a| !a.destroyed);
 
         // Draw bullets
-        s.fill(WHITE);
+        s.fill(BLACK);
         s.stroke(WHITE);
         for b in self.bullets.iter() {
             s.circle((b.pos, 1))?;
@@ -247,6 +235,20 @@ impl AppState for Asteroids {
 
         // Draw ship
         s.wireframe(&self.ship_model, self.ship.pos, self.ship.angle, SHIP_SCALE)?;
+
+        // Draw Level, Lives, & Score
+        s.text_size(16);
+        s.fill(WHITE);
+        s.text(
+            (4, 4),
+            &format!("LEVEL: {}  SCORE: {}", self.level, self.score),
+        )?;
+
+        s.fill(BLACK);
+        s.stroke(WHITE);
+        for i in 0..self.lives {
+            s.wireframe(&self.ship_model, (12 + (i * 14), 36), -HALF_PI, 2.0)?;
+        }
 
         // Win level
         if self.asteroids.is_empty() {

@@ -1,20 +1,13 @@
 //! SDL Renderer implementation
 
-use super::{
-    state::{environment::WindowId, settings::BlendMode},
-    Error, Position, RendererSettings, Rendering, Result,
-};
 use crate::{
-    color::Color,
-    event::{Axis, Button, Event, Key, Mouse, WindowEvent},
-    image::Image,
-    shape::Rect,
+    prelude::*,
+    renderer::{Error, RendererSettings, Rendering, Result},
 };
 use sdl2::{
     audio::{AudioQueue, AudioSpecDesired},
     gfx::primitives::{DrawRenderer, ToColor},
     image::LoadSurface,
-    pixels::PixelFormatEnum,
     render::{Canvas, TextureCreator, TextureQuery, TextureValueError, UpdateTextureError},
     surface::Surface,
     ttf::{self, FontError, InitError},
@@ -32,6 +25,8 @@ type SdlEvent = sdl2::event::Event;
 type SdlColor = sdl2::pixels::Color;
 type SdlRect = sdl2::rect::Rect;
 type SdlBlendMode = sdl2::render::BlendMode;
+type SdlTexture = sdl2::render::Texture;
+type SdlPixelFormat = sdl2::pixels::PixelFormatEnum;
 
 /// An SDL [`Renderer`] implementation.
 pub struct Renderer {
@@ -42,6 +37,7 @@ pub struct Renderer {
     canvas: Canvas<Window>,
     audio_device: AudioQueue<f32>,
     texture_creator: TextureCreator<WindowContext>,
+    textures: Vec<SdlTexture>,
     blend_mode: SdlBlendMode,
 }
 
@@ -108,6 +104,7 @@ impl Rendering for Renderer {
             canvas,
             audio_device,
             texture_creator,
+            textures: Vec::new(),
             blend_mode: SdlBlendMode::None,
         })
     }
@@ -168,8 +165,7 @@ impl Rendering for Renderer {
     where
         S: AsRef<str>,
     {
-        self.canvas.window_mut().set_title(title.as_ref())?;
-        Ok(())
+        Ok(self.canvas.window_mut().set_title(title.as_ref())?)
     }
 
     /// Width of the current canvas.
@@ -186,8 +182,7 @@ impl Rendering for Renderer {
 
     /// Scale the current canvas.
     fn scale(&mut self, x: f32, y: f32) -> Result<()> {
-        self.canvas.set_scale(x, y)?;
-        Ok(())
+        Ok(self.canvas.set_scale(x, y)?)
     }
 
     /// Returns whether the application is fullscreen or not.
@@ -207,14 +202,66 @@ impl Rendering for Renderer {
         let _ = self.canvas.window_mut().set_fullscreen(fullscreen_type);
     }
 
-    // /// Create a texture to render to.
-    // fn create_texture(&mut self, _width: u32, _height: u32) -> Result<usize> {
-    //     // TODO: Handle textures
-    //     // Ok(self
-    //     //     .texture_creator
-    //     //     .create_texture_streaming(None, width, height)?)
-    //     todo!("create_texture")
-    // }
+    /// Create a texture to render to.
+    fn create_texture(
+        &mut self,
+        format: Option<PixelFormat>,
+        width: u32,
+        height: u32,
+    ) -> Result<usize> {
+        let format = format.map(|f| f.into());
+        let texture_id = self.textures.len();
+        self.textures.push(
+            self.texture_creator
+                .create_texture_streaming(format, width, height)?,
+        );
+        Ok(texture_id)
+    }
+
+    /// Delete a texture.
+    fn delete_texture(&mut self, texture_id: usize) -> Result<()> {
+        if texture_id < self.textures.len() {
+            let texture = self.textures.remove(texture_id);
+            // SAFETY: self.texture_creator can not be destroyed while PixEngine is running
+            unsafe { texture.destroy() };
+            Ok(())
+        } else {
+            Err(Error::InvalidTexture(texture_id))
+        }
+    }
+
+    /// Update texture with pixel data.
+    fn update_texture<R>(
+        &mut self,
+        texture_id: usize,
+        rect: Option<R>,
+        pixels: &[u8],
+        pitch: usize,
+    ) -> Result<()>
+    where
+        R: Into<Rect>,
+    {
+        if let Some(texture) = self.textures.get_mut(texture_id) {
+            let rect: Option<SdlRect> = rect.map(|r| r.into().into());
+            Ok(texture.update(rect, pixels, pitch)?)
+        } else {
+            Err(Error::InvalidTexture(texture_id))
+        }
+    }
+
+    /// Draw texture canvas.
+    fn draw_texture<R>(&mut self, texture_id: usize, src: Option<R>, dst: Option<R>) -> Result<()>
+    where
+        R: Into<Rect>,
+    {
+        if let Some(texture) = self.textures.get_mut(texture_id) {
+            let src: Option<SdlRect> = src.map(|r| r.into().into());
+            let dst: Option<SdlRect> = dst.map(|r| r.into().into());
+            Ok(self.canvas.copy(texture, src, dst)?)
+        } else {
+            Err(Error::InvalidTexture(texture_id))
+        }
+    }
 
     /// Draw text to the current canvas.
     fn text<S>(
@@ -245,7 +292,7 @@ impl Rendering for Renderer {
         // if let Some(fill) = fill {
         //     let x = i16::try_from(x)?;
         //     let y = i16::try_from(y)?;
-        //     self.canvas.string(x, y, text, fill)?;
+        //     self.canvas.string(x, y, text.as_ref(), fill)?;
         // }
         Ok(())
     }
@@ -261,7 +308,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw an array of pixels to the canvas.
-    fn points(&mut self, _pixels: &[u8], _pitch: usize) -> Result<()> {
+    fn pixels(&mut self, _pixels: &[u8], _pitch: usize) -> Result<()> {
         // TODO: Handle drawing pixels to textures
         // self.textures[0].update(None, pixels, pitch)?;
         // self.canvas.copy(&self.textures[0], None, None)?;
@@ -274,8 +321,16 @@ impl Rendering for Renderer {
         let y1 = i16::try_from(y1)?;
         let x2 = i16::try_from(x2)?;
         let y2 = i16::try_from(y2)?;
+        // TODO: smooth self.canvas.aa_line
+        // TODO stroke width: self.canvas.thick_line
         if let Some(stroke) = stroke {
-            self.canvas.line(x1, y1, x2, y2, stroke)?;
+            if y1 == y2 {
+                self.canvas.hline(x1, x2, y1, stroke)?;
+            } else if x1 == x2 {
+                self.canvas.vline(y1, y2, x1, stroke)?;
+            } else {
+                self.canvas.line(x1, y1, x2, y2, stroke)?;
+            }
         }
         Ok(())
     }
@@ -298,11 +353,11 @@ impl Rendering for Renderer {
         let y2 = i16::try_from(y2)?;
         let x3 = i16::try_from(x3)?;
         let y3 = i16::try_from(y3)?;
-        if let Some(stroke) = stroke {
-            self.canvas.trigon(x1, y1, x2, y2, x3, y3, stroke)?;
-        }
         if let Some(fill) = fill {
             self.canvas.filled_trigon(x1, y1, x2, y2, x3, y3, fill)?;
+        }
+        if let Some(stroke) = stroke {
+            self.canvas.trigon(x1, y1, x2, y2, x3, y3, stroke)?;
         }
         Ok(())
     }
@@ -321,11 +376,28 @@ impl Rendering for Renderer {
         let y = i16::try_from(y)?;
         let w = i16::try_from(width)?;
         let h = i16::try_from(height)?;
+        if let Some(fill) = fill {
+            self.canvas.box_(x, y, x + w - 1, y + h - 1, fill)?;
+        }
         if let Some(stroke) = stroke {
             self.canvas.rectangle(x, y, x + w - 1, y + h - 1, stroke)?;
         }
+        Ok(())
+    }
+
+    /// Draw a polygon to the current canvas.
+    fn polygon(
+        &mut self,
+        vx: &[i16],
+        vy: &[i16],
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()> {
         if let Some(fill) = fill {
-            self.canvas.box_(x, y, x + w - 1, y + h - 1, fill)?;
+            self.canvas.filled_polygon(vx, vy, fill)?;
+        }
+        if let Some(stroke) = stroke {
+            self.canvas.polygon(vx, vy, stroke)?;
         }
         Ok(())
     }
@@ -344,42 +416,41 @@ impl Rendering for Renderer {
         let y = i16::try_from(y)?;
         let w = i16::try_from(width)?;
         let h = i16::try_from(height)?;
-        if let Some(stroke) = stroke {
-            self.canvas.ellipse(x, y, w, h, stroke)?;
-        }
         if let Some(fill) = fill {
             self.canvas.filled_ellipse(x, y, w, h, fill)?;
+        }
+        if let Some(stroke) = stroke {
+            self.canvas.ellipse(x, y, w, h, stroke)?;
         }
         Ok(())
     }
 
-    // TODO: Move texture creation into image object?
     /// Draw an image to the current canvas.
     fn image(&mut self, x: i32, y: i32, img: &Image) -> Result<()> {
+        // TODO: move texture creation ti image
         let mut texture = self.texture_creator.create_texture_streaming(
-            PixelFormatEnum::RGB24,
+            SdlPixelFormat::RGB24,
             img.width(),
             img.height(),
         )?;
         texture.update(None, img.bytes(), 3 * img.width() as usize)?;
         texture.set_blend_mode(self.blend_mode);
         let dst = SdlRect::new(x, y, img.width(), img.height());
-        self.canvas.copy(&texture, None, dst)?;
-        Ok(())
+        Ok(self.canvas.copy(&texture, None, dst)?)
     }
 
     /// Draw an image to the current canvas.
     fn image_resized(&mut self, x: i32, y: i32, w: u32, h: u32, img: &Image) -> Result<()> {
+        // TODO: move texture creation ti image
         let mut texture = self.texture_creator.create_texture_streaming(
-            PixelFormatEnum::RGB24,
+            SdlPixelFormat::RGB24,
             img.width(),
             img.height(),
         )?;
         texture.update(None, img.bytes(), img.channels() * img.width() as usize)?;
         texture.set_blend_mode(self.blend_mode);
         let dst = SdlRect::new(x, y, w, h);
-        self.canvas.copy(&texture, None, dst)?;
-        Ok(())
+        Ok(self.canvas.copy(&texture, None, dst)?)
     }
 
     /// Add audio samples to the audio buffer queue.
@@ -798,6 +869,16 @@ impl From<BlendMode> for SdlBlendMode {
             Blend => SdlBlendMode::Blend,
             Add => SdlBlendMode::Add,
             Mod => SdlBlendMode::Mod,
+        }
+    }
+}
+
+impl From<PixelFormat> for SdlPixelFormat {
+    fn from(format: PixelFormat) -> Self {
+        use PixelFormat::*;
+        match format {
+            Rgb => SdlPixelFormat::RGB24,
+            Rgba => SdlPixelFormat::RGBA32,
         }
     }
 }
