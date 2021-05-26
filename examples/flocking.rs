@@ -4,7 +4,7 @@ const TITLE: &str = "Flocking Simulation";
 const WIDTH: u32 = 1000;
 const HEIGHT: u32 = 800;
 
-const BIRD_COUNT: usize = 100;
+const BIRD_COUNT: usize = 50;
 const BIRD_MODEL: [(f64, f64); 13] = [
     (1.5, 0.0),
     (0.75, -0.25),
@@ -40,7 +40,7 @@ impl Boid {
             pos: vector!(random!(WIDTH), random!(HEIGHT)),
             vel,
             acc: vector!(),
-            percep_radius: random!(25.0, 50.0),
+            percep_radius: random!(80.0, 100.0),
             max_acc: random!(0.2, 0.4),
             max_vel: random!(3.0, 6.0),
         }
@@ -58,6 +58,7 @@ impl Boid {
 
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.stroke(SKY_BLUE);
+        s.fill(SKY_BLUE);
         s.wireframe(&BIRD_MODEL, self.pos, self.vel.heading(), BIRD_SCALE)?;
         Ok(())
     }
@@ -137,7 +138,7 @@ impl App {
                     adjustment.cohesion.limit(boid.max_acc);
 
                     adjustment.separation /= adjustment.total;
-                    adjustment.separation.set_mag(boid.max_vel);
+                    adjustment.separation.set_mag(boid.max_vel * 2.0);
                     adjustment.separation -= boid.vel;
                     adjustment.separation.limit(boid.max_acc * 1.5);
                     Some(adjustment.alignment + adjustment.cohesion + adjustment.separation)
