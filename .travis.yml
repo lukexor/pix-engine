@@ -14,7 +14,7 @@ dist: bionic
 
 before_install:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew install sdl2 sdl2-mixer sdl2-image sdl2-ttf sdl2-gfx; fi
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo-apt-get update && sudo apt-get -y install libsdl2 libsdl2-mixer libsdl2-image libsdl2-ttf libsdl2-gfx; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get update && sudo apt-get -y install libsdl2 libsdl2-mixer libsdl2-image libsdl2-ttf libsdl2-gfx; fi
 
 matrix:
   allow_failures:
