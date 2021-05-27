@@ -3,6 +3,10 @@ rust:
   - stable
   - beta
   - nightly
+cache: cargo
+before_install:
+  sudo apt-get -y install libsdl2 libsdl2-mixer libsdl2-image libsdl2-ttf libsdl2-gfx
 matrix:
   allow_failures:
     - rust: nightly
+  fast_finish: true
