@@ -1,25 +1,25 @@
 language: rust
-
 rust:
   - stable
   - beta
   - nightly
-cache: cargo
-
 os:
   - linux
   - osx
+dist: bionic
+cache: cargo
 
-install: true
 addons:
   apt:
+    update: true
     packages:
-      - libsdl2
-      - libsdl2-mixer
-      - libsdl2-image
-      - libsdl2-ttf
-      - libsdl2-gfx
+      - libsdl2-2.0-0
+      - libsdl2-mixer-2.0-0
+      - libsdl2-image-2.0-0
+      - libsdl2-ttf-2.0-0
+      - libsdl2-gfx-1.0-0
   homebrew:
+    update: true
     packages:
       - sdl2
       - sdl2-mixer
@@ -27,7 +27,7 @@ addons:
       - sdl2-ttf
       - sdl2-gfx
 
-matrix:
+jobs:
   allow_failures:
     - rust: nightly
   fast_finish: true
