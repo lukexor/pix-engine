@@ -9,18 +9,12 @@ cache: cargo
 os:
   - linux
   - osx
+
 dist: bionic
 
 before_install:
-  case "$TRAVIS_OS_NAME" in
-    "osx")
-      brew update
-      brew install sdl2 sdl2-mixer sdl2-image sdl2-ttf sdl2-gfx
-      ;;
-    "linux")
-      sudo apt-get -y install libsdl2 libsdl2-mixer libsdl2-image libsdl2-ttf libsdl2-gfx
-      ;;
-  esac
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update && brew install sdl2 sdl2-mixer sdl2-image sdl2-ttf sdl2-gfx; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get -y install libsdl2 libsdl2-mixer libsdl2-image libsdl2-ttf libsdl2-gfx; fi
 
 matrix:
   allow_failures:
