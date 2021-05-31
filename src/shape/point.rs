@@ -3,7 +3,7 @@
 use crate::math::Scalar;
 use std::ops::*;
 
-/// A `Point`.
+/// A Point.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Point {
     /// X-coord
@@ -14,7 +14,7 @@ pub struct Point {
     pub z: i32,
 }
 
-/// # Create an [`Point`].
+/// # Create a [Point].
 ///
 /// ```
 /// use pix_engine::prelude::*;
@@ -34,12 +34,12 @@ macro_rules! point {
         point!($x, $y, 0)
     };
     ($x:expr, $y:expr, $z:expr$(,)?) => {
-        $crate::prelude::Point::new_3d($x as i32, $y as i32, $z as i32)
+        $crate::shape::point::Point::new_3d($x as i32, $y as i32, $z as i32)
     };
 }
 
 impl Point {
-    /// Create new `Point`.
+    /// Create new Point.
     pub fn new<P>(p: P) -> Self
     where
         P: Into<Point>,
@@ -47,12 +47,12 @@ impl Point {
         p.into()
     }
 
-    /// Create new 2D `Point`.
+    /// Create new 2D Point.
     pub fn new_2d(x: i32, y: i32) -> Self {
         Self { x, y, z: 0 }
     }
 
-    /// Create new 3D `Point`.
+    /// Create new 3D Point.
     pub fn new_3d(x: i32, y: i32, z: i32) -> Self {
         Self { x, y, z }
     }
@@ -246,21 +246,21 @@ impl RemAssign for Point {
     }
 }
 
-/// From tuple of (i32, i32) to [`Point`].
+/// From tuple of (i32, i32) to [Point].
 impl From<(i32, i32)> for Point {
     fn from((x, y): (i32, i32)) -> Self {
         Self::new_2d(x, y)
     }
 }
 
-/// From tuple of (i32, i32, i32) to [`Point`].
+/// From tuple of (i32, i32, i32) to [Point].
 impl From<(i32, i32, i32)> for Point {
     fn from((x, y, z): (i32, i32, i32)) -> Self {
         Self::new_3d(x, y, z)
     }
 }
 
-/// From 2D tuple of (x, y) Scalar to [`Point`].
+/// From 2D tuple of (x, y) Scalar to [Point].
 impl From<(Scalar, Scalar)> for Point {
     fn from((x, y): (Scalar, Scalar)) -> Self {
         let x = x.round() as i32;
@@ -269,7 +269,7 @@ impl From<(Scalar, Scalar)> for Point {
     }
 }
 
-/// From 3D tuple of (x, y, z) Scalar to [`Point`].
+/// From 3D tuple of (x, y, z) Scalar to [Point].
 impl From<(Scalar, Scalar, Scalar)> for Point {
     fn from((x, y, z): (Scalar, Scalar, Scalar)) -> Self {
         let x = x.round() as i32;
@@ -279,14 +279,14 @@ impl From<(Scalar, Scalar, Scalar)> for Point {
     }
 }
 
-/// From [`Point`] into tuple of (x, y) i32.
+/// From [Point] into tuple of (x, y) i32.
 impl From<Point> for (i32, i32) {
     fn from(p: Point) -> Self {
         (p.x, p.y)
     }
 }
 
-/// From [`Point`] into tuple of (x, y, z) i32.
+/// From [Point] into tuple of (x, y, z) i32.
 impl From<Point> for (i32, i32, i32) {
     fn from(p: Point) -> Self {
         (p.x, p.y, p.z)

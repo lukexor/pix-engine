@@ -2,38 +2,10 @@
 
 use crate::{prelude::*, renderer::Rendering};
 
-// TODO: StrokeCap { Round, Square, PRoject }
-// TODO: StrokeJoin { Miter, Bevel, Round }
-// TODO: AngleMode { Radians, Degrees }
-//   Blend: A * factor + B
-
 /// Texture Identifier.
 pub type TextureId = usize;
 
 impl PixState {
-    // TODO:
-
-    // 2D
-    // arc(p: Point, w: u32, h: u32, start: f32, stop: f32)
-    // quad(p1: Point, p2: Point, p3: Point, p4: Point)
-    // square_rounded(x: i32, y: i32, s: u32, r: u32)
-    // rect_rounded(x: i32, y: i32, w: u32, h: u32, r: u32)
-    // texture(texture: &Texture)
-
-    // 3D
-    // geometry_detail(x_count: i32, y_count: i32)
-    // plane(p1: Point, p2: Point)
-    // sphere(c: Point, r: i32)
-    // ellipsoid(rx: i32, ry: i32, rz: i32)
-    // cube(p: Point, w: u32, h: u32, d: u32)
-    // enum ShapeCap { None, Top, Bottom, Both }
-    // cylinder(c: Point, r: u32, h: u32)
-    // cone(c: Point, r: u32, h: u32)
-    // torus(c: Point, r: u32, tr: u32)
-
-    // image_resized(img: Image, x: i32, y: i32, w: u32, h: u32)
-    // image_projected(img: Image, dx: i32, dy: i32, dw: u32, dh: u32, sx: i32, sy: i32, sw: u32, sh: u32)
-
     /// Create a texture to render to.
     pub fn create_texture<F>(
         &mut self,
@@ -68,7 +40,7 @@ impl PixState {
     }
 
     /// Draw texture canvas.
-    pub fn draw_texture<R>(
+    pub fn texture<R>(
         &mut self,
         texture_id: usize,
         src: Option<R>,
@@ -77,7 +49,7 @@ impl PixState {
     where
         R: Into<Rect>,
     {
-        self.renderer.draw_texture(texture_id, src, dst)
+        self.renderer.texture(texture_id, src, dst)
     }
 
     /// Draw text to the current canvas.
@@ -108,8 +80,8 @@ impl PixState {
     }
 
     /// Draw an array of pixels to the current canvas.
-    pub fn pixels(&mut self, pixels: &[u8], pitch: usize) -> RendererResult<()> {
-        self.renderer.pixels(pixels, pitch)
+    pub fn points(&mut self, pixels: &[u8], pitch: usize) -> RendererResult<()> {
+        self.renderer.points(pixels, pitch)
     }
 
     /// Draw a line to the current canvas.
@@ -221,7 +193,6 @@ impl PixState {
         if vertexes.is_empty() {
             return Ok(());
         }
-        // TODO: cache?
         let (sin, cos) = angle.sin_cos();
         let mut tx = Vec::with_capacity(vertexes.len());
         let mut ty = Vec::with_capacity(vertexes.len());

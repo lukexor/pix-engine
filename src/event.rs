@@ -1,4 +1,4 @@
-//! Handles User and System level interaction event.
+//! Handles User and System level interaction events.
 
 use bitflags::bitflags;
 

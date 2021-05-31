@@ -1,4 +1,4 @@
-//! Generic graphics renderer interfaces
+//! Generic graphics renderer interfaces.
 
 use crate::prelude::*;
 use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
@@ -13,10 +13,10 @@ pub(crate) mod wasm;
 #[cfg(target_arch = "wasm32")]
 pub use wasm::Renderer;
 
-/// The result type for [`Renderer`] operations.
+/// The result type for [Renderer] operations.
 pub type Result<T> = result::Result<T, Error>;
 
-/// The error type for [`Renderer`] operations.
+/// The error type for [Renderer] operations.
 #[non_exhaustive]
 #[derive(Debug)]
 pub enum Error {
@@ -91,7 +91,7 @@ impl Default for RendererSettings {
 
 /// A common interface all renderers must implement
 pub(crate) trait Rendering: Sized {
-    /// Creates a new `Renderer` instance.
+    /// Creates a new Renderer instance.
     fn init(settings: RendererSettings) -> Result<Self>;
 
     /// Get the primary window id.
@@ -114,9 +114,6 @@ pub(crate) trait Rendering: Sized {
 
     /// Returns a single event or None if the event pump is empty.
     fn poll_event(&mut self) -> Option<Event>;
-
-    /// Returns an iterator of events from the event pump.
-    fn poll_events(&mut self) -> Vec<Event>;
 
     /// Updates the canvas from the current back buffer.
     fn present(&mut self);
@@ -164,12 +161,7 @@ pub(crate) trait Rendering: Sized {
         R: Into<Rect>;
 
     /// Draw texture canvas.
-    fn draw_texture<R>(
-        &mut self,
-        texture_id: TextureId,
-        src: Option<R>,
-        dst: Option<R>,
-    ) -> Result<()>
+    fn texture<R>(&mut self, texture_id: TextureId, src: Option<R>, dst: Option<R>) -> Result<()>
     where
         R: Into<Rect>;
 
@@ -190,7 +182,7 @@ pub(crate) trait Rendering: Sized {
     fn point(&mut self, x: i32, y: i32, stroke: Option<Color>) -> Result<()>;
 
     /// Draw an array of pixels to the current canvas.
-    fn pixels(&mut self, pixels: &[u8], pitch: usize) -> Result<()>;
+    fn points(&mut self, pixels: &[u8], pitch: usize) -> Result<()>;
 
     /// Draw a line to the current canvas.
     fn line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, stroke: Option<Color>) -> Result<()>;

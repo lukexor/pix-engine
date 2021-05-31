@@ -4,14 +4,13 @@ use super::PixState;
 use crate::{common::Result, renderer::Rendering};
 use std::time::Duration;
 
-/// Environment values for [`PixState`]
+/// Environment values for [PixState]
 #[derive(Debug, Clone)]
 pub(crate) struct Environment {
     pub(crate) focused: bool,
     pub(crate) focused_window: Option<WindowId>,
     pub(crate) delta_time: Duration,
     pub(crate) frame_rate: u64,
-    pub(crate) target_frame_rate: u64,
     pub(crate) frame_count: u64,
     pub(crate) quit: bool,
 }
@@ -23,7 +22,6 @@ impl Default for Environment {
             focused_window: None,
             delta_time: Duration::from_secs(0),
             frame_rate: 0,
-            target_frame_rate: 60, // TODO: target_frame_rate
             frame_count: 0,
             quit: false,
         }
@@ -74,8 +72,10 @@ impl PixState {
         self.env.frame_rate
     }
 
-    // TODO
-    // dimensions() -> (u32, u32)
+    /// The dimensions of the current canvas as a tuple of (width, height).
+    pub fn dimensions(&self) -> (u32, u32) {
+        (self.renderer.width(), self.renderer.height())
+    }
 
     /// The width of the current canvas.
     pub fn width(&self) -> u32 {
@@ -125,7 +125,7 @@ pub struct WindowBuilder {
 }
 
 impl WindowBuilder {
-    /// Creates a new `WindowBuilder` instance.
+    /// Creates a new WindowBuilder instance.
     pub fn new(width: u32, height: u32) -> Self {
         Self {
             width,
@@ -143,9 +143,9 @@ impl WindowBuilder {
         self
     }
 
-    /// Create a new window from the `WindowBuilder` and return its id.
+    /// Create a new window from the WindowBuilder and return its id.
     ///
-    /// Returns `Err` if any options provided are invalid.
+    /// Returns Err if any options provided are invalid.
     pub fn build(&self) -> Result<WindowId> {
         todo!("WindowBuilder::build");
     }

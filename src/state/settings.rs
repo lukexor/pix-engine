@@ -58,25 +58,7 @@ pub(crate) struct Settings {
     pub(crate) rect_mode: DrawMode,
     pub(crate) ellipse_mode: DrawMode,
     pub(crate) blend_mode: BlendMode,
-    // TODO: arc_mode: default ArcMode::Pie
-    // TODO: stroke_weight: u32, default 1
-    // TODO: stroke_cap: StrokeCap, Default StrokeCap::Round
-    // TODO: stroke_join: StrokeJoin, StrokeJoin::Miter
-    // TODO: angle_mode: AngleMode, Default AngleMode::Radians
-    // TODO: image_tint: Option<Color>, Default None
-    // TODO: image_mode: DrawMode, default DrawMode::Corner
-    // TODO: text_align_hori: TextAlignHori, Default TextAlignHori::Left
-    // TODO: text_align_vert: TextAlignVert, TextAlignVert::Top
-    // TODO: text_style: TextStyle, Default TextStyle::Normal
-    // TODO: text_font: Font, Default emulogic - Add attribution
-    // TODO: blend_factor: f32, Default 1.0
-    // TODO: transformation: Option<Transform>, Default None
 }
-
-// TODO: TextAlignHori { Left, Center, Right }
-// TODO: TextAlignVert { Top, Center, Bottom, Baseline }
-// TODO: TextStyle { Normal, Italic, Bold, BoldItalic }
-// TODO: Font { Arial, .., Custom(String, PathBuf) }
 
 impl Default for Settings {
     fn default() -> Self {
@@ -165,7 +147,7 @@ impl PixState {
         todo!("cursor_icon");
     }
 
-    /// Whether the game look is paused or not.
+    /// Whether the game loop is paused or not.
     pub fn paused(&mut self) -> bool {
         self.settings.paused
     }

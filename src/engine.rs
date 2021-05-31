@@ -1,4 +1,4 @@
-//! The core `PixEngine` functionality.
+//! The core [PixEngine] functionality.
 
 use crate::{
     common::Result,

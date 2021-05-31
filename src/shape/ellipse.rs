@@ -3,7 +3,7 @@
 use super::Point;
 use crate::{math::Scalar, vector::Vector};
 
-/// An `Ellipse`.
+/// An Ellipse.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Ellipse {
     /// Center x-coord
@@ -16,7 +16,7 @@ pub struct Ellipse {
     pub h: u32,
 }
 
-/// # Create a [`Ellipse`].
+/// # Create a [Ellipse].
 ///
 /// ```
 /// use pix_engine::prelude::*;
@@ -39,12 +39,12 @@ macro_rules! ellipse {
         ellipse!($x, $y, $s, $s)
     };
     ($x:expr, $y:expr, $w:expr, $h:expr$(,)?) => {
-        $crate::prelude::Ellipse::new($x as i32, $y as i32, $w as u32, $h as u32)
+        $crate::shape::ellipse::Ellipse::new($x as i32, $y as i32, $w as u32, $h as u32)
     };
 }
 
 impl Ellipse {
-    /// Creates a new [`Ellipse`].
+    /// Creates a new [Ellipse].
     pub fn new(x: i32, y: i32, w: u32, h: u32) -> Self {
         Self { x, y, w, h }
     }
@@ -64,42 +64,42 @@ impl Ellipse {
     }
 }
 
-/// From tuple of (x, y, w, h) to [`Ellipse`].
+/// From tuple of (x, y, w, h) to [Ellipse].
 impl From<(i32, i32, u32, u32)> for Ellipse {
     fn from((x, y, w, h): (i32, i32, u32, u32)) -> Self {
         Self::new(x, y, w, h)
     }
 }
 
-/// From tuple of (x, y, w, h) to [`Ellipse`].
+/// From tuple of (x, y, w, h) to [Ellipse].
 impl From<(Scalar, Scalar, u32, u32)> for Ellipse {
     fn from((x, y, w, h): (Scalar, Scalar, u32, u32)) -> Self {
         Self::new(x.round() as i32, y.round() as i32, w, h)
     }
 }
 
-/// From tuple of (`Point`, r) to [`Ellipse`].
+/// From tuple of (Point, r) to [Ellipse].
 impl From<(Point, u32, u32)> for Ellipse {
     fn from((p, w, h): (Point, u32, u32)) -> Self {
         Self::new(p.x, p.y, w, h)
     }
 }
 
-/// From tuple of (`Vector`, r) to [`Ellipse`].
+/// From tuple of (Vector, r) to [Ellipse].
 impl From<(Vector, u32, u32)> for Ellipse {
     fn from((v, w, h): (Vector, u32, u32)) -> Self {
         Self::new(v.x.round() as i32, v.y.round() as i32, w, h)
     }
 }
 
-/// From [`Circle`] to [`Ellipse`].
+/// From [Circle] to [Ellipse].
 impl From<Circle> for Ellipse {
     fn from(c: Circle) -> Self {
         Self::new(c.x, c.y, c.r, c.r)
     }
 }
 
-/// A `Circle`.
+/// A Circle.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Circle {
     /// Center x-coord
@@ -110,7 +110,7 @@ pub struct Circle {
     pub r: u32,
 }
 
-/// # Create a [`Circle`].
+/// # Create a [Circle].
 ///
 /// ```
 /// use pix_engine::prelude::*;
@@ -129,12 +129,12 @@ macro_rules! circle {
         circle!($x, $y, 100)
     };
     ($x:expr, $y:expr, $r:expr$(,)?) => {
-        $crate::prelude::Circle::new($x as i32, $y as i32, $r as u32)
+        $crate::shape::ellipse::Circle::new($x as i32, $y as i32, $r as u32)
     };
 }
 
 impl Circle {
-    /// Creates a new `Circle`.
+    /// Creates a new Circle.
     pub fn new(x: i32, y: i32, r: u32) -> Self {
         Self { x, y, r }
     }
@@ -154,28 +154,28 @@ impl Circle {
     }
 }
 
-/// From tuple of (x, y, r) to `Circle`.
+/// From tuple of (x, y, r) to Circle.
 impl From<(i32, i32, u32)> for Circle {
     fn from((x, y, r): (i32, i32, u32)) -> Self {
         Self::new(x, y, r)
     }
 }
 
-/// From tuple of (x, y, r) to `Circle`.
+/// From tuple of (x, y, r) to Circle.
 impl From<(Scalar, Scalar, u32)> for Circle {
     fn from((x, y, r): (Scalar, Scalar, u32)) -> Self {
         Self::new(x.round() as i32, y.round() as i32, r)
     }
 }
 
-/// From tuple of (`Point`, r) to `Circle`.
+/// From tuple of (Point, r) to Circle.
 impl From<(Point, u32)> for Circle {
     fn from((p, r): (Point, u32)) -> Self {
         Self::new(p.x, p.y, r)
     }
 }
 
-/// From tuple of (`Vector`, r) to `Circle`.
+/// From tuple of (Vector, r) to Circle.
 impl From<(Vector, u32)> for Circle {
     fn from((v, r): (Vector, u32)) -> Self {
         Self::new(v.x.round() as i32, v.y.round() as i32, r)

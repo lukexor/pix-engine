@@ -1,6 +1,6 @@
-//! Vector handling and operations in 3D space.
+//! Vector handling and operations in 2D or 3D space.
 //!
-//! Each `Vector` is represented by 3 values for x, y, and z. Values can be provided as either
+//! Each Vector is represented by 3 values for x, y, and z. Values can be provided as either
 //! integer or floating point.
 //!
 //! The number of parameters can vary. Optional values are in square brackets:
@@ -79,9 +79,7 @@ pub struct Vector {
     pub z: Scalar,
 }
 
-// TODO: Add s.create_vector to generate random vec in window space
-
-/// # Create an [`Vector`].
+/// # Create a [Vector].
 ///
 /// ```
 /// use pix_engine::prelude::*;
@@ -101,7 +99,7 @@ macro_rules! vector {
         vector!($x, $y, 0.0)
     };
     ($x:expr, $y:expr, $z:expr$(,)?) => {
-        $crate::prelude::Vector::new_3d($x as Scalar, $y as Scalar, $z as Scalar)
+        $crate::vector::Vector::new_3d($x as Scalar, $y as Scalar, $z as Scalar)
     };
 }
 
@@ -180,7 +178,7 @@ impl Vector {
     }
 
     /// Creates a new unit Vector in 2D space from a given angle. Angle is given
-    /// as Radians and is unaffected by `angle_mode`.
+    /// as Radians and is unaffected by angle_mode.
     ///
     /// # Example
     ///
@@ -514,7 +512,13 @@ impl Vector {
     }
 
     /// Wraps vector around given values
-    /// TODO: provide examples
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    ///
+    /// ```
     pub fn wrap_2d(&mut self, width: f64, height: f64) {
         if self.x > width {
             self.x = 0.0;
@@ -803,7 +807,7 @@ impl RemAssign for Vector {
     }
 }
 
-/// From 1D tuple of i32 to 3D `Vector` with all the same value.
+/// From 1D tuple of i32 to 3D Vector with all the same value.
 impl From<i32> for Vector {
     fn from(v: i32) -> Self {
         let v = v as Scalar;
@@ -811,7 +815,7 @@ impl From<i32> for Vector {
     }
 }
 
-/// From 1D tuple of i64 to 3D `Vector` with all the same value.
+/// From 1D tuple of i64 to 3D Vector with all the same value.
 impl From<i64> for Vector {
     fn from(v: i64) -> Self {
         let v = v as Scalar;
@@ -819,77 +823,77 @@ impl From<i64> for Vector {
     }
 }
 
-/// From 2D tuple of (x, y) i32 to `Vector`.
+/// From 2D tuple of (x, y) i32 to Vector.
 impl From<(i32, i32)> for Vector {
     fn from((x, y): (i32, i32)) -> Self {
         Self::new_2d(x as Scalar, y as Scalar)
     }
 }
 
-/// From 2D tuple of (x, y) u32 to `Vector`.
+/// From 2D tuple of (x, y) u32 to Vector.
 impl From<(u32, u32)> for Vector {
     fn from((x, y): (u32, u32)) -> Self {
         Self::new_2d(x as Scalar, y as Scalar)
     }
 }
 
-/// From 2D tuple of (x, y) i64 to `Vector`.
+/// From 2D tuple of (x, y) i64 to Vector.
 impl From<(i64, i64)> for Vector {
     fn from((x, y): (i64, i64)) -> Self {
         Self::new_2d(x as Scalar, y as Scalar)
     }
 }
 
-/// From 3D tuple of (x, y, z) i32 to `Vector`.
+/// From 3D tuple of (x, y, z) i32 to Vector.
 impl From<(i32, i32, i32)> for Vector {
     fn from((x, y, z): (i32, i32, i32)) -> Self {
         Self::new_3d(x as Scalar, y as Scalar, z as Scalar)
     }
 }
 
-/// From 3D tuple of (x, y, z) i64 to `Vector`.
+/// From 3D tuple of (x, y, z) i64 to Vector.
 impl From<(i64, i64, i64)> for Vector {
     fn from((x, y, z): (i64, i64, i64)) -> Self {
         Self::new_3d(x as Scalar, y as Scalar, z as Scalar)
     }
 }
 
-/// From 2D tuple of (x, y) f64 to `Vector`.
+/// From 2D tuple of (x, y) f64 to Vector.
 impl From<(f64, f64)> for Vector {
     fn from((x, y): (f64, f64)) -> Self {
         Self::new_2d(x, y)
     }
 }
 
-/// From 3D tuple of (x, y, z) f64 to `Vector`.
+/// From 3D tuple of (x, y, z) f64 to Vector.
 impl From<(f64, f64, f64)> for Vector {
     fn from((x, y, z): (f64, f64, f64)) -> Self {
         Self::new_3d(x, y, z)
     }
 }
 
-/// From [`Point`] to [`Vector`].
+/// From [Point] to [Vector].
 impl From<Point> for Vector {
     fn from(p: Point) -> Self {
         Self::new_3d(p.x as f64, p.y as f64, p.z as f64)
     }
 }
 
-/// From [`Vector`] into [`Point`].
+/// From [Vector] into [Point].
 impl From<Vector> for Point {
     fn from(v: Vector) -> Self {
         Self::new_3d(v.x.round() as i32, v.y.round() as i32, v.z.round() as i32)
     }
 }
 
-/// From [`Vector`] into tuple (x, y) f64.
+/// From [Vector] into tuple (x, y) f64.
 impl From<Vector> for (f64, f64) {
     fn from(v: Vector) -> Self {
         (v.x, v.y)
     }
 }
 
-/// From [`Vector`] into tuple (x, y, z) f64.
+/// From [Vector] into tuple (x, y, z) f64.
 impl From<Vector> for (f64, f64, f64) {
     fn from(v: Vector) -> Self {
         (v.x, v.y, v.z)

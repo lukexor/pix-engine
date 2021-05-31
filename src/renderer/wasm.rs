@@ -1,13 +1,18 @@
 use super::{RendererResult, RendererSettings, Rendering};
 use crate::{color::Color, event::Event, image::Image, shape::Rect};
 
-/// A Web-Assembly [`Renderer`] implementation.
+/// A Web-Assembly [Renderer] implementation.
 pub struct Renderer {}
 
 impl Rendering for Renderer {
-    /// Creates a new `Renderer` instance.
+    /// Creates a new Renderer instance.
     fn init(_s: RendererSettings) -> RendererResult<Self> {
         Ok(Self {})
+    }
+
+    /// Get the primary window id.
+    fn window_id(&self) -> WindowId {
+        todo!("window_id")
     }
 
     /// Clears the current canvas to the given clear color.
@@ -28,6 +33,11 @@ impl Rendering for Renderer {
     /// Sets the clip rect used by the renderer to draw to the current canvas.
     fn clip(&mut self, _rect: Option<Rect>) {
         todo!("set_clip_rect")
+    }
+
+    /// Sets the blend mode used by the renderer to draw textures.
+    fn blend_mode(&mut self, _mode: BlendMode) {
+        todo!("blend_mode")
     }
 
     /// Returns a single event or None if the event pump is empty.
@@ -76,6 +86,46 @@ impl Rendering for Renderer {
     /// Set the application to fullscreen or not.
     fn fullscreen(&mut self, _val: bool) {
         todo!("set_fullscreen")
+    }
+
+    /// Create a texture to draw to.
+    fn create_texture<F>(
+        &mut self,
+        _format: F,
+        _width: u32,
+        _height: u32,
+    ) -> RendererResult<TextureId>
+    where
+        F: Into<Option<PixelFormat>>,
+    {
+        todo!("create_teture")
+    }
+
+    /// Delete a texture.
+    fn delete_texture(&mut self, _texture_id: TextureId) -> RendererResult<()> {
+        todo!("delete_texture");
+    }
+
+    /// Update texture with pixel data.
+    fn update_texture<R>(
+        &mut self,
+        _texture_id: TextureId,
+        _rect: Option<R>,
+        _pixels: &[u8],
+        _pitch: usize,
+    ) -> RendererResult<()>
+    where
+        R: Into<Rect>,
+    {
+        todo!("update_texture")
+    }
+
+    /// Draw texture canvas.
+    fn texture<R>(&mut self, _texture_id: TextureId, _src: Option<R>, _dst: Option<R>) -> Result<()>
+    where
+        R: Into<Rect>,
+    {
+        todo!("texture")
     }
 
     /// Draw text to the current canvas.
@@ -145,6 +195,17 @@ impl Rendering for Renderer {
         todo!("rect")
     }
 
+    /// Draw a polygon to the current canvas.
+    fn polygon(
+        &mut self,
+        _vx: &[i16],
+        _vy: &[i16],
+        _fill: Option<Color>,
+        _stroke: Option<Color>,
+    ) -> RendererResult<()> {
+        todo!("polygon")
+    }
+
     /// Draw a ellipse to the current canvas.
     fn ellipse(
         &mut self,
@@ -162,11 +223,27 @@ impl Rendering for Renderer {
     fn image(&mut self, x: i32, y: i32, img: &Image) -> RendererResult<()> {
         todo!("image")
     }
+
+    /// Draw a resized image to the current canvas.
+    fn image_resized(
+        &mut self,
+        _x: i32,
+        _y: i32,
+        _w: u32,
+        _h: u32,
+        _img: &Image,
+    ) -> RendererResult<()> {
+        todo!("image_resized")
+    }
+
+    /// Add audio samples to the audio buffer queue.
+    fn enqueue_audio(&mut self, _samples: &[f32]) {
+        todo!("enqueue_audio")
+    }
 }
 
 impl std::fmt::Debug for Renderer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // TODO: Add some fields
-        write!(f, "WasmRenderer {{}}")
+        todo!(f, "WasmRenderer {{}}")
     }
 }

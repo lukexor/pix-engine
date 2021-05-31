@@ -11,8 +11,9 @@ A simple, cross-platform graphics/UI engine framework with a minimal interface.
 
 ## Usage
 
-In order to use the PixEngine, you need to implement the `State` interface on your
-application struct. There are three methods, only one of which is required:
+In order to use the `PixEngine`, you need to implement the `AppState` interface
+on your application struct. There are several methods, only one of which is
+required:
 
 * on_start - Setup functionality when the application begins.
 * on_stop - Teardown functionality for when the application is closed.
@@ -20,51 +21,44 @@ application struct. There are three methods, only one of which is required:
 
 Here's an example app skeleton:
 
-```
-struct App {
-    // Some data fields
-}
+```rust
+use pix_engine::prelude::*;
+
+struct App;
 
 impl App {
     fn new() -> Self {
-        Self {
-          // Data initialization
-        }
+        Self
     }
 }
 
-impl State for App {
-    fn on_start(&mut self, data: &mut StateData) -> PixEngineResult<bool> {
-        // Setup App state. StateData contains engine specific state and functions like mouse
-        // coordinates and draw functions
-        // Return true to continue. False errors the application.
-        Ok(true)
+impl AppState for App {
+    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
+        // Setup App state. State contains engine specific state and
+        // functions like mouse coordinates, draw functions, etc.
+        Ok(())
     }
-    fn on_update(&mut self, _elapsed: f32, _data: &mut StateData) -> PixEngineResult<bool> {
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         // Update App state roughly every 16ms.
-        // Return true to continue, or false to abort the update loop
-        Ok(true)
+        Ok(())
     }
-    fn on_stop(&mut self, _data: &mut StateData) -> PixEngineResult<bool> {
-        // Teardown any state or resources
-        // Returning false here prevents the app from closing
-        Ok(true)
+    fn on_stop(&mut self, s: &mut PixState) -> PixResult<()> {
+        // Teardown any state or resources.
+        Ok(())
     }
 }
 
 pub fn main() {
-    let app = App::new();
     let width = 800;
     let height = 600;
-    let vsync = true;
-    let mut engine = PixEngine::new(
-      "App Title".to_string(),
-      app,
-      800,
-      600,
-      vsync
-    ).expect("valid engine");
-    engine.run().expect("engine run");
+    let mut engine = PixEngine::create(width, height)
+      .with_title("App Title")
+      .position_centered()
+      .vsync_enabled()
+      .build()
+      .expect("valid engine");
+    let mut app = App::new();
+    engine.run(&mut app).expect("engine run");
 }
 ```
 
@@ -74,12 +68,8 @@ See the github issue tracker.
 
 ## License
 
-`PixEngine` is licensed under the GPLv3 license. See the `LICENSE.md` file in the root for a copy.
-
-## Contact
-
-For issue reporting, please use the github issue tracker. You can contact me directly
-[here](https://lukeworks.tech/contact/).
+`PixEngine` is licensed under the GPLv3 license. See the `LICENSE.md` file in
+the root for a copy.
 
 ## Contact
 
@@ -88,8 +78,10 @@ For issue reporting, please use the github issue tracker. You can contact me dir
 
 ## Credits
 
-Implementation heavily inspired by [OneLoneCoder](https://github.com/OneLoneCoder/) and his amazing
-[olcPixelGameEngine](https://github.com/OneLoneCoder/olcPixelGameEngine) project.
+Implementation heavily inspired by
+[OneLoneCoder](https://github.com/OneLoneCoder/) and his amazing
+[olcPixelGameEngine](https://github.com/OneLoneCoder/olcPixelGameEngine)
+project.
 
 Also heavily influenced by [p5js](https://p5js.org/).
 

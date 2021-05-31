@@ -77,7 +77,6 @@ where
 
     let (mut n1, mut n2, mut n3);
 
-    // TODO: Make a state setting
     let perlin_octaves = 4; // default to medium smooth
     let perlin_amp_falloff = 0.5; // 50% reduction/octave
     for _ in 0..perlin_octaves {
@@ -155,14 +154,7 @@ macro_rules! random {
         $crate::math::random($v)
     };
     ($s:expr, $e:expr$(,)?) => {{
-        // TODO: move this into a function
-        let s = $s;
-        let e = $e;
-        if s > e {
-            $crate::math::random_rng(e..s)
-        } else {
-            $crate::math::random_rng(s..e)
-        }
+        $crate::math::random_rng($s..$e)
     }};
 }
 
@@ -170,17 +162,28 @@ macro_rules! random {
 ///
 /// # Examples
 ///
-/// TODO
+/// ```
+/// use pix_engine::prelude::*;
+///
+/// let n = noise!(5.0);
+/// assert!(n >= 0.0 && n < 1.0);
+///
+/// let n = noise!(2.0, 1.5);
+/// assert!(n >= 0.0 && n < 1.0);
+///
+/// let n = noise!(2.0, 1.5, 3.0);
+/// assert!(n >= 0.0 && n < 1.0);
+/// ```
 #[macro_export]
 macro_rules! noise {
-    ($s:expr, $x:expr$(,)?) => {
-        $crate::math::noise($s, $x, 0.0, 0.0)
+    ($x:expr$(,)?) => {
+        $crate::math::noise(($x, 0.0, 0.0))
     };
-    ($s:expr, $x:expr, $y:expr$(,)?) => {
-        $crate::math::noise($s, $x, $y, 0.0)
+    ($x:expr, $y:expr$(,)?) => {
+        $crate::math::noise(($x, $y, 0.0))
     };
-    ($s:expr, $x:expr, $y:expr, $z:expr$(,)?) => {
-        $crate::math::noise($s, $x, $y, $z)
+    ($x:expr, $y:expr, $z:expr$(,)?) => {
+        $crate::math::noise(($x, $y, $z))
     };
 }
 

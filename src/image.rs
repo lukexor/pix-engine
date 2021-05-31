@@ -94,33 +94,9 @@ pub struct Image {
     format: PixelFormat,
     /// Texture Identifier
     pub(crate) texture_id: usize,
-    // TODO: tint, flip
 }
 
-// TODO: Texture { image, quad, uv, uv_scale, w }
-// texture!()
-
 impl Image {
-    // TODO:
-    // from_pixels(w: u32, h: u32, pixels: &[Color])
-    // pixel(x i32, y: i32) -> Color
-    // set_pixel(x i32, y: i32, pixel: Color)
-    // pixel_format() -> PixelFormat
-    // dimensions() -> (u32, u32)
-    // pixels() -> &[Color]
-    // pixels_mut() -> & mut[Color]
-    // get_index(x: i32, y: i32) -> usize
-    // filter(filter: ImageFilter)
-    // sub_image(x: i32, y: i32, w: u32, h: u32) -> Image
-    // set_sub_image(x: i32, y: i32, image: &Image)
-    // resize(w: u32, h: u32)
-    // blend(image: &Image, mode: BlendMode)
-    // mask(image: &Image)
-    // Image.filtered(image: Image, filter: ImageFilter) -> Image
-    // Image.resized(image: Image, w: u32, h: u32) -> Image
-    // Image.blended(image: &Image, mode: BlendMode) -> Image
-    // Image.mask(image: &Image) -> Image
-
     /// The image width.
     pub fn width(&self) -> u32 {
         self.width
@@ -129,6 +105,11 @@ impl Image {
     /// The image height.
     pub fn height(&self) -> u32 {
         self.height
+    }
+
+    /// The image (width, height) as a tuple.
+    pub fn dimensions(&self) -> (u32, u32) {
+        (self.width, self.height)
     }
 
     /// The image data as a u8 slice.

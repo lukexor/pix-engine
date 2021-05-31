@@ -1,6 +1,6 @@
-//! Color handling and manipulating used for draw operations.
+//! Color handling and manipulation used for draw operations.
 //!
-//! Each `Color` can be represented as either RGB, or HSV and can be converted from/into other
+//! Each [Color] can be represented as either [Rgb], or [Hsv] and can be converted from/into other
 //! representations as needed.
 //!
 //! Values can be provided as either integer or floating point. Floating point values will be
@@ -11,16 +11,23 @@
 //!
 //! # Syntax
 //!
-//! ```text
+//! ```ignore
+//! // RGB values range from 0-255
 //! rgb!(gray);
 //! rgb!(gray, [alpha]);
 //! rgb!(red, green, blue, [alpha]);
 //! rgb!(hexidecimal);
 //! rgb!(array_slice);
-//! NAMED_COLOR;
-//! ```
 //!
-//! Arguments are the same for the `hsv!()` macro
+//! // HSV values range from 0-360 for hue and 0.0-1.0 for all other values
+//! hsv!(gray);
+//! hsv!(gray, [alpha]);
+//! hsv!(hue, saturation, value, [alpha]);
+//! hsv!(hexidecimal);
+//! hsv!(array_slice);
+//!
+//! NAMED_COLOR; // e.g. ALICE_BLUE
+//! ```
 //!
 //! # Parameters
 //!
@@ -54,7 +61,7 @@
 //! # RGB Examples
 //!
 //! ```
-//! use pix_engine::prelude::*;
+//! # use pix_engine::prelude::*;
 //!
 //! let c = rgb!(128, 64, 0); // RGB
 //! assert_eq!(c.channels(), (128, 64, 0, 255));
@@ -66,7 +73,7 @@
 //! # HSV Example
 //!
 //! ```
-//! use pix_engine::prelude::*;
+//! # use pix_engine::prelude::*;
 //!
 //! let c = hsv!(337.0, 1.0, 0.8);
 //! assert_eq!(c.channels(), (337.0, 1.0, 0.8, 1.0));
@@ -76,7 +83,7 @@
 //! # Named Color Examples
 //!
 //! ```
-//! use pix_engine::prelude::*;
+//! # use pix_engine::prelude::*;
 //!
 //! let c = ALICE_BLUE;
 //! assert_eq!(c.channels(), (240, 248, 255, 255));
@@ -88,7 +95,7 @@
 //! # Color String Examples
 //!
 //! ```
-//! use pix_engine::prelude::*;
+//! # use pix_engine::prelude::*;
 //! use std::str::FromStr;
 //!
 //! let c = Rgb::from_str("#F0F").unwrap(); // 3-digit Hex string
@@ -106,7 +113,7 @@
 //!
 //! # Vec/Slice Examples
 //! ```
-//! use pix_engine::prelude::*;
+//! # use pix_engine::prelude::*;
 //! use std::convert::TryFrom;
 //!
 //! let vals: Vec<u8> = vec![128, 64, 0];
@@ -121,7 +128,7 @@
 //! # Other Examples
 //!
 //! ```
-//! use pix_engine::prelude::*;
+//! # use pix_engine::prelude::*;
 //!
 //! let c = Rgb::random();
 //! // `c.channels()` will return something like:
@@ -157,10 +164,10 @@ use std::{
     str::FromStr,
 };
 
-/// # Create an `Rgb` Color.
+/// # Create an [Rgb] [Color].
 ///
 /// ```
-/// use pix_engine::prelude::*;
+/// # use pix_engine::prelude::*;
 ///
 /// let c = rgb!(128, 64, 0); // RGB
 /// assert_eq!(c.channels(), (128, 64, 0, 255));
@@ -177,14 +184,14 @@ macro_rules! rgb {
         rgb!($r, $g, $b, 255)
     };
     ($r:expr, $g:expr, $b:expr, $a:expr$(,)?) => {
-        $crate::prelude::Rgb::rgba($r, $g, $b, $a)
+        $crate::color::Rgb::rgba($r, $g, $b, $a)
     };
 }
 
-/// # Create an `Hsv` Color.
+/// # Create an [Hsv] [Color].
 ///
 /// ```
-/// use pix_engine::prelude::*;
+/// # use pix_engine::prelude::*;
 ///
 /// let c = hsv!(337.0, 1.0, 0.8);
 /// assert_eq!(c.channels(), (337.0, 1.0, 0.8, 1.0));
@@ -193,16 +200,16 @@ macro_rules! rgb {
 #[macro_export]
 macro_rules! hsv {
     ($gray:expr) => {
-        hsv!($gray, $gray, $gray)
+        hsv!($gray * 360.0, $gray, $gray)
     };
     ($gray:expr, $a:expr$(,)?) => {
-        hsv!($gray, $gray, $gray, $a)
+        hsv!($gray * 360.0, $gray, $gray, $a)
     };
     ($h:expr, $s:expr, $v:expr$(,)?) => {
         hsv!($h, $s, $v, 1.0)
     };
     ($h:expr, $s:expr, $v:expr, $a:expr$(,)?) => {
-        $crate::prelude::Hsv::hsva($h, $s, $v, $a)
+        $crate::color::Hsv::hsva($h, $s, $v, $a)
     };
 }
 
@@ -210,7 +217,7 @@ macro_rules! hsv {
 ///
 /// # Examples
 /// ```
-/// use pix_engine::prelude::*;
+/// # use pix_engine::prelude::*;
 /// use std::convert::TryFrom;
 ///
 /// let c = Color::Rgb(rgb!(255, 0, 0));
@@ -226,7 +233,6 @@ macro_rules! hsv {
 #[allow(variant_size_differences)]
 #[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq)]
-// TODO: Convert to struct with rgb/hsv values
 pub enum Color {
     /// An Rgb instance of `Color`.
     Rgb(Rgb),
@@ -360,7 +366,7 @@ impl Rgb {
     ///
     /// # Example
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let c = Rgb::rgb(128, 64, 0);
     /// assert_eq!(c.channels(), (128, 64, 0, 255));
@@ -373,7 +379,7 @@ impl Rgb {
     ///
     /// # Example
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let c = Rgb::rgba(128, 64, 128, 128);
     /// assert_eq!(c.channels(), (128, 64, 128, 128));
@@ -461,7 +467,7 @@ impl Rgb {
     /// Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// assert_eq!(rgb!(0, 0, 255).to_hsv(), hsv!(240.0, 1.0, 1.0)); // Blue
     /// ```
@@ -497,7 +503,7 @@ impl Rgb {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let from = rgb!(255, 0, 0);
     /// let to = rgb!(0, 100, 255);
@@ -688,7 +694,7 @@ impl Hsv {
     /// Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// assert_eq!(hsv!(240.0, 1.0, 1.0).to_rgb(), rgb!(0, 0, 255)); // Blue
     /// ```
@@ -726,7 +732,7 @@ impl Hsv {
     /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
+    /// # use pix_engine::prelude::*;
     ///
     /// let from = hsv!(255.0, 0.0, 0.0);
     /// let to = hsv!(0.0, 1.0, 1.0);

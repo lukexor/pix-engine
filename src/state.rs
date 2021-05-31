@@ -1,4 +1,4 @@
-//! State management for `PixEngine`.
+//! State management for [PixEngine].
 
 use crate::{
     prelude::*,
@@ -11,10 +11,10 @@ use std::{borrow::Cow, collections::HashSet, error, fmt, io, result};
 pub mod environment;
 pub mod settings;
 
-/// The result type for [`PixState`] operations.
+/// The result type for [PixState] operations.
 pub type Result<T> = result::Result<T, Error>;
 
-/// The error type for [`PixState`] operations.
+/// The error type for [PixState] operations.
 #[non_exhaustive]
 #[derive(Debug)]
 pub enum Error {
@@ -26,7 +26,7 @@ pub enum Error {
     Other(Cow<'static, str>),
 }
 
-/// Defines state changing operations that are called while the `PixEngine` is running.
+/// Defines state changing operations that are called while the PixEngine is running.
 pub trait AppState {
     /// Called once upon engine start when `PixEngine::run()` is called.
     fn on_start(&mut self, _s: &mut PixState) -> PixResult<()> {
@@ -41,7 +41,6 @@ pub trait AppState {
         Ok(())
     }
 
-    // TODO: Make on calls return result
     /// Called each time a key is pressed.
     fn on_key_pressed(&mut self, _s: &mut PixState, _event: KeyEvent) -> PixResult<()> {
         Ok(())
@@ -66,10 +65,6 @@ pub trait AppState {
     fn on_mouse_pressed(&mut self, _s: &mut PixState, _btn: Mouse) -> PixResult<()> {
         Ok(())
     }
-
-    // TODO: on_mouse_clicked - Press followed by release
-    // TODO: on_mouse_dbl_clicked - 2 clicks
-    // TODO: on_mouse_motion
 
     /// Called each time a mouse button is released.
     fn on_mouse_released(&mut self, _s: &mut PixState, _btn: Mouse) -> PixResult<()> {
@@ -100,15 +95,11 @@ pub struct PixState {
     pub(crate) mouse_buttons: HashSet<Mouse>,
     pub(crate) key_down: bool,
     pub(crate) keys: HashSet<Key>,
-    pub(crate) perlin: Option<Vec<f64>>,
     pub(crate) setting_stack: Vec<Settings>,
 }
 
 impl PixState {
-    // TODO:
-    // save_canvas<P: AsRef<Path>>(filename: P)
-
-    /// Creates a new `PixState` instance with a given `Renderer`.
+    /// Creates a new PixState instance with a given Renderer.
     pub fn init(title: &str, renderer: Renderer) -> Self {
         Self {
             title: title.to_owned(),
@@ -121,8 +112,6 @@ impl PixState {
             mouse_buttons: HashSet::new(),
             key_down: false,
             keys: HashSet::new(),
-            // TODO: move to cache object
-            perlin: None,
             setting_stack: Vec::new(),
         }
     }
@@ -150,18 +139,6 @@ impl PixState {
             self.renderer.set_title(title)?;
         }
         Ok(())
-    }
-
-    // TODO:
-    // set_dimensions
-    // set_width
-    // set_height
-
-    /// Manually run on_update `n` times.
-    pub fn update(&mut self, _n: usize) {
-        // self.update_count = Some(n);
-        // self.settings.paused = false;
-        todo!("update")
     }
 
     /// Returns the current mouse position coordinates as (x, y).

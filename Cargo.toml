@@ -11,6 +11,7 @@ documentation = "https://github.com/lukexor/pix-engine"
 repository = "https://github.com/lukexor/pix-engine.git"
 homepage = "https://github.com/lukexor/pix-engine"
 edition = "2018"
+resolver = "2"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

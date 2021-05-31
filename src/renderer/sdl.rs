@@ -29,7 +29,7 @@ type SdlBlendMode = sdl2::render::BlendMode;
 type SdlTexture = sdl2::render::Texture;
 type SdlPixelFormat = sdl2::pixels::PixelFormatEnum;
 
-/// An SDL [`Renderer`] implementation.
+/// An SDL [Renderer] implementation.
 pub struct Renderer {
     context: Sdl,
     ttf_context: ttf::Sdl2TtfContext,
@@ -91,7 +91,7 @@ impl Rendering for Renderer {
         let audio_sub = context.audio()?;
         let desired_spec = AudioSpecDesired {
             freq: Some(s.audio_sample_rate),
-            channels: Some(1), // TODO: Add stereo option
+            channels: Some(1),
             samples: None,
         };
         let audio_device = audio_sub.open_queue(None, &desired_spec)?;
@@ -144,11 +144,6 @@ impl Rendering for Renderer {
     /// Returns a single event or None if the event pump is empty.
     fn poll_event(&mut self) -> Option<Event> {
         self.event_pump.poll_event().map(|evt| evt.into())
-    }
-
-    /// Returns a single event or None if the event pump is empty.
-    fn poll_events(&mut self) -> Vec<Event> {
-        self.event_pump.poll_iter().map(|evt| evt.into()).collect()
     }
 
     /// Updates the canvas from the current back buffer.
@@ -249,7 +244,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw texture canvas.
-    fn draw_texture<R>(&mut self, texture_id: usize, src: Option<R>, dst: Option<R>) -> Result<()>
+    fn texture<R>(&mut self, texture_id: usize, src: Option<R>, dst: Option<R>) -> Result<()>
     where
         R: Into<Rect>,
     {
@@ -275,7 +270,6 @@ impl Rendering for Renderer {
     where
         S: AsRef<str>,
     {
-        // TODO: Figure out how to store this
         // TODO: This path only works locally
         let font = self
             .ttf_context
@@ -287,12 +281,6 @@ impl Rendering for Renderer {
             self.canvas
                 .copy(&texture, None, Some(SdlRect::new(x, y, width, height)))?;
         }
-        // TODO: Explore more
-        // if let Some(fill) = fill {
-        //     let x = i16::try_from(x)?;
-        //     let y = i16::try_from(y)?;
-        //     self.canvas.string(x, y, text.as_ref(), fill)?;
-        // }
         Ok(())
     }
 
@@ -307,11 +295,8 @@ impl Rendering for Renderer {
     }
 
     /// Draw an array of pixels to the canvas.
-    fn pixels(&mut self, _pixels: &[u8], _pitch: usize) -> Result<()> {
-        // TODO: Handle drawing pixels to textures
-        // self.textures[0].update(None, pixels, pitch)?;
-        // self.canvas.copy(&self.textures[0], None, None)?;
-        todo!("points")
+    fn points(&mut self, _pixels: &[u8], _pitch: usize) -> Result<()> {
+        todo!("pixels")
     }
 
     /// Draw a line to the current canvas.
@@ -320,8 +305,6 @@ impl Rendering for Renderer {
         let y1 = i16::try_from(y1)?;
         let x2 = i16::try_from(x2)?;
         let y2 = i16::try_from(y2)?;
-        // TODO: smooth self.canvas.aa_line
-        // TODO stroke width: self.canvas.thick_line
         if let Some(stroke) = stroke {
             if y1 == y2 {
                 self.canvas.hline(x1, x2, y1, stroke)?;
@@ -467,8 +450,17 @@ impl Rendering for Renderer {
 
 impl std::fmt::Debug for Renderer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // TODO: Add some fields
-        write!(f, "SdlRenderer {{}}")
+        let (width, height) = self.canvas.output_size().unwrap_or((0, 0));
+        write!(
+            f,
+            "SdlRenderer {{ window_id: {}, title: {}, width: {}, height: {}, draw_color: {:?}, blend_mode: {:?} }}",
+            self.window_id,
+            self.canvas.window().title(),
+            width,
+            height,
+            self.canvas.draw_color(),
+            self.blend_mode,
+        )
     }
 }
 
