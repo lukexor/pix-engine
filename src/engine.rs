@@ -32,7 +32,7 @@ impl PixEngineBuilder {
     }
 
     /// Set a window title.
-    pub fn with_title<'a, S>(&'a mut self, title: S) -> &'a mut Self
+    pub fn with_title<S>(&mut self, title: S) -> &mut Self
     where
         S: AsRef<str>,
     {
@@ -41,27 +41,27 @@ impl PixEngineBuilder {
     }
 
     /// Enables frame rate in title.
-    pub fn with_frame_rate<'a>(&'a mut self) -> &'a mut Self {
+    pub fn with_frame_rate(&mut self) -> &mut Self {
         self.settings.show_frame_rate = true;
         self
     }
 
     /// Position the window at the given (x, y) coordinates of the display.
-    pub fn position<'a>(&'a mut self, x: i32, y: i32) -> &'a mut Self {
+    pub fn position(&mut self, x: i32, y: i32) -> &mut Self {
         self.settings.x = Position::Positioned(x);
         self.settings.y = Position::Positioned(y);
         self
     }
 
     /// Position the window in the center of the display.
-    pub fn position_centered<'a>(&'a mut self) -> &'a mut Self {
+    pub fn position_centered(&mut self) -> &mut Self {
         self.settings.x = Position::Centered;
         self.settings.y = Position::Centered;
         self
     }
 
     /// Set a window icon.
-    pub fn icon<'a, P>(&'a mut self, path: P) -> &'a mut Self
+    pub fn icon<P>(&mut self, path: P) -> &mut Self
     where
         P: AsRef<Path>,
     {
@@ -70,32 +70,32 @@ impl PixEngineBuilder {
     }
 
     /// Start window in fullscreen mode.
-    pub fn fullscreen<'a>(&'a mut self) -> &'a mut Self {
+    pub fn fullscreen(&mut self) -> &mut Self {
         self.settings.fullscreen = true;
         self
     }
 
     /// Allow window resizing.
-    pub fn resizable<'a>(&'a mut self) -> &'a mut Self {
+    pub fn resizable(&mut self) -> &mut Self {
         self.settings.resizable = true;
         self
     }
 
     /// Scales the window.
-    pub fn scale<'a>(&'a mut self, x: f32, y: f32) -> &'a mut Self {
+    pub fn scale(&mut self, x: f32, y: f32) -> &mut Self {
         self.settings.scale_x = x;
         self.settings.scale_y = y;
         self
     }
 
     /// Enable VSync.
-    pub fn vsync_enabled<'a>(&'a mut self) -> &'a mut Self {
+    pub fn vsync_enabled(&mut self) -> &mut Self {
         self.settings.vsync = true;
         self
     }
 
     /// Set audio sample rate.
-    pub fn audio_sample_rate<'a>(&'a mut self, sample_rate: i32) -> &'a mut Self {
+    pub fn audio_sample_rate(&mut self, sample_rate: i32) -> &mut Self {
         self.settings.audio_sample_rate = sample_rate;
         self
     }

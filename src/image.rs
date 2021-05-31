@@ -50,6 +50,7 @@ pub enum PixelFormat {
 
 impl PixelFormat {
     /// Return the number of channels associated with the format.
+
     pub fn channels(&self) -> usize {
         use PixelFormat::*;
         match self {
@@ -214,7 +215,7 @@ impl PixState {
         let path = path.as_ref();
         let ext = path.extension();
         if ext != Some(OsStr::new("png")) {
-            return Err(Error::InvalidFileType(ext.map(|e| e.to_os_string())))?;
+            return Err(Error::InvalidFileType(ext.map(|e| e.to_os_string())).into());
         }
 
         let png_file = BufReader::new(File::open(&path)?);

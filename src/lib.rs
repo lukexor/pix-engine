@@ -1,13 +1,14 @@
-#![warn(
+#![warn(missing_docs, unused)]
+#![deny(
+    bare_trait_objects,
+    ellipsis_inclusive_range_patterns,
     future_incompatible,
     missing_copy_implementations,
     missing_debug_implementations,
-    missing_docs,
     nonstandard_style,
     rust_2018_idioms,
     trivial_casts,
     trivial_numeric_casts,
-    unused,
     variant_size_differences
 )]
 // TODO: Fix intra-doc links

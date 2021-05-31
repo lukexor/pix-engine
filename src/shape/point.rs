@@ -279,16 +279,16 @@ impl From<(Scalar, Scalar, Scalar)> for Point {
     }
 }
 
-/// Into tuple of (x, y) i32 from [`Point`].
-impl Into<(i32, i32)> for Point {
-    fn into(self) -> (i32, i32) {
-        (self.x, self.y)
+/// From [`Point`] into tuple of (x, y) i32.
+impl From<Point> for (i32, i32) {
+    fn from(p: Point) -> Self {
+        (p.x, p.y)
     }
 }
 
-/// Into tuple of (x, y, z) i32 from [`Point`].
-impl Into<(i32, i32, i32)> for Point {
-    fn into(self) -> (i32, i32, i32) {
-        (self.x, self.y, self.z)
+/// From [`Point`] into tuple of (x, y, z) i32.
+impl From<Point> for (i32, i32, i32) {
+    fn from(p: Point) -> Self {
+        (p.x, p.y, p.z)
     }
 }

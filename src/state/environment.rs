@@ -135,7 +135,7 @@ impl WindowBuilder {
     }
 
     /// Set a window title.
-    pub fn with_title<'a, S>(&'a mut self, title: S) -> &'a mut Self
+    pub fn with_title<S>(&mut self, title: S) -> &mut Self
     where
         S: AsRef<str>,
     {

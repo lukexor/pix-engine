@@ -233,6 +233,6 @@ impl PixState {
             tx.push(x.round() as i16);
             ty.push(y.round() as i16);
         }
-        Ok(self.polygon(&tx, &ty)?)
+        self.polygon(&tx, &ty)
     }
 }

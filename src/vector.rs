@@ -870,33 +870,29 @@ impl From<(f64, f64, f64)> for Vector {
 
 /// From [`Point`] to [`Vector`].
 impl From<Point> for Vector {
-    fn from(point: Point) -> Self {
-        Self::new_3d(point.x as f64, point.y as f64, point.z as f64)
+    fn from(p: Point) -> Self {
+        Self::new_3d(p.x as f64, p.y as f64, p.z as f64)
     }
 }
 
-/// Into [`Point`] from [`Vector`].
-impl Into<Point> for Vector {
-    fn into(self) -> Point {
-        Point::new_3d(
-            self.x.round() as i32,
-            self.y.round() as i32,
-            self.z.round() as i32,
-        )
+/// From [`Vector`] into [`Point`].
+impl From<Vector> for Point {
+    fn from(v: Vector) -> Self {
+        Self::new_3d(v.x.round() as i32, v.y.round() as i32, v.z.round() as i32)
     }
 }
 
-/// Convert to f64 tuple of (x, y).
-impl Into<(f64, f64)> for Vector {
-    fn into(self) -> (f64, f64) {
-        (self.x, self.y)
+/// From [`Vector`] into tuple (x, y) f64.
+impl From<Vector> for (f64, f64) {
+    fn from(v: Vector) -> Self {
+        (v.x, v.y)
     }
 }
 
-/// Convert to f64 tuple of (x, y, z).
-impl Into<(f64, f64, f64)> for Vector {
-    fn into(self) -> (f64, f64, f64) {
-        (self.x, self.y, self.z)
+/// From [`Vector`] into tuple (x, y, z) f64.
+impl From<Vector> for (f64, f64, f64) {
+    fn from(v: Vector) -> Self {
+        (v.x, v.y, v.z)
     }
 }
 
