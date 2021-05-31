@@ -174,8 +174,8 @@ impl AppState for App {
         Ok(())
     }
 
-    fn on_key_pressed(&mut self, _s: &mut PixState, key: Key, _repeat: bool) -> PixResult<()> {
-        if key == Key::R {
+    fn on_key_pressed(&mut self, _s: &mut PixState, event: KeyEvent) -> PixResult<()> {
+        if event.key == Key::R {
             self.reset();
         }
         Ok(())

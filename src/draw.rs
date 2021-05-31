@@ -7,6 +7,9 @@ use crate::{prelude::*, renderer::Rendering};
 // TODO: AngleMode { Radians, Degrees }
 //   Blend: A * factor + B
 
+/// Texture Identifier.
+pub type TextureId = usize;
+
 impl PixState {
     // TODO:
 
@@ -32,7 +35,12 @@ impl PixState {
     // image_projected(img: Image, dx: i32, dy: i32, dw: u32, dh: u32, sx: i32, sy: i32, sw: u32, sh: u32)
 
     /// Create a texture to render to.
-    pub fn create_texture<F>(&mut self, format: F, width: u32, height: u32) -> RendererResult<usize>
+    pub fn create_texture<F>(
+        &mut self,
+        format: F,
+        width: u32,
+        height: u32,
+    ) -> RendererResult<TextureId>
     where
         F: Into<Option<PixelFormat>>,
     {

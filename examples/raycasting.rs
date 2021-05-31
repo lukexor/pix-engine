@@ -33,7 +33,7 @@ struct RayScene {
     xcells: u32,
     ycells: u32,
     drawing: bool,
-    light: Image,
+    light: Option<Image>,
 }
 
 impl RayScene {
@@ -54,7 +54,7 @@ impl RayScene {
             xcells,
             ycells,
             drawing: false,
-            light: Image::new(0, 0),
+            light: None,
         }
     }
 
@@ -312,7 +312,7 @@ impl AppState for RayScene {
 
         self.convert_edges_to_poly_map();
 
-        self.light = Image::load("static/light.png")?;
+        self.light = Some(s.create_image_from_file("static/light.png")?);
         s.blend_mode(BlendMode::Mod);
 
         Ok(())
@@ -343,7 +343,9 @@ impl AppState for RayScene {
             s.square((cell.pos, BLOCK_SIZE + 1))?;
         }
 
-        s.image(x - 255, y - 255, &self.light)?;
+        if let Some(ref light) = self.light {
+            s.image(x - 255, y - 255, &light)?;
+        }
 
         Ok(())
     }

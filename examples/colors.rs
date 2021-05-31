@@ -51,8 +51,8 @@ impl AppState for Colors {
         Ok(())
     }
 
-    fn on_key_pressed(&mut self, _s: &mut PixState, key: Key, _repeat: bool) -> PixResult<()> {
-        match key {
+    fn on_key_pressed(&mut self, _s: &mut PixState, event: KeyEvent) -> PixResult<()> {
+        match event.key {
             Key::Escape => self.auto = true,
             Key::Up => self.modify_hue(2.0, false),
             Key::Down => self.modify_hue(-2.0, false),

@@ -29,7 +29,7 @@ pub enum Error {
     /// Invalid (x, y) window position.
     InvalidPosition(Position, Position),
     /// Invalid Texture.
-    InvalidTexture(usize),
+    InvalidTexture(TextureId),
     /// An overflow occurred
     Overflow(Cow<'static, str>, u32),
     /// Any other unknown error as a string.
@@ -145,20 +145,17 @@ pub(crate) trait Rendering: Sized {
     fn fullscreen(&mut self, val: bool);
 
     /// Create a texture to draw to.
-    fn create_texture(
-        &mut self,
-        format: Option<PixelFormat>,
-        width: u32,
-        height: u32,
-    ) -> Result<usize>;
+    fn create_texture<F>(&mut self, format: F, width: u32, height: u32) -> Result<TextureId>
+    where
+        F: Into<Option<PixelFormat>>;
 
     /// Delete a texture.
-    fn delete_texture(&mut self, texture_id: usize) -> Result<()>;
+    fn delete_texture(&mut self, texture_id: TextureId) -> Result<()>;
 
     /// Update texture with pixel data.
     fn update_texture<R>(
         &mut self,
-        texture_id: usize,
+        texture_id: TextureId,
         rect: Option<R>,
         pixels: &[u8],
         pitch: usize,
@@ -167,7 +164,12 @@ pub(crate) trait Rendering: Sized {
         R: Into<Rect>;
 
     /// Draw texture canvas.
-    fn draw_texture<R>(&mut self, texture_id: usize, src: Option<R>, dst: Option<R>) -> Result<()>
+    fn draw_texture<R>(
+        &mut self,
+        texture_id: TextureId,
+        src: Option<R>,
+        dst: Option<R>,
+    ) -> Result<()>
     where
         R: Into<Rect>;
 

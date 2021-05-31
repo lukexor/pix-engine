@@ -22,6 +22,8 @@ png = "^0.16"
 rand = "^0.8"
 getrandom = { version = "^0.2", features=["js"] }
 rng = "^0.1"
+bitflags = "^1.2"
+lazy_static = "^1.4"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies.sdl2]
 version = "^0.34"
@@ -40,6 +42,7 @@ wasm-bindgen-test = "^0.3"
 
 [profile.dev]
 opt-level = 2
+split-debuginfo = "unpacked"
 
 [profile.release]
 lto = true

@@ -2,7 +2,7 @@
 
 use crate::{
     common::Result,
-    event::{Event, WindowEvent},
+    event::{Event, KeyEvent, WindowEvent},
     renderer::{Position, Renderer, RendererSettings, Rendering},
     state::{AppState, PixState},
 };
@@ -187,9 +187,18 @@ impl PixEngine {
         while let Some(event) = state.renderer.poll_event() {
             match event {
                 Event::Quit { .. } | Event::AppTerminating { .. } => state.quit(),
-                Event::Window { win_event, .. } => match win_event {
-                    WindowEvent::FocusGained => state.env.focused = true,
-                    WindowEvent::FocusLost => state.env.focused = false,
+                Event::Window {
+                    window_id,
+                    win_event,
+                } => match win_event {
+                    WindowEvent::FocusGained => {
+                        state.env.focused = true;
+                        state.env.focused_window = Some(window_id);
+                    }
+                    WindowEvent::FocusLost => {
+                        state.env.focused = false;
+                        state.env.focused_window = None;
+                    }
                     WindowEvent::Resized(_, _) | WindowEvent::SizeChanged(_, _) => {
                         app.on_window_resized(state)?
                     }
@@ -197,19 +206,37 @@ impl PixEngine {
                 },
                 Event::KeyDown {
                     key: Some(key),
+                    keymod,
                     repeat,
                 } => {
                     state.key_down = true;
                     state.keys.insert(key);
-                    app.on_key_pressed(state, key, repeat)?;
+                    app.on_key_pressed(
+                        state,
+                        KeyEvent {
+                            key,
+                            keymod,
+                            pressed: true,
+                            repeat,
+                        },
+                    )?;
                 }
                 Event::KeyUp {
                     key: Some(key),
+                    keymod,
                     repeat,
                 } => {
                     state.key_down = false;
                     state.keys.remove(&key);
-                    app.on_key_released(state, key, repeat)?;
+                    app.on_key_released(
+                        state,
+                        KeyEvent {
+                            key,
+                            keymod,
+                            pressed: false,
+                            repeat,
+                        },
+                    )?;
                 }
                 Event::TextInput { text, .. } => {
                     app.on_key_typed(state, &text)?;

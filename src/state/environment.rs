@@ -8,6 +8,7 @@ use std::time::Duration;
 #[derive(Debug, Clone)]
 pub(crate) struct Environment {
     pub(crate) focused: bool,
+    pub(crate) focused_window: Option<WindowId>,
     pub(crate) delta_time: Duration,
     pub(crate) frame_rate: u64,
     pub(crate) target_frame_rate: u64,
@@ -19,6 +20,7 @@ impl Default for Environment {
     fn default() -> Self {
         Self {
             focused: false,
+            focused_window: None,
             delta_time: Duration::from_secs(0),
             frame_rate: 0,
             target_frame_rate: 60, // TODO: target_frame_rate
@@ -32,6 +34,14 @@ impl PixState {
     /// Whether the application has focus or not.
     pub fn focused(&self) -> bool {
         self.env.focused
+    }
+
+    /// Whether the given window has focus or not.
+    pub fn focused_window(&self, window_id: WindowId) -> bool {
+        self.env
+            .focused_window
+            .map(|id| id == window_id)
+            .unwrap_or(false)
     }
 
     /// Get the primary window id.

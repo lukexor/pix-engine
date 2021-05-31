@@ -63,15 +63,16 @@ pub mod prelude {
     use super::*;
     pub use color::{constants::*, Color, Hsv, Rgb};
     pub use common::{Error as PixError, Result as PixResult};
+    pub use draw::TextureId;
     pub use engine::PixEngine;
     pub use event::*;
-    pub use image::{Error as ImageError, Image, Result as ImageResult};
+    pub use image::{Error as ImageError, Image, PixelFormat, Result as ImageResult};
     pub use math::{constants::*, map, Scalar};
     pub use renderer::{Error as RendererError, Position, Result as RendererResult};
     pub use shape::*;
     pub use state::{
         environment::WindowId,
-        settings::{ArcMode, BlendMode, DrawMode, PixelFormat},
+        settings::{ArcMode, BlendMode, DrawMode},
         AppState, Error as StateError, PixState, Result as StateResult,
     };
     pub use vector::Vector;

@@ -43,12 +43,12 @@ pub trait AppState {
 
     // TODO: Make on calls return result
     /// Called each time a key is pressed.
-    fn on_key_pressed(&mut self, _s: &mut PixState, _key: Key, _repeat: bool) -> PixResult<()> {
+    fn on_key_pressed(&mut self, _s: &mut PixState, _event: KeyEvent) -> PixResult<()> {
         Ok(())
     }
 
     /// Called each time a key is released.
-    fn on_key_released(&mut self, _s: &mut PixState, _key: Key, _repeat: bool) -> PixResult<()> {
+    fn on_key_released(&mut self, _s: &mut PixState, _event: KeyEvent) -> PixResult<()> {
         Ok(())
     }
 

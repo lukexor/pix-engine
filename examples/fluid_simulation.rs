@@ -10,8 +10,8 @@ const NF: f64 = N as f64;
 const SCALE: u32 = 2;
 const ITER: usize = 4;
 
-const VEL: f64 = 1.0; // Velocity of fluid from perlin noise
-const TIME_INC: f64 = 2.02; // Amount to step time for perlin noise each draw
+const VEL: f64 = 1.0; // Velocity of fluid
+const TIME_INC: f64 = 2.02; // Amount to step time each draw
 
 const SPACING: usize = 12;
 const COUNT: usize = (WIDTH / SCALE) as usize / SPACING + 1;
@@ -26,7 +26,6 @@ struct Fluid {
     vely: [f64; N * N],
     velx0: [f64; N * N],
     vely0: [f64; N * N],
-    flame: Image,
 }
 
 fn get_idx(x: usize, y: usize) -> usize {
@@ -170,7 +169,6 @@ impl Fluid {
             visc: 0.000000005, // Viscosity
             s: [0.0; N * N],
             density: [0.0; N * N],
-            flame: Image::new(0, 0),
             velx: [0.0; N * N],
             vely: [0.0; N * N],
             velx0: [0.0; N * N],
@@ -314,7 +312,6 @@ impl AppState for App {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         s.rect_mode(DrawMode::Center);
         s.no_stroke();
-        self.fluid.flame = Image::load("static/flame.png")?;
 
         for i in 0..COUNT {
             self.xs[i] = (i * SPACING) as f64;

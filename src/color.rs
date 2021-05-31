@@ -226,6 +226,7 @@ macro_rules! hsv {
 #[allow(variant_size_differences)]
 #[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq)]
+// TODO: Convert to struct with rgb/hsv values
 pub enum Color {
     /// An Rgb instance of `Color`.
     Rgb(Rgb),

@@ -1,6 +1,8 @@
 //! Handles User and System level interaction event.
 
-/// Wrapper around a concrete System or User Event.
+use bitflags::bitflags;
+
+/// System or User Event.
 #[allow(missing_docs)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum Event {
@@ -12,10 +14,12 @@ pub enum Event {
     },
     KeyDown {
         key: Option<Key>,
+        keymod: KeyMod,
         repeat: bool,
     },
     KeyUp {
         key: Option<Key>,
+        keymod: KeyMod,
         repeat: bool,
     },
     TextInput {
@@ -118,13 +122,23 @@ pub enum Event {
     Unknown,
 }
 
+/// A specific event representing a keypress.
+#[allow(missing_docs)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub struct KeyEvent {
+    pub key: Key,
+    pub keymod: KeyMod,
+    pub pressed: bool,
+    pub repeat: bool,
+}
+
 impl Default for Event {
     fn default() -> Self {
         Self::Unknown
     }
 }
 
-/// Wrapper around a concrete Window Event.
+/// Window Event.
 #[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum WindowEvent {
@@ -150,7 +164,7 @@ impl Default for WindowEvent {
     }
 }
 
-/// Wrapper around a concrete Mouse Button type.
+/// Mouse Button type.
 #[allow(missing_docs)]
 #[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -167,7 +181,23 @@ impl Default for Mouse {
     }
 }
 
-/// Wrapper around a concrete Key type.
+bitflags! {
+    /// Key Modifier.
+    pub struct KeyMod: u16 {
+        /// No modifier
+        const NONE = 0b0000;
+        /// LShift or RShift
+        const SHIFT = 0b0001;
+        /// LCtrl or RCtrl
+        const CTRL = 0b0010;
+        /// LAlt or RAlt
+        const ALT = 0b0100;
+        /// LGui or RGui
+        const GUI = 0b1000;
+    }
+}
+
+/// Keyboard key.
 #[allow(missing_docs)]
 #[non_exhaustive]
 #[rustfmt::skip]

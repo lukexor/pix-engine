@@ -1,6 +1,7 @@
 //! Math related types, constants and utility functions.
 
-use crate::{vector::Vector, PixState};
+use crate::vector::Vector;
+use lazy_static::lazy_static;
 use num_traits::{Num, NumCast};
 use rand::{self, distributions::uniform::SampleUniform, Rng};
 use std::ops::{AddAssign, Range};
@@ -13,6 +14,16 @@ const PERLIN_YWRAP: usize = 1 << PERLIN_YWRAPB;
 const PERLIN_ZWRAPB: usize = 8;
 const PERLIN_ZWRAP: usize = 1 << PERLIN_ZWRAPB;
 const PERLIN_SIZE: usize = 4095;
+
+lazy_static! {
+    static ref PERLIN: Vec<f64> = {
+        let mut perlin = Vec::with_capacity(PERLIN_SIZE + 1);
+        for _ in 0..PERLIN_SIZE + 1 {
+            perlin.push(random(1.0));
+        }
+        perlin
+    };
+}
 
 fn scaled_cosine(i: f64) -> f64 {
     0.5 * (1.0 - (i * constants::PI).cos())
@@ -42,18 +53,11 @@ where
 
 /// Returns the Perlin noise value at specified coordinates.
 #[allow(clippy::many_single_char_names)]
-pub fn noise<V>(s: &mut PixState, v: V) -> f64
+pub fn noise<V>(v: V) -> f64
 where
     V: Into<Vector>,
 {
     let v = v.into();
-    if s.perlin.is_none() {
-        let mut perlin = Vec::with_capacity(PERLIN_SIZE + 1);
-        for _ in 0..PERLIN_SIZE + 1 {
-            perlin.push(random(1.0));
-        }
-        s.perlin = Some(perlin);
-    }
 
     let x = v.x.abs();
     let y = v.y.abs();
@@ -73,52 +77,50 @@ where
 
     let (mut n1, mut n2, mut n3);
 
-    if let Some(ref perlin) = s.perlin {
-        // TODO: Make a state setting
-        let perlin_octaves = 4; // default to medium smooth
-        let perlin_amp_falloff = 0.5; // 50% reduction/octave
-        for _ in 0..perlin_octaves {
-            let mut of = xi + (yi << PERLIN_YWRAPB) + (zi << PERLIN_ZWRAPB);
+    // TODO: Make a state setting
+    let perlin_octaves = 4; // default to medium smooth
+    let perlin_amp_falloff = 0.5; // 50% reduction/octave
+    for _ in 0..perlin_octaves {
+        let mut of = xi + (yi << PERLIN_YWRAPB) + (zi << PERLIN_ZWRAPB);
 
-            rxf = scaled_cosine(xf);
-            ryf = scaled_cosine(yf);
+        rxf = scaled_cosine(xf);
+        ryf = scaled_cosine(yf);
 
-            n1 = perlin[of & PERLIN_SIZE];
-            n1 += rxf * (perlin[(of + 1) & PERLIN_SIZE] - n1);
-            n2 = perlin[(of + PERLIN_YWRAP) & PERLIN_SIZE];
-            n2 += rxf * (perlin[(of + PERLIN_YWRAP + 1) & PERLIN_SIZE] - n2);
-            n1 += ryf * (n2 - n1);
+        n1 = PERLIN[of & PERLIN_SIZE];
+        n1 += rxf * (PERLIN[(of + 1) & PERLIN_SIZE] - n1);
+        n2 = PERLIN[(of + PERLIN_YWRAP) & PERLIN_SIZE];
+        n2 += rxf * (PERLIN[(of + PERLIN_YWRAP + 1) & PERLIN_SIZE] - n2);
+        n1 += ryf * (n2 - n1);
 
-            of += PERLIN_ZWRAP;
-            n2 = perlin[of & PERLIN_SIZE];
-            n2 += rxf * (perlin[(of + 1) & PERLIN_SIZE] - n2);
-            n3 = perlin[(of + PERLIN_YWRAP) & PERLIN_SIZE];
-            n3 += rxf * (perlin[(of + PERLIN_YWRAP + 1) & PERLIN_SIZE] - n3);
-            n2 += ryf * (n3 - n2);
+        of += PERLIN_ZWRAP;
+        n2 = PERLIN[of & PERLIN_SIZE];
+        n2 += rxf * (PERLIN[(of + 1) & PERLIN_SIZE] - n2);
+        n3 = PERLIN[(of + PERLIN_YWRAP) & PERLIN_SIZE];
+        n3 += rxf * (PERLIN[(of + PERLIN_YWRAP + 1) & PERLIN_SIZE] - n3);
+        n2 += ryf * (n3 - n2);
 
-            n1 += scaled_cosine(zf) * (n2 - n1);
+        n1 += scaled_cosine(zf) * (n2 - n1);
 
-            noise_result += n1 * ampl;
-            ampl *= perlin_amp_falloff;
-            xi <<= 1;
-            xf *= 2.0;
-            yi <<= 1;
-            yf *= 2.0;
-            zi <<= 1;
-            zf *= 2.0;
+        noise_result += n1 * ampl;
+        ampl *= perlin_amp_falloff;
+        xi <<= 1;
+        xf *= 2.0;
+        yi <<= 1;
+        yf *= 2.0;
+        zi <<= 1;
+        zf *= 2.0;
 
-            if xf >= 1.0 {
-                xi += 1;
-                xf -= 1.0;
-            }
-            if yf >= 1.0 {
-                yi += 1;
-                yf -= 1.0;
-            }
-            if zf >= 1.0 {
-                zi += 1;
-                zf -= 1.0;
-            }
+        if xf >= 1.0 {
+            xi += 1;
+            xf -= 1.0;
+        }
+        if yf >= 1.0 {
+            yi += 1;
+            yf -= 1.0;
+        }
+        if zf >= 1.0 {
+            zi += 1;
+            zf -= 1.0;
         }
     }
     noise_result

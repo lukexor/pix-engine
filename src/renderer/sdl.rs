@@ -20,6 +20,7 @@ type SdlAxis = sdl2::controller::Axis;
 type SdlButton = sdl2::controller::Button;
 type SdlMouseButton = sdl2::mouse::MouseButton;
 type SdlKeycode = sdl2::keyboard::Keycode;
+type SdlMod = sdl2::keyboard::Mod;
 type SdlWindowEvent = sdl2::event::WindowEvent;
 type SdlEvent = sdl2::event::Event;
 type SdlColor = sdl2::pixels::Color;
@@ -203,13 +204,11 @@ impl Rendering for Renderer {
     }
 
     /// Create a texture to render to.
-    fn create_texture(
-        &mut self,
-        format: Option<PixelFormat>,
-        width: u32,
-        height: u32,
-    ) -> Result<usize> {
-        let format = format.map(|f| f.into());
+    fn create_texture<F>(&mut self, format: F, width: u32, height: u32) -> Result<TextureId>
+    where
+        F: Into<Option<PixelFormat>>,
+    {
+        let format = format.into().map(|f| f.into());
         let texture_id = self.textures.len();
         self.textures.push(
             self.texture_creator
@@ -219,7 +218,7 @@ impl Rendering for Renderer {
     }
 
     /// Delete a texture.
-    fn delete_texture(&mut self, texture_id: usize) -> Result<()> {
+    fn delete_texture(&mut self, texture_id: TextureId) -> Result<()> {
         if texture_id < self.textures.len() {
             let texture = self.textures.remove(texture_id);
             // SAFETY: self.texture_creator can not be destroyed while PixEngine is running
@@ -233,7 +232,7 @@ impl Rendering for Renderer {
     /// Update texture with pixel data.
     fn update_texture<R>(
         &mut self,
-        texture_id: usize,
+        texture_id: TextureId,
         rect: Option<R>,
         pixels: &[u8],
         pitch: usize,
@@ -427,30 +426,32 @@ impl Rendering for Renderer {
 
     /// Draw an image to the current canvas.
     fn image(&mut self, x: i32, y: i32, img: &Image) -> Result<()> {
-        // TODO: move texture creation ti image
-        let mut texture = self.texture_creator.create_texture_streaming(
-            SdlPixelFormat::RGB24,
-            img.width(),
-            img.height(),
-        )?;
-        texture.update(None, img.bytes(), 3 * img.width() as usize)?;
-        texture.set_blend_mode(self.blend_mode);
-        let dst = SdlRect::new(x, y, img.width(), img.height());
-        Ok(self.canvas.copy(&texture, None, dst)?)
+        if let Some(texture) = self.textures.get_mut(img.texture_id) {
+            texture.update(
+                None,
+                img.bytes(),
+                img.format().channels() * img.width() as usize,
+            )?;
+            texture.set_blend_mode(self.blend_mode);
+            let dst = SdlRect::new(x, y, img.width(), img.height());
+            self.canvas.copy(&texture, None, dst)?;
+        }
+        Ok(())
     }
 
     /// Draw an image to the current canvas.
     fn image_resized(&mut self, x: i32, y: i32, w: u32, h: u32, img: &Image) -> Result<()> {
-        // TODO: move texture creation ti image
-        let mut texture = self.texture_creator.create_texture_streaming(
-            SdlPixelFormat::RGB24,
-            img.width(),
-            img.height(),
-        )?;
-        texture.update(None, img.bytes(), img.channels() * img.width() as usize)?;
-        texture.set_blend_mode(self.blend_mode);
-        let dst = SdlRect::new(x, y, w, h);
-        Ok(self.canvas.copy(&texture, None, dst)?)
+        if let Some(texture) = self.textures.get_mut(img.texture_id) {
+            texture.update(
+                None,
+                img.bytes(),
+                img.format().channels() * img.width() as usize,
+            )?;
+            texture.set_blend_mode(self.blend_mode);
+            let dst = SdlRect::new(x, y, w, h);
+            self.canvas.copy(&texture, None, dst)?;
+        }
+        Ok(())
     }
 
     /// Add audio samples to the audio buffer queue.
@@ -502,15 +503,23 @@ impl From<SdlEvent> for Event {
                 win_event: win_event.into(),
             },
             SdlEvent::KeyDown {
-                keycode, repeat, ..
+                keycode,
+                keymod,
+                repeat,
+                ..
             } => KeyDown {
                 key: keycode.map(|k| k.into()),
+                keymod: keymod.into(),
                 repeat,
             },
             SdlEvent::KeyUp {
-                keycode, repeat, ..
+                keycode,
+                keymod,
+                repeat,
+                ..
             } => KeyUp {
                 key: keycode.map(|k| k.into()),
+                keymod: keymod.into(),
                 repeat,
             },
             SdlEvent::TextInput { text, .. } => TextInput { text },
@@ -785,6 +794,25 @@ impl From<SdlKeycode> for Key {
     }
 }
 
+impl From<SdlMod> for KeyMod {
+    fn from(keymod: SdlMod) -> Self {
+        let mut result = KeyMod::NONE;
+        if keymod.contains(SdlMod::LSHIFTMOD) || keymod.contains(SdlMod::RSHIFTMOD) {
+            result |= KeyMod::SHIFT;
+        }
+        if keymod.contains(SdlMod::LCTRLMOD) || keymod.contains(SdlMod::RCTRLMOD) {
+            result |= KeyMod::CTRL;
+        }
+        if keymod.contains(SdlMod::LALTMOD) || keymod.contains(SdlMod::RALTMOD) {
+            result |= KeyMod::ALT;
+        }
+        if keymod.contains(SdlMod::LGUIMOD) || keymod.contains(SdlMod::RGUIMOD) {
+            result |= KeyMod::GUI;
+        }
+        result
+    }
+}
+
 impl From<SdlMouseButton> for Mouse {
     fn from(button: SdlMouseButton) -> Self {
         use Mouse::*;
@@ -877,6 +905,10 @@ impl From<PixelFormat> for SdlPixelFormat {
     fn from(format: PixelFormat) -> Self {
         use PixelFormat::*;
         match format {
+            Indexed => SdlPixelFormat::Index8,
+            Grayscale => SdlPixelFormat::Index8,
+
+            GrayscaleAlpha => SdlPixelFormat::Index8, // TODO: This is likely not correct
             Rgb => SdlPixelFormat::RGB24,
             Rgba => SdlPixelFormat::RGBA32,
         }

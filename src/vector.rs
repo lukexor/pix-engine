@@ -79,6 +79,8 @@ pub struct Vector {
     pub z: Scalar,
 }
 
+// TODO: Add s.create_vector to generate random vec in window space
+
 /// # Create an [`Vector`].
 ///
 /// ```
