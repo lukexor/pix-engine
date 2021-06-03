@@ -899,7 +899,6 @@ impl From<PixelFormat> for SdlPixelFormat {
         match format {
             Indexed => SdlPixelFormat::Index8,
             Grayscale => SdlPixelFormat::Index8,
-
             GrayscaleAlpha => SdlPixelFormat::Index8, // TODO: This is likely not correct
             Rgb => SdlPixelFormat::RGB24,
             Rgba => SdlPixelFormat::RGBA32,

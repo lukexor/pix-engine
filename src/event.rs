@@ -1,10 +1,13 @@
 //! Handles User and System level interaction events.
 
 use bitflags::bitflags;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
 /// System or User Event.
 #[allow(missing_docs)]
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Event {
     Quit,
     AppTerminating,
@@ -124,7 +127,8 @@ pub enum Event {
 
 /// A specific event representing a keypress.
 #[allow(missing_docs)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct KeyEvent {
     pub key: Key,
     pub keymod: KeyMod,
@@ -140,7 +144,8 @@ impl Default for Event {
 
 /// Window Event.
 #[allow(missing_docs)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum WindowEvent {
     Shown,
     Hidden,
@@ -168,6 +173,7 @@ impl Default for WindowEvent {
 #[allow(missing_docs)]
 #[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Mouse {
     Left,
     Middle,
@@ -183,17 +189,19 @@ impl Default for Mouse {
 
 bitflags! {
     /// Key Modifier.
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(transparent))]
     pub struct KeyMod: u16 {
         /// No modifier
-        const NONE = 0b0000;
+        const NONE = 0x0000;
         /// LShift or RShift
-        const SHIFT = 0b0001;
+        const SHIFT = 0x0001;
         /// LCtrl or RCtrl
-        const CTRL = 0b0010;
+        const CTRL = 0x0040;
         /// LAlt or RAlt
-        const ALT = 0b0100;
+        const ALT = 0x0100;
         /// LGui or RGui
-        const GUI = 0b1000;
+        const GUI = 0x0400;
     }
 }
 
@@ -202,6 +210,7 @@ bitflags! {
 #[non_exhaustive]
 #[rustfmt::skip]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Key {
     Backspace, Tab, Return, Escape, Space, Exclaim, Quotedbl, Hash, Dollar, Percent, Ampersand,
     Quote, LeftParen, RightParen, Asterisk, Plus, Comma, Minus, Period, Slash, Num0, Num1, Num2,
@@ -221,6 +230,7 @@ impl Default for Key {
 /// A Joystick axis
 #[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Axis {
     LeftX,
     LeftY,
@@ -240,6 +250,7 @@ impl Default for Axis {
 /// A Controller button
 #[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Button {
     A,
     B,
