@@ -156,6 +156,8 @@
 //! ```
 
 use crate::random;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 use std::{
     convert::TryFrom,
     error,
@@ -233,6 +235,7 @@ macro_rules! hsv {
 #[allow(variant_size_differences)]
 #[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Color {
     /// An Rgb instance of `Color`.
     Rgb(Rgb),
@@ -354,6 +357,7 @@ impl From<Color> for Hsv {
 
 /// An `Rgb` Color containing Red, Green, Blue, and Alpha channels.
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Rgb {
     r: u8,
     g: u8,
@@ -611,6 +615,7 @@ impl TryFrom<&str> for Rgb {
 
 /// A `Hsv` Color containing Hue, Saturation, Value, and Alpha channels.
 #[derive(Default, Debug, Copy, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Hsv {
     h: f32,
     s: f32,

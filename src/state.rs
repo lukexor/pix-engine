@@ -5,6 +5,8 @@ use crate::{
     renderer::{Renderer, Rendering},
 };
 use environment::Environment;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 use settings::Settings;
 use std::{borrow::Cow, collections::HashSet, error, fmt, io, result};
 
@@ -84,8 +86,10 @@ pub trait AppState {
 
 /// Represents all engine-specific state and methods.
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct PixState {
     pub(crate) title: String,
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) renderer: Renderer,
     pub(crate) env: Environment,
     pub(crate) settings: Settings,

@@ -2,10 +2,13 @@
 
 use super::PixState;
 use crate::{common::Result, renderer::Rendering};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
 /// Environment values for [PixState]
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct Environment {
     pub(crate) focused: bool,
     pub(crate) focused_window: Option<WindowId>,

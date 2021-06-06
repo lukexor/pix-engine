@@ -1,10 +1,13 @@
 //! 2D/3D Point type used for drawing.
 
 use crate::math::Scalar;
-use std::ops::*;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+use std::{iter::Sum, ops::*};
 
 /// A Point.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Point {
     /// X-coord
     pub x: i32,
@@ -243,6 +246,24 @@ impl RemAssign for Point {
         if p.z != 0 {
             self.z %= p.z;
         }
+    }
+}
+
+impl Sum for Point {
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = Self>,
+    {
+        iter.fold(Point::new((0.0, 0.0, 0.0)), |a, b| a + b)
+    }
+}
+
+impl<'a> Sum<&'a Point> for Point {
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = &'a Self>,
+    {
+        iter.fold(Point::new((0.0, 0.0, 0.0)), |a, b| a + *b)
     }
 }
 

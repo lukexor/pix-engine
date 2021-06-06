@@ -2,9 +2,12 @@
 
 use super::Point;
 use crate::vector::Vector;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
 /// A Rectangle.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Rect {
     /// X-coord
     pub x: i32,
@@ -80,6 +83,7 @@ impl From<Square> for Rect {
 
 /// A Square.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Square {
     /// X-coord
     pub x: i32,

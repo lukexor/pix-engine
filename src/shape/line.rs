@@ -2,9 +2,12 @@
 
 use super::Point;
 use crate::vector::Vector;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
 /// A `Line`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Line {
     /// Start Point.
     pub p1: Point,

@@ -90,7 +90,7 @@ impl Default for RendererSettings {
 }
 
 /// A common interface all renderers must implement
-pub(crate) trait Rendering: Sized {
+pub(crate) trait Rendering: Default + Sized {
     /// Creates a new Renderer instance.
     fn init(settings: RendererSettings) -> Result<Self>;
 

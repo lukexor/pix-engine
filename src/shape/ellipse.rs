@@ -2,9 +2,12 @@
 
 use super::Point;
 use crate::{math::Scalar, vector::Vector};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
 /// An Ellipse.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Ellipse {
     /// Center x-coord
     pub x: i32,
@@ -101,6 +104,7 @@ impl From<Circle> for Ellipse {
 
 /// A Circle.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Circle {
     /// Center x-coord
     pub x: i32,

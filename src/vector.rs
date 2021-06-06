@@ -56,6 +56,8 @@ use crate::{
     random,
     shape::Point,
 };
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 use std::{fmt, iter::Sum, ops::*};
 
 /// Represents a Euclidiean (also known as geometric) Vector in 2D or 3D space. A Vector has both a magnitude and a direction,
@@ -70,6 +72,7 @@ use std::{fmt, iter::Sum, ops::*};
 /// to form a new vector using `let v3 = v1 + v2` or you can add one vector to another by calling
 /// `v1 += v2`.
 #[derive(Default, Debug, Copy, Clone, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Vector {
     /// X magnitude
     pub x: Scalar,

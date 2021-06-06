@@ -42,6 +42,12 @@ pub struct Renderer {
     blend_mode: SdlBlendMode,
 }
 
+impl Default for Renderer {
+    fn default() -> Self {
+        Self::init(RendererSettings::default()).expect("SDL2 Renderer")
+    }
+}
+
 impl Rendering for Renderer {
     /// Initializes the Sdl2Renderer using the given settings and opens a new window.
     fn init(s: RendererSettings) -> Result<Self> {

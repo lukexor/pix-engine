@@ -6,11 +6,14 @@ use crate::{
     renderer::{self, Rendering},
     shape::Rect,
 };
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 use std::path::Path;
 
 /// Drawing mode which changes how (x, y) coordinates are interpreted.
 #[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum DrawMode {
     /// Use (x, y) as the top-left corner. Default.
     Corner,
@@ -21,6 +24,7 @@ pub enum DrawMode {
 /// Drawing mode which changes how arcs are drawn.
 #[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum ArcMode {
     /// Draws arc with fill as an open pie segment.
     None,
@@ -35,6 +39,7 @@ pub enum ArcMode {
 /// Drawing mode which changes how textures are blended together.
 #[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum BlendMode {
     /// Disable blending
     None,
@@ -48,6 +53,7 @@ pub enum BlendMode {
 
 /// Several settings used to change various functionality of the engine.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct Settings {
     pub(crate) background: Color,
     pub(crate) fill: Option<Color>,
