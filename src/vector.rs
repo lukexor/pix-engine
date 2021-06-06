@@ -56,7 +56,7 @@ use crate::{
     random,
     shape::Point,
 };
-use std::{fmt, ops::*};
+use std::{fmt, iter::Sum, ops::*};
 
 /// Represents a Euclidiean (also known as geometric) Vector in 2D or 3D space. A Vector has both a magnitude and a direction,
 /// but this data type stores the components of the vector as (x, y, 0) for 2D or (x, y, z) for 3D.
@@ -804,6 +804,24 @@ impl RemAssign for Vector {
         if v.z != 0.0 {
             self.z %= v.z;
         }
+    }
+}
+
+impl Sum for Vector {
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = Self>,
+    {
+        iter.fold(Vector::new((0.0, 0.0, 0.0)), |a, b| a + b)
+    }
+}
+
+impl<'a> Sum<&'a Vector> for Vector {
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = &'a Self>,
+    {
+        iter.fold(Vector::new((0.0, 0.0, 0.0)), |a, b| a + *b)
     }
 }
 

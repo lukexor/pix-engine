@@ -4,7 +4,7 @@ const TITLE: &str = "Flocking Simulation";
 const WIDTH: u32 = 1000;
 const HEIGHT: u32 = 800;
 
-const BIRD_COUNT: usize = 50;
+const BIRD_COUNT: usize = 500;
 const BIRD_MODEL: [(f64, f64); 13] = [
     (1.5, 0.0),
     (0.75, -0.25),
@@ -20,40 +20,37 @@ const BIRD_MODEL: [(f64, f64); 13] = [
     (0.25, 1.5),
     (0.75, 0.25),
 ];
-const BIRD_SCALE: f64 = 8.0;
+const BIRD_SCALE: f64 = 3.0;
 
 #[derive(PartialEq)]
 struct Boid {
     pos: Vector,
     vel: Vector,
     acc: Vector,
-    percep_radius: f64,
     max_acc: f64,
     max_vel: f64,
 }
 
 impl Boid {
     fn new() -> Self {
-        let mut vel = Vector::random_2d();
-        vel.set_mag(random!(2.0, 4.0));
         Self {
             pos: vector!(random!(WIDTH), random!(HEIGHT)),
-            vel,
+            vel: vector!(random!(-1.0, 1.0), random!(-1.0, 1.0)),
             acc: vector!(),
-            percep_radius: random!(80.0, 100.0),
-            max_acc: random!(0.2, 0.4),
-            max_vel: random!(3.0, 6.0),
+            max_acc: 0.1,
+            max_vel: 3.0,
         }
     }
 
     fn update(&mut self) {
-        self.pos += self.vel;
-        self.pos.wrap_2d(WIDTH as f64, HEIGHT as f64);
         self.vel += self.acc;
+        self.vel.limit(self.max_vel);
         if self.vel.mag() < 2.0 {
             self.vel.set_mag(2.0);
         }
-        self.vel.limit(self.max_vel);
+        self.pos += self.vel;
+        self.pos.wrap_2d(WIDTH as f64, HEIGHT as f64);
+        self.acc *= 0.0;
     }
 
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
@@ -65,19 +62,17 @@ impl Boid {
 }
 
 struct BoidAdjustment {
-    alignment: Vector,
-    cohesion: Vector,
-    separation: Vector,
-    total: f64,
+    align: Vec<Vector>,
+    cohesion: Vec<Vector>,
+    sep: Vec<Vector>,
 }
 
 impl BoidAdjustment {
     fn new() -> Self {
         Self {
-            alignment: vector!(),
-            cohesion: vector!(),
-            separation: vector!(),
-            total: 0.0,
+            align: Vec::with_capacity(BIRD_COUNT),
+            cohesion: Vec::with_capacity(BIRD_COUNT),
+            sep: Vec::with_capacity(BIRD_COUNT),
         }
     }
 }
@@ -102,49 +97,69 @@ impl App {
         }
     }
 
-    fn get_adjustment(&self) -> Vec<Option<Vector>> {
+    fn get_adjustment(&self) -> Vec<Vector> {
+        let align_dist = 50.0;
+        let cohesion_dist = 50.0;
+        let sep_dist = 25.0;
         self.flock
             .iter()
             .map(|boid| {
-                let mut adjustment =
-                    self.flock
-                        .iter()
-                        .fold(BoidAdjustment::new(), |mut adjustment, other| {
-                            let d = boid.pos.dist(other.pos);
-                            if boid != other && d < boid.percep_radius {
-                                adjustment.alignment += other.vel;
-                                adjustment.cohesion += other.pos;
-                                adjustment.separation += boid.pos - other.pos;
-                                if d > 0.0 {
-                                    adjustment.separation /= d;
-                                }
-                                adjustment.total += 1.0;
+                let adj = self
+                    .flock
+                    .iter()
+                    .fold(BoidAdjustment::new(), |mut adj, other| {
+                        let d = boid.pos.dist(other.pos);
+                        if d > 0.0 {
+                            if d < align_dist {
+                                adj.align.push(other.vel);
                             }
-                            adjustment
-                        });
-                if adjustment.total > 0.0 {
-                    if adjustment.total.is_infinite() || adjustment.total.is_nan() {
-                        eprintln!("{}", adjustment.total);
+                            if d < cohesion_dist {
+                                adj.cohesion.push(other.pos);
+                            }
+                            if d < sep_dist {
+                                let mut sep = boid.pos - other.pos;
+                                sep.normalize();
+                                sep /= d;
+                                adj.sep.push(sep);
+                            }
+                        }
+                        adj
+                    });
+
+                let mut sum = vector!();
+
+                if !adj.sep.is_empty() {
+                    let mut sep = adj.sep.iter().sum::<Vector>() / adj.sep.len() as f64;
+                    if sep.mag_sq() > 0.0 {
+                        sep.normalize();
+                        sep *= boid.max_vel;
+                        sep -= boid.vel;
+                        sep.limit(boid.max_acc);
+                        sum += sep * 1.5;
                     }
-                    adjustment.alignment /= adjustment.total;
-                    adjustment.alignment.set_mag(boid.max_vel);
-                    adjustment.alignment -= boid.vel;
-                    adjustment.alignment.limit(boid.max_acc);
-
-                    adjustment.cohesion /= adjustment.total;
-                    adjustment.cohesion -= boid.pos;
-                    adjustment.cohesion.set_mag(boid.max_vel);
-                    adjustment.cohesion -= boid.vel;
-                    adjustment.cohesion.limit(boid.max_acc);
-
-                    adjustment.separation /= adjustment.total;
-                    adjustment.separation.set_mag(boid.max_vel * 2.0);
-                    adjustment.separation -= boid.vel;
-                    adjustment.separation.limit(boid.max_acc * 1.5);
-                    Some(adjustment.alignment + adjustment.cohesion + adjustment.separation)
-                } else {
-                    None
                 }
+
+                if !adj.align.is_empty() {
+                    let mut align = adj.align.iter().sum::<Vector>() / adj.align.len() as f64;
+                    align.normalize();
+                    align *= boid.max_vel;
+                    align -= boid.vel;
+                    align.limit(boid.max_acc);
+                    sum += align;
+                }
+
+                if !adj.cohesion.is_empty() {
+                    let mut cohesion =
+                        adj.cohesion.iter().sum::<Vector>() / adj.cohesion.len() as f64;
+                    cohesion -= boid.pos;
+                    cohesion.normalize();
+                    cohesion *= boid.max_vel;
+                    cohesion -= boid.vel;
+                    cohesion.limit(boid.max_acc);
+                    sum += cohesion;
+                }
+
+                sum
             })
             .collect()
     }
@@ -160,10 +175,7 @@ impl AppState for App {
         s.clear();
         let adjustment = self.get_adjustment();
         for (i, boid) in self.flock.iter_mut().enumerate() {
-            boid.acc.set_mag(0.0);
-            if let Some(adjustment) = adjustment[i] {
-                boid.acc += adjustment;
-            }
+            boid.acc += adjustment[i];
             boid.update();
             boid.draw(s)?;
         }

@@ -41,8 +41,13 @@ web-sys = "^0.3"
 console_error_panic_hook = "^0.1"
 wasm-bindgen-test = "^0.3"
 
-[profile.dev]
+[profile.dev.package.sdl2]
 opt-level = 2
+
+[profile.test.package.sdl2]
+opt-level = 2
+
+[profile.dev]
 split-debuginfo = "unpacked"
 
 [profile.release]
