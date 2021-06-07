@@ -1,8 +1,16 @@
-use super::{RendererResult, RendererSettings, Rendering};
-use crate::{color::Color, event::Event, image::Image, shape::Rect};
+use crate::{
+    prelude::*,
+    renderer::{RendererSettings, Rendering, Result},
+};
 
 /// A Web-Assembly [Renderer] implementation.
-pub struct Renderer {}
+pub(crate) struct Renderer {}
+
+impl Default for Renderer {
+    fn default() -> Self {
+        Self {}
+    }
+}
 
 impl Rendering for Renderer {
     /// Creates a new Renderer instance.
@@ -56,10 +64,7 @@ impl Rendering for Renderer {
     }
 
     /// Set the current window title.
-    fn set_title<S>(&mut self, _title: S) -> RendererResult<()>
-    where
-        S: AsRef<str>,
-    {
+    fn set_title(&mut self, _title: &str) -> RendererResult<()> {
         todo!("set_title")
     }
 
@@ -131,12 +136,12 @@ impl Rendering for Renderer {
     /// Draw text to the current canvas.
     fn text<S>(
         &mut self,
-        text: S,
-        x: i32,
-        y: i32,
-        size: u32,
-        fill: Option<Color>,
-        stroke: Option<Color>,
+        _text: S,
+        _x: i32,
+        _y: i32,
+        _size: u32,
+        _fill: Option<Color>,
+        _stroke: Option<Color>,
     ) -> RendererResult<()>
     where
         S: AsRef<str>,
@@ -145,23 +150,23 @@ impl Rendering for Renderer {
     }
 
     /// Draw a pixel to the current canvas.
-    fn point(&mut self, x: i32, y: i32, stroke: Option<Color>) -> RendererResult<()> {
+    fn point(&mut self, _x: i32, _y: i32, _stroke: Option<Color>) -> RendererResult<()> {
         todo!("pixel")
     }
 
     /// Draw an array of pixels to the current canvas.
-    fn points(&mut self, pixels: &[u8], pitch: usize) -> RendererResult<()> {
+    fn points(&mut self, _pixels: &[u8], _pitch: usize) -> RendererResult<()> {
         todo!("pixels")
     }
 
     /// Draw a line to the current canvas.
     fn line(
         &mut self,
-        x1: i32,
-        y1: i32,
-        x2: i32,
-        y2: i32,
-        stroke: Option<Color>,
+        _x1: i32,
+        _y1: i32,
+        _x2: i32,
+        _y2: i32,
+        _stroke: Option<Color>,
     ) -> RendererResult<()> {
         todo!("line")
     }
@@ -170,14 +175,14 @@ impl Rendering for Renderer {
     #[allow(clippy::too_many_arguments)]
     fn triangle(
         &mut self,
-        x1: i32,
-        y1: i32,
-        x2: i32,
-        y2: i32,
-        x3: i32,
-        y3: i32,
-        fill: Option<Color>,
-        stroke: Option<Color>,
+        _x1: i32,
+        _y1: i32,
+        _x2: i32,
+        _y2: i32,
+        _x3: i32,
+        _y3: i32,
+        _fill: Option<Color>,
+        _stroke: Option<Color>,
     ) -> RendererResult<()> {
         todo!("triangle")
     }
@@ -185,12 +190,12 @@ impl Rendering for Renderer {
     /// Draw a rectangle to the current canvas.
     fn rect(
         &mut self,
-        x: i32,
-        y: i32,
-        width: u32,
-        height: u32,
-        fill: Option<Color>,
-        stroke: Option<Color>,
+        _x: i32,
+        _y: i32,
+        _width: u32,
+        _height: u32,
+        _fill: Option<Color>,
+        _stroke: Option<Color>,
     ) -> RendererResult<()> {
         todo!("rect")
     }
@@ -209,18 +214,18 @@ impl Rendering for Renderer {
     /// Draw a ellipse to the current canvas.
     fn ellipse(
         &mut self,
-        x: i32,
-        y: i32,
-        width: u32,
-        height: u32,
-        fill: Option<Color>,
-        stroke: Option<Color>,
+        _x: i32,
+        _y: i32,
+        _width: u32,
+        _height: u32,
+        _fill: Option<Color>,
+        _stroke: Option<Color>,
     ) -> RendererResult<()> {
         todo!("ellipse")
     }
 
     /// Draw an image to the current canvas.
-    fn image(&mut self, x: i32, y: i32, img: &Image) -> RendererResult<()> {
+    fn image(&mut self, _x: i32, _y: i32, _img: &Image) -> RendererResult<()> {
         todo!("image")
     }
 
@@ -243,7 +248,7 @@ impl Rendering for Renderer {
 }
 
 impl std::fmt::Debug for Renderer {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!(f, "WasmRenderer {{}}")
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!("WasmRenderer {{}}")
     }
 }

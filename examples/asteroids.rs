@@ -1,4 +1,5 @@
 use pix_engine::prelude::*;
+use std::f64::consts::{FRAC_PI_2, PI, TAU};
 
 const TITLE: &str = "Asteroids";
 const WIDTH: u32 = 800;
@@ -196,8 +197,8 @@ impl AppState for Asteroids {
 
                     if a.size > MIN_ASTEROID_SIZE {
                         // Break into two
-                        let a1 = random!(TWO_PI);
-                        let a2 = random!(TWO_PI);
+                        let a1 = random!(TAU);
+                        let a2 = random!(TAU);
                         new_asteroids.push(SpaceObj::new(
                             a.size >> 1,
                             a.pos,
@@ -247,7 +248,7 @@ impl AppState for Asteroids {
         s.fill(BLACK);
         s.stroke(WHITE);
         for i in 0..self.lives {
-            s.wireframe(&self.ship_model, (12 + (i * 14), 36), -HALF_PI, 2.0)?;
+            s.wireframe(&self.ship_model, (12 + (i * 14), 36), -FRAC_PI_2, 2.0)?;
         }
 
         // Win level
@@ -296,8 +297,7 @@ pub fn main() {
         .with_title(TITLE)
         .with_frame_rate()
         .position_centered()
-        .build()
-        .expect("valid engine");
+        .build();
     let mut app = Asteroids::new();
     engine.run(&mut app).expect("ran successfully");
 }

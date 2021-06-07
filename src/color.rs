@@ -11,7 +11,7 @@
 //!
 //! # Syntax
 //!
-//! ```ignore
+//! ```text
 //! // RGB values range from 0-255
 //! rgb!(gray);
 //! rgb!(gray, [alpha]);

@@ -31,8 +31,7 @@ pub fn main() {
         .with_title(TITLE)
         .with_frame_rate()
         .position_centered()
-        .build()
-        .expect("valid engine");
+        .build();
     let mut app = App::new();
     engine.run(&mut app).expect("ran successfully");
 }

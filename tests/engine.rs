@@ -44,7 +44,7 @@ impl AppState for App {
     }
 }
 
-fn create_engine() -> PixResult<PixEngine> {
+fn create_engine() -> PixEngine {
     PixEngine::create(800, 600)
         .with_title("Test App")
         .position_centered()
@@ -54,16 +54,8 @@ fn create_engine() -> PixResult<PixEngine> {
 
 #[test]
 #[ignore = "engine can only be tested in the main thread. --test-threads=1"]
-fn test_engine_create() {
-    // Nominal use case
-    let eng = create_engine();
-    assert!(eng.is_ok(), "should create new engine: {:?}", eng.err());
-}
-
-#[test]
-#[ignore = "engine can only be tested in the main thread. --test-threads=1"]
 fn test_run_engine_start() {
-    let mut eng = create_engine().unwrap();
+    let mut eng = create_engine();
     // Quitting from on_start should exit the game loop early
     let mut app = App::default();
     app.quit_on_start = true;
@@ -76,7 +68,7 @@ fn test_run_engine_start() {
 #[test]
 #[ignore = "engine can only be tested in the main thread. --test-threads=1"]
 fn test_run_engine_update() {
-    let mut eng = create_engine().unwrap();
+    let mut eng = create_engine();
     // Quitting from on_update should exit but still run on_stop
     let mut app = App::default();
     app.quit_on_update = true;
@@ -89,7 +81,7 @@ fn test_run_engine_update() {
 #[test]
 #[ignore = "engine can only be tested in the main thread. --test-threads=1"]
 fn test_run_engine_stop() {
-    let mut eng = create_engine().unwrap();
+    let mut eng = create_engine();
     // Aborting quit from on_stop should resume game loop
     let mut app = App::default();
     app.quit_on_update = true;

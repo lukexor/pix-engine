@@ -6,15 +6,18 @@ use crate::{
     renderer::{Position, Renderer, RendererSettings, Rendering},
     state::{AppState, PixState},
 };
+#[cfg(not(target_arch = "wasm32"))]
 use std::{
-    path::Path,
+    path::PathBuf,
     time::{Duration, Instant},
 };
 
+#[cfg(not(target_arch = "wasm32"))]
 const ONE_SECOND: Duration = Duration::from_secs(1);
 
 /// Builds a `PixEngine` instance by providing several optional modifiers.
-#[derive(Debug, Default)]
+#[non_exhaustive]
+#[derive(Default, Debug, Clone)]
 pub struct PixEngineBuilder {
     settings: RendererSettings,
 }
@@ -34,9 +37,9 @@ impl PixEngineBuilder {
     /// Set a window title.
     pub fn with_title<S>(&mut self, title: S) -> &mut Self
     where
-        S: AsRef<str>,
+        S: Into<String>,
     {
-        self.settings.title = title.as_ref().to_owned();
+        self.settings.title = title.into();
         self
     }
 
@@ -61,11 +64,12 @@ impl PixEngineBuilder {
     }
 
     /// Set a window icon.
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn icon<P>(&mut self, path: P) -> &mut Self
     where
-        P: AsRef<Path>,
+        P: Into<PathBuf>,
     {
-        self.settings.icon = Some(path.as_ref().to_owned());
+        self.settings.icon = Some(path.into());
         self
     }
 
@@ -103,21 +107,26 @@ impl PixEngineBuilder {
     /// Convert the `PixEngineBuilder` to a `PixEngine` instance.
     ///
     /// Returns `Err` if any options provided are invalid.
-    pub fn build(&self) -> Result<PixEngine> {
-        Ok(PixEngine {
+    pub fn build(&self) -> PixEngine {
+        PixEngine {
             settings: self.settings.clone(),
+            #[cfg(not(target_arch = "wasm32"))]
             last_frame_time: Instant::now(),
+            #[cfg(not(target_arch = "wasm32"))]
             frame_timer: Duration::from_secs(1),
             frame_counter: 0,
-        })
+        }
     }
 }
 
 /// The core engine that maintains the frame loop, event handling, etc.
-#[derive(Debug)]
+#[non_exhaustive]
+#[derive(Debug, Clone)]
 pub struct PixEngine {
     settings: RendererSettings,
+    #[cfg(not(target_arch = "wasm32"))]
     frame_timer: Duration,
+    #[cfg(not(target_arch = "wasm32"))]
     last_frame_time: Instant,
     frame_counter: u64,
 }
@@ -154,7 +163,6 @@ impl PixEngine {
             return Ok(());
         }
 
-        self.last_frame_time = Instant::now();
         // on_stop loop enables on_stop to prevent application close if necessary
         'on_stop: loop {
             // running loop continues until an event or on_update returns false or errors
@@ -163,7 +171,7 @@ impl PixEngine {
                 if state.env.quit {
                     break 'running;
                 } else if state.settings.paused {
-                    std::thread::sleep(Duration::from_millis(16));
+                    self.sleep();
                     continue;
                 }
 
@@ -267,7 +275,23 @@ impl PixEngine {
         Ok(())
     }
 
+    #[cfg(target_arch = "wasm32")]
+    fn sleep(&mut self) {
+        todo!("wasm32: sleep");
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn sleep(&mut self) {
+        std::thread::sleep(Duration::from_millis(16));
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn update_frame_rate(&mut self, _state: &mut PixState) -> Result<()> {
+        todo!("wasm32: update_frame_rate");
+    }
+
     /// Updates the average frame rate and the window title if setting is enabled.
+    #[cfg(not(target_arch = "wasm32"))]
     fn update_frame_rate(&mut self, state: &mut PixState) -> Result<()> {
         let now = Instant::now();
         state.env.delta_time = now - self.last_frame_time;
@@ -285,5 +309,11 @@ impl PixEngine {
             }
         }
         Ok(())
+    }
+}
+
+impl Default for PixEngine {
+    fn default() -> Self {
+        PixEngine::builder().build()
     }
 }

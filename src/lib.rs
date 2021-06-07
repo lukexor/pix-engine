@@ -1,5 +1,9 @@
-#![warn(missing_docs, unused)]
-#![deny(
+#![warn(
+    missing_docs,
+    unused,
+    deprecated_in_future,
+    unreachable_pub,
+    unused_crate_dependencies,
     bare_trait_objects,
     ellipsis_inclusive_range_patterns,
     future_incompatible,
@@ -14,7 +18,6 @@
 )]
 #![doc(html_favicon_url = "")]
 #![doc(html_logo_url = "")]
-#![doc(html_playground_url = "")]
 
 //! # Getting Started
 //!
@@ -62,13 +65,14 @@
 //!       .with_title("App Title")
 //!       .position_centered()
 //!       .vsync_enabled()
-//!       .build()
-//!       .expect("valid engine");
+//!       .build();
 //!     let mut app = App::new();
 //!     engine.run(&mut app).expect("engine run");
 //! }
 //! ```
 
+#[cfg(target_arch = "wasm32")]
+use getrandom as _; // Used to set "js" feature for rand
 use include_dir::{include_dir, Dir};
 
 // Bundles static binary assets with crate
@@ -76,13 +80,13 @@ const _STATIC_DIR: Dir<'_> = include_dir!("./static");
 
 #[macro_use]
 pub mod color;
-#[macro_use]
-pub mod math;
 pub mod audio;
 pub mod draw;
 pub mod engine;
 pub mod event;
 pub mod image;
+#[macro_use]
+pub mod math;
 pub mod renderer;
 #[macro_use]
 pub mod shape;
@@ -105,8 +109,8 @@ pub mod prelude {
     pub use engine::PixEngine;
     pub use event::*;
     pub use image::{Error as ImageError, Image, PixelFormat, Result as ImageResult};
-    pub use math::{constants::*, map, Scalar};
-    pub use renderer::{Error as RendererError, Position, Renderer, Result as RendererResult};
+    pub use math::{map, Scalar};
+    pub use renderer::{Error as RendererError, Position, Result as RendererResult};
     pub use shape::*;
     pub use state::{
         environment::WindowId,

@@ -207,7 +207,7 @@ impl RayScene {
 
     fn cast_ray(&self, o: Vector, r: Vector) -> Option<Vector> {
         let mut intersect = None;
-        let mut closest_param = INFINITY;
+        let mut closest_param = f64::INFINITY;
         for e in self.edges.iter() {
             if let Some((point, param)) = Self::intersection(o, r + o, e.start, e.end) {
                 if intersect.is_none() || param < closest_param {
@@ -410,8 +410,7 @@ fn main() {
         .vsync_enabled()
         .icon("static/light.png")
         .resizable()
-        .build()
-        .expect("valid engine");
+        .build();
     let mut app = RayScene::new();
     engine.run(&mut app).expect("ran successfully");
 }

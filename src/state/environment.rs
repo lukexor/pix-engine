@@ -120,6 +120,7 @@ impl PixState {
 pub type WindowId = u32;
 
 /// WindowBuilder
+#[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct WindowBuilder {
     title: String,

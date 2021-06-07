@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 /// System or User Event.
 #[allow(missing_docs)]
+#[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Event {
@@ -127,6 +128,7 @@ pub enum Event {
 
 /// A specific event representing a keypress.
 #[allow(missing_docs)]
+#[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct KeyEvent {
@@ -144,6 +146,7 @@ impl Default for Event {
 
 /// Window Event.
 #[allow(missing_docs)]
+#[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum WindowEvent {
@@ -229,6 +232,7 @@ impl Default for Key {
 
 /// A Joystick axis
 #[allow(missing_docs)]
+#[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Axis {
@@ -249,6 +253,7 @@ impl Default for Axis {
 
 /// A Controller button
 #[allow(missing_docs)]
+#[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Button {

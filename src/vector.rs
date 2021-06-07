@@ -51,14 +51,10 @@
 //! assert!(v.z >= -1.0 && v.z <= 1.0);
 //! ```
 
-use crate::{
-    math::{constants::*, Scalar},
-    random,
-    shape::Point,
-};
+use crate::{math::Scalar, random, shape::Point};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::{fmt, iter::Sum, ops::*};
+use std::{f64::consts::TAU, fmt, iter::Sum, ops::*};
 
 /// Represents a Euclidiean (also known as geometric) Vector in 2D or 3D space. A Vector has both a magnitude and a direction,
 /// but this data type stores the components of the vector as (x, y, 0) for 2D or (x, y, z) for 3D.
@@ -220,7 +216,7 @@ impl Vector {
     /// // (0.6091097, -0.22805278, 0.0)
     /// ```
     pub fn random_2d() -> Self {
-        Self::from_angle(random!(TWO_PI), 1.0)
+        Self::from_angle(random!(TAU), 1.0)
     }
 
     /// Make a random unit Vector in 3D space.
@@ -242,7 +238,7 @@ impl Vector {
     /// // (0.6091097, -0.22805278, -0.7595902)
     /// ```
     pub fn random_3d() -> Self {
-        let (sin, cos) = random!(TWO_PI).sin_cos();
+        let (sin, cos) = random!(TAU).sin_cos();
         let z: Scalar = random!(-1.0, 1.0); // Range from -1.0 to 1.0
         let z_base = (1.0 - z * z).sqrt();
         let x = z_base * cos;
@@ -370,7 +366,7 @@ impl Vector {
     /// let v2 = vector!(0, 1, 0);
     /// let dist = v1.dist(v2);
     ///
-    /// let abs_difference = (dist - SQRT_2).abs();
+    /// let abs_difference = (dist - std::f64::consts::SQRT_2).abs();
     /// assert!(abs_difference <= 1e-4);
     /// ```
     pub fn dist<V: Into<Vector>>(&self, v: V) -> Scalar {
@@ -457,7 +453,7 @@ impl Vector {
     /// # use pix_engine::prelude::*;
     ///
     /// let mut v = vector!(10, 20);
-    /// v.rotate(HALF_PI);
+    /// v.rotate(std::f64::consts::FRAC_PI_2);
     ///
     /// let abs_difference_x = (v.x - (-20.0)).abs();
     /// let abs_difference_y = (v.y - 10.0).abs();
@@ -483,7 +479,7 @@ impl Vector {
     /// let v1 = vector!(1, 0, 0);
     /// let v2 = vector!(0, 1, 0);
     /// let angle = v1.angle_between(v2);
-    /// assert_eq!(angle, HALF_PI);
+    /// assert_eq!(angle, std::f64::consts::FRAC_PI_2);
     /// ```
     pub fn angle_between<V: Into<Vector>>(&self, v: V) -> Scalar {
         let v = v.into();

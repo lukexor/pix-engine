@@ -70,8 +70,7 @@ pub fn main() {
         .with_frame_rate()
         .position_centered()
         .vsync_enabled()
-        .build()
-        .expect("valid engine");
+        .build();
     let mut app = Colors::new();
     engine.run(&mut app).expect("ran successfully");
 }

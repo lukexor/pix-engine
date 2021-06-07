@@ -25,7 +25,7 @@ impl fmt::Display for Error {
             RendererError(err) => err.fmt(f),
             StateError(err) => err.fmt(f),
             ImageError(err) => err.fmt(f),
-            Other(err) => write!(f, "Unknown error: {}", err),
+            Other(err) => write!(f, "unknown error: {}", err),
         }
     }
 }

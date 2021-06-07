@@ -85,7 +85,8 @@ pub trait AppState {
 }
 
 /// Represents all engine-specific state and methods.
-#[derive(Debug)]
+#[non_exhaustive]
+#[derive(Default, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct PixState {
     pub(crate) title: String,
@@ -104,9 +105,12 @@ pub struct PixState {
 
 impl PixState {
     /// Creates a new PixState instance with a given Renderer.
-    pub fn init(title: &str, renderer: Renderer) -> Self {
+    pub(crate) fn init<S>(title: S, renderer: Renderer) -> Self
+    where
+        S: Into<String>,
+    {
         Self {
-            title: title.to_owned(),
+            title: title.into(),
             renderer,
             env: Environment::default(),
             settings: Settings::default(),
@@ -134,13 +138,16 @@ impl PixState {
     }
 
     /// Set the current window title.
-    pub fn set_title(&mut self, title: &str) -> Result<()> {
-        self.title = title.to_owned();
+    pub fn set_title<S>(&mut self, title: S) -> Result<()>
+    where
+        S: Into<String>,
+    {
+        self.title = title.into();
         if self.settings.show_frame_rate {
             self.renderer
-                .set_title(&format!("{} - FPS: {}", title, self.env.frame_rate))?;
+                .set_title(&format!("{} - FPS: {}", self.title, self.env.frame_rate))?;
         } else {
-            self.renderer.set_title(title)?;
+            self.renderer.set_title(&self.title)?;
         }
         Ok(())
     }
@@ -182,7 +189,7 @@ impl fmt::Display for Error {
         match self {
             IoError(err) => err.fmt(f),
             RendererError(err) => err.fmt(f),
-            Other(err) => write!(f, "Image error: {}", err),
+            Other(err) => write!(f, "image error: {}", err),
         }
     }
 }

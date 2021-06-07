@@ -26,7 +26,7 @@ lazy_static! {
 }
 
 fn scaled_cosine(i: f64) -> f64 {
-    0.5 * (1.0 - (i * constants::PI).cos())
+    0.5 * (1.0 - (i * std::f64::consts::PI).cos())
 }
 
 /// Returns a random number within a range.
@@ -296,18 +296,4 @@ where
         }
         values
     }
-}
-
-/// Math constants
-pub mod constants {
-    pub use std::f64::consts::*;
-    pub use std::f64::INFINITY;
-    pub use std::f64::NAN;
-
-    /// PI / 2
-    pub const HALF_PI: f64 = std::f64::consts::FRAC_PI_2;
-    /// PI / 4
-    pub const QUARTER_PI: f64 = std::f64::consts::FRAC_PI_4;
-    /// 2 PI
-    pub const TWO_PI: f64 = TAU;
 }

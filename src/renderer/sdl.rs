@@ -30,7 +30,7 @@ type SdlTexture = sdl2::render::Texture;
 type SdlPixelFormat = sdl2::pixels::PixelFormatEnum;
 
 /// An SDL [Renderer] implementation.
-pub struct Renderer {
+pub(crate) struct Renderer {
     context: Sdl,
     ttf_context: ttf::Sdl2TtfContext,
     event_pump: EventPump,
@@ -163,11 +163,8 @@ impl Rendering for Renderer {
     }
 
     /// Set the current window title.
-    fn set_title<S>(&mut self, title: S) -> Result<()>
-    where
-        S: AsRef<str>,
-    {
-        Ok(self.canvas.window_mut().set_title(title.as_ref())?)
+    fn set_title(&mut self, title: &str) -> Result<()> {
+        Ok(self.canvas.window_mut().set_title(title)?)
     }
 
     /// Width of the current canvas.
@@ -1005,6 +1002,6 @@ impl From<UpdateTextureError> for Error {
 
 impl From<NulError> for Error {
     fn from(err: NulError) -> Self {
-        Self::InvalidText("Unknown nul error", err)
+        Self::InvalidText("unknown nul error", err)
     }
 }

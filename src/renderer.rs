@@ -6,12 +6,12 @@ use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) mod sdl;
 #[cfg(not(target_arch = "wasm32"))]
-pub use sdl::Renderer;
+pub(crate) use sdl::Renderer;
 
 #[cfg(target_arch = "wasm32")]
 pub(crate) mod wasm;
 #[cfg(target_arch = "wasm32")]
-pub use wasm::Renderer;
+pub(crate) use wasm::Renderer;
 
 /// The result type for [Renderer] operations.
 pub type Result<T> = result::Result<T, Error>;
@@ -122,9 +122,7 @@ pub(crate) trait Rendering: Default + Sized {
     fn title(&self) -> &str;
 
     /// Set the current window title.
-    fn set_title<S>(&mut self, title: S) -> Result<()>
-    where
-        S: AsRef<str>;
+    fn set_title(&mut self, title: &str) -> Result<()>;
 
     /// Width of the current canvas.
     fn width(&self) -> u32;
@@ -246,13 +244,13 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use Error::*;
         match self {
-            InitError => write!(f, "Renderer initialization error"),
+            InitError => write!(f, "renderer initialization error"),
             IoError(err) => err.fmt(f),
-            InvalidText(msg, err) => write!(f, "Invalid text: {}, {}", msg, err),
-            InvalidPosition(x, y) => write!(f, "Invalid window position: {:?}", (x, y)),
-            InvalidTexture(id) => write!(f, "Invalid texture_id: {}", id),
+            InvalidText(msg, err) => write!(f, "invalid text: {}, {}", msg, err),
+            InvalidPosition(x, y) => write!(f, "invalid window position: {:?}", (x, y)),
+            InvalidTexture(id) => write!(f, "invalid texture_id: {}", id),
             Overflow(err, val) => write!(f, "{}: {}", err, val),
-            Other(err) => write!(f, "Unknown renderer error: {}", err),
+            Other(err) => write!(f, "unknown renderer error: {}", err),
         }
     }
 }

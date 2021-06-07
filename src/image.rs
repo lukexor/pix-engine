@@ -82,6 +82,7 @@ impl Default for PixelFormat {
 }
 
 /// Represents a buffer of pixel color values.
+#[non_exhaustive]
 #[derive(Debug, Default, Clone)]
 pub struct Image {
     /// Width of the image
@@ -220,12 +221,12 @@ impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use Error::*;
         match self {
-            InvalidFileType(ext) => write!(f, "Invalid file type: {:?}", ext),
-            InvalidColorType(color_type) => write!(f, "Invalid color type: {:?}", color_type),
-            InvalidBitDepth(depth) => write!(f, "Invalid bit depth: {:?}", depth),
+            InvalidFileType(ext) => write!(f, "invalid file type: {:?}", ext),
+            InvalidColorType(color_type) => write!(f, "invalid color type: {:?}", color_type),
+            InvalidBitDepth(depth) => write!(f, "invalid bit depth: {:?}", depth),
             IoError(err) => err.fmt(f),
             DecodingError(err) => err.fmt(f),
-            Other(err) => write!(f, "Renderer Error: {}", err),
+            Other(err) => write!(f, "renderer error: {}", err),
         }
     }
 }
