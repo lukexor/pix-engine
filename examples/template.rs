@@ -27,7 +27,8 @@ impl AppState for App {
 }
 
 pub fn main() {
-    let mut engine = PixEngine::create(WIDTH, HEIGHT)
+    let mut engine = PixEngine::builder()
+        .with_dimensions(WIDTH, HEIGHT)
         .with_title(TITLE)
         .with_frame_rate()
         .position_centered()

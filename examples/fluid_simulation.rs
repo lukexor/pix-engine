@@ -31,7 +31,7 @@ struct Fluid {
 fn get_idx(x: usize, y: usize) -> usize {
     let x = x.clamp(0, NLEN);
     let y = y.clamp(0, NLEN);
-    return x + y * N;
+    x + y * N
 }
 
 fn diffuse(b: usize, xs: &mut [f64], xs0: &[f64], diff: f64, dt: f64) {
@@ -177,8 +177,8 @@ impl Fluid {
     }
 
     fn step(&mut self) {
-        diffuse(1, &mut self.velx0, &mut self.velx, self.visc, self.dt);
-        diffuse(2, &mut self.vely0, &mut self.vely, self.visc, self.dt);
+        diffuse(1, &mut self.velx0, &self.velx, self.visc, self.dt);
+        diffuse(2, &mut self.vely0, &self.vely, self.visc, self.dt);
 
         project(
             &mut self.velx0,
@@ -211,7 +211,7 @@ impl Fluid {
             &mut self.vely0,
         );
 
-        diffuse(0, &mut self.s, &mut self.density, self.diff, self.dt);
+        diffuse(0, &mut self.s, &self.density, self.diff, self.dt);
         advect(
             0,
             &mut self.density,
@@ -222,6 +222,7 @@ impl Fluid {
         );
     }
 
+    #[allow(clippy::many_single_char_names)]
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         self.step();
         for i in 1..NLEN {
@@ -341,7 +342,8 @@ impl AppState for App {
 }
 
 pub fn main() {
-    let mut engine = PixEngine::create(WIDTH, HEIGHT)
+    let mut engine = PixEngine::builder()
+        .with_dimensions(WIDTH, HEIGHT)
         .with_title(TITLE)
         .with_frame_rate()
         .position_centered()

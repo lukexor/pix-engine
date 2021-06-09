@@ -1,4 +1,4 @@
-//! Various shape types used for drawing.
+//! Shape functions for drawing.
 
 #[macro_use]
 pub mod ellipse;

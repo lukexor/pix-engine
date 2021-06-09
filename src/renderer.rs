@@ -1,4 +1,4 @@
-//! Generic graphics renderer interfaces.
+//! Graphics renderer functions.
 
 use crate::prelude::*;
 use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
@@ -13,10 +13,10 @@ pub(crate) mod wasm;
 #[cfg(target_arch = "wasm32")]
 pub(crate) use wasm::Renderer;
 
-/// The result type for [Renderer] operations.
+/// The result type for Renderer operations.
 pub type Result<T> = result::Result<T, Error>;
 
-/// The error type for [Renderer] operations.
+/// The error type for Renderer operations.
 #[non_exhaustive]
 #[derive(Debug)]
 pub enum Error {

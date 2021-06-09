@@ -1,4 +1,4 @@
-//! State management for [PixEngine].
+//! [PixState] functions for [PixEngine] and [AppState].
 
 use crate::{
     prelude::*,

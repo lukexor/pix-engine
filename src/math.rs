@@ -1,4 +1,4 @@
-//! Math related types, constants and utility functions.
+//! Math functions and constants.
 
 use crate::vector::Vector;
 use lazy_static::lazy_static;

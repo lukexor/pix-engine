@@ -27,46 +27,40 @@
 //! The goal of this library is to be simpler to setup and use for graphics or algorithm
 //! exploration than larger graphics libraries.
 //!
-//! This is more than just a toy project, however, and can be used to drive powerful
-//! applications. The primary use of this project is in the
-//! [Tetanes](https://crates.io/crates/tetanes) NES emulator project.
+//! This is intended to be more than just a toy crate, however, and can be used to drive real
+//! applications. For example, the
+//! [Tetanes](https://crates.io/crates/tetanes) NES emulator is driven by this crate.
 //!
 //! ```no_run
 //! use pix_engine::prelude::*;
 //!
 //! struct App;
 //!
-//! impl App {
-//!     fn new() -> Self {
-//!         Self
-//!     }
-//! }
-//!
 //! impl AppState for App {
 //!     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-//!         // Setup App state. State contains engine specific state and
-//!         // functions like mouse coordinates, draw functions, etc.
+//!         // Setup App state. PixState contains engine specific state and
+//!         // utility functions for things like getting mouse coordinates,
+//!         // drawing shapes, etc.
 //!         Ok(())
 //!     }
 //!     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-//!         // Update App state roughly every 16ms.
+//!         // Main render loop. Called roughly every 16ms.
 //!         Ok(())
 //!     }
 //!     fn on_stop(&mut self, s: &mut PixState) -> PixResult<()> {
-//!         // Teardown any state or resources.
+//!         // Teardown any state or resources before exiting.
 //!         Ok(())
 //!     }
 //! }
 //!
 //! pub fn main() {
-//!     let width = 800;
-//!     let height = 600;
-//!     let mut engine = PixEngine::create(width, height)
+//!     let mut engine = PixEngine::builder()
+//!       .with_dimensions(800, 600)
 //!       .with_title("App Title")
 //!       .position_centered()
 //!       .vsync_enabled()
 //!       .build();
-//!     let mut app = App::new();
+//!     let mut app = App;
 //!     engine.run(&mut app).expect("engine run");
 //! }
 //! ```
@@ -97,13 +91,11 @@ pub mod vector;
 mod common;
 mod utils;
 
-pub use prelude::{AppState, PixEngine, PixError, PixResult, PixState};
-
-/// Re-exports most commonly used structs, traits, and functions.
+/// Exports most commonly used types, traits, and functions.
 #[macro_use]
 pub mod prelude {
     use super::*;
-    pub use color::{constants::*, Color, Hsv, Rgb};
+    pub use color::{constants::*, Color, ColorError};
     pub use common::{Error as PixError, Result as PixResult};
     pub use draw::TextureId;
     pub use engine::PixEngine;

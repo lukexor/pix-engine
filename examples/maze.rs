@@ -62,30 +62,24 @@ impl Maze {
     fn has_neighbors(&mut self) -> bool {
         self.neighbors.clear();
         if let Some(top) = self.stack.last() {
-            // println!("top: {:?}", top);
             let north = self.offset(0, -1);
             let east = self.offset(1, 0);
             let south = self.offset(0, 1);
             let west = self.offset(-1, 0);
             if top.1 > 0 && (self.maze[north] & VISITED) == 0 {
-                // println!("north: {:?}", self.maze[north]);
                 self.neighbors.push(0);
             }
             if top.0 < self.width - 1 && (self.maze[east] & VISITED) == 0 {
-                // println!("east: {:?}", self.maze[east]);
                 self.neighbors.push(1);
             }
             if top.1 < self.height - 1 && (self.maze[south] & VISITED) == 0 {
-                // println!("south: {:?}", self.maze[south]);
                 self.neighbors.push(2);
             }
             if top.0 > 0 && (self.maze[west] & VISITED) == 0 {
-                // println!("west: {:?}", self.maze[west]);
                 self.neighbors.push(3);
             }
         }
-        // println!("has: {}", !self.neighbors.is_empty());
-        return !self.neighbors.is_empty();
+        !self.neighbors.is_empty()
     }
 
     fn visit_neighbor(&mut self) {
@@ -95,7 +89,6 @@ impl Maze {
         };
         let current = self.offset(0, 0);
         let next = self.neighbors[random!(self.neighbors.len())];
-        // println!("visiting: {}", next);
         match next {
             0 => {
                 let north = self.offset(0, -1);
@@ -170,7 +163,8 @@ impl AppState for Maze {
 }
 
 pub fn main() {
-    let mut engine = PixEngine::create(WIDTH, HEIGHT)
+    let mut engine = PixEngine::builder()
+        .with_dimensions(WIDTH, HEIGHT)
         .with_title(TITLE)
         .with_frame_rate()
         .scale(SCALE, SCALE)

@@ -8,7 +8,7 @@ pub type Result<T> = result::Result<T, Error>;
 #[non_exhaustive]
 #[derive(Debug)]
 pub enum Error {
-    /// An error from the underlying [Renderer](crate::prelude::Renderer).
+    /// An error from the underlying Renderer.
     RendererError(renderer::Error),
     /// An error from [PixState](crate::prelude::PixState).
     StateError(state::Error),

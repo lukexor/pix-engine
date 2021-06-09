@@ -2,7 +2,7 @@
 
 use super::PixState;
 use crate::{
-    color::{constants::*, Color},
+    color::Color,
     renderer::{self, Rendering},
     shape::Rect,
 };
@@ -69,8 +69,8 @@ pub(crate) struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            background: Color::Rgb(TRANSPARENT),
-            fill: Some(Color::Rgb(BLACK)),
+            background: Color::default(),
+            fill: None,
             stroke: None,
             text_size: 16,
             paused: false,

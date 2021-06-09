@@ -37,7 +37,7 @@ impl Colors {
         self.auto = auto;
         self.h = (self.h + change) % 360.0;
         if self.h < 0.0 {
-            self.h = 360.0 + self.h;
+            self.h += 360.0;
         }
     }
 }
@@ -65,7 +65,8 @@ impl AppState for Colors {
 }
 
 pub fn main() {
-    let mut engine = PixEngine::create(WIDTH, HEIGHT)
+    let mut engine = PixEngine::builder()
+        .with_dimensions(WIDTH, HEIGHT)
         .with_title(TITLE)
         .with_frame_rate()
         .position_centered()

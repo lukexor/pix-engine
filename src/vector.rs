@@ -1,4 +1,4 @@
-//! Vector handling and operations in 2D or 3D space.
+//! 2D and 3D [Vector] functions.
 //!
 //! Each Vector is represented by 3 values for x, y, and z. Values can be provided as either
 //! integer or floating point.

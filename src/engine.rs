@@ -1,4 +1,4 @@
-//! The core [PixEngine] functionality.
+//! Core [PixEngine] functions.
 
 use crate::{
     common::Result,
@@ -15,7 +15,7 @@ use std::{
 #[cfg(not(target_arch = "wasm32"))]
 const ONE_SECOND: Duration = Duration::from_secs(1);
 
-/// Builds a `PixEngine` instance by providing several optional modifiers.
+/// Builds a [PixEngine] instance by providing several configration functions.
 #[non_exhaustive]
 #[derive(Default, Debug, Clone)]
 pub struct PixEngineBuilder {
@@ -23,15 +23,18 @@ pub struct PixEngineBuilder {
 }
 
 impl PixEngineBuilder {
-    /// Creates a new `PixEngineBuilder` instance.
-    pub fn new(width: u32, height: u32) -> Self {
+    /// Create a new `PixEngineBuilder` instance.
+    pub fn new() -> Self {
         Self {
-            settings: RendererSettings {
-                width,
-                height,
-                ..Default::default()
-            },
+            settings: RendererSettings::default(),
         }
+    }
+
+    /// Set window dimensions.
+    pub fn with_dimensions(&mut self, width: u32, height: u32) -> &mut Self {
+        self.settings.width = width;
+        self.settings.height = height;
+        self
     }
 
     /// Set a window title.
@@ -43,7 +46,7 @@ impl PixEngineBuilder {
         self
     }
 
-    /// Enables frame rate in title.
+    /// Enable average frame rate (FPS) in title.
     pub fn with_frame_rate(&mut self) -> &mut Self {
         self.settings.show_frame_rate = true;
         self
@@ -104,9 +107,7 @@ impl PixEngineBuilder {
         self
     }
 
-    /// Convert the `PixEngineBuilder` to a `PixEngine` instance.
-    ///
-    /// Returns `Err` if any options provided are invalid.
+    /// Convert [PixEngineBuilder] to a [PixEngine] instance.
     pub fn build(&self) -> PixEngine {
         PixEngine {
             settings: self.settings.clone(),
@@ -119,7 +120,7 @@ impl PixEngineBuilder {
     }
 }
 
-/// The core engine that maintains the frame loop, event handling, etc.
+/// The core engine that maintains the render loop, state, drawing functions, event handling, etc.
 #[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct PixEngine {
@@ -132,17 +133,12 @@ pub struct PixEngine {
 }
 
 impl PixEngine {
-    /// Creates a default `PixEngineBuilder` which can create a `PixEngine` instance.
+    /// Creates a default [PixEngineBuilder] which can build a `PixEngine` instance.
     pub fn builder() -> PixEngineBuilder {
         PixEngineBuilder::default()
     }
 
-    /// Creates a new `PixEngineBuilder` with width/height which can create a `PixEngine` instance.
-    pub fn create(width: u32, height: u32) -> PixEngineBuilder {
-        PixEngineBuilder::new(width, height)
-    }
-
-    /// Starts the `PixEngine` and begins executing the frame loop.
+    /// Starts the `PixEngine` application and begins executing the frame loop.
     pub fn run<A>(&mut self, app: &mut A) -> Result<()>
     where
         A: AppState,
@@ -187,7 +183,7 @@ impl PixEngine {
         Ok(())
     }
 
-    /// Handle events from the event pump.
+    /// Handle user and system events.
     fn handle_events<A>(&mut self, state: &mut PixState, app: &mut A) -> Result<()>
     where
         A: AppState,

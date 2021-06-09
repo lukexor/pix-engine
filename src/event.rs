@@ -1,4 +1,4 @@
-//! Handles User and System level interaction events.
+//! User and System Events.
 
 use bitflags::bitflags;
 #[cfg(feature = "serde")]

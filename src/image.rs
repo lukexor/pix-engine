@@ -1,4 +1,4 @@
-//! Image related operations and functionality.
+//! [Image] and [PixelFormat] functions.
 
 use crate::prelude::*;
 use std::{
