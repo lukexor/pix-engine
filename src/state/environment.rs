@@ -45,17 +45,17 @@ impl PixState {
             .unwrap_or(false)
     }
 
-    /// Get the primary window id.
+    /// Get the primary `Window` id.
     pub fn window_id(&self) -> WindowId {
         self.renderer.window_id()
     }
 
-    /// Creates a new WindowBuilder.
+    /// Create a new [WindowBuilder].
     pub fn create_window(&self, width: u32, height: u32) -> WindowBuilder {
         WindowBuilder::new(width, height)
     }
 
-    /// Closes an open window.
+    /// Close an open window.
     pub fn close_window(&self, _window_id: WindowId) -> Result<()> {
         todo!("close_window");
     }

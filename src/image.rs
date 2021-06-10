@@ -98,42 +98,42 @@ pub struct Image {
 }
 
 impl Image {
-    /// The image width.
+    /// `Image` width.
     pub fn width(&self) -> u32 {
         self.width
     }
 
-    /// The image height.
+    /// `Image` height.
     pub fn height(&self) -> u32 {
         self.height
     }
 
-    /// The image (width, height) as a tuple.
+    /// `Image` dimensions as a tuple of (width, height).
     pub fn dimensions(&self) -> (u32, u32) {
         (self.width, self.height)
     }
 
-    /// The image data as a u8 slice.
+    /// `Image` data as a slice reference.
     pub fn bytes(&self) -> &[u8] {
         &self.data
     }
 
-    /// The image data as a mutable u8 slice.
+    /// `Image` data as a mutable slice reference.
     pub fn bytes_mut(&mut self) -> &mut [u8] {
         &mut self.data
     }
 
-    /// Update `Image` with an array of u8 bytes representing RGB/A values.
+    /// Update `Image` with an slice of bytes representing RGB/A values.
     pub fn update_bytes(&mut self, bytes: &[u8]) {
         self.data.clone_from_slice(bytes);
     }
 
-    /// The image pixel format.
+    /// `Image` pixel format.
     pub fn format(&self) -> PixelFormat {
         self.format
     }
 
-    /// Save an `Image` to a `png` file.
+    /// Save `Image` to a `png` file.
     pub fn save<P>(&self, _path: P) -> Result<()>
     where
         P: AsRef<Path>,

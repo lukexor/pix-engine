@@ -61,10 +61,11 @@ impl PixState {
         let text = text.as_ref();
         let p = p.into();
         let s = &self.settings;
-        let width = text.len() as u32 * s.text_size;
+        let size = s.text_size as i32;
+        let width = text.len() as i32 * size;
         let (x, y) = match s.rect_mode {
             DrawMode::Corner => (p.x, p.y),
-            DrawMode::Center => (p.x - width as i32 / 2, p.y - s.text_size as i32 / 2),
+            DrawMode::Center => (p.x - width / 2, p.y - size / 2),
         };
         self.renderer
             .text(text, x, y, s.text_size, s.fill, s.stroke)

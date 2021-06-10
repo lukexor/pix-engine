@@ -232,6 +232,7 @@ impl Color {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
+    /// # #[allow(unused_variables)]
     /// let c = Color::random();
     /// // `c.rgb_channels()` will return something like:
     /// // (207, 12, 217, 255)
@@ -246,6 +247,7 @@ impl Color {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
+    /// # #[allow(unused_variables)]
     /// let c = Color::random_alpha();
     /// // `c.rgb_channels()` will return something like:
     /// // (132, 159, 233, 76)
@@ -265,15 +267,14 @@ impl Color {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// use std::convert::TryFrom;
-    ///
     /// let vals: Vec<u8> = vec![128, 64, 0];
-    /// let c = Color::from_rgb_slice(&vals).unwrap(); // RGB Vec
+    /// let c = Color::from_rgb_slice(&vals)?; // RGB Vec
     /// assert_eq!(c.rgb_channels(), (128, 64, 0, 255));
     ///
     /// let vals: [u8; 4] = [128, 64, 0, 128];
-    /// let c = Color::from_rgb_slice(&vals[..]).unwrap(); // RGBA slice
+    /// let c = Color::from_rgb_slice(&vals[..])?; // RGBA slice
     /// assert_eq!(c.rgb_channels(), (128, 64, 0, 128));
+    /// # Ok::<(), ColorError>(())
     /// ```
     pub fn from_rgb_slice(slice: &[u8]) -> Result<Self, ColorError> {
         match *slice {
@@ -296,15 +297,14 @@ impl Color {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// use std::convert::TryFrom;
-    ///
     /// let vals: Vec<f32> = vec![128.0, 0.8, 0.0];
-    /// let c = Color::from_hsv_slice(&vals).unwrap(); // HSV Vec
+    /// let c = Color::from_hsv_slice(&vals)?; // HSV Vec
     /// assert_eq!(c.hsv_channels(), (128.0, 0.8, 0.0, 1.0));
     ///
     /// let vals: [f32; 4] = [128.0, 0.8, 0.0, 0.5];
-    /// let c = Color::from_hsv_slice(&vals[..]).unwrap(); // HSVA slice
+    /// let c = Color::from_hsv_slice(&vals[..])?; // HSVA slice
     /// assert_eq!(c.hsv_channels(), (128.0, 0.8, 0.0, 0.5));
+    /// # Ok::<(), ColorError>(())
     /// ```
     pub fn from_hsv_slice(slice: &[f32]) -> Result<Self, ColorError> {
         match *slice {

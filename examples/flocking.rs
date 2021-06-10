@@ -4,8 +4,8 @@ const TITLE: &str = "Flocking Simulation";
 const WIDTH: u32 = 1000;
 const HEIGHT: u32 = 800;
 
-const BIRD_COUNT: usize = 500;
-const BIRD_MODEL: [(f64, f64); 13] = [
+const BOID_COUNT: usize = 500;
+const BOID_MODEL: [(f64, f64); 13] = [
     (1.5, 0.0),
     (0.75, -0.25),
     (0.25, -1.5),
@@ -20,7 +20,7 @@ const BIRD_MODEL: [(f64, f64); 13] = [
     (0.25, 1.5),
     (0.75, 0.25),
 ];
-const BIRD_SCALE: f64 = 3.0;
+const BOID_SIZE: f64 = 3.0;
 
 #[derive(PartialEq)]
 struct Boid {
@@ -49,14 +49,14 @@ impl Boid {
             self.vel.set_mag(2.0);
         }
         self.pos += self.vel;
-        self.pos.wrap_2d(WIDTH as f64, HEIGHT as f64);
+        self.pos.wrap_2d(WIDTH as f64, HEIGHT as f64, BOID_SIZE);
         self.acc *= 0.0;
     }
 
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.stroke(SKY_BLUE);
         s.fill(SKY_BLUE);
-        s.wireframe(&BIRD_MODEL, self.pos, self.vel.heading(), BIRD_SCALE)?;
+        s.wireframe(&BOID_MODEL, self.pos, self.vel.heading(), BOID_SIZE)?;
         Ok(())
     }
 }
@@ -70,9 +70,9 @@ struct BoidAdjustment {
 impl BoidAdjustment {
     fn new() -> Self {
         Self {
-            align: Vec::with_capacity(BIRD_COUNT),
-            cohesion: Vec::with_capacity(BIRD_COUNT),
-            sep: Vec::with_capacity(BIRD_COUNT),
+            align: Vec::with_capacity(BOID_COUNT),
+            cohesion: Vec::with_capacity(BOID_COUNT),
+            sep: Vec::with_capacity(BOID_COUNT),
         }
     }
 }
@@ -83,8 +83,8 @@ struct App {
 
 impl App {
     fn new() -> Self {
-        let mut flock = Vec::with_capacity(BIRD_COUNT);
-        for _ in 0..BIRD_COUNT {
+        let mut flock = Vec::with_capacity(BOID_COUNT);
+        for _ in 0..BOID_COUNT {
             flock.push(Boid::new());
         }
         Self { flock }
@@ -92,7 +92,7 @@ impl App {
 
     fn reset(&mut self) {
         self.flock.clear();
-        for _ in 0..BIRD_COUNT {
+        for _ in 0..BOID_COUNT {
             self.flock.push(Boid::new());
         }
     }

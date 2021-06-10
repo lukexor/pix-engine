@@ -1,5 +1,6 @@
 #![warn(
     missing_docs,
+    missing_doc_code_examples,
     unused,
     deprecated_in_future,
     unreachable_pub,
@@ -16,13 +17,17 @@
     rustdoc::broken_intra_doc_links,
     rustdoc::private_intra_doc_links
 )]
-#![doc(html_favicon_url = "")]
-#![doc(html_logo_url = "")]
+#![doc(
+    html_root_url = "https://docs.rs/pix-engine/0.3.5",
+    html_favicon_url = "",
+    html_logo_url = "",
+    test(attr(deny(warnings)))
+)]
 
 //! # Getting Started
 //!
-//! A cross-platform graphics/UI engine framework for simple games, visualizations, and graphics
-//! demos.
+//! `pix_engine` is a cross-platform graphics/UI engine framework for simple games, visualizations,
+//! and graphics demos.
 //!
 //! The goal of this library is to be simpler to setup and use for graphics or algorithm
 //! exploration than larger graphics libraries.
@@ -32,6 +37,7 @@
 //! [Tetanes](https://crates.io/crates/tetanes) NES emulator is driven by this crate.
 //!
 //! ```no_run
+//! # #![allow(unused_variables)]
 //! use pix_engine::prelude::*;
 //!
 //! struct App;

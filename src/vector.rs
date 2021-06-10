@@ -133,7 +133,6 @@ impl Vector {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    ///
     /// let v = Vector::new_2d(1.0, 2.0);
     /// assert_eq!(v.get(), (1.0, 2.0, 0.0));
     /// ```
@@ -147,7 +146,6 @@ impl Vector {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    ///
     /// let v = Vector::new_3d(2.1, 3.5, 1.0);
     /// assert_eq!(v.get(), (2.1, 3.5, 1.0));
     /// ```
@@ -164,11 +162,9 @@ impl Vector {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    ///
     /// let v1 = vector!(1, 0, 1);
     /// let mut v2 = v1.copy();
     /// v2.x = 2.0;
-    ///
     /// assert_eq!(v1.get(), (1.0, 0.0, 1.0));
     /// assert_eq!(v2.get(), (2.0, 0.0, 1.0));
     /// ```
@@ -183,12 +179,9 @@ impl Vector {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    ///
     /// let v = Vector::from_angle(30.0, 15.0);
-    ///
     /// let abs_difference_x = (v.x - 2.3137).abs();
     /// let abs_difference_y = (v.y - (-14.8204)).abs();
-    ///
     /// assert!(abs_difference_x <= 1e-4);
     /// assert!(abs_difference_y <= 1e-4);
     /// ```
@@ -203,9 +196,7 @@ impl Vector {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    ///
     /// let v = Vector::random_2d();
-    ///
     /// assert!(v.x > -1.0 && v.x < 1.0);
     /// assert!(v.y > -1.0 && v.y < 1.0);
     /// assert_eq!(v.z, 0.0);
@@ -225,9 +216,7 @@ impl Vector {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    ///
     /// let v = Vector::random_3d();
-    ///
     /// assert!(v.x > -1.0 && v.x < 1.0);
     /// assert!(v.y > -1.0 && v.y < 1.0);
     /// assert!(v.z > -1.0 && v.z < 1.0);
@@ -246,12 +235,30 @@ impl Vector {
         Self::new_3d(x, y, z)
     }
 
-    /// Get the xyz coordinates as a tuple.
+    /// Get `Vector` coordinates as a tuple of (x, y, z).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v = Vector::new_3d(2.0, 1.0, 3.0);
+    /// assert_eq!(v.get(), (2.0, 1.0, 3.0));
+    /// ```
     pub const fn get(&self) -> (Scalar, Scalar, Scalar) {
         (self.x, self.y, self.z)
     }
 
-    /// Set the xyz coordinates.
+    /// Set `Vector` (x, y, z) coordinates.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut v = Vector::new_3d(2.0, 1.0, 3.0);
+    /// assert_eq!(v.get(), (2.0, 1.0, 3.0));
+    /// v.set((1.0, 2.0, 4.0));
+    /// assert_eq!(v.get(), (1.0, 2.0, 4.0));
+    /// ```
     pub fn set<V: Into<Vector>>(&mut self, v: V) {
         let v = v.into();
         self.x = v.x;
@@ -261,13 +268,12 @@ impl Vector {
 
     /// Calculates and returns the magnitude (length) of the Vector.
     ///
-    /// The formula is `sqrt(x*x + y*y + z*z)`.
+    /// The formula used is `sqrt(x*x + y*y + z*z)`.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    ///
     /// let v = vector!(1, 2, 3);
     /// let abs_difference = (v.mag() - 3.7416).abs();
     /// assert!(abs_difference <= 1e-4);
@@ -279,13 +285,12 @@ impl Vector {
     /// Calculates and returns the squared magnitude (length) of the Vector. This is faster if the
     /// real length is not required in the case of comparing vectors.
     ///
-    /// The formula is `x*x + y*y + z*z`.
+    /// The formula used is `x*x + y*y + z*z`.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    ///
     /// let v = vector!(1, 2, 3);
     /// assert_eq!(v.mag_sq(), 14.0);
     /// ```
@@ -295,7 +300,7 @@ impl Vector {
 
     /// Set the magnitude (length) of the Vector.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```
     /// # use pix_engine::prelude::*;
@@ -324,7 +329,6 @@ impl Vector {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    ///
     /// let v = vector!(1, 2, 3);
     /// let dot_product = v.dot((2, 3, 4));
     /// assert_eq!(dot_product, 20.0);
@@ -340,7 +344,6 @@ impl Vector {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    ///
     /// let v1 = vector!(1, 2, 3);
     /// let v2 = vector!(1, 2, 3);
     /// let cross = v1.cross(v2);
@@ -436,7 +439,6 @@ impl Vector {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    ///
     /// let v = vector!(10, 10);
     /// let heading = v.heading();
     /// assert_eq!(heading.to_degrees(), 45.0);
@@ -475,7 +477,6 @@ impl Vector {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    ///
     /// let v1 = vector!(1, 0, 0);
     /// let v2 = vector!(0, 1, 0);
     /// let angle = v1.angle_between(v2);
@@ -496,38 +497,45 @@ impl Vector {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    ///
     /// let mut v = vector!(4, 6); // Vector heading right and down
     /// let n = vector!(0, -1); // Surface normal facing up
     /// v.reflect(n); // Reflect about the surface normal (e.g. the x-axis)
     ///
     /// assert_eq!(v.x, 4.0);
     /// assert_eq!(v.y, -6.0);
-    ///
     /// ```
     pub fn reflect<V: Into<Vector>>(&mut self, normal: V) {
         let normal = normal.into();
         *self -= normal * 2.0 * self.dot(normal);
     }
 
-    /// Wraps vector around given values
+    /// Wraps `Vector` around given width, height with a size.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```
     /// # use pix_engine::prelude::*;
     ///
+    /// let mut v = vector!(200, 300);
+    /// v.wrap_2d(150.0, 400.0, 10.0);
+    /// assert_eq!(v.x, -10.0);
+    /// assert_eq!(v.y, 300.0);
+    ///
+    /// let mut v = vector!(200, 300);
+    /// v.wrap_2d(300.0, 200.0, 10.0);
+    /// assert_eq!(v.x, 200.0);
+    /// assert_eq!(v.y, -10.0);
     /// ```
-    pub fn wrap_2d(&mut self, width: f64, height: f64) {
-        if self.x > width {
-            self.x = 0.0;
-        } else if self.x < 0.0 {
-            self.x = width;
+    pub fn wrap_2d(&mut self, width: f64, height: f64, size: f64) {
+        if self.x > width + size {
+            self.x = -size;
+        } else if self.x < -size {
+            self.x = width + size;
         }
-        if self.y > height {
-            self.y = 0.0;
-        } else if self.y < 0.0 {
-            self.y = height;
+        if self.y > height + size {
+            self.y = -size;
+        } else if self.y < -size {
+            self.y = height + size;
         }
     }
 
@@ -537,11 +545,9 @@ impl Vector {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    ///
     /// let mut v1 = vector!(1, 1, 0);
     /// let v2 = vector!(3, 3, 0);
     /// v1.lerp(v2, 0.5);
-    ///
     /// assert_eq!(v1.get(), (2.0, 2.0, 0.0));
     /// ```
     pub fn lerp<V: Into<Vector>>(&mut self, v: V, amt: Scalar) {
@@ -557,7 +563,6 @@ impl Vector {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    ///
     /// let v = vector!(1, 1, 0);
     /// assert_eq!(v.to_vec(), vec![1.0, 1.0, 0.0]);
     /// ```
@@ -571,7 +576,6 @@ impl Vector {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    ///
     /// let v = vector!(1, 1, 0);
     /// assert_eq!(v.values(), [1.0, 1.0, 0.0]);
     /// ```

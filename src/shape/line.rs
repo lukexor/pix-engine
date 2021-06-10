@@ -4,6 +4,7 @@ use super::Point;
 use crate::vector::Vector;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+use std::{convert::TryFrom, num::TryFromIntError};
 
 /// A `Line`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
@@ -36,9 +37,13 @@ impl From<(i32, i32, i32, i32)> for Line {
 }
 
 /// From tuple of (x1, y1, x2, y2) to `Line`.
-impl From<(u32, u32, u32, u32)> for Line {
-    fn from((x1, y1, x2, y2): (u32, u32, u32, u32)) -> Self {
-        Self::new((x1 as i32, y1 as i32), (x2 as i32, y2 as i32))
+impl TryFrom<(u32, u32, u32, u32)> for Line {
+    type Error = TryFromIntError;
+    fn try_from((x1, y1, x2, y2): (u32, u32, u32, u32)) -> Result<Self, Self::Error> {
+        Ok(Self::new(
+            (i32::try_from(x1)?, i32::try_from(y1)?),
+            (i32::try_from(x2)?, i32::try_from(y2)?),
+        ))
     }
 }
 

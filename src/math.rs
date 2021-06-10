@@ -16,7 +16,7 @@ const PERLIN_ZWRAP: usize = 1 << PERLIN_ZWRAPB;
 const PERLIN_SIZE: usize = 4095;
 
 lazy_static! {
-    static ref PERLIN: Vec<f64> = {
+    static ref PERLIN: Vec<Scalar> = {
         let mut perlin = Vec::with_capacity(PERLIN_SIZE + 1);
         for _ in 0..PERLIN_SIZE + 1 {
             perlin.push(random(1.0));
@@ -63,13 +63,13 @@ where
     let y = v.y.abs();
     let z = v.z.abs();
 
-    let mut xi = x.floor() as usize;
-    let mut yi = y.floor() as usize;
-    let mut zi = z.floor() as usize;
+    let mut xi = x.trunc() as usize;
+    let mut yi = y.trunc() as usize;
+    let mut zi = z.trunc() as usize;
 
-    let mut xf = x - xi as f64;
-    let mut yf = y - yi as f64;
-    let mut zf = z - zi as f64;
+    let mut xf = x.fract();
+    let mut yf = y.fract();
+    let mut zf = z.fract();
     let (mut rxf, mut ryf);
 
     let mut noise_result = 0.0;

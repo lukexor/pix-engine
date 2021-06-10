@@ -165,7 +165,9 @@ impl AppState for Asteroids {
         }
 
         self.ship.pos += self.ship.vel * elapsed;
-        self.ship.pos.wrap_2d(s.width() as f64, s.height() as f64);
+        self.ship
+            .pos
+            .wrap_2d(s.width() as f64, s.height() as f64, self.ship.size as f64);
 
         // Draw asteroids
         for a in self.asteroids.iter_mut() {
@@ -176,7 +178,8 @@ impl AppState for Asteroids {
             }
 
             a.pos += a.vel * elapsed;
-            a.pos.wrap_2d(s.width() as f64, s.height() as f64);
+            a.pos
+                .wrap_2d(s.width() as f64, s.height() as f64, a.size as f64);
             a.angle += 0.5 * elapsed; // Give some twirl
             s.fill(BLACK);
             s.stroke(YELLOW);
