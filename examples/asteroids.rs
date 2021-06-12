@@ -148,13 +148,13 @@ impl AppState for Asteroids {
         if self.paused {
             return Ok(());
         } else if self.gameover {
-            let x = width / 2 - 80;
-            let y = height / 2 - 24;
+            let x = width / 2 - 150;
+            let y = height / 2 - 100;
             s.fill(WHITE);
             s.text_size(32);
             s.text((x, y), "GAME OVER")?;
             s.text_size(16);
-            s.text((x - 100, y + 24), "PRESS SPACE TO RESTART")?;
+            s.text((x - 30, y + 50), "PRESS SPACE TO RESTART")?;
             return Ok(());
         }
 
@@ -177,10 +177,10 @@ impl AppState for Asteroids {
             .wrap_2d(s.width() as f64, s.height() as f64, self.ship.size as f64);
 
         // Draw asteroids
-        let ship_p = self.ship.pos.into_point_lossy();
+        let ship_p = self.ship.pos.as_point();
         for a in self.asteroids.iter_mut() {
             // Ship collision
-            if circle!(a.pos.into_point_lossy(), a.size).contains(ship_p) {
+            if circle!(a.pos.as_point(), a.size).contains(ship_p) {
                 self.exploded(s)?;
                 return Ok(());
             }
@@ -201,9 +201,9 @@ impl AppState for Asteroids {
             b.pos += b.vel * elapsed;
             b.angle -= 1.0 * elapsed;
 
-            let bp = b.pos.into_point_lossy();
+            let bp = b.pos.as_point();
             for a in self.asteroids.iter_mut() {
-                if circle!(a.pos.into_point_lossy(), a.size).contains(bp) {
+                if circle!(a.pos.as_point(), a.size).contains(bp) {
                     // Asteroid hit
                     b.destroyed = true; // Removes bullet
 
@@ -243,7 +243,7 @@ impl AppState for Asteroids {
         s.fill(BLACK);
         s.stroke(WHITE);
         for b in self.bullets.iter() {
-            s.circle((b.pos.into_point_lossy(), 1))?;
+            s.circle((b.pos.as_point(), 1))?;
         }
 
         // Draw ship

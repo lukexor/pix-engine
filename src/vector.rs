@@ -607,7 +607,7 @@ where
     }
 
     /// Convert [Vector<T>] to [Point<U>].
-    pub fn into_point_lossy<U>(self) -> Point<U>
+    pub fn as_point<U>(&self) -> Point<U>
     where
         T: AsPrimitive<U>,
         U: 'static + Copy,

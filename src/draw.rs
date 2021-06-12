@@ -28,7 +28,7 @@ impl PixState {
     }
 
     /// Update texture with pixel data.
-    pub fn update_texture<R, T, U>(
+    pub fn update_texture<R, T>(
         &mut self,
         texture_id: usize,
         rect: Option<R>,
@@ -44,7 +44,7 @@ impl PixState {
     }
 
     /// Draw texture canvas.
-    pub fn texture<R, T, U>(
+    pub fn texture<R, T>(
         &mut self,
         texture_id: usize,
         src: Option<R>,

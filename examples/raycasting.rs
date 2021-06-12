@@ -280,13 +280,13 @@ impl RayScene {
             s.fill(WHITE);
             s.stroke(WHITE);
             for i in 0..self.polygons.len() - 1 {
-                let p1: Point<i32> = self.polygons[i].1.into_point_lossy();
-                let p2: Point<i32> = self.polygons[i + 1].1.into_point_lossy();
+                let p1: Point<i32> = self.polygons[i].1.as_point();
+                let p2: Point<i32> = self.polygons[i + 1].1.as_point();
                 s.triangle((mouse_pos, p1, p2))?;
             }
             // Draw last triangle, connecting back to first point.
-            let p1: Point<i32> = self.polygons.last().unwrap().1.into_point_lossy();
-            let p2: Point<i32> = self.polygons[0].1.into_point_lossy();
+            let p1: Point<i32> = self.polygons.last().unwrap().1.as_point();
+            let p2: Point<i32> = self.polygons[0].1.as_point();
             s.triangle((mouse_pos, p1, p2))?;
         }
 
@@ -350,7 +350,7 @@ impl AppState for RayScene {
         s.fill(BLUE);
         s.stroke(BLUE);
         for cell in self.cells.iter().filter(|c| c.exists) {
-            s.square((cell.pos.into_point_lossy(), BLOCK_SIZE + 1))?;
+            s.square((cell.pos.as_point(), BLOCK_SIZE + 1))?;
         }
 
         if let Some(ref light) = self.light {
