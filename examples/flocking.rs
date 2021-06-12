@@ -5,28 +5,28 @@ const WIDTH: u32 = 1000;
 const HEIGHT: u32 = 800;
 
 const BOID_COUNT: usize = 500;
-const BOID_MODEL: [(f64, f64); 13] = [
-    (1.5, 0.0),
-    (0.75, -0.25),
-    (0.25, -1.5),
-    (-1.0, -2.25),
-    (-0.25, -1.5),
-    (-0.45, -0.35),
-    (-2.0, -0.2),
-    (-2.0, 0.2),
-    (-0.45, 0.35),
-    (-0.25, 1.5),
-    (-1.0, 2.25),
-    (0.25, 1.5),
-    (0.75, 0.25),
+const BOID_MODEL: [Vector<f64>; 13] = [
+    vector!(1.5, 0.0),
+    vector!(0.75, -0.25),
+    vector!(0.25, -1.5),
+    vector!(-1.0, -2.25),
+    vector!(-0.25, -1.5),
+    vector!(-0.45, -0.35),
+    vector!(-2.0, -0.2),
+    vector!(-2.0, 0.2),
+    vector!(-0.45, 0.35),
+    vector!(-0.25, 1.5),
+    vector!(-1.0, 2.25),
+    vector!(0.25, 1.5),
+    vector!(0.75, 0.25),
 ];
 const BOID_SIZE: f64 = 3.0;
 
 #[derive(PartialEq)]
 struct Boid {
-    pos: Vector,
-    vel: Vector,
-    acc: Vector,
+    pos: Vector<f64>,
+    vel: Vector<f64>,
+    acc: Vector<f64>,
     max_acc: f64,
     max_vel: f64,
 }
@@ -34,7 +34,7 @@ struct Boid {
 impl Boid {
     fn new() -> Self {
         Self {
-            pos: vector!(random!(WIDTH), random!(HEIGHT)),
+            pos: vector!(random!(WIDTH as f64), random!(HEIGHT as f64)),
             vel: vector!(random!(-1.0, 1.0), random!(-1.0, 1.0)),
             acc: vector!(),
             max_acc: 0.1,
@@ -62,9 +62,9 @@ impl Boid {
 }
 
 struct BoidAdjustment {
-    align: Vec<Vector>,
-    cohesion: Vec<Vector>,
-    sep: Vec<Vector>,
+    align: Vec<Vector<f64>>,
+    cohesion: Vec<Vector<f64>>,
+    sep: Vec<Vector<f64>>,
 }
 
 impl BoidAdjustment {
@@ -97,7 +97,7 @@ impl App {
         }
     }
 
-    fn get_adjustment(&self) -> Vec<Vector> {
+    fn get_adjustment(&self) -> Vec<Vector<f64>> {
         let align_dist = 50.0;
         let cohesion_dist = 50.0;
         let sep_dist = 25.0;
@@ -129,7 +129,7 @@ impl App {
                 let mut sum = vector!();
 
                 if !adj.sep.is_empty() {
-                    let mut sep = adj.sep.iter().sum::<Vector>() / adj.sep.len() as f64;
+                    let mut sep = adj.sep.iter().sum::<Vector<f64>>() / adj.sep.len() as f64;
                     if sep.mag_sq() > 0.0 {
                         sep.normalize();
                         sep *= boid.max_vel;
@@ -140,7 +140,7 @@ impl App {
                 }
 
                 if !adj.align.is_empty() {
-                    let mut align = adj.align.iter().sum::<Vector>() / adj.align.len() as f64;
+                    let mut align = adj.align.iter().sum::<Vector<f64>>() / adj.align.len() as f64;
                     align.normalize();
                     align *= boid.max_vel;
                     align -= boid.vel;
@@ -150,7 +150,7 @@ impl App {
 
                 if !adj.cohesion.is_empty() {
                     let mut cohesion =
-                        adj.cohesion.iter().sum::<Vector>() / adj.cohesion.len() as f64;
+                        adj.cohesion.iter().sum::<Vector<f64>>() / adj.cohesion.len() as f64;
                     cohesion -= boid.pos;
                     cohesion.normalize();
                     cohesion *= boid.max_vel;

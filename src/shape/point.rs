@@ -1,23 +1,23 @@
 //! 2D/3D Point type used for drawing.
 
-use crate::math::Scalar;
+use num::Num;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::{iter::Sum, ops::*};
+use std::{fmt, iter::Sum, ops::*};
 
 /// A Point.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Point {
+pub struct Point<T> {
     /// X-coord
-    pub x: i32,
+    pub x: T,
     /// Y-coord
-    pub y: i32,
+    pub y: T,
     /// Z-coord
-    pub z: i32,
+    pub z: T,
 }
 
-/// # Create a [Point].
+/// # Create a [Point<T>].
 ///
 /// ```
 /// use pix_engine::prelude::*;
@@ -37,46 +37,53 @@ macro_rules! point {
         point!($x, $y, 0)
     };
     ($x:expr, $y:expr, $z:expr$(,)?) => {
-        $crate::shape::point::Point::new_3d($x as i32, $y as i32, $z as i32)
+        $crate::shape::point::Point::new_3d($x, $y, $z)
     };
 }
 
-impl Point {
-    /// Create new Point.
-    pub fn new<P>(p: P) -> Self
-    where
-        P: Into<Point>,
-    {
-        p.into()
+impl<T> Point<T>
+where
+    T: Num + Copy,
+{
+    /// Create new 2D `Point`.
+    pub fn new_2d(x: T, y: T) -> Self {
+        Self { x, y, z: T::zero() }
     }
 
-    /// Create new 2D Point.
-    pub fn new_2d(x: i32, y: i32) -> Self {
-        Self { x, y, z: 0 }
-    }
-
-    /// Create new 3D Point.
-    pub fn new_3d(x: i32, y: i32, z: i32) -> Self {
+    /// Create new 3D `Point`.
+    pub fn new_3d(x: T, y: T, z: T) -> Self {
         Self { x, y, z }
     }
 
-    /// Gets a Point as an array of xyz i32 values.
+    /// Get `Point` coordinates as (x, y, z).
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
+    /// let p = point!(2, 1, 3);
+    /// assert_eq!(p.get(), (2, 1, 3));
+    /// ```
+    pub fn get(&self) -> (T, T, T) {
+        (self.x, self.y, self.z)
+    }
+
+    /// Get `Point` coordinates as [x, y, z].
     ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
     /// let p = point!(1, 2, 0);
     /// assert_eq!(p.values(), [1, 2, 0]);
     /// ```
-    pub fn values(&self) -> [i32; 3] {
+    pub fn values(&self) -> [T; 3] {
         [self.x, self.y, self.z]
     }
 }
 
-impl Index<usize> for Point {
-    type Output = i32;
+impl<T> Index<usize> for Point<T> {
+    type Output = T;
     fn index(&self, idx: usize) -> &Self::Output {
         match idx {
             0 => &self.x,
@@ -87,7 +94,7 @@ impl Index<usize> for Point {
     }
 }
 
-impl IndexMut<usize> for Point {
+impl<T> IndexMut<usize> for Point<T> {
     fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
         match idx {
             0 => &mut self.x,
@@ -98,218 +105,305 @@ impl IndexMut<usize> for Point {
     }
 }
 
-impl Add for Point {
+impl<T> Add for Point<T>
+where
+    T: Num + Add + Copy,
+{
     type Output = Self;
-
-    fn add(self, p: Point) -> Self::Output {
+    fn add(self, p: Point<T>) -> Self::Output {
         Point::new_3d(self.x + p.x, self.y + p.y, self.z + p.z)
     }
 }
 
-impl AddAssign for Point {
-    fn add_assign(&mut self, p: Point) {
+impl<T> AddAssign for Point<T>
+where
+    T: AddAssign,
+{
+    fn add_assign(&mut self, p: Point<T>) {
         self.x += p.x;
         self.y += p.y;
         self.z += p.z;
     }
 }
 
-impl Add<i32> for Point {
+impl<T, U> Add<U> for Point<T>
+where
+    T: Num + Add<U, Output = T> + Copy,
+    U: Num + Copy,
+{
     type Output = Self;
-
-    fn add(self, val: i32) -> Self::Output {
+    fn add(self, val: U) -> Self::Output {
         Point::new_3d(self.x + val, self.y + val, self.z + val)
     }
 }
 
-impl AddAssign<i32> for Point {
-    fn add_assign(&mut self, val: i32) {
+impl<T, U> AddAssign<U> for Point<T>
+where
+    T: AddAssign<U>,
+    U: Num + Copy,
+{
+    fn add_assign(&mut self, val: U) {
         self.x += val;
         self.y += val;
         self.z += val;
     }
 }
 
-impl Sub for Point {
+impl<T> Sub for Point<T>
+where
+    T: Num + Sub + Copy,
+{
     type Output = Self;
-
-    fn sub(self, p: Point) -> Self::Output {
+    fn sub(self, p: Point<T>) -> Self::Output {
         Point::new_3d(self.x - p.x, self.y - p.y, self.z - p.z)
     }
 }
 
-impl SubAssign for Point {
-    fn sub_assign(&mut self, p: Point) {
+impl<T, U> Sub<U> for Point<T>
+where
+    T: Num + Sub<U, Output = T> + Copy,
+    U: Num + Copy,
+{
+    type Output = Self;
+    fn sub(self, val: U) -> Self::Output {
+        Point::new_3d(self.x - val, self.y - val, self.z - val)
+    }
+}
+
+impl<T> SubAssign for Point<T>
+where
+    T: SubAssign,
+{
+    fn sub_assign(&mut self, p: Point<T>) {
         self.x -= p.x;
         self.y -= p.y;
         self.z -= p.z;
     }
 }
 
-impl Sub<i32> for Point {
-    type Output = Self;
-
-    fn sub(self, val: i32) -> Self::Output {
-        Point::new_3d(self.x - val, self.y - val, self.z - val)
-    }
-}
-
-impl SubAssign<i32> for Point {
-    fn sub_assign(&mut self, val: i32) {
+impl<T, U> SubAssign<U> for Point<T>
+where
+    T: SubAssign<U>,
+    U: Num + Copy,
+{
+    fn sub_assign(&mut self, val: U) {
         self.x -= val;
         self.y -= val;
         self.z -= val;
     }
 }
 
-impl Neg for Point {
+impl<T> Neg for Point<T>
+where
+    T: Num + Neg<Output = T> + Copy,
+{
     type Output = Self;
-
     fn neg(self) -> Self::Output {
         Point::new_3d(-self.x, -self.y, -self.z)
     }
 }
 
-impl Mul<i32> for Point {
+impl<T, U> Mul<U> for Point<T>
+where
+    T: Num + Mul<U, Output = T> + Copy,
+    U: Num + Copy,
+{
     type Output = Self;
-
-    fn mul(self, s: i32) -> Self::Output {
+    fn mul(self, s: U) -> Self::Output {
         Point::new_3d(self.x * s, self.y * s, self.z * s)
     }
 }
 
-impl Mul<Point> for i32 {
-    type Output = Point;
-
-    fn mul(self, p: Point) -> Self::Output {
-        Point::new_3d(self * p.x, self * p.x, self * p.z)
-    }
-}
-
-impl MulAssign<i32> for Point {
-    fn mul_assign(&mut self, s: i32) {
+impl<T, U> MulAssign<U> for Point<T>
+where
+    T: MulAssign<U>,
+    U: Num + Copy,
+{
+    fn mul_assign(&mut self, s: U) {
         self.x *= s;
         self.y *= s;
         self.z *= s;
     }
 }
 
-impl Div<i32> for Point {
+impl<T, U> Div<U> for Point<T>
+where
+    T: Num + Div<U, Output = T> + Copy,
+    U: Num + Copy,
+{
     type Output = Self;
-
-    fn div(self, s: i32) -> Self::Output {
+    fn div(self, s: U) -> Self::Output {
         Point::new_3d(self.x / s, self.y / s, self.z / s)
     }
 }
 
-impl Div<Point> for i32 {
-    type Output = Point;
-
-    fn div(self, p: Point) -> Self::Output {
-        Point::new_3d(self / p.x, self / p.x, self / p.z)
-    }
-}
-
-impl DivAssign<i32> for Point {
-    fn div_assign(&mut self, s: i32) {
+impl<T, U> DivAssign<U> for Point<T>
+where
+    T: Num + DivAssign<U>,
+    U: Num + Copy,
+{
+    fn div_assign(&mut self, s: U) {
         self.x /= s;
         self.y /= s;
         self.z /= s;
     }
 }
 
-impl Rem for Point {
+impl<T> Rem for Point<T>
+where
+    T: Num + Rem,
+{
     type Output = Self;
-
-    fn rem(mut self, p: Point) -> Self::Output {
-        if p.x != 0 {
-            self.x %= p.x;
+    fn rem(mut self, p: Point<T>) -> Self::Output {
+        if p.x != T::zero() {
+            self.x = self.x % p.x;
         }
-        if p.y != 0 {
-            self.y %= p.y;
+        if p.y != T::zero() {
+            self.y = self.y % p.y;
         }
-        if p.z != 0 {
-            self.z %= p.z;
+        if p.z != T::zero() {
+            self.z = self.z % p.z;
         }
         self
     }
 }
 
-impl RemAssign for Point {
-    fn rem_assign(&mut self, p: Point) {
-        if p.x != 0 {
+impl<T> RemAssign for Point<T>
+where
+    T: Num + RemAssign,
+{
+    fn rem_assign(&mut self, p: Point<T>) {
+        if p.x != T::zero() {
             self.x %= p.x;
         }
-        if p.y != 0 {
+        if p.y != T::zero() {
             self.y %= p.y;
         }
-        if p.z != 0 {
+        if p.z != T::zero() {
             self.z %= p.z;
         }
     }
 }
 
-impl Sum for Point {
+impl<T> Sum for Point<T>
+where
+    Self: Add<Output = Self>,
+    T: Num + Add,
+{
     fn sum<I>(iter: I) -> Self
     where
         I: Iterator<Item = Self>,
     {
-        iter.fold(Point::new((0.0, 0.0, 0.0)), |a, b| a + b)
+        let p = Point {
+            x: T::zero(),
+            y: T::zero(),
+            z: T::zero(),
+        };
+        iter.fold(p, |a, b| a + b)
     }
 }
 
-impl<'a> Sum<&'a Point> for Point {
+impl<'a, T: 'a> Sum<&'a Point<T>> for Point<T>
+where
+    Self: Add<Output = Self>,
+    T: Num + Add + Copy,
+{
     fn sum<I>(iter: I) -> Self
     where
         I: Iterator<Item = &'a Self>,
     {
-        iter.fold(Point::new((0.0, 0.0, 0.0)), |a, b| a + *b)
+        let p = Point {
+            x: T::zero(),
+            y: T::zero(),
+            z: T::zero(),
+        };
+        iter.fold(p, |a, b| a + *b)
     }
 }
 
-/// From tuple of (i32, i32) to [Point].
-impl From<(i32, i32)> for Point {
-    fn from((x, y): (i32, i32)) -> Self {
-        Self::new_2d(x, y)
+macro_rules! impl_op {
+    ($target:ty, $zero:expr) => {
+        impl Mul<Point<$target>> for $target {
+            type Output = Point<$target>;
+            fn mul(self, p: Point<$target>) -> Self::Output {
+                Point::new_3d(self * p.x, self * p.x, self * p.z)
+            }
+        }
+
+        impl Div<Point<$target>> for $target {
+            type Output = Point<$target>;
+            fn div(self, p: Point<$target>) -> Self::Output {
+                if p.x == $zero || p.y == $zero || p.z == $zero {
+                    panic!("divisor is zero");
+                }
+                Point::new_3d(self / p.x, self / p.x, self / p.z)
+            }
+        }
+    };
+}
+
+impl_op!(i8, 0);
+impl_op!(u8, 0);
+impl_op!(i16, 0);
+impl_op!(u16, 0);
+impl_op!(i32, 0);
+impl_op!(u32, 0);
+impl_op!(i64, 0);
+impl_op!(u64, 0);
+impl_op!(i128, 0);
+impl_op!(u128, 0);
+impl_op!(isize, 0);
+impl_op!(usize, 0);
+impl_op!(f32, 0.0);
+impl_op!(f64, 0.0);
+
+/// Convert `T` to [Point<T>].
+impl<T> From<T> for Point<T>
+where
+    T: Num + Copy,
+{
+    fn from(v: T) -> Self {
+        Self { x: v, y: v, z: v }
     }
 }
 
-/// From tuple of (i32, i32, i32) to [Point].
-impl From<(i32, i32, i32)> for Point {
-    fn from((x, y, z): (i32, i32, i32)) -> Self {
-        Self::new_3d(x, y, z)
+/// Convert `(T, T)` to [Point<T>].
+impl<T> From<(T, T)> for Point<T>
+where
+    T: Num,
+{
+    fn from((x, y): (T, T)) -> Self {
+        Self { x, y, z: T::zero() }
     }
 }
 
-/// From 2D tuple of (x, y) Scalar to [Point].
-impl From<(Scalar, Scalar)> for Point {
-    fn from((x, y): (Scalar, Scalar)) -> Self {
-        let x = x.round() as i32;
-        let y = y.round() as i32;
-        Self::new_2d(x, y)
+/// Convert `(T, T, T)` to [Point<T>].
+impl<T> From<(T, T, T)> for Point<T> {
+    fn from((x, y, z): (T, T, T)) -> Self {
+        Self { x, y, z }
     }
 }
 
-/// From 3D tuple of (x, y, z) Scalar to [Point].
-impl From<(Scalar, Scalar, Scalar)> for Point {
-    fn from((x, y, z): (Scalar, Scalar, Scalar)) -> Self {
-        let x = x.round() as i32;
-        let y = y.round() as i32;
-        let z = z.round() as i32;
-        Self::new_3d(x, y, z)
-    }
-}
-
-/// From [Point] into tuple of (x, y) i32.
-impl From<Point> for (i32, i32) {
-    fn from(p: Point) -> Self {
+/// Convert [Point<T>] into a (x, y) tuple.
+impl<T> From<Point<T>> for (T, T) {
+    fn from(p: Point<T>) -> Self {
         (p.x, p.y)
     }
 }
 
-/// From [Point] into tuple of (x, y, z) i32.
-impl From<Point> for (i32, i32, i32) {
-    fn from(p: Point) -> Self {
+/// Convert [Point<T>] into a (x, y, z) tuple.
+impl<T> From<Point<T>> for (T, T, T) {
+    fn from(p: Point<T>) -> Self {
         (p.x, p.y, p.z)
+    }
+}
+
+/// Display [Point<T>] as "(x, y, z)".
+impl<T> fmt::Display for Point<T>
+where
+    T: fmt::Display,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({}, {}, {})", self.x, self.y, self.z)
     }
 }

@@ -18,6 +18,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 include_dir = "^0.6"
+num = "^0.4"
 num-traits = "^0.2"
 png = "^0.16"
 rand = "^0.8"

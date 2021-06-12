@@ -6,6 +6,7 @@ use crate::{
     renderer::{self, Rendering},
     shape::Rect,
 };
+use num_traits::AsPrimitive;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -118,16 +119,17 @@ impl PixState {
     }
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    pub fn clip<R>(&mut self, rect: R)
+    pub fn clip<R, T>(&mut self, rect: R)
     where
-        R: Into<Rect>,
+        R: Into<Rect<T>>,
+        T: AsPrimitive<i32> + AsPrimitive<u32>,
     {
         self.renderer.clip(Some(rect.into()));
     }
 
     /// Clears the clip rect used by the renderer to draw to the current canvas.
     pub fn no_clip(&mut self) {
-        self.renderer.clip(None);
+        self.renderer.clip::<i32>(None);
     }
 
     /// Returns whether the application is fullscreen or not.

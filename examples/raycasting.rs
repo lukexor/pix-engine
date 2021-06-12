@@ -13,12 +13,12 @@ const EAST: usize = 2;
 const WEST: usize = 3;
 
 struct Edge {
-    start: Vector,
-    end: Vector,
+    start: Vector<f64>,
+    end: Vector<f64>,
 }
 
 impl Edge {
-    pub fn new<V: Into<Vector>>(start: V, end: V) -> Self {
+    pub fn new<V: Into<Vector<f64>>>(start: V, end: V) -> Self {
         let start = start.into();
         let end = end.into();
         Self { start, end }
@@ -28,8 +28,8 @@ impl Edge {
 struct RayScene {
     cells: Vec<Cell>,
     edges: Vec<Edge>,
-    points: Vec<Vector>,
-    polygons: Vec<(f64, Vector)>,
+    points: Vec<Vector<f64>>,
+    polygons: Vec<(f64, Vector<f64>)>,
     xcells: u32,
     ycells: u32,
     drawing: bool,
@@ -43,7 +43,7 @@ impl RayScene {
         let mut cells = Vec::with_capacity((xcells * ycells) as usize);
         for y in 0..ycells {
             for x in 0..xcells {
-                cells.push(Cell::new((x, y)));
+                cells.push(Cell::new((x as f64, y as f64)));
             }
         }
         Self {
@@ -79,15 +79,15 @@ impl RayScene {
     #[allow(clippy::many_single_char_names)]
     fn convert_edges_to_poly_map(&mut self) {
         let s = Rect::new(0, 0, self.xcells, self.ycells);
-        let pitch = self.xcells as i32;
+        let pitch = self.xcells;
         let block_size = BLOCK_SIZE as i32;
         // Reset edges state, keeping only the window boundaries
         self.edges.truncate(4);
         for c in self.cells.iter_mut() {
             c.reset();
         }
-        let width = s.w as i32;
-        let height = s.h as i32;
+        let width = s.w;
+        let height = s.h;
         for x in 0..width {
             for y in 0..height {
                 let x_off = x + s.x;
@@ -100,6 +100,9 @@ impl RayScene {
 
                 // Cell exists, check for edges
                 if self.exists(i) {
+                    let x_off = x_off as f64;
+                    let y_off = y_off as f64;
+                    let block_size = block_size as f64;
                     // No western neighbor, so needs an edge
                     if x > 0 && !self.exists(w) {
                         // Can extend down from northern neighbors WEST edge
@@ -184,7 +187,7 @@ impl RayScene {
         self.points.dedup();
     }
 
-    fn calc_visibility_polygons(&mut self, o: Vector) {
+    fn calc_visibility_polygons(&mut self, o: Vector<f64>) {
         self.polygons.clear();
         for p in self.points.iter() {
             // Cast three rays - one at and one off to each side
@@ -205,7 +208,7 @@ impl RayScene {
             .dedup_by(|a, b| (a.1.x - b.1.x).abs() <= 0.1 && (a.1.y - b.1.y).abs() <= 0.1);
     }
 
-    fn cast_ray(&self, o: Vector, r: Vector) -> Option<Vector> {
+    fn cast_ray(&self, o: Vector<f64>, r: Vector<f64>) -> Option<Vector<f64>> {
         let mut intersect = None;
         let mut closest_param = f64::INFINITY;
         for e in self.edges.iter() {
@@ -219,15 +222,20 @@ impl RayScene {
         intersect
     }
 
-    fn intersection(rs: Vector, re: Vector, es: Vector, ee: Vector) -> Option<(Vector, f64)> {
+    fn intersection(
+        rs: Vector<f64>,
+        re: Vector<f64>,
+        es: Vector<f64>,
+        ee: Vector<f64>,
+    ) -> Option<(Vector<f64>, f64)> {
         // Ray parametric
-        // RAY in parametric: Vector + Delta*T1
+        // RAY in parametric: Vector<f64> + Delta*T1
         let r_px = rs.x;
         let r_py = rs.y;
         let r_dx = re.x - rs.x;
         let r_dy = re.y - rs.y;
 
-        // SEGMENT in parametric: Vector + Delta*T2
+        // SEGMENT in parametric: Vector<f64> + Delta*T2
         let s_px = es.x;
         let s_py = es.y;
         let s_dx = ee.x - es.x;
@@ -266,19 +274,19 @@ impl RayScene {
             return Ok(true);
         }
 
-        self.calc_visibility_polygons((x, y).into());
+        self.calc_visibility_polygons(vector!(x as f64, y as f64));
 
         if !self.polygons.is_empty() {
             s.fill(WHITE);
             s.stroke(WHITE);
             for i in 0..self.polygons.len() - 1 {
-                let p1: Point = self.polygons[i].1.into();
-                let p2: Point = self.polygons[i + 1].1.into();
+                let p1: Point<i32> = self.polygons[i].1.into_point_lossy();
+                let p2: Point<i32> = self.polygons[i + 1].1.into_point_lossy();
                 s.triangle((mouse_pos, p1, p2))?;
             }
             // Draw last triangle, connecting back to first point.
-            let p1: Point = self.polygons.last().unwrap().1.into();
-            let p2: Point = self.polygons[0].1.into();
+            let p1: Point<i32> = self.polygons.last().unwrap().1.into_point_lossy();
+            let p2: Point<i32> = self.polygons[0].1.into_point_lossy();
             s.triangle((mouse_pos, p1, p2))?;
         }
 
@@ -305,10 +313,12 @@ impl AppState for RayScene {
         }
 
         // Screen Edges
-        self.edges.push(Edge::new((0, 0), (w, 0))); // Top
-        self.edges.push(Edge::new((w, 0), (w, h))); // Right
-        self.edges.push(Edge::new((0, h), (w, h))); // Bottom
-        self.edges.push(Edge::new((0, 0), (0, h))); // Left
+        let w = w as f64;
+        let h = h as f64;
+        self.edges.push(Edge::new((0.0, 0.0), (w, 0.0))); // Top
+        self.edges.push(Edge::new((w, 0.0), (w, h))); // Right
+        self.edges.push(Edge::new((0.0, h), (w, h))); // Bottom
+        self.edges.push(Edge::new((0.0, 0.0), (0.0, h))); // Left
 
         self.convert_edges_to_poly_map();
 
@@ -324,12 +334,12 @@ impl AppState for RayScene {
         let (x, y) = s.mouse_pos().into();
 
         let (cx, cw) = if x - 254 < 0 {
-            (0, (x + 255) as u32)
+            (0, x + 255)
         } else {
             (x - 254, 511)
         };
         let (cy, ch) = if y - 254 < 0 {
-            (0, (y + 255) as u32)
+            (0, y + 255)
         } else {
             (y - 254, 511)
         };
@@ -340,7 +350,7 @@ impl AppState for RayScene {
         s.fill(BLUE);
         s.stroke(BLUE);
         for cell in self.cells.iter().filter(|c| c.exists) {
-            s.square((cell.pos, BLOCK_SIZE + 1))?;
+            s.square((cell.pos.into_point_lossy(), BLOCK_SIZE + 1))?;
         }
 
         if let Some(ref light) = self.light {
@@ -381,7 +391,7 @@ impl AppState for RayScene {
 
 #[derive(Debug)]
 struct Cell {
-    pos: Vector,
+    pos: Vector<f64>,
     edges: [(bool, usize); 4],
     exists: bool,
 }
@@ -389,7 +399,7 @@ struct Cell {
 // 0,0 -> 0,0,16,16
 // 1,0 -> 16,0,32,16
 impl Cell {
-    pub fn new<P: Into<Vector>>(pos: P) -> Self {
+    pub fn new<P: Into<Vector<f64>>>(pos: P) -> Self {
         Self {
             pos: pos.into() * BLOCK_SIZE as f64,
             edges: [(false, 0); 4],

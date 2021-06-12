@@ -5,6 +5,7 @@ use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
 
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) mod sdl;
+use num_traits::AsPrimitive;
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) use sdl::Renderer;
 
@@ -107,7 +108,9 @@ pub(crate) trait Rendering: Default + Sized {
     fn draw_color(&mut self, color: Color);
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    fn clip(&mut self, rect: Option<Rect>);
+    fn clip<T>(&mut self, rect: Option<Rect<T>>)
+    where
+        T: AsPrimitive<i32> + AsPrimitive<u32>;
 
     /// Sets the blend mode used by the renderer to draw textures.
     fn blend_mode(&mut self, mode: BlendMode);
@@ -148,7 +151,7 @@ pub(crate) trait Rendering: Default + Sized {
     fn delete_texture(&mut self, texture_id: TextureId) -> Result<()>;
 
     /// Update texture with pixel data.
-    fn update_texture<R>(
+    fn update_texture<R, T>(
         &mut self,
         texture_id: TextureId,
         rect: Option<R>,
@@ -156,12 +159,19 @@ pub(crate) trait Rendering: Default + Sized {
         pitch: usize,
     ) -> Result<()>
     where
-        R: Into<Rect>;
+        R: Into<Rect<T>>,
+        T: AsPrimitive<i32> + AsPrimitive<u32>;
 
     /// Draw texture canvas.
-    fn texture<R>(&mut self, texture_id: TextureId, src: Option<R>, dst: Option<R>) -> Result<()>
+    fn texture<R, T>(
+        &mut self,
+        texture_id: TextureId,
+        src: Option<R>,
+        dst: Option<R>,
+    ) -> Result<()>
     where
-        R: Into<Rect>;
+        R: Into<Rect<T>>,
+        T: AsPrimitive<i32> + AsPrimitive<u32>;
 
     /// Draw text to the current canvas.
     fn text<S>(

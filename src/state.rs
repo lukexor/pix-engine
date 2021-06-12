@@ -94,8 +94,8 @@ pub struct PixState {
     pub(crate) renderer: Renderer,
     pub(crate) env: Environment,
     pub(crate) settings: Settings,
-    pub(crate) mouse_pos: Point,
-    pub(crate) pmouse_pos: Point,
+    pub(crate) mouse_pos: Point<i32>,
+    pub(crate) pmouse_pos: Point<i32>,
     pub(crate) mouse_down: bool,
     pub(crate) mouse_buttons: HashSet<Mouse>,
     pub(crate) key_down: bool,
@@ -153,12 +153,12 @@ impl PixState {
     }
 
     /// Returns the current mouse position coordinates as (x, y).
-    pub fn mouse_pos(&self) -> Point {
+    pub fn mouse_pos(&self) -> Point<i32> {
         self.mouse_pos
     }
 
     /// Returns the previous mouse position coordinates last frame as (x, y).
-    pub fn pmouse_pos(&self) -> Point {
+    pub fn pmouse_pos(&self) -> Point<i32> {
         self.pmouse_pos
     }
 

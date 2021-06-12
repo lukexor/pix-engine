@@ -2,12 +2,13 @@
 
 use crate::vector::Vector;
 use lazy_static::lazy_static;
-use num_traits::{Num, NumCast};
+use num::clamp;
+use num_traits::{AsPrimitive, Num, NumCast};
 use rand::{self, distributions::uniform::SampleUniform, Rng};
-use std::ops::{AddAssign, Range};
-
-/// Default type for math calculations
-pub type Scalar = f64;
+use std::{
+    f64::consts::PI,
+    ops::{AddAssign, Range},
+};
 
 const PERLIN_YWRAPB: usize = 4;
 const PERLIN_YWRAP: usize = 1 << PERLIN_YWRAPB;
@@ -16,7 +17,7 @@ const PERLIN_ZWRAP: usize = 1 << PERLIN_ZWRAPB;
 const PERLIN_SIZE: usize = 4095;
 
 lazy_static! {
-    static ref PERLIN: Vec<Scalar> = {
+    static ref PERLIN: Vec<f64> = {
         let mut perlin = Vec::with_capacity(PERLIN_SIZE + 1);
         for _ in 0..PERLIN_SIZE + 1 {
             perlin.push(random(1.0));
@@ -25,15 +26,10 @@ lazy_static! {
     };
 }
 
-fn scaled_cosine(i: f64) -> f64 {
-    0.5 * (1.0 - (i * std::f64::consts::PI).cos())
-}
-
 /// Returns a random number within a range.
-pub fn random_rng<T, V>(val: V) -> T
+pub fn random_rng<T>(val: impl Into<Range<T>>) -> T
 where
     T: Num + SampleUniform + PartialOrd,
-    V: Into<Range<T>>,
 {
     let val = val.into();
     rand::thread_rng().gen_range(val)
@@ -53,19 +49,16 @@ where
 
 /// Returns the Perlin noise value at specified coordinates.
 #[allow(clippy::many_single_char_names)]
-pub fn noise<V>(v: V) -> f64
-where
-    V: Into<Vector>,
-{
+pub fn noise(v: impl Into<Vector<f64>>) -> f64 {
     let v = v.into();
 
     let x = v.x.abs();
     let y = v.y.abs();
     let z = v.z.abs();
 
-    let mut xi = x.trunc() as usize;
-    let mut yi = y.trunc() as usize;
-    let mut zi = z.trunc() as usize;
+    let mut xi: usize = x.trunc().as_();
+    let mut yi: usize = y.trunc().as_();
+    let mut zi: usize = z.trunc().as_();
 
     let mut xf = x.fract();
     let mut yf = y.fract();
@@ -76,6 +69,8 @@ where
     let mut ampl = 0.5;
 
     let (mut n1, mut n2, mut n3);
+
+    let scaled_cosine = |i: f64| 0.5 * (1.0 - (i - PI).cos());
 
     let perlin_octaves = 4; // default to medium smooth
     let perlin_amp_falloff = 0.5; // 50% reduction/octave
@@ -189,7 +184,7 @@ macro_rules! noise {
 
 /// Remaps a number from one range to another.
 ///
-/// Map range defaults to 0.0...Scalar::MAX in the event casting to Scalar fails.
+/// Map range defaults to 0.0...f64::MAX in the event casting to f64 fails.
 /// NaN will result in the max mapped value.
 ///
 /// # Example
@@ -205,35 +200,30 @@ macro_rules! noise {
 /// let m = map(value, 0.0, 100.0, 0.0, 1.0);
 /// assert_eq!(m, 0.5);
 ///
-/// let value = Scalar::NAN;
+/// let value = f64::NAN;
 /// let m = map(value, 0.0, 100.0, 0.0, 1.0);
 /// assert!(m.is_nan());
 ///
-/// let value = Scalar::INFINITY;
+/// let value = f64::INFINITY;
 /// let m = map(value, 0.0, 100.0, 0.0, 1.0);
 /// assert_eq!(m, 1.0);
 ///
-/// let value = Scalar::NEG_INFINITY;
+/// let value = f64::NEG_INFINITY;
 /// let m = map(value, 0.0, 100.0, 0.0, 1.0);
 /// assert_eq!(m, 0.0);
 /// ```
 pub fn map<T>(value: T, start1: T, end1: T, start2: T, end2: T) -> T
 where
-    T: Copy + NumCast + PartialOrd + AddAssign,
+    T: NumCast + AsPrimitive<f64> + Copy,
 {
     let default = end1;
-    let start1: Scalar = NumCast::from(start1).unwrap_or(0.0);
-    let end1: Scalar = NumCast::from(end1).unwrap_or(Scalar::MAX);
-    let start2: Scalar = NumCast::from(start2).unwrap_or(0.0);
-    let end2: Scalar = NumCast::from(end2).unwrap_or(Scalar::MAX);
-    let value: Scalar = NumCast::from(value).unwrap_or(start1);
+    let start1: f64 = start1.as_();
+    let end1: f64 = end1.as_();
+    let start2: f64 = start2.as_();
+    let end2: f64 = end2.as_();
+    let value: f64 = value.as_();
     let new_val = (value - start1) / (end1 - start1) * (end2 - start2) + start2;
-    let mapped_val = if start2 < end2 {
-        new_val.clamp(start2, end2)
-    } else {
-        new_val.clamp(end2, start2)
-    };
-    T::from(mapped_val).unwrap_or(default)
+    NumCast::from(clamp(new_val, start2, end2)).unwrap_or(default)
 }
 
 /// Linear interpolates between two values by a given amount.
@@ -251,7 +241,7 @@ where
 /// ```
 pub fn lerp<T>(start: T, end: T, amount: T) -> T
 where
-    T: Copy + Num + PartialOrd,
+    T: Num + Copy + PartialOrd,
 {
     (T::one() - amount) * start + amount * end
 }
@@ -279,7 +269,7 @@ where
 /// ```
 pub fn lerp_map<T>(start1: T, end1: T, start2: T, end2: T) -> Vec<T>
 where
-    T: Copy + Num + NumCast + PartialOrd + AddAssign,
+    T: Num + NumCast + Copy + PartialOrd + AddAssign,
 {
     if start1 == end1 {
         vec![start2]

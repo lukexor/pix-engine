@@ -1,4 +1,4 @@
-//! 2D and 3D [Vector] functions.
+//! 2D and 3D [Vector] functions.Self::
 //!
 //! Each Vector is represented by 3 values for x, y, and z. Values can be provided as either
 //! integer or floating point.
@@ -21,10 +21,10 @@
 //! let v = vector!(); // New Vector placed at the origin (0.0, 0.0)
 //! assert_eq!(v.values(), [0.0, 0.0, 0.0]);
 //!
-//! let v = vector!(5); // Vector parallel with the X-axis, magnitude of 5
+//! let v = vector!(5.0); // Vector parallel with the X-axis, magnitude of 5
 //! assert_eq!(v.values(), [5.0, 0.0, 0.0]);
 //!
-//! let v = vector!(1, -3); // Vector in the XY-plane
+//! let v = vector!(1.0, -3.0); // Vector in the XY-plane
 //! assert_eq!(v.values(), [1.0, -3.0, 0.0]);
 //!
 //! let v = vector!(-1.5, 3.0, 2.2); // 3D Vector
@@ -36,14 +36,14 @@
 //! ```
 //! use pix_engine::prelude::*;
 //!
-//! let v = Vector::random_2d();
+//! let v: Vector<f64> = Vector::random_2d();
 //! // `v.values()` will return something like:
 //! // [-0.9993116191591512, 0.03709835324533284, 0.0]
 //! assert!(v.x >= -1.0 && v.x <= 1.0);
 //! assert!(v.y >= -1.0 && v.y <= 1.0);
 //! assert_eq!(v.z, 0.0);
 //!
-//! let v = Vector::random_3d();
+//! let v: Vector<f64> = Vector::random_3d();
 //! // `v.values()` will return something like:
 //! // [-0.40038099206441835, 0.8985763512414204, 0.17959844705110184]
 //! assert!(v.x >= -1.0 && v.x <= 1.0);
@@ -51,10 +51,19 @@
 //! assert!(v.z >= -1.0 && v.z <= 1.0);
 //! ```
 
-use crate::{math::Scalar, random, shape::Point};
+use crate::{random, shape::Point};
+use num::{clamp, Float, Num, NumCast};
+use num_traits::AsPrimitive;
+use rand::distributions::uniform::SampleUniform;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::{f64::consts::TAU, fmt, iter::Sum, ops::*};
+use std::{
+    convert::{TryFrom, TryInto},
+    f64::consts::TAU,
+    fmt,
+    iter::Sum,
+    ops::*,
+};
 
 /// Represents a Euclidiean (also known as geometric) Vector in 2D or 3D space. A Vector has both a magnitude and a direction,
 /// but this data type stores the components of the vector as (x, y, 0) for 2D or (x, y, z) for 3D.
@@ -69,21 +78,20 @@ use std::{f64::consts::TAU, fmt, iter::Sum, ops::*};
 /// `v1 += v2`.
 #[derive(Default, Debug, Copy, Clone, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Vector {
+pub struct Vector<T> {
     /// X magnitude
-    pub x: Scalar,
+    pub x: T,
     /// Y magnitude
-    pub y: Scalar,
+    pub y: T,
     /// Z magnitude
-    pub z: Scalar,
+    pub z: T,
 }
 
-/// # Create a [Vector].
+/// # Create a [Vector<T>].
 ///
 /// ```
 /// use pix_engine::prelude::*;
-///
-/// let v = vector!(1, 2, 0);
+/// let v = vector!(1.0, 2.0, 0.0);
 /// assert_eq!(v.values(), [1.0, 2.0, 0.0]);
 /// ```
 #[macro_export]
@@ -98,49 +106,16 @@ macro_rules! vector {
         vector!($x, $y, 0.0)
     };
     ($x:expr, $y:expr, $z:expr$(,)?) => {
-        $crate::vector::Vector::new_3d($x as Scalar, $y as Scalar, $z as Scalar)
+        $crate::vector::Vector::new_3d($x, $y, $z)
     };
 }
 
-impl Vector {
-    /// Creates a new Vector in 3D space. Shortcut for `Vector::new_2d()` and `Vector::new_3d()`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    ///
-    /// let v1 = Vector::new((1, 2));
-    /// assert_eq!(v1.get(), (1.0, 2.0, 0.0));
-    ///
-    /// let v2 = Vector::new((2.1, 3.5, 1.0));
-    /// assert_eq!(v2.get(), (2.1, 3.5, 1.0));
-    /// ```
-    pub fn new<V>(v: V) -> Self
-    where
-        V: Into<Vector>,
-    {
-        let v = v.into();
-        if !Self::valid_coordinates(v.x, v.y, v.z) {
-            eprintln!("Vector::new: vector contains components that are either undefined or not finite numbers: {}", v);
-        }
-        v
-    }
-
-    /// Creates a new Vector in 2D space.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v = Vector::new_2d(1.0, 2.0);
-    /// assert_eq!(v.get(), (1.0, 2.0, 0.0));
-    /// ```
-    pub fn new_2d(x: Scalar, y: Scalar) -> Self {
-        Self::new_3d(x, y, 0.0)
-    }
-
+impl<T> Vector<T> {
     /// Creates a new Vector in 3D space.
+    ///
+    /// # Panics
+    ///
+    /// Panics if any coordinate is `Infinity`, or `NaN`.
     ///
     /// # Example
     ///
@@ -149,106 +124,11 @@ impl Vector {
     /// let v = Vector::new_3d(2.1, 3.5, 1.0);
     /// assert_eq!(v.get(), (2.1, 3.5, 1.0));
     /// ```
-    pub fn new_3d(x: Scalar, y: Scalar, z: Scalar) -> Self {
-        if !Self::valid_coordinates(x, y, z) {
-            eprintln!("Vector::new: vector contains components that are either undefined or not finite numbers: {:?}", (x, y, z));
-        }
+    pub const fn new_3d(x: T, y: T, z: T) -> Self {
         Self { x, y, z }
     }
 
-    /// Copies the current Vector into a new Vector.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v1 = vector!(1, 0, 1);
-    /// let mut v2 = v1.copy();
-    /// v2.x = 2.0;
-    /// assert_eq!(v1.get(), (1.0, 0.0, 1.0));
-    /// assert_eq!(v2.get(), (2.0, 0.0, 1.0));
-    /// ```
-    pub fn copy(&self) -> Self {
-        *self
-    }
-
-    /// Creates a new unit Vector in 2D space from a given angle. Angle is given
-    /// as Radians and is unaffected by angle_mode.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v = Vector::from_angle(30.0, 15.0);
-    /// let abs_difference_x = (v.x - 2.3137).abs();
-    /// let abs_difference_y = (v.y - (-14.8204)).abs();
-    /// assert!(abs_difference_x <= 1e-4);
-    /// assert!(abs_difference_y <= 1e-4);
-    /// ```
-    pub fn from_angle(angle: Scalar, length: Scalar) -> Self {
-        let (sin, cos) = angle.sin_cos();
-        Self::new_2d(length * cos, length * sin)
-    }
-
-    /// Make a random unit Vector in 2D space.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v = Vector::random_2d();
-    /// assert!(v.x > -1.0 && v.x < 1.0);
-    /// assert!(v.y > -1.0 && v.y < 1.0);
-    /// assert_eq!(v.z, 0.0);
-    ///
-    /// // May make v's (x, y, z) values something like:
-    /// // (0.61554617, -0.51195765, 0.0) or
-    /// // (-0.4695841, -0.14366731, 0.0) or
-    /// // (0.6091097, -0.22805278, 0.0)
-    /// ```
-    pub fn random_2d() -> Self {
-        Self::from_angle(random!(TAU), 1.0)
-    }
-
-    /// Make a random unit Vector in 3D space.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v = Vector::random_3d();
-    /// assert!(v.x > -1.0 && v.x < 1.0);
-    /// assert!(v.y > -1.0 && v.y < 1.0);
-    /// assert!(v.z > -1.0 && v.z < 1.0);
-    ///
-    /// // May make v's (x, y, z) values something like:
-    /// // (0.61554617, -0.51195765, 0.599168) or
-    /// // (-0.4695841, -0.14366731, -0.8711202) or
-    /// // (0.6091097, -0.22805278, -0.7595902)
-    /// ```
-    pub fn random_3d() -> Self {
-        let (sin, cos) = random!(TAU).sin_cos();
-        let z: Scalar = random!(-1.0, 1.0); // Range from -1.0 to 1.0
-        let z_base = (1.0 - z * z).sqrt();
-        let x = z_base * cos;
-        let y = z_base * sin;
-        Self::new_3d(x, y, z)
-    }
-
-    /// Get `Vector` coordinates as a tuple of (x, y, z).
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v = Vector::new_3d(2.0, 1.0, 3.0);
-    /// assert_eq!(v.get(), (2.0, 1.0, 3.0));
-    /// ```
-    pub const fn get(&self) -> (Scalar, Scalar, Scalar) {
-        (self.x, self.y, self.z)
-    }
-
-    /// Set `Vector` (x, y, z) coordinates.
+    /// Set `Vector` coordinates from (x, y, z).
     ///
     /// # Example
     ///
@@ -259,27 +139,62 @@ impl Vector {
     /// v.set((1.0, 2.0, 4.0));
     /// assert_eq!(v.get(), (1.0, 2.0, 4.0));
     /// ```
-    pub fn set<V: Into<Vector>>(&mut self, v: V) {
+    pub fn set(&mut self, v: impl Into<Vector<T>>) {
         let v = v.into();
         self.x = v.x;
         self.y = v.y;
         self.z = v.z;
     }
+}
 
-    /// Calculates and returns the magnitude (length) of the Vector.
+impl<T> Vector<T>
+where
+    T: Num + Copy,
+{
+    /// Creates a new Vector in 2D space.
     ///
-    /// The formula used is `sqrt(x*x + y*y + z*z)`.
+    /// # Panics
+    ///
+    /// Panics if any coordinate is `Infinity`, or `NaN`.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v = vector!(1, 2, 3);
-    /// let abs_difference = (v.mag() - 3.7416).abs();
-    /// assert!(abs_difference <= 1e-4);
+    /// let v = Vector::new_2d(1.0, 2.0);
+    /// assert_eq!(v.get(), (1.0, 2.0, 0.0));
     /// ```
-    pub fn mag(&self) -> Scalar {
-        self.mag_sq().sqrt()
+    pub fn new_2d(x: T, y: T) -> Self {
+        Self::new_3d(x, y, T::zero())
+    }
+
+    /// Copies the current Vector into a new Vector.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v1 = vector!(1.0, 0.0, 1.0);
+    /// let mut v2 = v1.copy();
+    /// v2.x = 2.0;
+    /// assert_eq!(v1.get(), (1.0, 0.0, 1.0));
+    /// assert_eq!(v2.get(), (2.0, 0.0, 1.0));
+    /// ```
+    pub fn copy(&self) -> Self {
+        *self
+    }
+
+    /// Get `Vector` coordinates as (x, y, z).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v = vector!(2.0, 1.0, 3.0);
+    /// assert_eq!(v.get(), (2.0, 1.0, 3.0));
+    /// ```
+    pub fn get(&self) -> (T, T, T) {
+        (self.x, self.y, self.z)
     }
 
     /// Calculates and returns the squared magnitude (length) of the Vector. This is faster if the
@@ -291,11 +206,187 @@ impl Vector {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v = vector!(1, 2, 3);
+    /// let v = vector!(1.0, 2.0, 3.0);
     /// assert_eq!(v.mag_sq(), 14.0);
     /// ```
-    pub fn mag_sq(&self) -> Scalar {
+    pub fn mag_sq(&self) -> T {
         self.x * self.x + self.y * self.y + self.z * self.z
+    }
+
+    /// Calculates and returns the dot product with another Vector.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v = vector!(1.0, 2.0, 3.0);
+    /// let dot_product = v.dot((2.0, 3.0, 4.0));
+    /// assert_eq!(dot_product, 20.0);
+    /// ```
+    pub fn dot(&self, v: impl Into<Vector<T>>) -> T {
+        let v = v.into();
+        self.x * v.x + self.y * v.y + self.z * v.z
+    }
+
+    /// Calculates and returns the Vector cross product with another Vector.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v1 = vector!(1.0, 2.0, 3.0);
+    /// let v2 = vector!(1.0, 2.0, 3.0);
+    /// let cross = v1.cross(v2);
+    /// assert_eq!(cross.get(), (0.0, 0.0, 0.0));
+    /// ```
+    pub fn cross(&self, v: impl Into<Vector<T>>) -> Self {
+        let v = v.into();
+        Self::new_3d(
+            self.y * v.z - self.z * v.y,
+            self.z * v.x - self.x * v.z,
+            self.x * v.y - self.y * v.x,
+        )
+    }
+
+    /// Reflect the current Vector about a normal to a line in 2D space, or about a normal to
+    /// a plane in 3D space.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut v = vector!(4.0, 6.0); // Vector heading right and down
+    /// let n = vector!(0.0, -1.0); // Surface normal facing up
+    /// v.reflect(n); // Reflect about the surface normal (e.g. the x-axis)
+    ///
+    /// assert_eq!(v.x, 4.0);
+    /// assert_eq!(v.y, -6.0);
+    /// ```
+    pub fn reflect(&mut self, normal: impl Into<Vector<T>>)
+    where
+        Self: SubAssign,
+    {
+        let normal = normal.into();
+        *self -= normal * (T::one() + T::one()) * self.dot(normal);
+    }
+
+    /// Returns a representation of this vector as a Vec of T values. Useful for temporary use.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v = vector!(1.0, 1.0, 0.0);
+    /// assert_eq!(v.to_vec(), vec![1.0, 1.0, 0.0]);
+    /// ```
+    pub fn to_vec(&self) -> Vec<T> {
+        vec![self.x, self.y, self.z]
+    }
+
+    /// Get `Vector` coordinates as [x, y, z].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v = vector!(1.0, 1.0, 0.0);
+    /// assert_eq!(v.values(), [1.0, 1.0, 0.0]);
+    /// ```
+    pub fn values(&self) -> [T; 3] {
+        [self.x, self.y, self.z]
+    }
+}
+
+impl<T> Vector<T>
+where
+    T: Float,
+{
+    /// Creates a new unit Vector in 2D space from a given angle. Angle is given
+    /// as Radians and is unaffected by angle_mode.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v: Vector<f64> = Vector::from_angle(30.0, 15.0);
+    /// let abs_difference_x = (v.x - 2.3137).abs();
+    /// let abs_difference_y = (v.y - (-14.8204)).abs();
+    /// assert!(abs_difference_x <= 1e-4);
+    /// assert!(abs_difference_y <= 1e-4);
+    /// ```
+    pub fn from_angle(angle: T, length: T) -> Self {
+        let (sin, cos) = angle.sin_cos();
+        Self::new_2d(length * cos, length * sin)
+    }
+
+    /// Make a random unit Vector in 2D space.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v: Vector<f64> = Vector::random_2d();
+    /// assert!(v.x > -1.0 && v.x < 1.0);
+    /// assert!(v.y > -1.0 && v.y < 1.0);
+    /// assert_eq!(v.z, 0.0);
+    ///
+    /// // May make v's (x, y, z) values something like:
+    /// // (0.61554617, -0.51195765, 0.0) or
+    /// // (-0.4695841, -0.14366731, 0.0) or
+    /// // (0.6091097, -0.22805278, 0.0)
+    /// ```
+    pub fn random_2d() -> Self
+    where
+        T: SampleUniform,
+    {
+        Self::from_angle(
+            random!(NumCast::from(TAU).unwrap_or_else(T::zero)),
+            T::one(),
+        )
+    }
+
+    /// Make a random unit Vector in 3D space.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v: Vector<f64> = Vector::random_3d();
+    /// assert!(v.x > -1.0 && v.x < 1.0);
+    /// assert!(v.y > -1.0 && v.y < 1.0);
+    /// assert!(v.z > -1.0 && v.z < 1.0);
+    ///
+    /// // May make v's (x, y, z) values something like:
+    /// // (0.61554617, -0.51195765, 0.599168) or
+    /// // (-0.4695841, -0.14366731, -0.8711202) or
+    /// // (0.6091097, -0.22805278, -0.7595902)
+    /// ```
+    pub fn random_3d() -> Self
+    where
+        T: SampleUniform,
+    {
+        let (sin, cos) = random!(NumCast::from(TAU).unwrap_or_else(T::zero)).sin_cos();
+        let z: T = random!(-T::one(), T::one()); // Range from -1 to 1
+        let z_base = (T::one() - z * z).sqrt();
+        let x = z_base * cos;
+        let y = z_base * sin;
+        Self::new_3d(x, y, z)
+    }
+
+    /// Calculates and returns the magnitude (length) of the Vector.
+    ///
+    /// The formula used is `sqrt(x*x + y*y + z*z)`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v: Vector<f64> = vector!(1.0, 2.0, 3.0);
+    /// let abs_difference = (v.mag() - 3.7416).abs();
+    /// assert!(abs_difference <= 1e-4);
+    /// ```
+    pub fn mag(&self) -> T {
+        self.mag_sq().sqrt()
     }
 
     /// Set the magnitude (length) of the Vector.
@@ -305,7 +396,7 @@ impl Vector {
     /// ```
     /// # use pix_engine::prelude::*;
     ///
-    /// let mut v = vector!(10, 20, 2);
+    /// let mut v: Vector<f64> = vector!(10.0, 20.0, 2.0);
     /// v.set_mag(10.0);
     ///
     /// let abs_difference_mag = (v.mag() - 10.0).abs();
@@ -318,44 +409,12 @@ impl Vector {
     /// assert!(abs_difference_y <= 1e-4);
     /// assert!(abs_difference_z <= 1e-4);
     /// ```
-    pub fn set_mag(&mut self, mag: Scalar) {
+    pub fn set_mag(&mut self, mag: T)
+    where
+        T: MulAssign,
+    {
         self.normalize();
         *self *= mag;
-    }
-
-    /// Calculates and returns the dot product with another Vector.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v = vector!(1, 2, 3);
-    /// let dot_product = v.dot((2, 3, 4));
-    /// assert_eq!(dot_product, 20.0);
-    /// ```
-    pub fn dot<V: Into<Vector>>(&self, v: V) -> Scalar {
-        let v = v.into();
-        self.x * v.x + self.y * v.y + self.z * v.z
-    }
-
-    /// Calculates and returns the Vector cross product with another Vector.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v1 = vector!(1, 2, 3);
-    /// let v2 = vector!(1, 2, 3);
-    /// let cross = v1.cross(v2);
-    /// assert_eq!(cross.get(), (0.0, 0.0, 0.0));
-    /// ```
-    pub fn cross<V: Into<Vector>>(&self, v: V) -> Self {
-        let v = v.into();
-        Self::new_3d(
-            self.y * v.z - self.z * v.y,
-            self.z * v.x - self.x * v.z,
-            self.x * v.y - self.y * v.x,
-        )
     }
 
     /// Calculates the Euclidean distance between the current Vector and another vector.
@@ -365,14 +424,14 @@ impl Vector {
     /// ```
     /// # use pix_engine::prelude::*;
     ///
-    /// let v1 = vector!(1, 0, 0);
-    /// let v2 = vector!(0, 1, 0);
+    /// let v1: Vector<f64> = vector!(1.0, 0.0, 0.0);
+    /// let v2: Vector<f64> = vector!(0.0, 1.0, 0.0);
     /// let dist = v1.dist(v2);
     ///
     /// let abs_difference = (dist - std::f64::consts::SQRT_2).abs();
     /// assert!(abs_difference <= 1e-4);
     /// ```
-    pub fn dist<V: Into<Vector>>(&self, v: V) -> Scalar {
+    pub fn dist(&self, v: impl Into<Vector<T>>) -> T {
         let v = v.into();
         (*self - v).mag()
     }
@@ -384,7 +443,7 @@ impl Vector {
     /// ```
     /// # use pix_engine::prelude::*;
     ///
-    /// let mut v = vector!(10, 20, 2);
+    /// let mut v: Vector<f64> = vector!(10.0, 20.0, 2.0);
     /// v.normalize();
     ///
     /// let abs_difference_mag = (v.mag() - 1.0).abs();
@@ -398,11 +457,14 @@ impl Vector {
     /// assert!(abs_difference_y <= 1e-4);
     /// assert!(abs_difference_z <= 1e-4);
     /// ```
-    pub fn normalize(&mut self) {
+    pub fn normalize(&mut self)
+    where
+        T: MulAssign,
+    {
         let len = self.mag();
-        if len != 0.0 {
-            // Multiply by the reciprocol so we don't duploicate a div by zero check
-            *self *= 1.0 / len;
+        if len != T::zero() {
+            // Multiply by the reciprocol so we don't duplicate a div by zero check
+            *self *= T::one() / len;
         }
     }
 
@@ -413,7 +475,7 @@ impl Vector {
     /// ```
     /// # use pix_engine::prelude::*;
     ///
-    /// let mut v = vector!(10, 20, 2);
+    /// let mut v: Vector<f64> = vector!(10.0, 20.0, 2.0);
     /// v.limit(5.0);
     ///
     /// let abs_difference_x = (v.x - 2.2271).abs();
@@ -424,7 +486,10 @@ impl Vector {
     /// assert!(abs_difference_y <= 1e-4, "y {}", abs_difference_y);
     /// assert!(abs_difference_z <= 1e-4, "z {}", abs_difference_z);
     /// ```
-    pub fn limit(&mut self, max: Scalar) {
+    pub fn limit(&mut self, max: T)
+    where
+        T: DivAssign + MulAssign,
+    {
         let mag_sq = self.mag_sq();
         if mag_sq > max * max {
             *self /= mag_sq.sqrt();
@@ -439,11 +504,11 @@ impl Vector {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v = vector!(10, 10);
+    /// let v: Vector<f64> = vector!(10.0, 10.0);
     /// let heading = v.heading();
     /// assert_eq!(heading.to_degrees(), 45.0);
     /// ```
-    pub fn heading(&self) -> Scalar {
+    pub fn heading(&self) -> T {
         self.y.atan2(self.x)
     }
 
@@ -454,7 +519,7 @@ impl Vector {
     /// ```
     /// # use pix_engine::prelude::*;
     ///
-    /// let mut v = vector!(10, 20);
+    /// let mut v: Vector<f64> = vector!(10.0, 20.0);
     /// v.rotate(std::f64::consts::FRAC_PI_2);
     ///
     /// let abs_difference_x = (v.x - (-20.0)).abs();
@@ -463,7 +528,7 @@ impl Vector {
     /// assert!(abs_difference_x <= 1e-4);
     /// assert!(abs_difference_y <= 1e-4);
     /// ```
-    pub fn rotate(&mut self, angle: Scalar) {
+    pub fn rotate(&mut self, angle: T) {
         let new_heading = self.heading() + angle;
         let mag = self.mag();
         let (sin, cos) = new_heading.sin_cos();
@@ -477,36 +542,38 @@ impl Vector {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v1 = vector!(1, 0, 0);
-    /// let v2 = vector!(0, 1, 0);
+    /// let v1 = vector!(1.0, 0.0, 0.0);
+    /// let v2 = vector!(0.0, 1.0, 0.0);
     /// let angle = v1.angle_between(v2);
     /// assert_eq!(angle, std::f64::consts::FRAC_PI_2);
     /// ```
-    pub fn angle_between<V: Into<Vector>>(&self, v: V) -> Scalar {
+    pub fn angle_between(&self, v: impl Into<Vector<T>>) -> T {
         let v = v.into();
         // This should range from -1.0 to 1.0, inclusive but could possibly land outside this range
         // due to floating-point rounding, so we'll need to clamp it to the correct range.
-        let dot_mag_product = (self.dot(v) / (self.mag() * v.mag())).clamp(-1.0, 1.0);
+        let dot_mag_product = clamp(self.dot(v) / (self.mag() * v.mag()), -T::one(), T::one());
         dot_mag_product.acos() * self.cross(v).z.signum()
     }
 
-    /// Reflect the current Vector about a normal to a line in 2D space, or about a normal to
-    /// a plane in 3D space.
+    /// Linear interpolate the current vector to another vector.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let mut v = vector!(4, 6); // Vector heading right and down
-    /// let n = vector!(0, -1); // Surface normal facing up
-    /// v.reflect(n); // Reflect about the surface normal (e.g. the x-axis)
-    ///
-    /// assert_eq!(v.x, 4.0);
-    /// assert_eq!(v.y, -6.0);
+    /// let mut v1 = vector!(1.0, 1.0, 0.0);
+    /// let v2 = vector!(3.0, 3.0, 0.0);
+    /// v1.lerp(v2, 0.5);
+    /// assert_eq!(v1.get(), (2.0, 2.0, 0.0));
     /// ```
-    pub fn reflect<V: Into<Vector>>(&mut self, normal: V) {
-        let normal = normal.into();
-        *self -= normal * 2.0 * self.dot(normal);
+    pub fn lerp(&mut self, v: impl Into<Vector<T>>, amt: T)
+    where
+        T: AddAssign,
+    {
+        let v = v.into();
+        self.x += (v.x - self.x) * amt;
+        self.y += (v.y - self.y) * amt;
+        self.z += (v.z - self.z) * amt;
     }
 
     /// Wraps `Vector` around given width, height with a size.
@@ -516,17 +583,17 @@ impl Vector {
     /// ```
     /// # use pix_engine::prelude::*;
     ///
-    /// let mut v = vector!(200, 300);
+    /// let mut v = vector!(200.0, 300.0);
     /// v.wrap_2d(150.0, 400.0, 10.0);
     /// assert_eq!(v.x, -10.0);
     /// assert_eq!(v.y, 300.0);
     ///
-    /// let mut v = vector!(200, 300);
+    /// let mut v = vector!(200.0, 300.0);
     /// v.wrap_2d(300.0, 200.0, 10.0);
     /// assert_eq!(v.x, 200.0);
     /// assert_eq!(v.y, -10.0);
     /// ```
-    pub fn wrap_2d(&mut self, width: f64, height: f64, size: f64) {
+    pub fn wrap_2d(&mut self, width: T, height: T, size: T) {
         if self.x > width + size {
             self.x = -size;
         } else if self.x < -size {
@@ -539,63 +606,22 @@ impl Vector {
         }
     }
 
-    /// Linear interpolate the current vector to another vector.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let mut v1 = vector!(1, 1, 0);
-    /// let v2 = vector!(3, 3, 0);
-    /// v1.lerp(v2, 0.5);
-    /// assert_eq!(v1.get(), (2.0, 2.0, 0.0));
-    /// ```
-    pub fn lerp<V: Into<Vector>>(&mut self, v: V, amt: Scalar) {
-        let v = v.into();
-        self.x += (v.x - self.x) * amt;
-        self.y += (v.y - self.y) * amt;
-        self.z += (v.z - self.z) * amt;
-    }
-
-    /// Returns a representation of this vector as a Vec of Scalar values. Useful for temporary use.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v = vector!(1, 1, 0);
-    /// assert_eq!(v.to_vec(), vec![1.0, 1.0, 0.0]);
-    /// ```
-    pub fn to_vec(&self) -> Vec<Scalar> {
-        vec![self.x, self.y, self.z]
-    }
-
-    /// Gets a Vector as an array of xyz Scalar values.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v = vector!(1, 1, 0);
-    /// assert_eq!(v.values(), [1.0, 1.0, 0.0]);
-    /// ```
-    pub fn values(&self) -> [Scalar; 3] {
-        [self.x, self.y, self.z]
-    }
-
-    /// Helper function to validate a single coordinate is finite and defined.
-    fn valid_coordinate(v: Scalar) -> bool {
-        v.is_finite() && !v.is_nan()
-    }
-
-    /// Helper function to validate all coordinates are finite and defined.
-    fn valid_coordinates(x: Scalar, y: Scalar, z: Scalar) -> bool {
-        Self::valid_coordinate(x) && Self::valid_coordinate(y) && Self::valid_coordinate(z)
+    /// Convert [Vector<T>] to [Point<U>].
+    pub fn into_point_lossy<U>(self) -> Point<U>
+    where
+        T: AsPrimitive<U>,
+        U: 'static + Copy,
+    {
+        Point {
+            x: self.x.as_(),
+            y: self.y.as_(),
+            z: self.z.as_(),
+        }
     }
 }
 
-impl Index<usize> for Vector {
-    type Output = f64;
+impl<T> Index<usize> for Vector<T> {
+    type Output = T;
     fn index(&self, idx: usize) -> &Self::Output {
         match idx {
             0 => &self.x,
@@ -606,7 +632,7 @@ impl Index<usize> for Vector {
     }
 }
 
-impl IndexMut<usize> for Vector {
+impl<T> IndexMut<usize> for Vector<T> {
     fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
         match idx {
             0 => &mut self.x,
@@ -617,311 +643,369 @@ impl IndexMut<usize> for Vector {
     }
 }
 
-impl Add for Vector {
+impl<T> Add for Vector<T>
+where
+    T: Num,
+{
     type Output = Self;
-
-    fn add(self, v: Vector) -> Self::Output {
-        Vector::new_3d(self.x + v.x, self.y + v.y, self.z + v.z)
+    fn add(self, v: Vector<T>) -> Self::Output {
+        Self {
+            x: self.x + v.x,
+            y: self.y + v.y,
+            z: self.z + v.z,
+        }
     }
 }
 
-impl AddAssign for Vector {
-    fn add_assign(&mut self, v: Vector) {
+impl<T, U> Add<U> for Vector<T>
+where
+    T: Num + Add<U, Output = T>,
+    U: Num + Copy,
+{
+    type Output = Self;
+    fn add(self, s: U) -> Self::Output {
+        Self {
+            x: self.x + s,
+            y: self.y + s,
+            z: self.z + s,
+        }
+    }
+}
+
+impl<T> AddAssign for Vector<T>
+where
+    T: AddAssign,
+{
+    fn add_assign(&mut self, v: Vector<T>) {
         self.x += v.x;
         self.y += v.y;
         self.z += v.z;
     }
 }
 
-impl Add<Scalar> for Vector {
+impl<T, U> AddAssign<U> for Vector<T>
+where
+    T: AddAssign<U>,
+    U: Num + Copy,
+{
+    fn add_assign(&mut self, s: U) {
+        self.x += s;
+        self.y += s;
+        self.z += s;
+    }
+}
+
+impl<T> Sub for Vector<T>
+where
+    T: Num,
+{
     type Output = Self;
-
-    fn add(self, val: Scalar) -> Self::Output {
-        Vector::new_3d(self.x + val, self.y + val, self.z + val)
+    fn sub(self, v: Vector<T>) -> Self::Output {
+        Self {
+            x: self.x - v.x,
+            y: self.y - v.y,
+            z: self.z - v.z,
+        }
     }
 }
 
-impl AddAssign<Scalar> for Vector {
-    fn add_assign(&mut self, val: Scalar) {
-        self.x += val;
-        self.y += val;
-        self.z += val;
-    }
-}
-
-impl Sub for Vector {
+impl<T, U> Sub<U> for Vector<T>
+where
+    T: Num + Sub<U, Output = T>,
+    U: Num + Copy,
+{
     type Output = Self;
-
-    fn sub(self, v: Vector) -> Self::Output {
-        Vector::new_3d(self.x - v.x, self.y - v.y, self.z - v.z)
+    fn sub(self, s: U) -> Self::Output {
+        Self {
+            x: self.x - s,
+            y: self.y - s,
+            z: self.z - s,
+        }
     }
 }
 
-impl SubAssign for Vector {
-    fn sub_assign(&mut self, v: Vector) {
+impl<T> SubAssign for Vector<T>
+where
+    T: SubAssign,
+{
+    fn sub_assign(&mut self, v: Vector<T>) {
         self.x -= v.x;
         self.y -= v.y;
         self.z -= v.z;
     }
 }
 
-impl Sub<Scalar> for Vector {
-    type Output = Self;
-
-    fn sub(self, val: Scalar) -> Self::Output {
-        Vector::new_3d(self.x - val, self.y - val, self.z - val)
+impl<T, U> SubAssign<U> for Vector<T>
+where
+    T: SubAssign<U>,
+    U: Num + Copy,
+{
+    fn sub_assign(&mut self, s: U) {
+        self.x -= s;
+        self.y -= s;
+        self.z -= s;
     }
 }
 
-impl SubAssign<Scalar> for Vector {
-    fn sub_assign(&mut self, val: Scalar) {
-        self.x -= val;
-        self.y -= val;
-        self.z -= val;
-    }
-}
-
-impl Neg for Vector {
+impl<T> Neg for Vector<T>
+where
+    T: Num + Neg<Output = T>,
+{
     type Output = Self;
-
     fn neg(self) -> Self::Output {
-        Vector::new_3d(-self.x, -self.y, -self.z)
+        Self {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+        }
     }
 }
 
-impl Mul<Scalar> for Vector {
+impl<T, U> Mul<U> for Vector<T>
+where
+    T: Num + Mul<U, Output = T>,
+    U: Num + Copy,
+{
     type Output = Self;
-
-    fn mul(self, s: Scalar) -> Self::Output {
-        if s.is_infinite() || s.is_nan() {
-            panic!(
-                "Vector::mul: scaler is either undefined or not finite: {}",
-                s
-            );
-        } else {
-            Vector::new_3d(self.x * s, self.y * s, self.z * s)
+    fn mul(self, s: U) -> Self::Output {
+        Self {
+            x: self.x * s,
+            y: self.y * s,
+            z: self.z * s,
         }
     }
 }
 
-impl Mul<Vector> for Scalar {
-    type Output = Vector;
-
-    fn mul(self, v: Vector) -> Self::Output {
-        if self.is_infinite() || self.is_nan() {
-            panic!(
-                "Vector::mul: scaler is either undefined or not finite: {}",
-                self
-            );
-        } else {
-            Vector::new_3d(self * v.x, self * v.x, self * v.z)
-        }
+impl<T, U> MulAssign<U> for Vector<T>
+where
+    T: MulAssign<U>,
+    U: Num + Copy,
+{
+    fn mul_assign(&mut self, s: U) {
+        self.x *= s;
+        self.y *= s;
+        self.z *= s;
     }
 }
 
-impl MulAssign<Scalar> for Vector {
-    fn mul_assign(&mut self, s: Scalar) {
-        if s.is_infinite() || s.is_nan() {
-            panic!(
-                "Vector::mul_assign: scaler is either undefined or not finite: {}",
-                s
-            );
-        } else {
-            self.x *= s;
-            self.y *= s;
-            self.z *= s;
-        }
-    }
-}
-
-impl Div<Scalar> for Vector {
+impl<T, U> Div<U> for Vector<T>
+where
+    T: Num + Div<U, Output = T>,
+    U: Num + Copy,
+{
     type Output = Self;
-
-    fn div(self, s: Scalar) -> Self::Output {
-        if s == 0.0 || s.is_infinite() || s.is_nan() {
-            panic!(
-                "Vector::div: scaler is either zero, undefined or not finite: {}",
-                s
-            );
+    fn div(self, s: U) -> Self::Output {
+        if s == U::zero() {
+            panic!("divisor is zero");
         } else {
-            Vector::new_3d(self.x / s, self.y / s, self.z / s)
+            Self {
+                x: self.x / s,
+                y: self.y / s,
+                z: self.z / s,
+            }
         }
     }
 }
 
-impl Div<Vector> for Scalar {
-    type Output = Vector;
-
-    fn div(self, v: Vector) -> Self::Output {
-        if self.is_infinite() || self.is_nan() {
-            panic!(
-                "Vector::div: scaler is either undefined or not finite: {}",
-                self
-            );
-        } else {
-            Vector::new_3d(self / v.x, self / v.x, self / v.z)
+impl<T, U> DivAssign<U> for Vector<T>
+where
+    T: Num + DivAssign<U>,
+    U: Num + Copy,
+{
+    fn div_assign(&mut self, s: U) {
+        if s == U::zero() {
+            panic!("divisor is zero");
         }
+        self.x /= s;
+        self.y /= s;
+        self.z /= s;
     }
 }
 
-impl DivAssign<Scalar> for Vector {
-    fn div_assign(&mut self, s: Scalar) {
-        if s == 0.0 || s.is_infinite() || s.is_nan() {
-            panic!(
-                "Vector::div_assign: scaler is either zero, undefined or not finite: {}",
-                s
-            );
-        } else {
-            self.x /= s;
-            self.y /= s;
-            self.z /= s;
-        }
-    }
-}
-
-impl Rem for Vector {
+impl<T> Rem for Vector<T>
+where
+    T: Num,
+{
     type Output = Self;
-
-    fn rem(mut self, v: Vector) -> Self::Output {
-        if v.x != 0.0 {
-            self.x %= v.x;
+    fn rem(mut self, v: Vector<T>) -> Self::Output {
+        if v.x != T::zero() {
+            self.x = self.x % v.x;
         }
-        if v.y != 0.0 {
-            self.y %= v.y;
+        if v.y != T::zero() {
+            self.y = self.y % v.y;
         }
-        if v.z != 0.0 {
-            self.z %= v.z;
+        if v.z != T::zero() {
+            self.z = self.z % v.z;
         }
         self
     }
 }
 
-impl RemAssign for Vector {
-    fn rem_assign(&mut self, v: Vector) {
-        if v.x != 0.0 {
+impl<T> RemAssign for Vector<T>
+where
+    T: Num + RemAssign,
+{
+    fn rem_assign(&mut self, v: Vector<T>) {
+        if v.x != T::zero() {
             self.x %= v.x;
         }
-        if v.y != 0.0 {
+        if v.y != T::zero() {
             self.y %= v.y;
         }
-        if v.z != 0.0 {
+        if v.z != T::zero() {
             self.z %= v.z;
         }
     }
 }
 
-impl Sum for Vector {
+impl<T> Sum for Vector<T>
+where
+    Self: Add<Output = Self>,
+    T: Num,
+{
     fn sum<I>(iter: I) -> Self
     where
         I: Iterator<Item = Self>,
     {
-        iter.fold(Vector::new((0.0, 0.0, 0.0)), |a, b| a + b)
+        let v = Self {
+            x: T::zero(),
+            y: T::zero(),
+            z: T::zero(),
+        };
+        iter.fold(v, |a, b| a + b)
     }
 }
 
-impl<'a> Sum<&'a Vector> for Vector {
+impl<'a, T> Sum<&'a Vector<T>> for Vector<T>
+where
+    Self: Add<Output = Self>,
+    T: Num + Copy,
+{
     fn sum<I>(iter: I) -> Self
     where
         I: Iterator<Item = &'a Self>,
     {
-        iter.fold(Vector::new((0.0, 0.0, 0.0)), |a, b| a + *b)
+        let v = Self {
+            x: T::zero(),
+            y: T::zero(),
+            z: T::zero(),
+        };
+        iter.fold(v, |a, b| a + *b)
     }
 }
 
-/// From 1D tuple of i32 to 3D Vector with all the same value.
-impl From<i32> for Vector {
-    fn from(v: i32) -> Self {
-        let v = v as Scalar;
-        Self::new_3d(v, v, v)
+macro_rules! impl_op {
+    ($target:ty, $zero:expr) => {
+        impl Mul<Vector<$target>> for $target {
+            type Output = Vector<$target>;
+            fn mul(self, v: Vector<$target>) -> Self::Output {
+                Vector::new_3d(self * v.x, self * v.y, self * v.z)
+            }
+        }
+
+        impl Div<Vector<$target>> for $target {
+            type Output = Vector<$target>;
+            fn div(self, v: Vector<$target>) -> Self::Output {
+                if v.x == $zero || v.y == $zero || v.z == $zero {
+                    panic!("divisor is zero");
+                }
+                Vector::new_3d(self / v.x, self / v.y, self / v.z)
+            }
+        }
+    };
+}
+
+impl_op!(i8, 0);
+impl_op!(u8, 0);
+impl_op!(i16, 0);
+impl_op!(u16, 0);
+impl_op!(i32, 0);
+impl_op!(u32, 0);
+impl_op!(i64, 0);
+impl_op!(u64, 0);
+impl_op!(i128, 0);
+impl_op!(u128, 0);
+impl_op!(isize, 0);
+impl_op!(usize, 0);
+impl_op!(f32, 0.0);
+impl_op!(f64, 0.0);
+
+/// Convert `T` to [Vector<T>].
+impl<T> From<T> for Vector<T>
+where
+    T: Num + Copy,
+{
+    fn from(v: T) -> Self {
+        Self { x: v, y: v, z: v }
     }
 }
 
-/// From 1D tuple of i64 to 3D Vector with all the same value.
-impl From<i64> for Vector {
-    fn from(v: i64) -> Self {
-        let v = v as Scalar;
-        Self::new_3d(v, v, v)
+/// Convert `(T, T)` to [Vector<T>].
+impl<T> From<(T, T)> for Vector<T>
+where
+    T: Num,
+{
+    fn from((x, y): (T, T)) -> Self {
+        Self { x, y, z: T::zero() }
     }
 }
 
-/// From 2D tuple of (x, y) i32 to Vector.
-impl From<(i32, i32)> for Vector {
-    fn from((x, y): (i32, i32)) -> Self {
-        Self::new_2d(x as Scalar, y as Scalar)
+/// Convert `(T, T, T)` to [Vector<T>].
+impl<T> From<(T, T, T)> for Vector<T> {
+    fn from((x, y, z): (T, T, T)) -> Self {
+        Self { x, y, z }
     }
 }
 
-/// From 2D tuple of (x, y) u32 to Vector.
-impl From<(u32, u32)> for Vector {
-    fn from((x, y): (u32, u32)) -> Self {
-        Self::new_2d(x as Scalar, y as Scalar)
-    }
-}
-
-/// From 2D tuple of (x, y) i64 to Vector.
-impl From<(i64, i64)> for Vector {
-    fn from((x, y): (i64, i64)) -> Self {
-        Self::new_2d(x as Scalar, y as Scalar)
-    }
-}
-
-/// From 3D tuple of (x, y, z) i32 to Vector.
-impl From<(i32, i32, i32)> for Vector {
-    fn from((x, y, z): (i32, i32, i32)) -> Self {
-        Self::new_3d(x as Scalar, y as Scalar, z as Scalar)
-    }
-}
-
-/// From 3D tuple of (x, y, z) i64 to Vector.
-impl From<(i64, i64, i64)> for Vector {
-    fn from((x, y, z): (i64, i64, i64)) -> Self {
-        Self::new_3d(x as Scalar, y as Scalar, z as Scalar)
-    }
-}
-
-/// From 2D tuple of (x, y) f64 to Vector.
-impl From<(f64, f64)> for Vector {
-    fn from((x, y): (f64, f64)) -> Self {
-        Self::new_2d(x, y)
-    }
-}
-
-/// From 3D tuple of (x, y, z) f64 to Vector.
-impl From<(f64, f64, f64)> for Vector {
-    fn from((x, y, z): (f64, f64, f64)) -> Self {
-        Self::new_3d(x, y, z)
-    }
-}
-
-/// From [Point] to [Vector].
-impl From<Point> for Vector {
-    fn from(p: Point) -> Self {
-        Self::new_3d(p.x as f64, p.y as f64, p.z as f64)
-    }
-}
-
-/// From [Vector] into [Point].
-impl From<Vector> for Point {
-    fn from(v: Vector) -> Self {
-        Self::new_3d(v.x.round() as i32, v.y.round() as i32, v.z.round() as i32)
-    }
-}
-
-/// From [Vector] into tuple (x, y) f64.
-impl From<Vector> for (f64, f64) {
-    fn from(v: Vector) -> Self {
+/// Convert [Vector<T>] to `(x, y)`.
+impl<T> From<Vector<T>> for (T, T) {
+    fn from(v: Vector<T>) -> Self {
         (v.x, v.y)
     }
 }
 
-/// From [Vector] into tuple (x, y, z) f64.
-impl From<Vector> for (f64, f64, f64) {
-    fn from(v: Vector) -> Self {
+/// Convert [Vector<T>] to `(x, y, z)`.
+impl<T> From<Vector<T>> for (T, T, T) {
+    fn from(v: Vector<T>) -> Self {
         (v.x, v.y, v.z)
     }
 }
 
-impl fmt::Display for Vector {
+/// Convert [Point<U>] to [Vector<T>].
+impl<T, U> TryFrom<Point<U>> for Vector<T>
+where
+    U: TryInto<T>,
+{
+    type Error = <U as TryInto<T>>::Error;
+    fn try_from(p: Point<U>) -> Result<Self, Self::Error> {
+        Ok(Self {
+            x: p.x.try_into()?,
+            y: p.y.try_into()?,
+            z: p.z.try_into()?,
+        })
+    }
+}
+
+/// Convert [Vector<U>] to [Point<T>].
+impl<T, U> TryFrom<Vector<U>> for Point<T>
+where
+    U: TryInto<T>,
+{
+    type Error = <U as TryInto<T>>::Error;
+    fn try_from(v: Vector<U>) -> Result<Self, Self::Error> {
+        Ok(Self {
+            x: v.x.try_into()?,
+            y: v.y.try_into()?,
+            z: v.z.try_into()?,
+        })
+    }
+}
+
+/// Display [Vector<T>] as "[x, y, z]".
+impl<T> fmt::Display for Vector<T>
+where
+    T: fmt::Display,
+{
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "[{}, {}, {}]", self.x, self.y, self.z)
     }

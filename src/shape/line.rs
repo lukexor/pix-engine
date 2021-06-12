@@ -2,25 +2,28 @@
 
 use super::Point;
 use crate::vector::Vector;
+use num::Num;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::{convert::TryFrom, num::TryFromIntError};
 
-/// A `Line`.
+/// A `Line` with a starting [Point<T>] and ending [Point<T>].
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Line {
-    /// Start Point.
-    pub p1: Point,
-    /// End Point.
-    pub p2: Point,
+pub struct Line<T> {
+    /// Start [Point<T>].
+    pub p1: Point<T>,
+    /// End [Point<T>].
+    pub p2: Point<T>,
 }
 
-impl Line {
-    /// Creates a new `Line`.
+impl<T> Line<T>
+where
+    T: Num,
+{
+    /// Create new `Line`.
     pub fn new<P>(p1: P, p2: P) -> Self
     where
-        P: Into<Point>,
+        P: Into<Point<T>>,
     {
         Self {
             p1: p1.into(),
@@ -29,34 +32,33 @@ impl Line {
     }
 }
 
-/// From tuple of (x1, y1, x2, y2) to `Line`.
-impl From<(i32, i32, i32, i32)> for Line {
-    fn from((x1, y1, x2, y2): (i32, i32, i32, i32)) -> Self {
+/// Convert `(x1, y1, x2, y2)` to [Line<T>].
+impl<T> From<(T, T, T, T)> for Line<T>
+where
+    T: Num + Copy,
+{
+    fn from((x1, y1, x2, y2): (T, T, T, T)) -> Self {
         Self::new((x1, y1), (x2, y2))
     }
 }
 
-/// From tuple of (x1, y1, x2, y2) to `Line`.
-impl TryFrom<(u32, u32, u32, u32)> for Line {
-    type Error = TryFromIntError;
-    fn try_from((x1, y1, x2, y2): (u32, u32, u32, u32)) -> Result<Self, Self::Error> {
-        Ok(Self::new(
-            (i32::try_from(x1)?, i32::try_from(y1)?),
-            (i32::try_from(x2)?, i32::try_from(y2)?),
-        ))
-    }
-}
-
-/// From tuple of (`Point`, `Point`) to `Line`.
-impl From<(Point, Point)> for Line {
-    fn from((p1, p2): (Point, Point)) -> Self {
+/// Convert `([Point<T>], [Point<T>])` to [Line<T>].
+impl<T> From<(Point<T>, Point<T>)> for Line<T>
+where
+    T: Num + Copy,
+{
+    fn from((p1, p2): (Point<T>, Point<T>)) -> Self {
         Self::new(p1, p2)
     }
 }
 
-/// From tuple of (`Vector`, `Vector`) to `Line`.
-impl From<(Vector, Vector)> for Line {
-    fn from((v1, v2): (Vector, Vector)) -> Self {
+/// Convert `([Vector<T>], [Vector<T>])` to [Line<T>].
+impl<T> From<(Vector<T>, Vector<T>)> for Line<T>
+where
+    Vector<T>: Into<Point<T>>,
+    T: Num + Copy,
+{
+    fn from((v1, v2): (Vector<T>, Vector<T>)) -> Self {
         Self::new(v1, v2)
     }
 }

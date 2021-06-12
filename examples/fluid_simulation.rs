@@ -7,14 +7,14 @@ const HEIGHT: u32 = 600;
 const N: usize = 300;
 const NLEN: usize = N - 1;
 const NF: f64 = N as f64;
-const SCALE: u32 = 2;
+const SCALE: i32 = 2;
 const ITER: usize = 4;
 
 const VEL: f64 = 1.0; // Velocity of fluid
 const TIME_INC: f64 = 2.02; // Amount to step time each draw
 
 const SPACING: usize = 12;
-const COUNT: usize = (WIDTH / SCALE) as usize / SPACING + 1;
+const COUNT: usize = (WIDTH / SCALE as u32) as usize / SPACING + 1;
 
 struct Fluid {
     dt: f64,
@@ -227,8 +227,8 @@ impl Fluid {
         self.step();
         for i in 1..NLEN {
             for j in 1..NLEN {
-                let x = i as i32 * SCALE as i32;
-                let y = j as i32 * SCALE as i32;
+                let x = i as i32 * SCALE;
+                let y = j as i32 * SCALE;
                 let idx = get_idx(i, j);
 
                 // Draw density
@@ -262,7 +262,7 @@ struct App {
     t: f64,
     xs: [f64; COUNT],
     ys: [f64; COUNT],
-    base: Rect,
+    base: Rect<u32>,
 }
 
 impl App {
@@ -272,7 +272,7 @@ impl App {
             t: 0.0,
             xs: [0.0; COUNT],
             ys: [0.0; COUNT],
-            base: rect!(0, HEIGHT as i32 - 10, WIDTH * SCALE, 20),
+            base: rect!(0, HEIGHT - 10, WIDTH * SCALE as u32, 20),
         }
     }
 

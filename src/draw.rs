@@ -1,6 +1,9 @@
 //! Draw functions.
 
 use crate::{prelude::*, renderer::Rendering};
+use num::Float;
+use num_traits::AsPrimitive;
+use std::{borrow::Cow, iter::Iterator};
 
 /// Texture Identifier.
 pub type TextureId = usize;
@@ -25,7 +28,7 @@ impl PixState {
     }
 
     /// Update texture with pixel data.
-    pub fn update_texture<R>(
+    pub fn update_texture<R, T, U>(
         &mut self,
         texture_id: usize,
         rect: Option<R>,
@@ -33,30 +36,31 @@ impl PixState {
         pitch: usize,
     ) -> RendererResult<()>
     where
-        R: Into<Rect>,
+        R: Into<Rect<T>>,
+        T: AsPrimitive<i32> + AsPrimitive<u32>,
     {
         self.renderer
             .update_texture(texture_id, rect, pixels, pitch)
     }
 
     /// Draw texture canvas.
-    pub fn texture<R>(
+    pub fn texture<R, T, U>(
         &mut self,
         texture_id: usize,
         src: Option<R>,
         dst: Option<R>,
     ) -> RendererResult<()>
     where
-        R: Into<Rect>,
+        R: Into<Rect<T>>,
+        T: AsPrimitive<i32> + AsPrimitive<u32>,
     {
         self.renderer.texture(texture_id, src, dst)
     }
 
     /// Draw text to the current canvas.
-    pub fn text<S, P>(&mut self, p: P, text: S) -> RendererResult<()>
+    pub fn text<T>(&mut self, p: impl Into<Point<T>>, text: impl AsRef<str>) -> RendererResult<()>
     where
-        S: AsRef<str>,
-        P: Into<Point>,
+        T: AsPrimitive<i32>,
     {
         let text = text.as_ref();
         let p = p.into();
@@ -64,20 +68,21 @@ impl PixState {
         let size = s.text_size as i32;
         let width = text.len() as i32 * size;
         let (x, y) = match s.rect_mode {
-            DrawMode::Corner => (p.x, p.y),
-            DrawMode::Center => (p.x - width / 2, p.y - size / 2),
+            DrawMode::Corner => (p.x.as_(), p.y.as_()),
+            DrawMode::Center => (p.x.as_() - width / 2, p.y.as_() - size / 2),
         };
         self.renderer
             .text(text, x, y, s.text_size, s.fill, s.stroke)
     }
 
     /// Draw a point to the current canvas.
-    pub fn point<P>(&mut self, p: P) -> RendererResult<()>
+    pub fn point<T>(&mut self, p: impl Into<Point<T>>) -> RendererResult<()>
     where
-        P: Into<Point>,
+        T: AsPrimitive<i32>,
     {
         let p = p.into();
-        self.renderer.point(p.x, p.y, self.settings.stroke)
+        self.renderer
+            .point(p.x.as_(), p.y.as_(), self.settings.stroke)
     }
 
     /// Draw an array of pixels to the current canvas.
@@ -86,51 +91,66 @@ impl PixState {
     }
 
     /// Draw a line to the current canvas.
-    pub fn line<L>(&mut self, line: L) -> RendererResult<()>
+    pub fn line<T>(&mut self, line: impl Into<Line<T>>) -> RendererResult<()>
     where
-        L: Into<Line>,
+        T: AsPrimitive<i32>,
     {
         let line = line.into();
         let Point { x: x1, y: y1, .. } = line.p1;
         let Point { x: x2, y: y2, .. } = line.p2;
-        self.renderer.line(x1, y1, x2, y2, self.settings.stroke)
+        self.renderer
+            .line(x1.as_(), y1.as_(), x2.as_(), y2.as_(), self.settings.stroke)
     }
 
     /// Draw a triangle to the current canvas.
-    pub fn triangle<T>(&mut self, triangle: T) -> RendererResult<()>
+    pub fn triangle<T>(&mut self, triangle: impl Into<Triangle<T>>) -> RendererResult<()>
     where
-        T: Into<Triangle>,
+        T: AsPrimitive<i32>,
     {
         let s = &self.settings;
         let triangle = triangle.into();
         let Point { x: x1, y: y1, .. } = triangle.p1;
         let Point { x: x2, y: y2, .. } = triangle.p2;
         let Point { x: x3, y: y3, .. } = triangle.p3;
-        self.renderer
-            .triangle(x1, y1, x2, y2, x3, y3, s.fill, s.stroke)
+        self.renderer.triangle(
+            x1.as_(),
+            y1.as_(),
+            x2.as_(),
+            y2.as_(),
+            x3.as_(),
+            y3.as_(),
+            s.fill,
+            s.stroke,
+        )
     }
 
     /// Draw a square to the current canvas.
-    pub fn square<S>(&mut self, s: S) -> RendererResult<()>
+    pub fn square<T>(&mut self, square: impl Into<Square<T>>) -> RendererResult<()>
     where
-        S: Into<Square>,
+        T: AsPrimitive<i32> + AsPrimitive<u32>,
     {
-        let s = s.into();
-        self.rect(s)
+        let square = square.into();
+        self.rect(square)
     }
 
     /// Draw a rectangle to the current canvas.
-    pub fn rect<R>(&mut self, r: R) -> RendererResult<()>
+    pub fn rect<R, T>(&mut self, rect: R) -> RendererResult<()>
     where
-        R: Into<Rect>,
+        R: Into<Rect<T>>,
+        T: AsPrimitive<i32> + AsPrimitive<u32>,
     {
         let s = &self.settings;
-        let r = r.into();
+        let rect = rect.into();
+        let x: i32 = rect.x.as_();
+        let y: i32 = rect.y.as_();
+        let width: i32 = rect.w.as_();
+        let height: i32 = rect.h.as_();
         let (x, y) = match s.rect_mode {
-            DrawMode::Corner => (r.x, r.y),
-            DrawMode::Center => (r.x - r.w as i32 / 2, r.y - r.h as i32 / 2),
+            DrawMode::Corner => (x, y),
+            DrawMode::Center => (x - width / 2, y - height / 2),
         };
-        self.renderer.rect(x, y, r.w, r.h, s.fill, s.stroke)
+        self.renderer
+            .rect(x, y, rect.w.as_(), rect.h.as_(), s.fill, s.stroke)
     }
 
     /// Draw a polygon to the current canvas.
@@ -140,26 +160,31 @@ impl PixState {
     }
 
     /// Draw a circle to the current canvas.
-    pub fn circle<C>(&mut self, c: C) -> RendererResult<()>
+    pub fn circle<T>(&mut self, circle: impl Into<Circle<T>>) -> RendererResult<()>
     where
-        C: Into<Circle>,
+        T: AsPrimitive<i32> + AsPrimitive<u32>,
     {
-        let c = c.into();
-        self.ellipse(c)
+        let circle = circle.into();
+        self.ellipse(circle)
     }
 
     /// Draw a ellipse to the current canvas.
-    pub fn ellipse<E>(&mut self, e: E) -> RendererResult<()>
+    pub fn ellipse<T>(&mut self, ellipse: impl Into<Ellipse<T>>) -> RendererResult<()>
     where
-        E: Into<Ellipse>,
+        T: AsPrimitive<i32> + AsPrimitive<u32>,
     {
         let s = &self.settings;
-        let e = e.into();
+        let ellipse = ellipse.into();
+        let x: i32 = ellipse.x.as_();
+        let y: i32 = ellipse.y.as_();
+        let width: i32 = ellipse.w.as_();
+        let height: i32 = ellipse.h.as_();
         let (x, y) = match s.ellipse_mode {
-            DrawMode::Corner => (e.x, e.y),
-            DrawMode::Center => (e.x - e.w as i32 / 2, e.y - e.h as i32 / 2),
+            DrawMode::Corner => (x, y),
+            DrawMode::Center => (x - width / 2, y - height / 2),
         };
-        self.renderer.ellipse(x, y, e.w, e.h, s.fill, s.stroke)
+        self.renderer
+            .ellipse(x, y, ellipse.w.as_(), ellipse.h.as_(), s.fill, s.stroke)
     }
 
     /// Draw an image to the current canvas.
@@ -180,31 +205,30 @@ impl PixState {
     }
 
     /// Draw a wireframe to the current canvas.
-    pub fn wireframe<P>(
+    pub fn wireframe<T>(
         &mut self,
-        vertexes: &[(f64, f64)],
-        p: P,
-        angle: f64,
-        scale: f64,
+        vertexes: &[Vector<T>],
+        p: impl Into<Vector<T>>,
+        angle: T,
+        scale: T,
     ) -> RendererResult<()>
     where
-        P: Into<Vector>,
+        T: Float + AsPrimitive<i16>,
     {
         let p = p.into();
-        if vertexes.is_empty() {
-            return Ok(());
-        }
         let (sin, cos) = angle.sin_cos();
-        let mut tx = Vec::with_capacity(vertexes.len());
-        let mut ty = Vec::with_capacity(vertexes.len());
-        for vertex in vertexes.iter() {
-            // Rotate / Scale / Translate
-            let (vx, vy) = vertex;
-            let x = (vx * cos - vy * sin) * scale + p.x;
-            let y = (vx * sin + vy * cos) * scale + p.y;
-            tx.push(x.round() as i16);
-            ty.push(y.round() as i16);
+        let (tx, ty): (Vec<i16>, Vec<i16>) = vertexes
+            .iter()
+            .map(|v| {
+                let x = (v.x * cos - v.y * sin) * scale + p.x;
+                let y = (v.x * sin + v.y * cos) * scale + p.y;
+                (x.round().as_(), y.round().as_())
+            })
+            .unzip();
+        if tx.is_empty() || ty.is_empty() {
+            Err(RendererError::Other(Cow::from("no vertexes to render")))
+        } else {
+            self.polygon(&tx, &ty)
         }
-        self.polygon(&tx, &ty)
     }
 }

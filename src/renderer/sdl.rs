@@ -4,6 +4,7 @@ use crate::{
     prelude::*,
     renderer::{Error, RendererSettings, Rendering, Result},
 };
+use num_traits::AsPrimitive;
 use sdl2::{
     audio::{AudioQueue, AudioSpecDesired},
     gfx::primitives::{DrawRenderer, ToColor},
@@ -137,7 +138,10 @@ impl Rendering for Renderer {
     }
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    fn clip(&mut self, rect: Option<Rect>) {
+    fn clip<T>(&mut self, rect: Option<Rect<T>>)
+    where
+        T: AsPrimitive<i32> + AsPrimitive<u32>,
+    {
         let rect = rect.map(|rect| rect.into());
         self.canvas.set_clip_rect(rect);
     }
@@ -228,7 +232,7 @@ impl Rendering for Renderer {
     }
 
     /// Update texture with pixel data.
-    fn update_texture<R>(
+    fn update_texture<R, T>(
         &mut self,
         texture_id: TextureId,
         rect: Option<R>,
@@ -236,7 +240,8 @@ impl Rendering for Renderer {
         pitch: usize,
     ) -> Result<()>
     where
-        R: Into<Rect>,
+        R: Into<Rect<T>>,
+        T: AsPrimitive<i32> + AsPrimitive<u32>,
     {
         if let Some(texture) = self.textures.get_mut(texture_id) {
             let rect: Option<SdlRect> = rect.map(|r| r.into().into());
@@ -247,9 +252,10 @@ impl Rendering for Renderer {
     }
 
     /// Draw texture canvas.
-    fn texture<R>(&mut self, texture_id: usize, src: Option<R>, dst: Option<R>) -> Result<()>
+    fn texture<R, T>(&mut self, texture_id: usize, src: Option<R>, dst: Option<R>) -> Result<()>
     where
-        R: Into<Rect>,
+        R: Into<Rect<T>>,
+        T: AsPrimitive<i32> + AsPrimitive<u32>,
     {
         if let Some(texture) = self.textures.get_mut(texture_id) {
             let src: Option<SdlRect> = src.map(|r| r.into().into());
@@ -870,9 +876,12 @@ impl From<Color> for SdlColor {
     }
 }
 
-impl From<Rect> for SdlRect {
-    fn from(rect: Rect) -> Self {
-        Self::new(rect.x, rect.y, rect.w, rect.h)
+impl<T> From<Rect<T>> for SdlRect
+where
+    T: AsPrimitive<i32> + AsPrimitive<u32>,
+{
+    fn from(rect: Rect<T>) -> Self {
+        Self::new(rect.x.as_(), rect.y.as_(), rect.w.as_(), rect.h.as_())
     }
 }
 

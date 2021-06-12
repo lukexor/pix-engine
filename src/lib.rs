@@ -107,7 +107,7 @@ pub mod prelude {
     pub use engine::PixEngine;
     pub use event::*;
     pub use image::{Error as ImageError, Image, PixelFormat, Result as ImageResult};
-    pub use math::{map, Scalar};
+    pub use math::map;
     pub use renderer::{Error as RendererError, Position, Result as RendererResult};
     pub use shape::*;
     pub use state::{
