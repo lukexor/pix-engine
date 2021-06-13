@@ -1,8 +1,5 @@
 use pix_engine::prelude::*;
-use std::{
-    convert::TryInto,
-    f64::consts::{FRAC_PI_2, PI, TAU},
-};
+use std::f64::consts::{FRAC_PI_2, PI, TAU};
 
 const TITLE: &str = "Asteroids";
 const WIDTH: u32 = 800;
@@ -53,17 +50,17 @@ impl SpaceObj {
             destroyed: false,
         }
     }
-    fn rand_asteroid(ship: &SpaceObj, s: &PixState) -> PixResult<Self> {
+    fn rand_asteroid(ship: &SpaceObj, s: &PixState) -> Self {
         let (ship_x, ship_y) = ship.pos.into();
         let mut pos = vector!(random!(s.width() as f64), random!(s.height() as f64));
-        let p: Point<f64> = pos.try_into().unwrap();
+        let p: Point<f64> = pos.as_point();
         if circle!(ship_x, ship_y, ASTEROID_SAFE_RADIUS).contains(p) {
             pos -= ship.pos
         }
 
         let vel = vector!(random!(-MAX_ASTEROID_SPEED, MAX_ASTEROID_SPEED));
         let angle = random!(360.0);
-        Ok(Self::new(ASTEROID_SIZE, pos, vel, angle))
+        Self::new(ASTEROID_SIZE, pos, vel, angle)
     }
 }
 
@@ -98,7 +95,7 @@ impl Asteroids {
         self.asteroids.clear();
         self.bullets.clear();
         for _ in 0..asteroid_count {
-            self.asteroids.push(SpaceObj::rand_asteroid(&self.ship, s)?);
+            self.asteroids.push(SpaceObj::rand_asteroid(&self.ship, s));
         }
         Ok(())
     }
@@ -274,7 +271,7 @@ impl AppState for Asteroids {
             self.score += 1000;
             self.bullets.clear();
             for _ in 0..(self.level + 2) {
-                self.asteroids.push(SpaceObj::rand_asteroid(&self.ship, s)?);
+                self.asteroids.push(SpaceObj::rand_asteroid(&self.ship, s));
             }
         }
 
@@ -309,7 +306,7 @@ impl AppState for Asteroids {
     }
 }
 
-pub fn main() {
+pub fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .with_title(TITLE)
@@ -317,5 +314,5 @@ pub fn main() {
         .position_centered()
         .build();
     let mut app = Asteroids::new();
-    engine.run(&mut app).expect("ran successfully");
+    engine.run(&mut app)
 }

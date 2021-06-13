@@ -1,5 +1,5 @@
 use pix_engine::prelude::*;
-use std::cmp::Ordering::Less;
+use std::{borrow::Cow, cmp::Ordering::Less};
 
 const TITLE: &str = "Raycasting";
 const WIDTH: u32 = 1000;
@@ -69,15 +69,20 @@ impl RayScene {
     fn has_edge(&self, i: usize, dir: usize) -> bool {
         self.cells.get(i).map(|c| c.edges[dir].0).unwrap_or(false)
     }
-    fn get_edge_index(&mut self, i: usize, dir: usize) -> usize {
-        self.cells.get(i).map(|c| c.edges[dir].1).unwrap()
+    fn get_edge_index(&mut self, i: usize, dir: usize) -> PixResult<usize> {
+        self.cells
+            .get(i)
+            .map(|c| c.edges[dir].1)
+            .ok_or(PixError::Other(Cow::from("invalid cell index")))
     }
-    fn get_edge_mut(&mut self, i: usize) -> &mut Edge {
-        self.edges.get_mut(i).unwrap()
+    fn get_edge_mut(&mut self, i: usize) -> PixResult<&mut Edge> {
+        self.edges
+            .get_mut(i)
+            .ok_or(PixError::Other(Cow::from("invalid edge index")))
     }
 
     #[allow(clippy::many_single_char_names)]
-    fn convert_edges_to_poly_map(&mut self) {
+    fn convert_edges_to_poly_map(&mut self) -> PixResult<()> {
         let s = Rect::new(0, 0, self.xcells, self.ycells);
         let pitch = self.xcells;
         let block_size = BLOCK_SIZE as i32;
@@ -107,8 +112,8 @@ impl RayScene {
                     if x > 0 && !self.exists(w) {
                         // Can extend down from northern neighbors WEST edge
                         if self.has_edge(n, WEST) {
-                            let edge_id = self.get_edge_index(n, WEST);
-                            self.get_edge_mut(edge_id).end.y += block_size as f64;
+                            let edge_id = self.get_edge_index(n, WEST)?;
+                            self.get_edge_mut(edge_id)?.end.y += block_size as f64;
                             self.cells[i].edges[WEST] = (true, edge_id);
                         } else {
                             // Create WEST edge extending downward
@@ -124,8 +129,8 @@ impl RayScene {
                     if x < width && !self.exists(e) {
                         // Can extend down from northern neighbors EAST edge
                         if self.has_edge(n, EAST) {
-                            let edge_id = self.get_edge_index(n, EAST);
-                            self.get_edge_mut(edge_id).end.y += block_size as f64;
+                            let edge_id = self.get_edge_index(n, EAST)?;
+                            self.get_edge_mut(edge_id)?.end.y += block_size as f64;
                             self.cells[i].edges[EAST] = (true, edge_id);
                         } else {
                             // Create EAST edge extending downward
@@ -142,8 +147,8 @@ impl RayScene {
                     if y > 0 && !self.exists(n) {
                         // Can extend from western neighbors NORTH edge
                         if self.has_edge(w, NORTH) {
-                            let edge_id = self.get_edge_index(w, NORTH);
-                            self.get_edge_mut(edge_id).end.x += block_size as f64;
+                            let edge_id = self.get_edge_index(w, NORTH)?;
+                            self.get_edge_mut(edge_id)?.end.x += block_size as f64;
                             self.cells[i].edges[NORTH] = (true, edge_id);
                         } else {
                             // Create NORTH edge extending right
@@ -159,8 +164,8 @@ impl RayScene {
                     if y < height && !self.exists(s) {
                         // Can extend from western neighbors SOUTH edge
                         if self.has_edge(w, SOUTH) {
-                            let edge_id = self.get_edge_index(w, SOUTH);
-                            self.get_edge_mut(edge_id).end.x += block_size as f64;
+                            let edge_id = self.get_edge_index(w, SOUTH)?;
+                            self.get_edge_mut(edge_id)?.end.x += block_size as f64;
                             self.cells[i].edges[SOUTH] = (true, edge_id);
                         } else {
                             // Create SOUTH edge extending right
@@ -185,6 +190,7 @@ impl RayScene {
         self.points
             .sort_unstable_by(|a, b| a.partial_cmp(&b).unwrap_or(Less));
         self.points.dedup();
+        Ok(())
     }
 
     fn calc_visibility_polygons(&mut self, o: Vector<f64>) {
@@ -285,6 +291,7 @@ impl RayScene {
                 s.triangle((mouse_pos, p1, p2))?;
             }
             // Draw last triangle, connecting back to first point.
+            // SAFETY: self.polygons has at least one element due to is_empty() check above
             let p1: Point<i32> = self.polygons.last().unwrap().1.as_point();
             let p2: Point<i32> = self.polygons[0].1.as_point();
             s.triangle((mouse_pos, p1, p2))?;
@@ -320,7 +327,7 @@ impl AppState for RayScene {
         self.edges.push(Edge::new((0.0, h), (w, h))); // Bottom
         self.edges.push(Edge::new((0.0, 0.0), (0.0, h))); // Left
 
-        self.convert_edges_to_poly_map();
+        self.convert_edges_to_poly_map()?;
 
         self.light = Some(s.create_image_from_file("static/light.png")?);
         s.blend_mode(BlendMode::Mod);
@@ -367,7 +374,7 @@ impl AppState for RayScene {
                 let i = self.get_cell_index(mx, my);
                 self.cells[i].exists = !self.cells[i].exists;
                 self.drawing = self.cells[i].exists;
-                self.convert_edges_to_poly_map();
+                self.convert_edges_to_poly_map()?;
             }
         }
         Ok(())
@@ -382,7 +389,7 @@ impl AppState for RayScene {
                     let i = self.get_cell_index(mx, my);
                     self.cells[i].exists = self.drawing;
                 }
-                self.convert_edges_to_poly_map();
+                self.convert_edges_to_poly_map()?;
             }
         }
         Ok(())
@@ -412,7 +419,7 @@ impl Cell {
     }
 }
 
-fn main() {
+fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .with_title(TITLE)
@@ -423,5 +430,5 @@ fn main() {
         .resizable()
         .build();
     let mut app = RayScene::new();
-    engine.run(&mut app).expect("ran successfully");
+    engine.run(&mut app)
 }

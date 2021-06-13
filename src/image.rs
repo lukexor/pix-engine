@@ -205,7 +205,7 @@ impl PixState {
         let (info, mut reader) = png.read_info()?;
 
         let mut data = vec![0x00; info.buffer_size()];
-        reader.next_frame(&mut data).unwrap();
+        reader.next_frame(&mut data)?;
         let format = info.color_type.into();
         Ok(Image {
             width: info.width,

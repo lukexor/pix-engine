@@ -1,7 +1,5 @@
+#![deny(missing_docs, missing_doc_code_examples, unused)]
 #![warn(
-    missing_docs,
-    missing_doc_code_examples,
-    unused,
     deprecated_in_future,
     unreachable_pub,
     unused_crate_dependencies,

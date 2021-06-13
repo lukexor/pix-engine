@@ -194,7 +194,7 @@ impl AppState for App {
     }
 }
 
-pub fn main() {
+pub fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .with_title(TITLE)
@@ -203,5 +203,5 @@ pub fn main() {
         .vsync_enabled()
         .build();
     let mut app = App::new();
-    engine.run(&mut app).expect("ran successfully");
+    engine.run(&mut app)
 }
