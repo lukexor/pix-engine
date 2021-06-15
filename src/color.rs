@@ -1,9 +1,9 @@
 //! [Color] functions for drawing.
 //!
-//! Each `Color` can be represented as either [Rgb] or [Hsv] and can be converted from/into other
+//! Each `Color` can be represented as either [Rgb] or [Hsb] and can be converted from/into other
 //! representations as needed.
 //!
-//! There are two convience macros for easy construction: [rgb!] and [hsv!] that take 1-4
+//! There are two convience macros for easy construction: [rgb!] and [hsb!] that take 1-4
 //! parameters. The number of parameters provided alter how they are interpreted.
 //!
 //! Providing a single parameter results in a grayscale color. Two parameters is used for grayscale
@@ -20,33 +20,33 @@
 //! # use pix_engine::prelude::*;
 //! // RGB values range from 0-255
 //! let c = rgb!(55); // Grayscale
-//! assert_eq!(c.rgb_channels(), (55, 55, 55, 255));
+//! assert_eq!(c.channels(), [55, 55, 55, 255]);
 //!
 //! let c = rgb!(55, 128); // Grayscale with alpha
-//! assert_eq!(c.rgb_channels(), (55, 55, 55, 128));
+//! assert_eq!(c.channels(), [55, 55, 55, 128]);
 //!
 //! let c = rgb!(128, 0, 55); // Red, Green, Blue
-//! assert_eq!(c.rgb_channels(), (128, 0, 55, 255));
+//! assert_eq!(c.channels(), [128, 0, 55, 255]);
 //!
 //! let c = rgb!(128, 0, 55, 128); // Red, Green, Blue, and Alpha
-//! assert_eq!(c.rgb_channels(), (128, 0, 55, 128));
+//! assert_eq!(c.channels(), [128, 0, 55, 128]);
 //!
 //! // HSV values range from 0.0-360.0 for hue and 0.0-1.0 for all other values
-//! let c = hsv!(0.5); // Grayscale
-//! assert_eq!(c.hsv_channels(), (0.0, 0.0, 0.5, 1.0));
+//! let c = hsb!(50.0); // Grayscale
+//! assert_eq!(c.levels(), [0.0, 0.0, 0.5, 1.0]);
 //!
-//! let c = hsv!(0.5, 0.8); // Grayscale with alpha
-//! assert_eq!(c.hsv_channels(), (0.0, 0.0, 0.5, 0.8));
+//! let c = hsb!(50.0, 0.8); // Grayscale with alpha
+//! assert_eq!(c.levels(), [0.0, 0.0, 0.5, 0.8]);
 //!
-//! let c = hsv!(128.0, 1.0, 0.5); // Hue, Saturation, Value
-//! assert_eq!(c.hsv_channels(), (128.0, 1.0, 0.5, 1.0));
+//! let c = hsb!(126.0, 100.0, 50.0); // Hue, Saturation, Value
+//! assert_eq!(c.levels(), [0.35, 1.0, 0.5, 1.0]);
 //!
-//! let c = hsv!(228.0, 0.8, 1.0, 0.8); // Hue, Saturation, Value, and Alpha
-//! assert_eq!(c.hsv_channels(), (228.0, 0.8, 1.0, 0.8));
+//! let c = hsb!(234.0, 80.0, 100.0, 0.8); // Hue, Saturation, Value, and Alpha
+//! assert_eq!(c.levels(), [0.65, 0.8, 1.0, 0.8]);
 //!
 //! // Named color constants
 //! let c = ALICE_BLUE;
-//! assert_eq!(c.rgb_channels(), (240, 248, 255, 255));
+//! assert_eq!(c.channels(), [240, 248, 255, 255]);
 //! ```
 //!
 //! You can also create colors from hexidecimal strings using 3, 4, 6, or 8-digit formats.
@@ -58,37 +58,315 @@
 //! use std::str::FromStr;
 //!
 //! let c = Color::from_str("#F0F")?; // 3-digit Hex string
-//! assert_eq!(c.rgb_channels(), (255, 0, 255, 255));
+//! assert_eq!(c.channels(), [255, 0, 255, 255]);
 //!
 //! let c = Color::from_str("#F0F5")?; // 4-digit Hex string
-//! assert_eq!(c.rgb_channels(), (255, 0, 255, 85));
+//! assert_eq![c.channels(), [255, 0, 255, 85]];
 //!
 //! let c = Color::from_str("#F0F5BF")?; // 6-digit Hex string
-//! assert_eq!(c.rgb_channels(), (240, 245, 191, 255));
+//! assert_eq!(c.channels(), [240, 245, 191, 255]);
 //!
 //! let c = Color::from_str("#F0F5BF5F")?; // 8-digit Hex string
-//! assert_eq!(c.rgb_channels(), (240, 245, 191, 95));
+//! assert_eq!(c.channels(), [240, 245, 191, 95]);
 //! # Ok::<(), ColorError>(())
 //! ```
 
-use hsv::Hsv;
-use rgb::Rgb;
+use crate::random;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::{
     borrow::Cow,
-    convert::TryFrom,
     error,
     fmt::{self, LowerHex, UpperHex},
     ops::*,
-    str::FromStr,
 };
 
 pub mod constants;
-pub mod hsv;
-pub mod rgb;
+pub mod conversion;
 
-/// # Create an [Rgb] [Color].
+/// Color channel format indicating level interpretation.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum ColorFormat {
+    /// Red, Green, and Blue
+    Rgb,
+    /// Hue, Saturation, and Brightness
+    Hsb,
+    /// Hue, Saturation, and Lightness
+    Hsl,
+}
+
+use ColorFormat::*;
+
+/// A color represented as [Rgb] or [Hsb].
+#[derive(Debug, Copy, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Color {
+    /// levels representing each color bit.
+    levels: [f64; 4],
+    /// Channel format.
+    format: ColorFormat,
+}
+
+#[inline]
+fn maxes(format: ColorFormat) -> [f64; 4] {
+    match format {
+        Rgb => [255.0; 4],
+        Hsb => [360.0, 100.0, 100.0, 1.0],
+        Hsl => [360.0, 100.0, 100.0, 1.0],
+    }
+}
+
+impl Color {
+    /// Constructs a `Color` with the given [ColorFormat] and max alpha.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::new(ColorFormat::Rgb, 0.0, 0.0, 128.0);
+    /// assert_eq!(c.channels(), [0, 0, 128, 255]);
+    ///
+    /// let c = Color::new(ColorFormat::Hsb, 126.0, 50.0, 100.0);
+    /// assert_eq!(c.levels(), [0.35, 0.5, 1.0, 1.0]);
+    /// ```
+    pub fn new(format: ColorFormat, v1: f64, v2: f64, v3: f64) -> Self {
+        let [_, _, _, alpha_max] = maxes(format);
+        Self::new_alpha(format, v1, v2, v3, alpha_max)
+    }
+
+    /// Constructs a `Color` with the given [ColorFormat] and alpha.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::new_alpha(ColorFormat::Rgb, 0.0, 0.0, 128.0, 50.0);
+    /// assert_eq!(c.channels(), [0, 0, 128, 50]);
+    ///
+    /// let c = Color::new_alpha(ColorFormat::Hsb, 126.0, 50.0, 100.0, 0.8);
+    /// assert_eq!(c.levels(), [0.35, 0.5, 1.0, 0.8]);
+    /// ```
+    pub fn new_alpha(format: ColorFormat, v1: f64, v2: f64, v3: f64, alpha: f64) -> Self {
+        let [v1_max, v2_max, v3_max, alpha_max] = maxes(format);
+        Self {
+            levels: [
+                (v1 / v1_max).clamp(0.0, 1.0),
+                (v2 / v2_max).clamp(0.0, 1.0),
+                (v3 / v3_max).clamp(0.0, 1.0),
+                (alpha / alpha_max).clamp(0.0, 1.0),
+            ],
+            format,
+        }
+    }
+
+    /// Constructs a [Rgb] `Color` containing red, green, and blue with alpha of
+    /// 255.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::rgb(128, 64, 0);
+    /// assert_eq!(c.channels(), [128, 64, 0, 255]);
+    /// ```
+    pub fn rgb(r: u8, g: u8, b: u8) -> Self {
+        Self::new(Rgb, f64::from(r), f64::from(g), f64::from(b))
+    }
+
+    /// Constructs a [Rgb] `Color` containing red, green, blue, and alpha.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::rgba(128, 64, 128, 128);
+    /// assert_eq!(c.channels(), [128, 64, 128, 128]);
+    /// ```
+    pub fn rgba(r: u8, g: u8, b: u8, a: u8) -> Self {
+        Self::new_alpha(Rgb, f64::from(r), f64::from(g), f64::from(b), f64::from(a))
+    }
+
+    /// Constructs a [Hsb] `Color` containing hue, saturation, and brightness
+    /// with alpha of 1.0.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::hsb(126.0, 80.0, 0.0);
+    /// assert_eq!(c.levels(), [0.35, 0.8, 0.0, 1.0]);
+    /// ```
+    pub fn hsb(h: f64, s: f64, b: f64) -> Self {
+        Self::new(Hsb, h, s, b)
+    }
+
+    /// Constructs a [Hsb] `Color` containing hue, saturation, brightness and
+    /// alpha.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::hsba(126.0, 80.0, 0.0, 0.5);
+    /// assert_eq!(c.levels(), [0.35, 0.8, 0.0, 0.5]);
+    /// ```
+    pub fn hsba(h: f64, s: f64, b: f64, a: f64) -> Self {
+        Self::new_alpha(Hsb, h, s, b, a)
+    }
+
+    /// Constructs a [Hsl] `Color` containing hue, saturation, and lightness
+    /// with alpha of 1.0.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::hsl(126.0, 80.0, 0.0);
+    /// assert_eq!(c.levels(), [0.35, 0.8, 0.0, 1.0]);
+    /// ```
+    pub fn hsl(h: f64, s: f64, l: f64) -> Self {
+        Self::new(Hsl, h, s, l)
+    }
+
+    /// Constructs a [Hsl] `Color` containing hue, saturation, lightness and
+    /// alpha.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::hsla(126.0, 80.0, 0.0, 0.5);
+    /// assert_eq!(c.levels(), [0.35, 0.8, 0.0, 0.5]);
+    /// ```
+    pub fn hsla(h: f64, s: f64, l: f64, a: f64) -> Self {
+        Self::new_alpha(Hsl, h, s, l, a)
+    }
+
+    /// Constructs a random `Color` with [ColorFormat] and max alpha.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # #[allow(unused_variables)]
+    /// let c = Color::random(ColorFormat::Rgb);
+    /// // `c.channels()` will return something like:
+    /// // [207, 12, 217, 255]
+    /// ```
+    pub fn random(format: ColorFormat) -> Self {
+        Self {
+            levels: [random!(1.0), random!(1.0), random!(1.0), 1.0],
+            format,
+        }
+    }
+
+    /// Constructs a random `Color` with [ColorFormat] and alpha.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # #[allow(unused_variables)]
+    /// let c = Color::random_alpha(ColorFormat::Rgb);
+    /// // `c.channels()` will return something like:
+    /// // [132, 159, 233, 76]
+    /// ```
+    pub fn random_alpha(format: ColorFormat) -> Self {
+        Self {
+            levels: [random!(1.0), random!(1.0), random!(1.0), random!(1.0)],
+            format,
+        }
+    }
+
+    /// Constructs a `Color` from a slice of 1-4 values. The number of values
+    /// provided alter how they are interpreted similar to the [rgb!], [hsb!],
+    /// and [hsl!] macros.
+    ///
+    /// # Errors
+    ///
+    /// If the slice is empty or has more than 4 values, an error is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let vals: Vec<f64> = vec![128.0, 64.0, 0.0];
+    /// let c = Color::from_slice(ColorFormat::Rgb, &vals)?; // RGB Vec
+    /// assert_eq!(c.channels(), [128, 64, 0, 255]);
+    ///
+    /// let vals: [f64; 4] = [128.0, 64.0, 0.0, 128.0];
+    /// let c = Color::from_slice(ColorFormat::Rgb, &vals[..])?; // RGBA slice
+    /// assert_eq!(c.channels(), [128, 64, 0, 128]);
+    /// # Ok::<(), ColorError>(())
+    /// ```
+    pub fn from_slice(format: ColorFormat, slice: &[f64]) -> Result<Self, ColorError> {
+        match *slice {
+            [gray] => Ok(Self::new(format, gray, gray, gray)),
+            [gray, a] => Ok(Self::new_alpha(format, gray, gray, gray, a)),
+            [v1, v2, v3] => Ok(Self::new(format, v1, v2, v3)),
+            [v1, v2, v3, a] => Ok(Self::new_alpha(format, v1, v2, v3, a)),
+            _ => Err(ColorError::InvalidSlice(Cow::from(slice.to_owned()))),
+        }
+    }
+
+    /// Constructs a [Rgb] `Color` from a [u32] RGBA hexadecimal value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::from_hex(0xF0FF00FF);
+    /// assert_eq!(c.channels(), [240, 255, 0, 255]);
+    ///
+    /// let c = Color::from_hex(0xF0FF0080);
+    /// assert_eq!(c.channels(), [240, 255, 0, 128]);
+    /// ```
+    pub fn from_hex(hex: u32) -> Self {
+        let [r, g, b, a] = hex.to_be_bytes();
+        Self::rgba(r, g, b, a)
+    }
+
+    /// Returns a list of max values for each color channel.
+    pub fn maxes(&self) -> [f64; 4] {
+        maxes(self.format)
+    }
+
+    /// Returns the `Color` levels which range from [0.0, 1.0].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::rgba(128, 64, 128, 128);
+    /// assert_eq!(c.channels(), [128, 64, 128, 128]);
+    /// ```
+    pub const fn levels(&self) -> [f64; 4] {
+        self.levels
+    }
+
+    /// Returns the `Color` [Rgb] channels which range from [0, 255].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::rgba(128, 64, 128, 128);
+    /// assert_eq!(c.channels(), [128, 64, 128, 128]);
+    /// ```
+    pub fn channels(&self) -> [u8; 4] {
+        let [r_max, g_max, b_max, a_max] = maxes(Rgb);
+        let [r, g, b, a] = self.to_format(Rgb).levels();
+        [
+            (r * r_max).round() as u8,
+            (g * g_max).round() as u8,
+            (b * b_max).round() as u8,
+            (a * a_max).round() as u8,
+        ]
+    }
+}
+
+/// # Constructs a [Rgb] [Color].
 ///
 /// # Examples
 ///
@@ -96,16 +374,16 @@ pub mod rgb;
 /// # use pix_engine::prelude::*;
 ///
 /// let c = rgb!(128); // Gray
-/// assert_eq!(c.rgb_channels(), (128, 128, 128, 255));
+/// assert_eq!(c.channels(), [128, 128, 128, 255]);
 ///
 /// let c = rgb!(128, 64); // Gray with alpha
-/// assert_eq!(c.rgb_channels(), (128, 128, 128, 64));
+/// assert_eq!(c.channels(), [128, 128, 128, 64]);
 ///
 /// let c = rgb!(128, 64, 0); // Red, Green, Blue
-/// assert_eq!(c.rgb_channels(), (128, 64, 0, 255));
+/// assert_eq!(c.channels(), [128, 64, 0, 255]);
 ///
 /// let c = rgb!(128, 64, 128, 128); // Red, Green, Blue, Alpha
-/// assert_eq!(c.rgb_channels(), (128, 64, 128, 128));
+/// assert_eq!(c.channels(), [128, 64, 128, 128]);
 /// ```
 #[macro_export]
 macro_rules! rgb {
@@ -123,417 +401,164 @@ macro_rules! rgb {
     };
 }
 
-/// # Create a [Hsv] [Color].
+/// # Constructs a [Hsb] [Color].
 ///
 /// # Examples
 ///
 /// ```
 /// # use pix_engine::prelude::*;
 ///
-/// let c = hsv!(0.5); // Gray
-/// assert_eq!(c.hsv_channels(), (0.0, 0.0, 0.5, 1.0));
+/// let c = hsb!(50.0); // Gray
+/// assert_eq!(c.levels(), [0.0, 0.0, 0.5, 1.0]);
 ///
-/// let c = hsv!(0.5, 0.5); // Gray with alpha
-/// assert_eq!(c.hsv_channels(), (0.0, 0.0, 0.5, 0.5));
+/// let c = hsb!(50.0, 0.5); // Gray with alpha
+/// assert_eq!(c.levels(), [0.0, 0.0, 0.5, 0.5]);
 ///
-/// let c = hsv!(337.0, 1.0, 0.8); // Hue, Saturation, Value
-/// assert_eq!(c.hsv_channels(), (337.0, 1.0, 0.8, 1.0));
+/// let c = hsb!(342.0, 100.0, 80.0); // Hue, Saturation, Brightness
+/// assert_eq!(c.levels(), [0.95, 1.0, 0.8, 1.0]);
 ///
-/// let c = hsv!(337.0, 1.0, 0.8, 0.5); // Hue, Saturation, Value, Alpha
-/// assert_eq!(c.hsv_channels(), (337.0, 1.0, 0.8, 0.5));
+/// let c = hsb!(342.0, 100.0, 80.0, 0.5); // Hue, Saturation, Brightness, Alpha
+/// assert_eq!(c.levels(), [0.95, 1.0, 0.8, 0.5]);
 /// ```
 #[macro_export]
-macro_rules! hsv {
+macro_rules! hsb {
     ($gray:expr) => {
-        hsv!(0.0, 0.0, $gray)
+        hsb!(0.0, 0.0, $gray)
     };
     ($gray:expr, $a:expr$(,)?) => {
-        hsv!(0.0, 0.0, $gray, $a)
+        hsb!(0.0, 0.0, $gray, $a)
     };
-    ($h:expr, $s:expr, $v:expr$(,)?) => {
-        hsv!($h, $s, $v, 1.0)
+    ($h:expr, $s:expr, $b:expr$(,)?) => {
+        hsb!($h, $s, $b, 1.0)
     };
-    ($h:expr, $s:expr, $v:expr, $a:expr$(,)?) => {
-        $crate::color::Color::hsva($h, $s, $v, $a)
+    ($h:expr, $s:expr, $b:expr, $a:expr$(,)?) => {
+        $crate::color::Color::hsba($h, $s, $b, $a)
     };
 }
 
-/// A color represented as [Rgb] or [Hsv].
-#[allow(variant_size_differences)]
-#[derive(Debug, Copy, Clone, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub enum Color {
-    /// Red, Green, Blue and Alpha values.
-    Rgb(Rgb),
-    /// Hue, Saturation, Value and Alpha values.
-    Hsv(Hsv),
-}
-
-impl Color {
-    /// Create a new `Color`, defaulting to black.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::new();
-    /// assert_eq!(c.rgb_channels(), (0, 0, 0, 255));
-    /// ```
-    pub fn new() -> Self {
-        Self::Rgb(Rgb::new())
-    }
-
-    /// Create a new `Color` with red, green, and blue with alpha of 255.
-    ///
-    /// # Example
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::rgb(128, 64, 0);
-    /// assert_eq!(c.rgb_channels(), (128, 64, 0, 255));
-    /// ```
-    pub const fn rgb(r: u8, g: u8, b: u8) -> Self {
-        Self::rgba(r, g, b, 255)
-    }
-
-    /// Create a new `Color` with red, green, blue, and alpha of 255.
-    ///
-    /// # Example
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::rgba(128, 64, 128, 128);
-    /// assert_eq!(c.rgb_channels(), (128, 64, 128, 128));
-    /// ```
-    pub const fn rgba(r: u8, g: u8, b: u8, a: u8) -> Self {
-        Self::Rgb(Rgb::rgba(r, g, b, a))
-    }
-
-    /// Create a new `Color` with hue, saturation, and value with alpha of 255.
-    ///
-    /// # Example
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::hsv(128.0, 0.8, 0.0);
-    /// assert_eq!(c.hsv_channels(), (128.0, 0.8, 0.0, 1.0));
-    /// ```
-    pub fn hsv(h: f32, s: f32, v: f32) -> Self {
-        Self::hsva(h, s, v, 1.0)
-    }
-
-    /// Create a new `Color` with hue, saturation, value and alpha.
-    ///
-    /// # Example
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::hsva(128.0, 0.8, 0.0, 0.5);
-    /// assert_eq!(c.hsv_channels(), (128.0, 0.8, 0.0, 0.5));
-    /// ```
-    pub fn hsva(h: f32, s: f32, v: f32, a: f32) -> Self {
-        Self::Hsv(Hsv::hsva(h, s, v, a))
-    }
-
-    /// Create a new `Color` with random red, green, and blue with alpha of 255.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # #[allow(unused_variables)]
-    /// let c = Color::random();
-    /// // `c.rgb_channels()` will return something like:
-    /// // (207, 12, 217, 255)
-    /// ```
-    pub fn random() -> Self {
-        Self::Rgb(Rgb::random())
-    }
-
-    /// Create a new `Color` with random red, green, blue and alpha.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # #[allow(unused_variables)]
-    /// let c = Color::random_alpha();
-    /// // `c.rgb_channels()` will return something like:
-    /// // (132, 159, 233, 76)
-    /// ```
-    pub fn random_alpha() -> Self {
-        Self::Rgb(Rgb::random_alpha())
-    }
-
-    /// Create a new `Color` from a slice of 1-4 [u8] RGBA values. The number of values provided
-    /// alter how they are interpreted similar to the [rgb!] macro.
-    ///
-    /// # Errors
-    ///
-    /// If the slice is empty or has more than 4 values, an error is returned.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let vals: Vec<u8> = vec![128, 64, 0];
-    /// let c = Color::from_rgb_slice(&vals)?; // RGB Vec
-    /// assert_eq!(c.rgb_channels(), (128, 64, 0, 255));
-    ///
-    /// let vals: [u8; 4] = [128, 64, 0, 128];
-    /// let c = Color::from_rgb_slice(&vals[..])?; // RGBA slice
-    /// assert_eq!(c.rgb_channels(), (128, 64, 0, 128));
-    /// # Ok::<(), ColorError>(())
-    /// ```
-    pub fn from_rgb_slice(slice: &[u8]) -> Result<Self, ColorError> {
-        match *slice {
-            [gray] => Ok(Self::rgb(gray, gray, gray)),
-            [gray, a] => Ok(Self::rgba(gray, gray, gray, a)),
-            [r, g, b] => Ok(Self::rgb(r, g, b)),
-            [r, g, b, a] => Ok(Self::rgba(r, g, b, a)),
-            _ => Err(ColorError::InvalidRgbSlice(Cow::from(slice.to_owned()))),
-        }
-    }
-
-    /// Create a new `Color` from a slice of 1-4 [u32] HSVA values. The number of values provided
-    /// alter how they are interpreted similar to the [hsv!] macro.
-    ///
-    /// # Errors
-    ///
-    /// If the slice is empty or has more than 4 values, an error is returned.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let vals: Vec<f32> = vec![128.0, 0.8, 0.0];
-    /// let c = Color::from_hsv_slice(&vals)?; // HSV Vec
-    /// assert_eq!(c.hsv_channels(), (128.0, 0.8, 0.0, 1.0));
-    ///
-    /// let vals: [f32; 4] = [128.0, 0.8, 0.0, 0.5];
-    /// let c = Color::from_hsv_slice(&vals[..])?; // HSVA slice
-    /// assert_eq!(c.hsv_channels(), (128.0, 0.8, 0.0, 0.5));
-    /// # Ok::<(), ColorError>(())
-    /// ```
-    pub fn from_hsv_slice(slice: &[f32]) -> Result<Self, ColorError> {
-        match *slice {
-            [gray] => Ok(Self::hsv(gray, gray, gray)),
-            [gray, a] => Ok(Self::hsva(gray, gray, gray, a)),
-            [h, s, v] => Ok(Self::hsv(h, s, v)),
-            [h, s, v, a] => Ok(Self::hsva(h, s, v, a)),
-            _ => Err(ColorError::InvalidHsvSlice(Cow::from(slice.to_owned()))),
-        }
-    }
-
-    /// Create a new `Color` from a [u32] RGBA hexadecimal value.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::from_hex(0xF0FF00FF);
-    /// assert_eq!(c.rgb_channels(), (240, 255, 0, 255));
-    ///
-    /// let c = Color::from_hex(0xF0FF0080);
-    /// assert_eq!(c.rgb_channels(), (240, 255, 0, 128));
-    /// ```
-    pub fn from_hex(hex: u32) -> Self {
-        let [r, g, b, a] = hex.to_be_bytes();
-        Self::rgba(r, g, b, a)
-    }
-
-    /// Get the red, green, blue, and alpha channels as a tuple of 4 [u8] values.
-    ///
-    /// # Example
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::rgba(128, 64, 128, 128);
-    /// assert_eq!(c.rgb_channels(), (128, 64, 128, 128));
-    /// ```
-    pub fn rgb_channels(self) -> (u8, u8, u8, u8) {
-        match self {
-            Self::Rgb(rgb) => (rgb.r, rgb.g, rgb.b, rgb.a),
-            Self::Hsv(hsv) => {
-                let rgb = hsv.to_rgb();
-                (rgb.r, rgb.g, rgb.b, rgb.a)
-            }
-        }
-    }
-
-    /// Get the hue, saturation, value, and alpha channels as a tuple of 4 [f32] values.
-    ///
-    /// # Example
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::hsva(128.0, 0.8, 1.0, 0.5);
-    /// assert_eq!(c.hsv_channels(), (128.0, 0.8, 1.0, 0.5));
-    /// ```
-    pub fn hsv_channels(self) -> (f32, f32, f32, f32) {
-        match self {
-            Self::Rgb(rgb) => {
-                let hsv = rgb.to_hsv();
-                (hsv.h, hsv.s, hsv.v, hsv.a)
-            }
-            Self::Hsv(hsv) => (hsv.h, hsv.s, hsv.v, hsv.a),
-        }
-    }
-
-    /// Convert `Color` from [Rgb] into [Hsv].
-    ///
-    /// Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// assert_eq!(rgb!(0, 0, 255).to_hsv(), hsv!(240.0, 1.0, 1.0)); // blue
-    /// ```
-    pub fn to_hsv(self) -> Self {
-        match self {
-            Self::Rgb(rgb) => Self::Hsv(rgb.to_hsv()),
-            Self::Hsv(_) => self,
-        }
-    }
-
-    /// Convert `Color` from [Hsv] into [Rgb].
-    ///
-    /// Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// assert_eq!(hsv!(240.0, 1.0, 1.0).to_rgb(), rgb!(0, 0, 255)); // blue
-    /// ```
-    pub fn to_rgb(self) -> Self {
-        match self {
-            Self::Rgb(_) => self,
-            Self::Hsv(hsv) => Self::Rgb(hsv.to_rgb()),
-        }
-    }
-
-    /// Creates a new `Color` by linear interpolating between two colors by a given amount between
-    /// 0.0 and 1.0.
-    ///
-    /// # Note
-    ///
-    /// You can lerp between any mix of [Rgb] and [Hsv] Colors, but an implicit conversion is
-    /// performed based on the format of `self`. See examples for reference.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let from = rgb!(255, 0, 0);
-    /// let to = rgb!(0, 100, 255);
-    /// let lerped = from.lerp(to, 0.5);
-    /// assert_eq!(lerped.rgb_channels(), (128, 50, 128, 255));
-    ///
-    /// let from = rgb!(255, 0, 0);
-    /// let to = hsv!(120.0, 0.8, 1.0, 0.5);
-    /// let lerped = from.lerp(to, 0.25); // `to` is implicity converted to RGB
-    /// assert_eq!(lerped.rgb_channels(), (204, 64, 13, 223));
-    /// ```
-    pub fn lerp(self, c2: Color, amt: f32) -> Self {
-        let amt = amt.clamp(0.0, 1.0);
-        let lerp = |start, stop, amt| amt * (stop - start) + start;
-        match self {
-            Self::Rgb(rgb) => {
-                let (r, g, b, a) = rgb.channels();
-                let (or, og, ob, oa) = c2.rgb_channels();
-                let r = lerp(r as f32, or as f32, amt).round() as u8;
-                let g = lerp(g as f32, og as f32, amt).round() as u8;
-                let b = lerp(b as f32, ob as f32, amt).round() as u8;
-                let a = lerp(a as f32, oa as f32, amt).round() as u8;
-                Self::rgba(r, g, b, a)
-            }
-            Self::Hsv(hsv) => {
-                let (h, s, v, a) = hsv.channels();
-                let (oh, os, ov, oa) = c2.hsv_channels();
-                let h = lerp(h, oh, amt);
-                let s = lerp(s, os, amt);
-                let v = lerp(v, ov, amt);
-                let a = lerp(a, oa, amt);
-                Self::hsva(h, s, v, a)
-            }
-        }
-    }
+/// # Constructs a [Hsl] [Color].
+///
+/// # Examples
+///
+/// ```
+/// # use pix_engine::prelude::*;
+///
+/// let c = hsl!(50.0); // Gray
+/// assert_eq!(c.levels(), [0.0, 0.0, 0.5, 1.0]);
+///
+/// let c = hsl!(50.0, 0.5); // Gray with alpha
+/// assert_eq!(c.levels(), [0.0, 0.0, 0.5, 0.5]);
+///
+/// let c = hsl!(342.0, 100.0, 80.0); // Hue, Saturation, Lightness
+/// assert_eq!(c.levels(), [0.95, 1.0, 0.8, 1.0]);
+///
+/// let c = hsl!(342.0, 100.0, 80.0, 0.5); // Hue, Saturation, Lightness, Alpha
+/// assert_eq!(c.levels(), [0.95, 1.0, 0.8, 0.5]);
+/// ```
+#[macro_export]
+macro_rules! hsl {
+    ($gray:expr) => {
+        hsl!(0.0, 0.0, $gray)
+    };
+    ($gray:expr, $a:expr$(,)?) => {
+        hsl!(0.0, 0.0, $gray, $a)
+    };
+    ($h:expr, $s:expr, $l:expr$(,)?) => {
+        hsl!($h, $s, $l, 1.0)
+    };
+    ($h:expr, $s:expr, $l:expr, $a:expr$(,)?) => {
+        $crate::color::Color::hsla($h, $s, $l, $a)
+    };
 }
 
 impl Default for Color {
     fn default() -> Self {
-        Self::new()
+        Self::rgb(0, 0, 0)
+    }
+}
+
+impl Index<usize> for Color {
+    type Output = f64;
+    fn index(&self, idx: usize) -> &Self::Output {
+        match idx {
+            i if i < 4 => self.levels.get(i).unwrap(),
+            _ => panic!("index out of bounds: the len is 4 but the index is {}", idx),
+        }
     }
 }
 
 impl LowerHex for Color {
+    #[allow(clippy::many_single_char_names)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Rgb(rgb) => LowerHex::fmt(rgb, f),
-            Self::Hsv(hsv) => LowerHex::fmt(&hsv.to_rgb(), f),
-        }
+        let [r, g, b, a] = self.channels();
+        write!(f, "#{:x}{:x}{:x}{:x}", r, g, b, a)
     }
 }
 
 impl UpperHex for Color {
+    #[allow(clippy::many_single_char_names)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Rgb(rgb) => UpperHex::fmt(rgb, f),
-            Self::Hsv(hsv) => UpperHex::fmt(&hsv.to_rgb(), f),
-        }
+        let [r, g, b, a] = self.channels();
+        write!(f, "#{:X}{:X}{:X}{:X}", r, g, b, a)
     }
 }
 
 impl Add for Color {
     type Output = Self;
-    fn add(self, color: Color) -> Self::Output {
-        match self {
-            Self::Rgb(rgb) => {
-                let (r, g, b, a) = color.rgb_channels();
-                rgb!(
-                    rgb.r.saturating_add(r),
-                    rgb.g.saturating_add(g),
-                    rgb.b.saturating_add(b),
-                    rgb.a.saturating_add(a)
-                )
-            }
-            Self::Hsv(hsv) => {
-                let (_, s, _, a) = color.hsv_channels();
-                hsv!(
-                    hsv.h,
-                    (hsv.s + s).clamp(0.0, 1.0),
-                    hsv.v,
-                    (hsv.a + a).clamp(0.0, 1.0)
-                )
-            }
+    fn add(self, other: Color) -> Self::Output {
+        let other = other.to_format(self.format);
+        let [v1, v2, v3, a] = self.levels();
+        let [ov1, ov2, ov3, oa] = other.levels();
+        Self::new_alpha(self.format, v1 + ov1, v2 + ov2, v3 + ov3, a + oa)
+    }
+}
+
+impl AddAssign for Color {
+    fn add_assign(&mut self, other: Color) {
+        let other = other.to_format(self.format);
+        for i in 0..4 {
+            self.levels[i] = (self.levels[i] + other.levels[i]).clamp(0.0, 1.0);
         }
     }
 }
 
 impl Sub for Color {
     type Output = Self;
-    fn sub(self, color: Color) -> Self::Output {
-        match self {
-            Self::Rgb(rgb) => {
-                let (r, g, b, a) = color.rgb_channels();
-                rgb!(
-                    rgb.r.saturating_sub(r),
-                    rgb.g.saturating_sub(g),
-                    rgb.b.saturating_sub(b),
-                    rgb.a.saturating_sub(a)
-                )
-            }
-            Self::Hsv(hsv) => {
-                let (_, s, _, a) = color.hsv_channels();
-                hsv!(
-                    hsv.h,
-                    (hsv.s - s).clamp(0.0, 1.0),
-                    hsv.v,
-                    (hsv.a - a).clamp(0.0, 1.0)
-                )
-            }
+    fn sub(self, other: Color) -> Self::Output {
+        let other = other.to_format(self.format);
+        let [v1, v2, v3, a] = self.levels();
+        let [ov1, ov2, ov3, oa] = other.levels();
+        Self::new_alpha(self.format, v1 - ov1, v2 - ov2, v3 - ov3, a - oa)
+    }
+}
+
+impl SubAssign for Color {
+    fn sub_assign(&mut self, other: Color) {
+        let other = other.to_format(self.format);
+        for i in 0..4 {
+            self.levels[i] = (self.levels[i] - other.levels[i]).clamp(0.0, 1.0);
         }
     }
 }
 
-impl Mul<u8> for Color {
+impl Mul<f32> for Color {
     type Output = Self;
-    fn mul(self, s: u8) -> Self::Output {
-        match self {
-            Self::Rgb(rgb) => rgb!(rgb.r * s, rgb.g * s, rgb.b * s),
-            Self::Hsv(hsv) => hsv!(hsv.h, hsv.s * s as f32, hsv.v),
+    fn mul(self, s: f32) -> Self::Output {
+        let [v1, v2, v3, a] = self.levels();
+        Self::new_alpha(
+            self.format,
+            v1 * s as f64,
+            v2 * s as f64,
+            v3 * s as f64,
+            a * s as f64,
+        )
+    }
+}
+
+impl MulAssign<f32> for Color {
+    fn mul_assign(&mut self, s: f32) {
+        for i in 0..4 {
+            self.levels[i] = (self.levels[i] * s as f64).clamp(0.0, 1.0);
         }
     }
 }
@@ -541,23 +566,37 @@ impl Mul<u8> for Color {
 impl Mul<f64> for Color {
     type Output = Self;
     fn mul(self, s: f64) -> Self::Output {
-        match self {
-            Self::Rgb(rgb) => rgb!(
-                (rgb.r as f64 * s).clamp(0.0, 255.0) as u8,
-                (rgb.g as f64 * s).clamp(0.0, 255.0) as u8,
-                (rgb.b as f64 * s).clamp(0.0, 255.0) as u8
-            ),
-            Self::Hsv(hsv) => hsv!(hsv.h, hsv.s * s as f32, hsv.v),
+        let [v1, v2, v3, a] = self.levels();
+        Self::new_alpha(self.format, v1 * s, v2 * s, v3 * s, a * s)
+    }
+}
+
+impl MulAssign<f64> for Color {
+    fn mul_assign(&mut self, s: f64) {
+        for i in 0..4 {
+            self.levels[i] = (self.levels[i] * s).clamp(0.0, 1.0);
         }
     }
 }
 
-impl Div<u8> for Color {
+impl Div<f32> for Color {
     type Output = Self;
-    fn div(self, s: u8) -> Self::Output {
-        match self {
-            Self::Rgb(rgb) => rgb!(rgb.r / s, rgb.g / s, rgb.b / s),
-            Self::Hsv(hsv) => hsv!(hsv.h, hsv.s / s as f32, hsv.v),
+    fn div(self, s: f32) -> Self::Output {
+        let [v1, v2, v3, a] = self.levels();
+        Self::new_alpha(
+            self.format,
+            v1 / s as f64,
+            v2 / s as f64,
+            v3 / s as f64,
+            a / s as f64,
+        )
+    }
+}
+
+impl DivAssign<f32> for Color {
+    fn div_assign(&mut self, s: f32) {
+        for i in 0..4 {
+            self.levels[i] = (self.levels[i] / s as f64).clamp(0.0, 1.0);
         }
     }
 }
@@ -565,123 +604,15 @@ impl Div<u8> for Color {
 impl Div<f64> for Color {
     type Output = Self;
     fn div(self, s: f64) -> Self::Output {
-        match self {
-            Self::Rgb(rgb) => rgb!(
-                (rgb.r as f64 / s).clamp(0.0, 255.0) as u8,
-                (rgb.g as f64 / s).clamp(0.0, 255.0) as u8,
-                (rgb.b as f64 / s).clamp(0.0, 255.0) as u8
-            ),
-            Self::Hsv(hsv) => hsv!(hsv.h, hsv.s / s as f32, hsv.v),
-        }
+        let [v1, v2, v3, a] = self.levels();
+        Self::new_alpha(self.format, v1 / s, v2 / s, v3 / s, a / s)
     }
 }
 
-impl FromStr for Color {
-    type Err = ColorError;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self::Rgb(Rgb::from_str(s)?))
-    }
-}
-
-impl TryFrom<&str> for Color {
-    type Error = ColorError;
-    fn try_from(s: &str) -> Result<Self, Self::Error> {
-        Self::from_str(s)
-    }
-}
-
-impl From<u8> for Color {
-    fn from(gray: u8) -> Self {
-        rgb!(gray)
-    }
-}
-
-impl From<(u8, u8)> for Color {
-    fn from((gray, a): (u8, u8)) -> Self {
-        rgb!(gray, a)
-    }
-}
-
-impl From<(u8, u8, u8)> for Color {
-    fn from((r, g, b): (u8, u8, u8)) -> Self {
-        rgb!(r, g, b)
-    }
-}
-
-impl From<(u8, u8, u8, u8)> for Color {
-    fn from((r, g, b, a): (u8, u8, u8, u8)) -> Self {
-        rgb!(r, g, b, a)
-    }
-}
-
-impl From<Color> for (u8, u8, u8, u8) {
-    fn from(color: Color) -> Self {
-        match color {
-            Color::Rgb(rgb) => rgb.into(),
-            Color::Hsv(hsv) => hsv.to_rgb().into(),
-        }
-    }
-}
-
-impl From<Color> for (f32, f32, f32, f32) {
-    fn from(color: Color) -> Self {
-        match color {
-            Color::Rgb(rgb) => rgb.to_hsv().into(),
-            Color::Hsv(hsv) => hsv.into(),
-        }
-    }
-}
-
-impl From<Rgb> for Color {
-    fn from(rgb: Rgb) -> Self {
-        Self::Rgb(rgb)
-    }
-}
-
-impl From<f32> for Color {
-    fn from(gray: f32) -> Self {
-        hsv!(gray)
-    }
-}
-
-impl From<(f32, f32)> for Color {
-    fn from((gray, a): (f32, f32)) -> Self {
-        hsv!(gray, a)
-    }
-}
-
-impl From<(f32, f32, f32)> for Color {
-    fn from((h, s, v): (f32, f32, f32)) -> Self {
-        hsv!(h, s, v)
-    }
-}
-
-impl From<(f32, f32, f32, f32)> for Color {
-    fn from((h, s, v, a): (f32, f32, f32, f32)) -> Self {
-        hsv!(h, s, v, a)
-    }
-}
-
-impl From<Hsv> for Color {
-    fn from(hsv: Hsv) -> Self {
-        Self::Hsv(hsv)
-    }
-}
-
-impl From<Color> for Rgb {
-    fn from(color: Color) -> Self {
-        match color {
-            Color::Rgb(rgb) => rgb,
-            Color::Hsv(hsv) => hsv.to_rgb(),
-        }
-    }
-}
-
-impl From<Color> for Hsv {
-    fn from(color: Color) -> Self {
-        match color {
-            Color::Rgb(rgb) => rgb.to_hsv(),
-            Color::Hsv(hsv) => hsv,
+impl DivAssign<f64> for Color {
+    fn div_assign(&mut self, s: f64) {
+        for i in 0..4 {
+            self.levels[i] = (self.levels[i] / s).clamp(0.0, 1.0);
         }
     }
 }
@@ -690,10 +621,8 @@ impl From<Color> for Hsv {
 #[non_exhaustive]
 #[derive(Debug, Clone)]
 pub enum ColorError {
-    /// Error when creating a [Color] from an invalid [Rgb] slice.
-    InvalidRgbSlice(Cow<'static, [u8]>),
-    /// Error when creating a [Color] from an invalid [Hsv] slice.
-    InvalidHsvSlice(Cow<'static, [f32]>),
+    /// Error when creating a [Color] from an invalid slice.
+    InvalidSlice(Cow<'static, [f64]>),
     /// Error when creating a [Color] from an invalid string.
     InvalidString(Cow<'static, str>),
 }
@@ -702,8 +631,7 @@ impl fmt::Display for ColorError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use ColorError::*;
         match self {
-            InvalidRgbSlice(slice) => write!(f, "invalid Rgb slice: {:?}", slice),
-            InvalidHsvSlice(slice) => write!(f, "invalid Hsv slice: {:?}", slice),
+            InvalidSlice(slice) => write!(f, "invalid color slice: {:?}", slice),
             InvalidString(s) => write!(f, "invalid color string format: {}", s),
         }
     }
@@ -713,44 +641,19 @@ impl error::Error for ColorError {}
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn test_hsv_to_rgb() {
-        assert_eq!(hsv!(0.0, 0.0, 0.0).to_rgb(), rgb!(0, 0, 0)); // Black
-        assert_eq!(hsv!(0.0, 0.0, 1.0).to_rgb(), rgb!(255, 255, 255)); // White
-        assert_eq!(hsv!(0.0, 1.0, 1.0).to_rgb(), rgb!(255, 0, 0)); // Red
-        assert_eq!(hsv!(120.0, 1.0, 1.0).to_rgb(), rgb!(0, 255, 0)); // Lime
-        assert_eq!(hsv!(240.0, 1.0, 1.0).to_rgb(), rgb!(0, 0, 255)); // Blue
-        assert_eq!(hsv!(60.0, 1.0, 1.0).to_rgb(), rgb!(255, 255, 0)); // Yellow
-        assert_eq!(hsv!(180.0, 1.0, 1.0).to_rgb(), rgb!(0, 255, 255)); // Cyan
-        assert_eq!(hsv!(300.0, 1.0, 1.0).to_rgb(), rgb!(255, 0, 255)); // Magenta
-        assert_eq!(hsv!(0.0, 0.0, 0.75).to_rgb(), rgb!(191, 191, 191)); // Silver
-        assert_eq!(hsv!(0.0, 0.0, 0.5).to_rgb(), rgb!(128, 128, 128)); // Gray
-        assert_eq!(hsv!(0.0, 1.0, 0.5).to_rgb(), rgb!(128, 0, 0)); // Maroon
-        assert_eq!(hsv!(60.0, 1.0, 0.5).to_rgb(), rgb!(128, 128, 0)); // Olive
-        assert_eq!(hsv!(120.0, 1.0, 0.5).to_rgb(), rgb!(0, 128, 0)); // Green
-        assert_eq!(hsv!(300.0, 1.0, 0.5).to_rgb(), rgb!(128, 0, 128)); // Purple
-        assert_eq!(hsv!(180.0, 1.0, 0.5).to_rgb(), rgb!(0, 128, 128)); // Teal
-        assert_eq!(hsv!(240.0, 1.0, 0.5).to_rgb(), rgb!(0, 0, 128)); // Navy
-    }
+    use super::*;
 
     #[test]
-    fn test_rgb_to_hsv() {
-        assert_eq!(rgb!(0, 0, 0).to_hsv(), hsv!(0.0, 0.0, 0.0)); // Black
-        assert_eq!(rgb!(255, 255, 255).to_hsv(), hsv!(0.0, 0.0, 1.0)); // White
-        assert_eq!(rgb!(255, 0, 0).to_hsv(), hsv!(0.0, 1.0, 1.0)); // Red
-        assert_eq!(rgb!(0, 255, 0).to_hsv(), hsv!(120.0, 1.0, 1.0)); // Lime
-        assert_eq!(rgb!(0, 0, 255).to_hsv(), hsv!(240.0, 1.0, 1.0)); // Blue
-        assert_eq!(rgb!(255, 255, 0).to_hsv(), hsv!(60.0, 1.0, 1.0)); // Yellow
-        assert_eq!(rgb!(0, 255, 255).to_hsv(), hsv!(180.0, 1.0, 1.0)); // Cyan
-        assert_eq!(rgb!(255, 0, 255).to_hsv(), hsv!(300.0, 1.0, 1.0)); // Magenta
-
-        assert_eq!(rgb!(191, 191, 191).to_hsv(), hsv!(0.0, 0.0, 0.7490196)); // Silver
-        assert_eq!(rgb!(128, 128, 128).to_hsv(), hsv!(0.0, 0.0, 0.5019608)); // Gray
-        assert_eq!(rgb!(128, 0, 0).to_hsv(), hsv!(0.0, 1.0, 0.5019608)); // Maroon
-        assert_eq!(rgb!(128, 128, 0).to_hsv(), hsv!(60.0, 1.0, 0.5019608)); // Olive
-        assert_eq!(rgb!(0, 128, 0).to_hsv(), hsv!(120.0, 1.0, 0.5019608)); // Green
-        assert_eq!(rgb!(128, 0, 128).to_hsv(), hsv!(300.0, 1.0, 0.5019608)); // Purple
-        assert_eq!(rgb!(0, 128, 128).to_hsv(), hsv!(180.0, 1.0, 0.5019608)); // Teal
-        assert_eq!(rgb!(0, 0, 128).to_hsv(), hsv!(240.0, 1.0, 0.5019608)); // Navy
+    fn test_constructors() {
+        let expected = |format| Color {
+            levels: [0.0, 0.0, 0.0, 1.0],
+            format,
+        };
+        assert_eq!(Color::new(Rgb, 0.0, 0.0, 0.0), expected(Rgb));
+        assert_eq!(Color::new_alpha(Rgb, 0.0, 0.0, 0.0, 255.0), expected(Rgb));
+        assert_eq!(Color::new(Hsb, 0.0, 0.0, 0.0), expected(Hsb));
+        assert_eq!(Color::new_alpha(Hsb, 0.0, 0.0, 0.0, 1.0), expected(Hsb));
+        assert_eq!(Color::new(Hsl, 0.0, 0.0, 0.0), expected(Hsl));
+        assert_eq!(Color::new_alpha(Hsl, 0.0, 0.0, 0.0, 1.0), expected(Hsl));
     }
 }

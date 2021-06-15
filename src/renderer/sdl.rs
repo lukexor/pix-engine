@@ -865,13 +865,14 @@ impl From<SdlAxis> for Axis {
 
 impl ToColor for Color {
     fn as_rgba(&self) -> (u8, u8, u8, u8) {
-        self.rgb_channels()
+        let [r, g, b, a] = self.channels();
+        (r, g, b, a)
     }
 }
 
 impl From<Color> for SdlColor {
     fn from(color: Color) -> Self {
-        let (r, g, b, a) = color.rgb_channels();
+        let [r, g, b, a] = color.channels();
         Self::RGBA(r, g, b, a)
     }
 }

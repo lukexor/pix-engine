@@ -6,7 +6,7 @@ const HEIGHT: u32 = 600;
 const SIZE: u32 = 4;
 
 struct Colors {
-    h: f32,
+    h: f64,
     auto: bool,
 }
 
@@ -18,9 +18,9 @@ impl Colors {
     fn draw_gradient(&mut self, state: &mut PixState) -> PixResult<()> {
         for x in (0..WIDTH / SIZE).into_iter() {
             for y in (0..HEIGHT / SIZE).into_iter() {
-                let s = map((SIZE * x) as f32, 0.0, WIDTH as f32, 0.0, 1.0);
-                let v = map((SIZE * y) as f32, 0.0, HEIGHT as f32, 0.0, 1.0);
-                state.fill(hsv!(self.h, s, v));
+                let s = map((SIZE * x) as f64, 0.0, WIDTH as f64, 0.0, 100.0);
+                let v = map((SIZE * y) as f64, 0.0, HEIGHT as f64, 0.0, 100.0);
+                state.fill(hsb!(self.h, s, v));
                 state.rect(((SIZE * x), (SIZE * y), SIZE, SIZE))?;
             }
         }
@@ -33,7 +33,7 @@ impl Colors {
         Ok(())
     }
 
-    fn modify_hue(&mut self, change: f32, auto: bool) {
+    fn modify_hue(&mut self, change: f64, auto: bool) {
         self.auto = auto;
         self.h = (self.h + change) % 360.0;
         if self.h < 0.0 {
