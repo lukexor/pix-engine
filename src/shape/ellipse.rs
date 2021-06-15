@@ -1,7 +1,6 @@
 //! 2D Circle types used for drawing.
 
-use super::Point;
-use crate::vector::Vector;
+use crate::prelude::{Point, Vector};
 use num::Num;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -32,14 +31,11 @@ pub struct Ellipse<T> {
 /// ```
 #[macro_export]
 macro_rules! ellipse {
-    () => {
-        ellipse!(0, 0)
+    ($p:expr, $r:expr$(,)?) => {
+        ellipse!($p, $r, $r)
     };
-    ($x:expr, $y:expr$(,)?) => {
-        ellipse!($x, $y, 100)
-    };
-    ($x:expr, $y:expr, $s:expr$(,)?) => {
-        ellipse!($x, $y, $s, $s)
+    ($p:expr, $w:expr, $h:expr$(,)?) => {
+        ellipse!($p.x, $p.y, $w, $h)
     };
     ($x:expr, $y:expr, $w:expr, $h:expr$(,)?) => {
         $crate::shape::ellipse::Ellipse::new($x, $y, $w, $h)
@@ -139,9 +135,6 @@ pub struct Circle<T> {
 /// ```
 #[macro_export]
 macro_rules! circle {
-    () => {
-        circle!(0, 0)
-    };
     ($p:expr, $r:expr$(,)?) => {
         circle!($p.x, $p.y, $r)
     };
@@ -200,5 +193,65 @@ impl<T> From<(Point<T>, T)> for Circle<T> {
 impl<T> From<(Vector<T>, T)> for Circle<T> {
     fn from((v, r): (Vector<T>, T)) -> Self {
         Self { x: v.x, y: v.y, r }
+    }
+}
+
+/// A `Sphere` positioned at (x, y, z) with radius.
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Sphere<T> {
+    /// Center position
+    pub center: Point<T>,
+    /// Radius
+    pub radius: T,
+}
+
+/// # Create new [Sphere<T>].
+///
+/// ```
+/// use pix_engine::prelude::*;
+/// let s = sphere!((10, 20, 10), 100);
+/// assert_eq!(s.center, point!(10, 20, 10));
+/// assert_eq!(s.radius, 100);
+/// ```
+#[macro_export]
+macro_rules! sphere {
+    ($p:expr, $r:expr$(,)?) => {
+        $crate::shape::ellipse::Sphere::new($p, $r)
+    };
+    (($x:expr, $y:expr, $z:expr), $r:expr$(,)?) => {
+        $crate::shape::ellipse::Sphere::new(($x, $y, $z), $r)
+    };
+}
+
+impl<T> Sphere<T>
+where
+    T: Num,
+{
+    /// Create new `Sphere`.
+    pub fn new<P>(center: P, radius: T) -> Self
+    where
+        P: Into<Point<T>>,
+    {
+        Self {
+            center: center.into(),
+            radius,
+        }
+    }
+
+    /// Whether a 3D [Point<T>] lies inside this sphere.
+    pub fn contains(&self, _p: impl Into<Point<T>>) -> bool
+    where
+        T: PartialOrd + Copy,
+    {
+        todo!("sphere contains")
+    }
+
+    /// Whether another sphere overlaps this one.
+    pub fn overlaps(&self, _other: Sphere<T>) -> bool
+    where
+        T: PartialOrd + Copy,
+    {
+        todo!("sphere overlaps")
     }
 }

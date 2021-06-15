@@ -1,6 +1,8 @@
 //! 2D/3D Point type used for drawing.
 
+use crate::vector::Vector;
 use num::Num;
+use num_traits::AsPrimitive;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::{fmt, iter::Sum, ops::*};
@@ -41,18 +43,54 @@ macro_rules! point {
     };
 }
 
+impl<T> Point<T> {
+    /// Create 3D `Point`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p = Point::new_3d(2, 3, 1);
+    /// assert_eq!(p.get(), (2, 3, 1));
+    /// ```
+    pub const fn new_3d(x: T, y: T, z: T) -> Self {
+        Self { x, y, z }
+    }
+
+    /// Set `Point` coordinates from (x, y, z).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut p = Point::new_3d(2, 1, 3);
+    /// assert_eq!(p.get(), (2, 1, 3));
+    /// p.set((1, 2, 4));
+    /// assert_eq!(p.get(), (1, 2, 4));
+    /// ```
+    pub fn set(&mut self, v: impl Into<Vector<T>>) {
+        let v = v.into();
+        self.x = v.x;
+        self.y = v.y;
+        self.z = v.z;
+    }
+}
+
 impl<T> Point<T>
 where
     T: Num + Copy,
 {
-    /// Create new 2D `Point`.
+    /// Create 2D `Point`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p = Point::new_2d(2, 3);
+    /// assert_eq!(p.get(), (2, 3, 0));
+    /// ```
     pub fn new_2d(x: T, y: T) -> Self {
         Self { x, y, z: T::zero() }
-    }
-
-    /// Create new 3D `Point`.
-    pub fn new_3d(x: T, y: T, z: T) -> Self {
-        Self { x, y, z }
     }
 
     /// Get `Point` coordinates as (x, y, z).
@@ -79,6 +117,28 @@ where
     /// ```
     pub fn values(&self) -> [T; 3] {
         [self.x, self.y, self.z]
+    }
+
+    /// Convert [Point<T>] to [Vector<U>].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p = point!(1, 2, 3);
+    /// let v: Vector<f64> = p.as_vector();
+    /// assert_eq!(v.values(), [1.0, 2.0, 3.0]);
+    /// ```
+    pub fn as_vector<U>(&self) -> Vector<U>
+    where
+        T: AsPrimitive<U>,
+        U: 'static + Copy,
+    {
+        Vector {
+            x: self.x.as_(),
+            y: self.y.as_(),
+            z: self.z.as_(),
+        }
     }
 }
 

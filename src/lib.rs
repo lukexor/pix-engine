@@ -1,5 +1,6 @@
-#![deny(missing_docs, missing_doc_code_examples, unused)]
+#![deny(missing_docs, missing_doc_code_examples)]
 #![warn(
+    unused,
     deprecated_in_future,
     unreachable_pub,
     unused_crate_dependencies,
@@ -83,6 +84,7 @@ pub mod draw;
 pub mod engine;
 pub mod event;
 pub mod image;
+pub mod lighting;
 #[macro_use]
 pub mod math;
 pub mod renderer;
@@ -96,7 +98,6 @@ mod common;
 mod utils;
 
 /// Exports most commonly used types, traits, and functions.
-#[macro_use]
 pub mod prelude {
     use super::*;
     pub use color::{constants::*, Color, ColorError};
@@ -105,6 +106,7 @@ pub mod prelude {
     pub use engine::PixEngine;
     pub use event::*;
     pub use image::{Error as ImageError, Image, PixelFormat, Result as ImageResult};
+    pub use lighting::{Light, LightSource};
     pub use math::map;
     pub use renderer::{Error as RendererError, Position, Result as RendererResult};
     pub use shape::*;
@@ -119,5 +121,5 @@ pub mod prelude {
     // Math macros
     pub use {noise, random, vector};
     // Shape macros
-    pub use {circle, ellipse, point, rect, square};
+    pub use {circle, ellipse, point, rect, sphere, square};
 }

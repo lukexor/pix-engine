@@ -10,7 +10,7 @@ pub mod point;
 pub mod rect;
 pub mod triangle;
 
-pub use ellipse::{Circle, Ellipse};
+pub use ellipse::{Circle, Ellipse, Sphere};
 pub use line::Line;
 pub use point::Point;
 pub use rect::{Rect, Square};

@@ -111,7 +111,7 @@ macro_rules! vector {
 }
 
 impl<T> Vector<T> {
-    /// Creates a new Vector in 3D space.
+    /// Create 3D `Vector`.
     ///
     /// # Panics
     ///
@@ -151,7 +151,7 @@ impl<T> Vector<T>
 where
     T: Num + Copy,
 {
-    /// Creates a new Vector in 2D space.
+    /// Create 2D `Vector`.
     ///
     /// # Panics
     ///
@@ -182,6 +182,27 @@ where
     /// ```
     pub fn copy(&self) -> Self {
         *self
+    }
+
+    /// Create `Vector<T>` from reflection about a normal.
+    pub fn reflection(v: impl Into<Vector<T>>, normal: impl Into<Vector<T>>) -> Self
+    where
+        Self: SubAssign,
+        T: MulAssign + Float,
+    {
+        let mut v = v.into();
+        v.reflect(normal);
+        v
+    }
+
+    /// Create `Vector<T>` from a normalized `Vector<T>`.
+    pub fn normalized(v: impl Into<Vector<T>>) -> Self
+    where
+        T: MulAssign + Float,
+    {
+        let mut v = v.into();
+        v.normalize();
+        v
     }
 
     /// Get `Vector` coordinates as (x, y, z).
@@ -256,18 +277,19 @@ where
     /// ```
     /// # use pix_engine::prelude::*;
     /// let mut v = vector!(4.0, 6.0); // Vector heading right and down
-    /// let n = vector!(0.0, -1.0); // Surface normal facing up
+    /// let n = vector!(0.0, 1.0); // Surface normal facing up
     /// v.reflect(n); // Reflect about the surface normal (e.g. the x-axis)
     ///
-    /// assert_eq!(v.x, 4.0);
-    /// assert_eq!(v.y, -6.0);
+    /// assert_eq!(v.x, -4.0);
+    /// assert_eq!(v.y, 6.0);
     /// ```
     pub fn reflect(&mut self, normal: impl Into<Vector<T>>)
     where
         Self: SubAssign,
+        T: MulAssign + Float,
     {
-        let normal = normal.into();
-        *self -= normal * (T::one() + T::one()) * self.dot(normal);
+        let normal = Self::normalized(normal);
+        *self = normal * ((T::one() + T::one()) * self.dot(normal)) - *self;
     }
 
     /// Returns a representation of this vector as a Vec of T values. Useful for temporary use.
@@ -607,6 +629,15 @@ where
     }
 
     /// Convert [Vector<T>] to [Point<U>].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v = vector!(1.1, 2.0, 3.5);
+    /// let p: Point<i32> = v.as_point();
+    /// assert_eq!(p.values(), [1, 2, 3]);
+    /// ```
     pub fn as_point<U>(&self) -> Point<U>
     where
         T: AsPrimitive<U>,

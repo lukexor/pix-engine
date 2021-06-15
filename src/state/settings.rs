@@ -155,12 +155,12 @@ impl PixState {
         todo!("cursor_icon");
     }
 
-    /// Whether the game loop is paused or not.
+    /// Whether the render loop is paused or not.
     pub fn paused(&mut self) -> bool {
         self.settings.paused
     }
 
-    /// Pause the game loop or not.
+    /// Pause or unpause the render loop.
     pub fn pause(&mut self, paused: bool) {
         self.settings.paused = paused;
     }
