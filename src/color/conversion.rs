@@ -36,6 +36,7 @@ fn rgb_to_hsb([r, g, b, a]: [f64; 4]) -> [f64; 4] {
 }
 
 /// Convert to [Rgb] to [Hsl] format.
+#[allow(clippy::many_single_char_names)]
 fn rgb_to_hsl([r, g, b, a]: [f64; 4]) -> [f64; 4] {
     let c_max = r.max(g).max(b);
     let c_min = r.min(g).min(b);
@@ -96,6 +97,7 @@ fn hsb_to_rgb([h, s, b, a]: [f64; 4]) -> [f64; 4] {
 }
 
 /// Convert to [Hsl] to [Rgb] format.
+#[allow(clippy::many_single_char_names)]
 fn hsl_to_rgb([h, s, l, a]: [f64; 4]) -> [f64; 4] {
     if s.abs() < f64::EPSILON {
         [l, l, l, a]
@@ -133,6 +135,7 @@ fn hsl_to_rgb([h, s, l, a]: [f64; 4]) -> [f64; 4] {
 }
 
 /// Convert to [Hsl] to [Hsb] format.
+#[allow(clippy::many_single_char_names)]
 fn hsl_to_hsb([h, s, l, a]: [f64; 4]) -> [f64; 4] {
     let b = if l < 0.5 {
         (1.0 + s) * l
@@ -144,6 +147,7 @@ fn hsl_to_hsb([h, s, l, a]: [f64; 4]) -> [f64; 4] {
 }
 
 /// Convert to [Hsb] to [Hsl] format.
+#[allow(clippy::many_single_char_names)]
 fn hsb_to_hsl([h, s, b, a]: [f64; 4]) -> [f64; 4] {
     let l = (2.0 - s) * b / 2.0;
     let s = match l {
@@ -173,7 +177,7 @@ impl Color {
             (Hsl, Hsb) => hsl_to_hsb(self.levels),
             (_, _) => self.levels,
         };
-        Self { format, levels }
+        Self { levels, format }
     }
 
     /// Constructs a `Color` by linear interpolating between two colors by a given amount between

@@ -127,7 +127,12 @@ impl<T> Vector<T> {
     pub const fn new_3d(x: T, y: T, z: T) -> Self {
         Self { x, y, z }
     }
+}
 
+impl<T> Vector<T>
+where
+    T: Float,
+{
     /// Set `Vector` coordinates from (x, y, z).
     ///
     /// # Example
@@ -145,12 +150,6 @@ impl<T> Vector<T> {
         self.y = v.y;
         self.z = v.z;
     }
-}
-
-impl<T> Vector<T>
-where
-    T: Num + Copy,
-{
     /// Create 2D `Vector`.
     ///
     /// # Panics
@@ -317,12 +316,7 @@ where
     pub fn values(&self) -> [T; 3] {
         [self.x, self.y, self.z]
     }
-}
 
-impl<T> Vector<T>
-where
-    T: Float,
-{
     /// Creates a new unit Vector in 2D space from a given angle. Angle is given
     /// as Radians and is unaffected by angle_mode.
     ///
@@ -946,18 +940,6 @@ macro_rules! impl_op {
     };
 }
 
-impl_op!(i8, 0);
-impl_op!(u8, 0);
-impl_op!(i16, 0);
-impl_op!(u16, 0);
-impl_op!(i32, 0);
-impl_op!(u32, 0);
-impl_op!(i64, 0);
-impl_op!(u64, 0);
-impl_op!(i128, 0);
-impl_op!(u128, 0);
-impl_op!(isize, 0);
-impl_op!(usize, 0);
 impl_op!(f32, 0.0);
 impl_op!(f64, 0.0);
 
