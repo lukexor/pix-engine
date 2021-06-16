@@ -2,7 +2,7 @@
 
 use super::{
     Color, ColorError,
-    ColorFormat::{self, *},
+    ColorMode::{self, *},
 };
 use std::{borrow::Cow, convert::TryFrom, str::FromStr};
 
@@ -66,6 +66,7 @@ fn rgb_to_hsl([r, g, b, a]: [f64; 4]) -> [f64; 4] {
 }
 
 /// Convert to [Hsb] to [Rgb] format.
+#[inline]
 #[allow(clippy::many_single_char_names)]
 fn hsb_to_rgb([h, s, b, a]: [f64; 4]) -> [f64; 4] {
     if b.abs() < f64::EPSILON {
@@ -97,6 +98,7 @@ fn hsb_to_rgb([h, s, b, a]: [f64; 4]) -> [f64; 4] {
 }
 
 /// Convert to [Hsl] to [Rgb] format.
+#[inline]
 #[allow(clippy::many_single_char_names)]
 fn hsl_to_rgb([h, s, l, a]: [f64; 4]) -> [f64; 4] {
     if s.abs() < f64::EPSILON {
@@ -158,35 +160,45 @@ fn hsb_to_hsl([h, s, b, a]: [f64; 4]) -> [f64; 4] {
     [h, s, l, a]
 }
 
-impl Color {
-    /// Convert `Color` to [ColorFormat].
-    ///
-    /// Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// assert_eq!(rgb!(0, 0, 255).to_format(ColorFormat::Hsb), hsb!(240.0, 100.0, 100.0));
-    /// ```
-    pub fn to_format(self, format: ColorFormat) -> Self {
-        let levels = match (self.format, format) {
-            (Hsb, Rgb) => hsb_to_rgb(self.levels),
-            (Hsl, Rgb) => hsl_to_rgb(self.levels),
-            (Rgb, Hsb) => rgb_to_hsb(self.levels),
-            (Rgb, Hsl) => rgb_to_hsl(self.levels),
-            (Hsb, Hsl) => hsb_to_hsl(self.levels),
-            (Hsl, Hsb) => hsl_to_hsb(self.levels),
-            (_, _) => self.levels,
-        };
-        Self { levels, format }
+#[inline]
+pub(crate) fn maxes(mode: ColorMode) -> [f64; 4] {
+    match mode {
+        Rgb => [255.0; 4],
+        Hsb => [360.0, 100.0, 100.0, 1.0],
+        Hsl => [360.0, 100.0, 100.0, 1.0],
     }
+}
 
+/// Convert levels from one format to another.
+#[inline]
+pub(crate) fn convert_levels(levels: [f64; 4], from: ColorMode, to: ColorMode) -> [f64; 4] {
+    match (from, to) {
+        (Hsb, Rgb) => hsb_to_rgb(levels),
+        (Hsl, Rgb) => hsl_to_rgb(levels),
+        (Rgb, Hsb) => rgb_to_hsb(levels),
+        (Rgb, Hsl) => rgb_to_hsl(levels),
+        (Hsb, Hsl) => hsb_to_hsl(levels),
+        (Hsl, Hsb) => hsl_to_hsb(levels),
+        (_, _) => levels,
+    }
+}
+
+/// Convert levels to RGB channels.
+#[inline]
+pub(crate) fn calculate_channels(levels: [f64; 4]) -> [u8; 4] {
+    let [r, g, b, a] = levels;
+    let [r_max, g_max, b_max, a_max] = maxes(Rgb);
+    [
+        (r * r_max).round() as u8,
+        (g * g_max).round() as u8,
+        (b * b_max).round() as u8,
+        (a * a_max).round() as u8,
+    ]
+}
+
+impl Color {
     /// Constructs a `Color` by linear interpolating between two colors by a given amount between
     /// 0.0 and 1.0.
-    ///
-    /// # Note
-    ///
-    /// You can interpolate between any combination of [ColorFormat], but an implicit conversion
-    /// is performed to match the format of `self`. See examples for reference.
     ///
     /// # Examples
     ///
@@ -205,22 +217,15 @@ impl Color {
     pub fn lerp(self, other: Color, amt: f64) -> Self {
         let lerp = |start, stop, amt| amt * (stop - start) + start;
 
-        println!("{:?}", self);
-        println!("{:?}", other);
         let amt = amt.clamp(0.0, 1.0);
-        let other = other.to_format(self.format);
-        println!("{:?}", other);
         let [v1, v2, v3, a] = self.levels();
         let [ov1, ov2, ov3, oa] = other.levels();
-        let v1 = lerp(v1, ov1, amt);
-        let v2 = lerp(v2, ov2, amt);
-        let v3 = lerp(v3, ov3, amt);
-        let a = lerp(a, oa, amt);
-        println!("{} * ({} - {}) + {}", amt, ov1, v1, v1);
-        Self {
-            levels: [v1, v2, v3, a],
-            format: self.format,
-        }
+        let v1 = lerp(v1, ov1, amt).clamp(0.0, 1.0);
+        let v2 = lerp(v2, ov2, amt).clamp(0.0, 1.0);
+        let v3 = lerp(v3, ov3, amt).clamp(0.0, 1.0);
+        let a = lerp(a, oa, amt).clamp(0.0, 1.0);
+        // SAFETY: We clamp the inputs to between 0.0..=1.0 - upholding the levels invariant.
+        unsafe { Self::from_raw(self.mode, v1, v2, v3, a) }
     }
 }
 
@@ -422,7 +427,7 @@ impl From<[f64; 4]> for Color {
 
 #[cfg(test)]
 mod tests {
-    use crate::prelude::{hsb, rgb, ColorFormat::*};
+    use crate::prelude::{hsb, hsl, rgb};
 
     macro_rules! assert_approx_eq {
         ($c1:expr, $c2:expr) => {
@@ -433,55 +438,132 @@ mod tests {
             let v3d = v3 - ov3;
             let ad = a - oa;
             let e = 0.002;
-            assert!(v1d < e, "v1: {} < {}", v1d, e);
-            assert!(v2d < e, "v2: {} < {}", v2d, e);
-            assert!(v3d < e, "v3: {} < {}", v3d, e);
-            assert!(ad < e, "a: {} < {}", ad, e);
+            assert!(v1d < e, "v1: ({} - {}) < {}", v1, ov1, e);
+            assert!(v2d < e, "v2: ({} - {}) < {}", v2, ov2, e);
+            assert!(v3d < e, "v3: ({} - {}) < {}", v3, ov3, e);
+            assert!(ad < e, "a: ({} - {}) < {}", a, oa, e);
         };
     }
 
     #[test]
-    fn test_hsv_to_rgb() {
-        assert_approx_eq!(hsb!(0.0, 0.0, 0.0).to_format(Rgb), rgb!(0, 0, 0)); // Black
-        assert_approx_eq!(hsb!(0.0, 0.0, 100.0).to_format(Rgb), rgb!(255, 255, 255)); // White
-        assert_approx_eq!(hsb!(0.0, 100.0, 100.0).to_format(Rgb), rgb!(255, 0, 0)); // Red
-        assert_approx_eq!(hsb!(120.0, 100.0, 100.0).to_format(Rgb), rgb!(0, 255, 0)); // Lime
-        assert_approx_eq!(hsb!(240.0, 100.0, 100.0).to_format(Rgb), rgb!(0, 0, 255)); // Blue
-        assert_approx_eq!(hsb!(60.0, 100.0, 100.0).to_format(Rgb), rgb!(255, 255, 0)); // Yellow
-        assert_approx_eq!(hsb!(180.0, 100.0, 100.0).to_format(Rgb), rgb!(0, 255, 255)); // Cyan
-        assert_approx_eq!(hsb!(300.0, 100.0, 100.0).to_format(Rgb), rgb!(255, 0, 255)); // Magenta
-        assert_approx_eq!(hsb!(0.0, 0.0, 75.0).to_format(Rgb), rgb!(191, 191, 191)); // Silver
-        assert_approx_eq!(hsb!(0.0, 0.0, 50.0).to_format(Rgb), rgb!(128, 128, 128)); // Gray
-        assert_approx_eq!(hsb!(0.0, 100.0, 50.0).to_format(Rgb), rgb!(128, 0, 0)); // Maroon
-        assert_approx_eq!(hsb!(60.0, 100.0, 50.0).to_format(Rgb), rgb!(128, 128, 0)); // Olive
-        assert_approx_eq!(hsb!(120.0, 100.0, 50.0).to_format(Rgb), rgb!(0, 128, 0)); // Green
-        assert_approx_eq!(hsb!(300.0, 100.0, 50.0).to_format(Rgb), rgb!(128, 0, 128)); // Purple
-        assert_approx_eq!(hsb!(180.0, 100.0, 50.0).to_format(Rgb), rgb!(0, 128, 128)); // Teal
-        assert_approx_eq!(hsb!(240.0, 100.0, 50.0).to_format(Rgb), rgb!(0, 0, 128));
-        // Navy
+    fn test_hsb_to_rgb() {
+        assert_approx_eq!(hsb!(0.0, 0.0, 0.0), rgb!(0, 0, 0));
+        assert_approx_eq!(hsb!(0.0, 0.0, 100.0), rgb!(255, 255, 255));
+        assert_approx_eq!(hsb!(0.0, 100.0, 100.0), rgb!(255, 0, 0));
+        assert_approx_eq!(hsb!(120.0, 100.0, 100.0), rgb!(0, 255, 0));
+        assert_approx_eq!(hsb!(240.0, 100.0, 100.0), rgb!(0, 0, 255));
+        assert_approx_eq!(hsb!(60.0, 100.0, 100.0), rgb!(255, 255, 0));
+        assert_approx_eq!(hsb!(180.0, 100.0, 100.0), rgb!(0, 255, 255));
+        assert_approx_eq!(hsb!(300.0, 100.0, 100.0), rgb!(255, 0, 255));
+        assert_approx_eq!(hsb!(0.0, 0.0, 75.0), rgb!(191, 191, 191));
+        assert_approx_eq!(hsb!(0.0, 0.0, 50.0), rgb!(128, 128, 128));
+        assert_approx_eq!(hsb!(0.0, 100.0, 50.0), rgb!(128, 0, 0));
+        assert_approx_eq!(hsb!(60.0, 100.0, 50.0), rgb!(128, 128, 0));
+        assert_approx_eq!(hsb!(120.0, 100.0, 50.0), rgb!(0, 128, 0));
+        assert_approx_eq!(hsb!(300.0, 100.0, 50.0), rgb!(128, 0, 128));
+        assert_approx_eq!(hsb!(180.0, 100.0, 50.0), rgb!(0, 128, 128));
+        assert_approx_eq!(hsb!(240.0, 100.0, 50.0), rgb!(0, 0, 128));
     }
 
     #[test]
-    fn test_rgb_to_hsv() {
-        assert_approx_eq!(rgb!(0, 0, 0).to_format(Hsb), hsb!(0.0, 0.0, 0.0)); // Black
-        assert_approx_eq!(rgb!(255, 255, 255).to_format(Hsb), hsb!(0.0, 0.0, 100.0)); // White
-        assert_approx_eq!(rgb!(255, 0, 0).to_format(Hsb), hsb!(0.0, 100.0, 100.0)); // Red
-        assert_approx_eq!(rgb!(0, 255, 0).to_format(Hsb), hsb!(120.0, 100.0, 100.0)); // Lime
-        assert_approx_eq!(rgb!(0, 0, 255).to_format(Hsb), hsb!(240.0, 100.0, 100.0)); // Blue
-        assert_approx_eq!(rgb!(255, 255, 0).to_format(Hsb), hsb!(60.0, 100.0, 100.0)); // Yellow
-        assert_approx_eq!(rgb!(0, 255, 255).to_format(Hsb), hsb!(180.0, 100.0, 100.0)); // Cyan
-        assert_approx_eq!(rgb!(255, 0, 255).to_format(Hsb), hsb!(300.0, 100.0, 100.0)); // Magenta
+    fn test_hsb_to_hsl() {
+        assert_approx_eq!(hsb!(0.0, 0.0, 0.0), hsl!(0.0, 0.0, 0.0));
+        assert_approx_eq!(hsb!(0.0, 0.0, 100.0), hsl!(0.0, 0.0, 100.0));
+        assert_approx_eq!(hsb!(0.0, 100.0, 100.0), hsl!(0.0, 100.0, 50.0));
+        assert_approx_eq!(hsb!(120.0, 100.0, 100.0), hsl!(120.0, 100.0, 50.0));
+        assert_approx_eq!(hsb!(240.0, 100.0, 100.0), hsl!(240.0, 100.0, 50.0));
+        assert_approx_eq!(hsb!(60.0, 100.0, 100.0), hsl!(60.0, 100.0, 50.0));
+        assert_approx_eq!(hsb!(180.0, 100.0, 100.0), hsl!(180.0, 100.0, 50.0));
+        assert_approx_eq!(hsb!(300.0, 100.0, 100.0), hsl!(300.0, 100.0, 50.0));
+        assert_approx_eq!(hsb!(0.0, 0.0, 75.0), hsl!(0.0, 0.0, 75.0));
+        assert_approx_eq!(hsb!(0.0, 0.0, 50.0), hsl!(0.0, 0.0, 50.0));
+        assert_approx_eq!(hsb!(0.0, 100.0, 50.0), hsl!(0.0, 100.0, 25.0));
+        assert_approx_eq!(hsb!(60.0, 100.0, 50.0), hsl!(60.0, 100.0, 25.0));
+        assert_approx_eq!(hsb!(120.0, 100.0, 50.0), hsl!(120.0, 100.0, 25.0));
+        assert_approx_eq!(hsb!(300.0, 100.0, 50.0), hsl!(300.0, 100.0, 25.0));
+        assert_approx_eq!(hsb!(180.0, 100.0, 50.0), hsl!(180.0, 100.0, 25.0));
+        assert_approx_eq!(hsb!(240.0, 100.0, 50.0), hsl!(240.0, 100.0, 25.0));
+    }
 
-        println!("{:?}", hsb!(0.0, 0.0, 75.0));
-        println!("{:?}", rgb!(191, 191, 191).to_format(Hsb));
-        assert_approx_eq!(rgb!(191, 191, 191).to_format(Hsb), hsb!(0.0, 0.0, 74.9)); // Silver
-        assert_approx_eq!(rgb!(128, 128, 128).to_format(Hsb), hsb!(0.0, 0.0, 50.0)); // Gray
-        assert_approx_eq!(rgb!(128, 0, 0).to_format(Hsb), hsb!(0.0, 100.0, 50.2)); // Maroon
-        assert_approx_eq!(rgb!(128, 128, 0).to_format(Hsb), hsb!(60.0, 100.0, 50.0)); // Olive
-        assert_approx_eq!(rgb!(0, 128, 0).to_format(Hsb), hsb!(120.0, 100.0, 50.0)); // Green
-        assert_approx_eq!(rgb!(128, 0, 128).to_format(Hsb), hsb!(300.0, 100.0, 50.0)); // Purple
-        assert_approx_eq!(rgb!(0, 128, 128).to_format(Hsb), hsb!(180.0, 100.0, 50.0)); // Teal
-        assert_approx_eq!(rgb!(0, 0, 128).to_format(Hsb), hsb!(240.0, 100.0, 50.0));
-        // Navy
+    #[test]
+    fn test_hsl_to_rgb() {
+        assert_approx_eq!(hsl!(0.0, 0.0, 0.0), rgb!(0, 0, 0));
+        assert_approx_eq!(hsl!(0.0, 0.0, 100.0), rgb!(255, 255, 255));
+        assert_approx_eq!(hsl!(0.0, 100.0, 100.0), rgb!(255, 255, 255));
+        assert_approx_eq!(hsl!(120.0, 100.0, 100.0), rgb!(255, 255, 255));
+        assert_approx_eq!(hsl!(240.0, 100.0, 100.0), rgb!(255, 255, 255));
+        assert_approx_eq!(hsl!(60.0, 100.0, 100.0), rgb!(255, 255, 255));
+        assert_approx_eq!(hsl!(180.0, 100.0, 100.0), rgb!(255, 255, 255));
+        assert_approx_eq!(hsl!(300.0, 100.0, 100.0), rgb!(255, 255, 255));
+        assert_approx_eq!(hsl!(0.0, 0.0, 75.0), rgb!(191, 191, 191));
+        assert_approx_eq!(hsl!(0.0, 0.0, 50.0), rgb!(128, 128, 128));
+        assert_approx_eq!(hsl!(0.0, 100.0, 50.0), rgb!(255, 0, 0));
+        assert_approx_eq!(hsl!(60.0, 100.0, 50.0), rgb!(255, 255, 0));
+        println!("{:?}", hsl!(120.0, 100.0, 50.0));
+        println!("{:?}", rgb!(0, 255, 0));
+        assert_approx_eq!(hsl!(120.0, 100.0, 50.0), rgb!(0, 255, 0));
+        assert_approx_eq!(hsl!(300.0, 100.0, 50.0), rgb!(255, 0, 255));
+        assert_approx_eq!(hsl!(180.0, 100.0, 50.0), rgb!(0, 255, 255));
+        assert_approx_eq!(hsl!(240.0, 100.0, 50.0), rgb!(0, 0, 255));
+    }
+
+    #[test]
+    fn test_hsl_to_hsb() {
+        assert_approx_eq!(hsl!(0.0, 0.0, 0.0), hsb!(0.0, 0.0, 0.0));
+        assert_approx_eq!(hsl!(0.0, 0.0, 100.0), hsb!(255.0, 255.0, 255.0));
+        assert_approx_eq!(hsl!(0.0, 100.0, 100.0), hsb!(255.0, 0.0, 0.0));
+        assert_approx_eq!(hsl!(120.0, 100.0, 100.0), hsb!(0.0, 255.0, 0.0));
+        assert_approx_eq!(hsl!(240.0, 100.0, 100.0), hsb!(0.0, 0.0, 255.0));
+        assert_approx_eq!(hsl!(60.0, 100.0, 100.0), hsb!(255.0, 255.0, 0.0));
+        assert_approx_eq!(hsl!(180.0, 100.0, 100.0), hsb!(0.0, 255.0, 255.0));
+        assert_approx_eq!(hsl!(300.0, 100.0, 100.0), hsb!(255.0, 0.0, 255.0));
+        assert_approx_eq!(hsl!(0.0, 0.0, 75.0), hsb!(191.0, 191.0, 191.0));
+        assert_approx_eq!(hsl!(0.0, 0.0, 50.0), hsb!(128.0, 128.0, 128.0));
+        assert_approx_eq!(hsl!(0.0, 100.0, 50.0), hsb!(128.0, 0.0, 0.0));
+        assert_approx_eq!(hsl!(60.0, 100.0, 50.0), hsb!(128.0, 128.0, 0.0));
+        assert_approx_eq!(hsl!(120.0, 100.0, 50.0), hsb!(0.0, 128.0, 0.0));
+        assert_approx_eq!(hsl!(300.0, 100.0, 50.0), hsb!(128.0, 0.0, 128.0));
+        assert_approx_eq!(hsl!(180.0, 100.0, 50.0), hsb!(0.0, 128.0, 128.0));
+        assert_approx_eq!(hsl!(240.0, 100.0, 50.0), hsb!(0.0, 0.0, 128.0));
+    }
+
+    #[test]
+    fn test_rgb_to_hsb() {
+        assert_approx_eq!(rgb!(0, 0, 0), hsb!(0.0, 0.0, 0.0));
+        assert_approx_eq!(rgb!(255, 255, 255), hsb!(0.0, 0.0, 100.0));
+        assert_approx_eq!(rgb!(255, 0, 0), hsb!(0.0, 100.0, 100.0));
+        assert_approx_eq!(rgb!(0, 255, 0), hsb!(120.0, 100.0, 100.0));
+        assert_approx_eq!(rgb!(0, 0, 255), hsb!(240.0, 100.0, 100.0));
+        assert_approx_eq!(rgb!(255, 255, 0), hsb!(60.0, 100.0, 100.0));
+        assert_approx_eq!(rgb!(0, 255, 255), hsb!(180.0, 100.0, 100.0));
+        assert_approx_eq!(rgb!(255, 0, 255), hsb!(300.0, 100.0, 100.0));
+        assert_approx_eq!(rgb!(191, 191, 191), hsb!(0.0, 0.0, 74.9));
+        assert_approx_eq!(rgb!(128, 128, 128), hsb!(0.0, 0.0, 50.0));
+        assert_approx_eq!(rgb!(128, 0, 0), hsb!(0.0, 100.0, 50.2));
+        assert_approx_eq!(rgb!(128, 128, 0), hsb!(60.0, 100.0, 50.0));
+        assert_approx_eq!(rgb!(0, 128, 0), hsb!(120.0, 100.0, 50.0));
+        assert_approx_eq!(rgb!(128, 0, 128), hsb!(300.0, 100.0, 50.0));
+        assert_approx_eq!(rgb!(0, 128, 128), hsb!(180.0, 100.0, 50.0));
+        assert_approx_eq!(rgb!(0, 0, 128), hsb!(240.0, 100.0, 50.0));
+    }
+
+    #[test]
+    fn test_rgb_to_hsl() {
+        assert_approx_eq!(rgb!(0, 0, 0), hsl!(0.0, 0.0, 0.0));
+        assert_approx_eq!(rgb!(255, 255, 255), hsl!(0.0, 0.0, 100.0));
+        assert_approx_eq!(rgb!(255, 0, 0), hsl!(0.0, 100.0, 100.0));
+        assert_approx_eq!(rgb!(0, 255, 0), hsl!(120.0, 100.0, 100.0));
+        assert_approx_eq!(rgb!(0, 0, 255), hsl!(240.0, 100.0, 100.0));
+        assert_approx_eq!(rgb!(255, 255, 0), hsl!(60.0, 100.0, 100.0));
+        assert_approx_eq!(rgb!(0, 255, 255), hsl!(180.0, 100.0, 100.0));
+        assert_approx_eq!(rgb!(255, 0, 255), hsl!(300.0, 100.0, 100.0));
+        assert_approx_eq!(rgb!(191, 191, 191), hsl!(0.0, 0.0, 74.9));
+        assert_approx_eq!(rgb!(128, 128, 128), hsl!(0.0, 0.0, 50.0));
+        assert_approx_eq!(rgb!(128, 0, 0), hsl!(0.0, 100.0, 50.2));
+        assert_approx_eq!(rgb!(128, 128, 0), hsl!(60.0, 100.0, 50.0));
+        assert_approx_eq!(rgb!(0, 128, 0), hsl!(120.0, 100.0, 50.0));
+        assert_approx_eq!(rgb!(128, 0, 128), hsl!(300.0, 100.0, 50.0));
+        assert_approx_eq!(rgb!(0, 128, 128), hsl!(180.0, 100.0, 50.0));
+        assert_approx_eq!(rgb!(0, 0, 128), hsl!(240.0, 100.0, 50.0));
     }
 }

@@ -100,7 +100,7 @@ mod utils;
 /// Exports most commonly used types, traits, and functions.
 pub mod prelude {
     use super::*;
-    pub use color::{constants::*, Color, ColorError, ColorFormat};
+    pub use color::{constants::*, Color, ColorError, ColorMode};
     pub use common::{Error as PixError, Result as PixResult};
     pub use draw::TextureId;
     pub use engine::PixEngine;

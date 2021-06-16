@@ -1,0 +1,19 @@
+{
+  "configurations": {
+    "launch": {
+      "adapter": "CodeLLDB",
+      "configuration": {
+        "request": "launch",
+        "program": "${workspaceRoot}/target/debug/examples/flocking"
+      }
+    },
+    "attach": {
+      "adapter": "CodeLLDB",
+      "configuration": {
+        "request": "attach",
+        "program": "${workspaceRoot}/target/debug/examples/flocking",
+        "MIMode": "lldb"
+      }
+    }
+  }
+}

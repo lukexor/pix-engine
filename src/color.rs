@@ -1,14 +1,19 @@
 //! [Color] functions for drawing.
 //!
-//! Each `Color` can be represented as either [Rgb] or [Hsb] and can be converted from/into other
-//! representations as needed.
+//! Each `Color` can be represented as [Rgb], [Hsb], or [Hsl] and can be converted from/into other
+//! representations as needed. The default mode is [Rgb] with values ranging from `0..=255` for
+//! red, green, blue, and alpha. [Hsb] and [Hsl] values range from `0.0..=360.0` for hue,
+//! `0.0..=100.0` for saturation and brightness/lightness and `0.0..=1.0` for alpha.
 //!
-//! There are two convience macros for easy construction: [rgb!] and [hsb!] that take 1-4
+//! There are convience macros for easy construction: [rgb!], [hsb!] and [hsl!] that take 1-4
 //! parameters. The number of parameters provided alter how they are interpreted.
 //!
-//! Providing a single parameter results in a grayscale color. Two parameters is used for grayscale
-//! with alpha transparency. Three is interpreted as RGB or HSV values with a fourth parameter used
-//! to apply alpha transparency.
+//! Providing a single parameter results in a grayscale color. Two parameters results in grayscale
+//! with alpha transparency. Three parameters are used as RGB or HSB/HSL values with a fourth
+//! parameter used to apply alpha transparency.
+//!
+//! The `Color` instance will remember which mode it was created in, modifying how manipulation
+//! methods are interprted and can be changed to different modes as needed.
 //!
 //! There are also several named color [constants](constants) available in the
 //! [prelude](crate::prelude) matching the [SVG 1.0 Color
@@ -16,9 +21,11 @@
 //!
 //! # Examples
 //!
+//! `Rgb` values range from `0..=255` for red, green, blue and alpha transparency.
+//!
 //! ```
 //! # use pix_engine::prelude::*;
-//! // RGB values range from 0-255
+//!
 //! let c = rgb!(55); // Grayscale
 //! assert_eq!(c.channels(), [55, 55, 55, 255]);
 //!
@@ -30,8 +37,14 @@
 //!
 //! let c = rgb!(128, 0, 55, 128); // Red, Green, Blue, and Alpha
 //! assert_eq!(c.channels(), [128, 0, 55, 128]);
+//! ```
 //!
-//! // HSV values range from 0.0-360.0 for hue and 0.0-1.0 for all other values
+//! `Hsb`/`Hsl` values range from `0.0..=360.0` for hue, `0.0..=100.0` for saturation and
+//! brightness/lightness and `0.0..=1.0` for alpha transparency.
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//!
 //! let c = hsb!(50.0); // Grayscale
 //! assert_eq!(c.levels(), [0.0, 0.0, 0.5, 1.0]);
 //!
@@ -43,15 +56,21 @@
 //!
 //! let c = hsb!(234.0, 80.0, 100.0, 0.8); // Hue, Saturation, Value, and Alpha
 //! assert_eq!(c.levels(), [0.65, 0.8, 1.0, 0.8]);
+//! ```
 //!
-//! // Named color constants
+//! SVG 1.0 Named color constants
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//!
 //! let c = ALICE_BLUE;
 //! assert_eq!(c.channels(), [240, 248, 255, 255]);
+//!
+//! let c = DARK_ORCHID;
+//! assert_eq!(c.channels(), [153, 50, 204, 255]);
 //! ```
 //!
 //! You can also create colors from hexidecimal strings using 3, 4, 6, or 8-digit formats.
-//!
-//! # Examples
 //!
 //! ```
 //! # use pix_engine::prelude::*;
@@ -72,6 +91,7 @@
 //! ```
 
 use crate::random;
+use conversion::{calculate_channels, convert_levels, maxes};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::{
@@ -84,10 +104,10 @@ use std::{
 pub mod constants;
 pub mod conversion;
 
-/// Color channel format indicating level interpretation.
+/// Color mode indicating level interpretation.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub enum ColorFormat {
+pub enum ColorMode {
     /// Red, Green, and Blue
     Rgb,
     /// Hue, Saturation, and Brightness
@@ -96,67 +116,94 @@ pub enum ColorFormat {
     Hsl,
 }
 
-use ColorFormat::*;
+use ColorMode::*;
 
-/// A color represented as [Rgb] or [Hsb].
+/// A color represented as [Rgb], [Hsb], or [Hsl].
 #[derive(Debug, Copy, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Color {
-    /// levels representing each color bit.
+    /// Color mode.
+    mode: ColorMode,
+    /// RGB values ranging `0.0..=1.0`.
     levels: [f64; 4],
-    /// Channel format.
-    format: ColorFormat,
-}
-
-#[inline]
-fn maxes(format: ColorFormat) -> [f64; 4] {
-    match format {
-        Rgb => [255.0; 4],
-        Hsb => [360.0, 100.0, 100.0, 1.0],
-        Hsl => [360.0, 100.0, 100.0, 1.0],
-    }
+    /// RGB values ranging from `0..=255`.
+    channels: [u8; 4],
 }
 
 impl Color {
-    /// Constructs a `Color` with the given [ColorFormat] and max alpha.
+    /// Constructs a [Rgb] `Color` and max alpha.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let c = Color::new(ColorFormat::Rgb, 0.0, 0.0, 128.0);
+    /// let c = Color::new(0, 0, 128);
     /// assert_eq!(c.channels(), [0, 0, 128, 255]);
-    ///
-    /// let c = Color::new(ColorFormat::Hsb, 126.0, 50.0, 100.0);
-    /// assert_eq!(c.levels(), [0.35, 0.5, 1.0, 1.0]);
     /// ```
-    pub fn new(format: ColorFormat, v1: f64, v2: f64, v3: f64) -> Self {
-        let [_, _, _, alpha_max] = maxes(format);
-        Self::new_alpha(format, v1, v2, v3, alpha_max)
+    pub fn new(r: u8, g: u8, b: u8) -> Self {
+        Self::rgb(r, g, b)
     }
 
-    /// Constructs a `Color` with the given [ColorFormat] and alpha.
+    /// Constructs a [Rgb] `Color` with alpha.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let c = Color::new_alpha(ColorFormat::Rgb, 0.0, 0.0, 128.0, 50.0);
+    /// let c = Color::new_alpha(0, 0, 128, 50);
+    /// assert_eq!(c.channels(), [0, 0, 128, 50]);
+    /// ```
+    pub fn new_alpha(r: u8, g: u8, b: u8, a: u8) -> Self {
+        Self::rgba(r, g, b, a)
+    }
+
+    /// Constructs a `Color` with the given [ColorMode] and max alpha.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::with_mode(ColorMode::Rgb, 0.0, 0.0, 128.0);
+    /// assert_eq!(c.channels(), [0, 0, 128, 255]);
+    ///
+    /// let c = Color::with_mode(ColorMode::Hsb, 126.0, 50.0, 100.0);
+    /// assert_eq!(c.levels(), [0.35, 0.5, 1.0, 1.0]);
+    /// ```
+    pub fn with_mode(mode: ColorMode, v1: f64, v2: f64, v3: f64) -> Self {
+        let [_, _, _, alpha_max] = maxes(mode);
+        Self::with_mode_alpha(mode, v1, v2, v3, alpha_max)
+    }
+
+    /// Constructs a `Color` with the given [ColorMode] and alpha.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::with_mode_alpha(ColorMode::Rgb, 0.0, 0.0, 128.0, 50.0);
     /// assert_eq!(c.channels(), [0, 0, 128, 50]);
     ///
-    /// let c = Color::new_alpha(ColorFormat::Hsb, 126.0, 50.0, 100.0, 0.8);
+    /// let c = Color::with_mode_alpha(ColorMode::Hsb, 126.0, 50.0, 100.0, 0.8);
     /// assert_eq!(c.levels(), [0.35, 0.5, 1.0, 0.8]);
     /// ```
-    pub fn new_alpha(format: ColorFormat, v1: f64, v2: f64, v3: f64, alpha: f64) -> Self {
-        let [v1_max, v2_max, v3_max, alpha_max] = maxes(format);
+    pub fn with_mode_alpha(mode: ColorMode, v1: f64, v2: f64, v3: f64, alpha: f64) -> Self {
+        // Normalize channels
+        let [v1_max, v2_max, v3_max, alpha_max] = maxes(mode);
+        let levels = [
+            (v1 / v1_max).clamp(0.0, 1.0),
+            (v2 / v2_max).clamp(0.0, 1.0),
+            (v3 / v3_max).clamp(0.0, 1.0),
+            (alpha / alpha_max).clamp(0.0, 1.0),
+        ];
+
+        // Convert to `Rgb`
+        let levels = convert_levels(levels, mode, Rgb);
+        let channels = calculate_channels(levels);
+
         Self {
-            levels: [
-                (v1 / v1_max).clamp(0.0, 1.0),
-                (v2 / v2_max).clamp(0.0, 1.0),
-                (v3 / v3_max).clamp(0.0, 1.0),
-                (alpha / alpha_max).clamp(0.0, 1.0),
-            ],
-            format,
+            mode,
+            levels,
+            channels,
         }
     }
 
@@ -171,7 +218,7 @@ impl Color {
     /// assert_eq!(c.channels(), [128, 64, 0, 255]);
     /// ```
     pub fn rgb(r: u8, g: u8, b: u8) -> Self {
-        Self::new(Rgb, f64::from(r), f64::from(g), f64::from(b))
+        Self::with_mode(Rgb, f64::from(r), f64::from(g), f64::from(b))
     }
 
     /// Constructs a [Rgb] `Color` containing red, green, blue, and alpha.
@@ -184,7 +231,7 @@ impl Color {
     /// assert_eq!(c.channels(), [128, 64, 128, 128]);
     /// ```
     pub fn rgba(r: u8, g: u8, b: u8, a: u8) -> Self {
-        Self::new_alpha(Rgb, f64::from(r), f64::from(g), f64::from(b), f64::from(a))
+        Self::with_mode_alpha(Rgb, f64::from(r), f64::from(g), f64::from(b), f64::from(a))
     }
 
     /// Constructs a [Hsb] `Color` containing hue, saturation, and brightness
@@ -198,7 +245,7 @@ impl Color {
     /// assert_eq!(c.levels(), [0.35, 0.8, 0.0, 1.0]);
     /// ```
     pub fn hsb(h: f64, s: f64, b: f64) -> Self {
-        Self::new(Hsb, h, s, b)
+        Self::with_mode(Hsb, h, s, b)
     }
 
     /// Constructs a [Hsb] `Color` containing hue, saturation, brightness and
@@ -212,7 +259,7 @@ impl Color {
     /// assert_eq!(c.levels(), [0.35, 0.8, 0.0, 0.5]);
     /// ```
     pub fn hsba(h: f64, s: f64, b: f64, a: f64) -> Self {
-        Self::new_alpha(Hsb, h, s, b, a)
+        Self::with_mode_alpha(Hsb, h, s, b, a)
     }
 
     /// Constructs a [Hsl] `Color` containing hue, saturation, and lightness
@@ -226,7 +273,7 @@ impl Color {
     /// assert_eq!(c.levels(), [0.35, 0.8, 0.0, 1.0]);
     /// ```
     pub fn hsl(h: f64, s: f64, l: f64) -> Self {
-        Self::new(Hsl, h, s, l)
+        Self::with_mode(Hsl, h, s, l)
     }
 
     /// Constructs a [Hsl] `Color` containing hue, saturation, lightness and
@@ -240,43 +287,61 @@ impl Color {
     /// assert_eq!(c.levels(), [0.35, 0.8, 0.0, 0.5]);
     /// ```
     pub fn hsla(h: f64, s: f64, l: f64, a: f64) -> Self {
-        Self::new_alpha(Hsl, h, s, l, a)
+        Self::with_mode_alpha(Hsl, h, s, l, a)
     }
 
-    /// Constructs a random `Color` with [ColorFormat] and max alpha.
+    /// Constructs a raw `Color` with the given [ColorMode] and alpha using the levels passed in
+    /// as-is without normalizing them.
+    ///
+    /// # Safety
+    ///
+    /// This may result in unexpected behavior if values are outside the range `0.0..=1.0`. It is
+    /// up to the responsibility of the caller to hold this invariant.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::from_raw(Rgb, 0.4, 0.5, 1.0, 0.8);
+    /// assert_eq!(c.channels(), [102, 128, 255, 204]);
+    /// ```
+    pub unsafe fn from_raw(mode: ColorMode, v1: f64, v2: f64, v3: f64, alpha: f64) -> Self {
+        let levels = [v1, v2, v3, alpha];
+        Self {
+            mode,
+            levels,
+            channels: calculate_channels(levels),
+        }
+    }
+
+    /// Constructs a random [Rgb] `Color` with max alpha.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
     /// # #[allow(unused_variables)]
-    /// let c = Color::random(ColorFormat::Rgb);
+    /// let c = Color::random();
     /// // `c.channels()` will return something like:
     /// // [207, 12, 217, 255]
     /// ```
-    pub fn random(format: ColorFormat) -> Self {
-        Self {
-            levels: [random!(1.0), random!(1.0), random!(1.0), 1.0],
-            format,
-        }
+    pub fn random() -> Self {
+        Self::new(random!(255), random!(255), random!(255))
     }
 
-    /// Constructs a random `Color` with [ColorFormat] and alpha.
+    /// Constructs a random [Rgb] `Color` with alpha.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
     /// # #[allow(unused_variables)]
-    /// let c = Color::random_alpha(ColorFormat::Rgb);
+    /// let c = Color::random_alpha()
     /// // `c.channels()` will return something like:
     /// // [132, 159, 233, 76]
     /// ```
-    pub fn random_alpha(format: ColorFormat) -> Self {
-        Self {
-            levels: [random!(1.0), random!(1.0), random!(1.0), random!(1.0)],
-            format,
-        }
+    pub fn random_alpha() -> Self {
+        Self::new_alpha(random!(255), random!(255), random!(255), random!(255))
     }
 
     /// Constructs a `Color` from a slice of 1-4 values. The number of values
@@ -292,20 +357,20 @@ impl Color {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let vals: Vec<f64> = vec![128.0, 64.0, 0.0];
-    /// let c = Color::from_slice(ColorFormat::Rgb, &vals)?; // RGB Vec
+    /// let c = Color::from_slice(ColorMode::Rgb, &vals)?; // RGB Vec
     /// assert_eq!(c.channels(), [128, 64, 0, 255]);
     ///
     /// let vals: [f64; 4] = [128.0, 64.0, 0.0, 128.0];
-    /// let c = Color::from_slice(ColorFormat::Rgb, &vals[..])?; // RGBA slice
+    /// let c = Color::from_slice(ColorMode::Rgb, &vals[..])?; // RGBA slice
     /// assert_eq!(c.channels(), [128, 64, 0, 128]);
     /// # Ok::<(), ColorError>(())
     /// ```
-    pub fn from_slice(format: ColorFormat, slice: &[f64]) -> Result<Self, ColorError> {
+    pub fn from_slice(mode: ColorMode, slice: &[f64]) -> Result<Self, ColorError> {
         match *slice {
-            [gray] => Ok(Self::new(format, gray, gray, gray)),
-            [gray, a] => Ok(Self::new_alpha(format, gray, gray, gray, a)),
-            [v1, v2, v3] => Ok(Self::new(format, v1, v2, v3)),
-            [v1, v2, v3, a] => Ok(Self::new_alpha(format, v1, v2, v3, a)),
+            [gray] => Ok(Self::with_mode(mode, gray, gray, gray)),
+            [gray, a] => Ok(Self::with_mode_alpha(mode, gray, gray, gray, a)),
+            [v1, v2, v3] => Ok(Self::with_mode(mode, v1, v2, v3)),
+            [v1, v2, v3, a] => Ok(Self::with_mode_alpha(mode, v1, v2, v3, a)),
             _ => Err(ColorError::InvalidSlice(Cow::from(slice.to_owned()))),
         }
     }
@@ -329,7 +394,7 @@ impl Color {
 
     /// Returns a list of max values for each color channel.
     pub fn maxes(&self) -> [f64; 4] {
-        maxes(self.format)
+        maxes(self.mode)
     }
 
     /// Returns the `Color` levels which range from [0.0, 1.0].
@@ -354,15 +419,9 @@ impl Color {
     /// let c = Color::rgba(128, 64, 128, 128);
     /// assert_eq!(c.channels(), [128, 64, 128, 128]);
     /// ```
+    #[inline]
     pub fn channels(&self) -> [u8; 4] {
-        let [r_max, g_max, b_max, a_max] = maxes(Rgb);
-        let [r, g, b, a] = self.to_format(Rgb).levels();
-        [
-            (r * r_max).round() as u8,
-            (g * g_max).round() as u8,
-            (b * b_max).round() as u8,
-            (a * a_max).round() as u8,
-        ]
+        self.channels
     }
 }
 
@@ -506,16 +565,14 @@ impl UpperHex for Color {
 impl Add for Color {
     type Output = Self;
     fn add(self, other: Color) -> Self::Output {
-        let other = other.to_format(self.format);
         let [v1, v2, v3, a] = self.levels();
         let [ov1, ov2, ov3, oa] = other.levels();
-        Self::new_alpha(self.format, v1 + ov1, v2 + ov2, v3 + ov3, a + oa)
+        Self::with_mode_alpha(self.mode, v1 + ov1, v2 + ov2, v3 + ov3, a + oa)
     }
 }
 
 impl AddAssign for Color {
     fn add_assign(&mut self, other: Color) {
-        let other = other.to_format(self.format);
         for i in 0..4 {
             self.levels[i] = (self.levels[i] + other.levels[i]).clamp(0.0, 1.0);
         }
@@ -525,16 +582,14 @@ impl AddAssign for Color {
 impl Sub for Color {
     type Output = Self;
     fn sub(self, other: Color) -> Self::Output {
-        let other = other.to_format(self.format);
         let [v1, v2, v3, a] = self.levels();
         let [ov1, ov2, ov3, oa] = other.levels();
-        Self::new_alpha(self.format, v1 - ov1, v2 - ov2, v3 - ov3, a - oa)
+        Self::with_mode_alpha(self.mode, v1 - ov1, v2 - ov2, v3 - ov3, a - oa)
     }
 }
 
 impl SubAssign for Color {
     fn sub_assign(&mut self, other: Color) {
-        let other = other.to_format(self.format);
         for i in 0..4 {
             self.levels[i] = (self.levels[i] - other.levels[i]).clamp(0.0, 1.0);
         }
@@ -545,8 +600,8 @@ impl Mul<f32> for Color {
     type Output = Self;
     fn mul(self, s: f32) -> Self::Output {
         let [v1, v2, v3, a] = self.levels();
-        Self::new_alpha(
-            self.format,
+        Self::with_mode_alpha(
+            self.mode,
             v1 * s as f64,
             v2 * s as f64,
             v3 * s as f64,
@@ -567,7 +622,7 @@ impl Mul<f64> for Color {
     type Output = Self;
     fn mul(self, s: f64) -> Self::Output {
         let [v1, v2, v3, a] = self.levels();
-        Self::new_alpha(self.format, v1 * s, v2 * s, v3 * s, a * s)
+        Self::with_mode_alpha(self.mode, v1 * s, v2 * s, v3 * s, a * s)
     }
 }
 
@@ -583,8 +638,8 @@ impl Div<f32> for Color {
     type Output = Self;
     fn div(self, s: f32) -> Self::Output {
         let [v1, v2, v3, a] = self.levels();
-        Self::new_alpha(
-            self.format,
+        Self::with_mode_alpha(
+            self.mode,
             v1 / s as f64,
             v2 / s as f64,
             v3 / s as f64,
@@ -605,7 +660,7 @@ impl Div<f64> for Color {
     type Output = Self;
     fn div(self, s: f64) -> Self::Output {
         let [v1, v2, v3, a] = self.levels();
-        Self::new_alpha(self.format, v1 / s, v2 / s, v3 / s, a / s)
+        Self::with_mode_alpha(self.mode, v1 / s, v2 / s, v3 / s, a / s)
     }
 }
 
@@ -645,15 +700,25 @@ mod tests {
 
     #[test]
     fn test_constructors() {
-        let expected = |format| Color {
+        let expected = |mode| Color {
+            mode,
             levels: [0.0, 0.0, 0.0, 1.0],
-            format,
+            channels: [0, 0, 0, 255],
         };
-        assert_eq!(Color::new(Rgb, 0.0, 0.0, 0.0), expected(Rgb));
-        assert_eq!(Color::new_alpha(Rgb, 0.0, 0.0, 0.0, 255.0), expected(Rgb));
-        assert_eq!(Color::new(Hsb, 0.0, 0.0, 0.0), expected(Hsb));
-        assert_eq!(Color::new_alpha(Hsb, 0.0, 0.0, 0.0, 1.0), expected(Hsb));
-        assert_eq!(Color::new(Hsl, 0.0, 0.0, 0.0), expected(Hsl));
-        assert_eq!(Color::new_alpha(Hsl, 0.0, 0.0, 0.0, 1.0), expected(Hsl));
+        assert_eq!(Color::with_mode(Rgb, 0.0, 0.0, 0.0), expected(Rgb));
+        assert_eq!(
+            Color::with_mode_alpha(Rgb, 0.0, 0.0, 0.0, 255.0),
+            expected(Rgb)
+        );
+        assert_eq!(Color::with_mode(Hsb, 0.0, 0.0, 0.0), expected(Hsb));
+        assert_eq!(
+            Color::with_mode_alpha(Hsb, 0.0, 0.0, 0.0, 1.0),
+            expected(Hsb)
+        );
+        assert_eq!(Color::with_mode(Hsl, 0.0, 0.0, 0.0), expected(Hsl));
+        assert_eq!(
+            Color::with_mode_alpha(Hsl, 0.0, 0.0, 0.0, 1.0),
+            expected(Hsl)
+        );
     }
 }
