@@ -1,14 +1,60 @@
 //! [Color] conversion functions.
 
 use super::{
-    Color, ColorError,
+    Color,
     ColorMode::{self, *},
 };
-use std::{borrow::Cow, convert::TryFrom, str::FromStr};
+use std::{borrow::Cow, convert::TryFrom, error, fmt, str::FromStr};
 
-/// Convert to [Rgb] to [Hsb] format.
+/// The error type for [Color] operations.
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub enum ColorError {
+    /// Error when creating a [Color] from an invalid [slice].
+    InvalidSlice(Cow<'static, [f64]>),
+    /// Error when creating a [Color] from an invalid string using [FromStr](std::str::FromStr).
+    InvalidString(Cow<'static, str>),
+}
+
+impl fmt::Display for ColorError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use ColorError::*;
+        match self {
+            InvalidSlice(slice) => write!(f, "invalid color slice: {:?}", slice),
+            InvalidString(s) => write!(f, "invalid color string format: {}", s),
+        }
+    }
+}
+
+impl error::Error for ColorError {}
+
+/// Return the max value for each [ColorMode].
+#[inline]
+pub(crate) const fn maxes(mode: ColorMode) -> [f64; 4] {
+    match mode {
+        Rgb => [255.0; 4],
+        Hsb => [360.0, 100.0, 100.0, 1.0],
+        Hsl => [360.0, 100.0, 100.0, 1.0],
+    }
+}
+
+/// Converts levels from one format to another.
+#[inline]
+pub(crate) fn convert_levels(levels: [f64; 4], from: ColorMode, to: ColorMode) -> [f64; 4] {
+    match (from, to) {
+        (Hsb, Rgb) => hsb_to_rgb(levels),
+        (Hsl, Rgb) => hsl_to_rgb(levels),
+        (Rgb, Hsb) => rgb_to_hsb(levels),
+        (Rgb, Hsl) => rgb_to_hsl(levels),
+        (Hsb, Hsl) => hsb_to_hsl(levels),
+        (Hsl, Hsb) => hsl_to_hsb(levels),
+        (_, _) => levels,
+    }
+}
+
+/// Converts to [Rgb] to [Hsb] format.
 #[allow(clippy::many_single_char_names)]
-fn rgb_to_hsb([r, g, b, a]: [f64; 4]) -> [f64; 4] {
+pub(crate) fn rgb_to_hsb([r, g, b, a]: [f64; 4]) -> [f64; 4] {
     let c_max = r.max(g).max(b);
     let c_min = r.min(g).min(b);
     let chr = c_max - c_min;
@@ -35,9 +81,9 @@ fn rgb_to_hsb([r, g, b, a]: [f64; 4]) -> [f64; 4] {
     }
 }
 
-/// Convert to [Rgb] to [Hsl] format.
+/// Converts to [Rgb] to [Hsl] format.
 #[allow(clippy::many_single_char_names)]
-fn rgb_to_hsl([r, g, b, a]: [f64; 4]) -> [f64; 4] {
+pub(crate) fn rgb_to_hsl([r, g, b, a]: [f64; 4]) -> [f64; 4] {
     let c_max = r.max(g).max(b);
     let c_min = r.min(g).min(b);
     let l = c_max + c_min;
@@ -65,10 +111,9 @@ fn rgb_to_hsl([r, g, b, a]: [f64; 4]) -> [f64; 4] {
     }
 }
 
-/// Convert to [Hsb] to [Rgb] format.
-#[inline]
+/// Converts to [Hsb] to [Rgb] format.
 #[allow(clippy::many_single_char_names)]
-fn hsb_to_rgb([h, s, b, a]: [f64; 4]) -> [f64; 4] {
+pub(crate) fn hsb_to_rgb([h, s, b, a]: [f64; 4]) -> [f64; 4] {
     if b.abs() < f64::EPSILON {
         [0.0, 0.0, 0.0, a]
     } else if s.abs() < f64::EPSILON {
@@ -97,13 +142,13 @@ fn hsb_to_rgb([h, s, b, a]: [f64; 4]) -> [f64; 4] {
     }
 }
 
-/// Convert to [Hsl] to [Rgb] format.
-#[inline]
+/// Converts to [Hsl] to [Rgb] format.
 #[allow(clippy::many_single_char_names)]
-fn hsl_to_rgb([h, s, l, a]: [f64; 4]) -> [f64; 4] {
+pub(crate) fn hsl_to_rgb([h, s, l, a]: [f64; 4]) -> [f64; 4] {
     if s.abs() < f64::EPSILON {
         [l, l, l, a]
     } else {
+        let h = h * 6.0;
         let b = if l < 0.5 {
             (1.0 + s) * l
         } else {
@@ -136,9 +181,9 @@ fn hsl_to_rgb([h, s, l, a]: [f64; 4]) -> [f64; 4] {
     }
 }
 
-/// Convert to [Hsl] to [Hsb] format.
+/// Converts to [Hsl] to [Hsb] format.
 #[allow(clippy::many_single_char_names)]
-fn hsl_to_hsb([h, s, l, a]: [f64; 4]) -> [f64; 4] {
+pub(crate) fn hsl_to_hsb([h, s, l, a]: [f64; 4]) -> [f64; 4] {
     let b = if l < 0.5 {
         (1.0 + s) * l
     } else {
@@ -148,9 +193,9 @@ fn hsl_to_hsb([h, s, l, a]: [f64; 4]) -> [f64; 4] {
     [h, s, b, a]
 }
 
-/// Convert to [Hsb] to [Hsl] format.
+/// Converts to [Hsb] to [Hsl] format.
 #[allow(clippy::many_single_char_names)]
-fn hsb_to_hsl([h, s, b, a]: [f64; 4]) -> [f64; 4] {
+pub(crate) fn hsb_to_hsl([h, s, b, a]: [f64; 4]) -> [f64; 4] {
     let l = (2.0 - s) * b / 2.0;
     let s = match l {
         _ if (l - 1.0).abs() < f64::EPSILON => 0.0,
@@ -160,30 +205,7 @@ fn hsb_to_hsl([h, s, b, a]: [f64; 4]) -> [f64; 4] {
     [h, s, l, a]
 }
 
-#[inline]
-pub(crate) fn maxes(mode: ColorMode) -> [f64; 4] {
-    match mode {
-        Rgb => [255.0; 4],
-        Hsb => [360.0, 100.0, 100.0, 1.0],
-        Hsl => [360.0, 100.0, 100.0, 1.0],
-    }
-}
-
-/// Convert levels from one format to another.
-#[inline]
-pub(crate) fn convert_levels(levels: [f64; 4], from: ColorMode, to: ColorMode) -> [f64; 4] {
-    match (from, to) {
-        (Hsb, Rgb) => hsb_to_rgb(levels),
-        (Hsl, Rgb) => hsl_to_rgb(levels),
-        (Rgb, Hsb) => rgb_to_hsb(levels),
-        (Rgb, Hsl) => rgb_to_hsl(levels),
-        (Hsb, Hsl) => hsb_to_hsl(levels),
-        (Hsl, Hsb) => hsl_to_hsb(levels),
-        (_, _) => levels,
-    }
-}
-
-/// Convert levels to RGB channels.
+/// Converts levels to RGB channels.
 #[inline]
 pub(crate) fn calculate_channels(levels: [f64; 4]) -> [u8; 4] {
     let [r, g, b, a] = levels;
@@ -198,7 +220,7 @@ pub(crate) fn calculate_channels(levels: [f64; 4]) -> [u8; 4] {
 
 impl Color {
     /// Constructs a `Color` by linear interpolating between two colors by a given amount between
-    /// 0.0 and 1.0.
+    /// `0.0` and `1.0`.
     ///
     /// # Examples
     ///
@@ -214,7 +236,7 @@ impl Color {
     /// let lerped = from.lerp(to, 0.25); // `to` is implicity converted to RGB
     /// assert_eq!(lerped.channels(), [204, 64, 13, 223]);
     /// ```
-    pub fn lerp(self, other: Color, amt: f64) -> Self {
+    pub fn lerp(&self, other: Color, amt: f64) -> Self {
         let lerp = |start, stop, amt| amt * (stop - start) + start;
 
         let amt = amt.clamp(0.0, 1.0);
@@ -227,10 +249,37 @@ impl Color {
         // SAFETY: We clamp the inputs to between 0.0..=1.0 - upholding the levels invariant.
         unsafe { Self::from_raw(self.mode, v1, v2, v3, a) }
     }
+
+    /// Update RGB channels by calculating them from the current levels.
+    pub(crate) fn calculate_channels(&mut self) {
+        self.channels = calculate_channels(self.levels);
+    }
 }
 
 impl FromStr for Color {
     type Err = ColorError;
+
+    /// Converts to [Color] from a hexidecimal string.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// use std::str::FromStr;
+    ///
+    /// let c = Color::from_str("#F0F")?; // 3-digit Hex string
+    /// assert_eq!(c.channels(), [255, 0, 255, 255]);
+    ///
+    /// let c = Color::from_str("#F0F5")?; // 4-digit Hex string
+    /// assert_eq![c.channels(), [255, 0, 255, 85]];
+    ///
+    /// let c = Color::from_str("#F0F5BF")?; // 6-digit Hex string
+    /// assert_eq!(c.channels(), [240, 245, 191, 255]);
+    ///
+    /// let c = Color::from_str("#F0F5BF5F")?; // 8-digit Hex string
+    /// assert_eq!(c.channels(), [240, 245, 191, 95]);
+    /// # Ok::<(), ColorError>(())
+    /// ```
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if !s.starts_with('#') {
             return Err(ColorError::InvalidString(Cow::from(s.to_owned())));
@@ -272,162 +321,94 @@ impl FromStr for Color {
 
 impl TryFrom<&str> for Color {
     type Error = ColorError;
+    /// Try to create a `Color` from a hexidecimal string.
+    #[inline]
     fn try_from(s: &str) -> Result<Self, Self::Error> {
         Self::from_str(s)
     }
 }
 
-impl From<u8> for Color {
-    fn from(gray: u8) -> Self {
-        Self::rgb(gray, gray, gray)
-    }
+macro_rules! impl_from {
+    ($($source: ty),*) => {
+        $(
+            impl From<$source> for Color {
+                /// Convert from value to grayscale `Color`.
+                #[inline]
+                fn from(gray: $source) -> Self {
+                    let gray = f64::from(gray);
+                    Self::with_mode(Rgb, gray, gray, gray)
+                }
+            }
+
+            impl From<($source, $source)> for Color {
+                /// Convert from (value, alpha) to grayscale `Color` with alpha.
+                #[inline]
+                fn from((gray, alpha): ($source, $source)) -> Self {
+                    let gray = f64::from(gray);
+                    let alpha = f64::from(alpha);
+                    Self::with_mode_alpha(Rgb, gray, gray, gray, alpha)
+                }
+            }
+
+            impl From<($source, $source, $source)> for Color {
+                /// Convert from (r, g, b) to `Color` with max alpha.
+                #[inline]
+                fn from((r, g, b): ($source, $source, $source)) -> Self {
+                    Self::with_mode(Rgb, f64::from(r), f64::from(g), f64::from(b))
+                }
+            }
+
+            impl From<($source, $source, $source, $source)> for Color {
+                /// Convert from (r, g, b, a) to `Color`.
+                #[inline]
+                fn from((r, g, b, a): ($source, $source, $source, $source)) -> Self {
+                    Self::with_mode_alpha(Rgb, f64::from(r), f64::from(g), f64::from(b), f64::from(a))
+                }
+            }
+
+            impl From<[$source; 1]> for Color {
+                /// Convert from [value] to grayscale `Color`.
+                #[inline]
+                fn from([gray]: [$source; 1]) -> Self {
+                    let gray = f64::from(gray);
+                    Self::with_mode(Rgb, gray, gray, gray)
+                }
+            }
+
+            impl From<[$source; 2]> for Color {
+                /// Convert from [value, alpha] to grayscale `Color` with alpha.
+                #[inline]
+                fn from([gray, alpha]: [$source; 2]) -> Self {
+                    let gray = f64::from(gray);
+                    let alpha = f64::from(alpha);
+                    Self::with_mode_alpha(Rgb, gray, gray, gray, alpha)
+                }
+            }
+
+            impl From<[$source; 3]> for Color {
+                /// Convert from [r, g, b] to `Color` with max alpha.
+                #[inline]
+                fn from([r, g, b]: [$source; 3]) -> Self {
+                    Self::with_mode(Rgb, f64::from(r), f64::from(g), f64::from(b))
+                }
+            }
+
+            impl From<[$source; 4]> for Color {
+                /// Convert from [r, g, b, a] to `Color`.
+                #[inline]
+                fn from([r, g, b, a]: [$source; 4]) -> Self {
+                    Self::with_mode_alpha(Rgb, f64::from(r), f64::from(g), f64::from(b), f64::from(a))
+                }
+            }
+        )*
+    };
 }
 
-impl From<(u8, u8)> for Color {
-    fn from((gray, alpha): (u8, u8)) -> Self {
-        Self::rgba(gray, gray, gray, alpha)
-    }
-}
-
-impl From<(u8, u8, u8)> for Color {
-    fn from((r, g, b): (u8, u8, u8)) -> Self {
-        Self::rgb(r, g, b)
-    }
-}
-
-impl From<(u8, u8, u8, u8)> for Color {
-    fn from((r, g, b, a): (u8, u8, u8, u8)) -> Self {
-        Self::rgba(r, g, b, a)
-    }
-}
-
-impl From<[u8; 2]> for Color {
-    fn from([gray, alpha]: [u8; 2]) -> Self {
-        Self::rgba(gray, gray, gray, alpha)
-    }
-}
-
-impl From<[u8; 3]> for Color {
-    fn from([r, g, b]: [u8; 3]) -> Self {
-        Self::rgb(r, g, b)
-    }
-}
-
-impl From<[u8; 4]> for Color {
-    fn from([r, g, b, a]: [u8; 4]) -> Self {
-        Self::rgba(r, g, b, a)
-    }
-}
-
-impl From<Color> for [f64; 4] {
-    fn from(color: Color) -> Self {
-        color.levels()
-    }
-}
-
-impl From<f32> for Color {
-    fn from(gray: f32) -> Self {
-        let gray = gray as f64;
-        Self::hsb(gray, gray, gray)
-    }
-}
-
-impl From<(f32, f32)> for Color {
-    fn from((gray, alpha): (f32, f32)) -> Self {
-        let gray = gray as f64;
-        Self::hsba(gray, gray, gray, alpha as f64)
-    }
-}
-
-impl From<(f32, f32, f32)> for Color {
-    fn from((h, s, v): (f32, f32, f32)) -> Self {
-        Self::hsb(h as f64, s as f64, v as f64)
-    }
-}
-
-impl From<(f32, f32, f32, f32)> for Color {
-    fn from((h, s, v, a): (f32, f32, f32, f32)) -> Self {
-        Self::hsba(h as f64, s as f64, v as f64, a as f64)
-    }
-}
-
-impl From<[f32; 1]> for Color {
-    fn from([gray]: [f32; 1]) -> Self {
-        let gray = gray as f64;
-        Self::hsb(gray, gray, gray)
-    }
-}
-
-impl From<[f32; 2]> for Color {
-    fn from([gray, alpha]: [f32; 2]) -> Self {
-        let gray = gray as f64;
-        Self::hsba(gray, gray, gray, alpha as f64)
-    }
-}
-
-impl From<[f32; 3]> for Color {
-    fn from([h, s, v]: [f32; 3]) -> Self {
-        Self::hsb(h as f64, s as f64, v as f64)
-    }
-}
-
-impl From<[f32; 4]> for Color {
-    fn from([h, s, v, a]: [f32; 4]) -> Self {
-        Self::hsba(h as f64, s as f64, v as f64, a as f64)
-    }
-}
-
-impl From<f64> for Color {
-    fn from(gray: f64) -> Self {
-        Self::hsb(gray, gray, gray)
-    }
-}
-
-impl From<(f64, f64)> for Color {
-    fn from((gray, alpha): (f64, f64)) -> Self {
-        Self::hsba(gray, gray, gray, alpha)
-    }
-}
-
-impl From<(f64, f64, f64)> for Color {
-    fn from((h, s, v): (f64, f64, f64)) -> Self {
-        Self::hsb(h, s, v)
-    }
-}
-
-impl From<(f64, f64, f64, f64)> for Color {
-    fn from((h, s, v, a): (f64, f64, f64, f64)) -> Self {
-        Self::hsba(h, s, v, a)
-    }
-}
-
-impl From<[f64; 1]> for Color {
-    fn from([gray]: [f64; 1]) -> Self {
-        Self::hsb(gray, gray, gray)
-    }
-}
-
-impl From<[f64; 2]> for Color {
-    fn from([gray, alpha]: [f64; 2]) -> Self {
-        Self::hsba(gray, gray, gray, alpha)
-    }
-}
-
-impl From<[f64; 3]> for Color {
-    fn from([h, s, v]: [f64; 3]) -> Self {
-        Self::hsb(h, s, v)
-    }
-}
-
-impl From<[f64; 4]> for Color {
-    fn from([h, s, v, a]: [f64; 4]) -> Self {
-        Self::hsba(h, s, v, a)
-    }
-}
+impl_from!(u8, i8, u16, i16, u32, i32, f32, f64);
 
 #[cfg(test)]
 mod tests {
-    use crate::prelude::{hsb, hsl, rgb};
+    use crate::prelude::{hsb, hsl, rgb, Color};
 
     macro_rules! assert_approx_eq {
         ($c1:expr, $c2:expr) => {
@@ -443,6 +424,84 @@ mod tests {
             assert!(v3d < e, "v3: ({} - {}) < {}", v3, ov3, e);
             assert!(ad < e, "a: ({} - {}) < {}", a, oa, e);
         };
+    }
+
+    #[test]
+    fn test_tuple_conversions() {
+        let _: Color = 50u8.into();
+        let _: Color = 50i8.into();
+        let _: Color = 50u16.into();
+        let _: Color = 50i16.into();
+        let _: Color = 50u32.into();
+        let _: Color = 50i32.into();
+        let _: Color = 50.0f32.into();
+        let _: Color = 50.0f64.into();
+
+        let _: Color = (50u8, 100).into();
+        let _: Color = (50i8, 100).into();
+        let _: Color = (50u16, 100).into();
+        let _: Color = (50i16, 100).into();
+        let _: Color = (50u32, 100).into();
+        let _: Color = (50i32, 100).into();
+        let _: Color = (50.0f32, 100.0).into();
+        let _: Color = (50.0f64, 100.0).into();
+
+        let _: Color = (50u8, 100, 55).into();
+        let _: Color = (50i8, 100, 55).into();
+        let _: Color = (50u16, 100, 55).into();
+        let _: Color = (50i16, 100, 55).into();
+        let _: Color = (50u32, 100, 55).into();
+        let _: Color = (50i32, 100, 55).into();
+        let _: Color = (50.0f32, 100.0, 55.0).into();
+        let _: Color = (50.0f64, 100.0, 55.0).into();
+
+        let _: Color = (50u8, 100, 55, 100).into();
+        let _: Color = (50i8, 100, 55, 100).into();
+        let _: Color = (50u16, 100, 55, 100).into();
+        let _: Color = (50i16, 100, 55, 100).into();
+        let _: Color = (50u32, 100, 55, 100).into();
+        let _: Color = (50i32, 100, 55, 100).into();
+        let _: Color = (50.0f32, 100.0, 55.0, 100.0).into();
+        let _: Color = (50.0f64, 100.0, 55.0, 100.0).into();
+    }
+
+    #[test]
+    fn test_slice_conversions() {
+        let _: Color = [50u8].into();
+        let _: Color = [50i8].into();
+        let _: Color = [50u16].into();
+        let _: Color = [50i16].into();
+        let _: Color = [50u32].into();
+        let _: Color = [50i32].into();
+        let _: Color = [50.0f32].into();
+        let _: Color = [50.0f64].into();
+
+        let _: Color = [50u8, 100].into();
+        let _: Color = [50i8, 100].into();
+        let _: Color = [50u16, 100].into();
+        let _: Color = [50i16, 100].into();
+        let _: Color = [50u32, 100].into();
+        let _: Color = [50i32, 100].into();
+        let _: Color = [50.0f32, 100.0].into();
+        let _: Color = [50.0f64, 100.0].into();
+
+        let _: Color = [50u8, 100, 55].into();
+        let _: Color = [50i8, 100, 55].into();
+        let _: Color = [50u16, 100, 55].into();
+        let _: Color = [50i16, 100, 55].into();
+        let _: Color = [50u32, 100, 55].into();
+        let _: Color = [50i32, 100, 55].into();
+        let _: Color = [50.0f32, 100.0, 55.0].into();
+        let _: Color = [50.0f64, 100.0, 55.0].into();
+
+        let _: Color = [50u8, 100, 55, 100].into();
+        let _: Color = [50i8, 100, 55, 100].into();
+        let _: Color = [50u16, 100, 55, 100].into();
+        let _: Color = [50i16, 100, 55, 100].into();
+        let _: Color = [50u32, 100, 55, 100].into();
+        let _: Color = [50i32, 100, 55, 100].into();
+        let _: Color = [50.0f32, 100.0, 55.0, 100.0].into();
+        let _: Color = [50.0f64, 100.0, 55.0, 100.0].into();
     }
 
     #[test]
@@ -499,8 +558,6 @@ mod tests {
         assert_approx_eq!(hsl!(0.0, 0.0, 50.0), rgb!(128, 128, 128));
         assert_approx_eq!(hsl!(0.0, 100.0, 50.0), rgb!(255, 0, 0));
         assert_approx_eq!(hsl!(60.0, 100.0, 50.0), rgb!(255, 255, 0));
-        println!("{:?}", hsl!(120.0, 100.0, 50.0));
-        println!("{:?}", rgb!(0, 255, 0));
         assert_approx_eq!(hsl!(120.0, 100.0, 50.0), rgb!(0, 255, 0));
         assert_approx_eq!(hsl!(300.0, 100.0, 50.0), rgb!(255, 0, 255));
         assert_approx_eq!(hsl!(180.0, 100.0, 50.0), rgb!(0, 255, 255));
@@ -510,21 +567,21 @@ mod tests {
     #[test]
     fn test_hsl_to_hsb() {
         assert_approx_eq!(hsl!(0.0, 0.0, 0.0), hsb!(0.0, 0.0, 0.0));
-        assert_approx_eq!(hsl!(0.0, 0.0, 100.0), hsb!(255.0, 255.0, 255.0));
-        assert_approx_eq!(hsl!(0.0, 100.0, 100.0), hsb!(255.0, 0.0, 0.0));
-        assert_approx_eq!(hsl!(120.0, 100.0, 100.0), hsb!(0.0, 255.0, 0.0));
-        assert_approx_eq!(hsl!(240.0, 100.0, 100.0), hsb!(0.0, 0.0, 255.0));
-        assert_approx_eq!(hsl!(60.0, 100.0, 100.0), hsb!(255.0, 255.0, 0.0));
-        assert_approx_eq!(hsl!(180.0, 100.0, 100.0), hsb!(0.0, 255.0, 255.0));
-        assert_approx_eq!(hsl!(300.0, 100.0, 100.0), hsb!(255.0, 0.0, 255.0));
-        assert_approx_eq!(hsl!(0.0, 0.0, 75.0), hsb!(191.0, 191.0, 191.0));
-        assert_approx_eq!(hsl!(0.0, 0.0, 50.0), hsb!(128.0, 128.0, 128.0));
-        assert_approx_eq!(hsl!(0.0, 100.0, 50.0), hsb!(128.0, 0.0, 0.0));
-        assert_approx_eq!(hsl!(60.0, 100.0, 50.0), hsb!(128.0, 128.0, 0.0));
-        assert_approx_eq!(hsl!(120.0, 100.0, 50.0), hsb!(0.0, 128.0, 0.0));
-        assert_approx_eq!(hsl!(300.0, 100.0, 50.0), hsb!(128.0, 0.0, 128.0));
-        assert_approx_eq!(hsl!(180.0, 100.0, 50.0), hsb!(0.0, 128.0, 128.0));
-        assert_approx_eq!(hsl!(240.0, 100.0, 50.0), hsb!(0.0, 0.0, 128.0));
+        assert_approx_eq!(hsl!(0.0, 0.0, 100.0), hsb!(0.0, 0.0, 100.0));
+        assert_approx_eq!(hsl!(0.0, 100.0, 100.0), hsb!(0.0, 0.0, 100.0));
+        assert_approx_eq!(hsl!(120.0, 100.0, 100.0), hsb!(120.0, 0.0, 100.0));
+        assert_approx_eq!(hsl!(240.0, 100.0, 100.0), hsb!(240.0, 0.0, 100.0));
+        assert_approx_eq!(hsl!(60.0, 100.0, 100.0), hsb!(60.0, 0.0, 100.0));
+        assert_approx_eq!(hsl!(180.0, 100.0, 100.0), hsb!(180.0, 0.0, 100.0));
+        assert_approx_eq!(hsl!(300.0, 100.0, 100.0), hsb!(300.0, 0.0, 100.0));
+        assert_approx_eq!(hsl!(0.0, 0.0, 75.0), hsb!(0.0, 0.0, 75.0));
+        assert_approx_eq!(hsl!(0.0, 0.0, 50.0), hsb!(0.0, 0.0, 50.0));
+        assert_approx_eq!(hsl!(0.0, 100.0, 50.0), hsb!(0.0, 100.0, 100.0));
+        assert_approx_eq!(hsl!(60.0, 100.0, 50.0), hsb!(60.0, 100.0, 100.0));
+        assert_approx_eq!(hsl!(120.0, 100.0, 50.0), hsb!(120.0, 100.0, 100.0));
+        assert_approx_eq!(hsl!(300.0, 100.0, 50.0), hsb!(300.0, 100.0, 100.0));
+        assert_approx_eq!(hsl!(180.0, 100.0, 50.0), hsb!(180.0, 100.0, 100.0));
+        assert_approx_eq!(hsl!(240.0, 100.0, 50.0), hsb!(240.0, 100.0, 100.0));
     }
 
     #[test]

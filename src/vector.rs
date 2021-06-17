@@ -622,7 +622,7 @@ where
         }
     }
 
-    /// Convert [Vector<T>] to [Point<U>].
+    /// Converts [Vector<T>] to [Point<U>].
     ///
     /// # Example
     ///
@@ -943,7 +943,7 @@ macro_rules! impl_op {
 impl_op!(f32, 0.0);
 impl_op!(f64, 0.0);
 
-/// Convert `T` to [Vector<T>].
+/// Converts `T` to [Vector<T>].
 impl<T> From<T> for Vector<T>
 where
     T: Num + Copy,
@@ -953,7 +953,7 @@ where
     }
 }
 
-/// Convert `(T, T)` to [Vector<T>].
+/// Converts `(T, T)` to [Vector<T>].
 impl<T> From<(T, T)> for Vector<T>
 where
     T: Num,
@@ -963,28 +963,28 @@ where
     }
 }
 
-/// Convert `(T, T, T)` to [Vector<T>].
+/// Converts `(T, T, T)` to [Vector<T>].
 impl<T> From<(T, T, T)> for Vector<T> {
     fn from((x, y, z): (T, T, T)) -> Self {
         Self { x, y, z }
     }
 }
 
-/// Convert [Vector<T>] to `(x, y)`.
+/// Converts [Vector<T>] to `(x, y)`.
 impl<T> From<Vector<T>> for (T, T) {
     fn from(v: Vector<T>) -> Self {
         (v.x, v.y)
     }
 }
 
-/// Convert [Vector<T>] to `(x, y, z)`.
+/// Converts [Vector<T>] to `(x, y, z)`.
 impl<T> From<Vector<T>> for (T, T, T) {
     fn from(v: Vector<T>) -> Self {
         (v.x, v.y, v.z)
     }
 }
 
-/// Convert [Point<U>] to [Vector<T>].
+/// Converts [Point<U>] to [Vector<T>].
 impl<T, U> TryFrom<Point<U>> for Vector<T>
 where
     U: TryInto<T>,
@@ -999,7 +999,7 @@ where
     }
 }
 
-/// Convert [Vector<U>] to [Point<T>].
+/// Converts [Vector<U>] to [Point<T>].
 impl<T, U> TryFrom<Vector<U>> for Point<T>
 where
     U: TryInto<T>,

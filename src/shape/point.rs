@@ -119,7 +119,7 @@ where
         [self.x, self.y, self.z]
     }
 
-    /// Convert [Point<T>] to [Vector<U>].
+    /// Converts [Point<T>] to [Vector<U>].
     ///
     /// # Example
     ///
@@ -417,7 +417,7 @@ impl_op!(usize, 0);
 impl_op!(f32, 0.0);
 impl_op!(f64, 0.0);
 
-/// Convert `T` to [Point<T>].
+/// Converts `T` to [Point<T>].
 impl<T> From<T> for Point<T>
 where
     T: Num + Copy,
@@ -427,7 +427,7 @@ where
     }
 }
 
-/// Convert `(T, T)` to [Point<T>].
+/// Converts `(T, T)` to [Point<T>].
 impl<T> From<(T, T)> for Point<T>
 where
     T: Num,
@@ -437,21 +437,21 @@ where
     }
 }
 
-/// Convert `(T, T, T)` to [Point<T>].
+/// Converts `(T, T, T)` to [Point<T>].
 impl<T> From<(T, T, T)> for Point<T> {
     fn from((x, y, z): (T, T, T)) -> Self {
         Self { x, y, z }
     }
 }
 
-/// Convert [Point<T>] into a (x, y) tuple.
+/// Converts [Point<T>] into a (x, y) tuple.
 impl<T> From<Point<T>> for (T, T) {
     fn from(p: Point<T>) -> Self {
         (p.x, p.y)
     }
 }
 
-/// Convert [Point<T>] into a (x, y, z) tuple.
+/// Converts [Point<T>] into a (x, y, z) tuple.
 impl<T> From<Point<T>> for (T, T, T) {
     fn from(p: Point<T>) -> Self {
         (p.x, p.y, p.z)
