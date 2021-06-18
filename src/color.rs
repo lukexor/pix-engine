@@ -1,4 +1,4 @@
-//! [Color] functions for drawing
+//! [Color] functions for drawing.
 //!
 //! Each [Color] can be constructed with a [ColorMode]. The default mode and internal representation
 //! is [Rgb] with values ranging from `0..=255` for red, green, blue, and alpha transparency. [Hsb] and [Hsl]
@@ -12,6 +12,9 @@
 //! - Two parameters constructs a grayscale color with alpha transparency.
 //! - Three parameters are used as RGB or HSB/HSL values.
 //! - Four parameters are used as RGBB or HSb/HSL values with alpha transparency.
+//!
+//! If you're not picky about color, there are the [random](Color::random) and
+//! [random_alpha](Color::random_alpha) methods.
 //!
 //! [Color] also implements [FromStr](std::str::FromStr) allowing conversion from a 3, 4, 6, or 8-digit hexidecimal
 //! string.
@@ -29,7 +32,8 @@
 //! `Rgb` values range from `0..=255` for red, green, blue and alpha transparency.
 //!
 //! ```
-//! # use pix_engine::prelude::*;
+//! use pix_engine::prelude::*;
+//!
 //! let c = rgb!(55); // Grayscale
 //! assert_eq!(c.channels(), [55, 55, 55, 255]);
 //!
@@ -47,7 +51,8 @@
 //! brightness/lightness and `0.0..=1.0` for alpha transparency.
 //!
 //! ```
-//! # use pix_engine::prelude::*;
+//! use pix_engine::prelude::*;
+//!
 //! let c = hsb!(50.0); // Gray
 //! assert_eq!(c.channels(), [128, 128, 128, 255]);
 //!
@@ -64,7 +69,8 @@
 //! # SVG 1.0 Named color constants
 //!
 //! ```
-//! # use pix_engine::prelude::*;
+//! use pix_engine::prelude::*;
+//!
 //! let c = ALICE_BLUE;
 //! assert_eq!(c.channels(), [240, 248, 255, 255]);
 //!
@@ -75,7 +81,7 @@
 //! # From a hexidecimal string
 //!
 //! ```
-//! # use pix_engine::prelude::*;
+//! use pix_engine::prelude::*;
 //! use std::str::FromStr;
 //!
 //! let c = Color::from_str("#F0F")?; // 3-digit Hex string
@@ -774,7 +780,8 @@ impl Color {
 /// # Examples
 ///
 /// ```
-/// # use pix_engine::prelude::*;
+/// use pix_engine::prelude::*;
+///
 /// let c = rgb!(128); // Gray
 /// assert_eq!(c.channels(), [128, 128, 128, 255]);
 ///
@@ -808,7 +815,8 @@ macro_rules! rgb {
 /// # Examples
 ///
 /// ```
-/// # use pix_engine::prelude::*;
+/// use pix_engine::prelude::*;
+///
 /// let c = hsb!(50.0); // Gray
 /// assert_eq!(c.channels(), [128, 128, 128, 255]);
 ///
@@ -842,7 +850,8 @@ macro_rules! hsb {
 /// # Examples
 ///
 /// ```
-/// # use pix_engine::prelude::*;
+/// use pix_engine::prelude::*;
+///
 /// let c = hsl!(50.0); // Gray
 /// assert_eq!(c.channels(), [128, 128, 128, 255]);
 ///
@@ -884,6 +893,15 @@ impl Index<usize> for Color {
             i if i < 4 => self.levels.get(i).unwrap(),
             _ => panic!("index out of bounds: the len is 4 but the index is {}", idx),
         }
+    }
+}
+
+/// Display [Color] as "[r, g, b, a]".
+impl fmt::Display for Color {
+    #[allow(clippy::many_single_char_names)]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let [r, g, b, a] = self.channels();
+        write!(f, "[{}, {}, {}, {}]", r, g, b, a)
     }
 }
 

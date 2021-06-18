@@ -219,7 +219,7 @@ pub(crate) fn calculate_channels(levels: [f64; 4]) -> [u8; 4] {
 }
 
 impl Color {
-    /// Constructs a `Color` by linear interpolating between two colors by a given amount between
+    /// Constructs a `Color` by linear interpolating between two `Color`s by a given amount between
     /// `0.0` and `1.0`.
     ///
     /// # Examples
@@ -367,7 +367,7 @@ macro_rules! impl_from {
             }
 
             impl From<[$source; 1]> for Color {
-                /// Convert from [value] to grayscale `Color`.
+                /// Convert from `[value]` to grayscale `Color`.
                 #[inline]
                 fn from([gray]: [$source; 1]) -> Self {
                     let gray = f64::from(gray);
@@ -376,7 +376,7 @@ macro_rules! impl_from {
             }
 
             impl From<[$source; 2]> for Color {
-                /// Convert from [value, alpha] to grayscale `Color` with alpha.
+                /// Convert from `[value, alpha]` to grayscale `Color` with alpha.
                 #[inline]
                 fn from([gray, alpha]: [$source; 2]) -> Self {
                     let gray = f64::from(gray);
@@ -386,7 +386,7 @@ macro_rules! impl_from {
             }
 
             impl From<[$source; 3]> for Color {
-                /// Convert from [r, g, b] to `Color` with max alpha.
+                /// Convert from `[r, g, b]` to `Color` with max alpha.
                 #[inline]
                 fn from([r, g, b]: [$source; 3]) -> Self {
                     Self::with_mode(Rgb, f64::from(r), f64::from(g), f64::from(b))
@@ -394,7 +394,7 @@ macro_rules! impl_from {
             }
 
             impl From<[$source; 4]> for Color {
-                /// Convert from [r, g, b, a] to `Color`.
+                /// Convert from `[r, g, b, a]` to `Color`.
                 #[inline]
                 fn from([r, g, b, a]: [$source; 4]) -> Self {
                     Self::with_mode_alpha(Rgb, f64::from(r), f64::from(g), f64::from(b), f64::from(a))

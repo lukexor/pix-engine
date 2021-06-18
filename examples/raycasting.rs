@@ -270,7 +270,7 @@ impl RayScene {
         }
 
         // Return the POINT OF INTERSECTION
-        Some((Vector::new_2d(r_px + r_dx * t1, r_py + r_dy * t1), t1))
+        Some((vector!(r_px + r_dx * t1, r_py + r_dy * t1), t1))
     }
 
     fn draw_visibility_polygons(&mut self, s: &mut PixState) -> PixResult<bool> {

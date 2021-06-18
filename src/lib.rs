@@ -112,7 +112,7 @@ pub mod prelude {
     pub use shape::*;
     pub use state::{
         environment::WindowId,
-        settings::{ArcMode, BlendMode, DrawMode},
+        settings::{AngleMode, ArcMode, BlendMode, DrawMode},
         AppState, Error as StateError, PixState, Result as StateResult,
     };
     pub use vector::Vector;

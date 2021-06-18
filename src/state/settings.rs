@@ -52,6 +52,17 @@ pub enum BlendMode {
     Mod,
 }
 
+/// Angle mode which changes how math functions interpreted.
+#[non_exhaustive]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum AngleMode {
+    /// Radians
+    Radians,
+    /// Degrees
+    Degrees,
+}
+
 /// Several settings used to change various functionality of the engine.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
