@@ -1,4 +1,4 @@
-//! [Image] and [PixelFormat] functions.
+//! [`Image`] and [`PixelFormat`] functions.
 
 use crate::prelude::*;
 use std::{
@@ -12,10 +12,10 @@ use std::{
     result,
 };
 
-/// `Image` Result
+/// The result type for [`Image`] operations.
 pub type Result<T> = result::Result<T, Error>;
 
-/// Types of errors `Image` can return in a `Result`.
+/// The error type for [`Image`] operations.
 #[non_exhaustive]
 #[derive(Debug)]
 pub enum Error {
@@ -33,7 +33,7 @@ pub enum Error {
     Other(Cow<'static, str>),
 }
 
-/// PixelFormat for interpreting bytes when using textures.
+/// `PixelFormat` for interpreting bytes when using textures.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum PixelFormat {
     /// 8-bit Indexed color
@@ -50,7 +50,6 @@ pub enum PixelFormat {
 
 impl PixelFormat {
     /// Return the number of channels associated with the format.
-
     pub fn channels(&self) -> usize {
         use PixelFormat::*;
         match self {

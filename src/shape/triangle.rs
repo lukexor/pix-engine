@@ -1,4 +1,4 @@
-//! 2D Triangle<T> type used for drawing.
+//! [`Triangle`] type used for drawing.
 
 use super::Point;
 use crate::vector::Vector;
@@ -6,7 +6,7 @@ use num::Num;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// A `Triangle`.
+/// A `Triangle` with three [`Point<T>`]s.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Triangle<T> {
@@ -22,7 +22,7 @@ impl<T> Triangle<T>
 where
     T: Num,
 {
-    /// Create new `Triangle<T>`.
+    /// Constructs a [`Triangle<T>`].
     pub fn new<P>(p1: P, p2: P, p3: P) -> Self
     where
         P: Into<Point<T>>,
@@ -35,7 +35,7 @@ where
     }
 }
 
-/// Convert `(x1, y1, x2, y2, x3, y3)` to [Triangle<T>].
+/// Convert `(x1, y1, x2, y2, x3, y3)` to [`Triangle<T>`].
 impl<T> From<(T, T, T, T, T, T)> for Triangle<T>
 where
     T: Num + Copy,
@@ -45,7 +45,7 @@ where
     }
 }
 
-/// Convert `([Point<T>], [Point<T>], [Point<T>])` to [Triangle<T>].
+/// Convert ([`Point<T>`], [`Point<T>`], [`Point<T>`]) to [`Triangle<T>`].
 impl<T> From<(Point<T>, Point<T>, Point<T>)> for Triangle<T>
 where
     T: Num + Copy,
@@ -55,7 +55,7 @@ where
     }
 }
 
-/// Convert `([Vector<T>], [Vector<T>], [Vector<T>]) to [Triangle<T>].
+/// Convert ([`Vector<T>`], [`Vector<T>`], [`Vector<T>`]) to [`Triangle<T>`].
 impl<T> From<(Vector<T>, Vector<T>, Vector<T>)> for Triangle<T>
 where
     Vector<T>: Into<Point<T>>,

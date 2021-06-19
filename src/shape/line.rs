@@ -1,4 +1,4 @@
-//! 2D Line type used for drawing.
+//! [`Line`] type used for drawing.
 
 use super::Point;
 use crate::vector::Vector;
@@ -6,7 +6,7 @@ use num::Num;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// A `Line` with a starting [Point<T>] and ending [Point<T>].
+/// A `Line` with a starting [`Point<T>`] and ending [`Point<T>`].
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Line<T> {
@@ -20,7 +20,7 @@ impl<T> Line<T>
 where
     T: Num,
 {
-    /// Create new `Line`.
+    /// Constructs a `Line`.
     pub fn new<P>(p1: P, p2: P) -> Self
     where
         P: Into<Point<T>>,
@@ -32,7 +32,7 @@ where
     }
 }
 
-/// Convert `(x1, y1, x2, y2)` to [Line<T>].
+/// Convert `(x1, y1, x2, y2)` to [`Line<T>`].
 impl<T> From<(T, T, T, T)> for Line<T>
 where
     T: Num + Copy,
@@ -42,7 +42,7 @@ where
     }
 }
 
-/// Convert `([Point<T>], [Point<T>])` to [Line<T>].
+/// Convert ([`Point<T>`], [`Point<T>`]) to [`Line<T>`].
 impl<T> From<(Point<T>, Point<T>)> for Line<T>
 where
     T: Num + Copy,
@@ -52,7 +52,7 @@ where
     }
 }
 
-/// Convert `([Vector<T>], [Vector<T>])` to [Line<T>].
+/// Convert ([`Vector<T>`], [`Vector<T>`]) to [`Line<T>`].
 impl<T> From<(Vector<T>, Vector<T>)> for Line<T>
 where
     Vector<T>: Into<Point<T>>,

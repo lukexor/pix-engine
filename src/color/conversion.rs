@@ -1,4 +1,4 @@
-//! [Color] conversion functions.
+//! [`Color`] conversion functions.
 
 use super::{
     Color,
@@ -6,13 +6,13 @@ use super::{
 };
 use std::{borrow::Cow, convert::TryFrom, error, fmt, str::FromStr};
 
-/// The error type for [Color] operations.
+/// The error type for [`Color`] operations.
 #[non_exhaustive]
 #[derive(Debug, Clone)]
 pub enum ColorError {
-    /// Error when creating a [Color] from an invalid [slice].
+    /// Error when creating a [`Color`] from an invalid [`slice`].
     InvalidSlice(Cow<'static, [f64]>),
-    /// Error when creating a [Color] from an invalid string using [FromStr](std::str::FromStr).
+    /// Error when creating a [`Color`] from an invalid string using [`FromStr`](std::str::FromStr).
     InvalidString(Cow<'static, str>),
 }
 
@@ -28,7 +28,7 @@ impl fmt::Display for ColorError {
 
 impl error::Error for ColorError {}
 
-/// Return the max value for each [ColorMode].
+/// Return the max value for each [`ColorMode`].
 #[inline]
 pub(crate) const fn maxes(mode: ColorMode) -> [f64; 4] {
     match mode {
@@ -38,7 +38,7 @@ pub(crate) const fn maxes(mode: ColorMode) -> [f64; 4] {
     }
 }
 
-/// Converts levels from one format to another.
+/// Converts levels from one [`ColorMode`] to another.
 #[inline]
 pub(crate) fn convert_levels(levels: [f64; 4], from: ColorMode, to: ColorMode) -> [f64; 4] {
     match (from, to) {
@@ -52,7 +52,7 @@ pub(crate) fn convert_levels(levels: [f64; 4], from: ColorMode, to: ColorMode) -
     }
 }
 
-/// Converts to [Rgb] to [Hsb] format.
+/// Converts to [`Rgb`] to [`Hsb`] format.
 #[allow(clippy::many_single_char_names)]
 pub(crate) fn rgb_to_hsb([r, g, b, a]: [f64; 4]) -> [f64; 4] {
     let c_max = r.max(g).max(b);
@@ -81,7 +81,7 @@ pub(crate) fn rgb_to_hsb([r, g, b, a]: [f64; 4]) -> [f64; 4] {
     }
 }
 
-/// Converts to [Rgb] to [Hsl] format.
+/// Converts to [`Rgb`] to [`Hsl`] format.
 #[allow(clippy::many_single_char_names)]
 pub(crate) fn rgb_to_hsl([r, g, b, a]: [f64; 4]) -> [f64; 4] {
     let c_max = r.max(g).max(b);
@@ -111,7 +111,7 @@ pub(crate) fn rgb_to_hsl([r, g, b, a]: [f64; 4]) -> [f64; 4] {
     }
 }
 
-/// Converts to [Hsb] to [Rgb] format.
+/// Converts to [`Hsb`] to [`Rgb`] format.
 #[allow(clippy::many_single_char_names)]
 pub(crate) fn hsb_to_rgb([h, s, b, a]: [f64; 4]) -> [f64; 4] {
     if b.abs() < f64::EPSILON {
@@ -142,7 +142,7 @@ pub(crate) fn hsb_to_rgb([h, s, b, a]: [f64; 4]) -> [f64; 4] {
     }
 }
 
-/// Converts to [Hsl] to [Rgb] format.
+/// Converts to [`Hsl`] to [`Rgb`] format.
 #[allow(clippy::many_single_char_names)]
 pub(crate) fn hsl_to_rgb([h, s, l, a]: [f64; 4]) -> [f64; 4] {
     if s.abs() < f64::EPSILON {
@@ -181,7 +181,7 @@ pub(crate) fn hsl_to_rgb([h, s, l, a]: [f64; 4]) -> [f64; 4] {
     }
 }
 
-/// Converts to [Hsl] to [Hsb] format.
+/// Converts to [`Hsl`] to [`Hsb`] format.
 #[allow(clippy::many_single_char_names)]
 pub(crate) fn hsl_to_hsb([h, s, l, a]: [f64; 4]) -> [f64; 4] {
     let b = if l < 0.5 {
@@ -193,7 +193,7 @@ pub(crate) fn hsl_to_hsb([h, s, l, a]: [f64; 4]) -> [f64; 4] {
     [h, s, b, a]
 }
 
-/// Converts to [Hsb] to [Hsl] format.
+/// Converts to [`Hsb`] to [`Hsl`] format.
 #[allow(clippy::many_single_char_names)]
 pub(crate) fn hsb_to_hsl([h, s, b, a]: [f64; 4]) -> [f64; 4] {
     let l = (2.0 - s) * b / 2.0;
@@ -205,7 +205,7 @@ pub(crate) fn hsb_to_hsl([h, s, b, a]: [f64; 4]) -> [f64; 4] {
     [h, s, l, a]
 }
 
-/// Converts levels to RGB channels.
+/// Converts levels to [`u8`] RGBA channels.
 #[inline]
 pub(crate) fn calculate_channels(levels: [f64; 4]) -> [u8; 4] {
     let [r, g, b, a] = levels;

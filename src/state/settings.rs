@@ -1,4 +1,6 @@
-//! Settings for the current engine `PixState`.
+//! Settings for the current [`PixEngine`] [`PixState`].
+//!
+//! [`PixEngine`]: crate::prelude::PixEngine
 
 use super::PixState;
 use crate::{
@@ -11,14 +13,14 @@ use num_traits::AsPrimitive;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
-/// Drawing mode which changes how (x, y) coordinates are interpreted.
+/// Drawing mode which changes how `(x, y)` coordinates are interpreted.
 #[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum DrawMode {
-    /// Use (x, y) as the top-left corner. Default.
+    /// Use `(x, y)` as the top-left corner. Default.
     Corner,
-    /// Use (x, y) as the center.
+    /// Use `(x, y)` as the center.
     Center,
 }
 

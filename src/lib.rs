@@ -1,28 +1,3 @@
-#![deny(missing_docs, missing_doc_code_examples)]
-#![warn(
-    unused,
-    deprecated_in_future,
-    unreachable_pub,
-    unused_crate_dependencies,
-    bare_trait_objects,
-    ellipsis_inclusive_range_patterns,
-    future_incompatible,
-    missing_debug_implementations,
-    nonstandard_style,
-    rust_2018_idioms,
-    trivial_casts,
-    trivial_numeric_casts,
-    variant_size_differences,
-    rustdoc::broken_intra_doc_links,
-    rustdoc::private_intra_doc_links
-)]
-#![doc(
-    html_root_url = "https://docs.rs/pix-engine/0.3.5",
-    html_favicon_url = "",
-    html_logo_url = "",
-    test(attr(deny(warnings)))
-)]
-
 //! # Getting Started
 //!
 //! `pix_engine` is a cross-platform graphics/UI engine framework for simple games, visualizations,
@@ -33,7 +8,7 @@
 //!
 //! This is intended to be more than just a toy crate, however, and can be used to drive real
 //! applications. For example, the
-//! [Tetanes](https://crates.io/crates/tetanes) NES emulator is driven by this crate.
+//! [`Tetanes`](https://crates.io/crates/tetanes) NES emulator is driven by this crate.
 //!
 //! ```no_run
 //! # #![allow(unused_variables)]
@@ -69,6 +44,31 @@
 //!     engine.run(&mut app).expect("engine run");
 //! }
 //! ```
+
+#![deny(missing_docs, missing_doc_code_examples)]
+#![warn(
+    unused,
+    deprecated_in_future,
+    unreachable_pub,
+    unused_crate_dependencies,
+    bare_trait_objects,
+    ellipsis_inclusive_range_patterns,
+    future_incompatible,
+    missing_debug_implementations,
+    nonstandard_style,
+    rust_2018_idioms,
+    trivial_casts,
+    trivial_numeric_casts,
+    variant_size_differences,
+    rustdoc::broken_intra_doc_links,
+    rustdoc::private_intra_doc_links
+)]
+#![doc(
+    html_root_url = "https://docs.rs/pix-engine/0.3.5",
+    html_favicon_url = "",
+    html_logo_url = "",
+    test(attr(deny(warnings)))
+)]
 
 #[cfg(target_arch = "wasm32")]
 use getrandom as _; // Used to set "js" feature for rand

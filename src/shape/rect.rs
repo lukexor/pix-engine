@@ -1,4 +1,4 @@
-//! 2D Rect types used for drawing.
+//! [`Square`] and [`Rect`] types used for drawing.
 
 use super::Point;
 use crate::vector::Vector;
@@ -6,7 +6,7 @@ use num::Num;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// A `Rectangle` positioned at (x, y) with width and height.
+/// A `Rectangle` positioned at `(x, y)` with `width` and `height`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Rect<T> {
@@ -20,7 +20,7 @@ pub struct Rect<T> {
     pub h: T,
 }
 
-/// # Create new [Rect<T>].
+/// # Constructs a [`Rect<T>`].
 ///
 /// ```
 /// use pix_engine::prelude::*;
@@ -50,20 +50,20 @@ impl<T> Rect<T>
 where
     T: Num,
 {
-    /// Create new `Rect`.
+    /// Constructs a `Rect`.
     pub fn new(x: T, y: T, w: T, h: T) -> Self {
         Self { x, y, w, h }
     }
 }
 
-/// Convert `(x, y, w, h)` to [Rect<T>].
+/// Convert `(x, y, w, h)` to [`Rect<T>`].
 impl<T> From<(T, T, T, T)> for Rect<T> {
     fn from((x, y, w, h): (T, T, T, T)) -> Self {
         Self { x, y, w, h }
     }
 }
 
-/// Convert `([Point<T>], w, h)` to [Rect<T>].
+/// Convert ([`Point<T>`], `w`, `h`) to [`Rect<T>`].
 impl<T> From<(Point<T>, T, T)> for Rect<T> {
     fn from((p, w, h): (Point<T>, T, T)) -> Self {
         Self {
@@ -75,7 +75,7 @@ impl<T> From<(Point<T>, T, T)> for Rect<T> {
     }
 }
 
-/// Convert `([Vector<T>], w, h)` to [Rect<T>].
+/// Convert ([`Vector<T>`], `w`, `h`) to [`Rect<T>`].
 impl<T> From<(Vector<T>, T, T)> for Rect<T> {
     fn from((v, w, h): (Vector<T>, T, T)) -> Self {
         Self {
@@ -87,7 +87,7 @@ impl<T> From<(Vector<T>, T, T)> for Rect<T> {
     }
 }
 
-/// Convert [Square<T>] to [Rect<T>].
+/// Convert [`Square<T>`] to [`Rect<T>`].
 impl<T> From<Square<T>> for Rect<T>
 where
     T: Copy,
@@ -102,7 +102,7 @@ where
     }
 }
 
-/// A `Square` positioned at (x, y) with size.
+/// A `Square` positioned at `(x, y)` with `size`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Square<T> {
@@ -114,7 +114,7 @@ pub struct Square<T> {
     pub s: T,
 }
 
-/// # Create new [Square<T>].
+/// # Constructs a [`Square<T>`].
 ///
 /// ```
 /// use pix_engine::prelude::*;
@@ -140,27 +140,27 @@ impl<T> Square<T>
 where
     T: Num,
 {
-    /// Create new `Square`.
+    /// Constructs a `Square`.
     pub fn new(x: T, y: T, s: T) -> Self {
         Self { x, y, s }
     }
 }
 
-/// Convert `(x, y, s)` to [Square<T>].
+/// Convert `(x, y, s)` to [`Square<T>`].
 impl<T> From<(T, T, T)> for Square<T> {
     fn from((x, y, s): (T, T, T)) -> Self {
         Self { x, y, s }
     }
 }
 
-/// Convert `([Point<T>], size)` to [Square<T>].
+/// Convert ([`Point<T>`], `size`) to [`Square<T>`].
 impl<T> From<(Point<T>, T)> for Square<T> {
     fn from((p, s): (Point<T>, T)) -> Self {
         Self { x: p.x, y: p.y, s }
     }
 }
 
-/// Convert `([Vector<T>], size)` to [Square<T>].
+/// Convert ([`Vector<T>`], `size`) to [`Square<T>`].
 impl<T> From<(Vector<T>, T)> for Square<T> {
     fn from((v, s): (Vector<T>, T)) -> Self {
         Self { x: v.x, y: v.y, s }

@@ -1,4 +1,4 @@
-//! Core [PixEngine] functions.
+//! Core [`PixEngine`] functions.
 
 use crate::{
     common::Result,
@@ -15,7 +15,7 @@ use std::{
 #[cfg(not(target_arch = "wasm32"))]
 const ONE_SECOND: Duration = Duration::from_secs(1);
 
-/// Builds a [PixEngine] instance by providing several configration functions.
+/// Builds a [`PixEngine`] instance by providing several configration functions.
 #[non_exhaustive]
 #[derive(Default, Debug, Clone)]
 pub struct PixEngineBuilder {
@@ -107,7 +107,7 @@ impl PixEngineBuilder {
         self
     }
 
-    /// Convert [PixEngineBuilder] to a [PixEngine] instance.
+    /// Convert [`PixEngineBuilder`] to a [`PixEngine`] instance.
     pub fn build(&self) -> PixEngine {
         PixEngine {
             settings: self.settings.clone(),
@@ -133,7 +133,7 @@ pub struct PixEngine {
 }
 
 impl PixEngine {
-    /// Creates a default [PixEngineBuilder] which can build a `PixEngine` instance.
+    /// Creates a default [`PixEngineBuilder`] which can build a `PixEngine` instance.
     pub fn builder() -> PixEngineBuilder {
         PixEngineBuilder::default()
     }

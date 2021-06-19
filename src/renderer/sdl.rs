@@ -30,7 +30,7 @@ type SdlBlendMode = sdl2::render::BlendMode;
 type SdlTexture = sdl2::render::Texture;
 type SdlPixelFormat = sdl2::pixels::PixelFormatEnum;
 
-/// An SDL [Renderer] implementation.
+/// An SDL [`Renderer`] implementation.
 pub(crate) struct Renderer {
     context: Sdl,
     ttf_context: ttf::Sdl2TtfContext,
@@ -472,18 +472,6 @@ impl std::fmt::Debug for Renderer {
         )
     }
 }
-
-// impl AudioCallback for Audio {
-//     type Channel = f32;
-
-//     fn callback(&mut self, out: &mut [f32]) {
-//         for x in out.iter_mut() {
-//             if let Some(sample) = self.samples.pop_front() {
-//                 *x = sample;
-//             }
-//         }
-//     }
-// }
 
 /*
  * Type Conversions

@@ -1,11 +1,11 @@
-//! [Color] functions for drawing.
+//! [`Color`] functions for drawing.
 //!
-//! Each [Color] can be constructed with a [ColorMode]. The default mode and internal representation
-//! is [Rgb] with values ranging from `0..=255` for red, green, blue, and alpha transparency. [Hsb] and [Hsl]
+//! Each [`Color`] can be constructed with a [`ColorMode`]. The default mode and internal representation
+//! is [`Rgb`] with values ranging from `0..=255` for red, green, blue, and alpha transparency. [`Hsb`] and [`Hsl`]
 //! values range from `0.0..=360.0` for hue, `0.0..=100.0` for saturation and brightness/lightness
 //! and `0.0..=1.0` for alpha transparency.
 //!
-//! There are convience macros for flexible construction: [color!], [rgb!], [hsb!] and [hsl!] that take 1-4
+//! There are convience macros for flexible construction: [`color!`], [`rgb!`], [`hsb!`] and [`hsl!`] that take 1-4
 //! parameters. The number of parameters provided alter how they are interpreted:
 //!
 //! - Providing a single parameter constructs a grayscale color.
@@ -13,18 +13,18 @@
 //! - Three parameters are used as RGB or HSB/HSL values.
 //! - Four parameters are used as RGBB or HSb/HSL values with alpha transparency.
 //!
-//! If you're not picky about color, there are the [random](Color::random) and
-//! [random_alpha](Color::random_alpha) methods.
+//! If you're not picky about color, there are the [`random`](Color::random) and
+//! [`random_alpha`](Color::random_alpha) methods.
 //!
-//! [Color] also implements [FromStr](std::str::FromStr) allowing conversion from a 3, 4, 6, or 8-digit hexidecimal
+//! [`Color`] also implements [`FromStr`](std::str::FromStr) allowing conversion from a 3, 4, 6, or 8-digit hexidecimal
 //! string.
 //!
-//! The [Color] instance stores which [ColorMode] it was created with, modifying how manipulation
-//! methods are interprted such as [set_alpha](Color::set_alpha) taking a range of `0.0..=255.0` or `0.0..=1.0`.
-//! The `ColorMode` can be changed any time to alter this behavior using [set_mode](Color::set_mode).
+//! The [`Color`] instance stores which [`ColorMode`] it was created with, modifying how manipulation
+//! methods are interprted such as [`set_alpha`](Color::set_alpha) taking a range of `0.0..=255.0` or `0.0..=1.0`.
+//! The `ColorMode` can be changed any time to alter this behavior using [`set_mode`](Color::set_mode).
 //!
-//! There are also several named color [constants](constants) available in the
-//! [prelude](crate::prelude) matching the [SVG 1.0 Color
+//! There are also several named color [`constants`] available in the
+//! [`prelude`](crate::prelude) matching the [SVG 1.0 Color
 //! Keywords](https://www.w3.org/TR/SVG11/types.html#ColorKeywords).
 //!
 //! # Examples
@@ -88,7 +88,7 @@
 //! assert_eq!(c.channels(), [255, 0, 255, 255]);
 //!
 //! let c = Color::from_str("#F0F5")?; // 4-digit Hex string
-//! assert_eq![c.channels(), [255, 0, 255, 85]];
+//! assert_eq!(c.channels(), [255, 0, 255, 85]);
 //!
 //! let c = Color::from_str("#F0F5BF")?; // 6-digit Hex string
 //! assert_eq!(c.channels(), [240, 245, 191, 255]);
@@ -111,7 +111,7 @@ use std::{
 pub mod constants;
 pub mod conversion;
 
-/// [Color] mode indicating level interpretation.
+/// [`Color`] mode indicating level interpretation.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum ColorMode {
@@ -125,7 +125,7 @@ pub enum ColorMode {
 
 use ColorMode::*;
 
-/// A color represented with a [ColorMode].
+/// A color represented with a [`ColorMode`].
 #[derive(Debug, Copy, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Color {
@@ -138,7 +138,7 @@ pub struct Color {
 }
 
 impl Color {
-    /// Constructs a [Rgb] `Color` with max alpha.
+    /// Constructs a [`Rgb`] `Color` with max alpha.
     ///
     /// # Example
     ///
@@ -151,7 +151,7 @@ impl Color {
         Self::rgb(r, g, b)
     }
 
-    /// Constructs a [Rgb] `Color` with alpha.
+    /// Constructs a [`Rgb`] `Color` with alpha.
     ///
     /// # Example
     ///
@@ -164,7 +164,7 @@ impl Color {
         Self::rgba(r, g, b, a)
     }
 
-    /// Constructs a `Color` with the given [ColorMode] and max alpha.
+    /// Constructs a `Color` with the given [`ColorMode`] and max alpha.
     ///
     /// # Examples
     ///
@@ -181,7 +181,7 @@ impl Color {
         Self::with_mode_alpha(mode, v1, v2, v3, alpha_max)
     }
 
-    /// Constructs a `Color` with the given [ColorMode] and alpha.
+    /// Constructs a `Color` with the given [`ColorMode`] and alpha.
     ///
     /// # Examples
     ///
@@ -214,7 +214,7 @@ impl Color {
         }
     }
 
-    /// Constructs a [Rgb] `Color` containing red, green, and blue with alpha of
+    /// Constructs a [`Rgb`] `Color` containing red, green, and blue with alpha of
     /// `255`.
     ///
     /// # Example
@@ -228,7 +228,7 @@ impl Color {
         Self::with_mode(Rgb, f64::from(r), f64::from(g), f64::from(b))
     }
 
-    /// Constructs a [Rgb] `Color` containing red, green, blue, and alpha.
+    /// Constructs a [`Rgb`] `Color` containing red, green, blue, and alpha.
     ///
     /// # Example
     ///
@@ -241,7 +241,7 @@ impl Color {
         Self::with_mode_alpha(Rgb, f64::from(r), f64::from(g), f64::from(b), f64::from(a))
     }
 
-    /// Constructs a [Hsb] `Color` containing hue, saturation, and brightness
+    /// Constructs a [`Hsb`] `Color` containing hue, saturation, and brightness
     /// with alpha of `1.0`.
     ///
     /// # Example
@@ -255,7 +255,7 @@ impl Color {
         Self::with_mode(Hsb, h, s, b)
     }
 
-    /// Constructs a [Hsb] `Color` containing hue, saturation, brightness and
+    /// Constructs a [`Hsb`] `Color` containing hue, saturation, brightness and
     /// alpha.
     ///
     /// # Example
@@ -269,7 +269,7 @@ impl Color {
         Self::with_mode_alpha(Hsb, h, s, b, a)
     }
 
-    /// Constructs a [Hsl] `Color` containing hue, saturation, and lightness
+    /// Constructs a [`Hsl`] `Color` containing hue, saturation, and lightness
     /// with alpha of `1.0`.
     ///
     /// # Example
@@ -283,7 +283,7 @@ impl Color {
         Self::with_mode(Hsl, h, s, l)
     }
 
-    /// Constructs a [Hsl] `Color` containing hue, saturation, lightness and
+    /// Constructs a [`Hsl`] `Color` containing hue, saturation, lightness and
     /// alpha.
     ///
     /// # Example
@@ -297,7 +297,7 @@ impl Color {
         Self::with_mode_alpha(Hsl, h, s, l, a)
     }
 
-    /// Constructs a raw `Color` with the given [ColorMode] and alpha using the levels passed in
+    /// Constructs a raw `Color` with the given [`ColorMode`] and alpha using the levels passed in
     /// as-is without normalizing them.
     ///
     /// # Safety
@@ -321,7 +321,7 @@ impl Color {
         }
     }
 
-    /// Constructs a random [Rgb] `Color` with max alpha.
+    /// Constructs a random [`Rgb`] `Color` with max alpha.
     ///
     /// # Example
     ///
@@ -336,7 +336,7 @@ impl Color {
         Self::new(random!(255), random!(255), random!(255))
     }
 
-    /// Constructs a random [Rgb] `Color` with alpha.
+    /// Constructs a random [`Rgb`] `Color` with alpha.
     ///
     /// # Example
     ///
@@ -351,13 +351,13 @@ impl Color {
         Self::new_alpha(random!(255), random!(255), random!(255), random!(255))
     }
 
-    /// Constructs a `Color` from a [slice] of 1-4 values. The number of values
-    /// provided alter how they are interpreted similar to the [rgb!], [hsb!],
-    /// and [hsl!] macros.
+    /// Constructs a `Color` from a [`slice`] of 1-4 values. The number of values
+    /// provided alter how they are interpreted similar to the [`color!`], [`rgb!`], [`hsb!`], and
+    /// [`hsl!`] macros.
     ///
     /// # Errors
     ///
-    /// If the [slice] is empty or has more than 4 values, an error is returned.
+    /// If the [`slice`] is empty or has more than 4 values, an error is returned.
     ///
     /// # Examples
     ///
@@ -383,7 +383,7 @@ impl Color {
         Ok(result)
     }
 
-    /// Constructs a [Rgb] `Color` from a [u32] RGBA hexadecimal value.
+    /// Constructs a [`Rgb`] `Color` from a [`u32`] RGBA hexadecimal value.
     ///
     /// # Examples
     ///
@@ -400,7 +400,7 @@ impl Color {
         Self::rgba(r, g, b, a)
     }
 
-    /// Returns a list of max values for each color channel based on [ColorMode].
+    /// Returns a list of max values for each color channel based on [`ColorMode`].
     ///
     /// # Examples
     ///
@@ -434,7 +434,7 @@ impl Color {
         self.levels
     }
 
-    /// Returns the [Rgb] `Color` channels which range from `0..=255`.
+    /// Returns the [`Rgb`] `Color` channels which range from `0..=255`.
     ///
     /// # Example
     ///
@@ -448,7 +448,7 @@ impl Color {
         self.channels
     }
 
-    /// Returns the current [ColorMode].
+    /// Returns the current [`ColorMode`].
     ///
     /// # Examples
     ///
@@ -465,7 +465,7 @@ impl Color {
         self.mode
     }
 
-    /// Set the [ColorMode].
+    /// Set the [`ColorMode`].
     ///
     /// # Example
     ///
@@ -577,7 +577,7 @@ impl Color {
     }
 
     /// Returns the alpha `Color` channel ranging from `0.0..=255.0` or `0.0..=1.0` depending on
-    /// current [ColorMode].
+    /// current [`ColorMode`].
     ///
     /// # Examples
     ///
@@ -596,7 +596,7 @@ impl Color {
     }
 
     /// Set the alpha `Color` channel ranging from `0..=255` or `0.0..=1.0` depending on current
-    /// [ColorMode].
+    /// [`ColorMode`].
     ///
     /// # Examples
     ///
@@ -671,8 +671,8 @@ impl Color {
         levels[1] * maxes[1]
     }
 
-    /// Set the saturation `Color` channel ranging from `0.0..=100.0`. Defaults to [Hsb] if the
-    /// current mode is not [Hsb] or [Hsl] already.
+    /// Set the saturation `Color` channel ranging from `0.0..=100.0`. Defaults to [`Hsb`] if the
+    /// current mode is not [`Hsb`] or [`Hsl`] already.
     ///
     /// # Examples
     ///
@@ -775,9 +775,9 @@ impl Color {
     }
 }
 
-/// # Constructs a [Rgb] [Color].
+/// # Constructs a [`Rgb`] [`Color`].
 ///
-/// Alias for [rgb!].
+/// Alias for [`rgb!`].
 #[macro_export]
 macro_rules! color {
     ($gray:expr) => {
@@ -794,7 +794,7 @@ macro_rules! color {
     };
 }
 
-/// # Constructs a [Rgb] [Color].
+/// # Constructs a [`Rgb`] [`Color`].
 ///
 /// # Examples
 ///
@@ -829,7 +829,7 @@ macro_rules! rgb {
     };
 }
 
-/// # Constructs a [Hsb] [Color].
+/// # Constructs a [`Hsb`] [`Color`].
 ///
 /// # Examples
 ///
@@ -864,7 +864,7 @@ macro_rules! hsb {
     };
 }
 
-/// # Constructs a [Hsl] [Color].
+/// # Constructs a [`Hsl`] [`Color`].
 ///
 /// # Examples
 ///
@@ -905,7 +905,7 @@ impl Default for Color {
     }
 }
 
-/// Display [Color] as "[r, g, b, a]".
+/// Display [`Color`] as "[r, g, b, a]".
 impl fmt::Display for Color {
     #[allow(clippy::many_single_char_names)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

@@ -14,10 +14,10 @@ pub(crate) mod wasm;
 #[cfg(target_arch = "wasm32")]
 pub(crate) use wasm::Renderer;
 
-/// The result type for Renderer operations.
+/// The result type for `Renderer` operations.
 pub type Result<T> = result::Result<T, Error>;
 
-/// The error type for Renderer operations.
+/// The error type for `Renderer` operations.
 #[non_exhaustive]
 #[derive(Debug)]
 pub enum Error {
@@ -40,7 +40,7 @@ pub enum Error {
 /// Represents a possible screen position.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Position {
-    /// A positioned (x, y) coordinate.
+    /// A positioned `(x, y)` coordinate.
     Positioned(i32),
     /// A coordinate placed in the center of the display.
     Centered,

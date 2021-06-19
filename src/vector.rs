@@ -69,6 +69,7 @@ use rand::distributions::uniform::SampleUniform;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::{
+    array::IntoIter,
     convert::{TryFrom, TryInto},
     f64::consts::TAU,
     fmt,
@@ -85,7 +86,7 @@ use std::{
 /// Some example uses of a `Vector` include modeling a position, velocity, or acceleration of an
 /// object or particle.
 ///
-/// Vectors can be combined using "vector" math, so for example two `Vectors` can be added together
+/// `Vector`s can be combined using "vector" math, so for example two `Vector`s can be added together
 /// to form a new `Vector` using `let v3 = v1 + v2` or you can add one `Vector` to another by calling
 /// `v1 += v2`.
 #[derive(Default, Debug, Copy, Clone, PartialEq, PartialOrd)]
@@ -219,8 +220,8 @@ impl<T> Vector<T> {
     /// assert_eq!(iterator.next(), Some(&-4.0));
     /// assert_eq!(iterator.next(), None);
     /// ```
-    pub fn iter(&self) -> VectorIter<'_, T> {
-        VectorIter::new(self)
+    pub fn iter(&self) -> Iter<'_, T> {
+        Iter::new(self)
     }
 
     /// Returns an itereator over the `Vector` that allows modifying each value.
@@ -235,8 +236,8 @@ impl<T> Vector<T> {
     /// }
     /// assert_eq!(v.get(), [2.0, 4.0, -8.0]);
     /// ```
-    pub fn iter_mut(&mut self) -> VectorIterMut<'_, T> {
-        VectorIterMut::new(self)
+    pub fn iter_mut(&mut self) -> IterMut<'_, T> {
+        IterMut::new(self)
     }
 }
 
@@ -317,7 +318,7 @@ where
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
-    /// Returns the [dot product](https://en.wikipedia.org/wiki/Dot_product) betwen two `Vectors`.
+    /// Returns the [dot product](https://en.wikipedia.org/wiki/Dot_product) betwen two `Vector`s.
     ///
     /// # Example
     ///
@@ -333,7 +334,7 @@ where
     }
 
     /// Returns the [cross product](https://en.wikipedia.org/wiki/Cross_product) between two
-    /// `Vectors`.
+    /// `Vector`s.
     ///
     /// # Example
     ///
@@ -508,7 +509,7 @@ where
         *self *= mag;
     }
 
-    /// Returns the Euclidean distance between two `Vectors`.
+    /// Returns the Euclidean distance between two `Vector`s.
     ///
     /// # Example
     ///
@@ -600,7 +601,7 @@ where
     }
 
     /// Rotate a 2D `Vector` by an angle in radians, magnitude remains the same. Unaffected by
-    /// [AngleMode](crate::prelude::AngleMode).
+    /// [`AngleMode`](crate::prelude::AngleMode).
     ///
     /// # Example
     ///
@@ -623,7 +624,7 @@ where
         self.y = sin * mag;
     }
 
-    /// Returns the angle between two `Vectors` in radians.
+    /// Returns the angle between two `Vector`s in radians.
     ///
     /// # Example
     ///
@@ -642,7 +643,7 @@ where
         dot_mag_product.acos() * self.cross(v).z.signum()
     }
 
-    /// Constructs a `Vector<T>` by linear interpolating between two `Vectors` by a given amount
+    /// Constructs a `Vector<T>` by linear interpolating between two `Vector`s by a given amount
     /// between `0.0` and `1.0`.
     ///
     /// # Example
@@ -869,58 +870,20 @@ where
     }
 }
 
-impl<T> ExactSizeIterator for VectorIntoIter<T> {}
-impl<T> ExactSizeIterator for VectorIter<'_, T> {}
-impl<T> ExactSizeIterator for VectorIterMut<'_, T> {}
-
-/// Owned `Vector` iterator.
-///
-/// This struct is created by the [`into_iter`](Vector::into_iter) method on [Vectors](Vector).
-///
-/// # Example
-///
-/// ```
-/// # use pix_engine::prelude::*;
-/// let v: Vector<f64> = vector!(1.0, 2.0, -4.0);
-/// let mut iterator = v.into_iter();
-///
-/// assert_eq!(iterator.next(), Some(1.0));
-/// assert_eq!(iterator.next(), Some(2.0));
-/// assert_eq!(iterator.next(), Some(-4.0));
-/// assert_eq!(iterator.next(), None);
-/// ```
-#[derive(Debug, Clone)]
-pub struct VectorIntoIter<T> {
-    inner: Chain<Chain<Once<T>, Once<T>>, Once<T>>,
-}
-
-impl<T> VectorIntoIter<T> {
-    #[inline]
-    fn new(v: Vector<T>) -> Self {
-        Self {
-            inner: once(v.x).chain(once(v.y)).chain(once(v.z)),
-        }
-    }
-}
-
-impl<T> Iterator for VectorIntoIter<T> {
-    type Item = T;
-    fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next()
-    }
-}
+impl<T> ExactSizeIterator for Iter<'_, T> {}
+impl<T> ExactSizeIterator for IterMut<'_, T> {}
 
 impl<T> IntoIterator for Vector<T> {
     type Item = T;
-    type IntoIter = VectorIntoIter<T>;
+    type IntoIter = IntoIter<Self::Item, 3>;
     fn into_iter(self) -> Self::IntoIter {
-        VectorIntoIter::new(self)
+        IntoIter::new([self.x, self.y, self.z])
     }
 }
 
-/// Immutable `Vector` iterator.
+/// Immutable `Vector<T>` iterator over `[x, y, z]`.
 ///
-/// This struct is created by the [`iter`](Vector::iter) method on [Vectors](Vector).
+/// This struct is created by the [`iter`](Vector::iter) method on [`Vector`]s.
 ///
 /// # Example
 ///
@@ -935,11 +898,11 @@ impl<T> IntoIterator for Vector<T> {
 /// assert_eq!(iterator.next(), None);
 /// ```
 #[derive(Debug, Clone)]
-pub struct VectorIter<'a, T> {
+pub struct Iter<'a, T> {
     inner: Chain<Chain<Once<&'a T>, Once<&'a T>>, Once<&'a T>>,
 }
 
-impl<'a, T> VectorIter<'a, T> {
+impl<'a, T> Iter<'a, T> {
     #[inline]
     fn new(v: &'a Vector<T>) -> Self {
         Self {
@@ -948,7 +911,7 @@ impl<'a, T> VectorIter<'a, T> {
     }
 }
 
-impl<'a, T> Iterator for VectorIter<'a, T> {
+impl<'a, T> Iterator for Iter<'a, T> {
     type Item = &'a T;
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next()
@@ -957,15 +920,15 @@ impl<'a, T> Iterator for VectorIter<'a, T> {
 
 impl<'a, T> IntoIterator for &'a Vector<T> {
     type Item = &'a T;
-    type IntoIter = VectorIter<'a, T>;
+    type IntoIter = Iter<'a, T>;
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
 }
 
-/// Mutable `Vector` iterator.
+/// Mutable `Vector<T>` iterator over `[x, y, z]`.
 ///
-/// This struct is created by the [`iter_mut`](Vector::iter_mut) method on [Vectors](Vector).
+/// This struct is created by the [`iter_mut`](Vector::iter_mut) method on [`Vector`]s.
 ///
 /// # Example
 ///
@@ -978,11 +941,11 @@ impl<'a, T> IntoIterator for &'a Vector<T> {
 /// assert_eq!(v.get(), [2.0, 4.0, -8.0]);
 /// ```
 #[derive(Debug)]
-pub struct VectorIterMut<'a, T> {
+pub struct IterMut<'a, T> {
     inner: Chain<Chain<Once<&'a mut T>, Once<&'a mut T>>, Once<&'a mut T>>,
 }
 
-impl<'a, T> VectorIterMut<'a, T> {
+impl<'a, T> IterMut<'a, T> {
     #[inline]
     fn new(v: &'a mut Vector<T>) -> Self {
         Self {
@@ -991,7 +954,7 @@ impl<'a, T> VectorIterMut<'a, T> {
     }
 }
 
-impl<'a, T> Iterator for VectorIterMut<'a, T> {
+impl<'a, T> Iterator for IterMut<'a, T> {
     type Item = &'a mut T;
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next()
@@ -1000,7 +963,7 @@ impl<'a, T> Iterator for VectorIterMut<'a, T> {
 
 impl<'a, T> IntoIterator for &'a mut Vector<T> {
     type Item = &'a mut T;
-    type IntoIter = VectorIterMut<'a, T>;
+    type IntoIter = IterMut<'a, T>;
     fn into_iter(self) -> Self::IntoIter {
         self.iter_mut()
     }

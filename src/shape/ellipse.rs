@@ -1,11 +1,11 @@
-//! 2D Circle types used for drawing.
+//! [`Circle`], [`Ellipse`], and [`Sphere`] types used for drawing.
 
 use crate::prelude::{Point, Vector};
 use num::Num;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// An `Ellipse` positioned at (x, y), with width and height.
+/// An `Ellipse` positioned at `(x, y)`, with `width` and `height`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Ellipse<T> {
@@ -19,7 +19,7 @@ pub struct Ellipse<T> {
     pub h: T,
 }
 
-/// # Create new [Ellipse<T>].
+/// # Construct an [`Ellipse<T>`].
 ///
 /// ```
 /// use pix_engine::prelude::*;
@@ -46,12 +46,12 @@ impl<T> Ellipse<T>
 where
     T: Num,
 {
-    /// Create new `Ellipse`.
+    /// Construct an `Ellipse`.
     pub fn new(x: T, y: T, w: T, h: T) -> Self {
         Self { x, y, w, h }
     }
 
-    /// Whether a 2D [Point<T>] lies inside this ellipse.
+    /// Whether a 2D [`Point<T>`] lies inside this ellipse.
     pub fn contains(&self, p: impl Into<Point<T>>) -> bool {
         let _p = p.into();
         todo!("ellipse contains");
@@ -63,7 +63,7 @@ where
     }
 }
 
-/// Convert `(x, y, w, h)` to [Ellipse<T>].
+/// Convert `(x, y, w, h)` to [`Ellipse<T>`].
 impl<T> From<(T, T, T, T)> for Ellipse<T>
 where
     T: Num,
@@ -73,7 +73,7 @@ where
     }
 }
 
-/// Convert `([Point<T>], w, h)` to [Ellipse<T>].
+/// Convert ([`Point<T>`], `w`, `h`) to [`Ellipse<T>`].
 impl<T> From<(Point<T>, T, T)> for Ellipse<T> {
     fn from((p, w, h): (Point<T>, T, T)) -> Self {
         Self {
@@ -85,7 +85,7 @@ impl<T> From<(Point<T>, T, T)> for Ellipse<T> {
     }
 }
 
-/// Convert `([Vector<T>], w, h)` to [Ellipse<T>].
+/// Convert ([`Vector<T>`], `w`, `h`) to [`Ellipse<T>`].
 impl<T> From<(Vector<T>, T, T)> for Ellipse<T> {
     fn from((v, w, h): (Vector<T>, T, T)) -> Self {
         Self {
@@ -97,7 +97,7 @@ impl<T> From<(Vector<T>, T, T)> for Ellipse<T> {
     }
 }
 
-/// Convert [Circle<T>] to [Ellipse<T>].
+/// Convert [`Circle<T>`] to [`Ellipse<T>`].
 impl<T> From<Circle<T>> for Ellipse<T>
 where
     T: Copy,
@@ -112,7 +112,7 @@ where
     }
 }
 
-/// A `Circle` positioned at (x, y) with radius.
+/// A `Circle` positioned at `(x, y)` with `radius`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Circle<T> {
@@ -124,7 +124,7 @@ pub struct Circle<T> {
     pub r: T,
 }
 
-/// # Create new [Circle<T>].
+/// # Constructs a [`Circle<T>`].
 ///
 /// ```
 /// use pix_engine::prelude::*;
@@ -147,12 +147,12 @@ impl<T> Circle<T>
 where
     T: Num,
 {
-    /// Create new `Circle`.
+    /// Constructs a `Circle`.
     pub fn new(x: T, y: T, r: T) -> Self {
         Self { x, y, r }
     }
 
-    /// Whether a 2D [Point<T>] lies inside this circle.
+    /// Whether a 2D [`Point<T>`] lies inside this circle.
     pub fn contains(&self, p: impl Into<Point<T>>) -> bool
     where
         T: PartialOrd + Copy,
@@ -175,28 +175,28 @@ where
     }
 }
 
-/// Convert `(x, y, r)` to [Circle<T>].
+/// Convert `(x, y, r)` to [`Circle<T>`].
 impl<T> From<(T, T, T)> for Circle<T> {
     fn from((x, y, r): (T, T, T)) -> Self {
         Self { x, y, r }
     }
 }
 
-/// Convert `([Point<T>], radius)` to [Circle<T>].
+/// Convert ([`Point<T>`], `radius`) to [`Circle<T>`].
 impl<T> From<(Point<T>, T)> for Circle<T> {
     fn from((p, r): (Point<T>, T)) -> Self {
         Self { x: p.x, y: p.y, r }
     }
 }
 
-/// Convert `([Vector<T>], radius)` to [Circle<T>].
+/// Convert ([`Vector<T>`], `radius`) to [`Circle<T>`].
 impl<T> From<(Vector<T>, T)> for Circle<T> {
     fn from((v, r): (Vector<T>, T)) -> Self {
         Self { x: v.x, y: v.y, r }
     }
 }
 
-/// A `Sphere` positioned at (x, y, z) with radius.
+/// A `Sphere` positioned at `(x, y, z)` with `radius`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Sphere<T> {
@@ -206,7 +206,7 @@ pub struct Sphere<T> {
     pub radius: T,
 }
 
-/// # Create new [Sphere<T>].
+/// # Constructs a [`Sphere<T>`].
 ///
 /// ```
 /// use pix_engine::prelude::*;
@@ -228,7 +228,7 @@ impl<T> Sphere<T>
 where
     T: Num,
 {
-    /// Create new `Sphere`.
+    /// Constructs a `Sphere`.
     pub fn new<P>(center: P, radius: T) -> Self
     where
         P: Into<Point<T>>,
@@ -239,7 +239,7 @@ where
         }
     }
 
-    /// Whether a 3D [Point<T>] lies inside this sphere.
+    /// Whether a 3D [`Point<T>`] lies inside this sphere.
     pub fn contains(&self, _p: impl Into<Point<T>>) -> bool
     where
         T: PartialOrd + Copy,

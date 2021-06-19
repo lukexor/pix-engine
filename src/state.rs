@@ -1,4 +1,4 @@
-//! [PixState] functions for [PixEngine] and [AppState].
+//! [`PixState`] functions for the [`PixEngine`] and [`AppState`].
 
 use crate::{
     prelude::*,
@@ -13,10 +13,10 @@ use std::{borrow::Cow, collections::HashSet, error, fmt, io, result};
 pub mod environment;
 pub mod settings;
 
-/// The result type for [PixState] operations.
+/// The result type for [`PixState`] operations.
 pub type Result<T> = result::Result<T, Error>;
 
-/// The error type for [PixState] operations.
+/// The error type for [`PixState`] operations.
 #[non_exhaustive]
 #[derive(Debug)]
 pub enum Error {

@@ -1,18 +1,20 @@
+//! Common crate functions and error types.
+
 use crate::{image, renderer, state};
 use std::{borrow::Cow, error, fmt, result};
 
-/// The result type for [PixEngine](crate::prelude::PixEngine) operations.
+/// The result type for [`PixEngine`](crate::prelude::PixEngine) operations.
 pub type Result<T> = result::Result<T, Error>;
 
-/// The error type for [PixEngine](crate::prelude::PixEngine) operations.
+/// The error type for [`PixEngine`](crate::prelude::PixEngine) operations.
 #[non_exhaustive]
 #[derive(Debug)]
 pub enum Error {
     /// An error from the underlying Renderer.
     RendererError(renderer::Error),
-    /// An error from [PixState](crate::prelude::PixState).
+    /// An error from [`PixState`](crate::prelude::PixState).
     StateError(state::Error),
-    /// An error from [Image](crate::prelude::Image)
+    /// An error from [`Image`](crate::prelude::Image)
     ImageError(image::Error),
     /// Unknown errors.
     Other(Cow<'static, str>),

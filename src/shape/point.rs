@@ -1,4 +1,4 @@
-//! 1D, 2D, and 3D [Point] functions used for drawing.
+//! [`Point`] functions used for drawing.
 
 use crate::vector::Vector;
 use num::Num;
@@ -7,7 +7,7 @@ use num_traits::AsPrimitive;
 use serde::{Deserialize, Serialize};
 use std::{fmt, iter::Sum, ops::*};
 
-/// A Point.
+/// A `Point`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Point<T> {

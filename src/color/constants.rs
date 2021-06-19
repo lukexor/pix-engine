@@ -1,9 +1,10 @@
-#![allow(missing_docs)]
-
 //! [SVG 1.0 Color Keywords](https://www.w3.org/TR/SVG11/types.html#ColorKeywords).
+
+#![allow(missing_docs)]
 
 use super::{Color, ColorMode::*};
 
+/// Const constructor helper.
 const fn rgb_const(lr: f64, lg: f64, lb: f64, r: u8, g: u8, b: u8) -> Color {
     Color {
         mode: Rgb,

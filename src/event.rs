@@ -1,10 +1,10 @@
-//! User and System Events.
+//! System and user [`Event`]s.
 
 use bitflags::bitflags;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// System or User Event.
+/// System or User `Event`.
 #[allow(missing_docs)]
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
@@ -126,7 +126,7 @@ pub enum Event {
     Unknown,
 }
 
-/// A specific event representing a keypress.
+/// A specific [`Event`] representing a keypress.
 #[allow(missing_docs)]
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -144,7 +144,7 @@ impl Default for Event {
     }
 }
 
-/// Window Event.
+/// Window [`Event`].
 #[allow(missing_docs)]
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
