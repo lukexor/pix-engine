@@ -103,8 +103,10 @@ use conversion::{calculate_channels, convert_levels, maxes, ColorError};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::{
+    array::IntoIter,
     borrow::Cow,
     fmt::{self, LowerHex, UpperHex},
+    iter::{once, Chain, Once},
     ops::*,
 };
 
@@ -773,6 +775,25 @@ impl Color {
         self.levels = convert_levels(levels, Hsl, Rgb);
         self.calculate_channels();
     }
+
+    /// Returns an itereator over the `Color` RGBA channels `[r, g, b, a]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = color!(100, 200, 50);
+    /// let mut iterator = c.iter();
+    ///
+    /// assert_eq!(iterator.next(), Some(100));
+    /// assert_eq!(iterator.next(), Some(200));
+    /// assert_eq!(iterator.next(), Some(50));
+    /// assert_eq!(iterator.next(), Some(255));
+    /// assert_eq!(iterator.next(), None);
+    /// ```
+    pub fn iter(&self) -> Iter {
+        Iter::new(self)
+    }
 }
 
 /// # Constructs a [`Rgb`] [`Color`].
@@ -993,6 +1014,81 @@ impl SubAssign for Color {
             *level = level.clamp(0.0, 1.0);
         }
         self.calculate_channels();
+    }
+}
+
+impl ExactSizeIterator for Iter {}
+
+impl IntoIterator for Color {
+    type Item = u8;
+    type IntoIter = IntoIter<Self::Item, 4>;
+
+    /// Owned `Color` iterator over `[r, g, b, a]`.
+    ///
+    /// This struct is created by the [`into_iter`](Color::into_iter) method on [`Color`]s.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = color!(100, 200, 50);
+    /// let mut iterator = c.into_iter();
+    ///
+    /// assert_eq!(iterator.next(), Some(100));
+    /// assert_eq!(iterator.next(), Some(200));
+    /// assert_eq!(iterator.next(), Some(50));
+    /// assert_eq!(iterator.next(), Some(255));
+    /// assert_eq!(iterator.next(), None);
+    /// ```
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter::new(self.channels())
+    }
+}
+
+/// Immutable `Color` iterator over `[r, g, b, a]`.
+///
+/// This struct is created by the [`iter`](Color::iter) method on [`Color`]s.
+///
+/// # Example
+///
+/// ```
+/// # use pix_engine::prelude::*;
+/// let c: Color<f64> = color!(100, 200, 50);
+/// let mut iterator = c.iter();
+///
+/// assert_eq!(iterator.next(), Some(100));
+/// assert_eq!(iterator.next(), Some(200));
+/// assert_eq!(iterator.next(), Some(50));
+/// assert_eq!(iterator.next(), Some(255));
+/// assert_eq!(iterator.next(), None);
+/// ```
+#[derive(Debug, Clone)]
+pub struct Iter {
+    inner: Chain<Chain<Chain<Once<u8>, Once<u8>>, Once<u8>>, Once<u8>>,
+}
+
+impl Iter {
+    #[inline]
+    fn new(c: &Color) -> Self {
+        let [r, g, b, a] = c.channels();
+        Self {
+            inner: once(r).chain(once(g)).chain(once(b)).chain(once(a)),
+        }
+    }
+}
+
+impl Iterator for Iter {
+    type Item = u8;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next()
+    }
+}
+
+impl IntoIterator for &Color {
+    type Item = u8;
+    type IntoIter = Iter;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
     }
 }
 

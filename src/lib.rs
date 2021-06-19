@@ -117,7 +117,7 @@ pub mod prelude {
     };
     pub use vector::Vector;
     // Color macros
-    pub use {hsb, hsl, rgb};
+    pub use {color, hsb, hsl, rgb};
     // Math macros
     pub use {noise, random, vector};
     // Shape macros

@@ -206,7 +206,7 @@ impl<T> Vector<T> {
         self.z = v.z;
     }
 
-    /// Returns an itereator over the `Vector`.
+    /// Returns an itereator over the `Vector`s coordinates `[x, y, z]`.
     ///
     /// # Example
     ///
@@ -876,6 +876,23 @@ impl<T> ExactSizeIterator for IterMut<'_, T> {}
 impl<T> IntoIterator for Vector<T> {
     type Item = T;
     type IntoIter = IntoIter<Self::Item, 3>;
+
+    /// Owned `Vector<T>` iterator over `[x, y, z]`.
+    ///
+    /// This struct is created by the [`into_iter`](Vector::into_iter) method on [`Vector`]s.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v: Vector<f64> = vector!(1.0, 2.0, -4.0);
+    /// let mut iterator = v.into_iter();
+    ///
+    /// assert_eq!(iterator.next(), Some(1.0));
+    /// assert_eq!(iterator.next(), Some(2.0));
+    /// assert_eq!(iterator.next(), Some(-4.0));
+    /// assert_eq!(iterator.next(), None);
+    /// ```
     fn into_iter(self) -> Self::IntoIter {
         IntoIter::new([self.x, self.y, self.z])
     }
