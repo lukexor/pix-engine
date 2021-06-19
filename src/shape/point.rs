@@ -355,7 +355,7 @@ where
     }
 }
 
-macro_rules! impl_op {
+macro_rules! impl_mul {
     ($target:ty, $zero:expr) => {
         impl Mul<Point<$target>> for $target {
             type Output = Point<$target>;
@@ -363,33 +363,23 @@ macro_rules! impl_op {
                 Point::new(self * p.x, self * p.x, self * p.z)
             }
         }
-
-        impl Div<Point<$target>> for $target {
-            type Output = Point<$target>;
-            fn div(self, p: Point<$target>) -> Self::Output {
-                if p.x == $zero || p.y == $zero || p.z == $zero {
-                    panic!("divisor is zero");
-                }
-                Point::new(self / p.x, self / p.x, self / p.z)
-            }
-        }
     };
 }
 
-impl_op!(i8, 0);
-impl_op!(u8, 0);
-impl_op!(i16, 0);
-impl_op!(u16, 0);
-impl_op!(i32, 0);
-impl_op!(u32, 0);
-impl_op!(i64, 0);
-impl_op!(u64, 0);
-impl_op!(i128, 0);
-impl_op!(u128, 0);
-impl_op!(isize, 0);
-impl_op!(usize, 0);
-impl_op!(f32, 0.0);
-impl_op!(f64, 0.0);
+impl_mul!(i8, 0);
+impl_mul!(u8, 0);
+impl_mul!(i16, 0);
+impl_mul!(u16, 0);
+impl_mul!(i32, 0);
+impl_mul!(u32, 0);
+impl_mul!(i64, 0);
+impl_mul!(u64, 0);
+impl_mul!(i128, 0);
+impl_mul!(u128, 0);
+impl_mul!(isize, 0);
+impl_mul!(usize, 0);
+impl_mul!(f32, 0.0);
+impl_mul!(f64, 0.0);
 
 /// Converts `T` to [`Point<T>`].
 impl<T> From<T> for Point<T>

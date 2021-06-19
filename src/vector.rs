@@ -1,20 +1,20 @@
-//! 1D, 2D and 3D Euclidean [Vector] functions.
+//! 1D, 2D and 3D Euclidean [`Vector`] functions.
 //!
-//! Each [Vector] represents a 1D, 2D or 3D Euclidean (or geometric) vector with a magnitude and a
+//! Each [`Vector`] represents a 1D, 2D or 3D Euclidean (or geometric) vector with a magnitude and a
 //! direction. The `Vector`, however, contains 3 values for `x`, `y`, and `z`. The magnitude and direction are
-//! retrieved with the [mag](Vector::mag) and [heading](Vector::heading) methods.
+//! retrieved with the [`mag`](Vector::mag) and [`heading`](Vector::heading) methods.
 //!
 //! Some example uses of a `Vector` include modeling a position, velocity, or acceleration of an
 //! object or particle.
 //!
-//! The [vector!] macro allows for flexible construction which takes 0-3 parameters:
+//! The [`vector!`] macro allows for flexible construction which takes 0-3 parameters:
 //!
 //! - Zero parameters constructs a vector at the origin `(0.0, 0.0, 0.0)`
 //! - One, Two, or Three parameters constructs a vector with `x`, `y`, and `z` set with remaining
 //!   values set to `0.0`.
 //!
-//! If you want randomized vectors, use the [random_1d](Vector::random_1d),
-//! [random_2d](Vector::random_2d) and [random_3d](Vector::random_3d) methods which create unit
+//! If you want randomized vectors, use the [`random_1d`](Vector::random_1d),
+//! [`random_2d`](Vector::random_2d) and [`random_3d`](Vector::random_3d) methods which create unit
 //! vectors with magnitudes in the range `-1.0..=1.0`.
 //!
 //! # Examples
@@ -72,20 +72,20 @@ use std::{
     convert::{TryFrom, TryInto},
     f64::consts::TAU,
     fmt,
-    iter::Sum,
+    iter::{once, Chain, Once, Sum},
     ops::*,
 };
 
 /// Represents a Euclidiean (also known as geometric) `Vector` in 2D or 3D space. A `Vector` has
 /// both a magnitude and a direction. The `Vector`, however, contains 3 values for `x`, `y`, and `z`.
 ///
-/// The magnitude and direction are retrieved with the [mag](Vector::mag) and
-/// [heading](Vector::heading) methods.
+/// The magnitude and direction are retrieved with the [`mag`](Vector::mag) and
+/// [`heading`](Vector::heading) methods.
 ///
 /// Some example uses of a `Vector` include modeling a position, velocity, or acceleration of an
 /// object or particle.
 ///
-/// Vectors can be combined using "vector" math, so for example two `Vector`s can be added together
+/// Vectors can be combined using "vector" math, so for example two `Vectors` can be added together
 /// to form a new `Vector` using `let v3 = v1 + v2` or you can add one `Vector` to another by calling
 /// `v1 += v2`.
 #[derive(Default, Debug, Copy, Clone, PartialEq, PartialOrd)]
@@ -204,6 +204,40 @@ impl<T> Vector<T> {
         self.y = v.y;
         self.z = v.z;
     }
+
+    /// Returns an itereator over the `Vector`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v: Vector<f64> = vector!(1.0, 2.0, -4.0);
+    /// let mut iterator = v.iter();
+    ///
+    /// assert_eq!(iterator.next(), Some(&1.0));
+    /// assert_eq!(iterator.next(), Some(&2.0));
+    /// assert_eq!(iterator.next(), Some(&-4.0));
+    /// assert_eq!(iterator.next(), None);
+    /// ```
+    pub fn iter(&self) -> VectorIter<'_, T> {
+        VectorIter::new(self)
+    }
+
+    /// Returns an itereator over the `Vector` that allows modifying each value.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut v: Vector<f64> = vector!(1.0, 2.0, -4.0);
+    /// for value in v.iter_mut() {
+    ///     *value *= 2.0;
+    /// }
+    /// assert_eq!(v.get(), [2.0, 4.0, -8.0]);
+    /// ```
+    pub fn iter_mut(&mut self) -> VectorIterMut<'_, T> {
+        VectorIterMut::new(self)
+    }
 }
 
 impl<T> Vector<T>
@@ -283,7 +317,7 @@ where
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
-    /// Returns the [dot product](https://en.wikipedia.org/wiki/Dot_product) betwen two `Vector`s.
+    /// Returns the [dot product](https://en.wikipedia.org/wiki/Dot_product) betwen two `Vectors`.
     ///
     /// # Example
     ///
@@ -299,7 +333,7 @@ where
     }
 
     /// Returns the [cross product](https://en.wikipedia.org/wiki/Cross_product) between two
-    /// `Vector`s.
+    /// `Vectors`.
     ///
     /// # Example
     ///
@@ -353,7 +387,7 @@ where
     }
 
     /// Constructs a 2D unit `Vector` in the XY plane from a given angle. Angle is given as radians
-    /// and is unaffected by [AngleMode](crate::prelude::AngleMode).
+    /// and is unaffected by [`AngleMode`](crate::prelude::AngleMode).
     ///
     /// # Example
     ///
@@ -474,7 +508,7 @@ where
         *self *= mag;
     }
 
-    /// Returns the Euclidean distance between two `Vector`s.
+    /// Returns the Euclidean distance between two `Vectors`.
     ///
     /// # Example
     ///
@@ -589,7 +623,7 @@ where
         self.y = sin * mag;
     }
 
-    /// Returns the angle between two `Vector`s in radians.
+    /// Returns the angle between two `Vectors` in radians.
     ///
     /// # Example
     ///
@@ -608,7 +642,7 @@ where
         dot_mag_product.acos() * self.cross(v).z.signum()
     }
 
-    /// Constructs a `Vector<T>` by linear interpolating between two `Vector`s by a given amount
+    /// Constructs a `Vector<T>` by linear interpolating between two `Vectors` by a given amount
     /// between `0.0` and `1.0`.
     ///
     /// # Example
@@ -684,6 +718,8 @@ where
     }
 }
 
+// Operations
+
 impl<T> Index<usize> for Vector<T> {
     type Output = T;
     fn index(&self, idx: usize) -> &Self::Output {
@@ -717,17 +753,6 @@ where
     }
 }
 
-impl<T, U> Add<U> for Vector<T>
-where
-    T: Num + Add<U, Output = T>,
-    U: Num + Copy,
-{
-    type Output = Self;
-    fn add(self, s: U) -> Self::Output {
-        Vector::new(self.x + s, self.y + s, self.z + s)
-    }
-}
-
 impl<T> AddAssign for Vector<T>
 where
     T: AddAssign,
@@ -736,18 +761,6 @@ where
         self.x += v.x;
         self.y += v.y;
         self.z += v.z;
-    }
-}
-
-impl<T, U> AddAssign<U> for Vector<T>
-where
-    T: AddAssign<U>,
-    U: Num + Copy,
-{
-    fn add_assign(&mut self, s: U) {
-        self.x += s;
-        self.y += s;
-        self.z += s;
     }
 }
 
@@ -761,17 +774,6 @@ where
     }
 }
 
-impl<T, U> Sub<U> for Vector<T>
-where
-    T: Num + Sub<U, Output = T>,
-    U: Num + Copy,
-{
-    type Output = Self;
-    fn sub(self, s: U) -> Self::Output {
-        Vector::new(self.x - s, self.y - s, self.z - s)
-    }
-}
-
 impl<T> SubAssign for Vector<T>
 where
     T: SubAssign,
@@ -780,18 +782,6 @@ where
         self.x -= v.x;
         self.y -= v.y;
         self.z -= v.z;
-    }
-}
-
-impl<T, U> SubAssign<U> for Vector<T>
-where
-    T: SubAssign<U>,
-    U: Num + Copy,
-{
-    fn sub_assign(&mut self, s: U) {
-        self.x -= s;
-        self.y -= s;
-        self.z -= s;
     }
 }
 
@@ -851,29 +841,6 @@ where
     }
 }
 
-impl<T, U> Rem<U> for Vector<T>
-where
-    T: Num + Rem<U, Output = T>,
-    U: Num + Copy,
-{
-    type Output = Self;
-    fn rem(self, s: U) -> Self::Output {
-        Vector::new(self.x % s, self.y % s, self.z % s)
-    }
-}
-
-impl<T, U> RemAssign<U> for Vector<T>
-where
-    T: Num + RemAssign<U>,
-    U: Num + Copy,
-{
-    fn rem_assign(&mut self, s: U) {
-        self.x %= s;
-        self.y %= s;
-        self.z %= s;
-    }
-}
-
 impl<T> Sum for Vector<T>
 where
     Self: Add<Output = Self>,
@@ -902,41 +869,157 @@ where
     }
 }
 
-macro_rules! impl_op {
-    ($target:ty, $zero:expr) => {
-        impl Mul<Vector<$target>> for $target {
-            type Output = Vector<$target>;
-            fn mul(self, v: Vector<$target>) -> Self::Output {
-                Vector::new(self * v.x, self * v.y, self * v.z)
-            }
-        }
+impl<T> ExactSizeIterator for VectorIntoIter<T> {}
+impl<T> ExactSizeIterator for VectorIter<'_, T> {}
+impl<T> ExactSizeIterator for VectorIterMut<'_, T> {}
 
-        impl Div<Vector<$target>> for $target {
-            type Output = Vector<$target>;
-            fn div(self, v: Vector<$target>) -> Self::Output {
-                if v.x == $zero || v.y == $zero || v.z == $zero {
-                    panic!("divisor is zero");
-                }
-                Vector::new(self / v.x, self / v.y, self / v.z)
-            }
+/// Owned `Vector` iterator.
+///
+/// This struct is created by the [`into_iter`](Vector::into_iter) method on [Vectors](Vector).
+///
+/// # Example
+///
+/// ```
+/// # use pix_engine::prelude::*;
+/// let v: Vector<f64> = vector!(1.0, 2.0, -4.0);
+/// let mut iterator = v.into_iter();
+///
+/// assert_eq!(iterator.next(), Some(1.0));
+/// assert_eq!(iterator.next(), Some(2.0));
+/// assert_eq!(iterator.next(), Some(-4.0));
+/// assert_eq!(iterator.next(), None);
+/// ```
+#[derive(Debug, Clone)]
+pub struct VectorIntoIter<T> {
+    inner: Chain<Chain<Once<T>, Once<T>>, Once<T>>,
+}
+
+impl<T> VectorIntoIter<T> {
+    #[inline]
+    fn new(v: Vector<T>) -> Self {
+        Self {
+            inner: once(v.x).chain(once(v.y)).chain(once(v.z)),
         }
+    }
+}
+
+impl<T> Iterator for VectorIntoIter<T> {
+    type Item = T;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next()
+    }
+}
+
+impl<T> IntoIterator for Vector<T> {
+    type Item = T;
+    type IntoIter = VectorIntoIter<T>;
+    fn into_iter(self) -> Self::IntoIter {
+        VectorIntoIter::new(self)
+    }
+}
+
+/// Immutable `Vector` iterator.
+///
+/// This struct is created by the [`iter`](Vector::iter) method on [Vectors](Vector).
+///
+/// # Example
+///
+/// ```
+/// # use pix_engine::prelude::*;
+/// let v: Vector<f64> = vector!(1.0, 2.0, -4.0);
+/// let mut iterator = v.iter();
+///
+/// assert_eq!(iterator.next(), Some(&1.0));
+/// assert_eq!(iterator.next(), Some(&2.0));
+/// assert_eq!(iterator.next(), Some(&-4.0));
+/// assert_eq!(iterator.next(), None);
+/// ```
+#[derive(Debug, Clone)]
+pub struct VectorIter<'a, T> {
+    inner: Chain<Chain<Once<&'a T>, Once<&'a T>>, Once<&'a T>>,
+}
+
+impl<'a, T> VectorIter<'a, T> {
+    #[inline]
+    fn new(v: &'a Vector<T>) -> Self {
+        Self {
+            inner: once(&v.x).chain(once(&v.y)).chain(once(&v.z)),
+        }
+    }
+}
+
+impl<'a, T> Iterator for VectorIter<'a, T> {
+    type Item = &'a T;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a Vector<T> {
+    type Item = &'a T;
+    type IntoIter = VectorIter<'a, T>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+/// Mutable `Vector` iterator.
+///
+/// This struct is created by the [`iter_mut`](Vector::iter_mut) method on [Vectors](Vector).
+///
+/// # Example
+///
+/// ```
+/// # use pix_engine::prelude::*;
+/// let mut v = vector!(1.0, 2.0, -4.0);
+/// for value in v.iter_mut() {
+///     *value *= 2.0;
+/// }
+/// assert_eq!(v.get(), [2.0, 4.0, -8.0]);
+/// ```
+#[derive(Debug)]
+pub struct VectorIterMut<'a, T> {
+    inner: Chain<Chain<Once<&'a mut T>, Once<&'a mut T>>, Once<&'a mut T>>,
+}
+
+impl<'a, T> VectorIterMut<'a, T> {
+    #[inline]
+    fn new(v: &'a mut Vector<T>) -> Self {
+        Self {
+            inner: once(&mut v.x).chain(once(&mut v.y)).chain(once(&mut v.z)),
+        }
+    }
+}
+
+impl<'a, T> Iterator for VectorIterMut<'a, T> {
+    type Item = &'a mut T;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a mut Vector<T> {
+    type Item = &'a mut T;
+    type IntoIter = VectorIterMut<'a, T>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}
+
+macro_rules! impl_ops {
+    ($($target:ty),*) => {
+        $(
+            impl Mul<Vector<$target>> for $target {
+                type Output = Vector<$target>;
+                fn mul(self, v: Vector<$target>) -> Self::Output {
+                    Vector::new(self * v.x, self * v.y, self * v.z)
+                }
+            }
+        )*
     };
 }
 
-impl_op!(i8, 0);
-impl_op!(u8, 0);
-impl_op!(i16, 0);
-impl_op!(u16, 0);
-impl_op!(i32, 0);
-impl_op!(u32, 0);
-impl_op!(i64, 0);
-impl_op!(u64, 0);
-impl_op!(i128, 0);
-impl_op!(u128, 0);
-impl_op!(isize, 0);
-impl_op!(usize, 0);
-impl_op!(f32, 0.0);
-impl_op!(f64, 0.0);
+impl_ops!(i8, u8, i16, u16, i32, u32, i128, u128, isize, usize, f32, f64);
 
 /// Converts `T` to [`Vector<T>`].
 impl<T> From<T> for Vector<T>
@@ -1067,6 +1150,63 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    macro_rules! test_ops {
+        ($($val: expr),*) => {
+            $(
+                // Mul<T> for Vector
+                let v = vector!(2.0, -5.0, 0.0) * $val;
+                assert_eq!(v.get(), [4.0, -10.0, 0.0]);
+
+                // Mul<Vector> for T
+                let v = $val * vector!(2.0, -5.0, 0.0);
+                assert_eq!(v.get(), [4.0, -10.0, 0.0]);
+
+                // MulAssign<T> for Vector
+                let mut v = vector!(2.0, -5.0, 0.0);
+                v *= $val;
+                assert_eq!(v.get(), [4.0, -10.0, 0.0]);
+
+                // Div<T> for Vector
+                let v = vector!(1.0, -5.0, 0.0) / $val;
+                assert_eq!(v.get(), [0.5, -2.5, 0.0]);
+
+                // DivAssign<T> for Vector
+                let mut v = vector!(2.0, -5.0, 0.0);
+                v /= $val;
+                assert_eq!(v.get(), [1.0, -2.5, 0.0]);
+            )*
+        };
+    }
+
+    #[test]
+    fn test_ops() {
+        // Add
+        let v1 = vector!(2.0, 5.0, 1.0);
+        let v2 = vector!(1.0, 5.0, -1.0);
+        let v3 = v1 + v2;
+        assert_eq!(v3.get(), [3.0, 10.0, 0.0]);
+
+        // AddAssign
+        let mut v1 = vector!(2.0, 5.0, 1.0);
+        let v2 = vector!(1.0, 5.0, -1.0);
+        v1 += v2;
+        assert_eq!(v1.get(), [3.0, 10.0, 0.0]);
+
+        // Sub
+        let v1 = vector!(2.0, 1.0, 2.0);
+        let v2 = vector!(1.0, 5.0, 3.0);
+        let v3 = v1 - v2;
+        assert_eq!(v3.get(), [1.0, -4.0, -1.0]);
+
+        // SubAssign
+        let mut v1 = vector!(2.0, 1.0, 2.0);
+        let v2 = vector!(1.0, 5.0, 3.0);
+        v1 -= v2;
+        assert_eq!(v1.get(), [1.0, -4.0, -1.0]);
+
+        test_ops!(2.0f32, 2.0f64);
+    }
 
     #[test]
     fn test_tuple_conversions() {
