@@ -6,19 +6,19 @@ const HEIGHT: u32 = 800;
 
 const BOID_COUNT: usize = 500;
 const BOID_MODEL: [Vector<f64>; 13] = [
-    vector!(1.5, 0.0),
-    vector!(0.75, -0.25),
-    vector!(0.25, -1.5),
-    vector!(-1.0, -2.25),
-    vector!(-0.25, -1.5),
-    vector!(-0.45, -0.35),
-    vector!(-2.0, -0.2),
-    vector!(-2.0, 0.2),
-    vector!(-0.45, 0.35),
-    vector!(-0.25, 1.5),
-    vector!(-1.0, 2.25),
-    vector!(0.25, 1.5),
-    vector!(0.75, 0.25),
+    vector!(1.5, 0.0, 0.0),
+    vector!(0.75, -0.25, 0.0),
+    vector!(0.25, -1.5, 0.0),
+    vector!(-1.0, -2.25, 0.0),
+    vector!(-0.25, -1.5, 0.0),
+    vector!(-0.45, -0.35, 0.0),
+    vector!(-2.0, -0.2, 0.0),
+    vector!(-2.0, 0.2, 0.0),
+    vector!(-0.45, 0.35, 0.0),
+    vector!(-0.25, 1.5, 0.0),
+    vector!(-1.0, 2.25, 0.0),
+    vector!(0.25, 1.5, 0.0),
+    vector!(0.75, 0.25, 0.0),
 ];
 const BOID_SIZE: f64 = 3.0;
 

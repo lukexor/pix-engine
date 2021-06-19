@@ -22,7 +22,7 @@
 //! ```
 //! use pix_engine::prelude::*;
 //!
-//! let v = vector!(); // Vector placed at the origin (0.0, 0.0, 0.0)
+//! let v: Vector<f64> = vector!(); // Vector placed at the origin (0.0, 0.0, 0.0)
 //! assert_eq!(v.get(), [0.0, 0.0, 0.0]);
 //!
 //! let v = vector!(5.0); // 1D Vector parallel with the X-axis, magnitude 5
@@ -107,7 +107,7 @@ pub struct Vector<T> {
 /// ```
 /// use pix_engine::prelude::*;
 ///
-/// let v = vector!();
+/// let v: Vector<f64> = vector!();
 /// assert_eq!(v.get(), [0.0, 0.0, 0.0]);
 ///
 /// let v = vector!(1.0);
@@ -122,13 +122,13 @@ pub struct Vector<T> {
 #[macro_export]
 macro_rules! vector {
     () => {
-        vector!(0.0, 0.0, 0.0)
+        $crate::vector::Vector::default()
     };
     ($x:expr) => {
-        vector!($x, 0.0, 0.0)
+        $crate::vector::Vector::new_x($x)
     };
     ($x:expr, $y:expr$(,)?) => {
-        vector!($x, $y, 0.0)
+        $crate::vector::Vector::new_xy($x, $y)
     };
     ($x:expr, $y:expr, $z:expr$(,)?) => {
         $crate::vector::Vector::new($x, $y, $z)
@@ -147,6 +147,42 @@ impl<T> Vector<T> {
     /// ```
     pub const fn new(x: T, y: T, z: T) -> Self {
         Self { x, y, z }
+    }
+
+    /// Constructs a `Vector<T>` with only an `x` magnitude.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v = Vector::new_x(2.1);
+    /// assert_eq!(v.get(), [2.1, 0.0, 0.0]);
+    /// ```
+    pub fn new_x(x: T) -> Self
+    where
+        T: Num,
+    {
+        Self {
+            x,
+            y: T::zero(),
+            z: T::zero(),
+        }
+    }
+
+    /// Constructs a `Vector<T>` with only `x` and `y magnitudes.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v = Vector::new_xy(2.1, 3.5);
+    /// assert_eq!(v.get(), [2.1, 3.5, 0.0]);
+    /// ```
+    pub fn new_xy(x: T, y: T) -> Self
+    where
+        T: Num,
+    {
+        Self { x, y, z: T::zero() }
     }
 
     /// Copy the current `Vector`.
@@ -286,6 +322,43 @@ where
         v
     }
 
+    /// Constructs a `Vector<T>` from a [`Point<T>`].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p: Point<f64> = point!(1.0, 2.0);
+    /// let v = Vector::from_point(p);
+    /// assert_eq!(v.get(), [1.0, 2.0, 0.0]);
+    /// ```
+    pub fn from_point(p: impl Into<Point<T>>) -> Self {
+        let p = p.into();
+        Self {
+            x: p.x,
+            y: p.y,
+            z: p.z,
+        }
+    }
+
+    /// Constructs a 2D unit `Vector<T>` in the XY plane from a given angle. Angle is given as radians
+    /// and is unaffected by [`AngleMode`](crate::prelude::AngleMode).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v: Vector<f64> = Vector::from_angle(30.0, 15.0);
+    /// let abs_difference_x = (v.x - 2.3137).abs();
+    /// let abs_difference_y = (v.y - (-14.8204)).abs();
+    /// assert!(abs_difference_x <= 1e-4);
+    /// assert!(abs_difference_y <= 1e-4);
+    /// ```
+    pub fn from_angle(angle: T, length: T) -> Self {
+        let (sin, cos) = angle.sin_cos();
+        Self::new(length * cos, length * sin, T::zero())
+    }
+
     /// Returns the magnitude (length) of the `Vector`.
     ///
     /// The formula used is `sqrt(x*x + y*y + z*z)`.
@@ -385,24 +458,6 @@ where
     /// ```
     pub fn to_vec(&self) -> Vec<T> {
         vec![self.x, self.y, self.z]
-    }
-
-    /// Constructs a 2D unit `Vector` in the XY plane from a given angle. Angle is given as radians
-    /// and is unaffected by [`AngleMode`](crate::prelude::AngleMode).
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v: Vector<f64> = Vector::from_angle(30.0, 15.0);
-    /// let abs_difference_x = (v.x - 2.3137).abs();
-    /// let abs_difference_y = (v.y - (-14.8204)).abs();
-    /// assert!(abs_difference_x <= 1e-4);
-    /// assert!(abs_difference_y <= 1e-4);
-    /// ```
-    pub fn from_angle(angle: T, length: T) -> Self {
-        let (sin, cos) = angle.sin_cos();
-        Self::new(length * cos, length * sin, T::zero())
     }
 
     /// Constructs a random unit `Vector<T>` in 1D space.
@@ -916,14 +971,16 @@ impl<T> IntoIterator for Vector<T> {
 /// ```
 #[derive(Debug, Clone)]
 pub struct Iter<'a, T> {
-    inner: Chain<Chain<Once<&'a T>, Once<&'a T>>, Once<&'a T>>,
+    inner: [&'a T; 3],
+    current: usize,
 }
 
 impl<'a, T> Iter<'a, T> {
     #[inline]
     fn new(v: &'a Vector<T>) -> Self {
         Self {
-            inner: once(&v.x).chain(once(&v.y)).chain(once(&v.z)),
+            inner: [&v.x, &v.y, &v.z],
+            current: 0,
         }
     }
 }
@@ -931,7 +988,12 @@ impl<'a, T> Iter<'a, T> {
 impl<'a, T> Iterator for Iter<'a, T> {
     type Item = &'a T;
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next()
+        if self.current > 2 {
+            return None;
+        }
+        let next = self.inner[self.current];
+        self.current += 1;
+        Some(next)
     }
 }
 
@@ -942,6 +1004,8 @@ impl<'a, T> IntoIterator for &'a Vector<T> {
         self.iter()
     }
 }
+
+type ThreeChain<T> = Chain<Chain<Once<T>, Once<T>>, Once<T>>;
 
 /// Mutable `Vector<T>` iterator over `[x, y, z]`.
 ///
@@ -959,7 +1023,7 @@ impl<'a, T> IntoIterator for &'a Vector<T> {
 /// ```
 #[derive(Debug)]
 pub struct IterMut<'a, T> {
-    inner: Chain<Chain<Once<&'a mut T>, Once<&'a mut T>>, Once<&'a mut T>>,
+    inner: ThreeChain<&'a mut T>,
 }
 
 impl<'a, T> IterMut<'a, T> {

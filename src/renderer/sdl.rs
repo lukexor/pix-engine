@@ -15,7 +15,7 @@ use sdl2::{
     video::{FullscreenType, Window, WindowBuildError, WindowContext},
     EventPump, IntegerOrSdlError, Sdl,
 };
-use std::{borrow::Cow, convert::TryFrom, ffi::NulError};
+use std::{borrow::Cow, ffi::NulError};
 
 type SdlAxis = sdl2::controller::Axis;
 type SdlButton = sdl2::controller::Button;
@@ -45,13 +45,13 @@ pub(crate) struct Renderer {
 
 impl Default for Renderer {
     fn default() -> Self {
-        Self::init(RendererSettings::default()).expect("SDL2 Renderer")
+        Self::new(RendererSettings::default()).expect("SDL2 Renderer")
     }
 }
 
 impl Rendering for Renderer {
     /// Initializes the Sdl2Renderer using the given settings and opens a new window.
-    fn init(s: RendererSettings) -> Result<Self> {
+    fn new(s: RendererSettings) -> Result<Self> {
         let context = sdl2::init()?;
         let ttf_context = ttf::init()?;
         let video_subsys = context.video()?;
@@ -267,22 +267,18 @@ impl Rendering for Renderer {
     }
 
     /// Draw text to the current canvas.
-    fn text<S>(
+    fn text(
         &mut self,
-        text: S,
         x: i32,
         y: i32,
-        size: u32,
+        text: impl AsRef<str>,
+        size: u16,
         fill: Option<Color>,
         _stroke: Option<Color>,
-    ) -> Result<()>
-    where
-        S: AsRef<str>,
-    {
+    ) -> Result<()> {
+        let text = text.as_ref();
         // TODO: This path only works locally
-        let font = self
-            .ttf_context
-            .load_font("static/emulogic.ttf", size as u16)?;
+        let font = self.ttf_context.load_font("static/emulogic.ttf", size)?;
         if let Some(fill) = fill {
             let surface = font.render(text.as_ref()).blended(fill)?;
             let texture = self.texture_creator.create_texture_from_surface(&surface)?;
@@ -294,26 +290,15 @@ impl Rendering for Renderer {
     }
 
     /// Draw a pixel to the current canvas.
-    fn point(&mut self, x: i32, y: i32, stroke: Option<Color>) -> Result<()> {
+    fn point(&mut self, x: i16, y: i16, stroke: Option<Color>) -> Result<()> {
         if let Some(stroke) = stroke {
-            let x = i16::try_from(x)?;
-            let y = i16::try_from(y)?;
             self.canvas.pixel(x, y, stroke)?;
         }
         Ok(())
     }
 
-    /// Draw an array of pixels to the canvas.
-    fn points(&mut self, _pixels: &[u8], _pitch: usize) -> Result<()> {
-        todo!("pixels")
-    }
-
     /// Draw a line to the current canvas.
-    fn line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, stroke: Option<Color>) -> Result<()> {
-        let x1 = i16::try_from(x1)?;
-        let y1 = i16::try_from(y1)?;
-        let x2 = i16::try_from(x2)?;
-        let y2 = i16::try_from(y2)?;
+    fn line(&mut self, x1: i16, y1: i16, x2: i16, y2: i16, stroke: Option<Color>) -> Result<()> {
         if let Some(stroke) = stroke {
             if y1 == y2 {
                 self.canvas.hline(x1, x2, y1, stroke)?;
@@ -329,21 +314,15 @@ impl Rendering for Renderer {
     /// Draw a triangle to the current canvas.
     fn triangle(
         &mut self,
-        x1: i32,
-        y1: i32,
-        x2: i32,
-        y2: i32,
-        x3: i32,
-        y3: i32,
+        x1: i16,
+        y1: i16,
+        x2: i16,
+        y2: i16,
+        x3: i16,
+        y3: i16,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
-        let x1 = i16::try_from(x1)?;
-        let y1 = i16::try_from(y1)?;
-        let x2 = i16::try_from(x2)?;
-        let y2 = i16::try_from(y2)?;
-        let x3 = i16::try_from(x3)?;
-        let y3 = i16::try_from(y3)?;
         if let Some(fill) = fill {
             self.canvas.filled_trigon(x1, y1, x2, y2, x3, y3, fill)?;
         }
@@ -356,22 +335,20 @@ impl Rendering for Renderer {
     /// Draw a rectangle to the current canvas.
     fn rect(
         &mut self,
-        x: i32,
-        y: i32,
-        width: u32,
-        height: u32,
+        x: i16,
+        y: i16,
+        width: i16,
+        height: i16,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
-        let x = i16::try_from(x)?;
-        let y = i16::try_from(y)?;
-        let w = i16::try_from(width)?;
-        let h = i16::try_from(height)?;
         if let Some(fill) = fill {
-            self.canvas.box_(x, y, x + w - 1, y + h - 1, fill)?;
+            self.canvas
+                .box_(x, y, x + width - 1, y + height - 1, fill)?;
         }
         if let Some(stroke) = stroke {
-            self.canvas.rectangle(x, y, x + w - 1, y + h - 1, stroke)?;
+            self.canvas
+                .rectangle(x, y, x + width - 1, y + height - 1, stroke)?;
         }
         Ok(())
     }
@@ -396,29 +373,25 @@ impl Rendering for Renderer {
     /// Draw a ellipse to the current canvas.
     fn ellipse(
         &mut self,
-        x: i32,
-        y: i32,
-        width: u32,
-        height: u32,
+        x: i16,
+        y: i16,
+        width: i16,
+        height: i16,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
-        let x = i16::try_from(x)?;
-        let y = i16::try_from(y)?;
-        let w = i16::try_from(width)?;
-        let h = i16::try_from(height)?;
         if let Some(fill) = fill {
-            self.canvas.filled_ellipse(x, y, w, h, fill)?;
+            self.canvas.filled_ellipse(x, y, width, height, fill)?;
         }
         if let Some(stroke) = stroke {
-            self.canvas.ellipse(x, y, w, h, stroke)?;
+            self.canvas.ellipse(x, y, width, height, stroke)?;
         }
         Ok(())
     }
 
     /// Draw an image to the current canvas.
     fn image(&mut self, x: i32, y: i32, img: &Image) -> Result<()> {
-        if let Some(texture) = self.textures.get_mut(img.texture_id) {
+        if let Some(texture) = self.textures.get_mut(img.texture_id()) {
             texture.update(
                 None,
                 img.bytes(),
@@ -433,7 +406,7 @@ impl Rendering for Renderer {
 
     /// Draw an image to the current canvas.
     fn image_resized(&mut self, x: i32, y: i32, w: u32, h: u32, img: &Image) -> Result<()> {
-        if let Some(texture) = self.textures.get_mut(img.texture_id) {
+        if let Some(texture) = self.textures.get_mut(img.texture_id()) {
             texture.update(
                 None,
                 img.bytes(),

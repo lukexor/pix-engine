@@ -104,8 +104,8 @@ pub struct PixState {
 }
 
 impl PixState {
-    /// Creates a new PixState instance with a given Renderer.
-    pub(crate) fn init<S>(title: S, renderer: Renderer) -> Self
+    /// Constructs `PixState` with a given `Renderer`.
+    pub(super) fn new<S>(title: S, renderer: Renderer) -> Self
     where
         S: Into<String>,
     {

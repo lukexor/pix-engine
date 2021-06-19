@@ -14,7 +14,7 @@ impl Default for Renderer {
 
 impl Rendering for Renderer {
     /// Creates a new Renderer instance.
-    fn init(_s: RendererSettings) -> RendererResult<Self> {
+    fn new(_s: RendererSettings) -> RendererResult<Self> {
         Ok(Self {})
     }
 

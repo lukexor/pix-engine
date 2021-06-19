@@ -30,13 +30,13 @@ pub struct Point<T> {
 #[macro_export]
 macro_rules! point {
     () => {
-        point!(0, 0, 0)
+        $crate::shape::point::Point::default()
     };
     ($x:expr) => {
-        point!($x, 0, 0)
+        $crate::shape::point::Point::new_x($x)
     };
     ($x:expr, $y:expr$(,)?) => {
-        point!($x, $y, 0)
+        $crate::shape::point::Point::new_xy($x, $y)
     };
     ($x:expr, $y:expr, $z:expr$(,)?) => {
         $crate::shape::point::Point::new($x, $y, $z)
@@ -55,6 +55,61 @@ impl<T> Point<T> {
     /// ```
     pub const fn new(x: T, y: T, z: T) -> Self {
         Self { x, y, z }
+    }
+
+    /// Constructs a `Point<T>` with only an `x` magnitude.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p = Point::new_x(2);
+    /// assert_eq!(p.get(), [2, 0, 0]);
+    /// ```
+    pub fn new_x(x: T) -> Self
+    where
+        T: Num,
+    {
+        Self {
+            x,
+            y: T::zero(),
+            z: T::zero(),
+        }
+    }
+
+    /// Constructs a `Point<T>` with only `x` and `y magnitudes.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p = Point::new_xy(2, 3);
+    /// assert_eq!(p.get(), [2, 3, 0]);
+    /// ```
+    pub fn new_xy(x: T, y: T) -> Self
+    where
+        T: Num,
+    {
+        Self { x, y, z: T::zero() }
+    }
+
+    /// Constructs a `Point<T>` from a [`Vector<T>`].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v: Vector<f64> = vector!(1.0, 2.0);
+    /// let p = Point::from_vector(v);
+    /// assert_eq!(p.get(), [1.0, 2.0, 0.0]);
+    /// ```
+    pub fn from_vector(v: impl Into<Vector<T>>) -> Self {
+        let v = v.into();
+        Self {
+            x: v.x,
+            y: v.y,
+            z: v.z,
+        }
     }
 
     /// Copy the current `Point`.

@@ -19,7 +19,7 @@ pub struct Ellipse<T> {
     pub h: T,
 }
 
-/// # Construct an [`Ellipse<T>`].
+/// # Constructs an [`Ellipse<T>`].
 ///
 /// ```
 /// use pix_engine::prelude::*;
@@ -46,7 +46,7 @@ impl<T> Ellipse<T>
 where
     T: Num,
 {
-    /// Construct an `Ellipse`.
+    /// Constructs an `Ellipse`.
     pub fn new(x: T, y: T, w: T, h: T) -> Self {
         Self { x, y, w, h }
     }

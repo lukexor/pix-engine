@@ -25,11 +25,11 @@ pub enum Error {
     InvalidColorType(png::ColorType),
     /// Invalid bit depth.
     InvalidBitDepth(png::BitDepth),
-    /// IO specific errors.
+    /// I/O errors.
     IoError(io::Error),
-    /// Decoding specific errors.
+    /// [`png`] decoding errors.
     DecodingError(png::DecodingError),
-    /// Any other unknown error as a string.
+    /// Unknown error.
     Other(Cow<'static, str>),
 }
 
@@ -49,7 +49,7 @@ pub enum PixelFormat {
 }
 
 impl PixelFormat {
-    /// Return the number of channels associated with the format.
+    /// Returns the number of channels associated with the format.
     pub fn channels(&self) -> usize {
         use PixelFormat::*;
         match self {
@@ -80,20 +80,20 @@ impl Default for PixelFormat {
     }
 }
 
-/// Represents a buffer of pixel color values.
+/// An `Image` representing a buffer of pixel color values.
 #[non_exhaustive]
 #[derive(Debug, Default, Clone)]
 pub struct Image {
-    /// Width of the image
+    /// `Image` width.
     width: u32,
-    /// Height of the image
+    /// `Image` height.
     height: u32,
-    /// RGB values
+    /// Raw pixel data.
     data: Vec<u8>,
-    /// Pixel Format
+    /// Pixel Format.
     format: PixelFormat,
-    /// Texture Identifier
-    pub(crate) texture_id: usize,
+    /// Texture Identifier.
+    texture_id: usize,
 }
 
 impl Image {
@@ -107,47 +107,52 @@ impl Image {
         self.height
     }
 
-    /// `Image` dimensions as a tuple of (width, height).
+    /// Returns the `Image` dimensions as `(width, height)`.
     pub fn dimensions(&self) -> (u32, u32) {
         (self.width, self.height)
     }
 
-    /// `Image` data as a slice reference.
+    /// Returns the `Image` pixel data as a [`u8`] [`slice`].
     pub fn bytes(&self) -> &[u8] {
         &self.data
     }
 
-    /// `Image` data as a mutable slice reference.
+    /// Returns the `Image` pixel data as a mutable [`u8`] [`slice`].
     pub fn bytes_mut(&mut self) -> &mut [u8] {
         &mut self.data
     }
 
-    /// Update `Image` with an slice of bytes representing RGB/A values.
+    /// Update the `Image` with a  [`u8`] [`slice`] representing RGB/A values.
     pub fn update_bytes(&mut self, bytes: &[u8]) {
         self.data.clone_from_slice(bytes);
     }
 
-    /// `Image` pixel format.
+    /// Returns the `Image` pixel format.
     pub fn format(&self) -> PixelFormat {
         self.format
     }
 
-    /// Save `Image` to a `png` file.
+    /// Save the `Image` to a [`png`] file.
     pub fn save<P>(&self, _path: P) -> Result<()>
     where
         P: AsRef<Path>,
     {
         todo!("save image");
     }
+
+    /// Returns the `Image` [`TextureId`].
+    pub(crate) fn texture_id(&self) -> TextureId {
+        self.texture_id
+    }
 }
 
 impl PixState {
-    /// Create a blank RGBA `Image` with a given width/height.
+    /// Constructs an empty RGBA `Image` with given `width` and `height`.
     pub fn create_image(&mut self, width: u32, height: u32) -> PixResult<Image> {
         self.create_rgba_image(width, height)
     }
 
-    /// Create a blank RGBA `Image` with a given width/height.
+    /// Constructs an empty RGBA `Image` with given `width` and `height`.
     pub fn create_rgba_image(&mut self, width: u32, height: u32) -> PixResult<Image> {
         let format = PixelFormat::Rgba;
         Ok(Image {
@@ -159,7 +164,7 @@ impl PixState {
         })
     }
 
-    /// Create a blank RGB `Image` with a given width/height.
+    /// Constructs an empty RGB `Image` with given `width` and `height`.
     pub fn create_rgb_image(&mut self, width: u32, height: u32) -> PixResult<Image> {
         let format = PixelFormat::Rgb;
         Ok(Image {
@@ -171,7 +176,7 @@ impl PixState {
         })
     }
 
-    /// Create a new `Image` from an array of u8 bytes representing RGB/A values.
+    /// Constructs an `Image` from a [`u8`] [`slice`] representing RGB/A values.
     pub fn create_image_from_bytes(
         &mut self,
         width: u32,
@@ -188,7 +193,7 @@ impl PixState {
         })
     }
 
-    /// Create a new `Image` by loading it from a `png` file.
+    /// Constructs an `Image` from a [`png`] file.
     pub fn create_image_from_file<P>(&mut self, path: P) -> PixResult<Image>
     where
         P: AsRef<Path>,

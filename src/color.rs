@@ -106,7 +106,6 @@ use std::{
     array::IntoIter,
     borrow::Cow,
     fmt::{self, LowerHex, UpperHex},
-    iter::{once, Chain, Once},
     ops::*,
 };
 
@@ -1053,7 +1052,7 @@ impl IntoIterator for Color {
 ///
 /// ```
 /// # use pix_engine::prelude::*;
-/// let c: Color<f64> = color!(100, 200, 50);
+/// let c: Color = color!(100, 200, 50);
 /// let mut iterator = c.iter();
 ///
 /// assert_eq!(iterator.next(), Some(100));
@@ -1064,15 +1063,16 @@ impl IntoIterator for Color {
 /// ```
 #[derive(Debug, Clone)]
 pub struct Iter {
-    inner: Chain<Chain<Chain<Once<u8>, Once<u8>>, Once<u8>>, Once<u8>>,
+    inner: [u8; 4],
+    current: usize,
 }
 
 impl Iter {
     #[inline]
-    fn new(c: &Color) -> Self {
-        let [r, g, b, a] = c.channels();
+    fn new(color: &Color) -> Self {
         Self {
-            inner: once(r).chain(once(g)).chain(once(b)).chain(once(a)),
+            inner: color.channels(),
+            current: 0,
         }
     }
 }
@@ -1080,7 +1080,12 @@ impl Iter {
 impl Iterator for Iter {
     type Item = u8;
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next()
+        if self.current > 3 {
+            return None;
+        }
+        let next = self.inner[self.current];
+        self.current += 1;
+        Some(next)
     }
 }
 

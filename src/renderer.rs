@@ -93,7 +93,7 @@ impl Default for RendererSettings {
 /// A common interface all renderers must implement
 pub(crate) trait Rendering: Default + Sized {
     /// Creates a new Renderer instance.
-    fn init(settings: RendererSettings) -> Result<Self>;
+    fn new(settings: RendererSettings) -> Result<Self>;
 
     /// Get the primary window id.
     fn window_id(&self) -> WindowId;
@@ -174,37 +174,32 @@ pub(crate) trait Rendering: Default + Sized {
         T: AsPrimitive<i32> + AsPrimitive<u32>;
 
     /// Draw text to the current canvas.
-    fn text<S>(
+    fn text(
         &mut self,
-        text: S,
         x: i32,
         y: i32,
-        size: u32,
+        text: impl AsRef<str>,
+        size: u16,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> Result<()>
-    where
-        S: AsRef<str>;
+    ) -> Result<()>;
 
     /// Draw a pixel to the current canvas.
-    fn point(&mut self, x: i32, y: i32, stroke: Option<Color>) -> Result<()>;
-
-    /// Draw an array of pixels to the current canvas.
-    fn points(&mut self, pixels: &[u8], pitch: usize) -> Result<()>;
+    fn point(&mut self, x: i16, y: i16, stroke: Option<Color>) -> Result<()>;
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, stroke: Option<Color>) -> Result<()>;
+    fn line(&mut self, x1: i16, y1: i16, x2: i16, y2: i16, stroke: Option<Color>) -> Result<()>;
 
     /// Draw a triangle to the current canvas.
     #[allow(clippy::too_many_arguments)]
     fn triangle(
         &mut self,
-        x1: i32,
-        y1: i32,
-        x2: i32,
-        y2: i32,
-        x3: i32,
-        y3: i32,
+        x1: i16,
+        y1: i16,
+        x2: i16,
+        y2: i16,
+        x3: i16,
+        y3: i16,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()>;
@@ -212,10 +207,10 @@ pub(crate) trait Rendering: Default + Sized {
     /// Draw a rectangle to the current canvas.
     fn rect(
         &mut self,
-        x: i32,
-        y: i32,
-        width: u32,
-        height: u32,
+        x: i16,
+        y: i16,
+        width: i16,
+        height: i16,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()>;
@@ -232,10 +227,10 @@ pub(crate) trait Rendering: Default + Sized {
     /// Draw a ellipse to the current canvas.
     fn ellipse(
         &mut self,
-        x: i32,
-        y: i32,
-        width: u32,
-        height: u32,
+        x: i16,
+        y: i16,
+        width: i16,
+        height: i16,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()>;

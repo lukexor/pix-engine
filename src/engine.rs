@@ -23,7 +23,7 @@ pub struct PixEngineBuilder {
 }
 
 impl PixEngineBuilder {
-    /// Create a new `PixEngineBuilder` instance.
+    /// Constructs a `PixEngineBuilder`.
     pub fn new() -> Self {
         Self {
             settings: RendererSettings::default(),
@@ -133,7 +133,7 @@ pub struct PixEngine {
 }
 
 impl PixEngine {
-    /// Creates a default [`PixEngineBuilder`] which can build a `PixEngine` instance.
+    /// Constructs a default [`PixEngineBuilder`] which can build a `PixEngine` instance.
     pub fn builder() -> PixEngineBuilder {
         PixEngineBuilder::default()
     }
@@ -143,8 +143,8 @@ impl PixEngine {
     where
         A: AppState,
     {
-        let renderer = Renderer::init(self.settings.clone())?;
-        let mut state = PixState::init(&self.settings.title, renderer);
+        let renderer = Renderer::new(self.settings.clone())?;
+        let mut state = PixState::new(&self.settings.title, renderer);
         state.show_frame_rate(self.settings.show_frame_rate);
 
         // Clear and present once on start
