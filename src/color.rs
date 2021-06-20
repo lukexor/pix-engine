@@ -95,7 +95,7 @@
 //!
 //! let c = Color::from_str("#F0F5BF5F")?; // 8-digit Hex string
 //! assert_eq!(c.channels(), [240, 245, 191, 95]);
-//! # Ok::<(), ColorError>(())
+//! # Ok::<(), ColorError<f64>>(())
 //! ```
 
 use crate::random;
@@ -148,7 +148,7 @@ impl Color {
     /// let c = Color::new(0, 0, 128);
     /// assert_eq!(c.channels(), [0, 0, 128, 255]);
     /// ```
-    pub fn new(r: u8, g: u8, b: u8) -> Self {
+    pub fn new<T: Into<f64>>(r: T, g: T, b: T) -> Self {
         Self::rgb(r, g, b)
     }
 
@@ -161,7 +161,7 @@ impl Color {
     /// let c = Color::new_alpha(0, 0, 128, 50);
     /// assert_eq!(c.channels(), [0, 0, 128, 50]);
     /// ```
-    pub fn new_alpha(r: u8, g: u8, b: u8, a: u8) -> Self {
+    pub fn new_alpha<T: Into<f64>>(r: T, g: T, b: T, a: T) -> Self {
         Self::rgba(r, g, b, a)
     }
 
@@ -177,9 +177,25 @@ impl Color {
     /// let c = Color::with_mode(ColorMode::Hsb, 126.0, 50.0, 100.0);
     /// assert_eq!(c.channels(), [128, 255, 140, 255]);
     /// ```
-    pub fn with_mode(mode: ColorMode, v1: f64, v2: f64, v3: f64) -> Self {
-        let [_, _, _, alpha_max] = maxes(mode);
-        Self::with_mode_alpha(mode, v1, v2, v3, alpha_max)
+    pub fn with_mode<T: Into<f64>>(mode: ColorMode, v1: T, v2: T, v3: T) -> Self {
+        // Normalize channels
+        let [v1_max, v2_max, v3_max, _] = maxes(mode);
+        let levels = [
+            (v1.into() / v1_max).clamp(0.0, 1.0),
+            (v2.into() / v2_max).clamp(0.0, 1.0),
+            (v3.into() / v3_max).clamp(0.0, 1.0),
+            1.0,
+        ];
+
+        // Convert to `Rgb`
+        let levels = convert_levels(levels, mode, Rgb);
+        let channels = calculate_channels(levels);
+
+        Self {
+            mode,
+            levels,
+            channels,
+        }
     }
 
     /// Constructs a `Color` with the given [`ColorMode`] and alpha.
@@ -194,14 +210,14 @@ impl Color {
     /// let c = Color::with_mode_alpha(ColorMode::Hsb, 126.0, 50.0, 100.0, 0.8);
     /// assert_eq!(c.channels(), [128, 255, 140, 204]);
     /// ```
-    pub fn with_mode_alpha(mode: ColorMode, v1: f64, v2: f64, v3: f64, alpha: f64) -> Self {
+    pub fn with_mode_alpha<T: Into<f64>>(mode: ColorMode, v1: T, v2: T, v3: T, alpha: T) -> Self {
         // Normalize channels
         let [v1_max, v2_max, v3_max, alpha_max] = maxes(mode);
         let levels = [
-            (v1 / v1_max).clamp(0.0, 1.0),
-            (v2 / v2_max).clamp(0.0, 1.0),
-            (v3 / v3_max).clamp(0.0, 1.0),
-            (alpha / alpha_max).clamp(0.0, 1.0),
+            (v1.into() / v1_max).clamp(0.0, 1.0),
+            (v2.into() / v2_max).clamp(0.0, 1.0),
+            (v3.into() / v3_max).clamp(0.0, 1.0),
+            (alpha.into() / alpha_max).clamp(0.0, 1.0),
         ];
 
         // Convert to `Rgb`
@@ -225,8 +241,8 @@ impl Color {
     /// let c = Color::rgb(128, 64, 0);
     /// assert_eq!(c.channels(), [128, 64, 0, 255]);
     /// ```
-    pub fn rgb(r: u8, g: u8, b: u8) -> Self {
-        Self::with_mode(Rgb, f64::from(r), f64::from(g), f64::from(b))
+    pub fn rgb<T: Into<f64>>(r: T, g: T, b: T) -> Self {
+        Self::with_mode(Rgb, r, g, b)
     }
 
     /// Constructs a [`Rgb`] `Color` containing red, green, blue, and alpha.
@@ -238,8 +254,8 @@ impl Color {
     /// let c = Color::rgba(128, 64, 128, 128);
     /// assert_eq!(c.channels(), [128, 64, 128, 128]);
     /// ```
-    pub fn rgba(r: u8, g: u8, b: u8, a: u8) -> Self {
-        Self::with_mode_alpha(Rgb, f64::from(r), f64::from(g), f64::from(b), f64::from(a))
+    pub fn rgba<T: Into<f64>>(r: T, g: T, b: T, a: T) -> Self {
+        Self::with_mode_alpha(Rgb, r, g, b, a)
     }
 
     /// Constructs a [`Hsb`] `Color` containing hue, saturation, and brightness
@@ -252,7 +268,7 @@ impl Color {
     /// let c = Color::hsb(126.0, 80.0, 50.0);
     /// assert_eq!(c.channels(), [25, 128, 36, 255]);
     /// ```
-    pub fn hsb(h: f64, s: f64, b: f64) -> Self {
+    pub fn hsb<T: Into<f64>>(h: T, s: T, b: T) -> Self {
         Self::with_mode(Hsb, h, s, b)
     }
 
@@ -266,7 +282,7 @@ impl Color {
     /// let c = Color::hsba(126.0, 80.0, 50.0, 0.5);
     /// assert_eq!(c.channels(), [25, 128, 36, 128]);
     /// ```
-    pub fn hsba(h: f64, s: f64, b: f64, a: f64) -> Self {
+    pub fn hsba<T: Into<f64>>(h: T, s: T, b: T, a: T) -> Self {
         Self::with_mode_alpha(Hsb, h, s, b, a)
     }
 
@@ -280,7 +296,7 @@ impl Color {
     /// let c = Color::hsl(126.0, 80.0, 50.0);
     /// assert_eq!(c.channels(), [25, 230, 46, 255]);
     /// ```
-    pub fn hsl(h: f64, s: f64, l: f64) -> Self {
+    pub fn hsl<T: Into<f64>>(h: T, s: T, l: T) -> Self {
         Self::with_mode(Hsl, h, s, l)
     }
 
@@ -294,7 +310,7 @@ impl Color {
     /// let c = Color::hsla(126.0, 80.0, 50.0, 0.5);
     /// assert_eq!(c.channels(), [25, 230, 46, 128]);
     /// ```
-    pub fn hsla(h: f64, s: f64, l: f64, a: f64) -> Self {
+    pub fn hsla<T: Into<f64>>(h: T, s: T, l: T, a: T) -> Self {
         Self::with_mode_alpha(Hsl, h, s, l, a)
     }
 
@@ -313,7 +329,7 @@ impl Color {
     /// let c = unsafe { Color::from_raw(ColorMode::Rgb, 0.4, 0.5, 1.0, 0.8) };
     /// assert_eq!(c.channels(), [102, 128, 255, 204]);
     /// ```
-    pub unsafe fn from_raw<V: Into<f64>>(mode: ColorMode, v1: V, v2: V, v3: V, alpha: V) -> Self {
+    pub unsafe fn from_raw<T: Into<f64>>(mode: ColorMode, v1: T, v2: T, v3: T, alpha: T) -> Self {
         let levels = [v1.into(), v2.into(), v3.into(), alpha.into()];
         Self {
             mode,
@@ -322,6 +338,40 @@ impl Color {
         }
     }
 
+    /// Constructs a `Color` from a [`slice`] of 1-4 values. The number of values
+    /// provided alter how they are interpreted similar to the [`color!`], [`rgb!`], [`hsb!`], and
+    /// [`hsl!`] macros.
+    ///
+    /// # Errors
+    ///
+    /// If the [`slice`] is empty or has more than 4 values, an error is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let vals: Vec<f64> = vec![128.0, 64.0, 0.0];
+    /// let c = Color::from_slice(ColorMode::Rgb, &vals)?; // RGB Vec
+    /// assert_eq!(c.channels(), [128, 64, 0, 255]);
+    ///
+    /// let vals: [f64; 4] = [128.0, 64.0, 0.0, 128.0];
+    /// let c = Color::from_slice(ColorMode::Rgb, &vals[..])?; // RGBA slice
+    /// assert_eq!(c.channels(), [128, 64, 0, 128]);
+    /// # Ok::<(), ColorError<f64>>(())
+    /// ```
+    pub fn from_slice<T: Into<f64>>(mode: ColorMode, slice: &[T]) -> Result<Self, ColorError<T>>
+    where
+        T: fmt::Debug + Copy + Clone,
+    {
+        let result = match *slice {
+            [gray] => Self::with_mode(mode, gray, gray, gray),
+            [gray, a] => Self::with_mode_alpha(mode, gray, gray, gray, a),
+            [v1, v2, v3] => Self::with_mode(mode, v1, v2, v3),
+            [v1, v2, v3, a] => Self::with_mode_alpha(mode, v1, v2, v3, a),
+            _ => return Err(ColorError::InvalidSlice(Cow::from(slice.to_owned()))),
+        };
+        Ok(result)
+    }
     /// Constructs a random [`Rgb`] `Color` with max alpha.
     ///
     /// # Example
@@ -350,38 +400,6 @@ impl Color {
     /// ```
     pub fn random_alpha() -> Self {
         Self::new_alpha(random!(255), random!(255), random!(255), random!(255))
-    }
-
-    /// Constructs a `Color` from a [`slice`] of 1-4 values. The number of values
-    /// provided alter how they are interpreted similar to the [`color!`], [`rgb!`], [`hsb!`], and
-    /// [`hsl!`] macros.
-    ///
-    /// # Errors
-    ///
-    /// If the [`slice`] is empty or has more than 4 values, an error is returned.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let vals: Vec<f64> = vec![128.0, 64.0, 0.0];
-    /// let c = Color::from_slice(ColorMode::Rgb, &vals)?; // RGB Vec
-    /// assert_eq!(c.channels(), [128, 64, 0, 255]);
-    ///
-    /// let vals: [f64; 4] = [128.0, 64.0, 0.0, 128.0];
-    /// let c = Color::from_slice(ColorMode::Rgb, &vals[..])?; // RGBA slice
-    /// assert_eq!(c.channels(), [128, 64, 0, 128]);
-    /// # Ok::<(), ColorError>(())
-    /// ```
-    pub fn from_slice(mode: ColorMode, slice: &[f64]) -> Result<Self, ColorError> {
-        let result = match *slice {
-            [gray] => Self::with_mode(mode, gray, gray, gray),
-            [gray, a] => Self::with_mode_alpha(mode, gray, gray, gray, a),
-            [v1, v2, v3] => Self::with_mode(mode, v1, v2, v3),
-            [v1, v2, v3, a] => Self::with_mode_alpha(mode, v1, v2, v3, a),
-            _ => return Err(ColorError::InvalidSlice(Cow::from(slice.to_owned()))),
-        };
-        Ok(result)
     }
 
     /// Constructs a [`Rgb`] `Color` from a [`u32`] RGBA hexadecimal value.
@@ -648,10 +666,10 @@ impl Color {
     /// assert_eq!(c.channels(), [43, 128, 0, 255]);
     /// ```
     #[inline]
-    pub fn set_hue(&mut self, h: f64) {
+    pub fn set_hue(&mut self, h: impl Into<f64>) {
         let maxes = maxes(Hsb);
         let mut levels = convert_levels(self.levels, Rgb, Hsb);
-        levels[0] = h / maxes[0];
+        levels[0] = h.into() / maxes[0];
         self.levels = convert_levels(levels, Hsb, Rgb);
         self.calculate_channels();
     }
@@ -691,14 +709,14 @@ impl Color {
     /// assert_eq!(c.channels(), [96, 32, 32, 255]);
     /// ```
     #[inline]
-    pub fn set_saturation(&mut self, s: f64) {
+    pub fn set_saturation(&mut self, s: impl Into<f64>) {
         let mode = match self.mode {
             Hsb | Hsl => self.mode,
             _ => Hsb,
         };
         let maxes = maxes(mode);
         let mut levels = convert_levels(self.levels, Rgb, mode);
-        levels[1] = s / maxes[1];
+        levels[1] = s.into() / maxes[1];
         self.levels = convert_levels(levels, mode, Rgb);
         self.calculate_channels();
     }
@@ -731,10 +749,10 @@ impl Color {
     /// assert_eq!(c.channels(), [230, 0, 0, 255]);
     /// ```
     #[inline]
-    pub fn set_brightness(&mut self, b: f64) {
+    pub fn set_brightness(&mut self, b: impl Into<f64>) {
         let maxes = maxes(Hsb);
         let mut levels = convert_levels(self.levels, Rgb, Hsb);
-        levels[2] = b / maxes[2];
+        levels[2] = b.into() / maxes[2];
         self.levels = convert_levels(levels, Hsb, Rgb);
         self.calculate_channels();
     }
@@ -767,10 +785,10 @@ impl Color {
     /// assert_eq!(c.channels(), [255, 204, 204, 255]);
     /// ```
     #[inline]
-    pub fn set_lightness(&mut self, l: f64) {
+    pub fn set_lightness(&mut self, l: impl Into<f64>) {
         let maxes = maxes(Hsl);
         let mut levels = convert_levels(self.levels, Rgb, Hsl);
-        levels[2] = l / maxes[2];
+        levels[2] = l.into() / maxes[2];
         self.levels = convert_levels(levels, Hsl, Rgb);
         self.calculate_channels();
     }

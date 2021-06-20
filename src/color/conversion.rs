@@ -9,14 +9,22 @@ use std::{borrow::Cow, convert::TryFrom, error, fmt, str::FromStr};
 /// The error type for [`Color`] operations.
 #[non_exhaustive]
 #[derive(Debug, Clone)]
-pub enum ColorError {
+pub enum ColorError<T>
+where
+    T: 'static,
+    [T]: ToOwned,
+    <[T] as ToOwned>::Owned: fmt::Debug,
+{
     /// Error when creating a [`Color`] from an invalid [`slice`].
-    InvalidSlice(Cow<'static, [f64]>),
+    InvalidSlice(Cow<'static, [T]>),
     /// Error when creating a [`Color`] from an invalid string using [`FromStr`](std::str::FromStr).
     InvalidString(Cow<'static, str>),
 }
 
-impl fmt::Display for ColorError {
+impl<T> fmt::Display for ColorError<T>
+where
+    T: fmt::Debug + Clone,
+{
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use ColorError::*;
         match self {
@@ -26,7 +34,7 @@ impl fmt::Display for ColorError {
     }
 }
 
-impl error::Error for ColorError {}
+impl<T> error::Error for ColorError<T> where T: fmt::Debug + Clone {}
 
 /// Return the max value for each [`ColorMode`].
 #[inline]
@@ -236,10 +244,10 @@ impl Color {
     /// let lerped = from.lerp(to, 0.25); // `to` is implicity converted to RGB
     /// assert_eq!(lerped.channels(), [204, 64, 13, 223]);
     /// ```
-    pub fn lerp(&self, other: Color, amt: f64) -> Self {
+    pub fn lerp(&self, other: Color, amt: impl Into<f64>) -> Self {
         let lerp = |start, stop, amt| amt * (stop - start) + start;
 
-        let amt = amt.clamp(0.0, 1.0);
+        let amt = amt.into().clamp(0.0, 1.0);
         let [v1, v2, v3, a] = self.levels();
         let [ov1, ov2, ov3, oa] = other.levels();
         let v1 = lerp(v1, ov1, amt).clamp(0.0, 1.0);
@@ -257,7 +265,7 @@ impl Color {
 }
 
 impl FromStr for Color {
-    type Err = ColorError;
+    type Err = ColorError<f64>;
 
     /// Converts to [Color] from a hexidecimal string.
     ///
@@ -278,7 +286,7 @@ impl FromStr for Color {
     ///
     /// let c = Color::from_str("#F0F5BF5F")?; // 8-digit Hex string
     /// assert_eq!(c.channels(), [240, 245, 191, 95]);
-    /// # Ok::<(), ColorError>(())
+    /// # Ok::<(), ColorError<f64>>(())
     /// ```
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if !s.starts_with('#') {
@@ -320,7 +328,7 @@ impl FromStr for Color {
 }
 
 impl TryFrom<&str> for Color {
-    type Error = ColorError;
+    type Error = ColorError<f64>;
     /// Try to create a `Color` from a hexidecimal string.
     #[inline]
     fn try_from(s: &str) -> Result<Self, Self::Error> {
