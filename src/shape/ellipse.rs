@@ -1,7 +1,7 @@
 //! [`Circle`], [`Ellipse`], and [`Sphere`] types used for drawing.
 
 use crate::prelude::{Point, Vector};
-use num::Num;
+use num::{Num, Signed};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -155,9 +155,10 @@ where
     /// Whether a 2D [`Point<T>`] lies inside this circle.
     pub fn contains(&self, p: impl Into<Point<T>>) -> bool
     where
-        T: PartialOrd + Copy,
+        T: Signed + PartialOrd + Copy,
     {
         let p = p.into();
+        // TODO: Fix overflow
         let px = p.x - self.x;
         let py = p.y - self.y;
         (px * px + py * py) < self.r * self.r
@@ -166,7 +167,7 @@ where
     /// Whether another circle overlaps this one.
     pub fn overlaps(&self, other: Circle<T>) -> bool
     where
-        T: PartialOrd + Copy,
+        T: Signed + PartialOrd + Copy,
     {
         let px = self.x - other.x;
         let py = self.y - other.y;
@@ -242,7 +243,7 @@ where
     /// Whether a 3D [`Point<T>`] lies inside this sphere.
     pub fn contains(&self, _p: impl Into<Point<T>>) -> bool
     where
-        T: PartialOrd + Copy,
+        T: Signed + PartialOrd + Copy,
     {
         todo!("sphere contains")
     }
@@ -250,7 +251,7 @@ where
     /// Whether another sphere overlaps this one.
     pub fn overlaps(&self, _other: Sphere<T>) -> bool
     where
-        T: PartialOrd + Copy,
+        T: Signed + PartialOrd + Copy,
     {
         todo!("sphere overlaps")
     }

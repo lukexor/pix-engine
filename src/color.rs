@@ -106,6 +106,7 @@ use std::{
     array::IntoIter,
     borrow::Cow,
     fmt::{self, LowerHex, UpperHex},
+    iter::FromIterator,
     ops::*,
 };
 
@@ -1035,6 +1036,20 @@ impl SubAssign for Color {
 }
 
 impl ExactSizeIterator for Iter {}
+
+impl<T: Into<f64>> FromIterator<T> for Color {
+    fn from_iter<I>(iter: I) -> Self
+    where
+        I: IntoIterator<Item = T>,
+    {
+        let mut rgba = [0.0, 0.0, 0.0, 255.0];
+        for (i, v) in iter.into_iter().enumerate() {
+            rgba[i] = v.into();
+        }
+        let [r, g, b, a] = rgba;
+        Self::rgba(r, g, b, a)
+    }
+}
 
 impl IntoIterator for Color {
     type Item = u8;

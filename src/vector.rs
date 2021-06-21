@@ -73,7 +73,7 @@ use std::{
     convert::{TryFrom, TryInto},
     f64::consts::TAU,
     fmt,
-    iter::{once, Chain, Once, Sum},
+    iter::{once, Chain, FromIterator, Once, Sum},
     ops::*,
 };
 
@@ -609,7 +609,7 @@ where
         let len = self.mag();
         if len != T::zero() {
             // Multiply by the reciprocol so we don't duplicate a div by zero check
-            *self *= T::one() / len;
+            *self *= len.recip();
         }
     }
 
@@ -927,6 +927,23 @@ where
 
 impl<T> ExactSizeIterator for Iter<'_, T> {}
 impl<T> ExactSizeIterator for IterMut<'_, T> {}
+
+impl<T> FromIterator<T> for Vector<T>
+where
+    T: Num,
+{
+    fn from_iter<I>(iter: I) -> Self
+    where
+        I: IntoIterator<Item = T>,
+    {
+        let mut xyz = [T::zero(), T::zero(), T::zero()];
+        for (i, v) in iter.into_iter().enumerate() {
+            xyz[i] = v;
+        }
+        let [x, y, z] = xyz;
+        Self { x, y, z }
+    }
+}
 
 impl<T> IntoIterator for Vector<T> {
     type Item = T;

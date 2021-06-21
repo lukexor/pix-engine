@@ -143,9 +143,12 @@ pub(crate) trait Rendering: Default + Sized {
     fn fullscreen(&mut self, val: bool);
 
     /// Create a texture to draw to.
-    fn create_texture<F>(&mut self, format: F, width: u32, height: u32) -> Result<TextureId>
-    where
-        F: Into<Option<PixelFormat>>;
+    fn create_texture<T: Into<u32>>(
+        &mut self,
+        format: Option<PixelFormat>,
+        width: T,
+        height: T,
+    ) -> Result<TextureId>;
 
     /// Delete a texture.
     fn delete_texture(&mut self, texture_id: TextureId) -> Result<()>;
@@ -176,8 +179,7 @@ pub(crate) trait Rendering: Default + Sized {
     /// Draw text to the current canvas.
     fn text(
         &mut self,
-        x: i32,
-        y: i32,
+        p: impl Into<Point<i16>>,
         text: impl AsRef<str>,
         size: u16,
         fill: Option<Color>,

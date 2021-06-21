@@ -7,7 +7,7 @@ const HEIGHT: u32 = 800;
 struct SphereObj {
     sphere: Sphere<f64>,
     color: Color,
-    specular: Option<f64>,
+    specular: Option<i32>,
     reflective: f64,
 }
 
@@ -49,25 +49,25 @@ impl App {
             SphereObj {
                 sphere: sphere!((0.0, -1.0, 3.0), 1.0),
                 color: RED,
-                specular: Some(500.0),
+                specular: Some(500),
                 reflective: 0.2,
             },
             SphereObj {
                 sphere: sphere!((2.0, 0.0, 4.0), 1.0),
                 color: BLUE,
-                specular: Some(500.0),
+                specular: Some(500),
                 reflective: 0.3,
             },
             SphereObj {
                 sphere: sphere!((-2.0, 0.0, 4.0), 1.0),
                 color: GREEN,
-                specular: Some(10.0),
+                specular: Some(10),
                 reflective: 0.4,
             },
             SphereObj {
                 sphere: sphere!((0.0, -5001.0, 0.0), 5000.0),
                 color: YELLOW,
-                specular: Some(1000.0),
+                specular: Some(1000),
                 reflective: 0.5,
             },
         ];
@@ -110,7 +110,7 @@ impl App {
         position: Vector<f64>,
         normal: Vector<f64>,
         camera: Vector<f64>,
-        specular: Option<f64>,
+        specular: Option<i32>,
     ) -> f64 {
         let mut intensity = 0.0;
         for light in &self.lights {
@@ -143,7 +143,7 @@ impl App {
                         let r_dot_camera = r.dot(camera);
                         if r_dot_camera > 0.0 {
                             intensity +=
-                                light.intensity * (r_dot_camera / (r.mag() * camera.mag())).powf(s);
+                                light.intensity * (r_dot_camera / (r.mag() * camera.mag())).powi(s);
                         }
                     }
                 }

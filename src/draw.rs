@@ -10,15 +10,12 @@ pub type TextureId = usize;
 
 impl PixState {
     /// Constructs a `Texture` to render to.
-    pub fn create_texture<F>(
+    pub fn create_texture<T: Into<u32>>(
         &mut self,
-        format: F,
-        width: u32,
-        height: u32,
-    ) -> RendererResult<TextureId>
-    where
-        F: Into<Option<PixelFormat>>,
-    {
+        format: Option<PixelFormat>,
+        width: T,
+        height: T,
+    ) -> RendererResult<TextureId> {
         self.renderer.create_texture(format, width, height)
     }
 
@@ -60,19 +57,19 @@ impl PixState {
     /// Draw text to the current canvas.
     pub fn text<T>(&mut self, p: impl Into<Point<T>>, text: impl AsRef<str>) -> RendererResult<()>
     where
-        T: AsPrimitive<i32>,
+        T: AsPrimitive<i16>,
     {
-        let text = text.as_ref();
-        let p = p.into();
         let s = &self.settings;
-        let size = s.text_size as i32;
-        let width = text.len() as i32 * size;
-        let (x, y) = match s.rect_mode {
-            DrawMode::Corner => (p.x.as_(), p.y.as_()),
-            DrawMode::Center => (p.x.as_() - width / 2, p.y.as_() - size / 2),
+        let p = p.into();
+        let p = match s.rect_mode {
+            DrawMode::Corner => point!(p.x.as_(), p.y.as_()),
+            DrawMode::Center => {
+                let height = s.text_size as i16;
+                let width = text.as_ref().len() as i16 * height;
+                point!(p.x.as_() - width / 2, p.y.as_() - height / 2)
+            }
         };
-        self.renderer
-            .text(x, y, text, s.text_size as u16, s.fill, s.stroke)
+        self.renderer.text(p, text, s.text_size, s.fill, s.stroke)
     }
 
     /// Draw a [`Point<T>`] to the current canvas.

@@ -174,10 +174,10 @@ impl AppState for Asteroids {
             .wrap_2d(s.width() as f64, s.height() as f64, self.ship.size as f64);
 
         // Draw asteroids
-        let ship_p = self.ship.pos.as_point();
+        let ship_p: Point<f64> = self.ship.pos.as_point();
         for a in self.asteroids.iter_mut() {
             // Ship collision
-            if circle!(a.pos.as_point(), a.size).contains(ship_p) {
+            if circle!(a.pos.as_point(), a.size as f64).contains(ship_p) {
                 self.exploded(s)?;
                 return Ok(());
             }
@@ -198,9 +198,9 @@ impl AppState for Asteroids {
             b.pos += b.vel * elapsed;
             b.angle -= 1.0 * elapsed;
 
-            let bp = b.pos.as_point();
+            let bp: Point<f64> = b.pos.as_point();
             for a in self.asteroids.iter_mut() {
-                if circle!(a.pos.as_point(), a.size).contains(bp) {
+                if circle!(a.pos.as_point(), a.size as f64).contains(bp) {
                     // Asteroid hit
                     b.destroyed = true; // Removes bullet
 

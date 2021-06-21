@@ -72,7 +72,7 @@ pub(crate) struct Settings {
     pub(crate) background: Color,
     pub(crate) fill: Option<Color>,
     pub(crate) stroke: Option<Color>,
-    pub(crate) text_size: u32,
+    pub(crate) text_size: u16,
     pub(crate) paused: bool,
     pub(crate) show_frame_rate: bool,
     pub(crate) rect_mode: DrawMode,
@@ -189,7 +189,7 @@ impl PixState {
     }
 
     /// Set the text size for drawing to the current canvas.
-    pub fn text_size(&mut self, size: u32) {
+    pub fn text_size(&mut self, size: u16) {
         self.settings.text_size = size;
     }
 

@@ -206,16 +206,19 @@ impl Rendering for Renderer {
     }
 
     /// Create a texture to render to.
-    fn create_texture<F>(&mut self, format: F, width: u32, height: u32) -> Result<TextureId>
-    where
-        F: Into<Option<PixelFormat>>,
-    {
-        let format = format.into().map(|f| f.into());
+    fn create_texture<T: Into<u32>>(
+        &mut self,
+        format: Option<PixelFormat>,
+        width: T,
+        height: T,
+    ) -> Result<TextureId> {
         let texture_id = self.textures.len();
-        self.textures.push(
-            self.texture_creator
-                .create_texture_streaming(format, width, height)?,
-        );
+        self.textures
+            .push(self.texture_creator.create_texture_streaming(
+                format.map(|f| f.into()),
+                width.into(),
+                height.into(),
+            )?);
         Ok(texture_id)
     }
 
@@ -269,13 +272,13 @@ impl Rendering for Renderer {
     /// Draw text to the current canvas.
     fn text(
         &mut self,
-        x: i32,
-        y: i32,
+        p: impl Into<Point<i16>>,
         text: impl AsRef<str>,
         size: u16,
         fill: Option<Color>,
         _stroke: Option<Color>,
     ) -> Result<()> {
+        let p = p.into();
         let text = text.as_ref();
         // TODO: This path only works locally
         let font = self.ttf_context.load_font("static/emulogic.ttf", size)?;
@@ -283,8 +286,11 @@ impl Rendering for Renderer {
             let surface = font.render(text.as_ref()).blended(fill)?;
             let texture = self.texture_creator.create_texture_from_surface(&surface)?;
             let TextureQuery { width, height, .. } = texture.query();
-            self.canvas
-                .copy(&texture, None, Some(SdlRect::new(x, y, width, height)))?;
+            self.canvas.copy(
+                &texture,
+                None,
+                Some(SdlRect::new(p.x as i32, p.y as i32, width, height)),
+            )?;
         }
         Ok(())
     }
