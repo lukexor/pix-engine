@@ -2,7 +2,7 @@
 
 use crate::{
     prelude::*,
-    renderer::{Renderer, Rendering},
+    renderer::{Error as RendererError, Renderer, Rendering},
 };
 use environment::Environment;
 #[cfg(feature = "serde")]
@@ -138,7 +138,7 @@ impl PixState {
     }
 
     /// Set the current window title.
-    pub fn set_title<S>(&mut self, title: S) -> Result<()>
+    pub fn set_title<S>(&mut self, title: S) -> PixResult<()>
     where
         S: Into<String>,
     {

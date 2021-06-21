@@ -73,12 +73,12 @@ impl RayScene {
         self.cells
             .get(i)
             .map(|c| c.edges[dir].1)
-            .ok_or(PixError::Other(Cow::from("invalid cell index")))
+            .ok_or_else(|| PixError::Other(Cow::from("invalid cell index")))
     }
     fn get_edge_mut(&mut self, i: usize) -> PixResult<&mut Edge> {
         self.edges
             .get_mut(i)
-            .ok_or(PixError::Other(Cow::from("invalid edge index")))
+            .ok_or_else(|| PixError::Other(Cow::from("invalid edge index")))
     }
 
     #[allow(clippy::many_single_char_names)]

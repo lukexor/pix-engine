@@ -1211,31 +1211,45 @@ where
 mod tests {
     use super::*;
 
+    macro_rules! assert_approx_eq {
+        ($v1:expr, $v2:expr) => {
+            assert_approx_eq!($v1, $v2, f64::EPSILON);
+        };
+        ($v1:expr, $v2:expr, $e:expr) => {
+            let [v1, v2, v3] = $v1;
+            let [ov1, ov2, ov3] = $v2;
+            let v1d = v1 - ov1;
+            let v2d = v2 - ov2;
+            let v3d = v3 - ov3;
+            assert!(v1d < $e, "v1: ({} - {}) < {}", v1, ov1, $e);
+            assert!(v2d < $e, "v2: ({} - {}) < {}", v2, ov2, $e);
+            assert!(v3d < $e, "v3: ({} - {}) < {}", v3, ov3, $e);
+        };
+    }
+
     macro_rules! test_ops {
-        ($($val: expr),*) => {
-            $(
-                // Mul<T> for Vector
-                let v = vector!(2.0, -5.0, 0.0) * $val;
-                assert_eq!(v.get(), [4.0, -10.0, 0.0]);
+        ($val:expr, $e:expr) => {
+            // Mul<T> for Vector
+            let v = vector!(2.0, -5.0, 0.0) * $val;
+            assert_approx_eq!(v.get(), [4.0, -10.0, 0.0], $e);
 
-                // Mul<Vector> for T
-                let v = $val * vector!(2.0, -5.0, 0.0);
-                assert_eq!(v.get(), [4.0, -10.0, 0.0]);
+            // Mul<Vector> for T
+            let v = $val * vector!(2.0, -5.0, 0.0);
+            assert_approx_eq!(v.get(), [4.0, -10.0, 0.0], $e);
 
-                // MulAssign<T> for Vector
-                let mut v = vector!(2.0, -5.0, 0.0);
-                v *= $val;
-                assert_eq!(v.get(), [4.0, -10.0, 0.0]);
+            // MulAssign<T> for Vector
+            let mut v = vector!(2.0, -5.0, 0.0);
+            v *= $val;
+            assert_approx_eq!(v.get(), [4.0, -10.0, 0.0], $e);
 
-                // Div<T> for Vector
-                let v = vector!(1.0, -5.0, 0.0) / $val;
-                assert_eq!(v.get(), [0.5, -2.5, 0.0]);
+            // Div<T> for Vector
+            let v = vector!(1.0, -5.0, 0.0) / $val;
+            assert_approx_eq!(v.get(), [0.5, -2.5, 0.0], $e);
 
-                // DivAssign<T> for Vector
-                let mut v = vector!(2.0, -5.0, 0.0);
-                v /= $val;
-                assert_eq!(v.get(), [1.0, -2.5, 0.0]);
-            )*
+            // DivAssign<T> for Vector
+            let mut v = vector!(2.0, -5.0, 0.0);
+            v /= $val;
+            assert_approx_eq!(v.get(), [1.0, -2.5, 0.0], $e);
         };
     }
 
@@ -1245,27 +1259,28 @@ mod tests {
         let v1 = vector!(2.0, 5.0, 1.0);
         let v2 = vector!(1.0, 5.0, -1.0);
         let v3 = v1 + v2;
-        assert_eq!(v3.get(), [3.0, 10.0, 0.0]);
+        assert_approx_eq!(v3.get(), [3.0, 10.0, 0.0]);
 
         // AddAssign
         let mut v1 = vector!(2.0, 5.0, 1.0);
         let v2 = vector!(1.0, 5.0, -1.0);
         v1 += v2;
-        assert_eq!(v1.get(), [3.0, 10.0, 0.0]);
+        assert_approx_eq!(v1.get(), [3.0, 10.0, 0.0]);
 
         // Sub
         let v1 = vector!(2.0, 1.0, 2.0);
         let v2 = vector!(1.0, 5.0, 3.0);
         let v3 = v1 - v2;
-        assert_eq!(v3.get(), [1.0, -4.0, -1.0]);
+        assert_approx_eq!(v3.get(), [1.0, -4.0, -1.0]);
 
         // SubAssign
         let mut v1 = vector!(2.0, 1.0, 2.0);
         let v2 = vector!(1.0, 5.0, 3.0);
         v1 -= v2;
-        assert_eq!(v1.get(), [1.0, -4.0, -1.0]);
+        assert_approx_eq!(v1.get(), [1.0, -4.0, -1.0]);
 
-        test_ops!(2.0f32, 2.0f64);
+        test_ops!(2.0f32, f32::EPSILON);
+        test_ops!(2.0f64, f64::EPSILON);
     }
 
     #[test]

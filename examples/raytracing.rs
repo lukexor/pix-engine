@@ -1,4 +1,4 @@
-use pix_engine::prelude::*;
+use pix_engine::prelude_3d::*;
 
 const TITLE: &str = "Example App";
 const WIDTH: u32 = 800;
@@ -40,7 +40,7 @@ fn intersect_ray_sphere(
     let two_a = 2.0 * a;
     let t1 = (-b + sqrt) / two_a;
     let t2 = (-b - sqrt) / two_a;
-    return (t1, t2);
+    (t1, t2)
 }
 
 impl App {

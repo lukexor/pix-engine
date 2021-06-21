@@ -93,28 +93,28 @@ pub mod shape;
 pub mod state;
 #[macro_use]
 pub mod vector;
+pub mod texture;
 
 mod common;
 mod utils;
 
-/// Exports most commonly used types, traits, and functions.
+/// Exports most commonly used types, traits, and functions for 2D.
 pub mod prelude {
     use super::*;
-    pub use color::{constants::*, conversion::ColorError, Color, ColorMode};
+    pub use color::{constants::*, Color, ColorError, ColorMode};
     pub use common::{Error as PixError, Result as PixResult};
-    pub use draw::TextureId;
     pub use engine::PixEngine;
-    pub use event::*;
-    pub use image::{Error as ImageError, Image, PixelFormat, Result as ImageResult};
-    pub use lighting::{Light, LightSource};
+    pub use event::{Axis, Button, Event, Key, KeyEvent, KeyMod, Mouse, WindowEvent};
+    pub use image::{Image, PixelFormat};
     pub use math::map;
-    pub use renderer::{Error as RendererError, Position, Result as RendererResult};
-    pub use shape::*;
+    pub use renderer::Position;
+    pub use shape::{Circle, Ellipse, Line, Point, Rect, Square, Triangle};
     pub use state::{
         environment::WindowId,
         settings::{AngleMode, ArcMode, BlendMode, DrawMode},
-        AppState, Error as StateError, PixState, Result as StateResult,
+        AppState, PixState,
     };
+    pub use texture::TextureId;
     pub use vector::Vector;
     // Color macros
     pub use {color, hsb, hsl, rgb};
@@ -122,4 +122,12 @@ pub mod prelude {
     pub use {noise, random, vector};
     // Shape macros
     pub use {circle, ellipse, point, rect, sphere, square};
+}
+
+/// Exports most commonly used types, traits, and functions for 3D.
+pub mod prelude_3d {
+    pub use super::*;
+    pub use lighting::{Light, LightSource};
+    pub use prelude::*;
+    pub use shape::Sphere;
 }

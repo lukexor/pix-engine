@@ -1,6 +1,6 @@
 //! Graphics renderer functions.
 
-use crate::prelude::*;
+use crate::{prelude::*, state::Error as StateError};
 use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
 
 #[cfg(not(target_arch = "wasm32"))]

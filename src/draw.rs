@@ -1,60 +1,29 @@
 //! Draw functions.
 
-use crate::{prelude::*, renderer::Rendering};
+use crate::{
+    prelude::*,
+    renderer::{Error as RendererError, Rendering},
+};
 use num_traits::{AsPrimitive, Float};
 use std::{borrow::Cow, iter::Iterator};
 
-/// `Texture` Identifier.
-pub type TextureId = usize;
-
 impl PixState {
-    /// Constructs a `Texture` to render to.
-    pub fn create_texture<T: Into<u32>>(
-        &mut self,
-        format: impl Into<Option<PixelFormat>>,
-        width: T,
-        height: T,
-    ) -> RendererResult<TextureId> {
-        self.renderer.create_texture(format, width, height)
-    }
-
-    /// Deletes a texture by [`TextureId`].
-    pub fn delete_texture(&mut self, texture_id: usize) -> RendererResult<()> {
-        self.renderer.delete_texture(texture_id)
-    }
-
-    /// Update the `Texture` with a [`u8`] [`slice`] of pixel data.
-    pub fn update_texture<R, T>(
-        &mut self,
-        texture_id: usize,
-        rect: Option<R>,
-        pixels: &[u8],
-        pitch: usize,
-    ) -> RendererResult<()>
-    where
-        R: Into<Rect<T>>,
-        T: AsPrimitive<i32> + AsPrimitive<u32>,
-    {
-        self.renderer
-            .update_texture(texture_id, rect, pixels, pitch)
-    }
-
     /// Draw the `Texture` to the current canvas.
     pub fn texture<R, T>(
         &mut self,
         texture_id: usize,
         src: Option<R>,
         dst: Option<R>,
-    ) -> RendererResult<()>
+    ) -> PixResult<()>
     where
         R: Into<Rect<T>>,
         T: AsPrimitive<i32> + AsPrimitive<u32>,
     {
-        self.renderer.texture(texture_id, src, dst)
+        Ok(self.renderer.texture(texture_id, src, dst)?)
     }
 
     /// Draw text to the current canvas.
-    pub fn text<T>(&mut self, p: impl Into<Point<T>>, text: impl AsRef<str>) -> RendererResult<()>
+    pub fn text<T>(&mut self, p: impl Into<Point<T>>, text: impl AsRef<str>) -> PixResult<()>
     where
         T: AsPrimitive<i16>,
     {
@@ -68,33 +37,35 @@ impl PixState {
                 point!(p.x.as_() - width / 2, p.y.as_() - height / 2)
             }
         };
-        self.renderer.text(p, text, s.text_size, s.fill, s.stroke)
+        Ok(self.renderer.text(p, text, s.text_size, s.fill, s.stroke)?)
     }
 
     /// Draw a [`Point<T>`] to the current canvas.
-    pub fn point<T>(&mut self, p: impl Into<Point<T>>) -> RendererResult<()>
+    pub fn point<T>(&mut self, p: impl Into<Point<T>>) -> PixResult<()>
     where
         T: AsPrimitive<i16>,
     {
         let p = p.into();
-        self.renderer
-            .point(p.x.as_(), p.y.as_(), self.settings.stroke)
+        Ok(self
+            .renderer
+            .point(p.x.as_(), p.y.as_(), self.settings.stroke)?)
     }
 
     /// Draw a line to the current canvas.
-    pub fn line<T>(&mut self, line: impl Into<Line<T>>) -> RendererResult<()>
+    pub fn line<T>(&mut self, line: impl Into<Line<T>>) -> PixResult<()>
     where
         T: AsPrimitive<i16>,
     {
         let line = line.into();
         let Point { x: x1, y: y1, .. } = line.p1;
         let Point { x: x2, y: y2, .. } = line.p2;
-        self.renderer
-            .line(x1.as_(), y1.as_(), x2.as_(), y2.as_(), self.settings.stroke)
+        Ok(self
+            .renderer
+            .line(x1.as_(), y1.as_(), x2.as_(), y2.as_(), self.settings.stroke)?)
     }
 
     /// Draw a triangle to the current canvas.
-    pub fn triangle<T>(&mut self, triangle: impl Into<Triangle<T>>) -> RendererResult<()>
+    pub fn triangle<T>(&mut self, triangle: impl Into<Triangle<T>>) -> PixResult<()>
     where
         T: AsPrimitive<i16>,
     {
@@ -103,7 +74,7 @@ impl PixState {
         let Point { x: x1, y: y1, .. } = triangle.p1;
         let Point { x: x2, y: y2, .. } = triangle.p2;
         let Point { x: x3, y: y3, .. } = triangle.p3;
-        self.renderer.triangle(
+        Ok(self.renderer.triangle(
             x1.as_(),
             y1.as_(),
             x2.as_(),
@@ -112,11 +83,11 @@ impl PixState {
             y3.as_(),
             s.fill,
             s.stroke,
-        )
+        )?)
     }
 
     /// Draw a square to the current canvas.
-    pub fn square<T>(&mut self, square: impl Into<Square<T>>) -> RendererResult<()>
+    pub fn square<T>(&mut self, square: impl Into<Square<T>>) -> PixResult<()>
     where
         T: AsPrimitive<i16>,
     {
@@ -125,7 +96,7 @@ impl PixState {
     }
 
     /// Draw a rectangle to the current canvas.
-    pub fn rect<R, T>(&mut self, rect: R) -> RendererResult<()>
+    pub fn rect<R, T>(&mut self, rect: R) -> PixResult<()>
     where
         R: Into<Rect<T>>,
         T: AsPrimitive<i16>,
@@ -140,18 +111,19 @@ impl PixState {
             DrawMode::Corner => (x, y),
             DrawMode::Center => (x - width / 2, y - height / 2),
         };
-        self.renderer
-            .rect(x, y, rect.w.as_(), rect.h.as_(), s.fill, s.stroke)
+        Ok(self
+            .renderer
+            .rect(x, y, rect.w.as_(), rect.h.as_(), s.fill, s.stroke)?)
     }
 
     /// Draw a polygon to the current canvas.
-    pub fn polygon(&mut self, vx: &[i16], vy: &[i16]) -> RendererResult<()> {
+    pub fn polygon(&mut self, vx: &[i16], vy: &[i16]) -> PixResult<()> {
         let s = &self.settings;
-        self.renderer.polygon(vx, vy, s.fill, s.stroke)
+        Ok(self.renderer.polygon(vx, vy, s.fill, s.stroke)?)
     }
 
     /// Draw a circle to the current canvas.
-    pub fn circle<T>(&mut self, circle: impl Into<Circle<T>>) -> RendererResult<()>
+    pub fn circle<T>(&mut self, circle: impl Into<Circle<T>>) -> PixResult<()>
     where
         T: AsPrimitive<i16>,
     {
@@ -160,7 +132,7 @@ impl PixState {
     }
 
     /// Draw a ellipse to the current canvas.
-    pub fn ellipse<T>(&mut self, ellipse: impl Into<Ellipse<T>>) -> RendererResult<()>
+    pub fn ellipse<T>(&mut self, ellipse: impl Into<Ellipse<T>>) -> PixResult<()>
     where
         T: AsPrimitive<i16>,
     {
@@ -174,25 +146,19 @@ impl PixState {
             DrawMode::Corner => (x, y),
             DrawMode::Center => (x - width / 2, y - height / 2),
         };
-        self.renderer
-            .ellipse(x, y, ellipse.w.as_(), ellipse.h.as_(), s.fill, s.stroke)
+        Ok(self
+            .renderer
+            .ellipse(x, y, ellipse.w.as_(), ellipse.h.as_(), s.fill, s.stroke)?)
     }
 
     /// Draw an image to the current canvas.
-    pub fn image(&mut self, x: i32, y: i32, img: &Image) -> RendererResult<()> {
-        self.renderer.image(x, y, img)
+    pub fn image(&mut self, x: i32, y: i32, img: &Image) -> PixResult<()> {
+        Ok(self.renderer.image(x, y, img)?)
     }
 
     /// Draw a resized image to the current canvas.
-    pub fn image_resized(
-        &mut self,
-        x: i32,
-        y: i32,
-        w: u32,
-        h: u32,
-        img: &Image,
-    ) -> RendererResult<()> {
-        self.renderer.image_resized(x, y, w, h, img)
+    pub fn image_resized(&mut self, x: i32, y: i32, w: u32, h: u32, img: &Image) -> PixResult<()> {
+        Ok(self.renderer.image_resized(x, y, w, h, img)?)
     }
 
     /// Draw a wireframe to the current canvas.
@@ -202,7 +168,7 @@ impl PixState {
         p: impl Into<Vector<T>>,
         angle: T,
         scale: T,
-    ) -> RendererResult<()>
+    ) -> PixResult<()>
     where
         T: Float + AsPrimitive<i16>,
     {
@@ -217,7 +183,7 @@ impl PixState {
             })
             .unzip();
         if tx.is_empty() || ty.is_empty() {
-            Err(RendererError::Other(Cow::from("no vertexes to render")))
+            Err(RendererError::Other(Cow::from("no vertexes to render")).into())
         } else {
             self.polygon(&tx, &ty)
         }
