@@ -105,15 +105,15 @@ impl PixState {
         let rect = rect.into();
         let x: i16 = rect.x.as_();
         let y: i16 = rect.y.as_();
-        let width: i16 = rect.w.as_();
-        let height: i16 = rect.h.as_();
+        let width: i16 = rect.width.as_();
+        let height: i16 = rect.height.as_();
         let (x, y) = match s.rect_mode {
             DrawMode::Corner => (x, y),
             DrawMode::Center => (x - width / 2, y - height / 2),
         };
         Ok(self
             .renderer
-            .rect(x, y, rect.w.as_(), rect.h.as_(), s.fill, s.stroke)?)
+            .rect(x, y, rect.width.as_(), rect.height.as_(), s.fill, s.stroke)?)
     }
 
     /// Draw a polygon to the current canvas.
@@ -140,15 +140,20 @@ impl PixState {
         let ellipse = ellipse.into();
         let x: i16 = ellipse.x.as_();
         let y: i16 = ellipse.y.as_();
-        let width: i16 = ellipse.w.as_();
-        let height: i16 = ellipse.h.as_();
+        let width: i16 = ellipse.width.as_();
+        let height: i16 = ellipse.height.as_();
         let (x, y) = match s.ellipse_mode {
             DrawMode::Corner => (x, y),
             DrawMode::Center => (x - width / 2, y - height / 2),
         };
-        Ok(self
-            .renderer
-            .ellipse(x, y, ellipse.w.as_(), ellipse.h.as_(), s.fill, s.stroke)?)
+        Ok(self.renderer.ellipse(
+            x,
+            y,
+            ellipse.width.as_(),
+            ellipse.height.as_(),
+            s.fill,
+            s.stroke,
+        )?)
     }
 
     /// Draw an image to the current canvas.

@@ -849,7 +849,12 @@ where
     T: AsPrimitive<i32> + AsPrimitive<u32>,
 {
     fn from(rect: Rect<T>) -> Self {
-        Self::new(rect.x.as_(), rect.y.as_(), rect.w.as_(), rect.h.as_())
+        Self::new(
+            rect.x.as_(),
+            rect.y.as_(),
+            rect.width.as_(),
+            rect.height.as_(),
+        )
     }
 }
 

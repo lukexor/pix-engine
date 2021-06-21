@@ -91,8 +91,8 @@ impl RayScene {
         for c in self.cells.iter_mut() {
             c.reset();
         }
-        let width = s.w;
-        let height = s.h;
+        let width = s.width;
+        let height = s.height;
         for x in 0..width {
             for y in 0..height {
                 let x_off = x + s.x;

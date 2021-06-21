@@ -14,9 +14,9 @@ pub struct Ellipse<T> {
     /// Center y-coord
     pub y: T,
     /// Width
-    pub w: T,
+    pub width: T,
     /// Height
-    pub h: T,
+    pub height: T,
 }
 
 /// # Constructs an [`Ellipse<T>`].
@@ -47,19 +47,38 @@ where
     T: Num,
 {
     /// Constructs an `Ellipse`.
-    pub fn new(x: T, y: T, w: T, h: T) -> Self {
-        Self { x, y, w, h }
+    pub fn new(x: T, y: T, width: T, height: T) -> Self {
+        Self {
+            x,
+            y,
+            width,
+            height,
+        }
     }
 
-    /// Whether a 2D [`Point<T>`] lies inside this ellipse.
-    pub fn contains(&self, p: impl Into<Point<T>>) -> bool {
-        let _p = p.into();
-        todo!("ellipse contains");
+    /// Returns whether this ellipse contains a given [`Point<T>`].
+    pub fn contains_point(&self, p: impl Into<(T, T)>) -> bool
+    where
+        T: Signed + PartialOrd + Copy,
+    {
+        let (x, y) = p.into();
+        let px = x - self.x;
+        let py = y - self.y;
+        let rx = self.width;
+        let ry = self.height;
+        (px * px) / (rx * rx) + (py * py) / (ry * ry) <= T::one()
     }
 
-    /// Whether another ellipse overlaps this one.
-    pub fn overlaps(&self, _other: Ellipse<T>) -> bool {
-        todo!("ellipse overlaps");
+    /// Returns whether this ellipse intersects another ellipse.
+    pub fn intersects(&self, other: Ellipse<T>) -> bool
+    where
+        T: Signed + PartialOrd + Copy,
+    {
+        let px = self.x - other.x;
+        let py = self.y - other.y;
+        let rx = self.width + other.width;
+        let ry = self.height + other.height;
+        (px * px) / (rx * rx) + (py * py) / (ry * ry) <= T::one()
     }
 }
 
@@ -68,31 +87,36 @@ impl<T> From<(T, T, T, T)> for Ellipse<T>
 where
     T: Num,
 {
-    fn from((x, y, w, h): (T, T, T, T)) -> Self {
-        Self { x, y, w, h }
+    fn from((x, y, width, height): (T, T, T, T)) -> Self {
+        Self {
+            x,
+            y,
+            width,
+            height,
+        }
     }
 }
 
 /// Convert ([`Point<T>`], `w`, `h`) to [`Ellipse<T>`].
 impl<T> From<(Point<T>, T, T)> for Ellipse<T> {
-    fn from((p, w, h): (Point<T>, T, T)) -> Self {
+    fn from((p, width, height): (Point<T>, T, T)) -> Self {
         Self {
             x: p.x,
             y: p.y,
-            w,
-            h,
+            width,
+            height,
         }
     }
 }
 
 /// Convert ([`Vector<T>`], `w`, `h`) to [`Ellipse<T>`].
 impl<T> From<(Vector<T>, T, T)> for Ellipse<T> {
-    fn from((v, w, h): (Vector<T>, T, T)) -> Self {
+    fn from((v, width, height): (Vector<T>, T, T)) -> Self {
         Self {
             x: v.x,
             y: v.y,
-            w,
-            h,
+            width,
+            height,
         }
     }
 }
@@ -106,8 +130,8 @@ where
         Self {
             x: c.x,
             y: c.y,
-            w: c.r,
-            h: c.r,
+            width: c.radius,
+            height: c.radius,
         }
     }
 }
@@ -121,7 +145,7 @@ pub struct Circle<T> {
     /// Center y-coord
     pub y: T,
     /// Radius
-    pub r: T,
+    pub radius: T,
 }
 
 /// # Constructs a [`Circle<T>`].
@@ -148,52 +172,60 @@ where
     T: Num,
 {
     /// Constructs a `Circle`.
-    pub fn new(x: T, y: T, r: T) -> Self {
-        Self { x, y, r }
+    pub fn new(x: T, y: T, radius: T) -> Self {
+        Self { x, y, radius }
     }
 
-    /// Whether a 2D [`Point<T>`] lies inside this circle.
-    pub fn contains(&self, p: impl Into<Point<T>>) -> bool
+    /// Returns whether this circle contains a given [`Point<T>`].
+    pub fn contains_point(&self, p: impl Into<(T, T)>) -> bool
     where
         T: Signed + PartialOrd + Copy,
     {
-        let p = p.into();
-        // TODO: Fix overflow
-        let px = p.x - self.x;
-        let py = p.y - self.y;
-        (px * px + py * py) < self.r * self.r
+        let (x, y) = p.into();
+        let px = x - self.x;
+        let py = y - self.y;
+        let r = self.radius;
+        (px * px + py * py) < r
     }
 
-    /// Whether another circle overlaps this one.
-    pub fn overlaps(&self, other: Circle<T>) -> bool
+    /// Returns whether this ellipse intersects another ellipse.
+    pub fn intersects(&self, other: Circle<T>) -> bool
     where
         T: Signed + PartialOrd + Copy,
     {
         let px = self.x - other.x;
         let py = self.y - other.y;
-        let r = self.r + other.r;
+        let r = self.radius + other.radius;
         (px * px + py * py) <= r * r
     }
 }
 
 /// Convert `(x, y, r)` to [`Circle<T>`].
 impl<T> From<(T, T, T)> for Circle<T> {
-    fn from((x, y, r): (T, T, T)) -> Self {
-        Self { x, y, r }
+    fn from((x, y, radius): (T, T, T)) -> Self {
+        Self { x, y, radius }
     }
 }
 
 /// Convert ([`Point<T>`], `radius`) to [`Circle<T>`].
 impl<T> From<(Point<T>, T)> for Circle<T> {
-    fn from((p, r): (Point<T>, T)) -> Self {
-        Self { x: p.x, y: p.y, r }
+    fn from((p, radius): (Point<T>, T)) -> Self {
+        Self {
+            x: p.x,
+            y: p.y,
+            radius,
+        }
     }
 }
 
 /// Convert ([`Vector<T>`], `radius`) to [`Circle<T>`].
 impl<T> From<(Vector<T>, T)> for Circle<T> {
-    fn from((v, r): (Vector<T>, T)) -> Self {
-        Self { x: v.x, y: v.y, r }
+    fn from((v, radius): (Vector<T>, T)) -> Self {
+        Self {
+            x: v.x,
+            y: v.y,
+            radius,
+        }
     }
 }
 
@@ -240,19 +272,28 @@ where
         }
     }
 
-    /// Whether a 3D [`Point<T>`] lies inside this sphere.
-    pub fn contains(&self, _p: impl Into<Point<T>>) -> bool
+    /// Returns whether this sphere contains a given [`Point<T>`].
+    pub fn contains(&self, point: impl Into<(T, T, T)>) -> bool
     where
         T: Signed + PartialOrd + Copy,
     {
-        todo!("sphere contains")
+        let (x, y, z) = point.into();
+        let px = x - self.center.x;
+        let py = y - self.center.y;
+        let pz = z - self.center.z;
+        let r = self.radius;
+        (px * px + py * py + pz * pz) < r * r
     }
 
-    /// Whether another sphere overlaps this one.
-    pub fn overlaps(&self, _other: Sphere<T>) -> bool
+    /// Returns whether this sphere intersects another sphere.
+    pub fn intersects(&self, other: Sphere<T>) -> bool
     where
         T: Signed + PartialOrd + Copy,
     {
-        todo!("sphere overlaps")
+        let px = other.center.x - self.center.x;
+        let py = other.center.y - self.center.y;
+        let pz = other.center.z - self.center.z;
+        let r = other.radius + self.radius;
+        (px * px + py * py + pz * pz) < r * r
     }
 }

@@ -51,10 +51,8 @@ impl SpaceObj {
         }
     }
     fn rand_asteroid(ship: &SpaceObj, s: &PixState) -> Self {
-        let (ship_x, ship_y) = ship.pos.into();
         let mut pos = vector!(random!(s.width() as f64), random!(s.height() as f64));
-        let p: Point<f64> = pos.as_point();
-        if circle!(ship_x, ship_y, ASTEROID_SAFE_RADIUS).contains(p) {
+        if Circle::from((ship.pos, ASTEROID_SAFE_RADIUS)).contains_point(pos) {
             pos -= ship.pos
         }
 
@@ -174,10 +172,9 @@ impl AppState for Asteroids {
             .wrap_2d(s.width() as f64, s.height() as f64, self.ship.size as f64);
 
         // Draw asteroids
-        let ship_p: Point<f64> = self.ship.pos.as_point();
         for a in self.asteroids.iter_mut() {
             // Ship collision
-            if circle!(a.pos.as_point(), a.size as f64).contains(ship_p) {
+            if Circle::from((a.pos, a.size as f64)).contains_point(self.ship.pos) {
                 self.exploded(s)?;
                 return Ok(());
             }
@@ -198,9 +195,8 @@ impl AppState for Asteroids {
             b.pos += b.vel * elapsed;
             b.angle -= 1.0 * elapsed;
 
-            let bp: Point<f64> = b.pos.as_point();
             for a in self.asteroids.iter_mut() {
-                if circle!(a.pos.as_point(), a.size as f64).contains(bp) {
+                if Circle::from((a.pos, a.size as f64)).contains_point(b.pos) {
                     // Asteroid hit
                     b.destroyed = true; // Removes bullet
 

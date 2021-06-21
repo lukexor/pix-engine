@@ -1,8 +1,8 @@
 //! [`Line`] type used for drawing.
 
 use super::Point;
-use crate::vector::Vector;
-use num_traits::Num;
+use crate::{point, vector::Vector};
+use num_traits::{Float, Num};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -30,6 +30,27 @@ where
             p2: p2.into(),
         }
     }
+
+    /// Returns whether this line intersects with another line.
+    pub fn intersects(&self, other: impl Into<Line<T>>) -> Option<Point<T>>
+    where
+        T: Float + PartialOrd + Copy,
+    {
+        let (p1, p2) = self.into();
+        let (p3, p4) = other.into().into();
+        let ua = ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x))
+            / ((p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y));
+        let ub = ((p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x))
+            / ((p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y));
+        // If ua and ub are between 0.0 and 1.0, intersection
+        if ua >= T::zero() && ub <= T::one() && ub >= T::zero() && ub <= T::one() {
+            let x = p1.x + ua * (p2.x - p1.x);
+            let y = p1.y + ua * (p2.y - p1.y);
+            Some(point!(x, y))
+        } else {
+            None
+        }
+    }
 }
 
 /// Convert `(x1, y1, x2, y2)` to [`Line<T>`].
@@ -49,6 +70,26 @@ where
 {
     fn from((p1, p2): (Point<T>, Point<T>)) -> Self {
         Self::new(p1, p2)
+    }
+}
+
+/// Convert [`Line<T>`] to ([`Point<T>`], [`Point<T>`]).
+impl<T> From<Line<T>> for (Point<T>, Point<T>)
+where
+    T: Num + Copy,
+{
+    fn from(line: Line<T>) -> Self {
+        (line.p1, line.p2)
+    }
+}
+
+/// Convert [`Line<T>`] to ([`Point<T>`], [`Point<T>`]).
+impl<T> From<&Line<T>> for (Point<T>, Point<T>)
+where
+    T: Num + Copy,
+{
+    fn from(line: &Line<T>) -> Self {
+        (line.p1, line.p2)
     }
 }
 
