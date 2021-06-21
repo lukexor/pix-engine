@@ -1,8 +1,7 @@
 //! [`Point`] functions used for drawing.
 
 use crate::vector::Vector;
-use num::Num;
-use num_traits::AsPrimitive;
+use num_traits::{AsPrimitive, Num};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::{fmt, iter::Sum, ops::*};

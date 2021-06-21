@@ -2,8 +2,7 @@
 
 use crate::vector::Vector;
 use lazy_static::lazy_static;
-use num::clamp;
-use num_traits::{AsPrimitive, Num, NumCast};
+use num_traits::{clamp, AsPrimitive, Num, NumCast};
 use rand::{self, distributions::uniform::SampleUniform, Rng};
 use std::{
     f64::consts::PI,

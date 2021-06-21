@@ -3,7 +3,15 @@ name = "pix-engine"
 version = "0.4.0"
 license = "MIT/Apache-2.0"
 description = "A cross-platform graphics/UI engine framework for simple games, visualizations, and graphics demos."
-categories = ["game-development", "game-engines", "graphics", "gui", "multimedia", "rendering", "web-assembly"]
+categories = [
+  "game-development",
+  "game-engines",
+  "graphics",
+  "gui",
+  "multimedia",
+  "rendering",
+  "web-assembly",
+]
 keywords = ["game-engine", "graphics", "ui", "gui", "rendering", "web-assembly", "sdl"]
 authors = ["Luke Petherbridge <me@lukeworks.tech>"]
 readme = "README.md"
@@ -18,13 +26,12 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 include_dir = "^0.6"
-num = "^0.4"
 num-traits = "^0.2"
 png = "^0.16"
 rand = "^0.8"
 bitflags = "^1.2"
 lazy_static = "^1.4"
-serde = { version = "^1.0", features=["derive"], optional = true }
+serde = { version = "^1.0", features = ["derive"], optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies.sdl2]
 version = "^0.34"
@@ -32,7 +39,7 @@ default_features = false
 features = ["gfx", "image", "mixer", "ttf", "unsafe_textures"]
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-getrandom = { version = "^0.2", features=["js"] }
+getrandom = { version = "^0.2", features = ["js"] }
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
 console_error_panic_hook = "^0.1"

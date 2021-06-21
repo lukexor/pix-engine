@@ -63,8 +63,7 @@
 //! ```
 
 use crate::{random, shape::Point};
-use num::{clamp, Float, Num, NumCast};
-use num_traits::AsPrimitive;
+use num_traits::{clamp, AsPrimitive, Float, Num, NumCast};
 use rand::distributions::uniform::SampleUniform;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};

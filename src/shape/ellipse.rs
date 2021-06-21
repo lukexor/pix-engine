@@ -1,7 +1,7 @@
 //! [`Circle`], [`Ellipse`], and [`Sphere`] types used for drawing.
 
 use crate::prelude::{Point, Vector};
-use num::{Num, Signed};
+use num_traits::{Num, Signed};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 

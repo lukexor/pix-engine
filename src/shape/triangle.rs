@@ -2,7 +2,7 @@
 
 use super::Point;
 use crate::vector::Vector;
-use num::Num;
+use num_traits::Num;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 

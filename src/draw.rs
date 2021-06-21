@@ -1,8 +1,7 @@
 //! Draw functions.
 
 use crate::{prelude::*, renderer::Rendering};
-use num::Float;
-use num_traits::AsPrimitive;
+use num_traits::{AsPrimitive, Float};
 use std::{borrow::Cow, iter::Iterator};
 
 /// `Texture` Identifier.
