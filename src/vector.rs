@@ -88,7 +88,7 @@ use std::{
 /// `Vector`s can be combined using "vector" math, so for example two `Vector`s can be added together
 /// to form a new `Vector` using `let v3 = v1 + v2` or you can add one `Vector` to another by calling
 /// `v1 += v2`.
-#[derive(Default, Debug, Copy, Clone, PartialEq, PartialOrd)]
+#[derive(Default, Debug, Copy, Clone, PartialEq, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Vector<T> {
     /// X magnitude

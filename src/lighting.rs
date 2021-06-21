@@ -5,7 +5,7 @@ use crate::prelude::{Point, Vector};
 use serde::{Deserialize, Serialize};
 
 /// Source of [`Light`].
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum LightSource<T> {
     /// Ambient light.
@@ -17,7 +17,7 @@ pub enum LightSource<T> {
 }
 
 /// `Light` representation including `source` and `intensity`.
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Light<T> {
     /// Source of light.

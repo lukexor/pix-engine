@@ -6,7 +6,7 @@ use num_traits::{Num, Signed};
 use serde::{Deserialize, Serialize};
 
 /// An `Ellipse` positioned at `(x, y)`, with `width` and `height`.
-#[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Ellipse<T> {
     /// Center x-coord
@@ -113,7 +113,7 @@ where
 }
 
 /// A `Circle` positioned at `(x, y)` with `radius`.
-#[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Circle<T> {
     /// Center x-coord

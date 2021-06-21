@@ -208,14 +208,14 @@ impl Rendering for Renderer {
     /// Create a texture to render to.
     fn create_texture<T: Into<u32>>(
         &mut self,
-        format: Option<PixelFormat>,
+        format: impl Into<Option<PixelFormat>>,
         width: T,
         height: T,
     ) -> Result<TextureId> {
         let texture_id = self.textures.len();
         self.textures
             .push(self.texture_creator.create_texture_streaming(
-                format.map(|f| f.into()),
+                format.into().map(|f| f.into()),
                 width.into(),
                 height.into(),
             )?);

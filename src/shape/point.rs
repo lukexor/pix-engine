@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::{fmt, iter::Sum, ops::*};
 
 /// A `Point`.
-#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Point<T> {
     /// X-coord
@@ -111,6 +111,28 @@ impl<T> Point<T> {
         }
     }
 
+    /// Constructs a `Point<T>` by shifting coordinates by given x, y, and z values.
+    pub fn offset<U>(self, x: U, y: U, z: U) -> Self
+    where
+        T: Num + Add<U, Output = T>,
+        U: Num + Copy,
+    {
+        Self {
+            x: self.x + x,
+            y: self.y + y,
+            z: self.z + z,
+        }
+    }
+
+    /// Constructs a `Point<T>` by multiplying it by the given scale factor.
+    pub fn scale<U>(self, s: U) -> Self
+    where
+        T: Num + Mul<U, Output = T>,
+        U: Num + Copy,
+    {
+        self * s
+    }
+
     /// Copy the current `Point`.
     ///
     /// # Example
@@ -139,7 +161,7 @@ impl<T> Point<T> {
     /// let p = point!(2, 1, 3);
     /// assert_eq!(p.get(), [2, 1, 3]);
     /// ```
-    pub fn get(&self) -> [T; 3]
+    pub fn get(self) -> [T; 3]
     where
         T: Copy,
     {

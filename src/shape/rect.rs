@@ -1,13 +1,13 @@
 //! [`Square`] and [`Rect`] types used for drawing.
 
-use super::Point;
+use super::{Line, Point};
 use crate::vector::Vector;
 use num_traits::Num;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 /// A `Rectangle` positioned at `(x, y)` with `width` and `height`.
-#[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Rect<T> {
     /// X-coord
@@ -48,11 +48,181 @@ macro_rules! rect {
 
 impl<T> Rect<T>
 where
-    T: Num,
+    T: Num + Copy,
 {
-    /// Constructs a `Rect`.
+    /// Constructs a `Rect<T>` at position `(x, y)` with `width` and `height`.
     pub fn new(x: T, y: T, w: T, h: T) -> Self {
         Self { x, y, w, h }
+    }
+
+    /// Constructs a `Rect<T>` centered at position `(x, y)` with `width` and `height`.
+    pub fn from_center(p: impl Into<(T, T)>, width: T, height: T) -> Self {
+        let (x, y) = p.into();
+        let two = T::one() + T::one();
+        Self {
+            x: x - width / two,
+            y: y - height / two,
+            w: width,
+            h: height,
+        }
+    }
+
+    /// Returns the horizontal position of the left edge.
+    pub fn x(&self) -> T {
+        self.x
+    }
+
+    /// Returns the vertical position of the top edge.
+    pub fn y(&self) -> T {
+        self.y
+    }
+
+    /// Returns the width.
+    pub fn width(&self) -> T {
+        self.w
+    }
+
+    /// Returns the height.
+    pub fn height(&self) -> T {
+        self.h
+    }
+
+    /// Returns the dimensions as `(width, height)`.
+    pub fn dimensions(&self) -> (T, T) {
+        (self.w, self.h)
+    }
+
+    /// Set the horizontal position of the left edge.
+    pub fn set_x(&mut self, x: T) {
+        self.x = x;
+    }
+
+    /// Set the vertical position of the top edge.
+    pub fn set_y(&mut self, y: T) {
+        self.y = y;
+    }
+
+    /// Set the width.
+    pub fn set_width(&mut self, width: T) {
+        self.w = width;
+    }
+
+    /// Set the height.
+    pub fn set_height(&mut self, height: T) {
+        self.h = height;
+    }
+
+    /// Set the dimensions as `(width, height)`.
+    pub fn set_dimensions(&mut self, (w, h): (T, T)) {
+        self.w = w;
+        self.h = h;
+    }
+
+    /// Returns the horizontal position of the left edge.
+    pub fn left(&self) -> T {
+        self.x
+    }
+
+    /// Returns the horizontal position of the right edge.
+    pub fn right(&self) -> T {
+        self.x + self.w
+    }
+
+    /// Returns the horizontal position of the top edge.
+    pub fn top(&self) -> T {
+        self.y
+    }
+
+    /// Returns the vertical position of the bottom edge.
+    pub fn bottom(&self) -> T {
+        self.y + self.h
+    }
+
+    /// Set the horizontal position of the left edge.
+    pub fn set_left(&mut self, left: T) {
+        self.set_x(left);
+    }
+
+    /// Set the horizontal position of the right edge.
+    pub fn set_right(&mut self, right: T) {
+        self.set_x(right - self.w);
+    }
+
+    /// Set the vertical position of the top edge.
+    pub fn set_top(&mut self, top: T) {
+        self.set_y(top);
+    }
+
+    /// Set the vertical position of the bottom edge.
+    pub fn set_bottom(&mut self, bottom: T) {
+        self.set_y(bottom - self.h);
+    }
+
+    /// Returns the center position as [`Point<T>`].
+    pub fn center(&self) -> Point<T> {
+        let two = T::one() + T::one();
+        let x = self.x + (self.w / two);
+        let y = self.y + (self.h / two);
+        point!(x, y)
+    }
+
+    /// Returns the top-left position as [`Point<T>`].
+    pub fn top_left(&self) -> Point<T> {
+        point!(self.x, self.y)
+    }
+
+    /// Returns the top-right position as [`Point<T>`].
+    pub fn top_right(&self) -> Point<T> {
+        point!(self.x + self.w, self.y)
+    }
+
+    /// Returns the bottom-left position as [`Point<T>`].
+    pub fn bottom_left(&self) -> Point<T> {
+        point!(self.x, self.y + self.h)
+    }
+
+    /// Returns the bottom-right position as [`Point<T>`].
+    pub fn bottom_right(&self) -> Point<T> {
+        point!(self.x + self.w, self.y + self.h)
+    }
+
+    /// Set position centered on a [`Point<T>`].
+    pub fn center_on(&mut self, p: impl Into<(T, T)>) {
+        let (x, y) = p.into();
+        let two = T::one() + T::one();
+        self.x = x - self.w / two;
+        self.y = y - self.h / two;
+    }
+
+    /// Returns whether this rectangle contains a given [`Point<T>`].
+    pub fn contains_point(&self, p: impl Into<(T, T)>) -> bool
+    where
+        T: PartialOrd,
+    {
+        let (x, y) = p.into();
+        x >= self.left() && x < self.right() && y >= self.top() && y < self.bottom()
+    }
+
+    /// Returns whether this rectangle completely contains another rectangle.
+    pub fn contains_rect(&self, other: impl Into<Rect<T>>) -> bool
+    where
+        T: PartialOrd,
+    {
+        let other = other.into();
+        other.left() >= self.left()
+            && other.right() < self.right()
+            && other.top() >= self.top()
+            && other.bottom() < self.bottom()
+    }
+
+    /// Returns whether this rectangle intersects with another rectangle.
+    pub fn intersects(&self, _other: impl Into<Rect<T>>) -> bool {
+        todo!();
+    }
+
+    /// Returns whether this rectangle intersects with a line.
+    pub fn intersects_line(&self, _line: impl Into<Line<T>>) -> Option<(Point<T>, Point<T>)> {
+        todo!();
     }
 }
 
@@ -103,7 +273,7 @@ where
 }
 
 /// A `Square` positioned at `(x, y)` with `size`.
-#[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Square<T> {
     /// X-coord

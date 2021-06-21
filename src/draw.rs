@@ -11,7 +11,7 @@ impl PixState {
     /// Constructs a `Texture` to render to.
     pub fn create_texture<T: Into<u32>>(
         &mut self,
-        format: Option<PixelFormat>,
+        format: impl Into<Option<PixelFormat>>,
         width: T,
         height: T,
     ) -> RendererResult<TextureId> {

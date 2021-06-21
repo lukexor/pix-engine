@@ -114,7 +114,7 @@ pub mod constants;
 pub mod conversion;
 
 /// [`Color`] mode indicating level interpretation.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum ColorMode {
     /// Red, Green, Blue, and Alpha

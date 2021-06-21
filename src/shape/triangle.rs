@@ -7,7 +7,7 @@ use num_traits::Num;
 use serde::{Deserialize, Serialize};
 
 /// A `Triangle` with three [`Point<T>`]s.
-#[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Triangle<T> {
     /// Point 1

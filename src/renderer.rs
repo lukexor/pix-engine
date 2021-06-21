@@ -145,7 +145,7 @@ pub(crate) trait Rendering: Default + Sized {
     /// Create a texture to draw to.
     fn create_texture<T: Into<u32>>(
         &mut self,
-        format: Option<PixelFormat>,
+        format: impl Into<Option<PixelFormat>>,
         width: T,
         height: T,
     ) -> Result<TextureId>;

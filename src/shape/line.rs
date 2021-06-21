@@ -7,7 +7,7 @@ use num_traits::Num;
 use serde::{Deserialize, Serialize};
 
 /// A `Line` with a starting [`Point<T>`] and ending [`Point<T>`].
-#[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Line<T> {
     /// Start [Point<T>].
