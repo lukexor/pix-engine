@@ -1,6 +1,6 @@
 //! [`Point`] functions used for drawing.
 
-use crate::vector::Vector;
+use crate::prelude::{Draw, PixResult, PixState, Vector};
 use num_traits::{AsPrimitive, Num};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -32,10 +32,10 @@ macro_rules! point {
         $crate::shape::point::Point::default()
     };
     ($x:expr) => {
-        $crate::shape::point::Point::new_x($x)
+        $crate::shape::point::Point::with_x($x)
     };
     ($x:expr, $y:expr$(,)?) => {
-        $crate::shape::point::Point::new_xy($x, $y)
+        $crate::shape::point::Point::with_xy($x, $y)
     };
     ($x:expr, $y:expr, $z:expr$(,)?) => {
         $crate::shape::point::Point::new($x, $y, $z)
@@ -62,10 +62,10 @@ impl<T> Point<T> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let p = Point::new_x(2);
+    /// let p = Point::with_x(2);
     /// assert_eq!(p.get(), [2, 0, 0]);
     /// ```
-    pub fn new_x(x: T) -> Self
+    pub fn with_x(x: T) -> Self
     where
         T: Num,
     {
@@ -82,10 +82,10 @@ impl<T> Point<T> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let p = Point::new_xy(2, 3);
+    /// let p = Point::with_xy(2, 3);
     /// assert_eq!(p.get(), [2, 3, 0]);
     /// ```
-    pub fn new_xy(x: T, y: T) -> Self
+    pub fn with_xy(x: T, y: T) -> Self
     where
         T: Num,
     {
@@ -210,6 +210,13 @@ impl<T> Point<T> {
             y: self.y.as_(),
             z: self.z.as_(),
         }
+    }
+}
+
+impl<T> Draw for Point<T> {
+    /// Draw point to the current [`PixState`] canvas.
+    fn draw(&self, s: &mut PixState) -> PixResult<()> {
+        s.point(self)
     }
 }
 
@@ -431,115 +438,141 @@ where
     }
 }
 
-macro_rules! impl_mul {
-    ($target:ty, $zero:expr) => {
-        impl Mul<Point<$target>> for $target {
-            type Output = Point<$target>;
-            fn mul(self, p: Point<$target>) -> Self::Output {
-                Point::new(self * p.x, self * p.x, self * p.z)
+macro_rules! impl_ops {
+    ($($target:ty),*) => {
+        $(
+            impl Mul<Point<$target>> for $target {
+                type Output = Point<$target>;
+                fn mul(self, p: Point<$target>) -> Self::Output {
+                    Point::new(self * p.x, self * p.x, self * p.z)
+                }
             }
-        }
+        )*
     };
 }
 
-impl_mul!(i8, 0);
-impl_mul!(u8, 0);
-impl_mul!(i16, 0);
-impl_mul!(u16, 0);
-impl_mul!(i32, 0);
-impl_mul!(u32, 0);
-impl_mul!(i64, 0);
-impl_mul!(u64, 0);
-impl_mul!(i128, 0);
-impl_mul!(u128, 0);
-impl_mul!(isize, 0);
-impl_mul!(usize, 0);
-impl_mul!(f32, 0.0);
-impl_mul!(f64, 0.0);
-
-/// Converts `T` to [`Point<T>`].
-impl<T> From<T> for Point<T>
-where
-    T: Num + Copy,
-{
-    fn from(v: T) -> Self {
-        Self { x: v, y: v, z: v }
-    }
+macro_rules! impl_from {
+    ($zero:expr => $($target:ty),*) => {
+        $(
+            /// Converts `U` to [`Point<T>`].
+            impl From<$target> for Point<$target> {
+                fn from(x: $target) -> Self {
+                    Self { x, y: $zero, z: $zero }
+                }
+            }
+        )*
+    };
 }
 
-/// Converts `(T, T)` to [`Point<T>`].
-impl<T> From<(T, T)> for Point<T>
-where
-    T: Num,
-{
-    fn from((x, y): (T, T)) -> Self {
-        Self { x, y, z: T::zero() }
-    }
-}
+impl_ops!(i8, u8, i16, u16, i32, u32, i128, u128, isize, usize, f32, f64);
+impl_from!(0 => i8, u8, i16, u16, i32, u32, i128, u128, isize, usize);
+impl_from!(0.0 => f32, f64);
 
-/// Converts `(T, T, T)` to [`Point<T>`].
-impl<T> From<(T, T, T)> for Point<T> {
-    fn from((x, y, z): (T, T, T)) -> Self {
-        Self { x, y, z }
-    }
-}
-
-/// Converts [`Point<T>`] to `(x, y)`.
-impl<T> From<Point<T>> for (T, T) {
-    fn from(p: Point<T>) -> Self {
-        (p.x, p.y)
-    }
-}
-
-/// Converts [`Point<T>`] to `(x, y, z)`.
-impl<T> From<Point<T>> for (T, T, T) {
-    fn from(p: Point<T>) -> Self {
-        (p.x, p.y, p.z)
-    }
-}
-
-/// Converts `[T]` to [`Point<T>`].
-impl<T> From<[T; 1]> for Point<T>
-where
-    T: Num,
-{
-    fn from([x]: [T; 1]) -> Self {
+/// Converts `[U; 1]` to [`Point<T>`].
+impl<T: Num, U: Into<T>> From<[U; 1]> for Point<T> {
+    fn from([x]: [U; 1]) -> Self {
         Self {
-            x,
+            x: x.into(),
             y: T::zero(),
             z: T::zero(),
         }
     }
 }
 
-/// Converts `[T, T]` to [`Point<T>`].
-impl<T> From<[T; 2]> for Point<T>
-where
-    T: Num,
-{
-    fn from([x, y]: [T; 2]) -> Self {
-        Self { x, y, z: T::zero() }
+/// Converts `&[U; 1]` to [`Point<T>`].
+impl<T: Num, U: Into<T> + Copy> From<&[U; 1]> for Point<T> {
+    fn from(&[x]: &[U; 1]) -> Self {
+        Self {
+            x: x.into(),
+            y: T::zero(),
+            z: T::zero(),
+        }
     }
 }
 
-/// Converts `[T, T, T]` to [`Point<T>`].
-impl<T> From<[T; 3]> for Point<T> {
-    fn from([x, y, z]: [T; 3]) -> Self {
-        Self { x, y, z }
+/// Converts `[U; 2]` to [`Point<T>`].
+impl<T: Num, U: Into<T>> From<[U; 2]> for Point<T> {
+    fn from([x, y]: [U; 2]) -> Self {
+        Self {
+            x: x.into(),
+            y: y.into(),
+            z: T::zero(),
+        }
     }
 }
 
-/// Converts [`Point<T>`] to `[x, y]`.
-impl<T> From<Point<T>> for [T; 2] {
-    fn from(v: Point<T>) -> Self {
-        [v.x, v.y]
+/// Converts `&[U; 2]` to [`Point<T>`].
+impl<T: Num, U: Into<T> + Copy> From<&[U; 2]> for Point<T> {
+    fn from(&[x, y]: &[U; 2]) -> Self {
+        Self {
+            x: x.into(),
+            y: y.into(),
+            z: T::zero(),
+        }
     }
 }
 
-/// Converts [`Point<T>`] to `[x, y, z]`.
-impl<T> From<Point<T>> for [T; 3] {
-    fn from(v: Point<T>) -> Self {
-        [v.x, v.y, v.z]
+/// Converts `[U; 3]` to [`Point<T>`].
+impl<T: Num, U: Into<T>> From<[U; 3]> for Point<T> {
+    fn from([x, y, z]: [U; 3]) -> Self {
+        Self {
+            x: x.into(),
+            y: y.into(),
+            z: z.into(),
+        }
+    }
+}
+
+/// Converts `&[U; 3]` to [`Point<T>`].
+impl<T: Num, U: Into<T> + Copy> From<&[U; 3]> for Point<T> {
+    fn from(&[x, y, z]: &[U; 3]) -> Self {
+        Self {
+            x: x.into(),
+            y: y.into(),
+            z: z.into(),
+        }
+    }
+}
+
+/// Converts [`Point<U>`] to `[x]`.
+impl<T: Num, U: Into<T>> From<Point<U>> for [T; 1] {
+    fn from(p: Point<U>) -> Self {
+        [p.x.into()]
+    }
+}
+
+/// Converts [`&Point<U>`] to `[x]`.
+impl<T: Num, U: Into<T>> From<&Point<U>> for [T; 1] {
+    fn from(p: &Point<U>) -> Self {
+        [p.x.into()]
+    }
+}
+
+/// Converts [`Point<U>`] to `[x, y]`.
+impl<T: Num, U: Into<T>> From<Point<U>> for [T; 2] {
+    fn from(p: Point<U>) -> Self {
+        [p.x.into(), p.y.into()]
+    }
+}
+
+/// Converts [`&Point<U>`] to `[x, y]`.
+impl<T: Num, U: Into<T> + Copy> From<&Point<U>> for [T; 2] {
+    fn from(p: &Point<U>) -> Self {
+        [p.x.into(), p.y.into()]
+    }
+}
+
+/// Converts [`Point<U>`] to `[x, y, z]`.
+impl<T: Num, U: Into<T>> From<Point<U>> for [T; 3] {
+    fn from(p: Point<U>) -> Self {
+        [p.x.into(), p.y.into(), p.z.into()]
+    }
+}
+
+/// Converts [`&Point<U>`] to `[x, y, z]`.
+impl<T: Num, U: Into<T> + Copy> From<&Point<U>> for [T; 3] {
+    fn from(p: &Point<U>) -> Self {
+        [p.x.into(), p.y.into(), p.z.into()]
     }
 }
 

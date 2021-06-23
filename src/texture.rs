@@ -1,20 +1,18 @@
 //! `Texture` functions.
 
 use crate::{prelude::*, renderer::Rendering};
-use num_traits::AsPrimitive;
 
 /// `Texture` Identifier.
 pub type TextureId = usize;
 
 impl PixState {
     /// Constructs a `Texture` to render to.
-    pub fn create_texture<T: Into<u32>>(
-        &mut self,
-        format: impl Into<Option<PixelFormat>>,
-        width: T,
-        height: T,
-    ) -> PixResult<TextureId> {
-        Ok(self.renderer.create_texture(format, width, height)?)
+    fn create_texture<T, F>(&mut self, width: T, height: T, format: F) -> PixResult<TextureId>
+    where
+        T: Into<f64>,
+        F: Into<Option<PixelFormat>>,
+    {
+        Ok(self.renderer.create_texture(width, height, format)?)
     }
 
     /// Deletes a texture by [`TextureId`].
@@ -23,16 +21,15 @@ impl PixState {
     }
 
     /// Update the `Texture` with a [`u8`] [`slice`] of pixel data.
-    pub fn update_texture<R, T>(
+    fn update_texture<R>(
         &mut self,
-        texture_id: usize,
-        rect: Option<R>,
+        texture_id: TextureId,
+        rect: R,
         pixels: &[u8],
         pitch: usize,
     ) -> PixResult<()>
     where
-        R: Into<Rect<T>>,
-        T: AsPrimitive<i32> + AsPrimitive<u32>,
+        R: Into<Option<Rect<f64>>>,
     {
         Ok(self
             .renderer

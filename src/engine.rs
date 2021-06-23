@@ -3,8 +3,10 @@
 use crate::{
     common::Result,
     event::{Event, KeyEvent, WindowEvent},
-    renderer::{Position, Renderer, RendererSettings, Rendering},
+    renderer::{Renderer, RendererSettings, Rendering},
     state::{AppState, PixState},
+    window::Position,
+    window::Window,
 };
 #[cfg(not(target_arch = "wasm32"))]
 use std::{
@@ -247,7 +249,7 @@ impl PixEngine {
                 }
                 Event::MouseMotion { x, y, .. } => {
                     state.pmouse_pos = state.mouse_pos;
-                    state.mouse_pos = (x, y).into();
+                    state.mouse_pos = [x, y].into();
                     if state.mouse_down {
                         app.on_mouse_dragged(state)?;
                     }

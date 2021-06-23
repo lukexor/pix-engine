@@ -1,9 +1,11 @@
 //! Environment related information for the [`PixEngine`].
 //!
 //! [`PixEngine`]: crate::prelude::PixEngine
-
-use super::PixState;
-use crate::{common::Result, renderer::Rendering};
+use crate::{
+    prelude::{PixResult, PixState, WindowBuilder, WindowId},
+    renderer::Rendering,
+    window::Window,
+};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
@@ -58,7 +60,7 @@ impl PixState {
     }
 
     /// Close an open window.
-    pub fn close_window(&self, _window_id: WindowId) -> Result<()> {
+    pub fn close_window(&self, _window_id: WindowId) -> PixResult<()> {
         todo!("close_window");
     }
 
@@ -115,54 +117,5 @@ impl PixState {
     /// The display pixel density of the primary monitor.
     pub fn display_density(&self) -> u32 {
         todo!("display_density")
-    }
-}
-
-/// Window Identifier
-pub type WindowId = u32;
-
-/// WindowBuilder
-#[non_exhaustive]
-#[derive(Debug, Clone)]
-pub struct WindowBuilder {
-    title: String,
-    width: u32,
-    height: u32,
-}
-
-impl WindowBuilder {
-    /// Creates a new WindowBuilder instance.
-    pub fn new(width: u32, height: u32) -> Self {
-        Self {
-            width,
-            height,
-            ..Default::default()
-        }
-    }
-
-    /// Set a window title.
-    pub fn with_title<S>(&mut self, title: S) -> &mut Self
-    where
-        S: AsRef<str>,
-    {
-        self.title = title.as_ref().to_owned();
-        self
-    }
-
-    /// Create a new window from the WindowBuilder and return its id.
-    ///
-    /// Returns Err if any options provided are invalid.
-    pub fn build(&self) -> Result<WindowId> {
-        todo!("WindowBuilder::build");
-    }
-}
-
-impl Default for WindowBuilder {
-    fn default() -> Self {
-        Self {
-            title: String::new(),
-            width: 400,
-            height: 400,
-        }
     }
 }

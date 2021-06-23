@@ -17,7 +17,13 @@
 //! # Ok::<(), PixError>(())
 //! ```
 
-use crate::{renderer::Rendering, state::PixState};
+use crate::state::PixState;
+
+/// Trait representing audio support.
+pub(crate) trait Audio {
+    /// Add audio samples to the audio buffer queue.
+    fn enqueue_audio(&mut self, samples: &[f32]);
+}
 
 impl PixState {
     /// Add samples to the audio buffer queue.

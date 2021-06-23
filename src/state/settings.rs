@@ -7,8 +7,8 @@ use crate::{
     color::Color,
     renderer::{self, Rendering},
     shape::Rect,
+    window::Window,
 };
-use num_traits::AsPrimitive;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -72,7 +72,7 @@ pub(crate) struct Settings {
     pub(crate) background: Color,
     pub(crate) fill: Option<Color>,
     pub(crate) stroke: Option<Color>,
-    pub(crate) text_size: u16,
+    pub(crate) text_size: u32,
     pub(crate) paused: bool,
     pub(crate) show_frame_rate: bool,
     pub(crate) rect_mode: DrawMode,
@@ -132,27 +132,23 @@ impl PixState {
     }
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    pub fn clip<R, T>(&mut self, rect: R)
-    where
-        R: Into<Rect<T>>,
-        T: AsPrimitive<i32> + AsPrimitive<u32>,
-    {
-        self.renderer.clip(Some(rect.into()));
+    pub fn clip(&mut self, rect: impl Into<Rect<f64>>) {
+        self.renderer.clip(rect.into());
     }
 
     /// Clears the clip rect used by the renderer to draw to the current canvas.
     pub fn no_clip(&mut self) {
-        self.renderer.clip::<i32>(None);
+        self.renderer.clip(None);
     }
 
     /// Returns whether the application is fullscreen or not.
-    pub fn is_fullscreen(&mut self) -> bool {
-        self.renderer.is_fullscreen()
+    pub fn fullscreen(&mut self) -> bool {
+        self.renderer.fullscreen()
     }
 
     /// Set the application to fullscreen or not.
-    pub fn fullscreen(&mut self, val: bool) {
-        self.renderer.fullscreen(val)
+    pub fn set_fullscreen(&mut self, val: bool) {
+        self.renderer.set_fullscreen(val)
     }
 
     /// Set whether the cursor is shown or not.
@@ -189,7 +185,7 @@ impl PixState {
     }
 
     /// Set the text size for drawing to the current canvas.
-    pub fn text_size(&mut self, size: u16) {
+    pub fn text_size(&mut self, size: u32) {
         self.settings.text_size = size;
     }
 

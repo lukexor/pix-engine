@@ -21,7 +21,12 @@ impl Colors {
                 let s = map((SIZE * x) as f64, 0.0, WIDTH as f64, 0.0, 100.0);
                 let v = map((SIZE * y) as f64, 0.0, HEIGHT as f64, 0.0, 100.0);
                 state.fill(hsb!(self.h, s, v));
-                state.rect(((SIZE * x), (SIZE * y), SIZE, SIZE))?;
+                state.rect(rect!(
+                    (SIZE * x) as i32,
+                    (SIZE * y) as i32,
+                    SIZE as i32,
+                    SIZE as i32
+                ))?;
             }
         }
         state.fill(WHITE);

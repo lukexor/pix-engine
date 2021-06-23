@@ -338,17 +338,17 @@ impl AppState for RayScene {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         s.clear();
 
-        let (x, y) = s.mouse_pos().into();
+        let mouse = s.mouse_pos();
 
-        let (cx, cw) = if x - 254 < 0 {
-            (0, x + 255)
+        let (cx, cw) = if mouse.x - 254 < 0 {
+            (0, mouse.x + 255)
         } else {
-            (x - 254, 511)
+            (mouse.x - 254, 511)
         };
-        let (cy, ch) = if y - 254 < 0 {
-            (0, y + 255)
+        let (cy, ch) = if mouse.y - 254 < 0 {
+            (0, mouse.y + 255)
         } else {
-            (y - 254, 511)
+            (mouse.y - 254, 511)
         };
         s.clip((cx, cy, cw, ch));
 
@@ -357,11 +357,11 @@ impl AppState for RayScene {
         s.fill(BLUE);
         s.stroke(BLUE);
         for cell in self.cells.iter().filter(|c| c.exists) {
-            s.square((cell.pos.as_point(), BLOCK_SIZE + 1))?;
+            s.square((cell.pos.x as i32, cell.pos.y as i32, BLOCK_SIZE as i32 + 1))?;
         }
 
         if let Some(ref light) = self.light {
-            s.image(x - 255, y - 255, &light)?;
+            s.image(mouse.x - 255, mouse.y - 255, &light)?;
         }
 
         Ok(())

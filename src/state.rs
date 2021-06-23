@@ -3,6 +3,7 @@
 use crate::{
     prelude::*,
     renderer::{Error as RendererError, Renderer, Rendering},
+    window::Window,
 };
 use environment::Environment;
 #[cfg(feature = "serde")]
@@ -86,7 +87,7 @@ pub trait AppState {
 
 /// Represents all engine-specific state and methods.
 #[non_exhaustive]
-#[derive(Default, Debug)]
+#[derive(Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct PixState {
     pub(crate) title: String,
@@ -127,9 +128,9 @@ impl PixState {
     /// Clears the render target to the current background color set by `PixState::background()`.
     pub fn clear(&mut self) {
         let color = self.settings.background;
-        self.renderer.draw_color(self.settings.background);
+        self.renderer.set_draw_color(self.settings.background);
         self.renderer.clear();
-        self.renderer.draw_color(color);
+        self.renderer.set_draw_color(color);
     }
 
     /// Get the current window title.

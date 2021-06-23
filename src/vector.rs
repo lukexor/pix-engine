@@ -1079,99 +1079,139 @@ macro_rules! impl_ops {
     };
 }
 
+macro_rules! impl_from {
+    ($zero:expr => $($target:ty),*) => {
+        $(
+            /// Converts `U` to [`Vector<T>`].
+            impl From<$target> for Vector<$target> {
+                fn from(x: $target) -> Self {
+                    Self { x, y: $zero, z: $zero }
+                }
+            }
+        )*
+    };
+}
+
 impl_ops!(i8, u8, i16, u16, i32, u32, i128, u128, isize, usize, f32, f64);
+impl_from!(0 => i8, u8, i16, u16, i32, u32, i128, u128, isize, usize);
+impl_from!(0.0 => f32, f64);
 
-/// Converts `T` to [`Vector<T>`].
-impl<T> From<T> for Vector<T>
-where
-    T: Num + Copy,
-{
-    fn from(v: T) -> Self {
-        Self { x: v, y: v, z: v }
-    }
-}
-
-/// Converts `(T, T)` to [`Vector<T>`].
-impl<T> From<(T, T)> for Vector<T>
+/// Converts `[U; 1]` to [`Vector<T>`].
+impl<T, U: Into<T>> From<[U; 1]> for Vector<T>
 where
     T: Num,
 {
-    fn from((x, y): (T, T)) -> Self {
-        Self { x, y, z: T::zero() }
-    }
-}
-
-/// Converts `(T, T, T)` to [`Vector<T>`].
-impl<T> From<(T, T, T)> for Vector<T> {
-    fn from((x, y, z): (T, T, T)) -> Self {
-        Self { x, y, z }
-    }
-}
-
-/// Converts [`Vector<T>`] to `(x, y)`.
-impl<T> From<Vector<T>> for (T, T) {
-    fn from(v: Vector<T>) -> Self {
-        (v.x, v.y)
-    }
-}
-
-/// Converts [`Vector<T>`] to `(x, y, z)`.
-impl<T> From<Vector<T>> for (T, T, T) {
-    fn from(v: Vector<T>) -> Self {
-        (v.x, v.y, v.z)
-    }
-}
-
-/// Converts `[T]` to [`Vector<T>`].
-impl<T> From<[T; 1]> for Vector<T>
-where
-    T: Num,
-{
-    fn from([x]: [T; 1]) -> Self {
+    fn from([x]: [U; 1]) -> Self {
         Self {
-            x,
+            x: x.into(),
             y: T::zero(),
             z: T::zero(),
         }
     }
 }
 
-/// Converts `[T, T]` to [`Vector<T>`].
-impl<T> From<[T; 2]> for Vector<T>
+/// Converts `&[U; 1]` to [`Vector<T>`].
+impl<T, U: Into<T> + Copy> From<&[U; 1]> for Vector<T>
 where
     T: Num,
 {
-    fn from([x, y]: [T; 2]) -> Self {
-        Self { x, y, z: T::zero() }
+    fn from(&[x]: &[U; 1]) -> Self {
+        Self {
+            x: x.into(),
+            y: T::zero(),
+            z: T::zero(),
+        }
     }
 }
 
-/// Converts `[T, T, T]` to [`Vector<T>`].
-impl<T> From<[T; 3]> for Vector<T> {
-    fn from([x, y, z]: [T; 3]) -> Self {
-        Self { x, y, z }
+/// Converts `[U; 2]` to [`Vector<T>`].
+impl<T: Num, U: Into<T>> From<[U; 2]> for Vector<T> {
+    fn from([x, y]: [U; 2]) -> Self {
+        Self {
+            x: x.into(),
+            y: y.into(),
+            z: T::zero(),
+        }
     }
 }
 
-/// Converts [`Vector<T>`] to `[x, y]`.
-impl<T> From<Vector<T>> for [T; 2] {
-    fn from(v: Vector<T>) -> Self {
-        [v.x, v.y]
+/// Converts `&[U; 2]` to [`Vector<T>`].
+impl<T: Num, U: Into<T> + Copy> From<&[U; 2]> for Vector<T> {
+    fn from(&[x, y]: &[U; 2]) -> Self {
+        Self {
+            x: x.into(),
+            y: y.into(),
+            z: T::zero(),
+        }
     }
 }
 
-/// Converts [`Vector<T>`] to `[x, y, z]`.
-impl<T> From<Vector<T>> for [T; 3] {
-    fn from(v: Vector<T>) -> Self {
-        [v.x, v.y, v.z]
+/// Converts `[U; 3]` to [`Vector<T>`].
+impl<T, U: Into<T>> From<[U; 3]> for Vector<T> {
+    fn from([x, y, z]: [U; 3]) -> Self {
+        Self {
+            x: x.into(),
+            y: y.into(),
+            z: z.into(),
+        }
+    }
+}
+
+/// Converts `&[U; 3]` to [`Vector<T>`].
+impl<T, U: Into<T> + Copy> From<&[U; 3]> for Vector<T> {
+    fn from(&[x, y, z]: &[U; 3]) -> Self {
+        Self {
+            x: x.into(),
+            y: y.into(),
+            z: z.into(),
+        }
+    }
+}
+
+/// Converts [`Vector<U>`] to `[x]`.
+impl<T, U: Into<T>> From<Vector<U>> for [T; 1] {
+    fn from(v: Vector<U>) -> Self {
+        [v.x.into()]
+    }
+}
+
+/// Converts [`&Vector<U>`] to `[x]`.
+impl<T, U: Into<T> + Copy> From<&Vector<U>> for [T; 1] {
+    fn from(v: &Vector<U>) -> Self {
+        [v.x.into()]
+    }
+}
+
+/// Converts [`Vector<U>`] to `[x, y]`.
+impl<T, U: Into<T>> From<Vector<U>> for [T; 2] {
+    fn from(v: Vector<U>) -> Self {
+        [v.x.into(), v.y.into()]
+    }
+}
+
+/// Converts [`&Vector<U>`] to `[x, y]`.
+impl<T, U: Into<T> + Copy> From<&Vector<U>> for [T; 2] {
+    fn from(v: &Vector<U>) -> Self {
+        [v.x.into(), v.y.into()]
+    }
+}
+
+/// Converts [`Vector<U>`] to `[x, y, z]`.
+impl<T, U: Into<T>> From<Vector<U>> for [T; 3] {
+    fn from(v: Vector<U>) -> Self {
+        [v.x.into(), v.y.into(), v.z.into()]
+    }
+}
+
+/// Converts [`&Vector<U>`] to `[x, y, z]`.
+impl<T, U: Into<T> + Copy> From<&Vector<U>> for [T; 3] {
+    fn from(v: &Vector<U>) -> Self {
+        [v.x.into(), v.y.into(), v.z.into()]
     }
 }
 
 /// Converts [`Point<U>`] to [`Vector<T>`].
-impl<T, U> TryFrom<Point<U>> for Vector<T>
-where
-    U: TryInto<T>,
-{
+impl<T, U: TryInto<T>> TryFrom<Point<U>> for Vector<T> {
     type Error = <U as TryInto<T>>::Error;
     fn try_from(p: Point<U>) -> Result<Self, Self::Error> {
         Ok(Self {
@@ -1182,13 +1222,34 @@ where
     }
 }
 
+/// Converts [`&Point<U>`] to [`Vector<T>`].
+impl<T, U: TryInto<T>> TryFrom<&Point<U>> for Vector<T> {
+    type Error = <U as TryInto<T>>::Error;
+    fn try_from(p: &Point<U>) -> Result<Self, Self::Error> {
+        Ok(Self {
+            x: p.x.try_into()?,
+            y: p.y.try_into()?,
+            z: p.z.try_into()?,
+        })
+    }
+}
+
 /// Converts [`Vector<U>`] to [`Point<T>`].
-impl<T, U> TryFrom<Vector<U>> for Point<T>
-where
-    U: TryInto<T>,
-{
+impl<T, U: TryInto<T>> TryFrom<Vector<U>> for Point<T> {
     type Error = <U as TryInto<T>>::Error;
     fn try_from(v: Vector<U>) -> Result<Self, Self::Error> {
+        Ok(Self {
+            x: v.x.try_into()?,
+            y: v.y.try_into()?,
+            z: v.z.try_into()?,
+        })
+    }
+}
+
+/// Converts [`&Vector<U>`] to [`Point<T>`].
+impl<T, U: TryInto<T>> TryFrom<&Vector<U>> for Point<T> {
+    type Error = <U as TryInto<T>>::Error;
+    fn try_from(v: &Vector<U>) -> Result<Self, Self::Error> {
         Ok(Self {
             x: v.x.try_into()?,
             y: v.y.try_into()?,

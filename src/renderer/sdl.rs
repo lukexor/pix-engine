@@ -4,31 +4,27 @@ use crate::{
     prelude::*,
     renderer::{Error, RendererSettings, Rendering, Result},
 };
-use num_traits::AsPrimitive;
+use num_traits::{AsPrimitive, ToPrimitive};
 use sdl2::{
     audio::{AudioQueue, AudioSpecDesired},
     gfx::primitives::{DrawRenderer, ToColor},
     image::LoadSurface,
-    render::{Canvas, TextureCreator, TextureQuery, TextureValueError, UpdateTextureError},
+    pixels::{Color as SdlColor, PixelFormatEnum as SdlPixelFormat},
+    rect::Rect as SdlRect,
+    render::{
+        BlendMode as SdlBlendMode, Canvas, Texture as SdlTexture, TextureCreator, TextureQuery,
+        TextureValueError, UpdateTextureError,
+    },
     surface::Surface,
     ttf::{self, FontError, InitError},
-    video::{FullscreenType, Window, WindowBuildError, WindowContext},
+    video::{Window as SdlWindow, WindowBuildError, WindowContext},
     EventPump, IntegerOrSdlError, Sdl,
 };
 use std::{borrow::Cow, ffi::NulError};
 
-type SdlAxis = sdl2::controller::Axis;
-type SdlButton = sdl2::controller::Button;
-type SdlMouseButton = sdl2::mouse::MouseButton;
-type SdlKeycode = sdl2::keyboard::Keycode;
-type SdlMod = sdl2::keyboard::Mod;
-type SdlWindowEvent = sdl2::event::WindowEvent;
-type SdlEvent = sdl2::event::Event;
-type SdlColor = sdl2::pixels::Color;
-type SdlRect = sdl2::rect::Rect;
-type SdlBlendMode = sdl2::render::BlendMode;
-type SdlTexture = sdl2::render::Texture;
-type SdlPixelFormat = sdl2::pixels::PixelFormatEnum;
+mod audio;
+mod event;
+mod window;
 
 /// An SDL [`Renderer`] implementation.
 pub(crate) struct Renderer {
@@ -36,7 +32,7 @@ pub(crate) struct Renderer {
     ttf_context: ttf::Sdl2TtfContext,
     event_pump: EventPump,
     window_id: WindowId,
-    canvas: Canvas<Window>,
+    canvas: Canvas<SdlWindow>,
     audio_device: AudioQueue<f32>,
     texture_creator: TextureCreator<WindowContext>,
     textures: Vec<SdlTexture>,
@@ -117,32 +113,19 @@ impl Rendering for Renderer {
         })
     }
 
-    /// Get the primary window id.
-    fn window_id(&self) -> WindowId {
-        self.window_id
-    }
-
     /// Clears the canvas to the current clear color.
     fn clear(&mut self) {
         self.canvas.clear();
     }
 
-    /// Set whether the cursor is shown or not.
-    fn cursor(&mut self, show: bool) {
-        self.context.mouse().show_cursor(show);
-    }
-
     /// Sets the color used by the renderer to draw to the current canvas.
-    fn draw_color(&mut self, color: Color) {
-        self.canvas.set_draw_color(color);
+    fn set_draw_color(&mut self, color: impl Into<Color>) {
+        self.canvas.set_draw_color(color.into());
     }
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    fn clip<T>(&mut self, rect: Option<Rect<T>>)
-    where
-        T: AsPrimitive<i32> + AsPrimitive<u32>,
-    {
-        let rect = rect.map(|rect| rect.into());
+    fn clip(&mut self, rect: impl Into<Option<Rect<f64>>>) {
+        let rect = rect.into().map(|rect| rect.into());
         self.canvas.set_clip_rect(rect);
     }
 
@@ -151,24 +134,9 @@ impl Rendering for Renderer {
         self.blend_mode = mode.into();
     }
 
-    /// Returns a single event or None if the event pump is empty.
-    fn poll_event(&mut self) -> Option<Event> {
-        self.event_pump.poll_event().map(|evt| evt.into())
-    }
-
     /// Updates the canvas from the current back buffer.
     fn present(&mut self) {
         self.canvas.present();
-    }
-
-    /// Get the current window title.
-    fn title(&self) -> &str {
-        self.canvas.window().title()
-    }
-
-    /// Set the current window title.
-    fn set_title(&mut self, title: &str) -> Result<()> {
-        Ok(self.canvas.window_mut().set_title(title)?)
     }
 
     /// Width of the current canvas.
@@ -188,36 +156,18 @@ impl Rendering for Renderer {
         Ok(self.canvas.set_scale(x, y)?)
     }
 
-    /// Returns whether the application is fullscreen or not.
-    fn is_fullscreen(&self) -> bool {
-        use FullscreenType::*;
-        matches!(self.canvas.window().fullscreen_state(), True | Desktop)
-    }
-
-    /// Set the application to fullscreen or not.
-    fn fullscreen(&mut self, val: bool) {
-        let fullscreen_type = if val {
-            FullscreenType::True
-        } else {
-            FullscreenType::Off
-        };
-        // Don't care if this fails or not.
-        let _ = self.canvas.window_mut().set_fullscreen(fullscreen_type);
-    }
-
     /// Create a texture to render to.
-    fn create_texture<T: Into<u32>>(
-        &mut self,
-        format: impl Into<Option<PixelFormat>>,
-        width: T,
-        height: T,
-    ) -> Result<TextureId> {
+    fn create_texture<T, F>(&mut self, width: T, height: T, format: F) -> Result<TextureId>
+    where
+        T: Into<f64>,
+        F: Into<Option<PixelFormat>>,
+    {
         let texture_id = self.textures.len();
         self.textures
             .push(self.texture_creator.create_texture_streaming(
                 format.into().map(|f| f.into()),
-                width.into(),
-                height.into(),
+                width.into().round() as u32,
+                height.into().round() as u32,
             )?);
         Ok(texture_id)
     }
@@ -235,19 +185,18 @@ impl Rendering for Renderer {
     }
 
     /// Update texture with pixel data.
-    fn update_texture<R, T>(
+    fn update_texture<R>(
         &mut self,
         texture_id: TextureId,
-        rect: Option<R>,
+        rect: R,
         pixels: &[u8],
         pitch: usize,
     ) -> Result<()>
     where
-        R: Into<Rect<T>>,
-        T: AsPrimitive<i32> + AsPrimitive<u32>,
+        R: Into<Option<Rect<f64>>>,
     {
         if let Some(texture) = self.textures.get_mut(texture_id) {
-            let rect: Option<SdlRect> = rect.map(|r| r.into().into());
+            let rect: Option<SdlRect> = rect.into().map(|r| r.into());
             Ok(texture.update(rect, pixels, pitch)?)
         } else {
             Err(Error::InvalidTexture(texture_id))
@@ -255,14 +204,13 @@ impl Rendering for Renderer {
     }
 
     /// Draw texture canvas.
-    fn texture<R, T>(&mut self, texture_id: usize, src: Option<R>, dst: Option<R>) -> Result<()>
+    fn texture<R>(&mut self, texture_id: usize, src: R, dst: R) -> Result<()>
     where
-        R: Into<Rect<T>>,
-        T: AsPrimitive<i32> + AsPrimitive<u32>,
+        R: Into<Option<Rect<f64>>>,
     {
         if let Some(texture) = self.textures.get_mut(texture_id) {
-            let src: Option<SdlRect> = src.map(|r| r.into().into());
-            let dst: Option<SdlRect> = dst.map(|r| r.into().into());
+            let src: Option<SdlRect> = src.into().map(|r| r.into());
+            let dst: Option<SdlRect> = dst.into().map(|r| r.into());
             Ok(self.canvas.copy(texture, src, dst)?)
         } else {
             Err(Error::InvalidTexture(texture_id))
@@ -270,89 +218,107 @@ impl Rendering for Renderer {
     }
 
     /// Draw text to the current canvas.
-    fn text(
-        &mut self,
-        p: impl Into<Point<i16>>,
-        text: impl AsRef<str>,
-        size: u16,
-        fill: Option<Color>,
-        _stroke: Option<Color>,
-    ) -> Result<()> {
-        let p = p.into();
+    fn text<P, T, C>(&mut self, position: P, text: T, size: u32, fill: C, stroke: C) -> Result<()>
+    where
+        P: Into<(f64, f64)>,
+        T: AsRef<str>,
+        C: Into<Option<Color>>,
+    {
+        let (x, y) = position.into();
         let text = text.as_ref();
         // TODO: This path only works locally
-        let font = self.ttf_context.load_font("static/emulogic.ttf", size)?;
-        if let Some(fill) = fill {
+        let font = self
+            .ttf_context
+            .load_font("static/emulogic.ttf", size as u16)?;
+        if let Some(fill) = fill.into() {
             let surface = font.render(text.as_ref()).blended(fill)?;
             let texture = self.texture_creator.create_texture_from_surface(&surface)?;
             let TextureQuery { width, height, .. } = texture.query();
             self.canvas.copy(
                 &texture,
                 None,
-                Some(SdlRect::new(p.x as i32, p.y as i32, width, height)),
+                Some(SdlRect::new(
+                    x.round() as i32,
+                    y.round() as i32,
+                    width,
+                    height,
+                )),
             )?;
         }
         Ok(())
     }
 
     /// Draw a pixel to the current canvas.
-    fn point(&mut self, x: i16, y: i16, stroke: Option<Color>) -> Result<()> {
-        if let Some(stroke) = stroke {
-            self.canvas.pixel(x, y, stroke)?;
+    fn point<P, C>(&mut self, p: P, color: C) -> Result<()>
+    where
+        P: Into<(f64, f64)>,
+        C: Into<Option<Color>>,
+    {
+        if let Some(color) = color.into() {
+            let (x, y) = p.into();
+            self.canvas
+                .pixel(x.round() as i16, y.round() as i16, color)?;
         }
         Ok(())
     }
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, x1: i16, y1: i16, x2: i16, y2: i16, stroke: Option<Color>) -> Result<()> {
-        if let Some(stroke) = stroke {
+    fn line<L, C>(&mut self, line: L, color: C) -> Result<()>
+    where
+        L: Into<(f64, f64, f64, f64)>,
+        C: Into<Option<Color>>,
+    {
+        if let Some(color) = color.into() {
+            let (x1, y1, x2, y2) = line.into();
+            let x1 = x1.round() as i16;
+            let x2 = x2.round() as i16;
+            let y1 = y1.round() as i16;
+            let y2 = y2.round() as i16;
             if y1 == y2 {
-                self.canvas.hline(x1, x2, y1, stroke)?;
+                self.canvas.hline(x1, x2, y1, color)?;
             } else if x1 == x2 {
-                self.canvas.vline(y1, y2, x1, stroke)?;
+                self.canvas.vline(y1, y2, x1, color)?;
             } else {
-                self.canvas.line(x1, y1, x2, y2, stroke)?;
+                self.canvas.line(x1, y1, x2, y2, color)?;
             }
         }
         Ok(())
     }
 
     /// Draw a triangle to the current canvas.
-    fn triangle(
-        &mut self,
-        x1: i16,
-        y1: i16,
-        x2: i16,
-        y2: i16,
-        x3: i16,
-        y3: i16,
-        fill: Option<Color>,
-        stroke: Option<Color>,
-    ) -> Result<()> {
-        if let Some(fill) = fill {
+    fn triangle<T, U, C>(&mut self, tri: T, fill: C, stroke: C) -> Result<()>
+    where
+        T: Into<Triangle<U>>,
+        U: ToPrimitive,
+        C: Into<Option<Color>>,
+    {
+        let tri = tri.into();
+        let x1 = tri.p1.x.to_i16().unwrap_or(0);
+        let y1 = tri.p1.y.to_i16().unwrap_or(0);
+        let x2 = tri.p2.x.to_i16().unwrap_or(0);
+        let y2 = tri.p2.y.to_i16().unwrap_or(0);
+        let x3 = tri.p3.x.to_i16().unwrap_or(0);
+        let y3 = tri.p3.y.to_i16().unwrap_or(0);
+        if let Some(fill) = fill.into() {
             self.canvas.filled_trigon(x1, y1, x2, y2, x3, y3, fill)?;
         }
-        if let Some(stroke) = stroke {
+        if let Some(stroke) = stroke.into() {
             self.canvas.trigon(x1, y1, x2, y2, x3, y3, stroke)?;
         }
         Ok(())
     }
 
     /// Draw a rectangle to the current canvas.
-    fn rect(
-        &mut self,
-        x: i16,
-        y: i16,
-        width: i16,
-        height: i16,
-        fill: Option<Color>,
-        stroke: Option<Color>,
-    ) -> Result<()> {
-        if let Some(fill) = fill {
+    fn rect<R, C>(&mut self, rect: R, fill: C, stroke: C) -> Result<()>
+    where
+        R: Into<Rect<f64>>,
+        C: Into<Option<Color>>,
+    {
+        if let Some(fill) = fill.into() {
             self.canvas
                 .box_(x, y, x + width - 1, y + height - 1, fill)?;
         }
-        if let Some(stroke) = stroke {
+        if let Some(stroke) = stroke.into() {
             self.canvas
                 .rectangle(x, y, x + width - 1, y + height - 1, stroke)?;
         }
@@ -360,36 +326,29 @@ impl Rendering for Renderer {
     }
 
     /// Draw a polygon to the current canvas.
-    fn polygon(
-        &mut self,
-        vx: &[i16],
-        vy: &[i16],
-        fill: Option<Color>,
-        stroke: Option<Color>,
-    ) -> Result<()> {
-        if let Some(fill) = fill {
+    fn polygon<C>(&mut self, vx: &[i16], vy: &[i16], fill: C, stroke: C) -> Result<()>
+    where
+        C: Into<Option<Color>>,
+    {
+        if let Some(fill) = fill.into() {
             self.canvas.filled_polygon(vx, vy, fill)?;
         }
-        if let Some(stroke) = stroke {
+        if let Some(stroke) = stroke.into() {
             self.canvas.polygon(vx, vy, stroke)?;
         }
         Ok(())
     }
 
     /// Draw a ellipse to the current canvas.
-    fn ellipse(
-        &mut self,
-        x: i16,
-        y: i16,
-        width: i16,
-        height: i16,
-        fill: Option<Color>,
-        stroke: Option<Color>,
-    ) -> Result<()> {
-        if let Some(fill) = fill {
+    fn ellipse<E, C>(&mut self, ellipse: E, fill: C, stroke: C) -> Result<()>
+    where
+        E: Into<Ellipse<f64>>,
+        C: Into<Option<Color>>,
+    {
+        if let Some(fill) = fill.into() {
             self.canvas.filled_ellipse(x, y, width, height, fill)?;
         }
-        if let Some(stroke) = stroke {
+        if let Some(stroke) = stroke.into() {
             self.canvas.ellipse(x, y, width, height, stroke)?;
         }
         Ok(())
@@ -424,16 +383,6 @@ impl Rendering for Renderer {
         }
         Ok(())
     }
-
-    /// Add audio samples to the audio buffer queue.
-    fn enqueue_audio(&mut self, samples: &[f32]) {
-        // Don't let queue overflow
-        let sample_rate = self.audio_device.spec().freq as u32;
-        while self.audio_device.size() > sample_rate {
-            std::thread::sleep(std::time::Duration::from_millis(10));
-        }
-        self.audio_device.queue(samples);
-    }
 }
 
 impl std::fmt::Debug for Renderer {
@@ -455,380 +404,6 @@ impl std::fmt::Debug for Renderer {
 /*
  * Type Conversions
  */
-
-impl From<SdlEvent> for Event {
-    fn from(event: SdlEvent) -> Self {
-        use Event::*;
-        match event {
-            SdlEvent::Quit { .. } => Quit,
-            SdlEvent::AppTerminating { .. } => AppTerminating,
-            SdlEvent::Window {
-                window_id,
-                win_event,
-                ..
-            } => Window {
-                window_id,
-                win_event: win_event.into(),
-            },
-            SdlEvent::KeyDown {
-                keycode,
-                keymod,
-                repeat,
-                ..
-            } => KeyDown {
-                key: keycode.map(|k| k.into()),
-                keymod: keymod.into(),
-                repeat,
-            },
-            SdlEvent::KeyUp {
-                keycode,
-                keymod,
-                repeat,
-                ..
-            } => KeyUp {
-                key: keycode.map(|k| k.into()),
-                keymod: keymod.into(),
-                repeat,
-            },
-            SdlEvent::TextInput { text, .. } => TextInput { text },
-            SdlEvent::MouseMotion {
-                x, y, xrel, yrel, ..
-            } => MouseMotion { x, y, xrel, yrel },
-            SdlEvent::MouseButtonDown {
-                mouse_btn, x, y, ..
-            } => MouseDown {
-                button: mouse_btn.into(),
-                x,
-                y,
-            },
-            SdlEvent::MouseButtonUp {
-                mouse_btn, x, y, ..
-            } => MouseUp {
-                button: mouse_btn.into(),
-                x,
-                y,
-            },
-            SdlEvent::MouseWheel { x, y, .. } => MouseWheel { x, y },
-            SdlEvent::JoyAxisMotion {
-                which,
-                axis_idx,
-                value,
-                ..
-            } => JoyAxisMotion {
-                joy_id: which,
-                axis_idx,
-                value,
-            },
-            SdlEvent::JoyBallMotion {
-                which,
-                ball_idx,
-                xrel,
-                yrel,
-                ..
-            } => JoyBallMotion {
-                joy_id: which,
-                ball_idx,
-                xrel,
-                yrel,
-            },
-            SdlEvent::JoyButtonDown {
-                which, button_idx, ..
-            } => JoyDown {
-                joy_id: which,
-                button_idx,
-            },
-            SdlEvent::JoyButtonUp {
-                which, button_idx, ..
-            } => JoyUp {
-                joy_id: which,
-                button_idx,
-            },
-            SdlEvent::JoyDeviceAdded { which, .. } => JoyDeviceAdded { joy_id: which },
-            SdlEvent::JoyDeviceRemoved { which, .. } => JoyDeviceRemoved { joy_id: which },
-            SdlEvent::ControllerAxisMotion {
-                which, axis, value, ..
-            } => ControllerAxisMotion {
-                controller_id: which,
-                axis: axis.into(),
-                value,
-            },
-            SdlEvent::ControllerButtonDown { which, button, .. } => ControllerDown {
-                controller_id: which,
-                button: button.into(),
-            },
-            SdlEvent::ControllerButtonUp { which, button, .. } => ControllerUp {
-                controller_id: which,
-                button: button.into(),
-            },
-            SdlEvent::ControllerDeviceAdded { which, .. } => ControllerAdded {
-                controller_id: which,
-            },
-            SdlEvent::ControllerDeviceRemoved { which, .. } => ControllerRemoved {
-                controller_id: which,
-            },
-            SdlEvent::ControllerDeviceRemapped { which, .. } => ControllerRemapped {
-                controller_id: which,
-            },
-            SdlEvent::FingerDown {
-                touch_id,
-                finger_id,
-                x,
-                y,
-                dx,
-                dy,
-                pressure,
-                ..
-            } => FingerDown {
-                touch_id,
-                finger_id,
-                x,
-                y,
-                dx,
-                dy,
-                pressure,
-            },
-            SdlEvent::FingerUp {
-                touch_id,
-                finger_id,
-                x,
-                y,
-                dx,
-                dy,
-                pressure,
-                ..
-            } => FingerUp {
-                touch_id,
-                finger_id,
-                x,
-                y,
-                dx,
-                dy,
-                pressure,
-            },
-            SdlEvent::FingerMotion {
-                touch_id,
-                finger_id,
-                x,
-                y,
-                dx,
-                dy,
-                pressure,
-                ..
-            } => FingerMotion {
-                touch_id,
-                finger_id,
-                x,
-                y,
-                dx,
-                dy,
-                pressure,
-            },
-            _ => Self::Unknown,
-        }
-    }
-}
-
-impl From<SdlWindowEvent> for WindowEvent {
-    fn from(win_event: SdlWindowEvent) -> Self {
-        use WindowEvent::*;
-        match win_event {
-            SdlWindowEvent::Shown => Shown,
-            SdlWindowEvent::Hidden => Hidden,
-            SdlWindowEvent::Moved(x, y) => Moved(x, y),
-            SdlWindowEvent::Resized(w, h) | SdlWindowEvent::SizeChanged(w, h) => Resized(w, h),
-            SdlWindowEvent::Minimized => Minimized,
-            SdlWindowEvent::Maximized => Maximized,
-            SdlWindowEvent::Restored => Restored,
-            SdlWindowEvent::Enter => Enter,
-            SdlWindowEvent::Leave => Leave,
-            SdlWindowEvent::FocusGained => FocusGained,
-            SdlWindowEvent::FocusLost => FocusLost,
-            SdlWindowEvent::Close => Close,
-            _ => Unknown,
-        }
-    }
-}
-
-impl From<SdlKeycode> for Key {
-    fn from(keycode: SdlKeycode) -> Self {
-        use Key::*;
-        match keycode {
-            SdlKeycode::Backspace => Backspace,
-            SdlKeycode::Tab => Tab,
-            SdlKeycode::Return => Return,
-            SdlKeycode::Escape => Escape,
-            SdlKeycode::Space => Space,
-            SdlKeycode::Exclaim => Exclaim,
-            SdlKeycode::Quotedbl => Quotedbl,
-            SdlKeycode::Hash => Hash,
-            SdlKeycode::Dollar => Dollar,
-            SdlKeycode::Percent => Percent,
-            SdlKeycode::Ampersand => Ampersand,
-            SdlKeycode::Quote => Quote,
-            SdlKeycode::LeftParen => LeftParen,
-            SdlKeycode::RightParen => RightParen,
-            SdlKeycode::Asterisk => Asterisk,
-            SdlKeycode::Plus => Plus,
-            SdlKeycode::Comma => Comma,
-            SdlKeycode::Minus => Minus,
-            SdlKeycode::Period => Period,
-            SdlKeycode::Slash => Slash,
-            SdlKeycode::Num0 => Num0,
-            SdlKeycode::Num1 => Num1,
-            SdlKeycode::Num2 => Num2,
-            SdlKeycode::Num3 => Num3,
-            SdlKeycode::Num4 => Num4,
-            SdlKeycode::Num5 => Num5,
-            SdlKeycode::Num6 => Num6,
-            SdlKeycode::Num7 => Num7,
-            SdlKeycode::Num8 => Num8,
-            SdlKeycode::Num9 => Num9,
-            SdlKeycode::Colon => Colon,
-            SdlKeycode::Semicolon => Semicolon,
-            SdlKeycode::Less => Less,
-            SdlKeycode::Equals => Equals,
-            SdlKeycode::Greater => Greater,
-            SdlKeycode::Question => Question,
-            SdlKeycode::At => At,
-            SdlKeycode::LeftBracket => LeftBracket,
-            SdlKeycode::Backslash => Backslash,
-            SdlKeycode::RightBracket => RightBracket,
-            SdlKeycode::Caret => Caret,
-            SdlKeycode::Underscore => Underscore,
-            SdlKeycode::Backquote => Backquote,
-            SdlKeycode::A => A,
-            SdlKeycode::B => B,
-            SdlKeycode::C => C,
-            SdlKeycode::D => D,
-            SdlKeycode::E => E,
-            SdlKeycode::F => F,
-            SdlKeycode::G => G,
-            SdlKeycode::H => H,
-            SdlKeycode::I => I,
-            SdlKeycode::J => J,
-            SdlKeycode::K => K,
-            SdlKeycode::L => L,
-            SdlKeycode::M => M,
-            SdlKeycode::N => N,
-            SdlKeycode::O => O,
-            SdlKeycode::P => P,
-            SdlKeycode::Q => Q,
-            SdlKeycode::R => R,
-            SdlKeycode::S => S,
-            SdlKeycode::T => T,
-            SdlKeycode::U => U,
-            SdlKeycode::V => V,
-            SdlKeycode::W => W,
-            SdlKeycode::X => X,
-            SdlKeycode::Y => Y,
-            SdlKeycode::Z => Z,
-            SdlKeycode::Delete => Delete,
-            SdlKeycode::CapsLock => CapsLock,
-            SdlKeycode::F1 => F1,
-            SdlKeycode::F2 => F2,
-            SdlKeycode::F3 => F3,
-            SdlKeycode::F4 => F4,
-            SdlKeycode::F5 => F5,
-            SdlKeycode::F6 => F6,
-            SdlKeycode::F7 => F7,
-            SdlKeycode::F8 => F8,
-            SdlKeycode::F9 => F9,
-            SdlKeycode::F10 => F10,
-            SdlKeycode::F11 => F11,
-            SdlKeycode::F12 => F12,
-            SdlKeycode::PrintScreen => PrintScreen,
-            SdlKeycode::ScrollLock => ScrollLock,
-            SdlKeycode::Pause => Pause,
-            SdlKeycode::Insert => Insert,
-            SdlKeycode::Home => Home,
-            SdlKeycode::PageUp => PageUp,
-            SdlKeycode::End => End,
-            SdlKeycode::PageDown => PageDown,
-            SdlKeycode::Right => Right,
-            SdlKeycode::Left => Left,
-            SdlKeycode::Down => Down,
-            SdlKeycode::Up => Up,
-            SdlKeycode::NumLockClear => NumLock,
-            SdlKeycode::LCtrl => LCtrl,
-            SdlKeycode::LShift => LShift,
-            SdlKeycode::LAlt => LAlt,
-            SdlKeycode::LGui => LGui,
-            SdlKeycode::RCtrl => RCtrl,
-            SdlKeycode::RShift => RShift,
-            SdlKeycode::RAlt => RAlt,
-            SdlKeycode::RGui => RGui,
-            _ => Unknown,
-        }
-    }
-}
-
-impl From<SdlMod> for KeyMod {
-    fn from(keymod: SdlMod) -> Self {
-        let mut result = KeyMod::NONE;
-        if keymod.contains(SdlMod::LSHIFTMOD) || keymod.contains(SdlMod::RSHIFTMOD) {
-            result |= KeyMod::SHIFT;
-        }
-        if keymod.contains(SdlMod::LCTRLMOD) || keymod.contains(SdlMod::RCTRLMOD) {
-            result |= KeyMod::CTRL;
-        }
-        if keymod.contains(SdlMod::LALTMOD) || keymod.contains(SdlMod::RALTMOD) {
-            result |= KeyMod::ALT;
-        }
-        if keymod.contains(SdlMod::LGUIMOD) || keymod.contains(SdlMod::RGUIMOD) {
-            result |= KeyMod::GUI;
-        }
-        result
-    }
-}
-
-impl From<SdlMouseButton> for Mouse {
-    fn from(button: SdlMouseButton) -> Self {
-        use Mouse::*;
-        match button {
-            SdlMouseButton::Left => Left,
-            SdlMouseButton::Middle => Middle,
-            SdlMouseButton::Right => Right,
-            _ => Unknown,
-        }
-    }
-}
-
-impl From<SdlButton> for Button {
-    fn from(button: SdlButton) -> Self {
-        use Button::*;
-        match button {
-            SdlButton::A => A,
-            SdlButton::B => B,
-            SdlButton::X => X,
-            SdlButton::Y => Y,
-            SdlButton::Back => Back,
-            SdlButton::Guide => Guide,
-            SdlButton::Start => Start,
-            SdlButton::LeftStick => LeftStick,
-            SdlButton::RightStick => RightStick,
-            SdlButton::LeftShoulder => LeftShoulder,
-            SdlButton::RightShoulder => RightShoulder,
-            SdlButton::DPadUp => DPadUp,
-            SdlButton::DPadDown => DPadDown,
-            SdlButton::DPadLeft => DPadLeft,
-            SdlButton::DPadRight => DPadRight,
-        }
-    }
-}
-
-impl From<SdlAxis> for Axis {
-    fn from(axis: SdlAxis) -> Self {
-        use Axis::*;
-        match axis {
-            SdlAxis::LeftX => LeftX,
-            SdlAxis::LeftY => LeftY,
-            SdlAxis::RightX => RightX,
-            SdlAxis::RightY => RightY,
-            SdlAxis::TriggerLeft => TriggerLeft,
-            SdlAxis::TriggerRight => TriggerRight,
-        }
-    }
-}
 
 impl ToColor for Color {
     fn as_rgba(&self) -> (u8, u8, u8, u8) {

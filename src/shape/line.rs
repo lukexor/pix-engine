@@ -1,8 +1,7 @@
 //! [`Line`] type used for drawing.
 
-use super::Point;
-use crate::{point, vector::Vector};
-use num_traits::{Float, Num};
+use crate::prelude::{point, Draw, PixResult, PixState, Point, Vector};
+use num_traits::Num;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -10,42 +9,49 @@ use serde::{Deserialize, Serialize};
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Line<T> {
-    /// Start [Point<T>].
-    pub p1: Point<T>,
-    /// End [Point<T>].
-    pub p2: Point<T>,
+    /// Start of line.
+    pub start: Point<T>,
+    /// End of line.
+    pub end: Point<T>,
 }
 
-impl<T> Line<T>
-where
-    T: Num,
-{
-    /// Constructs a `Line`.
-    pub fn new<P>(p1: P, p2: P) -> Self
+impl<T> Line<T> {
+    /// Constructs a `Line` from `start` to `end` [`Point<T>`]s.
+    pub fn new<P>(start: P, end: P) -> Self
     where
         P: Into<Point<T>>,
     {
         Self {
-            p1: p1.into(),
-            p2: p2.into(),
+            start: start.into(),
+            end: end.into(),
         }
     }
 
-    /// Returns whether this line intersects with another line.
-    pub fn intersects(&self, other: impl Into<Line<T>>) -> Option<Point<T>>
+    /// Constructs a `Line` from `start` and `end` coordinates.
+    pub fn with_xy(start_x: T, start_y: T, end_x: T, end_y: T) -> Self
     where
-        T: Float + PartialOrd + Copy,
+        T: Num,
     {
-        let (p1, p2) = self.into();
-        let (p3, p4) = other.into().into();
-        let ua = ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x))
-            / ((p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y));
-        let ub = ((p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x))
-            / ((p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y));
+        let start = point!(start_x, start_y);
+        let end = point!(end_x, end_y);
+        Self { start, end }
+    }
+
+    /// Returns whether this line intersects with another line.
+    pub fn intersects(&self, other: impl Into<[f64; 4]>) -> Option<Point<f64>>
+    where
+        T: Num + Copy + Into<[f64; 4]>,
+    {
+        let [p1x, p1y, p2x, p2y]: [f64; 4] = self.into();
+        let [p3x, p3y, p4x, p4y]: [f64; 4] = other.into();
+        let ua = ((p4x - p3x) * (p1y - p3y) - (p4y - p3y) * (p1x - p3x))
+            / ((p4y - p3y) * (p2x - p1x) - (p4x - p3x) * (p2y - p1y));
+        let ub = ((p2x - p1x) * (p1y - p3y) - (p2y - p1y) * (p1x - p3x))
+            / ((p4y - p3y) * (p2x - p1x) - (p4x - p3x) * (p2y - p1y));
         // If ua and ub are between 0.0 and 1.0, intersection
-        if ua >= T::zero() && ub <= T::one() && ub >= T::zero() && ub <= T::one() {
-            let x = p1.x + ua * (p2.x - p1.x);
-            let y = p1.y + ua * (p2.y - p1.y);
+        if (0.0..=1.0).contains(&ua) && (0.0..=1.0).contains(&ub) {
+            let x = p1x + ua * (p2x - p1x);
+            let y = p1y + ua * (p2y - p1y);
             Some(point!(x, y))
         } else {
             None
@@ -53,53 +59,84 @@ where
     }
 }
 
-/// Convert `(x1, y1, x2, y2)` to [`Line<T>`].
-impl<T> From<(T, T, T, T)> for Line<T>
-where
-    T: Num + Copy,
-{
-    fn from((x1, y1, x2, y2): (T, T, T, T)) -> Self {
-        Self::new((x1, y1), (x2, y2))
+impl<T> Draw for Line<T> {
+    /// Draw line to the current [`PixState`] canvas.
+    fn draw(&self, s: &mut PixState) -> PixResult<()> {
+        s.line(self)
     }
 }
 
-/// Convert ([`Point<T>`], [`Point<T>`]) to [`Line<T>`].
-impl<T> From<(Point<T>, Point<T>)> for Line<T>
+/// Convert `[x1, y1, x2, y2]` to [`Line<T>`].
+impl<T: Num, U: Into<T>> From<[U; 4]> for Line<T> {
+    fn from([x1, y1, x2, y2]: [U; 4]) -> Self {
+        Self::new([x1, y1], [x2, y2])
+    }
+}
+
+/// Convert [`Line<U>`] to `[x1, y1, x2, y2]`.
+impl<T: Num, U: Into<T>> From<Line<U>> for [T; 4] {
+    fn from(line: Line<U>) -> Self {
+        let (x1, y1) = line.start.into();
+        let (x2, y2) = line.end.into();
+        [x1, y1, x2, y2]
+    }
+}
+
+/// Convert [`&Line<U>`] to `[x1, y1, x2, y2]`.
+impl<T: Num, U: Into<T> + Copy> From<&Line<U>> for [T; 4] {
+    fn from(line: &Line<U>) -> Self {
+        let (x1, y1) = line.start.into();
+        let (x2, y2) = line.end.into();
+        [x1, y1, x2, y2]
+    }
+}
+
+/// Convert ([`Point<U>`], [`Point<U>`]) to [`Line<T>`].
+impl<T, U: Into<T>> From<(Point<U>, Point<U>)> for Line<T>
 where
-    T: Num + Copy,
+    Point<U>: Into<Point<T>>,
 {
-    fn from((p1, p2): (Point<T>, Point<T>)) -> Self {
+    fn from((p1, p2): (Point<U>, Point<U>)) -> Self {
         Self::new(p1, p2)
     }
 }
 
-/// Convert [`Line<T>`] to ([`Point<T>`], [`Point<T>`]).
-impl<T> From<Line<T>> for (Point<T>, Point<T>)
+/// Convert [`Line<U>`] to ([`Point<T>`], [`Point<T>`]).
+impl<T: Num, U: Into<T>> From<Line<U>> for (Point<T>, Point<T>)
 where
-    T: Num + Copy,
+    Point<U>: Into<Point<T>>,
 {
-    fn from(line: Line<T>) -> Self {
-        (line.p1, line.p2)
+    fn from(line: Line<U>) -> Self {
+        (line.start.into(), line.end.into())
     }
 }
 
-/// Convert [`Line<T>`] to ([`Point<T>`], [`Point<T>`]).
-impl<T> From<&Line<T>> for (Point<T>, Point<T>)
+/// Convert [`Line<U>`] to ([`Point<T>`], [`Point<T>`]).
+impl<T: Num, U: Into<T> + Copy> From<&Line<U>> for (Point<T>, Point<T>)
 where
-    T: Num + Copy,
+    Point<U>: Into<Point<T>>,
 {
-    fn from(line: &Line<T>) -> Self {
-        (line.p1, line.p2)
+    fn from(line: &Line<U>) -> Self {
+        (line.start.into(), line.end.into())
     }
 }
 
-/// Convert ([`Vector<T>`], [`Vector<T>`]) to [`Line<T>`].
-impl<T> From<(Vector<T>, Vector<T>)> for Line<T>
+/// Convert ([`Vector<U>`], [`Vector<U>`]) to [`Line<T>`].
+impl<T: Num, U: Into<T>> From<(Vector<U>, Vector<U>)> for Line<T>
 where
-    Vector<T>: Into<Point<T>>,
-    T: Num + Copy,
+    Vector<U>: Into<Point<T>>,
 {
-    fn from((v1, v2): (Vector<T>, Vector<T>)) -> Self {
+    fn from((v1, v2): (Vector<U>, Vector<U>)) -> Self {
         Self::new(v1, v2)
+    }
+}
+
+/// Convert [`Line<U>`] to ([`Vector<T>`], [`Vector<T>`]).
+impl<T: Num, U: Into<T> + Copy> From<&Line<U>> for (Vector<T>, Vector<T>)
+where
+    Point<U>: Into<Vector<T>>,
+{
+    fn from(line: &Line<U>) -> Self {
+        (line.start.into(), line.end.into())
     }
 }

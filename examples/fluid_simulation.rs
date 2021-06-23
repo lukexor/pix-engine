@@ -237,7 +237,7 @@ impl Fluid {
                 let f = m * d;
                 if f > 15.0 {
                     s.fill(rgb!(f.floor() as u8, (f / 3.0).floor() as u8, 0, 220));
-                    s.square((x, y, SCALE))?;
+                    s.square(square!(x, y, SCALE))?;
                 }
             }
         }
@@ -262,7 +262,7 @@ struct App {
     t: f64,
     xs: [f64; COUNT],
     ys: [f64; COUNT],
-    base: Rect<u32>,
+    base: Rect<i32>,
 }
 
 impl App {
@@ -272,7 +272,7 @@ impl App {
             t: 0.0,
             xs: [0.0; COUNT],
             ys: [0.0; COUNT],
-            base: rect!(0, HEIGHT - 10, WIDTH * SCALE as u32, 20),
+            base: rect!(0, (HEIGHT as i32) - 10, (WIDTH as i32) * SCALE, 20),
         }
     }
 
@@ -292,13 +292,13 @@ impl App {
     }
 
     fn drag(&mut self, s: &mut PixState) -> PixResult<()> {
-        let (x, y) = s.mouse_pos().into();
+        let mouse = s.mouse_pos();
         let r = 3.0;
         for i in 0..628 {
             let (sin, cos) = (i as f64 * 0.01).sin_cos();
             let idx = get_idx(
-                ((x / SCALE as i32) as f64 + r * cos).floor() as usize,
-                ((y / SCALE as i32) as f64 + r * sin).floor() as usize,
+                ((mouse.x / SCALE as i32) as f64 + r * cos).floor() as usize,
+                ((mouse.y / SCALE as i32) as f64 + r * sin).floor() as usize,
             );
             self.fluid.density[idx] += random!(100.0);
             let velx = random!(-2.0 * VEL, 2.0 * VEL);

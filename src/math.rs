@@ -2,12 +2,13 @@
 
 use crate::vector::Vector;
 use lazy_static::lazy_static;
-use num_traits::{clamp, AsPrimitive, Num, NumCast};
+use num_traits::{Num, NumCast};
 use rand::{self, distributions::uniform::SampleUniform, Rng};
-use std::{
-    f64::consts::PI,
-    ops::{AddAssign, Range},
-};
+use std::ops::{AddAssign, Range};
+
+/// Default scalar type used for operations.
+pub type Scalar = f64;
+const PI: Scalar = std::f64::consts::PI;
 
 const PERLIN_YWRAPB: usize = 4;
 const PERLIN_YWRAP: usize = 1 << PERLIN_YWRAPB;
@@ -16,7 +17,7 @@ const PERLIN_ZWRAP: usize = 1 << PERLIN_ZWRAPB;
 const PERLIN_SIZE: usize = 4095;
 
 lazy_static! {
-    static ref PERLIN: Vec<f64> = {
+    static ref PERLIN: Vec<Scalar> = {
         let mut perlin = Vec::with_capacity(PERLIN_SIZE + 1);
         for _ in 0..PERLIN_SIZE + 1 {
             perlin.push(random(1.0));
@@ -48,16 +49,16 @@ where
 
 /// Returns the Perlin noise value at specified coordinates.
 #[allow(clippy::many_single_char_names)]
-pub fn noise(v: impl Into<Vector<f64>>) -> f64 {
+pub fn noise(v: impl Into<Vector<Scalar>>) -> Scalar {
     let v = v.into();
 
     let x = v.x.abs();
     let y = v.y.abs();
     let z = v.z.abs();
 
-    let mut xi: usize = x.trunc().as_();
-    let mut yi: usize = y.trunc().as_();
-    let mut zi: usize = z.trunc().as_();
+    let mut xi: usize = x.trunc() as usize;
+    let mut yi: usize = y.trunc() as usize;
+    let mut zi: usize = z.trunc() as usize;
 
     let mut xf = x.fract();
     let mut yf = y.fract();
@@ -69,7 +70,7 @@ pub fn noise(v: impl Into<Vector<f64>>) -> f64 {
 
     let (mut n1, mut n2, mut n3);
 
-    let scaled_cosine = |i: f64| 0.5 * (1.0 - (i - PI).cos());
+    let scaled_cosine = |i: Scalar| 0.5 * (1.0 - (i - PI).cos());
 
     let perlin_octaves = 4; // default to medium smooth
     let perlin_amp_falloff = 0.5; // 50% reduction/octave
@@ -183,7 +184,7 @@ macro_rules! noise {
 
 /// Remaps a number from one range to another.
 ///
-/// Map range defaults to 0.0...f64::MAX in the event casting to f64 fails.
+/// Map range defaults to `0.0..=Scalar::MAX` in the event casting to [`Scalar`] fails.
 /// NaN will result in the max mapped value.
 ///
 /// # Example
@@ -199,30 +200,29 @@ macro_rules! noise {
 /// let m = map(value, 0.0, 100.0, 0.0, 1.0);
 /// assert_eq!(m, 0.5);
 ///
-/// let value = f64::NAN;
+/// let value = Scalar::NAN;
 /// let m = map(value, 0.0, 100.0, 0.0, 1.0);
 /// assert!(m.is_nan());
 ///
-/// let value = f64::INFINITY;
+/// let value = Scalar::INFINITY;
 /// let m = map(value, 0.0, 100.0, 0.0, 1.0);
 /// assert_eq!(m, 1.0);
 ///
-/// let value = f64::NEG_INFINITY;
+/// let value = Scalar::NEG_INFINITY;
 /// let m = map(value, 0.0, 100.0, 0.0, 1.0);
 /// assert_eq!(m, 0.0);
 /// ```
 pub fn map<T>(value: T, start1: T, end1: T, start2: T, end2: T) -> T
 where
-    T: NumCast + AsPrimitive<f64> + Copy,
+    T: Into<Scalar> + From<Scalar> + PartialOrd + Copy,
 {
-    let default = end1;
-    let start1: f64 = start1.as_();
-    let end1: f64 = end1.as_();
-    let start2: f64 = start2.as_();
-    let end2: f64 = end2.as_();
-    let value: f64 = value.as_();
+    let start1 = start1.into();
+    let end1 = end1.into();
+    let start2 = start2.into();
+    let end2 = end2.into();
+    let value = value.into();
     let new_val = (value - start1) / (end1 - start1) * (end2 - start2) + start2;
-    NumCast::from(clamp(new_val, start2, end2)).unwrap_or(default)
+    new_val.clamp(start2, end2).into()
 }
 
 /// Linear interpolates between two values by a given amount.

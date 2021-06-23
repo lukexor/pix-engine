@@ -95,13 +95,13 @@ impl App {
         )
     }
 
-    fn canvas_to_screen(&self, x: i32, y: i32, s: &PixState) -> Point<f64> {
+    fn canvas_to_screen(&self, x: i32, y: i32, s: &PixState) -> Point<i32> {
         let width = s.width() as f64;
         let height = s.height() as f64;
         point!(
-            width / 2.0 + x as f64,
-            height / 2.0 - y as f64,
-            self.proj_plane_dist
+            (width / 2.0 + x as f64).round() as i32,
+            (height / 2.0 - y as f64).round() as i32,
+            self.proj_plane_dist.round() as i32
         )
     }
 

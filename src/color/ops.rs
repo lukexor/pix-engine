@@ -31,7 +31,7 @@ impl Index<usize> for Color {
     type Output = f64;
     fn index(&self, idx: usize) -> &Self::Output {
         match idx {
-            i if i < 4 => self.levels.get(i).unwrap(),
+            i if i < 4 => &self.levels[i],
             _ => panic!("index out of bounds: the len is 4 but the index is {}", idx),
         }
     }

@@ -94,6 +94,7 @@ pub mod state;
 #[macro_use]
 pub mod vector;
 pub mod texture;
+pub mod window;
 
 mod common;
 mod utils;
@@ -103,19 +104,19 @@ pub mod prelude {
     use super::*;
     pub use color::{constants::*, Color, ColorError, ColorMode};
     pub use common::{Error as PixError, Result as PixResult};
+    pub use draw::Draw;
     pub use engine::PixEngine;
     pub use event::{Axis, Button, Event, Key, KeyEvent, KeyMod, Mouse, WindowEvent};
     pub use image::{Image, PixelFormat};
     pub use math::map;
-    pub use renderer::Position;
-    pub use shape::{Circle, Ellipse, Line, Point, Rect, Square, Triangle};
+    pub use shape::{Circle, Ellipse, Line, Point, Rect, Shape, Triangle};
     pub use state::{
-        environment::WindowId,
         settings::{AngleMode, ArcMode, BlendMode, DrawMode},
         AppState, PixState,
     };
     pub use texture::TextureId;
     pub use vector::Vector;
+    pub use window::{Position, WindowBuilder, WindowId};
     // Color macros
     pub use {color, hsb, hsl, rgb};
     // Math macros
