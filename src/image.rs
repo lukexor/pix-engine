@@ -160,7 +160,7 @@ impl PixState {
             height,
             data: vec![0x00; format.channels() * (width * height) as usize],
             format,
-            texture_id: self.create_texture(format, width, height)?,
+            texture_id: self.create_texture(width, height, format)?,
         })
     }
 
@@ -172,7 +172,7 @@ impl PixState {
             height,
             data: vec![0x00; format.channels() * (width * height) as usize],
             format,
-            texture_id: self.create_texture(format, width, height)?,
+            texture_id: self.create_texture(width, height, format)?,
         })
     }
 
@@ -189,7 +189,7 @@ impl PixState {
             height,
             data: bytes.to_vec(),
             format,
-            texture_id: self.create_texture(format, width, height)?,
+            texture_id: self.create_texture(width, height, format)?,
         })
     }
 
@@ -216,7 +216,7 @@ impl PixState {
             height: info.height,
             data,
             format,
-            texture_id: self.create_texture(format, info.width, info.height)?,
+            texture_id: self.create_texture(info.width, info.height, format)?,
         })
     }
 }

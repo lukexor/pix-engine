@@ -144,19 +144,19 @@ impl AppState for Maze {
                 } else {
                     s.fill(BLUE);
                 }
-                s.square((x * (SIZE + 1), y * (SIZE + 1), SIZE))?;
+                s.square([x * (SIZE + 1), y * (SIZE + 1), SIZE])?;
                 if cell & PATH_S > 0 {
-                    s.rect((x * (SIZE + 1), y * (SIZE + 1) + SIZE, SIZE, 1))?;
+                    s.rect([x * (SIZE + 1), y * (SIZE + 1) + SIZE, SIZE, 1])?;
                 }
                 if cell & PATH_E > 0 {
-                    s.rect((x * (SIZE + 1) + SIZE, y * (SIZE + 1), 1, SIZE))?;
+                    s.rect([x * (SIZE + 1) + SIZE, y * (SIZE + 1), 1, SIZE])?;
                 }
             }
         }
 
         if let Some(top) = self.stack.last() {
             s.fill(GREEN);
-            s.square((top.0 * (SIZE + 1), top.1 * (SIZE + 1), SIZE))?;
+            s.square([top.0 * (SIZE + 1), top.1 * (SIZE + 1), SIZE])?;
         }
         Ok(())
     }

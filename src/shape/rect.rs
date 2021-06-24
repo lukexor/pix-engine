@@ -1,10 +1,7 @@
 //! [`Rect`] types used for drawing.
 
-use crate::{
-    prelude::{Draw, Line, PixResult, PixState, Point, Shape},
-    vector::Vector,
-};
-use num_traits::Num;
+use crate::prelude::{Draw, Line, PixResult, PixState, Point, Shape, ShapeNum};
+use num_traits::{AsPrimitive, Num};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -55,7 +52,8 @@ macro_rules! rect {
 /// let s = square!(10, 20, 100);
 /// assert_eq!(s.x, 10);
 /// assert_eq!(s.y, 20);
-/// assert_eq!(s.size, 100);
+/// assert_eq!(s.width, 100);
+/// assert_eq!(s.height, 100);
 /// ```
 #[macro_export]
 macro_rules! square {
@@ -106,6 +104,44 @@ impl<T> Rect<T> {
         self.width = width;
         self.height = height;
     }
+
+    /// Converts [`Rect<T>`] to [`Rect<i16>`].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let r: Rect<f32> = rect!(f32::MIN, 2.0, 3.0, f32::MAX);
+    /// let r = r.as_i16();
+    /// assert_eq!(r.x, i16::MIN);
+    /// assert_eq!(r.y, 2);
+    /// assert_eq!(r.width, 3);
+    /// assert_eq!(r.height, i16::MAX);
+    /// ```
+    pub fn as_i16(&self) -> Rect<i16>
+    where
+        T: AsPrimitive<i16>,
+    {
+        Rect::new(
+            self.x.as_(),
+            self.y.as_(),
+            self.width.as_(),
+            self.height.as_(),
+        )
+    }
+
+    /// Converts [`Rect<T>`] to [`Rect<f64>`].
+    pub fn as_f64(&self) -> Rect<f64>
+    where
+        T: AsPrimitive<f64>,
+    {
+        Rect::new(
+            self.x.as_(),
+            self.y.as_(),
+            self.width.as_(),
+            self.height.as_(),
+        )
+    }
 }
 
 impl<T> Rect<T>
@@ -146,12 +182,7 @@ where
     pub fn from_center(p: impl Into<(T, T)>, width: T, height: T) -> Self {
         let (x, y) = p.into();
         let two = T::one() + T::one();
-        Self {
-            x: x - width / two,
-            y: y - height / two,
-            width,
-            height,
-        }
+        Self::new(x - width / two, y - height / two, width, height)
     }
 
     /// Returns the horizontal position of the left edge.
@@ -231,9 +262,8 @@ where
     }
 }
 
-impl<T: Num + PartialOrd> Shape for Rect<T> {
+impl<T: ShapeNum> Shape<T> for Rect<T> {
     type Item = Rect<T>;
-    type DrawType = i16;
 
     /// Returns whether this rectangle contains a given [`Point<T>`].
     fn contains_point(&self, p: impl Into<Point<T>>) -> bool {
@@ -250,28 +280,25 @@ impl<T: Num + PartialOrd> Shape for Rect<T> {
             && other.bottom() < self.bottom()
     }
 
-    /// Returns whether this rectangle intersects with a line.
-    fn intersects_line(&self, line: impl Into<Line<f64>>) -> Option<(Point<f64>, Point<f64>)>
-    where
-        T: Into<f64>,
-    {
+    /// Returns the closest intersection point with a given line and distance along the line or
+    /// `None` if there is no intersection.
+    fn intersects_line(&self, line: impl Into<Line<f64>>) -> Option<(Point<f64>, f64)> {
+        let rect: Rect<f64> = self.as_f64();
         let line = line.into();
-        let left = line.intersects(Line::new(self.top_left(), self.bottom_left()));
-        let right = line.intersects(Line::new(self.top_right(), self.bottom_right()));
-        let top = line.intersects(Line::new(self.top_left(), self.top_right()));
-        let bottom = line.intersects(Line::new(self.bottom_left(), self.bottom_right()));
+        let left = line.intersects(Line::new(rect.top_left(), rect.bottom_left()));
+        let right = line.intersects(Line::new(rect.top_right(), rect.bottom_right()));
+        let top = line.intersects(Line::new(rect.top_left(), rect.top_right()));
+        let bottom = line.intersects(Line::new(rect.bottom_left(), rect.bottom_right()));
         [left, right, top, bottom]
             .iter()
             .filter_map(|&p| p)
-            .fold(None, |intersections, p1| {
-                let p2 = if line.start == p1 {
-                    line.end
+            .fold(None, |closest, intersection| {
+                let closest_t = closest.map(|c| c.1).unwrap_or(f64::INFINITY);
+                let t = intersection.1;
+                if t < closest_t {
+                    Some(intersection)
                 } else {
-                    line.start
-                };
-                match intersections {
-                    None => Some((p1, p2)),
-                    Some((i1, _)) => Some((i1, p2)),
+                    closest
                 }
             })
     }
@@ -288,10 +315,51 @@ impl<T: Num + PartialOrd> Shape for Rect<T> {
     }
 }
 
-impl<T> Draw for Rect<T> {
+impl<T> Draw for Rect<T>
+where
+    Rect<T>: Copy + Into<Rect<f64>>,
+{
     /// Draw rectangle to the current [`PixState`] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
-        s.rect(self)
+        s.rect(*self)
+    }
+}
+
+macro_rules! impl_from {
+    ($from:ty => $to:ty) => {
+        impl From<Rect<$from>> for Rect<$to> {
+            fn from(r: Rect<$from>) -> Self {
+                Rect::new(r.x.into(), r.y.into(), r.width.into(), r.height.into())
+            }
+        }
+    };
+}
+
+impl_from!(i8 => f32);
+impl_from!(u8 => f32);
+impl_from!(i16 => f32);
+impl_from!(u16 => f32);
+impl_from!(i8 => f64);
+impl_from!(u8 => f64);
+impl_from!(i16 => f64);
+impl_from!(u16 => f64);
+impl_from!(i32 => f64);
+impl_from!(u32 => f64);
+impl_from!(f32 => f64);
+
+/// Convert `[x, y, size]` to [`Rect<T>`].
+impl<T: Copy, U: Into<T>> From<[U; 3]> for Rect<T> {
+    fn from([x, y, size]: [U; 3]) -> Self {
+        let size = size.into();
+        Self::new(x.into(), y.into(), size, size)
+    }
+}
+
+/// Convert `&[x, y, size]` to [`Rect<T>`].
+impl<T: Copy, U: Copy + Into<T>> From<&[U; 3]> for Rect<T> {
+    fn from(&[x, y, size]: &[U; 3]) -> Self {
+        let size = size.into();
+        Self::new(x.into(), y.into(), size, size)
     }
 }
 
@@ -303,65 +371,23 @@ impl<T, U: Into<T>> From<[U; 4]> for Rect<T> {
 }
 
 /// Convert `&[x, y, width, height]` to [`Rect<T>`].
-impl<T: Copy, U: Into<T>> From<&[U; 4]> for Rect<T> {
+impl<T, U: Copy + Into<T>> From<&[U; 4]> for Rect<T> {
     fn from(&[x, y, width, height]: &[U; 4]) -> Self {
         Self::new(x.into(), y.into(), width.into(), height.into())
     }
 }
 
 /// Convert [`Rect<T>`] to `[x, y, width, height]`.
-impl<T: Copy, U: Into<T>> From<Rect<U>> for [T; 4] {
+impl<T, U: Into<T>> From<Rect<U>> for [T; 4] {
     fn from(r: Rect<U>) -> Self {
         [r.x.into(), r.y.into(), r.width.into(), r.height.into()]
     }
 }
 
 /// Convert [`&Rect<T>`] to `[x, y, width, height]`.
-impl<T: Copy, U: Into<T>> From<&Rect<U>> for [T; 4] {
+impl<T, U: Copy + Into<T>> From<&Rect<U>> for [T; 4] {
     fn from(r: &Rect<U>) -> Self {
         [r.x.into(), r.y.into(), r.width.into(), r.height.into()]
-    }
-}
-
-/// Convert ([`Point<U>`], `width`, `height`) to [`Rect<T>`].
-impl<T, U: Into<T>, V: Into<T>> From<(Point<U>, V, V)> for Rect<T> {
-    fn from((p, width, height): (Point<U>, V, V)) -> Self {
-        Self::new(p.x.into(), p.y.into(), width.into(), height.into())
-    }
-}
-
-/// Convert [`Rect<T>`] to ([`Point<U>`], `width`, `height`).
-impl<T, U: Into<T>, V: Into<T>> From<Rect<U>> for (Point<T>, V, V) {
-    fn from(r: Rect<U>) -> Self {
-        ((r.x, r.y).into(), r.width.into(), r.height.into())
-    }
-}
-
-/// Convert [`&Rect<T>`] to ([`Point<U>`], `width`, `height`).
-impl<T, U: Into<T>, V: Into<T>> From<&Rect<U>> for (Point<T>, V, V) {
-    fn from(r: &Rect<U>) -> Self {
-        ((r.x, r.y).into(), r.width.into(), r.height.into())
-    }
-}
-
-/// Convert ([`Vector<U>`], `width`, `height`) to [`Rect<T>`].
-impl<T, U: Into<T>, V: Into<T>> From<(Vector<U>, V, V)> for Rect<T> {
-    fn from((v, width, height): (Vector<U>, V, V)) -> Self {
-        Self::new(v.x.into(), v.y.into(), width.into(), height.into())
-    }
-}
-
-/// Convert [`Rect<T>`] to ([`Vector<U>`], `width`, `height`).
-impl<T, U: Into<T>, V: Into<T>> From<Rect<U>> for (Vector<T>, V, V) {
-    fn from(r: Rect<U>) -> Self {
-        ((r.x, r.y).into(), r.width.into(), r.height.into())
-    }
-}
-
-/// Convert [`&Rect<T>`] to ([`Vector<U>`], `width`, `height`).
-impl<T, U: Into<T>, V: Into<T>> From<&Rect<U>> for (Vector<T>, V, V) {
-    fn from(r: &Rect<U>) -> Self {
-        ((r.x, r.y).into(), r.width.into(), r.height.into())
     }
 }
 
@@ -369,33 +395,63 @@ impl<T, U: Into<T>, V: Into<T>> From<&Rect<U>> for (Vector<T>, V, V) {
 mod tests {
     use crate::prelude::*;
 
+    macro_rules! assert_approx_eq {
+        ($i1:expr, $i2:expr) => {
+            assert_approx_eq!($i1, $i2, f64::EPSILON);
+        };
+        ($i1:expr, $i2:expr, $e:expr) => {{
+            match ($i1, $i2) {
+                (Some((p1, t1)), Some((p2, t2))) => {
+                    let [x1, y1, z1]: [f64; 3] = p1.into();
+                    let [x2, y2, z2]: [f64; 3] = p2.into();
+                    let xd = (x1 - x2).abs();
+                    let yd = (y1 - y2).abs();
+                    let zd = (z1 - z2).abs();
+                    let td = (t1 - t2).abs();
+                    assert!(xd < $e, "x: ({} - {}) < {}", x1, x2, $e);
+                    assert!(yd < $e, "y: ({} - {}) < {}", y1, y2, $e);
+                    assert!(zd < $e, "z: ({} - {}) < {}", z1, z2, $e);
+                    assert!(td < $e, "t: ({} - {}) < {}", t1, t2, $e);
+                }
+                _ => assert_eq!($i1, $i2),
+            }
+        }};
+    }
+
     #[test]
     fn test_intersects_line() {
-        let rect = rect!(10, 10, 100, 100);
+        let rect: Rect<i32> = rect!(10, 10, 100, 100);
 
-        // (Left, p2)
-        let line = Line::with_xy(5, 7, 20, 30);
-        // assert_eq!(
-        //     rect.intersects_line(line),
-        //     Some((point!(0.0, 0.0), point!(0.0, 0.0)))
-        // );
-        // (Left, Right)
-        // (Left, Top)
-        // (Left, Bottom)
+        // Left
+        let line = Line::new([3, 7], [20, 30]);
+        assert_approx_eq!(
+            rect.intersects_line(line),
+            Some((point!(10.0, 16.471), 0.411)),
+            0.001
+        );
 
-        // (Right, p1)
-        // (Right, Left)
-        // (Right, Top)
-        // (Right, Bottom)
+        // Right
+        let line = Line::new([150, 50], [90, 30]);
+        assert_approx_eq!(
+            rect.intersects_line(line),
+            Some((point!(110.0, 36.667), 0.667)),
+            0.001
+        );
 
-        // (Top, p2)
-        // (Top, Left)
-        // (Top, Right)
-        // (Top, Bottom)
+        // Top
+        let line = Line::new([50, 5], [70, 30]);
+        assert_approx_eq!(
+            rect.intersects_line(line),
+            Some((point!(54.0, 10.0), 0.2)),
+            0.001
+        );
 
-        // (Bottom, p1)
-        // (Bottom, Left)
-        // (Bottom, Right)
-        // (Bottom, Top)
+        // Bottom
+        let line = Line::new([50, 150], [30, 30]);
+        assert_approx_eq!(
+            rect.intersects_line(line),
+            Some((point!(43.3333, 110.0), 0.333)),
+            0.001
+        );
     }
 }

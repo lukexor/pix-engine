@@ -12,24 +12,11 @@ const SOUTH: usize = 1;
 const EAST: usize = 2;
 const WEST: usize = 3;
 
-struct Edge {
-    start: Vector<f64>,
-    end: Vector<f64>,
-}
-
-impl Edge {
-    pub fn new<V: Into<Vector<f64>>>(start: V, end: V) -> Self {
-        let start = start.into();
-        let end = end.into();
-        Self { start, end }
-    }
-}
-
 struct RayScene {
     cells: Vec<Cell>,
-    edges: Vec<Edge>,
-    points: Vec<Vector<f64>>,
-    polygons: Vec<(f64, Vector<f64>)>,
+    edges: Vec<Line<f64>>,
+    points: Vec<Point<f64>>,
+    polygons: Vec<(f64, Point<f64>)>,
     xcells: u32,
     ycells: u32,
     drawing: bool,
@@ -43,7 +30,7 @@ impl RayScene {
         let mut cells = Vec::with_capacity((xcells * ycells) as usize);
         for y in 0..ycells {
             for x in 0..xcells {
-                cells.push(Cell::new((x as f64, y as f64)));
+                cells.push(Cell::new([x as f64, y as f64]));
             }
         }
         Self {
@@ -75,7 +62,7 @@ impl RayScene {
             .map(|c| c.edges[dir].1)
             .ok_or_else(|| PixError::Other(Cow::from("invalid cell index")))
     }
-    fn get_edge_mut(&mut self, i: usize) -> PixResult<&mut Edge> {
+    fn get_edge_mut(&mut self, i: usize) -> PixResult<&mut Line<f64>> {
         self.edges
             .get_mut(i)
             .ok_or_else(|| PixError::Other(Cow::from("invalid edge index")))
@@ -83,16 +70,16 @@ impl RayScene {
 
     #[allow(clippy::many_single_char_names)]
     fn convert_edges_to_poly_map(&mut self) -> PixResult<()> {
-        let s = Rect::new(0, 0, self.xcells, self.ycells);
-        let pitch = self.xcells;
+        let s = Rect::new(0, 0, self.xcells as i32, self.ycells as i32);
+        let pitch = self.xcells as i32;
         let block_size = BLOCK_SIZE as i32;
         // Reset edges state, keeping only the window boundaries
         self.edges.truncate(4);
         for c in self.cells.iter_mut() {
             c.reset();
         }
-        let width = s.width;
-        let height = s.height;
+        let width = s.width as i32;
+        let height = s.height as i32;
         for x in 0..width {
             for y in 0..height {
                 let x_off = x + s.x;
@@ -119,7 +106,7 @@ impl RayScene {
                             // Create WEST edge extending downward
                             let start = vector!(x_off * block_size, y_off * block_size);
                             let end = vector!(start.x, start.y + block_size as f64);
-                            let edge = Edge { start, end };
+                            let edge = Line::new(start, end);
                             let edge_id = self.edges.len();
                             self.edges.push(edge);
                             self.cells[i].edges[WEST] = (true, edge_id);
@@ -137,7 +124,7 @@ impl RayScene {
                             let start =
                                 vector!(x_off * block_size + block_size, y_off * block_size);
                             let end = vector!(start.x, start.y + block_size as f64);
-                            let edge = Edge { start, end };
+                            let edge = Line::new(start, end);
                             let edge_id = self.edges.len();
                             self.edges.push(edge);
                             self.cells[i].edges[EAST] = (true, edge_id);
@@ -154,7 +141,7 @@ impl RayScene {
                             // Create NORTH edge extending right
                             let start = vector!(x_off * block_size, y_off * block_size);
                             let end = vector!(start.x + block_size as f64, start.y);
-                            let edge = Edge { start, end };
+                            let edge = Line::new(start, end);
                             let edge_id = self.edges.len();
                             self.edges.push(edge);
                             self.cells[i].edges[NORTH] = (true, edge_id);
@@ -172,7 +159,7 @@ impl RayScene {
                             let start =
                                 vector!(x_off * block_size, y_off * block_size + block_size);
                             let end = vector!(start.x + block_size as f64, start.y);
-                            let edge = Edge { start, end };
+                            let edge = Line::new(start, end);
                             let edge_id = self.edges.len();
                             self.edges.push(edge);
                             self.cells[i].edges[SOUTH] = (true, edge_id);
@@ -195,14 +182,15 @@ impl RayScene {
 
     fn calc_visibility_polygons(&mut self, o: Vector<f64>) {
         self.polygons.clear();
-        for p in self.points.iter() {
+        for &p in self.points.iter() {
             // Cast three rays - one at and one off to each side
-            for offset in -1..2 {
+            for offset in -1..=1 {
                 let angle = offset as f64 / 10_000.0;
-                let mut r = p.copy() - o;
+                let mut r = p.as_vector() - o;
                 r.rotate(angle);
                 if let Some(intersect) = self.cast_ray(o, r) {
                     self.polygons.push((r.heading(), intersect));
+                    continue;
                 }
             }
         }
@@ -214,11 +202,12 @@ impl RayScene {
             .dedup_by(|a, b| (a.1.x - b.1.x).abs() <= 0.1 && (a.1.y - b.1.y).abs() <= 0.1);
     }
 
-    fn cast_ray(&self, o: Vector<f64>, r: Vector<f64>) -> Option<Vector<f64>> {
+    fn cast_ray(&self, o: Vector<f64>, r: Vector<f64>) -> Option<Point<f64>> {
         let mut intersect = None;
         let mut closest_param = f64::INFINITY;
-        for e in self.edges.iter() {
-            if let Some((point, param)) = Self::intersection(o, r + o, e.start, e.end) {
+        let ray: Line<f64> = Line::new(o, r + o);
+        for &e in self.edges.iter() {
+            if let Some((point, param)) = ray.intersects(e) {
                 if intersect.is_none() || param < closest_param {
                     intersect = Some(point);
                     closest_param = param;
@@ -228,78 +217,34 @@ impl RayScene {
         intersect
     }
 
-    fn intersection(
-        rs: Vector<f64>,
-        re: Vector<f64>,
-        es: Vector<f64>,
-        ee: Vector<f64>,
-    ) -> Option<(Vector<f64>, f64)> {
-        // Ray parametric
-        // RAY in parametric: Vector<f64> + Delta*T1
-        let r_px = rs.x;
-        let r_py = rs.y;
-        let r_dx = re.x - rs.x;
-        let r_dy = re.y - rs.y;
-
-        // SEGMENT in parametric: Vector<f64> + Delta*T2
-        let s_px = es.x;
-        let s_py = es.y;
-        let s_dx = ee.x - es.x;
-        let s_dy = ee.y - es.y;
-
-        // Are they parallel? If so, no intersect
-        let r_mag = (r_dx * r_dx + r_dy * r_dy).sqrt();
-        let s_mag = (s_dx * s_dx + s_dy * s_dy).sqrt();
-        if (r_dx / r_mag - s_dx / s_mag).abs() < std::f64::EPSILON
-            && (r_dy / r_mag - s_dy / s_mag).abs() < std::f64::EPSILON
-        {
-            return None;
-        }
-
-        // SOLVE FOR T1 & T2
-        // r_px+r_dx*T1 = s_px+s_dx*T2 && r_py+r_dy*T1 = s_py+s_dy*T2
-        // ==> T1 = (s_px+s_dx*T2-r_px)/r_dx = (s_py+s_dy*T2-r_py)/r_dy
-        // ==> s_px*r_dy + s_dx*T2*r_dy - r_px*r_dy = s_py*r_dx + s_dy*T2*r_dx - r_py*r_dx
-        // ==> T2 = (r_dx*(s_py-r_py) + r_dy*(r_px-s_px))/(s_dx*r_dy - s_dy*r_dx)
-        let t2 = (r_dx * (s_py - r_py) + r_dy * (r_px - s_px)) / (s_dx * r_dy - s_dy * r_dx);
-        let t1 = (s_px + s_dx * t2 - r_px) / r_dx;
-
-        // Must be within parametic whatevers for RAY/SEGMENT
-        if t1 < 0.0 || t1.is_infinite() || t1.is_nan() || t2 < 0.0 || t2 > 1.0 {
-            return None;
-        }
-
-        // Return the POINT OF INTERSECTION
-        Some((vector!(r_px + r_dx * t1, r_py + r_dy * t1), t1))
-    }
-
     fn draw_visibility_polygons(&mut self, s: &mut PixState) -> PixResult<bool> {
-        let mouse_pos = s.mouse_pos();
-        let (x, y) = mouse_pos.into();
-        if x <= 0 || x > s.width() as i32 || y <= 0 || y > s.height() as i32 {
+        let mouse = s.mouse_pos();
+        if mouse.x <= 0 || mouse.x > s.width() as i32 || mouse.y <= 0 || mouse.y > s.height() as i32
+        {
             return Ok(true);
         }
 
-        self.calc_visibility_polygons(vector!(x as f64, y as f64));
+        self.calc_visibility_polygons(mouse.as_vector());
 
+        s.fill(WHITE);
+        s.stroke(WHITE);
+        let mouse = mouse.into();
         if !self.polygons.is_empty() {
-            s.fill(WHITE);
-            s.stroke(WHITE);
             for i in 0..self.polygons.len() - 1 {
-                let p1: Point<i32> = self.polygons[i].1.as_point();
-                let p2: Point<i32> = self.polygons[i + 1].1.as_point();
-                s.triangle((mouse_pos, p1, p2))?;
+                let p1 = self.polygons[i].1;
+                let p2 = self.polygons[i + 1].1;
+                s.triangle([mouse, p1, p2])?;
             }
             // Draw last triangle, connecting back to first point.
             // SAFETY: self.polygons has at least one element due to is_empty() check above
-            let p1: Point<i32> = self.polygons.last().unwrap().1.as_point();
-            let p2: Point<i32> = self.polygons[0].1.as_point();
-            s.triangle((mouse_pos, p1, p2))?;
+            let p1 = self.polygons.last().unwrap().1;
+            let p2 = self.polygons[0].1;
+            s.triangle([mouse, p1, p2])?;
         }
 
         s.fill(RED);
         s.no_stroke();
-        s.circle((x, y, 2))?;
+        s.circle([mouse.x, mouse.y, 2.0])?;
         Ok(true)
     }
 }
@@ -322,10 +267,10 @@ impl AppState for RayScene {
         // Screen Edges
         let w = w as f64;
         let h = h as f64;
-        self.edges.push(Edge::new((0.0, 0.0), (w, 0.0))); // Top
-        self.edges.push(Edge::new((w, 0.0), (w, h))); // Right
-        self.edges.push(Edge::new((0.0, h), (w, h))); // Bottom
-        self.edges.push(Edge::new((0.0, 0.0), (0.0, h))); // Left
+        self.edges.push(Line::new([0.0, 0.0], [w, 0.0])); // Top
+        self.edges.push(Line::new([w, 0.0], [w, h])); // Right
+        self.edges.push(Line::new([0.0, h], [w, h])); // Bottom
+        self.edges.push(Line::new([0.0, 0.0], [0.0, h])); // Left
 
         self.convert_edges_to_poly_map()?;
 
@@ -350,14 +295,15 @@ impl AppState for RayScene {
         } else {
             (mouse.y - 254, 511)
         };
-        s.clip((cx, cy, cw, ch));
+        s.clip([cx, cy, cw, ch]);
 
         self.draw_visibility_polygons(s)?;
 
         s.fill(BLUE);
         s.stroke(BLUE);
         for cell in self.cells.iter().filter(|c| c.exists) {
-            s.square((cell.pos.x as i32, cell.pos.y as i32, BLOCK_SIZE as i32 + 1))?;
+            let p = cell.pos.as_point();
+            s.square([p.x, p.y, BLOCK_SIZE as i32 + 1])?;
         }
 
         if let Some(ref light) = self.light {
@@ -369,9 +315,9 @@ impl AppState for RayScene {
 
     fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse) -> PixResult<()> {
         if btn == Mouse::Left {
-            let (mx, my) = s.mouse_pos().into();
-            if mx > 0 && mx <= s.width() as i32 && my > 0 && my <= s.height() as i32 {
-                let i = self.get_cell_index(mx, my);
+            let m = s.mouse_pos();
+            if m.x > 0 && m.x <= s.width() as i32 && m.y > 0 && m.y <= s.height() as i32 {
+                let i = self.get_cell_index(m.x, m.y);
                 self.cells[i].exists = !self.cells[i].exists;
                 self.drawing = self.cells[i].exists;
                 self.convert_edges_to_poly_map()?;
@@ -382,11 +328,11 @@ impl AppState for RayScene {
 
     fn on_mouse_dragged(&mut self, s: &mut PixState) -> PixResult<()> {
         if s.mouse_buttons().contains(&Mouse::Left) {
-            let (mx, my) = s.mouse_pos().into();
-            let (px, py) = s.pmouse_pos().into();
-            if mx > 0 && mx <= s.width() as i32 && my > 0 && my <= s.height() as i32 {
-                if (mx, my) != (px, py) {
-                    let i = self.get_cell_index(mx, my);
+            let m = s.mouse_pos();
+            let pm = s.pmouse_pos();
+            if m.x > 0 && m.x <= s.width() as i32 && m.y > 0 && m.y <= s.height() as i32 {
+                if m != pm {
+                    let i = self.get_cell_index(m.x, m.y);
                     self.cells[i].exists = self.drawing;
                 }
                 self.convert_edges_to_poly_map()?;

@@ -3,8 +3,9 @@
 use crate::{
     prelude::*,
     renderer::{Error, RendererSettings, Rendering, Result},
+    window::Error as WindowError,
 };
-use num_traits::{AsPrimitive, ToPrimitive};
+use num_traits::AsPrimitive;
 use sdl2::{
     audio::{AudioQueue, AudioSpecDesired},
     gfx::primitives::{DrawRenderer, ToColor},
@@ -64,7 +65,7 @@ impl Rendering for Renderer {
             (Position::Positioned(x), Position::Positioned(y)) => {
                 window_builder.position(x, y);
             }
-            _ => return Err(Error::InvalidPosition(s.x, s.y)),
+            _ => return Err(WindowError::InvalidPosition(s.x, s.y).into()),
         };
         if s.fullscreen {
             window_builder.fullscreen();
@@ -185,18 +186,20 @@ impl Rendering for Renderer {
     }
 
     /// Update texture with pixel data.
-    fn update_texture<R>(
+    fn update_texture<R, P>(
         &mut self,
         texture_id: TextureId,
         rect: R,
-        pixels: &[u8],
+        pixels: P,
         pitch: usize,
     ) -> Result<()>
     where
         R: Into<Option<Rect<f64>>>,
+        P: AsRef<[u8]>,
     {
         if let Some(texture) = self.textures.get_mut(texture_id) {
             let rect: Option<SdlRect> = rect.into().map(|r| r.into());
+            let pixels = pixels.as_ref();
             Ok(texture.update(rect, pixels, pitch)?)
         } else {
             Err(Error::InvalidTexture(texture_id))
@@ -218,13 +221,13 @@ impl Rendering for Renderer {
     }
 
     /// Draw text to the current canvas.
-    fn text<P, T, C>(&mut self, position: P, text: T, size: u32, fill: C, stroke: C) -> Result<()>
+    fn text<P, T, C>(&mut self, position: P, text: T, size: u32, fill: C, _stroke: C) -> Result<()>
     where
-        P: Into<(f64, f64)>,
+        P: Into<Point<f64>>,
         T: AsRef<str>,
         C: Into<Option<Color>>,
     {
-        let (x, y) = position.into();
+        let p = position.into().as_i32();
         let text = text.as_ref();
         // TODO: This path only works locally
         let font = self
@@ -234,16 +237,8 @@ impl Rendering for Renderer {
             let surface = font.render(text.as_ref()).blended(fill)?;
             let texture = self.texture_creator.create_texture_from_surface(&surface)?;
             let TextureQuery { width, height, .. } = texture.query();
-            self.canvas.copy(
-                &texture,
-                None,
-                Some(SdlRect::new(
-                    x.round() as i32,
-                    y.round() as i32,
-                    width,
-                    height,
-                )),
-            )?;
+            self.canvas
+                .copy(&texture, None, Some(SdlRect::new(p.x, p.y, width, height)))?;
         }
         Ok(())
     }
@@ -251,13 +246,12 @@ impl Rendering for Renderer {
     /// Draw a pixel to the current canvas.
     fn point<P, C>(&mut self, p: P, color: C) -> Result<()>
     where
-        P: Into<(f64, f64)>,
+        P: Into<Point<f64>>,
         C: Into<Option<Color>>,
     {
         if let Some(color) = color.into() {
-            let (x, y) = p.into();
-            self.canvas
-                .pixel(x.round() as i16, y.round() as i16, color)?;
+            let p = p.into().as_i16();
+            self.canvas.pixel(p.x, p.y, color)?;
         }
         Ok(())
     }
@@ -265,15 +259,12 @@ impl Rendering for Renderer {
     /// Draw a line to the current canvas.
     fn line<L, C>(&mut self, line: L, color: C) -> Result<()>
     where
-        L: Into<(f64, f64, f64, f64)>,
+        L: Into<Line<f64>>,
         C: Into<Option<Color>>,
     {
         if let Some(color) = color.into() {
-            let (x1, y1, x2, y2) = line.into();
-            let x1 = x1.round() as i16;
-            let x2 = x2.round() as i16;
-            let y1 = y1.round() as i16;
-            let y2 = y2.round() as i16;
+            let line = line.into().as_i16();
+            let [x1, y1, x2, y2]: [i16; 4] = line.into();
             if y1 == y2 {
                 self.canvas.hline(x1, x2, y1, color)?;
             } else if x1 == x2 {
@@ -286,19 +277,13 @@ impl Rendering for Renderer {
     }
 
     /// Draw a triangle to the current canvas.
-    fn triangle<T, U, C>(&mut self, tri: T, fill: C, stroke: C) -> Result<()>
+    fn triangle<T, C>(&mut self, tri: T, fill: C, stroke: C) -> Result<()>
     where
-        T: Into<Triangle<U>>,
-        U: ToPrimitive,
+        T: Into<Triangle<f64>>,
         C: Into<Option<Color>>,
     {
-        let tri = tri.into();
-        let x1 = tri.p1.x.to_i16().unwrap_or(0);
-        let y1 = tri.p1.y.to_i16().unwrap_or(0);
-        let x2 = tri.p2.x.to_i16().unwrap_or(0);
-        let y2 = tri.p2.y.to_i16().unwrap_or(0);
-        let x3 = tri.p3.x.to_i16().unwrap_or(0);
-        let y3 = tri.p3.y.to_i16().unwrap_or(0);
+        let tri = tri.into().as_i16();
+        let [x1, y1, x2, y2, x3, y3]: [i16; 6] = tri.into();
         if let Some(fill) = fill.into() {
             self.canvas.filled_trigon(x1, y1, x2, y2, x3, y3, fill)?;
         }
@@ -314,6 +299,8 @@ impl Rendering for Renderer {
         R: Into<Rect<f64>>,
         C: Into<Option<Color>>,
     {
+        let rect = rect.into().as_i16();
+        let [x, y, width, height]: [i16; 4] = rect.into();
         if let Some(fill) = fill.into() {
             self.canvas
                 .box_(x, y, x + width - 1, y + height - 1, fill)?;
@@ -326,15 +313,18 @@ impl Rendering for Renderer {
     }
 
     /// Draw a polygon to the current canvas.
-    fn polygon<C>(&mut self, vx: &[i16], vy: &[i16], fill: C, stroke: C) -> Result<()>
+    fn polygon<C, V>(&mut self, vx: V, vy: V, fill: C, stroke: C) -> Result<()>
     where
         C: Into<Option<Color>>,
+        V: AsRef<[f64]>,
     {
+        let vx: Vec<i16> = vx.as_ref().iter().map(|v| v.round() as i16).collect();
+        let vy: Vec<i16> = vy.as_ref().iter().map(|v| v.round() as i16).collect();
         if let Some(fill) = fill.into() {
-            self.canvas.filled_polygon(vx, vy, fill)?;
+            self.canvas.filled_polygon(&vx, &vy, fill)?;
         }
         if let Some(stroke) = stroke.into() {
-            self.canvas.polygon(vx, vy, stroke)?;
+            self.canvas.polygon(&vx, &vy, stroke)?;
         }
         Ok(())
     }
@@ -345,6 +335,8 @@ impl Rendering for Renderer {
         E: Into<Ellipse<f64>>,
         C: Into<Option<Color>>,
     {
+        let ellipse = ellipse.into().as_i16();
+        let [x, y, width, height]: [i16; 4] = ellipse.into();
         if let Some(fill) = fill.into() {
             self.canvas.filled_ellipse(x, y, width, height, fill)?;
         }
@@ -488,6 +480,12 @@ impl From<FontError> for Error {
     }
 }
 
+impl From<WindowError> for Error {
+    fn from(err: WindowError) -> Self {
+        Error::WindowError(err)
+    }
+}
+
 impl From<WindowBuildError> for Error {
     fn from(err: WindowBuildError) -> Self {
         use WindowBuildError::*;
@@ -501,6 +499,16 @@ impl From<WindowBuildError> for Error {
 }
 
 impl From<IntegerOrSdlError> for Error {
+    fn from(err: IntegerOrSdlError) -> Self {
+        use IntegerOrSdlError::*;
+        match err {
+            IntegerOverflows(s, v) => Self::Overflow(Cow::from(s), v),
+            SdlError(s) => Self::Other(Cow::from(s)),
+        }
+    }
+}
+
+impl From<IntegerOrSdlError> for WindowError {
     fn from(err: IntegerOrSdlError) -> Self {
         use IntegerOrSdlError::*;
         match err {

@@ -7,7 +7,7 @@ pub type TextureId = usize;
 
 impl PixState {
     /// Constructs a `Texture` to render to.
-    fn create_texture<T, F>(&mut self, width: T, height: T, format: F) -> PixResult<TextureId>
+    pub fn create_texture<T, F>(&mut self, width: T, height: T, format: F) -> PixResult<TextureId>
     where
         T: Into<f64>,
         F: Into<Option<PixelFormat>>,
@@ -21,15 +21,16 @@ impl PixState {
     }
 
     /// Update the `Texture` with a [`u8`] [`slice`] of pixel data.
-    fn update_texture<R>(
+    pub fn update_texture<R, P>(
         &mut self,
         texture_id: TextureId,
         rect: R,
-        pixels: &[u8],
+        pixels: P,
         pitch: usize,
     ) -> PixResult<()>
     where
         R: Into<Option<Rect<f64>>>,
+        P: AsRef<[u8]>,
     {
         Ok(self
             .renderer

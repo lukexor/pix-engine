@@ -47,25 +47,25 @@ impl App {
     fn new() -> Self {
         let spheres = [
             SphereObj {
-                sphere: sphere!((0.0, -1.0, 3.0), 1.0),
+                sphere: sphere!([0.0, -1.0, 3.0], 1.0),
                 color: RED,
                 specular: Some(500),
                 reflective: 0.2,
             },
             SphereObj {
-                sphere: sphere!((2.0, 0.0, 4.0), 1.0),
+                sphere: sphere!([2.0, 0.0, 4.0], 1.0),
                 color: BLUE,
                 specular: Some(500),
                 reflective: 0.3,
             },
             SphereObj {
-                sphere: sphere!((-2.0, 0.0, 4.0), 1.0),
+                sphere: sphere!([-2.0, 0.0, 4.0], 1.0),
                 color: GREEN,
                 specular: Some(10),
                 reflective: 0.4,
             },
             SphereObj {
-                sphere: sphere!((0.0, -5001.0, 0.0), 5000.0),
+                sphere: sphere!([0.0, -5001.0, 0.0], 5000.0),
                 color: YELLOW,
                 specular: Some(1000),
                 reflective: 0.5,
@@ -73,8 +73,8 @@ impl App {
         ];
         let lights = [
             Light::ambient(0.2),
-            Light::point(0.6, (2.0, 1.0, 0.0)),
-            Light::direction(0.2, (1.0, 4.0, 4.0)),
+            Light::point(0.6, [2.0, 1.0, 0.0]),
+            Light::direction(0.2, [1.0, 4.0, 4.0]),
         ];
         Self {
             view_width: 1.0,
@@ -95,13 +95,13 @@ impl App {
         )
     }
 
-    fn canvas_to_screen(&self, x: i32, y: i32, s: &PixState) -> Point<i32> {
+    fn canvas_to_screen(&self, x: i32, y: i32, s: &PixState) -> Point<f64> {
         let width = s.width() as f64;
         let height = s.height() as f64;
         point!(
-            (width / 2.0 + x as f64).round() as i32,
-            (height / 2.0 - y as f64).round() as i32,
-            self.proj_plane_dist.round() as i32
+            (width / 2.0 + x as f64).round(),
+            (height / 2.0 - y as f64).round(),
+            self.proj_plane_dist.round()
         )
     }
 

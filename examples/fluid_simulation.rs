@@ -1,25 +1,28 @@
 use pix_engine::prelude::*;
 
 const TITLE: &str = "Fluid Simulation";
-const WIDTH: u32 = 600 - 10;
+const WIDTH: u32 = 600;
 const HEIGHT: u32 = 600;
 
 const N: usize = 300;
 const NLEN: usize = N - 1;
 const NF: f64 = N as f64;
 const SCALE: i32 = 2;
-const ITER: usize = 4;
+const ITER: usize = 2;
 
-const VEL: f64 = 1.0; // Velocity of fluid
-const TIME_INC: f64 = 2.02; // Amount to step time each draw
+const VEL: f64 = 1.4; // Velocity of fluid
+const TIME_INC: f64 = 0.5; // Amount to step time each draw
 
-const SPACING: usize = 12;
+const SPACING: usize = 20;
 const COUNT: usize = (WIDTH / SCALE as u32) as usize / SPACING + 1;
 
+const DT: f64 = 0.005;
+const DTX: f64 = DT * (NF - 2.0);
+const DTY: f64 = DT * (NF - 2.0);
+const DIFF: f64 = 0.00001; // Diffusion
+const VISC: f64 = 0.0000000001; // Viscosity
+
 struct Fluid {
-    dt: f64,
-    diff: f64,
-    visc: f64,
     s: [f64; N * N],
     density: [f64; N * N],
     velx: [f64; N * N],
@@ -34,8 +37,8 @@ fn get_idx(x: usize, y: usize) -> usize {
     x + y * N
 }
 
-fn diffuse(b: usize, xs: &mut [f64], xs0: &[f64], diff: f64, dt: f64) {
-    let a = dt * diff * (N - 2).pow(2) as f64;
+fn diffuse(b: usize, xs: &mut [f64], xs0: &[f64], amt: f64) {
+    let a = DT * amt * (N - 2).pow(2) as f64;
     linear_solve(b, xs, xs0, a, 1.0 + 6.0 * a);
 }
 
@@ -65,19 +68,16 @@ fn project(velx: &mut [f64], vely: &mut [f64], p: &mut [f64], div: &mut [f64]) {
     set_bounds(2, vely);
 }
 
-fn advect(b: usize, d: &mut [f64], d0: &[f64], velx: &[f64], vely: &[f64], dt: f64) {
+fn advect(b: usize, d: &mut [f64], d0: &[f64], velx: &[f64], vely: &[f64]) {
     let (mut i0, mut i1, mut j0, mut j1);
-
-    let dtx = dt * (NF - 2.0);
-    let dty = dt * (NF - 2.0);
 
     let (mut s0, mut s1, mut t0, mut t1);
 
     for j in 1..NLEN {
         for i in 1..NLEN {
             let idx = get_idx(i, j);
-            let mut x = i as f64 - (dtx * velx[idx]);
-            let mut y = j as f64 - (dty * vely[idx]);
+            let mut x = i as f64 - (DTX * velx[idx]);
+            let mut y = j as f64 - (DTY * vely[idx]);
 
             if x < 0.5 {
                 x = 0.5;
@@ -101,22 +101,17 @@ fn advect(b: usize, d: &mut [f64], d0: &[f64], velx: &[f64], vely: &[f64], dt: f
             t1 = y - j0 as f64;
             t0 = 1.0 - t1;
 
-            let mut pd = d[idx];
-            // NEW
-            if pd > 450.0 {
-                pd = 450.0;
-            }
-            // NEW
+            let pd = d[idx].clamp(0.0, 500.0);
             d[idx] = s0 * (t0 * d0[get_idx(i0, j0)] + t1 * d0[get_idx(i0, j1)])
                 + s1 * (t0 * d0[get_idx(i1, j0)] + t1 * d0[get_idx(i1, j1)]);
-            d[idx] = d[idx].clamp(pd - 150.0, 450.0);
+            d[idx] = d[idx].clamp(pd - 150.0, 500.0);
         }
     }
     set_bounds(b, d);
 }
 
 fn linear_solve(b: usize, xs: &mut [f64], xs0: &[f64], a: f64, c: f64) {
-    let c_recip = 1.0 / c;
+    let c_recip = c.recip();
     for _ in 0..ITER {
         for j in 1..NLEN {
             for i in 1..NLEN {
@@ -164,9 +159,6 @@ fn set_bounds(b: usize, xs: &mut [f64]) {
 impl Fluid {
     pub fn new() -> Self {
         Self {
-            dt: 0.01,          // Time step
-            diff: 0.00001,     // Diffusion
-            visc: 0.000000005, // Viscosity
             s: [0.0; N * N],
             density: [0.0; N * N],
             velx: [0.0; N * N],
@@ -177,8 +169,8 @@ impl Fluid {
     }
 
     fn step(&mut self) {
-        diffuse(1, &mut self.velx0, &self.velx, self.visc, self.dt);
-        diffuse(2, &mut self.vely0, &self.vely, self.visc, self.dt);
+        diffuse(1, &mut self.velx0, &self.velx, VISC);
+        diffuse(2, &mut self.vely0, &self.vely, VISC);
 
         project(
             &mut self.velx0,
@@ -187,22 +179,8 @@ impl Fluid {
             &mut self.vely,
         );
 
-        advect(
-            1,
-            &mut self.velx,
-            &self.velx0,
-            &self.velx0,
-            &self.vely0,
-            self.dt,
-        );
-        advect(
-            2,
-            &mut self.vely,
-            &self.vely0,
-            &self.velx0,
-            &self.vely0,
-            self.dt,
-        );
+        advect(1, &mut self.velx, &self.velx0, &self.velx0, &self.vely0);
+        advect(2, &mut self.vely, &self.vely0, &self.velx0, &self.vely0);
 
         project(
             &mut self.velx,
@@ -211,15 +189,8 @@ impl Fluid {
             &mut self.vely0,
         );
 
-        diffuse(0, &mut self.s, &self.density, self.diff, self.dt);
-        advect(
-            0,
-            &mut self.density,
-            &self.s,
-            &self.velx,
-            &self.vely,
-            self.dt,
-        );
+        diffuse(0, &mut self.s, &self.density, DIFF);
+        advect(0, &mut self.density, &self.s, &self.velx, &self.vely);
     }
 
     #[allow(clippy::many_single_char_names)]
@@ -235,9 +206,13 @@ impl Fluid {
                 let d = self.density[idx];
                 let m = d / 100.0;
                 let f = m * d;
-                if f > 15.0 {
-                    s.fill(rgb!(f.floor() as u8, (f / 3.0).floor() as u8, 0, 220));
-                    s.square(square!(x, y, SCALE))?;
+                if f > 10.0 {
+                    s.fill(rgb!(
+                        (f / 2.0).floor() as u8,
+                        (f / 6.0).floor() as u8,
+                        (f / 16.0).floor() as u8,
+                    ));
+                    s.square([x, y, SCALE])?;
                 }
             }
         }
@@ -246,9 +221,8 @@ impl Fluid {
 
     fn add_density(&mut self, idx: usize, amount: f64) {
         self.density[idx] += amount;
-        let velx = random!(-1.5 * VEL, 1.5 * VEL);
-        let vely = random!(-0.8 * VEL, -0.1 * VEL);
-        self.add_velocity(idx, velx, vely);
+        let velx = random!(-VEL, VEL);
+        self.add_velocity(idx, velx, -0.04);
     }
 
     fn add_velocity(&mut self, idx: usize, amount_x: f64, amount_y: f64) {
@@ -262,7 +236,6 @@ struct App {
     t: f64,
     xs: [f64; COUNT],
     ys: [f64; COUNT],
-    base: Rect<i32>,
 }
 
 impl App {
@@ -272,19 +245,18 @@ impl App {
             t: 0.0,
             xs: [0.0; COUNT],
             ys: [0.0; COUNT],
-            base: rect!(0, (HEIGHT as i32) - 10, (WIDTH as i32) * SCALE, 20),
         }
     }
 
     fn flame_on(&mut self, _s: &mut PixState) -> PixResult<()> {
         for k in 0..COUNT {
-            for i in (-9..9).step_by(3) {
-                for j in -5..=0 {
+            for i in -8..=8 {
+                for j in -5..=2 {
                     let idx = get_idx(
                         (self.xs[k] + i as f64).floor() as usize,
                         (self.ys[k] + j as f64).floor() as usize,
                     );
-                    self.fluid.add_density(idx, random!(50.0));
+                    self.fluid.add_density(idx, random!(20.0));
                 }
             }
         }
@@ -292,18 +264,15 @@ impl App {
     }
 
     fn drag(&mut self, s: &mut PixState) -> PixResult<()> {
-        let mouse = s.mouse_pos();
-        let r = 3.0;
+        let m = s.mouse_pos();
+        let r = 4.0;
         for i in 0..628 {
             let (sin, cos) = (i as f64 * 0.01).sin_cos();
             let idx = get_idx(
-                ((mouse.x / SCALE as i32) as f64 + r * cos).floor() as usize,
-                ((mouse.y / SCALE as i32) as f64 + r * sin).floor() as usize,
+                ((m.x / SCALE) as f64 + r * cos).floor() as usize,
+                ((m.y / SCALE) as f64 + r * sin).floor() as usize,
             );
-            self.fluid.density[idx] += random!(100.0);
-            let velx = random!(-2.0 * VEL, 2.0 * VEL);
-            let vely = random!(-0.05 * VEL, -0.01 * VEL);
-            self.fluid.add_velocity(idx, velx, vely);
+            self.fluid.add_density(idx, random!(500.0));
         }
         Ok(())
     }
@@ -331,8 +300,6 @@ impl AppState for App {
         self.flame_on(s)?;
         self.t += TIME_INC;
         self.fluid.on_update(s)?;
-        s.fill(DARK_SLATE_GRAY);
-        s.rect(self.base)?;
         Ok(())
     }
 

@@ -69,7 +69,6 @@ use rand::distributions::uniform::SampleUniform;
 use serde::{Deserialize, Serialize};
 use std::{
     array::IntoIter,
-    convert::{TryFrom, TryInto},
     f64::consts::TAU,
     fmt,
     iter::{once, Chain, FromIterator, Once, Sum},
@@ -148,40 +147,19 @@ impl<T> Vector<T> {
         Self { x, y, z }
     }
 
-    /// Constructs a `Vector<T>` with only an `x` magnitude.
+    /// Constructs a `Vector<T>` from a [`Point<T>`].
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v = Vector::new_x(2.1);
-    /// assert_eq!(v.get(), [2.1, 0.0, 0.0]);
+    /// let p: Point<f64> = point!(1.0, 2.0);
+    /// let v = Vector::from_point(p);
+    /// assert_eq!(v.get(), [1.0, 2.0, 0.0]);
     /// ```
-    pub fn new_x(x: T) -> Self
-    where
-        T: Num,
-    {
-        Self {
-            x,
-            y: T::zero(),
-            z: T::zero(),
-        }
-    }
-
-    /// Constructs a `Vector<T>` with only `x` and `y magnitudes.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v = Vector::new_xy(2.1, 3.5);
-    /// assert_eq!(v.get(), [2.1, 3.5, 0.0]);
-    /// ```
-    pub fn new_xy(x: T, y: T) -> Self
-    where
-        T: Num,
-    {
-        Self { x, y, z: T::zero() }
+    pub fn from_point(p: impl Into<Point<T>>) -> Self {
+        let p = p.into();
+        Self::new(p.x, p.y, p.z)
     }
 
     /// Copy the current `Vector`.
@@ -227,7 +205,7 @@ impl<T> Vector<T> {
     /// # use pix_engine::prelude::*;
     /// let mut v1 = Vector::new(2.0, 1.0, 3.0);
     /// assert_eq!(v1.get(), [2.0, 1.0, 3.0]);
-    /// v1.set((1.0, 2.0, 4.0));
+    /// v1.set([1.0, 2.0, 4.0]);
     /// assert_eq!(v1.get(), [1.0, 2.0, 4.0]);
     ///
     /// let v2 = Vector::new(-2.0, 5.0, 1.0);
@@ -274,6 +252,68 @@ impl<T> Vector<T> {
     pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         IterMut::new(self)
     }
+
+    /// Converts [`Vector<T>`] to [`Vector<i16>`].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v: Vector<f32> = vector!(f32::MAX, 2.0, 3.0);
+    /// let v = v.as_i16();
+    /// assert_eq!(v.get(), [i16::MAX, 2, 3]);
+    /// ```
+    pub fn as_i16(&self) -> Vector<i16>
+    where
+        T: AsPrimitive<i16>,
+    {
+        Vector::new(self.x.as_(), self.y.as_(), self.z.as_())
+    }
+
+    /// Converts [`Vector<T>`] to [`Vector<i32>`].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v: Vector<f32> = vector!(f32::MAX, 2.0, 3.0);
+    /// let v = v.as_i32();
+    /// assert_eq!(v.get(), [i32::MAX, 2, 3]);
+    /// ```
+    pub fn as_i32(&self) -> Vector<i32>
+    where
+        T: AsPrimitive<i32>,
+    {
+        Vector::new(self.x.as_(), self.y.as_(), self.z.as_())
+    }
+}
+
+impl<T: Num> Vector<T> {
+    /// Constructs a `Vector<T>` with only an `x` magnitude.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v = Vector::new_x(2.1);
+    /// assert_eq!(v.get(), [2.1, 0.0, 0.0]);
+    /// ```
+    pub fn new_x(x: T) -> Self {
+        Self::new(x, T::zero(), T::zero())
+    }
+
+    /// Constructs a `Vector<T>` with only `x` and `y magnitudes.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v = Vector::new_xy(2.1, 3.5);
+    /// assert_eq!(v.get(), [2.1, 3.5, 0.0]);
+    /// ```
+    pub fn new_xy(x: T, y: T) -> Self {
+        Self::new(x, y, T::zero())
+    }
 }
 
 impl<T> Vector<T>
@@ -319,25 +359,6 @@ where
         let mut v = v.into();
         v.normalize();
         v
-    }
-
-    /// Constructs a `Vector<T>` from a [`Point<T>`].
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let p: Point<f64> = point!(1.0, 2.0);
-    /// let v = Vector::from_point(p);
-    /// assert_eq!(v.get(), [1.0, 2.0, 0.0]);
-    /// ```
-    pub fn from_point(p: impl Into<Point<T>>) -> Self {
-        let p = p.into();
-        Self {
-            x: p.x,
-            y: p.y,
-            z: p.z,
-        }
     }
 
     /// Constructs a 2D unit `Vector<T>` in the XY plane from a given angle. Angle is given as radians
@@ -396,8 +417,9 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v = vector!(1.0, 2.0, 3.0);
-    /// let dot_product = v.dot((2.0, 3.0, 4.0));
+    /// let v1 = vector!(1.0, 2.0, 3.0);
+    /// let v2 = vector!(2.0, 3.0, 4.0);
+    /// let dot_product = v1.dot(v2);
     /// assert_eq!(dot_product, 20.0);
     /// ```
     pub fn dot(&self, v: impl Into<Vector<T>>) -> T {
@@ -765,11 +787,7 @@ where
         T: AsPrimitive<U>,
         U: 'static + Copy,
     {
-        Point {
-            x: self.x.as_(),
-            y: self.y.as_(),
-            z: self.z.as_(),
-        }
+        Point::new(self.x.as_(), self.y.as_(), self.z.as_())
     }
 }
 
@@ -940,7 +958,7 @@ where
             xyz[i] = v;
         }
         let [x, y, z] = xyz;
-        Self { x, y, z }
+        Self::new(x, y, z)
     }
 }
 
@@ -1079,22 +1097,7 @@ macro_rules! impl_ops {
     };
 }
 
-macro_rules! impl_from {
-    ($zero:expr => $($target:ty),*) => {
-        $(
-            /// Converts `U` to [`Vector<T>`].
-            impl From<$target> for Vector<$target> {
-                fn from(x: $target) -> Self {
-                    Self { x, y: $zero, z: $zero }
-                }
-            }
-        )*
-    };
-}
-
 impl_ops!(i8, u8, i16, u16, i32, u32, i128, u128, isize, usize, f32, f64);
-impl_from!(0 => i8, u8, i16, u16, i32, u32, i128, u128, isize, usize);
-impl_from!(0.0 => f32, f64);
 
 /// Converts `[U; 1]` to [`Vector<T>`].
 impl<T, U: Into<T>> From<[U; 1]> for Vector<T>
@@ -1102,11 +1105,7 @@ where
     T: Num,
 {
     fn from([x]: [U; 1]) -> Self {
-        Self {
-            x: x.into(),
-            y: T::zero(),
-            z: T::zero(),
-        }
+        Self::new(x.into(), T::zero(), T::zero())
     }
 }
 
@@ -1116,55 +1115,35 @@ where
     T: Num,
 {
     fn from(&[x]: &[U; 1]) -> Self {
-        Self {
-            x: x.into(),
-            y: T::zero(),
-            z: T::zero(),
-        }
+        Self::new(x.into(), T::zero(), T::zero())
     }
 }
 
 /// Converts `[U; 2]` to [`Vector<T>`].
 impl<T: Num, U: Into<T>> From<[U; 2]> for Vector<T> {
     fn from([x, y]: [U; 2]) -> Self {
-        Self {
-            x: x.into(),
-            y: y.into(),
-            z: T::zero(),
-        }
+        Self::new(x.into(), y.into(), T::zero())
     }
 }
 
 /// Converts `&[U; 2]` to [`Vector<T>`].
 impl<T: Num, U: Into<T> + Copy> From<&[U; 2]> for Vector<T> {
     fn from(&[x, y]: &[U; 2]) -> Self {
-        Self {
-            x: x.into(),
-            y: y.into(),
-            z: T::zero(),
-        }
+        Self::new(x.into(), y.into(), T::zero())
     }
 }
 
 /// Converts `[U; 3]` to [`Vector<T>`].
 impl<T, U: Into<T>> From<[U; 3]> for Vector<T> {
     fn from([x, y, z]: [U; 3]) -> Self {
-        Self {
-            x: x.into(),
-            y: y.into(),
-            z: z.into(),
-        }
+        Self::new(x.into(), y.into(), z.into())
     }
 }
 
 /// Converts `&[U; 3]` to [`Vector<T>`].
 impl<T, U: Into<T> + Copy> From<&[U; 3]> for Vector<T> {
     fn from(&[x, y, z]: &[U; 3]) -> Self {
-        Self {
-            x: x.into(),
-            y: y.into(),
-            z: z.into(),
-        }
+        Self::new(x.into(), y.into(), z.into())
     }
 }
 
@@ -1211,50 +1190,30 @@ impl<T, U: Into<T> + Copy> From<&Vector<U>> for [T; 3] {
 }
 
 /// Converts [`Point<U>`] to [`Vector<T>`].
-impl<T, U: TryInto<T>> TryFrom<Point<U>> for Vector<T> {
-    type Error = <U as TryInto<T>>::Error;
-    fn try_from(p: Point<U>) -> Result<Self, Self::Error> {
-        Ok(Self {
-            x: p.x.try_into()?,
-            y: p.y.try_into()?,
-            z: p.z.try_into()?,
-        })
+impl<T, U: Into<T>> From<Point<U>> for Vector<T> {
+    fn from(p: Point<U>) -> Self {
+        Self::new(p.x.into(), p.y.into(), p.z.into())
     }
 }
 
 /// Converts [`&Point<U>`] to [`Vector<T>`].
-impl<T, U: TryInto<T>> TryFrom<&Point<U>> for Vector<T> {
-    type Error = <U as TryInto<T>>::Error;
-    fn try_from(p: &Point<U>) -> Result<Self, Self::Error> {
-        Ok(Self {
-            x: p.x.try_into()?,
-            y: p.y.try_into()?,
-            z: p.z.try_into()?,
-        })
+impl<T, U: Copy + Into<T>> From<&Point<U>> for Vector<T> {
+    fn from(p: &Point<U>) -> Self {
+        Self::new(p.x.into(), p.y.into(), p.z.into())
     }
 }
 
 /// Converts [`Vector<U>`] to [`Point<T>`].
-impl<T, U: TryInto<T>> TryFrom<Vector<U>> for Point<T> {
-    type Error = <U as TryInto<T>>::Error;
-    fn try_from(v: Vector<U>) -> Result<Self, Self::Error> {
-        Ok(Self {
-            x: v.x.try_into()?,
-            y: v.y.try_into()?,
-            z: v.z.try_into()?,
-        })
+impl<T, U: Into<T>> From<Vector<U>> for Point<T> {
+    fn from(v: Vector<U>) -> Self {
+        Self::new(v.x.into(), v.y.into(), v.z.into())
     }
 }
 
 /// Converts [`&Vector<U>`] to [`Point<T>`].
-impl<T, U: TryInto<T>> TryFrom<&Vector<U>> for Point<T> {
-    type Error = <U as TryInto<T>>::Error;
-    fn try_from(v: &Vector<U>) -> Result<Self, Self::Error> {
-        Ok(Self {
-            x: v.x.try_into()?,
-            y: v.y.try_into()?,
-            z: v.z.try_into()?,
-        })
+impl<T, U: Copy + Into<T>> From<&Vector<U>> for Point<T> {
+    fn from(v: &Vector<U>) -> Self {
+        Self::new(v.x.into(), v.y.into(), v.z.into())
     }
 }
 
@@ -1279,9 +1238,9 @@ mod tests {
         ($v1:expr, $v2:expr, $e:expr) => {
             let [v1, v2, v3] = $v1;
             let [ov1, ov2, ov3] = $v2;
-            let v1d = v1 - ov1;
-            let v2d = v2 - ov2;
-            let v3d = v3 - ov3;
+            let v1d = (v1 - ov1).abs();
+            let v2d = (v2 - ov2).abs();
+            let v3d = (v3 - ov3).abs();
             assert!(v1d < $e, "v1: ({} - {}) < {}", v1, ov1, $e);
             assert!(v2d < $e, "v2: ({} - {}) < {}", v2, ov2, $e);
             assert!(v3d < $e, "v3: ({} - {}) < {}", v3, ov3, $e);
@@ -1342,36 +1301,6 @@ mod tests {
 
         test_ops!(2.0f32, f32::EPSILON);
         test_ops!(2.0f64, f64::EPSILON);
-    }
-
-    #[test]
-    fn test_tuple_conversions() {
-        let _: Vector<u8> = 50u8.into();
-        let _: Vector<i8> = 50i8.into();
-        let _: Vector<u16> = 50u16.into();
-        let _: Vector<i16> = 50i16.into();
-        let _: Vector<u32> = 50u32.into();
-        let _: Vector<i32> = 50i32.into();
-        let _: Vector<f32> = 50.0f32.into();
-        let _: Vector<f64> = 50.0f64.into();
-
-        let _: Vector<u8> = (50u8, 100).into();
-        let _: Vector<i8> = (50i8, 100).into();
-        let _: Vector<u16> = (50u16, 100).into();
-        let _: Vector<i16> = (50i16, 100).into();
-        let _: Vector<u32> = (50u32, 100).into();
-        let _: Vector<i32> = (50i32, 100).into();
-        let _: Vector<f32> = (50.0f32, 100.0).into();
-        let _: Vector<f64> = (50.0f64, 100.0).into();
-
-        let _: Vector<u8> = (50u8, 100, 55).into();
-        let _: Vector<i8> = (50i8, 100, 55).into();
-        let _: Vector<u16> = (50u16, 100, 55).into();
-        let _: Vector<i16> = (50i16, 100, 55).into();
-        let _: Vector<u32> = (50u32, 100, 55).into();
-        let _: Vector<i32> = (50i32, 100, 55).into();
-        let _: Vector<f32> = (50.0f32, 100.0, 55.0).into();
-        let _: Vector<f64> = (50.0f64, 100.0, 55.0).into();
     }
 
     #[test]

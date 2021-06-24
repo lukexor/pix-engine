@@ -1,7 +1,7 @@
 //! [`Line`] type used for drawing.
 
 use crate::prelude::{point, Draw, PixResult, PixState, Point, Vector};
-use num_traits::Num;
+use num_traits::{AsPrimitive, Num};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -27,42 +27,55 @@ impl<T> Line<T> {
         }
     }
 
-    /// Constructs a `Line` from `start` and `end` coordinates.
-    pub fn with_xy(start_x: T, start_y: T, end_x: T, end_y: T) -> Self
-    where
-        T: Num,
-    {
-        let start = point!(start_x, start_y);
-        let end = point!(end_x, end_y);
-        Self { start, end }
-    }
-
     /// Returns whether this line intersects with another line.
-    pub fn intersects(&self, other: impl Into<[f64; 4]>) -> Option<Point<f64>>
+    pub fn intersects(&self, other: impl Into<Line<f64>>) -> Option<(Point<f64>, f64)>
     where
-        T: Num + Copy + Into<[f64; 4]>,
+        T: Num + Copy + PartialOrd + Into<f64>,
     {
-        let [p1x, p1y, p2x, p2y]: [f64; 4] = self.into();
-        let [p3x, p3y, p4x, p4y]: [f64; 4] = other.into();
-        let ua = ((p4x - p3x) * (p1y - p3y) - (p4y - p3y) * (p1x - p3x))
-            / ((p4y - p3y) * (p2x - p1x) - (p4x - p3x) * (p2y - p1y));
-        let ub = ((p2x - p1x) * (p1y - p3y) - (p2y - p1y) * (p1x - p3x))
-            / ((p4y - p3y) * (p2x - p1x) - (p4x - p3x) * (p2y - p1y));
-        // If ua and ub are between 0.0 and 1.0, intersection
-        if (0.0..=1.0).contains(&ua) && (0.0..=1.0).contains(&ub) {
-            let x = p1x + ua * (p2x - p1x);
-            let y = p1y + ua * (p2y - p1y);
-            Some(point!(x, y))
+        let [x1, y1, x2, y2]: [f64; 4] = self.into();
+        let other = other.into();
+        let [x3, y3, x4, y4]: [f64; 4] = other.into();
+        let d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+        if d == 0.0 {
+            return None;
+        }
+        let t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / d;
+        let u = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / d;
+        if (0.0..).contains(&t) && (0.0..=1.0).contains(&u) {
+            let x = x1 + t * (x2 - x1);
+            let y = y1 + t * (y2 - y1);
+            Some((point!(x, y), t))
         } else {
             None
         }
     }
+
+    /// Converts [`Line<T>`] to [`Line<i16>`].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let l: Line<f32> = Line::new([f32::MAX, 2.0], [3.0, f32::MIN]);
+    /// let l = l.as_i16();
+    /// assert_eq!(l.start.get(), [i16::MAX, 2, 0]);
+    /// assert_eq!(l.end.get(), [3, i16::MIN, 0]);
+    /// ```
+    pub fn as_i16(&self) -> Line<i16>
+    where
+        T: AsPrimitive<i16>,
+    {
+        Line::new(self.start.as_i16(), self.end.as_i16())
+    }
 }
 
-impl<T> Draw for Line<T> {
+impl<T> Draw for Line<T>
+where
+    Line<T>: Copy + Into<Line<f64>>,
+{
     /// Draw line to the current [`PixState`] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
-        s.line(self)
+        s.line(*self)
     }
 }
 
@@ -76,8 +89,8 @@ impl<T: Num, U: Into<T>> From<[U; 4]> for Line<T> {
 /// Convert [`Line<U>`] to `[x1, y1, x2, y2]`.
 impl<T: Num, U: Into<T>> From<Line<U>> for [T; 4] {
     fn from(line: Line<U>) -> Self {
-        let (x1, y1) = line.start.into();
-        let (x2, y2) = line.end.into();
+        let [x1, y1]: [T; 2] = line.start.into();
+        let [x2, y2]: [T; 2] = line.end.into();
         [x1, y1, x2, y2]
     }
 }
@@ -85,8 +98,8 @@ impl<T: Num, U: Into<T>> From<Line<U>> for [T; 4] {
 /// Convert [`&Line<U>`] to `[x1, y1, x2, y2]`.
 impl<T: Num, U: Into<T> + Copy> From<&Line<U>> for [T; 4] {
     fn from(line: &Line<U>) -> Self {
-        let (x1, y1) = line.start.into();
-        let (x2, y2) = line.end.into();
+        let [x1, y1]: [T; 2] = line.start.into();
+        let [x2, y2]: [T; 2] = line.end.into();
         [x1, y1, x2, y2]
     }
 }

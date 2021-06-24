@@ -172,13 +172,13 @@ macro_rules! random {
 #[macro_export]
 macro_rules! noise {
     ($x:expr$(,)?) => {
-        $crate::math::noise(($x, 0.0, 0.0))
+        $crate::math::noise([$x, 0.0, 0.0])
     };
     ($x:expr, $y:expr$(,)?) => {
-        $crate::math::noise(($x, $y, 0.0))
+        $crate::math::noise([$x, $y, 0.0])
     };
     ($x:expr, $y:expr, $z:expr$(,)?) => {
-        $crate::math::noise(($x, $y, $z))
+        $crate::math::noise([$x, $y, $z])
     };
 }
 
@@ -200,29 +200,30 @@ macro_rules! noise {
 /// let m = map(value, 0.0, 100.0, 0.0, 1.0);
 /// assert_eq!(m, 0.5);
 ///
-/// let value = Scalar::NAN;
+/// let value = f64::NAN;
 /// let m = map(value, 0.0, 100.0, 0.0, 1.0);
 /// assert!(m.is_nan());
 ///
-/// let value = Scalar::INFINITY;
+/// let value = f64::INFINITY;
 /// let m = map(value, 0.0, 100.0, 0.0, 1.0);
 /// assert_eq!(m, 1.0);
 ///
-/// let value = Scalar::NEG_INFINITY;
+/// let value = f64::NEG_INFINITY;
 /// let m = map(value, 0.0, 100.0, 0.0, 1.0);
 /// assert_eq!(m, 0.0);
 /// ```
 pub fn map<T>(value: T, start1: T, end1: T, start2: T, end2: T) -> T
 where
-    T: Into<Scalar> + From<Scalar> + PartialOrd + Copy,
+    T: NumCast + Into<Scalar> + PartialOrd + Copy,
 {
+    let default = end2;
     let start1 = start1.into();
     let end1 = end1.into();
     let start2 = start2.into();
     let end2 = end2.into();
     let value = value.into();
     let new_val = (value - start1) / (end1 - start1) * (end2 - start2) + start2;
-    new_val.clamp(start2, end2).into()
+    NumCast::from(new_val.clamp(start2, end2)).unwrap_or(default)
 }
 
 /// Linear interpolates between two values by a given amount.

@@ -109,7 +109,7 @@ pub mod prelude {
     pub use event::{Axis, Button, Event, Key, KeyEvent, KeyMod, Mouse, WindowEvent};
     pub use image::{Image, PixelFormat};
     pub use math::map;
-    pub use shape::{Circle, Ellipse, Line, Point, Rect, Shape, Triangle};
+    pub use shape::{Circle, Ellipse, Line, Point, Rect, Shape, ShapeNum, Triangle};
     pub use state::{
         settings::{AngleMode, ArcMode, BlendMode, DrawMode},
         AppState, PixState,

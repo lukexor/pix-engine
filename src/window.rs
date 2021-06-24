@@ -1,7 +1,7 @@
 //! `Window` operations.
 
 use crate::prelude::{Event, PixError};
-use std::{error, ffi::NulError, fmt, result};
+use std::{borrow::Cow, error, ffi::NulError, fmt, result};
 
 /// The result type for `Renderer` operations.
 pub type Result<T> = result::Result<T, Error>;
@@ -42,13 +42,13 @@ pub(crate) trait Window {
     fn set_title(&mut self, title: &str) -> Result<()>;
 
     /// Width of the window.
-    fn window_width(&self, id: WindowId) -> Result<u32>;
+    fn window_width(&self) -> Result<u32>;
 
     /// Height of the window.
-    fn window_height(&self, id: WindowId) -> Result<u32>;
+    fn window_height(&self) -> Result<u32>;
 
     /// Resize the window.
-    fn resize(&mut self, id: WindowId, width: u32, height: u32) -> Result<()>;
+    fn resize(&mut self, width: u32, height: u32) -> Result<()>;
 
     /// Returns whether the application is fullscreen or not.
     fn fullscreen(&self) -> bool;
@@ -113,6 +113,10 @@ pub enum Error {
     InvalidWindow(WindowId),
     /// Invalid (x, y) window position.
     InvalidPosition(Position, Position),
+    /// An overflow occurred.
+    Overflow(Cow<'static, str>, u32),
+    /// Any other unknown error as a string.
+    Other(Cow<'static, str>),
 }
 
 impl fmt::Display for Error {
@@ -120,8 +124,10 @@ impl fmt::Display for Error {
         use Error::*;
         match self {
             InvalidTitle(msg, err) => write!(f, "invalid title: {}, {}", msg, err),
-            InvalidWindow(windowId) => write!(f, "invalid window id: {}", windowId),
+            InvalidWindow(window_id) => write!(f, "invalid window id: {}", window_id),
             InvalidPosition(x, y) => write!(f, "invalid window position: {:?}", (x, y)),
+            Overflow(err, val) => write!(f, "overflow {}: {}", err, val),
+            Other(err) => write!(f, "unknown window error: {}", err),
         }
     }
 }
@@ -131,5 +137,11 @@ impl error::Error for Error {}
 impl From<Error> for PixError {
     fn from(err: Error) -> Self {
         Self::WindowError(err)
+    }
+}
+
+impl From<NulError> for Error {
+    fn from(err: NulError) -> Self {
+        Self::InvalidTitle("unknown nul error", err)
     }
 }

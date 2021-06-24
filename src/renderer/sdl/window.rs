@@ -1,8 +1,7 @@
 use super::Renderer;
 use crate::{
     event::Event,
-    renderer::Result,
-    window::{Window, WindowId},
+    window::{Result, Window, WindowId},
 };
 use sdl2::video::FullscreenType;
 
@@ -33,19 +32,19 @@ impl Window for Renderer {
     }
 
     /// Width of the window.
-    fn window_width(&self, id: WindowId) -> Result<u32> {
+    fn window_width(&self) -> Result<u32> {
         let (width, _) = self.canvas.window().size();
         Ok(width)
     }
 
     /// Height of the window.
-    fn window_height(&self, id: WindowId) -> Result<u32> {
+    fn window_height(&self) -> Result<u32> {
         let (_, height) = self.canvas.window().size();
         Ok(height)
     }
 
     /// Resize the window.
-    fn resize(&mut self, id: WindowId, width: u32, height: u32) -> Result<()> {
+    fn resize(&mut self, width: u32, height: u32) -> Result<()> {
         Ok(self.canvas.window_mut().set_size(width, height)?)
     }
 

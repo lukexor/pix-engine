@@ -52,7 +52,7 @@ impl SpaceObj {
     }
     fn rand_asteroid(ship: &SpaceObj, s: &PixState) -> Self {
         let mut pos = vector!(random!(s.width() as f64), random!(s.height() as f64));
-        if Circle::from((ship.pos, ASTEROID_SAFE_RADIUS)).contains_point(pos) {
+        if Circle::from_vector(ship.pos, ASTEROID_SAFE_RADIUS).contains_point(pos) {
             pos -= ship.pos
         }
 
@@ -122,7 +122,7 @@ impl Asteroids {
 
 impl AppState for Asteroids {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        self.max_pos = (s.width() as f64, s.height() as f64).into();
+        self.max_pos = [s.width() as f64, s.height() as f64].into();
         self.ship_model = vec![vector!(5.0, 0.0), vector!(-2.5, -2.5), vector!(-2.5, 2.5)];
         for i in 0..20 {
             let noise = random!(0.8, 1.2);
@@ -147,9 +147,9 @@ impl AppState for Asteroids {
             let y = height / 2 - 100;
             s.fill(WHITE);
             s.text_size(32);
-            s.text((x, y), "GAME OVER")?;
+            s.text([x, y], "GAME OVER")?;
             s.text_size(16);
-            s.text((x - 30, y + 50), "PRESS SPACE TO RESTART")?;
+            s.text([x - 30, y + 50], "PRESS SPACE TO RESTART")?;
             return Ok(());
         }
 
@@ -174,7 +174,7 @@ impl AppState for Asteroids {
         // Draw asteroids
         for a in self.asteroids.iter_mut() {
             // Ship collision
-            if Circle::from((a.pos, a.size as f64)).contains_point(self.ship.pos) {
+            if Circle::from_vector(a.pos, a.size as f64).contains_point(self.ship.pos) {
                 self.exploded(s)?;
                 return Ok(());
             }
@@ -196,7 +196,7 @@ impl AppState for Asteroids {
             b.angle -= 1.0 * elapsed;
 
             for a in self.asteroids.iter_mut() {
-                if Circle::from((a.pos, a.size as f64)).contains_point(b.pos) {
+                if Circle::from_vector(a.pos, a.size as f64).contains_point(b.pos) {
                     // Asteroid hit
                     b.destroyed = true; // Removes bullet
 
@@ -236,7 +236,7 @@ impl AppState for Asteroids {
         s.fill(BLACK);
         s.stroke(WHITE);
         for b in self.bullets.iter() {
-            s.circle((b.pos.as_point(), 1))?;
+            s.circle(Circle::from_vector(b.pos, 1.0))?;
         }
 
         // Draw ship
@@ -246,7 +246,7 @@ impl AppState for Asteroids {
         s.text_size(16);
         s.fill(WHITE);
         s.text(
-            (4, 4),
+            [4, 4],
             &format!("LEVEL: {}  SCORE: {}", self.level, self.score),
         )?;
 
@@ -255,7 +255,7 @@ impl AppState for Asteroids {
         for i in 0..self.lives {
             s.wireframe(
                 &self.ship_model,
-                (12.0 + (i as f64 * 14.0), 36.0),
+                [12.0 + (i as f64 * 14.0), 36.0],
                 -FRAC_PI_2,
                 2.0,
             )?;

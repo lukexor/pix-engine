@@ -1,11 +1,10 @@
 //! Graphics renderer functions.
 
-use crate::{prelude::*, state::Error as StateError};
+use crate::{prelude::*, state::Error as StateError, window};
 use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
 
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) mod sdl;
-use num_traits::ToPrimitive;
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) use sdl::Renderer;
 
@@ -94,15 +93,16 @@ pub(crate) trait Rendering: Sized {
     fn delete_texture(&mut self, texture_id: TextureId) -> Result<()>;
 
     /// Update texture with pixel data.
-    fn update_texture<R>(
+    fn update_texture<R, P>(
         &mut self,
         texture_id: TextureId,
         rect: R,
-        pixels: &[u8],
+        pixels: P,
         pitch: usize,
     ) -> Result<()>
     where
-        R: Into<Option<Rect<f64>>>;
+        R: Into<Option<Rect<f64>>>,
+        P: AsRef<[u8]>;
 
     /// Draw texture canvas.
     fn texture<R>(&mut self, texture_id: TextureId, src: R, dst: R) -> Result<()>
@@ -129,10 +129,9 @@ pub(crate) trait Rendering: Sized {
         C: Into<Option<Color>>;
 
     /// Draw a triangle to the current canvas.
-    fn triangle<T, U, C>(&mut self, tri: T, fill: C, stroke: C) -> Result<()>
+    fn triangle<T, C>(&mut self, tri: T, fill: C, stroke: C) -> Result<()>
     where
-        T: Into<Triangle<U>>,
-        U: ToPrimitive,
+        T: Into<Triangle<f64>>,
         C: Into<Option<Color>>;
 
     /// Draw a rectangle to the current canvas.
@@ -142,9 +141,10 @@ pub(crate) trait Rendering: Sized {
         C: Into<Option<Color>>;
 
     /// Draw a polygon to the current canvas.
-    fn polygon<C>(&mut self, vx: &[f64], vy: &[f64], fill: C, stroke: C) -> Result<()>
+    fn polygon<C, V>(&mut self, vx: V, vy: V, fill: C, stroke: C) -> Result<()>
     where
-        C: Into<Option<Color>>;
+        C: Into<Option<Color>>,
+        V: AsRef<[f64]>;
 
     /// Draw a ellipse to the current canvas.
     fn ellipse<E, C>(&mut self, ellipse: E, fill: C, stroke: C) -> Result<()>
@@ -167,11 +167,13 @@ pub enum Error {
     InitError,
     /// Renderer I/O errors.
     IoError(io::Error),
+    /// Window errors.
+    WindowError(window::Error),
     /// Invalid text.
     InvalidText(&'static str, NulError),
     /// Invalid Texture.
     InvalidTexture(TextureId),
-    /// An overflow occurred
+    /// An overflow occurred.
     Overflow(Cow<'static, str>, u32),
     /// Any other unknown error as a string.
     Other(Cow<'static, str>),
@@ -182,11 +184,11 @@ impl fmt::Display for Error {
         use Error::*;
         match self {
             InitError => write!(f, "renderer initialization error"),
-            IoError(err) => err.fmt(f),
             InvalidText(msg, err) => write!(f, "invalid text: {}, {}", msg, err),
             InvalidTexture(id) => write!(f, "invalid texture_id: {}", id),
-            Overflow(err, val) => write!(f, "{}: {}", err, val),
+            Overflow(err, val) => write!(f, "overflow {}: {}", err, val),
             Other(err) => write!(f, "unknown renderer error: {}", err),
+            _ => self.fmt(f),
         }
     }
 }

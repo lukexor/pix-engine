@@ -25,25 +25,33 @@ resolver = "2"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+bitflags = "^1.2"
 include_dir = "^0.6"
+lazy_static = "^1.4"
 num-traits = "^0.2"
 png = "^0.16"
 rand = "^0.8"
-bitflags = "^1.2"
-lazy_static = "^1.4"
-serde = { version = "^1.0", features = ["derive"], optional = true }
 
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies.sdl2]
-version = "^0.34"
+[dependencies.serde]
+features = ["derive"]
+optional = true
+version = "^1.0"
+
+[target."cfg(not(target_arch = \"wasm32\"))".dependencies.sdl2]
 default_features = false
 features = ["gfx", "image", "mixer", "ttf", "unsafe_textures"]
+version = "^0.34"
 
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-getrandom = { version = "^0.2", features = ["js"] }
+[target."cfg(target_arch = \"wasm32\")".dependencies.getrandom]
+features = ["js"]
+version = "^0.2"
 
-[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+[target."cfg(target_arch = \"wasm32\")".dev-dependencies]
 console_error_panic_hook = "^0.1"
 wasm-bindgen-test = "^0.3"
+
+[profile.dev]
+split-debuginfo = "unpacked"
 
 [profile.dev.package.sdl2]
 opt-level = 2
@@ -51,9 +59,6 @@ opt-level = 2
 [profile.test.package.sdl2]
 opt-level = 2
 
-[profile.dev]
-split-debuginfo = "unpacked"
-
 [profile.release]
-lto = true
 codegen-units = 1
+lto = true
