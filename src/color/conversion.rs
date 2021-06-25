@@ -46,6 +46,17 @@ pub(crate) const fn maxes(mode: ColorMode) -> [f64; 4] {
     }
 }
 
+/// Clamp levels to `0.0..=1.0`.
+#[inline]
+pub(crate) fn clamp_levels(levels: [f64; 4]) -> [f64; 4] {
+    [
+        levels[0].clamp(0.0, 1.0),
+        levels[1].clamp(0.0, 1.0),
+        levels[2].clamp(0.0, 1.0),
+        levels[3].clamp(0.0, 1.0),
+    ]
+}
+
 /// Converts levels from one [`ColorMode`] to another.
 #[inline]
 pub(crate) fn convert_levels(levels: [f64; 4], from: ColorMode, to: ColorMode) -> [f64; 4] {
@@ -250,12 +261,18 @@ impl Color {
         let amt = amt.into().clamp(0.0, 1.0);
         let [v1, v2, v3, a] = self.levels();
         let [ov1, ov2, ov3, oa] = other.levels();
-        let v1 = lerp(v1, ov1, amt).clamp(0.0, 1.0);
-        let v2 = lerp(v2, ov2, amt).clamp(0.0, 1.0);
-        let v3 = lerp(v3, ov3, amt).clamp(0.0, 1.0);
-        let a = lerp(a, oa, amt).clamp(0.0, 1.0);
-        // SAFETY: We clamp the inputs to between 0.0..=1.0 - upholding the levels invariant.
-        unsafe { Self::from_raw(self.mode, v1, v2, v3, a) }
+        let levels = clamp_levels([
+            lerp(v1, ov1, amt),
+            lerp(v2, ov2, amt),
+            lerp(v3, ov3, amt),
+            lerp(a, oa, amt),
+        ]);
+        let channels = calculate_channels(levels);
+        Self {
+            mode: self.mode,
+            levels,
+            channels,
+        }
     }
 
     /// Update RGB channels by calculating them from the current levels.

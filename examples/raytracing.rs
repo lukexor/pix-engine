@@ -212,14 +212,15 @@ impl App {
 
 impl AppState for App {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.fill(WHITE);
+        s.fill(BLACK);
         let origin = vector!(0.0, 0.0, -2.0);
         let half_w = s.width() as i32 / 2;
         let half_h = s.height() as i32 / 2;
-        for x in -half_w..half_w {
-            for y in -half_h..half_h {
+        for x in -half_w..=half_w {
+            for y in -half_h..=half_h {
                 let direction = self.canvas_to_viewport(x, y, s).as_vector();
-                let color = self.trace_ray(origin, direction, 1.0, f64::INFINITY, 3);
+                let mut color = self.trace_ray(origin, direction, 1.0, f64::INFINITY, 3);
+                color.set_alpha(255);
                 s.stroke(color);
                 s.point(self.canvas_to_screen(x, y, s))?;
             }

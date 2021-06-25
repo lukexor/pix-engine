@@ -1,7 +1,7 @@
 //! [`Color`] operation functions.
 
 use super::{
-    conversion::{calculate_channels, convert_levels},
+    conversion::{calculate_channels, clamp_levels, convert_levels},
     Color,
 };
 use std::{
@@ -42,7 +42,7 @@ impl Add for Color {
     fn add(self, other: Color) -> Self::Output {
         let [v1, v2, v3, a] = self.levels;
         let [ov1, ov2, ov3, ova] = convert_levels(other.levels, other.mode, self.mode);
-        let levels = [v1 + ov1, v2 + ov2, v3 + ov3, a + ova];
+        let levels = clamp_levels([v1 + ov1, v2 + ov2, v3 + ov3, a + ova]);
         let channels = calculate_channels(levels);
         Self {
             mode: self.mode,
@@ -56,10 +56,7 @@ impl AddAssign for Color {
     fn add_assign(&mut self, other: Color) {
         let [v1, v2, v3, a] = self.levels;
         let [ov1, ov2, ov3, ova] = convert_levels(other.levels, other.mode, self.mode);
-        self.levels = [v1 + ov1, v2 + ov2, v3 + ov3, a + ova];
-        for level in &mut self.levels {
-            *level = level.clamp(0.0, 1.0);
-        }
+        self.levels = clamp_levels([v1 + ov1, v2 + ov2, v3 + ov3, a + ova]);
         self.calculate_channels();
     }
 }
@@ -69,7 +66,7 @@ impl Sub for Color {
     fn sub(self, other: Color) -> Self::Output {
         let [v1, v2, v3, a] = self.levels;
         let [ov1, ov2, ov3, ova] = convert_levels(other.levels, other.mode, self.mode);
-        let levels = [v1 - ov1, v2 - ov2, v3 - ov3, a - ova];
+        let levels = clamp_levels([v1 - ov1, v2 - ov2, v3 - ov3, a - ova]);
         let channels = calculate_channels(levels);
         Self {
             mode: self.mode,
@@ -83,10 +80,7 @@ impl SubAssign for Color {
     fn sub_assign(&mut self, other: Color) {
         let [v1, v2, v3, a] = self.levels;
         let [ov1, ov2, ov3, ova] = convert_levels(other.levels, other.mode, self.mode);
-        self.levels = [v1 - ov1, v2 - ov2, v3 - ov3, a - ova];
-        for level in &mut self.levels {
-            *level = level.clamp(0.0, 1.0);
-        }
+        self.levels = clamp_levels([v1 - ov1, v2 - ov2, v3 - ov3, a - ova]);
         self.calculate_channels();
     }
 }
@@ -194,7 +188,11 @@ macro_rules! impl_ops {
                 fn mul(self, s: $target) -> Self::Output {
                     let [v1, v2, v3, a] = self.levels;
                     let s = f64::from(s);
-                    let levels = [v1 * s, v2 * s, v3 * s, a * s];
+                    let levels = clamp_levels([v1 * s, v2 * s, v3 * s, a * s]);
+                    if s == 0.0 {
+                        let [r_max, _, _, _] = crate::color::conversion::maxes(crate::color::ColorMode::Rgb);
+                        assert_eq!((levels[0] * r_max).round() as u8, 0, "{:?}", (levels[0], r_max, v1, s));
+                    }
                     let channels = calculate_channels(levels);
                     Self {
                         mode: self.mode,
@@ -209,7 +207,7 @@ macro_rules! impl_ops {
                 fn mul(self, c: Color) -> Self::Output {
                     let [v1, v2, v3, a] = c.levels();
                     let s = f64::from(self);
-                    let levels = [v1 * s, v2 * s, v3 * s, a * s];
+                    let levels = clamp_levels([v1 * s, v2 * s, v3 * s, a * s]);
                     let channels = calculate_channels(levels);
                     Color {
                         mode: c.mode,
@@ -223,10 +221,7 @@ macro_rules! impl_ops {
                 fn mul_assign(&mut self, s: $target) {
                     let [v1, v2, v3, a] = self.levels;
                     let s = f64::from(s);
-                    self.levels = [v1 * s, v2 * s, v3 * s, a * s];
-                    for level in &mut self.levels {
-                        *level = level.clamp(0.0, 1.0);
-                    }
+                    self.levels = clamp_levels([v1 * s, v2 * s, v3 * s, a * s]);
                     self.calculate_channels();
                 }
             }
@@ -236,7 +231,7 @@ macro_rules! impl_ops {
                 fn div(self, s: $target) -> Self::Output {
                     let [v1, v2, v3, a] = self.levels;
                     let s = f64::from(s);
-                    let levels = [v1 / s, v2 / s, v3 / s, a / s];
+                    let levels = clamp_levels([v1 / s, v2 / s, v3 / s, a / s]);
                     let channels = calculate_channels(levels);
                     Self {
                         mode: self.mode,
@@ -250,10 +245,7 @@ macro_rules! impl_ops {
                 fn div_assign(&mut self, s: $target) {
                     let [v1, v2, v3, a] = self.levels;
                     let s = f64::from(s);
-                    self.levels = [v1 / s, v2 / s, v3 / s, a / s];
-                    for level in &mut self.levels {
-                        *level = level.clamp(0.0, 1.0);
-                    }
+                    self.levels = clamp_levels([v1 / s, v2 / s, v3 / s, a / s]);
                     self.calculate_channels();
                 }
             }
@@ -269,7 +261,7 @@ macro_rules! impl_as_ops {
                 fn mul(self, s: $target) -> Self::Output {
                     let [v1, v2, v3, a] = self.levels;
                     let s = s as f64;
-                    let levels = [v1 * s, v2 * s, v3 * s, a * s];
+                    let levels = clamp_levels([v1 * s, v2 * s, v3 * s, a * s]);
                     let channels = calculate_channels(levels);
                     Self {
                         mode: self.mode,
@@ -284,7 +276,7 @@ macro_rules! impl_as_ops {
                 fn mul(self, c: Color) -> Self::Output {
                     let [v1, v2, v3, a] = c.levels();
                     let s = self as f64;
-                    let levels = [v1 * s, v2 * s, v3 * s, a * s];
+                    let levels = clamp_levels([v1 * s, v2 * s, v3 * s, a * s]);
                     let channels = calculate_channels(levels);
                     Color {
                         mode: c.mode,
@@ -298,10 +290,7 @@ macro_rules! impl_as_ops {
                 fn mul_assign(&mut self, s: $target) {
                     let [v1, v2, v3, a] = self.levels;
                     let s = s as f64;
-                    self.levels = [v1 * s, v2 * s, v3 * s, a * s];
-                    for level in &mut self.levels {
-                        *level = level.clamp(0.0, 1.0);
-                    }
+                    self.levels = clamp_levels([v1 * s, v2 * s, v3 * s, a * s]);
                     self.calculate_channels();
                 }
             }
@@ -311,7 +300,7 @@ macro_rules! impl_as_ops {
                 fn div(self, s: $target) -> Self::Output {
                     let [v1, v2, v3, a] = self.levels;
                     let s = s as f64;
-                    let levels = [v1 / s, v2 / s, v3 / s, a / s];
+                    let levels = clamp_levels([v1 / s, v2 / s, v3 / s, a / s]);
                     let channels = calculate_channels(levels);
                     Self {
                         mode: self.mode,
@@ -325,10 +314,7 @@ macro_rules! impl_as_ops {
                 fn div_assign(&mut self, s: $target) {
                     let [v1, v2, v3, a] = self.levels;
                     let s = s as f64;
-                    self.levels = [v1 / s, v2 / s, v3 / s, a / s];
-                    for level in &mut self.levels {
-                        *level = level.clamp(0.0, 1.0);
-                    }
+                    self.levels = clamp_levels([v1 / s, v2 / s, v3 / s, a / s]);
                     self.calculate_channels();
                 }
             }

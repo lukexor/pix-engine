@@ -99,7 +99,7 @@
 //! ```
 
 use crate::random;
-use conversion::{calculate_channels, convert_levels, maxes};
+use conversion::{calculate_channels, clamp_levels, convert_levels, maxes};
 use ops::Iter;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -181,12 +181,12 @@ impl Color {
     pub fn with_mode<T: Into<f64>>(mode: ColorMode, v1: T, v2: T, v3: T) -> Self {
         // Normalize channels
         let [v1_max, v2_max, v3_max, _] = maxes(mode);
-        let levels = [
-            (v1.into() / v1_max).clamp(0.0, 1.0),
-            (v2.into() / v2_max).clamp(0.0, 1.0),
-            (v3.into() / v3_max).clamp(0.0, 1.0),
+        let levels = clamp_levels([
+            v1.into() / v1_max,
+            v2.into() / v2_max,
+            v3.into() / v3_max,
             1.0,
-        ];
+        ]);
 
         // Convert to `Rgb`
         let levels = convert_levels(levels, mode, Rgb);
@@ -214,12 +214,12 @@ impl Color {
     pub fn with_mode_alpha<T: Into<f64>>(mode: ColorMode, v1: T, v2: T, v3: T, alpha: T) -> Self {
         // Normalize channels
         let [v1_max, v2_max, v3_max, alpha_max] = maxes(mode);
-        let levels = [
-            (v1.into() / v1_max).clamp(0.0, 1.0),
-            (v2.into() / v2_max).clamp(0.0, 1.0),
-            (v3.into() / v3_max).clamp(0.0, 1.0),
-            (alpha.into() / alpha_max).clamp(0.0, 1.0),
-        ];
+        let levels = clamp_levels([
+            v1.into() / v1_max,
+            v2.into() / v2_max,
+            v3.into() / v3_max,
+            alpha.into() / alpha_max,
+        ]);
 
         // Convert to `Rgb`
         let levels = convert_levels(levels, mode, Rgb);
