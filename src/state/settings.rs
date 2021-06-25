@@ -2,11 +2,9 @@
 //!
 //! [`PixEngine`]: crate::prelude::PixEngine
 
-use super::PixState;
 use crate::{
-    color::Color,
+    prelude::{Color, PixState, Rect, Scalar},
     renderer::{self, Rendering},
-    shape::Rect,
     window::Window,
 };
 use num_traits::AsPrimitive;
@@ -133,13 +131,13 @@ impl PixState {
     }
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    pub fn clip(&mut self, rect: impl Into<Rect<f64>>) {
+    pub fn clip(&mut self, rect: impl Into<Rect<Scalar>>) {
         self.renderer.clip(rect.into());
     }
 
     /// Clears the clip rect used by the renderer to draw to the current canvas.
     pub fn no_clip(&mut self) {
-        self.renderer.clip(None);
+        self.renderer.clip::<Scalar, _>(None);
     }
 
     /// Returns whether the application is fullscreen or not.

@@ -307,7 +307,7 @@ impl AppState for RayScene {
         }
 
         if let Some(ref light) = self.light {
-            s.image(mouse.x - 255, mouse.y - 255, &light)?;
+            s.image([mouse.x - 255, mouse.y - 255], &light)?;
         }
 
         Ok(())

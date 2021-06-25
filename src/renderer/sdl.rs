@@ -125,7 +125,11 @@ impl Rendering for Renderer {
     }
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    fn clip(&mut self, rect: impl Into<Option<Rect<f64>>>) {
+    fn clip<T, R>(&mut self, rect: R)
+    where
+        T: AsPrimitive<Scalar>,
+        R: Into<Option<Rect<T>>>,
+    {
         let rect = rect.into().map(|rect| rect.into());
         self.canvas.set_clip_rect(rect);
     }
@@ -160,7 +164,7 @@ impl Rendering for Renderer {
     /// Create a texture to render to.
     fn create_texture<T, F>(&mut self, width: T, height: T, format: F) -> Result<TextureId>
     where
-        T: Into<f64>,
+        T: Into<Scalar>,
         F: Into<Option<PixelFormat>>,
     {
         let texture_id = self.textures.len();
@@ -194,7 +198,7 @@ impl Rendering for Renderer {
         pitch: usize,
     ) -> Result<()>
     where
-        R: Into<Option<Rect<f64>>>,
+        R: Into<Option<Rect<Scalar>>>,
         P: AsRef<[u8]>,
     {
         if let Some(texture) = self.textures.get_mut(texture_id) {
@@ -209,7 +213,7 @@ impl Rendering for Renderer {
     /// Draw texture canvas.
     fn texture<R>(&mut self, texture_id: usize, src: R, dst: R) -> Result<()>
     where
-        R: Into<Option<Rect<f64>>>,
+        R: Into<Option<Rect<Scalar>>>,
     {
         if let Some(texture) = self.textures.get_mut(texture_id) {
             let src: Option<SdlRect> = src.into().map(|r| r.into());
@@ -223,7 +227,7 @@ impl Rendering for Renderer {
     /// Draw text to the current canvas.
     fn text<P, T, C>(&mut self, position: P, text: T, size: u32, fill: C, _stroke: C) -> Result<()>
     where
-        P: Into<Point<f64>>,
+        P: Into<Point<Scalar>>,
         T: AsRef<str>,
         C: Into<Option<Color>>,
     {
@@ -246,7 +250,7 @@ impl Rendering for Renderer {
     /// Draw a pixel to the current canvas.
     fn point<P, C>(&mut self, p: P, color: C) -> Result<()>
     where
-        P: Into<Point<f64>>,
+        P: Into<Point<Scalar>>,
         C: Into<Option<Color>>,
     {
         if let Some(color) = color.into() {
@@ -259,7 +263,7 @@ impl Rendering for Renderer {
     /// Draw a line to the current canvas.
     fn line<L, C>(&mut self, line: L, color: C) -> Result<()>
     where
-        L: Into<Line<f64>>,
+        L: Into<Line<Scalar>>,
         C: Into<Option<Color>>,
     {
         if let Some(color) = color.into() {
@@ -279,7 +283,7 @@ impl Rendering for Renderer {
     /// Draw a triangle to the current canvas.
     fn triangle<T, C>(&mut self, tri: T, fill: C, stroke: C) -> Result<()>
     where
-        T: Into<Triangle<f64>>,
+        T: Into<Triangle<Scalar>>,
         C: Into<Option<Color>>,
     {
         let tri = tri.into().as_i16();
@@ -296,7 +300,7 @@ impl Rendering for Renderer {
     /// Draw a rectangle to the current canvas.
     fn rect<R, C>(&mut self, rect: R, fill: C, stroke: C) -> Result<()>
     where
-        R: Into<Rect<f64>>,
+        R: Into<Rect<Scalar>>,
         C: Into<Option<Color>>,
     {
         let rect = rect.into().as_i16();
@@ -316,7 +320,7 @@ impl Rendering for Renderer {
     fn polygon<C, V>(&mut self, vx: V, vy: V, fill: C, stroke: C) -> Result<()>
     where
         C: Into<Option<Color>>,
-        V: AsRef<[f64]>,
+        V: AsRef<[Scalar]>,
     {
         let vx: Vec<i16> = vx.as_ref().iter().map(|v| v.round() as i16).collect();
         let vy: Vec<i16> = vy.as_ref().iter().map(|v| v.round() as i16).collect();
@@ -332,7 +336,7 @@ impl Rendering for Renderer {
     /// Draw a ellipse to the current canvas.
     fn ellipse<E, C>(&mut self, ellipse: E, fill: C, stroke: C) -> Result<()>
     where
-        E: Into<Ellipse<f64>>,
+        E: Into<Ellipse<Scalar>>,
         C: Into<Option<Color>>,
     {
         let ellipse = ellipse.into().as_i16();
@@ -347,22 +351,29 @@ impl Rendering for Renderer {
     }
 
     /// Draw an image to the current canvas.
-    fn image(&mut self, x: i32, y: i32, img: &Image) -> Result<()> {
+    fn image<P>(&mut self, position: P, img: &Image) -> Result<()>
+    where
+        P: Into<Point<Scalar>>,
+    {
         if let Some(texture) = self.textures.get_mut(img.texture_id()) {
+            let pos = position.into();
             texture.update(
                 None,
                 img.bytes(),
                 img.format().channels() * img.width() as usize,
             )?;
             texture.set_blend_mode(self.blend_mode);
-            let dst = SdlRect::new(x, y, img.width(), img.height());
+            let dst = SdlRect::new(pos.x as i32, pos.y as i32, img.width(), img.height());
             self.canvas.copy(&texture, None, dst)?;
         }
         Ok(())
     }
 
     /// Draw an image to the current canvas.
-    fn image_resized(&mut self, x: i32, y: i32, w: u32, h: u32, img: &Image) -> Result<()> {
+    fn image_resized<R>(&mut self, dst_rect: R, img: &Image) -> Result<()>
+    where
+        R: Into<Rect<Scalar>>,
+    {
         if let Some(texture) = self.textures.get_mut(img.texture_id()) {
             texture.update(
                 None,
@@ -370,7 +381,7 @@ impl Rendering for Renderer {
                 img.format().channels() * img.width() as usize,
             )?;
             texture.set_blend_mode(self.blend_mode);
-            let dst = SdlRect::new(x, y, w, h);
+            let dst: SdlRect = dst_rect.into().into();
             self.canvas.copy(&texture, None, dst)?;
         }
         Ok(())
@@ -413,14 +424,14 @@ impl From<Color> for SdlColor {
 
 impl<T> From<Rect<T>> for SdlRect
 where
-    T: AsPrimitive<i32> + AsPrimitive<u32>,
+    T: AsPrimitive<Scalar>,
 {
     fn from(rect: Rect<T>) -> Self {
         Self::new(
-            rect.x.as_(),
-            rect.y.as_(),
-            rect.width.as_(),
-            rect.height.as_(),
+            rect.x.as_() as i32,
+            rect.y.as_() as i32,
+            rect.width.as_() as u32,
+            rect.height.as_() as u32,
         )
     }
 }

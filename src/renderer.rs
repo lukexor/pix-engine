@@ -73,7 +73,10 @@ pub(crate) trait Rendering: Sized {
     fn set_draw_color(&mut self, color: impl Into<Color>);
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    fn clip(&mut self, rect: impl Into<Option<Rect<f64>>>);
+    fn clip<T, R>(&mut self, rect: R)
+    where
+        T: AsPrimitive<Scalar>,
+        R: Into<Option<Rect<T>>>;
 
     /// Sets the blend mode used by the renderer to draw textures.
     fn blend_mode(&mut self, mode: BlendMode);
@@ -87,7 +90,7 @@ pub(crate) trait Rendering: Sized {
     /// Create a texture to draw to.
     fn create_texture<T, F>(&mut self, width: T, height: T, format: F) -> Result<TextureId>
     where
-        T: Into<f64>,
+        T: Into<Scalar>,
         F: Into<Option<PixelFormat>>;
 
     /// Delete a texture.
@@ -102,62 +105,66 @@ pub(crate) trait Rendering: Sized {
         pitch: usize,
     ) -> Result<()>
     where
-        R: Into<Option<Rect<f64>>>,
+        R: Into<Option<Rect<Scalar>>>,
         P: AsRef<[u8]>;
 
     /// Draw texture canvas.
     fn texture<R>(&mut self, texture_id: TextureId, src: R, dst: R) -> Result<()>
     where
-        R: Into<Option<Rect<f64>>>;
+        R: Into<Option<Rect<Scalar>>>;
 
     /// Draw text to the current canvas.
     fn text<P, T, C>(&mut self, position: P, text: T, size: u32, fill: C, stroke: C) -> Result<()>
     where
-        P: Into<Point<f64>>,
+        P: Into<Point<Scalar>>,
         T: AsRef<str>,
         C: Into<Option<Color>>;
 
     /// Draw a pixel to the current canvas.
     fn point<P, C>(&mut self, p: P, color: C) -> Result<()>
     where
-        P: Into<Point<f64>>,
+        P: Into<Point<Scalar>>,
         C: Into<Option<Color>>;
 
     /// Draw a line to the current canvas.
     fn line<L, C>(&mut self, line: L, color: C) -> Result<()>
     where
-        L: Into<Line<f64>>,
+        L: Into<Line<Scalar>>,
         C: Into<Option<Color>>;
 
     /// Draw a triangle to the current canvas.
     fn triangle<T, C>(&mut self, tri: T, fill: C, stroke: C) -> Result<()>
     where
-        T: Into<Triangle<f64>>,
+        T: Into<Triangle<Scalar>>,
         C: Into<Option<Color>>;
 
     /// Draw a rectangle to the current canvas.
     fn rect<R, C>(&mut self, rect: R, fill: C, stroke: C) -> Result<()>
     where
-        R: Into<Rect<f64>>,
+        R: Into<Rect<Scalar>>,
         C: Into<Option<Color>>;
 
     /// Draw a polygon to the current canvas.
     fn polygon<C, V>(&mut self, vx: V, vy: V, fill: C, stroke: C) -> Result<()>
     where
         C: Into<Option<Color>>,
-        V: AsRef<[f64]>;
+        V: AsRef<[Scalar]>;
 
     /// Draw a ellipse to the current canvas.
     fn ellipse<E, C>(&mut self, ellipse: E, fill: C, stroke: C) -> Result<()>
     where
-        E: Into<Ellipse<f64>>,
+        E: Into<Ellipse<Scalar>>,
         C: Into<Option<Color>>;
 
     /// Draw an image to the current canvas.
-    fn image(&mut self, x: i32, y: i32, img: &Image) -> Result<()>;
+    fn image<P>(&mut self, position: P, img: &Image) -> Result<()>
+    where
+        P: Into<Point<Scalar>>;
 
     /// Draw a resized image to the current canvas.
-    fn image_resized(&mut self, x: i32, y: i32, w: u32, h: u32, img: &Image) -> Result<()>;
+    fn image_resized<R>(&mut self, dst_rect: R, img: &Image) -> Result<()>
+    where
+        R: Into<Rect<Scalar>>;
 }
 
 /// The error type for `Renderer` operations.

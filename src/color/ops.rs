@@ -41,7 +41,7 @@ impl Add for Color {
     type Output = Self;
     fn add(self, other: Color) -> Self::Output {
         let [v1, v2, v3, a] = self.levels;
-        let [ov1, ov2, ov3, ova] = convert_levels(other.levels, other.mode, self.mode);
+        let [ov1, ov2, ov3, _] = convert_levels(other.levels, other.mode, self.mode);
         let levels = clamp_levels([v1 + ov1, v2 + ov2, v3 + ov3, a]);
         let channels = calculate_channels(levels);
         Self {
@@ -55,7 +55,7 @@ impl Add for Color {
 impl AddAssign for Color {
     fn add_assign(&mut self, other: Color) {
         let [v1, v2, v3, a] = self.levels;
-        let [ov1, ov2, ov3, ova] = convert_levels(other.levels, other.mode, self.mode);
+        let [ov1, ov2, ov3, _] = convert_levels(other.levels, other.mode, self.mode);
         self.levels = clamp_levels([v1 + ov1, v2 + ov2, v3 + ov3, a]);
         self.calculate_channels();
     }
@@ -65,7 +65,7 @@ impl Sub for Color {
     type Output = Self;
     fn sub(self, other: Color) -> Self::Output {
         let [v1, v2, v3, a] = self.levels;
-        let [ov1, ov2, ov3, ova] = convert_levels(other.levels, other.mode, self.mode);
+        let [ov1, ov2, ov3, _] = convert_levels(other.levels, other.mode, self.mode);
         let levels = clamp_levels([v1 - ov1, v2 - ov2, v3 - ov3, a]);
         let channels = calculate_channels(levels);
         Self {
@@ -79,7 +79,7 @@ impl Sub for Color {
 impl SubAssign for Color {
     fn sub_assign(&mut self, other: Color) {
         let [v1, v2, v3, a] = self.levels;
-        let [ov1, ov2, ov3, ova] = convert_levels(other.levels, other.mode, self.mode);
+        let [ov1, ov2, ov3, _] = convert_levels(other.levels, other.mode, self.mode);
         self.levels = clamp_levels([v1 - ov1, v2 - ov2, v3 - ov3, a]);
         self.calculate_channels();
     }
@@ -330,25 +330,25 @@ mod tests {
             $(
                 // Mul<T> for Color
                 let c = color!(200, 50, 10, 100) * $val;
-                assert_eq!(c.channels(), [255, 100, 20, 200]);
+                assert_eq!(c.channels(), [255, 100, 20, 100]);
 
                 // Mul<Color> for T
                 let c: Color = $val * color!(200, 50, 10, 100);
-                assert_eq!(c.channels(), [255, 100, 20, 200]);
+                assert_eq!(c.channels(), [255, 100, 20, 100]);
 
                 // MulAssign<T> for Color
                 let mut c = color!(200, 50, 10, 100);
                 c *= $val;
-                assert_eq!(c.channels(), [255, 100, 20, 200]);
+                assert_eq!(c.channels(), [255, 100, 20, 100]);
 
                 // Div<T> for Color
                 let c: Color = color!(100, 255, 0, 100) / $val;
-                assert_eq!(c.channels(), [50, 128, 0, 50]);
+                assert_eq!(c.channels(), [50, 128, 0, 100]);
 
                 // DivAssign<T> for Color
                 let mut c = color!(200, 50, 10, 100);
                 c /= $val;
-                assert_eq!(c.channels(), [100, 25, 5, 50]);
+                assert_eq!(c.channels(), [100, 25, 5, 100]);
             )*
         };
     }
@@ -359,25 +359,25 @@ mod tests {
         let c1 = color!(200, 50, 10, 100);
         let c2 = color!(100, 50, 10, 100);
         let c3 = c1 + c2;
-        assert_eq!(c3.channels(), [255, 100, 20, 200]);
+        assert_eq!(c3.channels(), [255, 100, 20, 100]);
 
         // AddAssign
         let mut c1 = color!(200, 50, 10, 100);
         let c2 = color!(100, 50, 10, 100);
         c1 += c2;
-        assert_eq!(c1.channels(), [255, 100, 20, 200]);
+        assert_eq!(c1.channels(), [255, 100, 20, 100]);
 
         // Sub
         let c1 = color!(200, 100, 20, 200);
         let c2 = color!(100, 50, 30, 100);
         let c3 = c1 - c2;
-        assert_eq!(c3.channels(), [100, 50, 0, 100]);
+        assert_eq!(c3.channels(), [100, 50, 0, 200]);
 
         // SubAssign
         let mut c1 = color!(200, 100, 20, 200);
         let c2 = color!(100, 50, 30, 100);
         c1 -= c2;
-        assert_eq!(c1.channels(), [100, 50, 0, 100]);
+        assert_eq!(c1.channels(), [100, 50, 0, 200]);
 
         test_ops!(2i8, 2u8, 2i16, 2u16, 2i32, 2u32, 2f32, 2f64);
     }
