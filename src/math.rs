@@ -8,7 +8,11 @@ use std::ops::{AddAssign, Range};
 
 /// Default scalar type used for operations.
 pub type Scalar = f64;
-const PI: Scalar = std::f64::consts::PI;
+
+/// Default math constants.
+pub mod constants {
+    pub use std::f64::consts::*;
+}
 
 const PERLIN_YWRAPB: usize = 4;
 const PERLIN_YWRAP: usize = 1 << PERLIN_YWRAPB;
@@ -70,7 +74,7 @@ pub fn noise(v: impl Into<Vector<Scalar>>) -> Scalar {
 
     let (mut n1, mut n2, mut n3);
 
-    let scaled_cosine = |i: Scalar| 0.5 * (1.0 - (i - PI).cos());
+    let scaled_cosine = |i: Scalar| 0.5 * (1.0 - (i - constants::PI).cos());
 
     let perlin_octaves = 4; // default to medium smooth
     let perlin_amp_falloff = 0.5; // 50% reduction/octave

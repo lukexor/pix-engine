@@ -1,6 +1,7 @@
 //! Graphics renderer functions.
 
 use crate::{prelude::*, state::Error as StateError, window};
+use num_traits::AsPrimitive;
 use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -81,7 +82,7 @@ pub(crate) trait Rendering: Sized {
     fn present(&mut self);
 
     /// Scale the current canvas.
-    fn scale(&mut self, x: f32, y: f32) -> Result<()>;
+    fn scale<T: AsPrimitive<f32>>(&mut self, x: T, y: T) -> Result<()>;
 
     /// Create a texture to draw to.
     fn create_texture<T, F>(&mut self, width: T, height: T, format: F) -> Result<TextureId>

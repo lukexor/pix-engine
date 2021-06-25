@@ -153,8 +153,8 @@ impl Rendering for Renderer {
     }
 
     /// Scale the current canvas.
-    fn scale(&mut self, x: f32, y: f32) -> Result<()> {
-        Ok(self.canvas.set_scale(x, y)?)
+    fn scale<T: AsPrimitive<f32>>(&mut self, x: T, y: T) -> Result<()> {
+        Ok(self.canvas.set_scale(x.as_(), y.as_())?)
     }
 
     /// Create a texture to render to.

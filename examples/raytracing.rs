@@ -219,8 +219,7 @@ impl AppState for App {
         for x in -half_w..=half_w {
             for y in -half_h..=half_h {
                 let direction = self.canvas_to_viewport(x, y, s).as_vector();
-                let mut color = self.trace_ray(origin, direction, 1.0, f64::INFINITY, 3);
-                color.set_alpha(255);
+                let color = self.trace_ray(origin, direction, 1.0, f64::INFINITY, 3);
                 s.stroke(color);
                 s.point(self.canvas_to_screen(x, y, s))?;
             }

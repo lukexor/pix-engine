@@ -9,6 +9,7 @@ use crate::{
     shape::Rect,
     window::Window,
 };
+use num_traits::AsPrimitive;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -180,7 +181,7 @@ impl PixState {
     }
 
     /// Set the rendering scale of the current canvas.
-    pub fn scale(&mut self, x: f32, y: f32) -> renderer::Result<()> {
+    pub fn scale<T: AsPrimitive<f32>>(&mut self, x: T, y: T) -> renderer::Result<()> {
         self.renderer.scale(x, y)
     }
 

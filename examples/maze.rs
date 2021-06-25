@@ -21,7 +21,7 @@ struct Maze {
     neighbors: Vec<i32>,
     size: usize,
     visited: usize,
-    stack: Vec<(i32, i32)>,
+    stack: Vec<Point<i32>>,
 }
 
 impl Maze {
@@ -34,7 +34,7 @@ impl Maze {
 
         let start_x = random!(width);
         let start_y = random!(height);
-        stack.push((start_x, start_y));
+        stack.push(point!(start_x, start_y));
         maze[(start_y * width + start_x) as usize] = VISITED;
 
         Self {
@@ -54,7 +54,7 @@ impl Maze {
 
     fn offset(&self, x: i32, y: i32) -> usize {
         match self.stack.last() {
-            Some(top) => ((top.1 + y) * self.width + top.0 + x) as usize,
+            Some(top) => ((top.y + y) * self.width + top.x + x) as usize,
             None => 0,
         }
     }
@@ -66,16 +66,16 @@ impl Maze {
             let east = self.offset(1, 0);
             let south = self.offset(0, 1);
             let west = self.offset(-1, 0);
-            if top.1 > 0 && (self.maze[north] & VISITED) == 0 {
+            if top.y > 0 && (self.maze[north] & VISITED) == 0 {
                 self.neighbors.push(0);
             }
-            if top.0 < self.width - 1 && (self.maze[east] & VISITED) == 0 {
+            if top.x < self.width - 1 && (self.maze[east] & VISITED) == 0 {
                 self.neighbors.push(1);
             }
-            if top.1 < self.height - 1 && (self.maze[south] & VISITED) == 0 {
+            if top.y < self.height - 1 && (self.maze[south] & VISITED) == 0 {
                 self.neighbors.push(2);
             }
-            if top.0 > 0 && (self.maze[west] & VISITED) == 0 {
+            if top.x > 0 && (self.maze[west] & VISITED) == 0 {
                 self.neighbors.push(3);
             }
         }
@@ -84,7 +84,7 @@ impl Maze {
 
     fn visit_neighbor(&mut self) {
         let (x, y) = match self.stack.last() {
-            Some(top) => (top.0, top.1),
+            Some(top) => (top.x, top.y),
             None => (0, 0),
         };
         let current = self.offset(0, 0);
@@ -94,28 +94,28 @@ impl Maze {
                 let north = self.offset(0, -1);
                 self.maze[north] |= VISITED | PATH_S;
                 self.maze[current] |= PATH_N;
-                self.stack.push((x, y - 1));
+                self.stack.push(point!(x, y - 1));
             }
             // East
             1 => {
                 let east = self.offset(1, 0);
                 self.maze[east] |= VISITED | PATH_W;
                 self.maze[current] |= PATH_E;
-                self.stack.push((x + 1, y));
+                self.stack.push(point!(x + 1, y));
             }
             // South
             2 => {
                 let south = self.offset(0, 1);
                 self.maze[south] |= VISITED | PATH_N;
                 self.maze[current] |= PATH_S;
-                self.stack.push((x, y + 1));
+                self.stack.push(point!(x, y + 1));
             }
             // West
             3 => {
                 let west = self.offset(-1, 0);
                 self.maze[west] |= VISITED | PATH_E;
                 self.maze[current] |= PATH_W;
-                self.stack.push((x - 1, y));
+                self.stack.push(point!(x - 1, y));
             }
             _ => unreachable!("more than max neighbors"),
         }
@@ -156,7 +156,7 @@ impl AppState for Maze {
 
         if let Some(top) = self.stack.last() {
             s.fill(GREEN);
-            s.square([top.0 * (SIZE + 1), top.1 * (SIZE + 1), SIZE])?;
+            s.square([top.x * (SIZE + 1), top.y * (SIZE + 1), SIZE])?;
         }
         Ok(())
     }

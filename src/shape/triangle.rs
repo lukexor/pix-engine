@@ -1,7 +1,7 @@
 //! [`Triangle`] type used for drawing.
 
 use crate::{
-    prelude::{Draw, Line, PixResult, PixState, Point, Shape, ShapeNum},
+    prelude::{Draw, Line, PixResult, PixState, Point, Scalar, Shape, ShapeNum},
     vector::Vector,
 };
 use num_traits::{AsPrimitive, Num};
@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 /// A `Triangle` with three [`Point<T>`]s.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Triangle<T> {
+pub struct Triangle<T = Scalar> {
     /// Point 1
     pub p1: Point<T>,
     /// Point 2
@@ -68,7 +68,7 @@ impl<T: ShapeNum> Shape<T> for Triangle<T> {
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
-    fn intersects_line(&self, _line: impl Into<Line<f64>>) -> Option<(Point<f64>, f64)> {
+    fn intersects_line(&self, _line: impl Into<Line<Scalar>>) -> Option<(Point<Scalar>, Scalar)> {
         todo!()
     }
 
@@ -80,7 +80,7 @@ impl<T: ShapeNum> Shape<T> for Triangle<T> {
 
 impl<T> Draw for Triangle<T>
 where
-    Triangle<T>: Copy + Into<Triangle<f64>>,
+    Triangle<T>: Copy + Into<Triangle<Scalar>>,
 {
     /// Draw triangle to the current [`PixState`] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {

@@ -1,6 +1,6 @@
 //! [`Point`] functions used for drawing.
 
-use crate::prelude::{Draw, PixResult, PixState, Vector};
+use crate::prelude::{Draw, PixResult, PixState, Scalar, Vector};
 use num_traits::{AsPrimitive, Float, Num};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -14,7 +14,7 @@ use std::{
 /// A `Point`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Point<T> {
+pub struct Point<T = Scalar> {
     /// X-coord
     pub x: T,
     /// Y-coord
@@ -278,7 +278,7 @@ impl<T: Num> Point<T> {
 
 impl<T> Draw for Point<T>
 where
-    Point<T>: Copy + Into<Point<f64>>,
+    Point<T>: Copy + Into<Point<Scalar>>,
 {
     /// Draw point to the current [`PixState`] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
@@ -566,7 +566,7 @@ impl<T> IntoIterator for Point<T> {
 /// assert_eq!(iterator.next(), None);
 /// ```
 #[derive(Debug, Clone)]
-pub struct Iter<'a, T> {
+pub struct Iter<'a, T = Scalar> {
     inner: [&'a T; 3],
     current: usize,
 }
@@ -618,7 +618,7 @@ type ThreeChain<T> = Chain<Chain<Once<T>, Once<T>>, Once<T>>;
 /// assert_eq!(p.get(), [2, 4, -8]);
 /// ```
 #[derive(Debug)]
-pub struct IterMut<'a, T> {
+pub struct IterMut<'a, T = Scalar> {
     inner: ThreeChain<&'a mut T>,
 }
 
@@ -671,17 +671,13 @@ macro_rules! impl_from {
     };
 }
 
-impl_from!(i8 => f32);
-impl_from!(u8 => f32);
-impl_from!(i16 => f32);
-impl_from!(u16 => f32);
-impl_from!(i8 => f64);
-impl_from!(u8 => f64);
-impl_from!(i16 => f64);
-impl_from!(u16 => f64);
-impl_from!(i32 => f64);
-impl_from!(u32 => f64);
-impl_from!(f32 => f64);
+impl_from!(i8 => Scalar);
+impl_from!(u8 => Scalar);
+impl_from!(i16 => Scalar);
+impl_from!(u16 => Scalar);
+impl_from!(i32 => Scalar);
+impl_from!(u32 => Scalar);
+impl_from!(f32 => Scalar);
 
 /// Converts `[U; 1]` to [`Point<T>`].
 impl<T: Num, U: Into<T>> From<[U; 1]> for Point<T> {

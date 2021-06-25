@@ -1,6 +1,6 @@
 //! [`Circle`], [`Ellipse`], and [`Sphere`] types used for drawing.
 
-use crate::prelude::{Draw, Line, PixResult, PixState, Point, Shape, ShapeNum, Vector};
+use crate::prelude::{Draw, Line, PixResult, PixState, Point, Scalar, Shape, ShapeNum, Vector};
 use num_traits::{AsPrimitive, Num, Signed};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 /// An `Ellipse` positioned at `(x, y)`, with `width` and `height`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Ellipse<T> {
+pub struct Ellipse<T = Scalar> {
     /// Center x-coord
     pub x: T,
     /// Center y-coord
@@ -183,7 +183,7 @@ impl<T: Copy, U: Into<T>> From<Circle<U>> for Ellipse<T> {
 /// A `Circle` positioned at `(x, y)` with `radius`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Circle<T> {
+pub struct Circle<T = Scalar> {
     /// Center x-coord
     pub x: T,
     /// Center y-coord
@@ -266,7 +266,7 @@ impl<T: ShapeNum> Shape<T> for Circle<T> {
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
-    fn intersects_line(&self, _line: impl Into<Line<f64>>) -> Option<(Point<f64>, f64)> {
+    fn intersects_line(&self, _line: impl Into<Line<Scalar>>) -> Option<(Point<Scalar>, Scalar)> {
         todo!()
     }
 
@@ -282,7 +282,7 @@ impl<T: ShapeNum> Shape<T> for Circle<T> {
 
 impl<T> Draw for Circle<T>
 where
-    Circle<T>: Copy + Into<Circle<f64>>,
+    Circle<T>: Copy + Into<Circle<Scalar>>,
 {
     /// Draw circle to the current [`PixState`] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
@@ -321,7 +321,7 @@ impl<T, U: Copy + Into<T>> From<&Circle<U>> for [T; 3] {
 /// A `Sphere` positioned at `(x, y, z)` with `radius`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Sphere<T> {
+pub struct Sphere<T = Scalar> {
     /// Center position
     pub center: Point<T>,
     /// Radius
@@ -379,7 +379,7 @@ impl<T: ShapeNum> Shape<T> for Sphere<T> {
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
-    fn intersects_line(&self, _line: impl Into<Line<f64>>) -> Option<(Point<f64>, f64)> {
+    fn intersects_line(&self, _line: impl Into<Line<Scalar>>) -> Option<(Point<Scalar>, Scalar)> {
         todo!()
     }
 

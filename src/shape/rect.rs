@@ -1,6 +1,6 @@
 //! [`Rect`] types used for drawing.
 
-use crate::prelude::{Draw, Line, PixResult, PixState, Point, Shape, ShapeNum};
+use crate::prelude::{Draw, Line, PixResult, PixState, Point, Scalar, Shape, ShapeNum};
 use num_traits::{AsPrimitive, Num};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 /// A `Rectangle` positioned at `(x, y)` with `width` and `height`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Rect<T> {
+pub struct Rect<T = Scalar> {
     /// X-coord
     pub x: T,
     /// Y-coord
@@ -130,10 +130,10 @@ impl<T> Rect<T> {
         )
     }
 
-    /// Converts [`Rect<T>`] to [`Rect<f64>`].
-    pub fn as_f64(&self) -> Rect<f64>
+    /// Converts [`Rect<T>`] to [`Rect<Scalar>`].
+    pub fn as_scalar(&self) -> Rect<Scalar>
     where
-        T: AsPrimitive<f64>,
+        T: AsPrimitive<Scalar>,
     {
         Rect::new(
             self.x.as_(),
@@ -282,8 +282,8 @@ impl<T: ShapeNum> Shape<T> for Rect<T> {
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
-    fn intersects_line(&self, line: impl Into<Line<f64>>) -> Option<(Point<f64>, f64)> {
-        let rect: Rect<f64> = self.as_f64();
+    fn intersects_line(&self, line: impl Into<Line<Scalar>>) -> Option<(Point<Scalar>, Scalar)> {
+        let rect: Rect<Scalar> = self.as_scalar();
         let line = line.into();
         let left = line.intersects(Line::new(rect.top_left(), rect.bottom_left()));
         let right = line.intersects(Line::new(rect.top_right(), rect.bottom_right()));
@@ -293,7 +293,7 @@ impl<T: ShapeNum> Shape<T> for Rect<T> {
             .iter()
             .filter_map(|&p| p)
             .fold(None, |closest, intersection| {
-                let closest_t = closest.map(|c| c.1).unwrap_or(f64::INFINITY);
+                let closest_t = closest.map(|c| c.1).unwrap_or(Scalar::INFINITY);
                 let t = intersection.1;
                 if t < closest_t {
                     Some(intersection)
@@ -317,7 +317,7 @@ impl<T: ShapeNum> Shape<T> for Rect<T> {
 
 impl<T> Draw for Rect<T>
 where
-    Rect<T>: Copy + Into<Rect<f64>>,
+    Rect<T>: Copy + Into<Rect<Scalar>>,
 {
     /// Draw rectangle to the current [`PixState`] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
@@ -335,17 +335,13 @@ macro_rules! impl_from {
     };
 }
 
-impl_from!(i8 => f32);
-impl_from!(u8 => f32);
-impl_from!(i16 => f32);
-impl_from!(u16 => f32);
-impl_from!(i8 => f64);
-impl_from!(u8 => f64);
-impl_from!(i16 => f64);
-impl_from!(u16 => f64);
-impl_from!(i32 => f64);
-impl_from!(u32 => f64);
-impl_from!(f32 => f64);
+impl_from!(i8 => Scalar);
+impl_from!(u8 => Scalar);
+impl_from!(i16 => Scalar);
+impl_from!(u16 => Scalar);
+impl_from!(i32 => Scalar);
+impl_from!(u32 => Scalar);
+impl_from!(f32 => Scalar);
 
 /// Convert `[x, y, size]` to [`Rect<T>`].
 impl<T: Copy, U: Into<T>> From<[U; 3]> for Rect<T> {
@@ -397,13 +393,13 @@ mod tests {
 
     macro_rules! assert_approx_eq {
         ($i1:expr, $i2:expr) => {
-            assert_approx_eq!($i1, $i2, f64::EPSILON);
+            assert_approx_eq!($i1, $i2, Scalar::EPSILON);
         };
         ($i1:expr, $i2:expr, $e:expr) => {{
             match ($i1, $i2) {
                 (Some((p1, t1)), Some((p2, t2))) => {
-                    let [x1, y1, z1]: [f64; 3] = p1.into();
-                    let [x2, y2, z2]: [f64; 3] = p2.into();
+                    let [x1, y1, z1]: [Scalar; 3] = p1.into();
+                    let [x2, y2, z2]: [Scalar; 3] = p2.into();
                     let xd = (x1 - x2).abs();
                     let yd = (y1 - y2).abs();
                     let zd = (z1 - z2).abs();

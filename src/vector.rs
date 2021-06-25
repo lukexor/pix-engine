@@ -62,14 +62,13 @@
 //! assert!(v.z >= -1.0 && v.z <= 1.0);
 //! ```
 
-use crate::{random, shape::Point};
+use crate::prelude::{constants::TAU, random, Point, Scalar};
 use num_traits::{clamp, AsPrimitive, Float, Num, NumCast};
 use rand::distributions::uniform::SampleUniform;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::{
     array::IntoIter,
-    f64::consts::TAU,
     fmt,
     iter::{once, Chain, FromIterator, Once, Sum},
     ops::*,
@@ -89,7 +88,7 @@ use std::{
 /// `v1 += v2`.
 #[derive(Default, Debug, Copy, Clone, PartialEq, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Vector<T> {
+pub struct Vector<T = Scalar> {
     /// X magnitude
     pub x: T,
     /// Y magnitude
@@ -1004,7 +1003,7 @@ impl<T> IntoIterator for Vector<T> {
 /// assert_eq!(iterator.next(), None);
 /// ```
 #[derive(Debug, Clone)]
-pub struct Iter<'a, T> {
+pub struct Iter<'a, T = Scalar> {
     inner: [&'a T; 3],
     current: usize,
 }
@@ -1056,7 +1055,7 @@ type ThreeChain<T> = Chain<Chain<Once<T>, Once<T>>, Once<T>>;
 /// assert_eq!(v.get(), [2.0, 4.0, -8.0]);
 /// ```
 #[derive(Debug)]
-pub struct IterMut<'a, T> {
+pub struct IterMut<'a, T = Scalar> {
     inner: ThreeChain<&'a mut T>,
 }
 

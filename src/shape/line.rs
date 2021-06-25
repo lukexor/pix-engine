@@ -1,6 +1,6 @@
 //! [`Line`] type used for drawing.
 
-use crate::prelude::{point, Draw, PixResult, PixState, Point, Vector};
+use crate::prelude::{point, Draw, PixResult, PixState, Point, Scalar, Vector};
 use num_traits::{AsPrimitive, Num};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 /// A `Line` with a starting [`Point<T>`] and ending [`Point<T>`].
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Line<T> {
+pub struct Line<T = Scalar> {
     /// Start of line.
     pub start: Point<T>,
     /// End of line.
@@ -28,13 +28,14 @@ impl<T> Line<T> {
     }
 
     /// Returns whether this line intersects with another line.
-    pub fn intersects(&self, other: impl Into<Line<f64>>) -> Option<(Point<f64>, f64)>
+    #[allow(clippy::many_single_char_names)]
+    pub fn intersects(&self, other: impl Into<Line<Scalar>>) -> Option<(Point<Scalar>, Scalar)>
     where
-        T: Num + Copy + PartialOrd + Into<f64>,
+        T: Num + Copy + PartialOrd + Into<Scalar>,
     {
-        let [x1, y1, x2, y2]: [f64; 4] = self.into();
+        let [x1, y1, x2, y2]: [Scalar; 4] = self.into();
         let other = other.into();
-        let [x3, y3, x4, y4]: [f64; 4] = other.into();
+        let [x3, y3, x4, y4]: [Scalar; 4] = other.into();
         let d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
         if d == 0.0 {
             return None;
@@ -71,7 +72,7 @@ impl<T> Line<T> {
 
 impl<T> Draw for Line<T>
 where
-    Line<T>: Copy + Into<Line<f64>>,
+    Line<T>: Copy + Into<Line<Scalar>>,
 {
     /// Draw line to the current [`PixState`] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
