@@ -8,13 +8,11 @@ use crate::{
     window::Position,
     window::Window,
 };
-#[cfg(not(target_arch = "wasm32"))]
-use std::{
-    path::PathBuf,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
 #[cfg(not(target_arch = "wasm32"))]
+use std::path::PathBuf;
+
 const ONE_SECOND: Duration = Duration::from_secs(1);
 
 /// Builds a [`PixEngine`] instance by providing several configration functions.
@@ -113,11 +111,8 @@ impl PixEngineBuilder {
     pub fn build(&self) -> PixEngine {
         PixEngine {
             settings: self.settings.clone(),
-            #[cfg(not(target_arch = "wasm32"))]
             last_frame_time: Instant::now(),
-            #[cfg(not(target_arch = "wasm32"))]
             frame_timer: Duration::from_secs(1),
-            frame_counter: 0,
         }
     }
 }
@@ -127,11 +122,8 @@ impl PixEngineBuilder {
 #[derive(Debug, Clone)]
 pub struct PixEngine {
     settings: RendererSettings,
-    #[cfg(not(target_arch = "wasm32"))]
     frame_timer: Duration,
-    #[cfg(not(target_arch = "wasm32"))]
     last_frame_time: Instant,
-    frame_counter: u64,
 }
 
 impl PixEngine {
@@ -166,17 +158,38 @@ impl PixEngine {
             // running loop continues until an event or on_update returns false or errors
             'running: loop {
                 self.handle_events(&mut state, app)?;
+
                 if state.env.quit {
                     break 'running;
-                } else if state.settings.paused {
-                    self.sleep();
-                    continue;
                 }
 
-                app.on_update(&mut state)?;
-                state.renderer.present();
-                self.update_frame_rate(&mut state)?;
+                let now = Instant::now();
+                let time_since_last = now - self.last_frame_time;
+                self.frame_timer += time_since_last;
+                let target_delta_time = ONE_SECOND / state.env.target_frame_rate;
+
+                if state.settings.paused || time_since_last >= target_delta_time {
+                    state.env.frame_rate = ONE_SECOND / time_since_last.as_secs() as u32;
+                    state.env.delta_time = time_since_last;
+                    self.last_frame_time = now;
+                }
+
+                if !state.settings.paused {
+                    app.on_update(&mut state)?;
+                    state.renderer.present();
+                }
+
+                if state.settings.show_frame_rate && self.frame_timer >= ONE_SECOND {
+                    self.frame_timer /= ONE_SECOND.as_secs() as u32;
+                    let title = format!(
+                        "{} - FPS: {}",
+                        state.title(),
+                        state.env.frame_rate.as_secs()
+                    );
+                    state.renderer.set_title(&title)?;
+                }
             }
+
             app.on_stop(&mut state)?;
             if state.env.quit {
                 break 'on_stop;
@@ -268,42 +281,6 @@ impl PixEngine {
                     app.on_mouse_wheel(state, x, y)?;
                 }
                 _ => (),
-            }
-        }
-        Ok(())
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    fn sleep(&mut self) {
-        todo!("wasm32: sleep");
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    fn sleep(&mut self) {
-        std::thread::sleep(Duration::from_millis(16));
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    fn update_frame_rate(&mut self, _state: &mut PixState) -> Result<()> {
-        todo!("wasm32: update_frame_rate");
-    }
-
-    /// Updates the average frame rate and the window title if setting is enabled.
-    #[cfg(not(target_arch = "wasm32"))]
-    fn update_frame_rate(&mut self, state: &mut PixState) -> Result<()> {
-        let now = Instant::now();
-        state.env.delta_time = now - self.last_frame_time;
-        self.last_frame_time = now;
-        if state.settings.show_frame_rate {
-            self.frame_timer += state.env.delta_time;
-            self.frame_counter += 1;
-            state.env.frame_count += 1;
-            if self.frame_timer >= ONE_SECOND {
-                state.env.frame_rate = self.frame_counter;
-                let title = format!("{} - FPS: {}", state.title(), state.env.frame_rate);
-                state.renderer.set_title(&title)?;
-                self.frame_timer -= ONE_SECOND;
-                self.frame_counter = 0;
             }
         }
         Ok(())

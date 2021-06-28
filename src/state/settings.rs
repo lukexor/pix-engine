@@ -24,7 +24,6 @@ pub enum DrawMode {
 }
 
 /// Drawing mode which changes how arcs are drawn.
-#[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum ArcMode {
@@ -43,25 +42,39 @@ pub enum ArcMode {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum BlendMode {
-    /// Disable blending
+    /// Disable blending.
     None,
-    /// Alpha blending
+    /// Alpha blending.
     Blend,
-    /// Additive blending
+    /// Additive blending.
     Add,
-    /// Color modulate
+    /// Color modulate.
     Mod,
 }
 
 /// Angle mode which changes how math functions interpreted.
-#[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum AngleMode {
-    /// Radians
+    /// Radians.
     Radians,
-    /// Degrees
+    /// Degrees.
     Degrees,
+}
+
+/// Text style for Bold/Italic rendering of fonts.
+#[non_exhaustive]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum TextStyle {
+    /// Normal.
+    Normal,
+    /// Italic.
+    Italic,
+    /// Bold.
+    Bold,
+    /// Bold & Italic.
+    BoldItalic,
 }
 
 /// Several settings used to change various functionality of the engine.
@@ -72,6 +85,8 @@ pub(crate) struct Settings {
     pub(crate) fill: Option<Color>,
     pub(crate) stroke: Option<Color>,
     pub(crate) text_size: u32,
+    pub(crate) text_style: TextStyle,
+    pub(crate) text_font: String,
     pub(crate) paused: bool,
     pub(crate) show_frame_rate: bool,
     pub(crate) rect_mode: DrawMode,
@@ -86,6 +101,8 @@ impl Default for Settings {
             fill: None,
             stroke: None,
             text_size: 16,
+            text_style: TextStyle::Normal,
+            text_font: "Emulogic".to_string(),
             paused: false,
             show_frame_rate: false,
             rect_mode: DrawMode::Corner,
@@ -186,6 +203,19 @@ impl PixState {
     /// Set the text size for drawing to the current canvas.
     pub fn text_size(&mut self, size: u32) {
         self.settings.text_size = size;
+        todo!(); // self.renderer.text_size
+    }
+
+    /// Set the text style for drawing to the current canvas.
+    pub fn text_style(&mut self, style: TextStyle) {
+        self.settings.text_style = style;
+        todo!(); // self.renderer.text_style
+    }
+
+    /// Set the text font-family for drawing to the current canvas.
+    pub fn text_font(&mut self, font: impl Into<String>) {
+        self.settings.text_font = font.into();
+        todo!(); // self.renderer.text_style
     }
 
     /// Change the way parameters are interpreted for drawing squares and rectangles.

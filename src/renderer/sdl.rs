@@ -236,7 +236,7 @@ impl Rendering for Renderer {
         // TODO: This path only works locally
         let font = self
             .ttf_context
-            .load_font("static/emulogic.ttf", size as u16)?;
+            .load_font("static/Courier New.ttf", size as u16)?;
         if let Some(fill) = fill.into() {
             let surface = font.render(text.as_ref()).blended(fill)?;
             let texture = self.texture_creator.create_texture_from_surface(&surface)?;
