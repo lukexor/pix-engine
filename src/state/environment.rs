@@ -8,7 +8,6 @@ use crate::{
 };
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
 
 /// Environment values for [`PixState`]
 #[derive(Debug, Clone)]
@@ -16,9 +15,9 @@ use std::time::Duration;
 pub(crate) struct Environment {
     pub(crate) focused: bool,
     pub(crate) focused_window: Option<WindowId>,
-    pub(crate) delta_time: Duration,
-    pub(crate) frame_rate: Duration,
-    pub(crate) target_frame_rate: u32,
+    pub(crate) delta_time: f64,
+    pub(crate) frame_rate: u32,
+    pub(crate) target_frame_rate: f64,
     pub(crate) frame_count: usize,
     pub(crate) quit: bool,
 }
@@ -28,9 +27,9 @@ impl Default for Environment {
         Self {
             focused: false,
             focused_window: None,
-            delta_time: Duration::default(),
-            frame_rate: Duration::default(),
-            target_frame_rate: 60,
+            delta_time: 0.0,
+            frame_rate: 0,
+            target_frame_rate: 60.0,
             frame_count: 0,
             quit: false,
         }
@@ -68,7 +67,7 @@ impl PixState {
 
     /// The time elapsed since last frame.
     pub fn delta_time(&self) -> f64 {
-        self.env.delta_time.as_secs_f64()
+        self.env.delta_time
     }
 
     /// The total number of frames rendered since application start.
@@ -78,12 +77,12 @@ impl PixState {
 
     /// The average frames per second rendered.
     pub fn frame_rate(&self) -> u32 {
-        self.env.frame_rate.as_secs() as u32
+        self.env.frame_rate
     }
 
     /// Set a target frame rate to render at.
     pub fn set_frame_rate(&mut self, rate: u32) {
-        self.env.target_frame_rate = rate;
+        self.env.target_frame_rate = rate as f64;
     }
 
     /// The dimensions of the current canvas as a tuple of (width, height).

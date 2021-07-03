@@ -8,12 +8,10 @@ use crate::{
     window::Position,
     window::Window,
 };
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
-
-const ONE_SECOND: Duration = Duration::from_secs(1);
 
 /// Builds a [`PixEngine`] instance by providing several configration functions.
 #[non_exhaustive]
@@ -112,7 +110,7 @@ impl PixEngineBuilder {
         PixEngine {
             settings: self.settings.clone(),
             last_frame_time: Instant::now(),
-            frame_timer: Duration::from_secs(1),
+            frame_timer: 1.0,
         }
     }
 }
@@ -122,7 +120,7 @@ impl PixEngineBuilder {
 #[derive(Debug, Clone)]
 pub struct PixEngine {
     settings: RendererSettings,
-    frame_timer: Duration,
+    frame_timer: f64,
     last_frame_time: Instant,
 }
 
@@ -137,7 +135,8 @@ impl PixEngine {
     where
         A: AppState,
     {
-        let renderer = Renderer::new(self.settings.clone())?;
+        // TODO: Explore creating context/texture_creator/ttf_context here - pass in with settings
+        let renderer = Renderer::new(&self.settings)?;
         let mut state = PixState::new(&self.settings.title, renderer);
         state.show_frame_rate(self.settings.show_frame_rate);
 
@@ -164,28 +163,24 @@ impl PixEngine {
                 }
 
                 let now = Instant::now();
-                let time_since_last = now - self.last_frame_time;
+                let time_since_last = (now - self.last_frame_time).as_millis() as f64;
+                let target_delta_time = 1000.0 / state.env.target_frame_rate;
                 self.frame_timer += time_since_last;
-                let target_delta_time = ONE_SECOND / state.env.target_frame_rate;
 
                 if state.settings.paused || time_since_last >= target_delta_time {
-                    state.env.frame_rate = ONE_SECOND / time_since_last.as_secs() as u32;
+                    state.env.frame_rate = (1000.0 / time_since_last).round() as u32;
                     state.env.delta_time = time_since_last;
                     self.last_frame_time = now;
+
+                    if !state.settings.paused {
+                        app.on_update(&mut state)?;
+                        state.renderer.present();
+                    }
                 }
 
-                if !state.settings.paused {
-                    app.on_update(&mut state)?;
-                    state.renderer.present();
-                }
-
-                if state.settings.show_frame_rate && self.frame_timer >= ONE_SECOND {
-                    self.frame_timer /= ONE_SECOND.as_secs() as u32;
-                    let title = format!(
-                        "{} - FPS: {}",
-                        state.title(),
-                        state.env.frame_rate.as_secs()
-                    );
+                if state.settings.show_frame_rate && self.frame_timer >= 1.0 {
+                    self.frame_timer -= 1.0;
+                    let title = format!("{} - FPS: {}", state.title(), state.env.frame_rate);
                     state.renderer.set_title(&title)?;
                 }
             }

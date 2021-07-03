@@ -1,4 +1,5 @@
 use lazy_static::lazy_static;
+
 use pix_engine::prelude::*;
 
 const TITLE: &str = "The Matrix";
@@ -12,7 +13,7 @@ const GLYPH_COLOR: [u8; 3] = [0, 155, 00];
 const GLYPH_COLOR_DARK: [u8; 3] = [0, 155, 00];
 const GLYPH_HIGHLIGHT: [u8; 3] = [200, 255, 200];
 const GLYPH_HIGHLIGHT_PROBABILITY: usize = 25;
-const MORPH_PROBABILITY: usize = 40;
+const MORPH_PROBABILITY: usize = 0;
 const MORPH_INTERVAL_MIN: usize = 2;
 const MORPH_INTERVAL_MAX: usize = 20;
 
@@ -23,7 +24,7 @@ const SPAWN_Y_MIN: i32 = -500;
 const SPAWN_Y_MAX: i32 = -100;
 const SPEED_MIN: u32 = 1;
 const SPEED_MAX: u32 = 2;
-const STREAM_EMPTY_PROBABILITY: usize = 5;
+const STREAM_EMPTY_PROBABILITY: usize = 0;
 const STREAM_MIN: usize = 3;
 const STREAM_MAX: usize = 30;
 
@@ -33,15 +34,15 @@ lazy_static! {
         for i in 0..10 {
             glyphs.push(char::from_digit(i, 10).unwrap());
         }
-        for i in 0..96 {
-            glyphs.push(char::from_u32(0x30A0 + i).unwrap());
-        }
+        // for i in 0..96 {
+        //     glyphs.push(char::from_u32(0x30A0 + i).unwrap());
+        // }
         glyphs
     };
 }
 
 struct Glyph {
-    pos: Point<i32>,
+    pos: Point,
     value: char,
     size: u32,
     color: Color,
@@ -49,7 +50,7 @@ struct Glyph {
 }
 
 impl Glyph {
-    pub fn new(pos: impl Into<Point<i32>>, size: u32, color: Color) -> Self {
+    pub fn new(pos: impl Into<Point>, size: u32, color: Color) -> Self {
         let mut glyph = Self {
             pos: pos.into(),
             value: GLYPHS[0],
@@ -71,15 +72,15 @@ impl Glyph {
             self.randomize();
         }
         s.fill(self.color);
-        s.text_size(self.size);
-        let mut tmp = [0; 4];
+        s.font_size(self.size);
+        let mut tmp = [0; 2];
         s.text(self.pos, self.value.encode_utf8(&mut tmp))?;
         Ok(())
     }
 }
 
 struct Stream {
-    pos: Point<i32>,
+    pos: Point,
     height: i32,
     highlight: bool,
     glyphs: Vec<Glyph>,
@@ -90,7 +91,7 @@ struct Stream {
 }
 
 impl Stream {
-    pub fn new(pos: impl Into<Point<i32>>) -> Self {
+    pub fn new(pos: impl Into<Point>) -> Self {
         let mut stream = Self {
             pos: pos.into(),
             height: 0,
@@ -118,7 +119,7 @@ impl Stream {
         if !empty_prob {
             let count = random!(STREAM_MIN, STREAM_MAX);
             for i in 0..count {
-                let y = self.pos.y - i as i32 * self.size as i32;
+                let y = self.pos.y - i as Scalar * self.size as Scalar;
                 let glyph = Glyph::new([self.pos.x, y], self.size, self.color);
                 self.glyphs.push(glyph);
             }
@@ -126,8 +127,12 @@ impl Stream {
         }
     }
 
+    pub fn x(&self) -> i32 {
+        self.pos.x.round() as i32
+    }
+
     pub fn y(&self) -> i32 {
-        self.pos.y
+        self.pos.y.round() as i32
     }
 
     pub fn height(&self) -> i32 {
@@ -135,17 +140,17 @@ impl Stream {
     }
 
     pub fn draw(&mut self, s: &mut PixState) -> PixResult<()> {
-        self.pos.y += (self.speed * self.size) as i32;
+        self.pos.y += (self.speed * self.size) as Scalar;
         let len = self.glyphs.len();
         for i in 0..len {
-            let idx = (i as i32 - self.pos.y / self.size as i32) as usize % len;
+            let idx = (i as Scalar - (self.pos.y / self.size as Scalar).floor()) as usize % len;
             let mut glyph = &mut self.glyphs[idx];
             if i == 0 && self.highlight {
                 glyph.color = GLYPH_HIGHLIGHT.into();
             } else {
                 glyph.color = self.color;
             }
-            glyph.pos.y = self.pos.y - i as i32 * self.size as i32;
+            glyph.pos.y = self.pos.y - (i as Scalar) * (self.size as Scalar);
             glyph.draw(s)?;
         }
         Ok(())
@@ -161,7 +166,7 @@ impl Matrix {
     fn new() -> Self {
         let count = (WIDTH / GLYPH_SIZE) as usize;
         let mut streams = Vec::with_capacity(count);
-        for i in 0..count {
+        for i in 0..2 {
             let x = i as i32 * GLYPH_SIZE as i32;
             let y = random!(START_Y_MIN, START_Y_MAX);
             streams.push(Stream::new([x, y]));
@@ -175,26 +180,27 @@ impl Matrix {
 
 impl AppState for Matrix {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.text_style(Bold);
-        s.text_font(GLYPH_FONT);
-        s.set_frame_rate(20);
+        s.background([0, 0, 0, 255]);
+        s.font_style(FontStyle::BOLD);
+        s.font_family(GLYPH_FONT);
+        s.set_frame_rate(10);
         Ok(())
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.background([0, 0, 0, 150]);
+        s.clear();
         let height = HEIGHT as i32;
-        self.streams
-            .retain(|stream| stream.y() <= (height + stream.height()));
         for stream in &mut self.streams {
             stream.draw(s)?;
-            if !stream.spawned && stream.pos.y >= (3 * HEIGHT as i32 / 4) {
+            if !stream.spawned && stream.y() >= (3 * height / 4) {
                 let y = random!(SPAWN_Y_MIN, SPAWN_Y_MAX);
-                let new_stream = Stream::new([stream.pos.x, y]);
+                let new_stream = Stream::new([stream.x(), y]);
                 self.new_streams.push(new_stream);
                 stream.spawned = true;
             }
         }
+        self.streams
+            .retain(|stream| stream.y() <= (height + stream.height()));
         self.streams.append(&mut self.new_streams);
         Ok(())
     }
@@ -210,6 +216,7 @@ pub fn main() -> PixResult<()> {
         .with_title(TITLE)
         .with_frame_rate()
         .position_centered()
+        .vsync_enabled()
         .build();
     let mut matrix = Matrix::new();
     engine.run(&mut matrix)

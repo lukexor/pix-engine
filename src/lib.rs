@@ -111,7 +111,7 @@ pub mod prelude {
     pub use math::{constants, map, Scalar};
     pub use shape::{Circle, Ellipse, Line, Point, Rect, Shape, ShapeNum, Triangle};
     pub use state::{
-        settings::{AngleMode, ArcMode, BlendMode, DrawMode, TextStyle::*},
+        settings::{AngleMode, ArcMode, BlendMode, DrawMode, FontStyle},
         AppState, PixState,
     };
     pub use texture::TextureId;

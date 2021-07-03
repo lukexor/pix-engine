@@ -3,8 +3,10 @@
 use crate::{
     prelude::*,
     renderer::{Error, RendererSettings, Rendering, Result},
+    state::settings::FontSettings,
     window::Error as WindowError,
 };
+use lazy_static::lazy_static;
 use num_traits::AsPrimitive;
 use sdl2::{
     audio::{AudioQueue, AudioSpecDesired},
@@ -17,7 +19,7 @@ use sdl2::{
         TextureValueError, UpdateTextureError,
     },
     surface::Surface,
-    ttf::{self, FontError, InitError},
+    ttf::{Font, FontError, FontStyle as SdlFontStyle, InitError, Sdl2TtfContext},
     video::{Window as SdlWindow, WindowBuildError, WindowContext},
     EventPump, IntegerOrSdlError, Sdl,
 };
@@ -27,10 +29,14 @@ mod audio;
 mod event;
 mod window;
 
+lazy_static! {
+    static ref TTF: Sdl2TtfContext = sdl2::ttf::init().unwrap();
+}
+
 /// An SDL [`Renderer`] implementation.
 pub(crate) struct Renderer {
     context: Sdl,
-    ttf_context: ttf::Sdl2TtfContext,
+    font: Font<'static, 'static>,
     event_pump: EventPump,
     window_id: WindowId,
     canvas: Canvas<SdlWindow>,
@@ -42,15 +48,14 @@ pub(crate) struct Renderer {
 
 impl Default for Renderer {
     fn default() -> Self {
-        Self::new(RendererSettings::default()).expect("SDL2 Renderer")
+        Self::new(&RendererSettings::default()).expect("SDL2 Renderer")
     }
 }
 
 impl Rendering for Renderer {
     /// Initializes the Sdl2Renderer using the given settings and opens a new window.
-    fn new(s: RendererSettings) -> Result<Self> {
+    fn new(s: &RendererSettings) -> Result<Self> {
         let context = sdl2::init()?;
-        let ttf_context = ttf::init()?;
         let video_subsys = context.video()?;
         let event_pump = context.event_pump()?;
 
@@ -101,9 +106,11 @@ impl Rendering for Renderer {
         let audio_device = audio_sub.open_queue(None, &desired_spec)?;
         audio_device.resume();
 
+        let font = TTF.load_font("static/Songti_SC.ttf", 16)?;
+
         Ok(Self {
             context,
-            ttf_context,
+            font,
             event_pump,
             window_id,
             canvas,
@@ -225,7 +232,14 @@ impl Rendering for Renderer {
     }
 
     /// Draw text to the current canvas.
-    fn text<P, T, C>(&mut self, position: P, text: T, size: u32, fill: C, _stroke: C) -> Result<()>
+    fn text<P, T, C>(
+        &mut self,
+        position: P,
+        text: T,
+        s: &FontSettings,
+        fill: C,
+        _stroke: C,
+    ) -> Result<()>
     where
         P: Into<Point<Scalar>>,
         T: AsRef<str>,
@@ -234,15 +248,14 @@ impl Rendering for Renderer {
         let p = position.into().as_i32();
         let text = text.as_ref();
         // TODO: This path only works locally
-        let font = self
-            .ttf_context
-            .load_font("static/Courier New.ttf", size as u16)?;
         if let Some(fill) = fill.into() {
-            let surface = font.render(text.as_ref()).blended(fill)?;
+            self.font.set_style(s.style.into());
+            let surface = self.font.render(text.as_ref()).blended(fill)?;
             let texture = self.texture_creator.create_texture_from_surface(&surface)?;
             let TextureQuery { width, height, .. } = texture.query();
             self.canvas
                 .copy(&texture, None, Some(SdlRect::new(p.x, p.y, width, height)))?;
+            // self.canvas.string(p.x, p.y, text, fill)?;
         }
         Ok(())
     }
@@ -419,6 +432,19 @@ impl From<Color> for SdlColor {
     fn from(color: Color) -> Self {
         let [r, g, b, a] = color.channels();
         Self::RGBA(r, g, b, a)
+    }
+}
+
+impl From<FontStyle> for SdlFontStyle {
+    fn from(style: FontStyle) -> Self {
+        match style {
+            FontStyle::NORMAL => SdlFontStyle::NORMAL,
+            FontStyle::BOLD => SdlFontStyle::BOLD,
+            FontStyle::ITALIC => SdlFontStyle::ITALIC,
+            FontStyle::UNDERLINE => SdlFontStyle::UNDERLINE,
+            FontStyle::STRIKETHROUGH => SdlFontStyle::STRIKETHROUGH,
+            _ => unreachable!("invalid FontStyle"),
+        }
     }
 }
 

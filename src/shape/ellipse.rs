@@ -1,7 +1,7 @@
 //! [`Circle`], [`Ellipse`], and [`Sphere`] types used for drawing.
 
 use crate::prelude::{Draw, Line, PixResult, PixState, Point, Scalar, Shape, ShapeNum, Vector};
-use num_traits::{AsPrimitive, Num, Signed};
+use num_traits::AsPrimitive;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -79,42 +79,17 @@ impl<T> Ellipse<T> {
     }
 }
 
-impl<T> Ellipse<T>
-where
-    T: Num,
-{
-    /// Returns whether this ellipse contains a given [`Point<T>`].
-    pub fn contains_point(&self, p: impl Into<(T, T)>) -> bool
-    where
-        T: Signed + PartialOrd + Copy,
-    {
-        let (x, y) = p.into();
-        let px = x - self.x;
-        let py = y - self.y;
-        let rx = self.width;
-        let ry = self.height;
-        (px * px) / (rx * rx) + (py * py) / (ry * ry) <= T::one()
-    }
-
-    /// Returns whether this ellipse intersects another ellipse.
-    pub fn intersects(&self, other: Ellipse<T>) -> bool
-    where
-        T: Signed + PartialOrd + Copy,
-    {
-        let px = self.x - other.x;
-        let py = self.y - other.y;
-        let rx = self.width + other.width;
-        let ry = self.height + other.height;
-        (px * px) / (rx * rx) + (py * py) / (ry * ry) <= T::one()
-    }
-}
-
 impl<T: ShapeNum> Shape<T> for Ellipse<T> {
     type Item = Ellipse<T>;
 
     /// Returns whether this ellipse contains a given [`Point<T>`].
-    fn contains_point(&self, _p: impl Into<Point<T>>) -> bool {
-        todo!()
+    fn contains_point(&self, p: impl Into<Point<T>>) -> bool {
+        let p = p.into();
+        let px = p.x - self.x;
+        let py = p.y - self.y;
+        let rx = self.width;
+        let ry = self.height;
+        (px * px) / (rx * rx) + (py * py) / (ry * ry) <= T::one()
     }
 
     /// Returns whether this ellipse completely contains another ellipse.
@@ -129,8 +104,13 @@ impl<T: ShapeNum> Shape<T> for Ellipse<T> {
     }
 
     /// Returns whether this ellipse intersects with another ellipse.
-    fn intersects(&self, _other: impl Into<Self::Item>) -> bool {
-        todo!()
+    fn intersects(&self, other: impl Into<Self::Item>) -> bool {
+        let other = other.into();
+        let px = self.x - other.x;
+        let py = self.y - other.y;
+        let rx = self.width + other.width;
+        let ry = self.height + other.height;
+        (px * px) / (rx * rx) + (py * py) / (ry * ry) <= T::one()
     }
 }
 
@@ -255,7 +235,7 @@ impl<T: ShapeNum> Shape<T> for Circle<T> {
         let p = p.into();
         let px = p.x - self.x;
         let py = p.y - self.y;
-        let r = self.radius;
+        let r = self.radius * self.radius;
         (px * px + py * py) < r
     }
 

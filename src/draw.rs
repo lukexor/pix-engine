@@ -29,12 +29,12 @@ impl PixState {
         let p = match s.rect_mode {
             DrawMode::Corner => p,
             DrawMode::Center => {
-                let height = s.text_size as Scalar;
+                let height = s.font.size as Scalar;
                 let width = text.as_ref().len() as Scalar * height;
                 point!(p.x - width / 2.0, p.y - height / 2.0)
             }
         };
-        Ok(self.renderer.text(p, text, s.text_size, s.fill, s.stroke)?)
+        Ok(self.renderer.text(p, text, &s.font, s.fill, s.stroke)?)
     }
 
     /// Draw a [`Point`] to the current canvas.

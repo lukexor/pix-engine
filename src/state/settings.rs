@@ -7,6 +7,7 @@ use crate::{
     renderer::{self, Rendering},
     window::Window,
 };
+use bitflags::bitflags;
 use num_traits::AsPrimitive;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -62,19 +63,31 @@ pub enum AngleMode {
     Degrees,
 }
 
-/// Text style for Bold/Italic rendering of fonts.
-#[non_exhaustive]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+bitflags! {
+    /// Font style for drawing text.
+    #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+    #[cfg_attr(feature = "serde", serde(transparent))]
+    pub struct FontStyle: i32 {
+        /// Normal.
+        const NORMAL = 0x00;
+        /// Bold.
+        const BOLD = 0x01;
+        /// Italic.
+        const ITALIC = 0x02;
+        /// Underline
+        const UNDERLINE = 0x03;
+        /// Strike-through
+        const STRIKETHROUGH = 0x04;
+    }
+}
+
+/// Settings used to change how text is drawn.
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub enum TextStyle {
-    /// Normal.
-    Normal,
-    /// Italic.
-    Italic,
-    /// Bold.
-    Bold,
-    /// Bold & Italic.
-    BoldItalic,
+pub(crate) struct FontSettings {
+    pub(crate) size: u32,
+    pub(crate) style: FontStyle,
+    pub(crate) family: String,
 }
 
 /// Several settings used to change various functionality of the engine.
@@ -84,11 +97,9 @@ pub(crate) struct Settings {
     pub(crate) background: Color,
     pub(crate) fill: Option<Color>,
     pub(crate) stroke: Option<Color>,
-    pub(crate) text_size: u32,
-    pub(crate) text_style: TextStyle,
-    pub(crate) text_font: String,
     pub(crate) paused: bool,
     pub(crate) show_frame_rate: bool,
+    pub(crate) font: FontSettings,
     pub(crate) rect_mode: DrawMode,
     pub(crate) ellipse_mode: DrawMode,
     pub(crate) blend_mode: BlendMode,
@@ -100,9 +111,11 @@ impl Default for Settings {
             background: Color::default(),
             fill: None,
             stroke: None,
-            text_size: 16,
-            text_style: TextStyle::Normal,
-            text_font: "Emulogic".to_string(),
+            font: FontSettings {
+                size: 16,
+                style: FontStyle::NORMAL,
+                family: "Emulogic".to_string(),
+            },
             paused: false,
             show_frame_rate: false,
             rect_mode: DrawMode::Corner,
@@ -200,22 +213,19 @@ impl PixState {
         self.renderer.scale(x, y)
     }
 
-    /// Set the text size for drawing to the current canvas.
-    pub fn text_size(&mut self, size: u32) {
-        self.settings.text_size = size;
-        todo!(); // self.renderer.text_size
+    /// Set the font size for drawing to the current canvas.
+    pub fn font_size(&mut self, size: u32) {
+        self.settings.font.size = size;
     }
 
-    /// Set the text style for drawing to the current canvas.
-    pub fn text_style(&mut self, style: TextStyle) {
-        self.settings.text_style = style;
-        todo!(); // self.renderer.text_style
+    /// Set the font style for drawing to the current canvas.
+    pub fn font_style(&mut self, style: FontStyle) {
+        self.settings.font.style = style;
     }
 
-    /// Set the text font-family for drawing to the current canvas.
-    pub fn text_font(&mut self, font: impl Into<String>) {
-        self.settings.text_font = font.into();
-        todo!(); // self.renderer.text_style
+    /// Set the font family for drawing to the current canvas.
+    pub fn font_family(&mut self, family: impl Into<String>) {
+        self.settings.font.family = family.into();
     }
 
     /// Change the way parameters are interpreted for drawing squares and rectangles.

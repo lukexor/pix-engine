@@ -20,7 +20,7 @@ const DT: Scalar = 0.005;
 const DTX: Scalar = DT * (N_SCALAR - 2.0);
 const DTY: Scalar = DT * (N_SCALAR - 2.0);
 const DIFF: Scalar = 0.00001; // Diffusion
-const VISC: Scalar = 0.0000000001; // Viscosity
+const VISC: Scalar = 0.000000001; // Viscosity
 
 struct Fluid {
     s: Vec<Scalar>,
@@ -223,7 +223,7 @@ impl Fluid {
     fn add_density(&mut self, idx: usize, amount: Scalar) {
         self.density[idx] += amount;
         let velx = random!(-VEL, VEL);
-        self.add_velocity(idx, velx, -0.04);
+        self.add_velocity(idx, velx, -0.1);
     }
 
     fn add_velocity(&mut self, idx: usize, amount_x: Scalar, amount_y: Scalar) {
@@ -251,8 +251,8 @@ impl App {
 
     fn flame_on(&mut self, _s: &mut PixState) -> PixResult<()> {
         for k in 0..COUNT {
-            for i in -8..=8 {
-                for j in -5..=2 {
+            for i in -9..=8 {
+                for j in -8..=2 {
                     let idx = get_idx(
                         (self.xs[k] + i as Scalar).floor() as usize,
                         (self.ys[k] + j as Scalar).floor() as usize,

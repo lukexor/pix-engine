@@ -1,6 +1,10 @@
 //! Graphics renderer functions.
 
-use crate::{prelude::*, state::Error as StateError, window};
+use crate::{
+    prelude::*,
+    state::{settings::FontSettings, Error as StateError},
+    window,
+};
 use num_traits::AsPrimitive;
 use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
 
@@ -58,7 +62,7 @@ impl Default for RendererSettings {
 /// Trait for operations on the underlying `Renderer`.
 pub(crate) trait Rendering: Sized {
     /// Creates a new Renderer instance.
-    fn new(settings: RendererSettings) -> Result<Self>;
+    fn new(settings: &RendererSettings) -> Result<Self>;
 
     /// Width of the current canvas.
     fn width(&self) -> u32;
@@ -114,7 +118,14 @@ pub(crate) trait Rendering: Sized {
         R: Into<Option<Rect<Scalar>>>;
 
     /// Draw text to the current canvas.
-    fn text<P, T, C>(&mut self, position: P, text: T, size: u32, fill: C, stroke: C) -> Result<()>
+    fn text<P, T, C>(
+        &mut self,
+        position: P,
+        text: T,
+        settings: &FontSettings,
+        fill: C,
+        stroke: C,
+    ) -> Result<()>
     where
         P: Into<Point<Scalar>>,
         T: AsRef<str>,
