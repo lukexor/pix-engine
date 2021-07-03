@@ -171,9 +171,9 @@ impl AppState for Asteroids {
             let x = width / 2 - 150;
             let y = height / 2 - 100;
             s.fill(WHITE);
-            s.font_size(32);
+            s.font_size(32)?;
             s.text([x, y], "GAME OVER")?;
-            s.font_size(16);
+            s.font_size(16)?;
             s.text([x - 30, y + 50], "PRESS SPACE TO RESTART")?;
             return Ok(());
         }
@@ -270,7 +270,7 @@ impl AppState for Asteroids {
         s.wireframe(&self.ship_model, self.ship.pos, self.ship.angle, SHIP_SCALE)?;
 
         // Draw Level, Lives, & Score
-        s.font_size(16);
+        s.font_size(16)?;
         s.fill(WHITE);
         s.text(
             [4, 4],
@@ -334,6 +334,7 @@ pub fn main() -> PixResult<()> {
         .with_dimensions(WIDTH, HEIGHT)
         .with_title(TITLE)
         .with_frame_rate()
+        .vsync_enabled()
         .position_centered()
         .build();
     let mut app = Asteroids::new();

@@ -74,8 +74,10 @@
 use getrandom as _; // Used to set "js" feature for rand
 use include_dir::{include_dir, Dir};
 
+/// Temporary directory to store libray assets.
+pub const ASSET_DIR: &'static str = "/tmp/pix-engine";
 // Bundles static binary assets with crate
-const _STATIC_DIR: Dir<'_> = include_dir!("./static");
+pub(crate) const ASSETS: Dir<'_> = include_dir!("./assets");
 
 #[macro_use]
 pub mod color;

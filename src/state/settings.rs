@@ -3,8 +3,8 @@
 //! [`PixEngine`]: crate::prelude::PixEngine
 
 use crate::{
-    prelude::{Color, PixState, Rect, Scalar},
-    renderer::{self, Rendering},
+    prelude::{Color, PixResult, PixState, Rect, Scalar},
+    renderer::Rendering,
     window::Window,
 };
 use bitflags::bitflags;
@@ -81,15 +81,6 @@ bitflags! {
     }
 }
 
-/// Settings used to change how text is drawn.
-#[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub(crate) struct FontSettings {
-    pub(crate) size: u32,
-    pub(crate) style: FontStyle,
-    pub(crate) family: String,
-}
-
 /// Several settings used to change various functionality of the engine.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -99,7 +90,6 @@ pub(crate) struct Settings {
     pub(crate) stroke: Option<Color>,
     pub(crate) paused: bool,
     pub(crate) show_frame_rate: bool,
-    pub(crate) font: FontSettings,
     pub(crate) rect_mode: DrawMode,
     pub(crate) ellipse_mode: DrawMode,
     pub(crate) blend_mode: BlendMode,
@@ -111,11 +101,6 @@ impl Default for Settings {
             background: Color::default(),
             fill: None,
             stroke: None,
-            font: FontSettings {
-                size: 16,
-                style: FontStyle::NORMAL,
-                family: "Emulogic".to_string(),
-            },
             paused: false,
             show_frame_rate: false,
             rect_mode: DrawMode::Corner,
@@ -161,7 +146,10 @@ impl PixState {
     }
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    pub fn clip(&mut self, rect: impl Into<Rect<Scalar>>) {
+    pub fn clip<R>(&mut self, rect: R)
+    where
+        R: Into<Rect<Scalar>>,
+    {
         self.renderer.clip(rect.into());
     }
 
@@ -209,23 +197,26 @@ impl PixState {
     }
 
     /// Set the rendering scale of the current canvas.
-    pub fn scale<T: AsPrimitive<f32>>(&mut self, x: T, y: T) -> renderer::Result<()> {
-        self.renderer.scale(x, y)
+    pub fn scale<T: AsPrimitive<f32>>(&mut self, x: T, y: T) -> PixResult<()> {
+        Ok(self.renderer.scale(x, y)?)
     }
 
     /// Set the font size for drawing to the current canvas.
-    pub fn font_size(&mut self, size: u32) {
-        self.settings.font.size = size;
+    pub fn font_size(&mut self, size: u32) -> PixResult<()> {
+        Ok(self.renderer.font_size(size)?)
     }
 
     /// Set the font style for drawing to the current canvas.
     pub fn font_style(&mut self, style: FontStyle) {
-        self.settings.font.style = style;
+        self.renderer.font_style(style);
     }
 
     /// Set the font family for drawing to the current canvas.
-    pub fn font_family(&mut self, family: impl Into<String>) {
-        self.settings.font.family = family.into();
+    pub fn font_family<S>(&mut self, family: S) -> PixResult<()>
+    where
+        S: Into<String>,
+    {
+        Ok(self.renderer.font_family(family)?)
     }
 
     /// Change the way parameters are interpreted for drawing squares and rectangles.

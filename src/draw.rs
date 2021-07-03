@@ -23,43 +23,53 @@ impl PixState {
     }
 
     /// Draw text to the current canvas.
-    pub fn text(&mut self, p: impl Into<Point<Scalar>>, text: impl AsRef<str>) -> PixResult<()> {
+    pub fn text<P, S>(&mut self, p: P, text: S) -> PixResult<()>
+    where
+        P: Into<Point<Scalar>>,
+        S: AsRef<str>,
+    {
         let s = &self.settings;
-        let p = p.into();
-        let p = match s.rect_mode {
-            DrawMode::Corner => p,
-            DrawMode::Center => {
-                let height = s.font.size as Scalar;
-                let width = text.as_ref().len() as Scalar * height;
-                point!(p.x - width / 2.0, p.y - height / 2.0)
-            }
-        };
-        Ok(self.renderer.text(p, text, &s.font, s.fill, s.stroke)?)
+        Ok(self.renderer.text(p, text, s.fill, s.stroke)?)
     }
 
     /// Draw a [`Point`] to the current canvas.
-    pub fn point(&mut self, p: impl Into<Point<Scalar>>) -> PixResult<()> {
+    pub fn point<P>(&mut self, p: P) -> PixResult<()>
+    where
+        P: Into<Point<Scalar>>,
+    {
         Ok(self.renderer.point(p, self.settings.stroke)?)
     }
 
     /// Draw a line to the current canvas.
-    pub fn line(&mut self, line: impl Into<Line<Scalar>>) -> PixResult<()> {
+    pub fn line<L>(&mut self, line: L) -> PixResult<()>
+    where
+        L: Into<Line<Scalar>>,
+    {
         Ok(self.renderer.line(line, self.settings.stroke)?)
     }
 
     /// Draw a triangle to the current canvas.
-    pub fn triangle(&mut self, tri: impl Into<Triangle<Scalar>>) -> PixResult<()> {
+    pub fn triangle<T>(&mut self, tri: T) -> PixResult<()>
+    where
+        T: Into<Triangle<Scalar>>,
+    {
         let s = &self.settings;
         Ok(self.renderer.triangle(tri, s.fill, s.stroke)?)
     }
 
     /// Draw a square to the current canvas.
-    pub fn square(&mut self, square: impl Into<Rect<Scalar>>) -> PixResult<()> {
+    pub fn square<R>(&mut self, square: R) -> PixResult<()>
+    where
+        R: Into<Rect<Scalar>>,
+    {
         self.rect(square)
     }
 
     /// Draw a rectangle to the current canvas.
-    pub fn rect(&mut self, rect: impl Into<Rect<Scalar>>) -> PixResult<()> {
+    pub fn rect<R>(&mut self, rect: R) -> PixResult<()>
+    where
+        R: Into<Rect<Scalar>>,
+    {
         let s = &self.settings;
         let rect = rect.into();
         let rect = match s.rect_mode {
@@ -79,12 +89,18 @@ impl PixState {
     }
 
     /// Draw a circle to the current canvas.
-    pub fn circle(&mut self, circle: impl Into<Circle<Scalar>>) -> PixResult<()> {
+    pub fn circle<C>(&mut self, circle: C) -> PixResult<()>
+    where
+        C: Into<Circle<Scalar>>,
+    {
         self.ellipse(circle.into())
     }
 
     /// Draw a ellipse to the current canvas.
-    pub fn ellipse(&mut self, ellipse: impl Into<Ellipse<Scalar>>) -> PixResult<()> {
+    pub fn ellipse<E>(&mut self, ellipse: E) -> PixResult<()>
+    where
+        E: Into<Ellipse<Scalar>>,
+    {
         let s = &self.settings;
         let ellipse = ellipse.into();
         let ellipse = match s.ellipse_mode {

@@ -7,6 +7,7 @@ use crate::{
     state::{AppState, PixState},
     window::Position,
     window::Window,
+    ASSETS, ASSET_DIR,
 };
 use std::time::Instant;
 
@@ -41,6 +42,28 @@ impl PixEngineBuilder {
         S: Into<String>,
     {
         self.settings.title = title.into();
+        self
+    }
+
+    /// Set a True-Type Font for text rendering.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn with_font<P>(&mut self, path: P, size: u16) -> &mut Self
+    where
+        P: Into<PathBuf>,
+    {
+        self.settings.font = path.into();
+        self.settings.font_size = size;
+        self
+    }
+
+    /// Set font for text rendering.
+    #[cfg(target_arch = "wasm32")]
+    pub fn with_font<S>(&mut self, font: S, size: u16) -> &mut Self
+    where
+        P: Into<String>,
+    {
+        self.settings.font = font.into();
+        self.settings.font_size = size;
         self
     }
 
@@ -110,7 +133,7 @@ impl PixEngineBuilder {
         PixEngine {
             settings: self.settings.clone(),
             last_frame_time: Instant::now(),
-            frame_timer: 1.0,
+            frame_timer: 1000.0,
         }
     }
 }
@@ -135,6 +158,8 @@ impl PixEngine {
     where
         A: AppState,
     {
+        let _ = ASSETS.extract(ASSET_DIR);
+
         // TODO: Explore creating context/texture_creator/ttf_context here - pass in with settings
         let renderer = Renderer::new(&self.settings)?;
         let mut state = PixState::new(&self.settings.title, renderer);
@@ -164,12 +189,16 @@ impl PixEngine {
 
                 let now = Instant::now();
                 let time_since_last = (now - self.last_frame_time).as_millis() as f64;
-                let target_delta_time = 1000.0 / state.env.target_frame_rate;
                 self.frame_timer += time_since_last;
+                let target_delta_time = state
+                    .env
+                    .target_frame_rate
+                    .map(|rate| 1000.0 / rate)
+                    .unwrap_or(0.0);
 
                 if state.settings.paused || time_since_last >= target_delta_time {
-                    state.env.frame_rate = (1000.0 / time_since_last).round() as u32;
-                    state.env.delta_time = time_since_last;
+                    state.env.frame_rate = 1000.0 / time_since_last;
+                    state.env.delta_time = (now - self.last_frame_time).as_secs_f64();
                     self.last_frame_time = now;
 
                     if !state.settings.paused {
@@ -178,9 +207,9 @@ impl PixEngine {
                     }
                 }
 
-                if state.settings.show_frame_rate && self.frame_timer >= 1.0 {
-                    self.frame_timer -= 1.0;
-                    let title = format!("{} - FPS: {}", state.title(), state.env.frame_rate);
+                if state.settings.show_frame_rate && self.frame_timer >= 1000.0 {
+                    self.frame_timer -= 1000.0;
+                    let title = format!("{} - FPS: {:#.2}", state.title(), state.env.frame_rate);
                     state.renderer.set_title(&title)?;
                 }
             }

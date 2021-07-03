@@ -1,9 +1,7 @@
 //! SDL Renderer implementation
-
 use crate::{
     prelude::*,
     renderer::{Error, RendererSettings, Rendering, Result},
-    state::settings::FontSettings,
     window::Error as WindowError,
 };
 use lazy_static::lazy_static;
@@ -23,20 +21,21 @@ use sdl2::{
     video::{Window as SdlWindow, WindowBuildError, WindowContext},
     EventPump, IntegerOrSdlError, Sdl,
 };
-use std::{borrow::Cow, ffi::NulError};
+use std::{borrow::Cow, collections::HashMap, ffi::NulError, path::PathBuf};
 
 mod audio;
 mod event;
 mod window;
 
 lazy_static! {
-    static ref TTF: Sdl2TtfContext = sdl2::ttf::init().unwrap();
+    static ref TTF: Sdl2TtfContext = sdl2::ttf::init().expect("sdl2_ttf initialized");
 }
 
 /// An SDL [`Renderer`] implementation.
 pub(crate) struct Renderer {
     context: Sdl,
-    font: Font<'static, 'static>,
+    font: (PathBuf, u16),
+    font_cache: HashMap<(PathBuf, u16), Font<'static, 'static>>,
     event_pump: EventPump,
     window_id: WindowId,
     canvas: Canvas<SdlWindow>,
@@ -44,12 +43,6 @@ pub(crate) struct Renderer {
     texture_creator: TextureCreator<WindowContext>,
     textures: Vec<SdlTexture>,
     blend_mode: SdlBlendMode,
-}
-
-impl Default for Renderer {
-    fn default() -> Self {
-        Self::new(&RendererSettings::default()).expect("SDL2 Renderer")
-    }
 }
 
 impl Rendering for Renderer {
@@ -106,11 +99,14 @@ impl Rendering for Renderer {
         let audio_device = audio_sub.open_queue(None, &desired_spec)?;
         audio_device.resume();
 
-        let font = TTF.load_font("static/Songti_SC.ttf", 16)?;
+        let mut font_cache = HashMap::new();
+        let font = (s.font.clone(), s.font_size);
+        font_cache.insert(font.clone(), TTF.load_font(&s.font, s.font_size)?);
 
         Ok(Self {
             context,
             font,
+            font_cache,
             event_pump,
             window_id,
             canvas,
@@ -127,7 +123,10 @@ impl Rendering for Renderer {
     }
 
     /// Sets the color used by the renderer to draw to the current canvas.
-    fn set_draw_color(&mut self, color: impl Into<Color>) {
+    fn set_draw_color<C>(&mut self, color: C)
+    where
+        C: Into<Color>,
+    {
         self.canvas.set_draw_color(color.into());
     }
 
@@ -231,15 +230,48 @@ impl Rendering for Renderer {
         }
     }
 
+    /// Set the font size for drawing to the current canvas.
+    fn font_size(&mut self, size: u32) -> Result<()> {
+        self.font.1 = size as u16;
+        if self.font_cache.get(&self.font).is_none() {
+            self.font_cache
+                .insert(self.font.clone(), TTF.load_font(&self.font.0, self.font.1)?);
+        }
+        Ok(())
+    }
+
+    /// Set the font style for drawing to the current canvas.
+    fn font_style(&mut self, style: FontStyle) {
+        if let Some(font) = self.font_cache.get_mut(&self.font) {
+            font.set_style(style.into());
+        }
+    }
+
+    /// Set the font family for drawing to the current canvas.
+    fn font_family<S>(&mut self, family: S) -> Result<()>
+    where
+        S: Into<String>,
+    {
+        // TODO: use size_of
+        // let p = p.into();
+        // let p = match s.rect_mode {
+        //     DrawMode::Corner => p,
+        //     DrawMode::Center => {
+        //         let height = s.font.size as Scalar;
+        //         let width = text.as_ref().len() as Scalar * height;
+        //         point!(p.x - width / 2.0, p.y - height / 2.0)
+        //     }
+        // };
+        self.font.0 = PathBuf::from(family.into());
+        if self.font_cache.get(&self.font).is_none() {
+            self.font_cache
+                .insert(self.font.clone(), TTF.load_font(&self.font.0, self.font.1)?);
+        }
+        Ok(())
+    }
+
     /// Draw text to the current canvas.
-    fn text<P, T, C>(
-        &mut self,
-        position: P,
-        text: T,
-        s: &FontSettings,
-        fill: C,
-        _stroke: C,
-    ) -> Result<()>
+    fn text<P, T, C>(&mut self, position: P, text: T, fill: C, _stroke: C) -> Result<()>
     where
         P: Into<Point<Scalar>>,
         T: AsRef<str>,
@@ -247,15 +279,13 @@ impl Rendering for Renderer {
     {
         let p = position.into().as_i32();
         let text = text.as_ref();
-        // TODO: This path only works locally
-        if let Some(fill) = fill.into() {
-            self.font.set_style(s.style.into());
-            let surface = self.font.render(text.as_ref()).blended(fill)?;
+        let font = self.font_cache.get(&self.font);
+        if let (Some(fill), Some(font)) = (fill.into(), font) {
+            let surface = font.render(text.as_ref()).blended(fill)?;
             let texture = self.texture_creator.create_texture_from_surface(&surface)?;
             let TextureQuery { width, height, .. } = texture.query();
             self.canvas
                 .copy(&texture, None, Some(SdlRect::new(p.x, p.y, width, height)))?;
-            // self.canvas.string(p.x, p.y, text, fill)?;
         }
         Ok(())
     }

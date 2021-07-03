@@ -1,10 +1,6 @@
 //! Graphics renderer functions.
 
-use crate::{
-    prelude::*,
-    state::{settings::FontSettings, Error as StateError},
-    window,
-};
+use crate::{prelude::*, state::Error as StateError, window, ASSET_DIR};
 use num_traits::AsPrimitive;
 use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
 
@@ -25,6 +21,12 @@ pub type Result<T> = result::Result<T, Error>;
 #[derive(Debug, Clone)]
 pub(crate) struct RendererSettings {
     pub(crate) title: String,
+    #[cfg(not(target_arch = "wasm32"))]
+    pub(crate) font: PathBuf,
+    #[cfg(target_arch = "wasm32")]
+    pub(crate) font: String,
+    pub(crate) font_size: u16,
+    #[cfg(not(target_arch = "wasm32"))]
     pub(crate) icon: Option<PathBuf>,
     pub(crate) x: Position,
     pub(crate) y: Position,
@@ -43,6 +45,12 @@ impl Default for RendererSettings {
     fn default() -> Self {
         Self {
             title: String::new(),
+            #[cfg(not(target_arch = "wasm32"))]
+            font: PathBuf::from(ASSET_DIR).join("emulogic.ttf"),
+            #[cfg(target_arch = "wasm32")]
+            font: "Courier New",
+            font_size: 16,
+            #[cfg(not(target_arch = "wasm32"))]
             icon: None,
             x: Position::default(),
             y: Position::default(),
@@ -74,7 +82,9 @@ pub(crate) trait Rendering: Sized {
     fn clear(&mut self);
 
     /// Sets the color used by the renderer to draw the current canvas.
-    fn set_draw_color(&mut self, color: impl Into<Color>);
+    fn set_draw_color<C>(&mut self, color: C)
+    where
+        C: Into<Color>;
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
     fn clip<T, R>(&mut self, rect: R)
@@ -117,15 +127,19 @@ pub(crate) trait Rendering: Sized {
     where
         R: Into<Option<Rect<Scalar>>>;
 
+    /// Set the font size for drawing to the current canvas.
+    fn font_size(&mut self, size: u32) -> Result<()>;
+
+    /// Set the font style for drawing to the current canvas.
+    fn font_style(&mut self, style: FontStyle);
+
+    /// Set the font family for drawing to the current canvas.
+    fn font_family<S>(&mut self, family: S) -> Result<()>
+    where
+        S: Into<String>;
+
     /// Draw text to the current canvas.
-    fn text<P, T, C>(
-        &mut self,
-        position: P,
-        text: T,
-        settings: &FontSettings,
-        fill: C,
-        stroke: C,
-    ) -> Result<()>
+    fn text<P, T, C>(&mut self, position: P, text: T, fill: C, stroke: C) -> Result<()>
     where
         P: Into<Point<Scalar>>,
         T: AsRef<str>,

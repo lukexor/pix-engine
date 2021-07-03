@@ -1,8 +1,8 @@
 use pix_engine::prelude::*;
 
 const TITLE: &str = "Fluid Simulation";
-const WIDTH: u32 = 400;
-const HEIGHT: u32 = WIDTH;
+const WIDTH: u32 = 300;
+const HEIGHT: u32 = 300;
 
 const SCALE: i32 = 1;
 const N: usize = (WIDTH / SCALE as u32) as usize;
@@ -19,7 +19,7 @@ const COUNT: usize = (WIDTH / SCALE as u32) as usize / SPACING + 1;
 const DT: Scalar = 0.005;
 const DTX: Scalar = DT * (N_SCALAR - 2.0);
 const DTY: Scalar = DT * (N_SCALAR - 2.0);
-const DIFF: Scalar = 0.00001; // Diffusion
+const DIFF: Scalar = 0.00002; // Diffusion
 const VISC: Scalar = 0.000000001; // Viscosity
 
 struct Fluid {
@@ -208,12 +208,12 @@ impl Fluid {
                 let m = d / 100.0;
                 let f = m * d;
                 if f > 10.0 {
-                    s.stroke(rgb!(
+                    s.fill(rgb!(
                         (f / 2.0).floor() as u8,
                         (f / 6.0).floor() as u8,
                         (f / 16.0).floor() as u8,
                     ));
-                    s.point([x, y])?;
+                    s.square([x, y, SCALE])?;
                 }
             }
         }
@@ -223,7 +223,7 @@ impl Fluid {
     fn add_density(&mut self, idx: usize, amount: Scalar) {
         self.density[idx] += amount;
         let velx = random!(-VEL, VEL);
-        self.add_velocity(idx, velx, -0.1);
+        self.add_velocity(idx, velx, -0.06);
     }
 
     fn add_velocity(&mut self, idx: usize, amount_x: Scalar, amount_y: Scalar) {

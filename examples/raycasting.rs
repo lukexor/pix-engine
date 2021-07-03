@@ -1,5 +1,5 @@
-use pix_engine::prelude::*;
-use std::{borrow::Cow, cmp::Ordering::Less};
+use pix_engine::{prelude::*, ASSET_DIR};
+use std::{borrow::Cow, cmp::Ordering::Less, path::PathBuf};
 
 const TITLE: &str = "Raycasting";
 const WIDTH: u32 = 1000;
@@ -20,7 +20,7 @@ struct RayScene {
     xcells: u32,
     ycells: u32,
     drawing: bool,
-    light: Option<Image>,
+    light: Image,
 }
 
 impl RayScene {
@@ -41,7 +41,7 @@ impl RayScene {
             xcells,
             ycells,
             drawing: false,
-            light: None,
+            light: Image::default(),
         }
     }
 
@@ -274,7 +274,7 @@ impl AppState for RayScene {
 
         self.convert_edges_to_poly_map()?;
 
-        self.light = Some(s.create_image_from_file("static/light.png")?);
+        self.light = s.create_image_from_file(PathBuf::from(ASSET_DIR).join("light.png"))?;
         s.blend_mode(BlendMode::Mod);
 
         Ok(())
@@ -306,9 +306,7 @@ impl AppState for RayScene {
             s.square([p.x, p.y, BLOCK_SIZE as i32 + 1])?;
         }
 
-        if let Some(ref light) = self.light {
-            s.image([mouse.x - 255, mouse.y - 255], &light)?;
-        }
+        s.image([mouse.x - 255, mouse.y - 255], &self.light)?;
 
         Ok(())
     }
@@ -372,7 +370,7 @@ fn main() -> PixResult<()> {
         .with_frame_rate()
         .position_centered()
         .vsync_enabled()
-        .icon("static/light.png")
+        .icon(PathBuf::from(ASSET_DIR).join("light.png"))
         .resizable()
         .build();
     let mut app = RayScene::new();
