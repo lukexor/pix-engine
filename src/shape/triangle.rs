@@ -1,11 +1,11 @@
-//! [`Triangle`] type used for drawing.
+//! [Triangle] type used for drawing.
 
 use crate::{prelude::*, vector::Vector};
 use num_traits::{AsPrimitive, Num};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// A `Triangle` with three [`Point<T>`]s.
+/// A `Triangle` with three [Point]s.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Triangle<T = Scalar> {
@@ -18,7 +18,7 @@ pub struct Triangle<T = Scalar> {
 }
 
 impl<T> Triangle<T> {
-    /// Constructs a [`Triangle<T>`].
+    /// Constructs a [Triangle].
     pub fn new<P>(p1: P, p2: P, p3: P) -> Self
     where
         P: Into<Point<T>>,
@@ -30,7 +30,7 @@ impl<T> Triangle<T> {
         }
     }
 
-    /// Convert [`Triangle<T>`] to [`Triangle<U>`] using `as` operator.
+    /// Convert [Triangle] to another primitive type using the `as` operator.
     #[inline]
     pub fn as_<U>(self) -> Triangle<U>
     where
@@ -46,13 +46,13 @@ where
     T: Copy,
     Self: Into<Triangle<Scalar>>,
 {
-    /// Draw triangle to the current [`PixState`] canvas.
+    /// Draw triangle to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.triangle(*self)
     }
 }
 
-/// Convert [`Triangle<T>`] to `[x1, y1, x2, y2, x3, y3]`.
+/// Convert [Triangle] to `[x1, y1, x2, y2, x3, y3]`.
 impl<T> From<Triangle<T>> for [T; 6] {
     fn from(tri: Triangle<T>) -> Self {
         let [x1, y1]: [T; 2] = tri.p1.into();
@@ -62,7 +62,7 @@ impl<T> From<Triangle<T>> for [T; 6] {
     }
 }
 
-/// Convert [`&Triangle<T>`] to `[x1, y1, x2, y2, x3, y3]`.
+/// Convert &[Triangle] to `[x1, y1, x2, y2, x3, y3]`.
 impl<T: Copy> From<&Triangle<T>> for [T; 6] {
     fn from(tri: &Triangle<T>) -> Self {
         let [x1, y1]: [T; 2] = tri.p1.into();
@@ -72,14 +72,14 @@ impl<T: Copy> From<&Triangle<T>> for [T; 6] {
     }
 }
 
-/// Convert `[x1, y1, x2, y2, x3, y3]` to [`Triangle<T>`].
+/// Convert `[x1, y1, x2, y2, x3, y3]` to [Triangle].
 impl<T: Num, U: Into<T>> From<[U; 6]> for Triangle<T> {
     fn from([x1, y1, x2, y2, x3, y3]: [U; 6]) -> Self {
         Self::new([x1, y1], [x2, y2], [x3, y3])
     }
 }
 
-/// Convert `[Point<U>; 3]` to [`Triangle<T>`].
+/// Convert `[Point<U>; 3]` to [Triangle].
 impl<T, U: Into<T>> From<[Point<U>; 3]> for Triangle<T>
 where
     Point<U>: Into<Point<T>>,
@@ -89,7 +89,7 @@ where
     }
 }
 
-/// Convert [`Triangle<U>`] to `[Point<U>; 3]`.
+/// Convert [Triangle] to `[Point<U>; 3]`.
 impl<T, U: Into<T>> From<Triangle<U>> for [Point<T>; 3]
 where
     Point<U>: Into<Point<T>>,
@@ -99,7 +99,7 @@ where
     }
 }
 
-/// Convert [`&Triangle<U>`] to `[Point<U>; 3]`.
+/// Convert &[Triangle] to `[Point<U>; 3]`.
 impl<T, U: Copy + Into<T>> From<&Triangle<U>> for [Point<T>; 3]
 where
     Point<U>: Into<Point<T>>,
@@ -109,7 +109,7 @@ where
     }
 }
 
-/// Convert `[Vector<U>; 3]` to [`Triangle<T>`].
+/// Convert `[Vector<U>; 3]` to [Triangle].
 impl<T, U: Into<T>> From<[Vector<U>; 3]> for Triangle<T>
 where
     Vector<U>: Into<Point<T>>,
@@ -119,7 +119,7 @@ where
     }
 }
 
-/// Convert [`Triangle<U>`] to `[Vector<U>; 3]`.
+/// Convert [Triangle] to `[Vector<U>; 3]`.
 impl<T, U: Into<T>> From<Triangle<U>> for [Vector<T>; 3]
 where
     Point<U>: Into<Vector<T>>,
@@ -129,7 +129,7 @@ where
     }
 }
 
-/// Convert [`&Triangle<U>`] to `[Vector<U>; 3]`.
+/// Convert &[Triangle] to `[Vector<U>; 3]`.
 impl<T, U: Copy + Into<T>> From<&Triangle<U>> for [Vector<T>; 3]
 where
     Point<U>: Into<Vector<T>>,

@@ -31,7 +31,7 @@ lazy_static! {
     static ref TTF: Sdl2TtfContext = sdl2::ttf::init().expect("sdl2_ttf initialized");
 }
 
-/// An SDL [`Renderer`] implementation.
+/// An SDL [Renderer] implementation.
 pub(crate) struct Renderer {
     context: Sdl,
     font: (PathBuf, u16),

@@ -1,4 +1,4 @@
-use pix_engine::prelude_3d::*;
+use pix_engine::prelude::*;
 
 const TITLE: &str = "Example App";
 const WIDTH: u32 = 800;

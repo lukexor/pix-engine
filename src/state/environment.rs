@@ -1,6 +1,6 @@
-//! Environment related information for the [`PixEngine`].
+//! Environment related information for the [PixEngine].
 //!
-//! [`PixEngine`]: crate::prelude::PixEngine
+//! [PixEngine]: crate::prelude::PixEngine
 use crate::{
     prelude::{PixResult, PixState, WindowBuilder, WindowId},
     renderer::Rendering,
@@ -9,7 +9,7 @@ use crate::{
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// Environment values for [`PixState`]
+/// Environment values for [PixState]
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct Environment {
@@ -55,7 +55,7 @@ impl PixState {
         self.renderer.window_id()
     }
 
-    /// Create a new [`WindowBuilder`].
+    /// Create a new [WindowBuilder].
     pub fn create_window(&self, width: u32, height: u32) -> WindowBuilder {
         WindowBuilder::new(width, height)
     }

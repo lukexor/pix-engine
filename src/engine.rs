@@ -1,4 +1,4 @@
-//! Core [`PixEngine`] functions.
+//! [PixEngine] functions.
 
 use crate::{
     prelude::*,

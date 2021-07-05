@@ -1,10 +1,10 @@
-//! [`Light`] source functions.
+//! [Light] source functions.
 
 use crate::prelude::{Point, Scalar, Vector};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// Source of [`Light`].
+/// Source of [Light].
 #[derive(Debug, Copy, Clone, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum LightSource<T> {
@@ -27,7 +27,7 @@ pub struct Light<T = Scalar> {
 }
 
 impl<T> Light<T> {
-    /// Constructs a `Light<T>` with `source` as [`LightSource::Ambient`].
+    /// Constructs a `Light<T>` with `source` as [LightSource::Ambient].
     pub fn ambient(intensity: T) -> Self {
         Self {
             source: LightSource::Ambient,
@@ -35,7 +35,7 @@ impl<T> Light<T> {
         }
     }
 
-    /// Constructs a `Light<T>` with `source` as [`LightSource::Point`].
+    /// Constructs a `Light<T>` with `source` as [LightSource::Point].
     pub fn point<P>(intensity: T, position: P) -> Self
     where
         P: Into<Point<T>>,
@@ -46,7 +46,7 @@ impl<T> Light<T> {
         }
     }
 
-    /// Constructs a `Light<T>` with source as [`LightSource::Direction`].
+    /// Constructs a `Light<T>` with source as [LightSource::Direction].
     pub fn direction<V>(intensity: T, direction: V) -> Self
     where
         V: Into<Vector<T>>,

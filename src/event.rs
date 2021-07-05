@@ -1,4 +1,4 @@
-//! System and user [`Event`]s.
+//! User and system [Event]s.
 
 use bitflags::bitflags;
 #[cfg(feature = "serde")]
@@ -126,7 +126,7 @@ pub enum Event {
     Unknown,
 }
 
-/// A specific [`Event`] representing a keypress.
+/// A specific [Event] representing a keypress.
 #[allow(missing_docs)]
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -144,7 +144,7 @@ impl Default for Event {
     }
 }
 
-/// Window [`Event`].
+/// Window [Event].
 #[allow(missing_docs)]
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

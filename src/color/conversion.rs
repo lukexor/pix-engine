@@ -1,4 +1,4 @@
-//! [`Color`] conversion functions.
+//! [Color] conversion functions.
 
 use super::{
     Color,
@@ -6,7 +6,7 @@ use super::{
 };
 use std::{borrow::Cow, convert::TryFrom, error, fmt, str::FromStr};
 
-/// The error type for [`Color`] operations.
+/// The error type for [Color] operations.
 #[non_exhaustive]
 #[derive(Debug, Clone)]
 pub enum ColorError<T>
@@ -15,9 +15,9 @@ where
     [T]: ToOwned,
     <[T] as ToOwned>::Owned: fmt::Debug,
 {
-    /// Error when creating a [`Color`] from an invalid [`slice`].
+    /// Error when creating a [Color] from an invalid [slice].
     InvalidSlice(Cow<'static, [T]>),
-    /// Error when creating a [`Color`] from an invalid string using [`FromStr`](std::str::FromStr).
+    /// Error when creating a [Color] from an invalid string using [FromStr](std::str::FromStr).
     InvalidString(Cow<'static, str>),
 }
 
@@ -36,7 +36,7 @@ where
 
 impl<T> error::Error for ColorError<T> where T: fmt::Debug + Clone {}
 
-/// Return the max value for each [`ColorMode`].
+/// Return the max value for each [ColorMode].
 #[inline]
 pub(crate) const fn maxes(mode: ColorMode) -> [f64; 4] {
     match mode {
@@ -57,7 +57,7 @@ pub(crate) fn clamp_levels(levels: [f64; 4]) -> [f64; 4] {
     ]
 }
 
-/// Converts levels from one [`ColorMode`] to another.
+/// Converts levels from one [ColorMode] to another.
 #[inline]
 pub(crate) fn convert_levels(levels: [f64; 4], from: ColorMode, to: ColorMode) -> [f64; 4] {
     match (from, to) {
@@ -71,7 +71,7 @@ pub(crate) fn convert_levels(levels: [f64; 4], from: ColorMode, to: ColorMode) -
     }
 }
 
-/// Converts to [`Rgb`] to [`Hsb`] format.
+/// Converts to [Rgb] to [Hsb] format.
 #[allow(clippy::many_single_char_names)]
 pub(crate) fn rgb_to_hsb([r, g, b, a]: [f64; 4]) -> [f64; 4] {
     let c_max = r.max(g).max(b);
@@ -100,7 +100,7 @@ pub(crate) fn rgb_to_hsb([r, g, b, a]: [f64; 4]) -> [f64; 4] {
     }
 }
 
-/// Converts to [`Rgb`] to [`Hsl`] format.
+/// Converts to [Rgb] to [Hsl] format.
 #[allow(clippy::many_single_char_names)]
 pub(crate) fn rgb_to_hsl([r, g, b, a]: [f64; 4]) -> [f64; 4] {
     let c_max = r.max(g).max(b);
@@ -130,7 +130,7 @@ pub(crate) fn rgb_to_hsl([r, g, b, a]: [f64; 4]) -> [f64; 4] {
     }
 }
 
-/// Converts to [`Hsb`] to [`Rgb`] format.
+/// Converts to [Hsb] to [Rgb] format.
 #[allow(clippy::many_single_char_names)]
 pub(crate) fn hsb_to_rgb([h, s, b, a]: [f64; 4]) -> [f64; 4] {
     if b.abs() < f64::EPSILON {
@@ -161,7 +161,7 @@ pub(crate) fn hsb_to_rgb([h, s, b, a]: [f64; 4]) -> [f64; 4] {
     }
 }
 
-/// Converts to [`Hsl`] to [`Rgb`] format.
+/// Converts to [Hsl] to [Rgb] format.
 #[allow(clippy::many_single_char_names)]
 pub(crate) fn hsl_to_rgb([h, s, l, a]: [f64; 4]) -> [f64; 4] {
     if s.abs() < f64::EPSILON {
@@ -200,7 +200,7 @@ pub(crate) fn hsl_to_rgb([h, s, l, a]: [f64; 4]) -> [f64; 4] {
     }
 }
 
-/// Converts to [`Hsl`] to [`Hsb`] format.
+/// Converts to [Hsl] to [Hsb] format.
 #[allow(clippy::many_single_char_names)]
 pub(crate) fn hsl_to_hsb([h, s, l, a]: [f64; 4]) -> [f64; 4] {
     let b = if l < 0.5 {
@@ -212,7 +212,7 @@ pub(crate) fn hsl_to_hsb([h, s, l, a]: [f64; 4]) -> [f64; 4] {
     [h, s, b, a]
 }
 
-/// Converts to [`Hsb`] to [`Hsl`] format.
+/// Converts to [Hsb] to [Hsl] format.
 #[allow(clippy::many_single_char_names)]
 pub(crate) fn hsb_to_hsl([h, s, b, a]: [f64; 4]) -> [f64; 4] {
     let l = (2.0 - s) * b / 2.0;
@@ -224,7 +224,7 @@ pub(crate) fn hsb_to_hsl([h, s, b, a]: [f64; 4]) -> [f64; 4] {
     [h, s, l, a]
 }
 
-/// Converts levels to [`u8`] RGBA channels.
+/// Converts levels to [u8] RGBA channels.
 #[inline]
 pub(crate) fn calculate_channels(levels: [f64; 4]) -> [u8; 4] {
     let [r, g, b, a] = levels;
@@ -284,7 +284,7 @@ impl Color {
 impl FromStr for Color {
     type Err = ColorError<f64>;
 
-    /// Converts to [Color] from a hexidecimal string.
+    /// Converts to [Color] from a hexadecimal string.
     ///
     /// # Examples
     ///
@@ -346,7 +346,7 @@ impl FromStr for Color {
 
 impl TryFrom<&str> for Color {
     type Error = ColorError<f64>;
-    /// Try to create a `Color` from a hexidecimal string.
+    /// Try to create a `Color` from a hexadecimal string.
     #[inline]
     fn try_from(s: &str) -> Result<Self, Self::Error> {
         Self::from_str(s)
@@ -357,37 +357,11 @@ macro_rules! impl_from {
     ($($source: ty),*) => {
         $(
             impl From<$source> for Color {
-                /// Convert from value to grayscale `Color`.
+                /// Convert from `value` to grayscale `Color`.
                 #[inline]
                 fn from(gray: $source) -> Self {
                     let gray = f64::from(gray);
                     Self::with_mode(Rgb, gray, gray, gray)
-                }
-            }
-
-            impl From<($source, $source)> for Color {
-                /// Convert from (value, alpha) to grayscale `Color` with alpha.
-                #[inline]
-                fn from((gray, alpha): ($source, $source)) -> Self {
-                    let gray = f64::from(gray);
-                    let alpha = f64::from(alpha);
-                    Self::with_mode_alpha(Rgb, gray, gray, gray, alpha)
-                }
-            }
-
-            impl From<($source, $source, $source)> for Color {
-                /// Convert from (r, g, b) to `Color` with max alpha.
-                #[inline]
-                fn from((r, g, b): ($source, $source, $source)) -> Self {
-                    Self::with_mode(Rgb, f64::from(r), f64::from(g), f64::from(b))
-                }
-            }
-
-            impl From<($source, $source, $source, $source)> for Color {
-                /// Convert from (r, g, b, a) to `Color`.
-                #[inline]
-                fn from((r, g, b, a): ($source, $source, $source, $source)) -> Self {
-                    Self::with_mode_alpha(Rgb, f64::from(r), f64::from(g), f64::from(b), f64::from(a))
                 }
             }
 
@@ -452,7 +426,7 @@ mod tests {
     }
 
     #[test]
-    fn test_tuple_conversions() {
+    fn test_slice_conversions() {
         let _: Color = 50u8.into();
         let _: Color = 50i8.into();
         let _: Color = 50u16.into();
@@ -462,36 +436,6 @@ mod tests {
         let _: Color = 50.0f32.into();
         let _: Color = 50.0f64.into();
 
-        let _: Color = (50u8, 100).into();
-        let _: Color = (50i8, 100).into();
-        let _: Color = (50u16, 100).into();
-        let _: Color = (50i16, 100).into();
-        let _: Color = (50u32, 100).into();
-        let _: Color = (50i32, 100).into();
-        let _: Color = (50.0f32, 100.0).into();
-        let _: Color = (50.0f64, 100.0).into();
-
-        let _: Color = (50u8, 100, 55).into();
-        let _: Color = (50i8, 100, 55).into();
-        let _: Color = (50u16, 100, 55).into();
-        let _: Color = (50i16, 100, 55).into();
-        let _: Color = (50u32, 100, 55).into();
-        let _: Color = (50i32, 100, 55).into();
-        let _: Color = (50.0f32, 100.0, 55.0).into();
-        let _: Color = (50.0f64, 100.0, 55.0).into();
-
-        let _: Color = (50u8, 100, 55, 100).into();
-        let _: Color = (50i8, 100, 55, 100).into();
-        let _: Color = (50u16, 100, 55, 100).into();
-        let _: Color = (50i16, 100, 55, 100).into();
-        let _: Color = (50u32, 100, 55, 100).into();
-        let _: Color = (50i32, 100, 55, 100).into();
-        let _: Color = (50.0f32, 100.0, 55.0, 100.0).into();
-        let _: Color = (50.0f64, 100.0, 55.0, 100.0).into();
-    }
-
-    #[test]
-    fn test_slice_conversions() {
         let _: Color = [50u8].into();
         let _: Color = [50i8].into();
         let _: Color = [50u16].into();

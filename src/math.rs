@@ -6,7 +6,7 @@ use num_traits::{Num, NumCast};
 use rand::{self, distributions::uniform::SampleUniform, Rng};
 use std::ops::{AddAssign, Range};
 
-/// Default scalar type used for operations.
+/// Default scalar type used for math operations.
 pub type Scalar = f64;
 
 /// Default math constants.
@@ -51,7 +51,7 @@ where
     }
 }
 
-/// Returns the Perlin noise value at specified coordinates.
+/// Returns the [Perlin noise](https://en.wikipedia.org/wiki/Perlin_noise) value at specified coordinates.
 #[allow(clippy::many_single_char_names)]
 pub fn noise(v: impl Into<Vector<Scalar>>) -> Scalar {
     let v = v.into();
@@ -188,7 +188,7 @@ macro_rules! noise {
 
 /// Remaps a number from one range to another.
 ///
-/// Map range defaults to `0.0..=Scalar::MAX` in the event casting to [`Scalar`] fails.
+/// Map range defaults to `0.0..=Scalar::MAX` in the event casting to [Scalar] fails.
 /// NaN will result in the max mapped value.
 ///
 /// # Example

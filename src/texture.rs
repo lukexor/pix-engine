@@ -24,12 +24,12 @@ impl PixState {
         Ok(self.renderer.create_texture(width, height, format.into())?)
     }
 
-    /// Deletes a texture by [`TextureId`].
+    /// Deletes a texture by [TextureId].
     pub fn delete_texture(&mut self, texture_id: usize) -> PixResult<()> {
         Ok(self.renderer.delete_texture(texture_id)?)
     }
 
-    /// Update the `Texture` with a [`u8`] [`slice`] of pixel data.
+    /// Update the `Texture` with a [u8] [slice] of pixel data.
     pub fn update_texture<R, P>(
         &mut self,
         texture_id: TextureId,

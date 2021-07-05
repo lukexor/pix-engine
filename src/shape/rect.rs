@@ -1,4 +1,4 @@
-//! [`Rect`] types used for drawing.
+//! [Rect] types used for drawing.
 
 use crate::prelude::*;
 use num_traits::{AsPrimitive, Float, Num};
@@ -19,7 +19,7 @@ pub struct Rect<T = Scalar> {
     pub height: T,
 }
 
-/// # Constructs a [`Rect<T>`].
+/// # Constructs a [Rect].
 ///
 /// ```
 /// use pix_engine::prelude::*;
@@ -45,7 +45,7 @@ macro_rules! rect {
     };
 }
 
-/// # Constructs a [`Rect<T>`] with the same `width` and `height`.
+/// # Constructs a [Rect] with the same `width` and `height`.
 ///
 /// ```
 /// use pix_engine::prelude::*;
@@ -105,7 +105,23 @@ impl<T> Rect<T> {
         self.height = height;
     }
 
-    /// Convert [`Rect<T>`] to [`Rect<U>`] using `as` operator.
+    /// Returns `Rect` as a [Vec].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let r = rect!(5, 10, 100, 100);
+    /// assert_eq!(r.to_vec(), vec![5, 10, 100, 100]);
+    /// ```
+    pub fn to_vec(self) -> Vec<T>
+    where
+        T: Copy,
+    {
+        vec![self.x, self.y, self.width, self.height]
+    }
+
+    /// Convert [Rect] to another primitive type using the `as` operator.
     #[inline]
     pub fn as_<U>(self) -> Rect<U>
     where
@@ -202,7 +218,7 @@ where
         self.set_y(bottom - self.height);
     }
 
-    /// Returns the center position as [`Point<T>`].
+    /// Returns the center position as [Point].
     pub fn center(&self) -> Point<T> {
         let two = T::one() + T::one();
         let x = self.x + (self.width / two);
@@ -210,27 +226,27 @@ where
         point!(x, y)
     }
 
-    /// Returns the top-left position as [`Point<T>`].
+    /// Returns the top-left position as [Point].
     pub fn top_left(&self) -> Point<T> {
         point!(self.x, self.y)
     }
 
-    /// Returns the top-right position as [`Point<T>`].
+    /// Returns the top-right position as [Point].
     pub fn top_right(&self) -> Point<T> {
         point!(self.x + self.width, self.y)
     }
 
-    /// Returns the bottom-left position as [`Point<T>`].
+    /// Returns the bottom-left position as [Point].
     pub fn bottom_left(&self) -> Point<T> {
         point!(self.x, self.y + self.height)
     }
 
-    /// Returns the bottom-right position as [`Point<T>`].
+    /// Returns the bottom-right position as [Point].
     pub fn bottom_right(&self) -> Point<T> {
         point!(self.x + self.width, self.y + self.height)
     }
 
-    /// Set position centered on a [`Point<T>`].
+    /// Set position centered on a [Point].
     pub fn center_on(&mut self, p: impl Into<(T, T)>) {
         let (x, y) = p.into();
         let two = T::one() + T::one();
@@ -239,10 +255,13 @@ where
     }
 }
 
-impl<T: ShapeNum> Shape<T> for Rect<T> {
+impl<T> Shape<T> for Rect<T>
+where
+    T: Num + Copy + PartialOrd,
+{
     type Item = Rect<T>;
 
-    /// Returns whether this rectangle contains a given [`Point<T>`].
+    /// Returns whether this rectangle contains a given [Point].
     fn contains_point<P>(&self, p: P) -> bool
     where
         P: Into<Point<T>>,
@@ -309,27 +328,27 @@ where
     T: Copy,
     Self: Into<Rect<Scalar>>,
 {
-    /// Draw rectangle to the current [`PixState`] canvas.
+    /// Draw rectangle to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.rect(*self)
     }
 }
 
-/// Convert [`Rect<T>`] to `[x, y, width, height]`.
+/// Convert [Rect] to `[x, y, width, height]`.
 impl<T> From<Rect<T>> for [T; 4] {
     fn from(r: Rect<T>) -> Self {
         [r.x, r.y, r.width, r.height]
     }
 }
 
-/// Convert [`&Rect<T>`] to `[x, y, width, height]`.
+/// Convert &[Rect] to `[x, y, width, height]`.
 impl<T: Copy> From<&Rect<T>> for [T; 4] {
     fn from(r: &Rect<T>) -> Self {
         [r.x, r.y, r.width, r.height]
     }
 }
 
-/// Convert `[x, y, size]` to [`Rect<T>`].
+/// Convert `[x, y, size]` to [Rect].
 impl<T: Copy, U: Into<T>> From<[U; 3]> for Rect<T> {
     fn from([x, y, size]: [U; 3]) -> Self {
         let size = size.into();
@@ -337,7 +356,7 @@ impl<T: Copy, U: Into<T>> From<[U; 3]> for Rect<T> {
     }
 }
 
-/// Convert `&[x, y, size]` to [`Rect<T>`].
+/// Convert `&[x, y, size]` to [Rect].
 impl<T: Copy, U: Copy + Into<T>> From<&[U; 3]> for Rect<T> {
     fn from(&[x, y, size]: &[U; 3]) -> Self {
         let size = size.into();
@@ -345,14 +364,14 @@ impl<T: Copy, U: Copy + Into<T>> From<&[U; 3]> for Rect<T> {
     }
 }
 
-/// Convert `[x, y, width, height]` to [`Rect<T>`].
+/// Convert `[x, y, width, height]` to [Rect].
 impl<T, U: Into<T>> From<[U; 4]> for Rect<T> {
     fn from([x, y, width, height]: [U; 4]) -> Self {
         Self::new(x.into(), y.into(), width.into(), height.into())
     }
 }
 
-/// Convert `&[x, y, width, height]` to [`Rect<T>`].
+/// Convert `&[x, y, width, height]` to [Rect].
 impl<T, U: Copy + Into<T>> From<&[U; 4]> for Rect<T> {
     fn from(&[x, y, width, height]: &[U; 4]) -> Self {
         Self::new(x.into(), y.into(), width.into(), height.into())

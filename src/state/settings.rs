@@ -1,6 +1,6 @@
-//! Settings for the current [`PixEngine`] [`PixState`].
+//! Settings for the current [PixEngine] [PixState].
 //!
-//! [`PixEngine`]: crate::prelude::PixEngine
+//! [PixEngine]: crate::prelude::PixEngine
 
 use crate::{
     prelude::{Color, PixResult, PixState, Rect},

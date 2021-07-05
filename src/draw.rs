@@ -1,4 +1,4 @@
-//! Draw functions.
+//! Drawing functions.
 
 use crate::{
     prelude::*,

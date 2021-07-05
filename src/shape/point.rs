@@ -1,4 +1,4 @@
-//! [`Point`] functions used for drawing.
+//! [Point] functions used for drawing.
 
 use crate::prelude::*;
 use num_traits::{AsPrimitive, Float, Num};
@@ -23,7 +23,7 @@ pub struct Point<T = Scalar> {
     pub z: T,
 }
 
-/// # Constructs a [`Point<T>`].
+/// # Constructs a [Point].
 ///
 /// ```
 /// use pix_engine::prelude::*;
@@ -61,7 +61,7 @@ impl<T> Point<T> {
         Self { x, y, z }
     }
 
-    /// Constructs a `Point<T>` from a [`Vector<T>`].
+    /// Constructs a `Point<T>` from a [Vector].
     ///
     /// # Example
     ///
@@ -114,7 +114,7 @@ impl<T> Point<T> {
         [self.x, self.y, self.z]
     }
 
-    /// Set `Point` coordinates from any type that implements [`Into<Point<T>>`].
+    /// Set `Point` coordinates from any type that implements [Into<Point<T>>].
     ///
     /// # Examples
     ///
@@ -139,7 +139,23 @@ impl<T> Point<T> {
         self.z = p.z;
     }
 
-    /// Returns an itereator over the `Point`s coordinates `[x, y, z]`.
+    /// Returns `Point` as a [Vec].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p = point!(1, 1, 0);
+    /// assert_eq!(p.to_vec(), vec![1, 1, 0]);
+    /// ```
+    pub fn to_vec(self) -> Vec<T>
+    where
+        T: Copy,
+    {
+        vec![self.x, self.y, self.z]
+    }
+
+    /// Returns an iterator over the `Point`s coordinates `[x, y, z]`.
     ///
     /// # Example
     ///
@@ -157,7 +173,7 @@ impl<T> Point<T> {
         Iter::new(self)
     }
 
-    /// Returns an itereator over the `Point` that allows modifying each value.
+    /// Returns an iterator over the `Point` that allows modifying each value.
     ///
     /// # Example
     ///
@@ -173,7 +189,7 @@ impl<T> Point<T> {
         IterMut::new(self)
     }
 
-    /// Convert [`Point<T>`] to [`Point<U>`] using `as` operator.
+    /// Convert [Point] to another primitive type using the `as` operator.
     #[inline]
     pub fn as_<U>(self) -> Point<U>
     where
@@ -245,7 +261,7 @@ where
     T: Copy,
     Self: Into<Point<Scalar>>,
 {
-    /// Draw point to the current [`PixState`] canvas.
+    /// Draw point to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.point(*self)
     }
@@ -277,7 +293,7 @@ impl<T> IntoIterator for Point<T> {
 
     /// Owned `Point<T>` iterator over `[x, y, z]`.
     ///
-    /// This struct is created by the [`into_iter`](Point::into_iter) method on [`Point`]s.
+    /// This struct is created by the [into_iter](Point::into_iter) method on [Point]s.
     ///
     /// # Example
     ///
@@ -298,7 +314,7 @@ impl<T> IntoIterator for Point<T> {
 
 /// Immutable `Point<T>` iterator over `[x, y, z]`.
 ///
-/// This struct is created by the [`iter`](Point::iter) method on [`Point`]s.
+/// This struct is created by the [iter](Point::iter) method on [Point]s.
 ///
 /// # Example
 ///
@@ -352,7 +368,7 @@ type ThreeChain<T> = Chain<Chain<Once<T>, Once<T>>, Once<T>>;
 
 /// Mutable `Point<T>` iterator over `[x, y, z]`.
 ///
-/// This struct is created by the [`iter_mut`](Point::iter_mut) method on [`Point`]s.
+/// This struct is created by the [iter_mut](Point::iter_mut) method on [Point]s.
 ///
 /// # Example
 ///
@@ -671,85 +687,85 @@ impl_ops!(i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize, f32, f
 
 // Conversions from U to Point<T>
 
-/// Convert [`Point<T>`] to `[x]`.
+/// Convert [Point] to `[x]`.
 impl<T> From<Point<T>> for [T; 1] {
     fn from(p: Point<T>) -> Self {
         [p.x]
     }
 }
-/// Convert [`&Point<T>`] to `[x]`.
+/// Convert &[Point] to `[x]`.
 impl<T: Copy> From<&Point<T>> for [T; 1] {
     fn from(p: &Point<T>) -> Self {
         [p.x]
     }
 }
 
-/// Convert [`Point<T>`] to `[x, y]`.
+/// Convert [Point] to `[x, y]`.
 impl<T> From<Point<T>> for [T; 2] {
     fn from(p: Point<T>) -> Self {
         [p.x, p.y]
     }
 }
-/// Convert [`&Point<T>`] to `[x, y]`.
+/// Convert &[Point] to `[x, y]`.
 impl<T: Copy> From<&Point<T>> for [T; 2] {
     fn from(p: &Point<T>) -> Self {
         [p.x, p.y]
     }
 }
 
-/// Convert [`Point<T>`] to `[x, y, z]`.
+/// Convert [Point] to `[x, y, z]`.
 impl<T> From<Point<T>> for [T; 3] {
     fn from(p: Point<T>) -> Self {
         [p.x, p.y, p.z]
     }
 }
-/// Convert [`&Point<T>`] to `[x, y, z]`.
+/// Convert &[Point] to `[x, y, z]`.
 impl<T: Copy> From<&Point<T>> for [T; 3] {
     fn from(p: &Point<T>) -> Self {
         [p.x, p.y, p.z]
     }
 }
 
-/// Convert `[U; 1]` to [`Point<T>`].
+/// Convert `[U; 1]` to [Point].
 impl<T: Num, U: Into<T>> From<[U; 1]> for Point<T> {
     fn from([x]: [U; 1]) -> Self {
         Self::new(x.into(), T::zero(), T::zero())
     }
 }
-/// Convert `&[U; 1]` to [`Point<T>`].
+/// Convert `&[U; 1]` to [Point].
 impl<T: Num, U: Copy + Into<T>> From<&[U; 1]> for Point<T> {
     fn from(&[x]: &[U; 1]) -> Self {
         Self::new(x.into(), T::zero(), T::zero())
     }
 }
 
-/// Convert `[U; 2]` to [`Point<T>`].
+/// Convert `[U; 2]` to [Point].
 impl<T: Num, U: Into<T>> From<[U; 2]> for Point<T> {
     fn from([x, y]: [U; 2]) -> Self {
         Self::new(x.into(), y.into(), T::zero())
     }
 }
-/// Convert `&[U; 2]` to [`Point<T>`].
+/// Convert `&[U; 2]` to [Point].
 impl<T: Num, U: Copy + Into<T>> From<&[U; 2]> for Point<T> {
     fn from(&[x, y]: &[U; 2]) -> Self {
         Self::new(x.into(), y.into(), T::zero())
     }
 }
 
-/// Convert `[U; 3]` to [`Point<T>`].
+/// Convert `[U; 3]` to [Point].
 impl<T, U: Into<T>> From<[U; 3]> for Point<T> {
     fn from([x, y, z]: [U; 3]) -> Self {
         Self::new(x.into(), y.into(), z.into())
     }
 }
-/// Convert `&[U; 3]` to [`Point<T>`].
+/// Convert `&[U; 3]` to [Point].
 impl<T, U: Copy + Into<T>> From<&[U; 3]> for Point<T> {
     fn from(&[x, y, z]: &[U; 3]) -> Self {
         Self::new(x.into(), y.into(), z.into())
     }
 }
 
-/// Display [`Point<T>`] as "(x, y, z)".
+/// Display [Point] as "(x, y, z)".
 impl<T> fmt::Display for Point<T>
 where
     T: fmt::Display,

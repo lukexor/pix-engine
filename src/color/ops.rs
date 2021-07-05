@@ -1,4 +1,4 @@
-//! [`Color`] operation functions.
+//! [Color] operation functions.
 
 use super::{
     conversion::{calculate_channels, clamp_levels, convert_levels},
@@ -107,7 +107,7 @@ impl IntoIterator for Color {
 
     /// Owned `Color` iterator over `[r, g, b, a]`.
     ///
-    /// This struct is created by the [`into_iter`](Color::into_iter) method on [`Color`]s.
+    /// This struct is created by the [into_iter](Color::into_iter) method on [Color]s.
     ///
     /// # Example
     ///
@@ -129,7 +129,7 @@ impl IntoIterator for Color {
 
 /// Immutable `Color` iterator over `[r, g, b, a]`.
 ///
-/// This struct is created by the [`iter`](Color::iter) method on [`Color`]s.
+/// This struct is created by the [iter](Color::iter) method on [Color]s.
 ///
 /// # Example
 ///

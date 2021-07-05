@@ -1,4 +1,4 @@
-//! `Window` operations.
+//! `Window` functions.
 
 use crate::prelude::{Event, PixError};
 use num_traits::AsPrimitive;

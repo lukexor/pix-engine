@@ -1,4 +1,4 @@
-//! [`Image`] and [`PixelFormat`] functions.
+//! [Image] and [PixelFormat] functions.
 
 use crate::prelude::*;
 use std::{
@@ -12,10 +12,10 @@ use std::{
     result,
 };
 
-/// The result type for [`Image`] operations.
+/// The result type for [Image] operations.
 pub type Result<T> = result::Result<T, Error>;
 
-/// The error type for [`Image`] operations.
+/// The error type for [Image] operations.
 #[non_exhaustive]
 #[derive(Debug)]
 pub enum Error {
@@ -27,13 +27,13 @@ pub enum Error {
     InvalidBitDepth(png::BitDepth),
     /// I/O errors.
     IoError(io::Error),
-    /// [`png`] decoding errors.
+    /// [png] decoding errors.
     DecodingError(png::DecodingError),
     /// Unknown error.
     Other(Cow<'static, str>),
 }
 
-/// `PixelFormat` for interpreting bytes when using textures.
+/// Format for interpreting bytes when using textures.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum PixelFormat {
     /// 8-bit Indexed color
@@ -112,17 +112,17 @@ impl Image {
         (self.width, self.height)
     }
 
-    /// Returns the `Image` pixel data as a [`u8`] [`slice`].
+    /// Returns the `Image` pixel data as a [u8] [slice].
     pub fn bytes(&self) -> &[u8] {
         &self.data
     }
 
-    /// Returns the `Image` pixel data as a mutable [`u8`] [`slice`].
+    /// Returns the `Image` pixel data as a mutable [u8] [slice].
     pub fn bytes_mut(&mut self) -> &mut [u8] {
         &mut self.data
     }
 
-    /// Update the `Image` with a  [`u8`] [`slice`] representing RGB/A values.
+    /// Update the `Image` with a  [u8] [slice] representing RGB/A values.
     pub fn update_bytes(&mut self, bytes: &[u8]) {
         self.data.clone_from_slice(bytes);
     }
@@ -132,7 +132,7 @@ impl Image {
         self.format
     }
 
-    /// Save the `Image` to a [`png`] file.
+    /// Save the `Image` to a [png] file.
     pub fn save<P>(&self, _path: P) -> Result<()>
     where
         P: AsRef<Path>,
@@ -140,7 +140,7 @@ impl Image {
         todo!("save image");
     }
 
-    /// Returns the `Image` [`TextureId`].
+    /// Returns the `Image` [TextureId].
     pub(crate) fn texture_id(&self) -> TextureId {
         self.texture_id
     }
@@ -176,7 +176,7 @@ impl PixState {
         })
     }
 
-    /// Constructs an `Image` from a [`u8`] [`slice`] representing RGB/A values.
+    /// Constructs an `Image` from a [u8] [slice] representing RGB/A values.
     pub fn create_image_from_bytes(
         &mut self,
         width: u32,
@@ -193,7 +193,7 @@ impl PixState {
         })
     }
 
-    /// Constructs an `Image` from a [`png`] file.
+    /// Constructs an `Image` from a [png] file.
     pub fn create_image_from_file<P>(&mut self, path: P) -> PixResult<Image>
     where
         P: AsRef<Path>,

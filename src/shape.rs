@@ -1,6 +1,6 @@
 //! Shape functions for drawing.
 
-use num_traits::{AsPrimitive, Float, Num};
+use num_traits::Float;
 
 #[macro_use]
 pub mod ellipse;
@@ -18,20 +18,12 @@ pub use point::Point;
 pub use rect::Rect;
 pub use triangle::Triangle;
 
-/// Trait constraint for implementing [`Shape`].
-pub trait ShapeNum: Num + Copy + PartialOrd + AsPrimitive<f64> {}
-
-impl<T> ShapeNum for T where T: Num + Copy + PartialOrd + AsPrimitive<f64> {}
-
 /// Trait for operations on a geometric shape.
-pub trait Shape<T>
-where
-    T: ShapeNum,
-{
-    /// The shape type. e.g. [`Rect<T>`].
+pub trait Shape<T> {
+    /// The shape type. e.g. [Rect<T>].
     type Item;
 
-    /// Returns whether this shape contains a given [`Point<T>`].
+    /// Returns whether this shape contains a given [Point<T>].
     fn contains_point<P>(&self, _p: P) -> bool
     where
         P: Into<Point<T>>,

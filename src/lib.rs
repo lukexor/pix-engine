@@ -1,47 +1,54 @@
 //! # Getting Started
 //!
-//! `pix_engine` is a cross-platform graphics/UI engine framework for simple games, visualizations,
-//! and graphics demos.
+//! `pix_engine` is a cross-platform graphics & UI library for simple games, visualizations,
+//! digital art, and graphics applications written in Rust, supporting [SDL2][] and
+//! [Web-Assembly][WASM]
+//! renderers.
 //!
-//! The goal of this library is to be simpler to setup and use for graphics or algorithm
-//! exploration than larger graphics libraries.
+//! The primary goal of this library is to be simple to setup and use for graphics or algorithm
+//! exploration and is not meant to be as fully-featured as other, larger graphics libraries.
 //!
-//! This is intended to be more than just a toy crate, however, and can be used to drive real
-//! applications. For example, the
-//! [`Tetanes`](https://crates.io/crates/tetanes) NES emulator is driven by this crate.
+//! It is intended to be more than just a toy library, however, and can be used to drive complex
+//! applications. For example, the [`Tetanes`][] [NES][] emulator.
+//!
+//! [SDL2]: https://crates.io/crates/sdl2/
+//! [WASM]: https://www.rust-lang.org/what/wasm
+//! [`Tetanes`]: https://crates.io/crates/tetanes
+//! [NES]: https://en.wikipedia.org/wiki/Nintendo_Entertainment_System
 //!
 //! ```no_run
 //! # #![allow(unused_variables)]
 //! use pix_engine::prelude::*;
 //!
-//! struct App;
+//! struct MyApp;
 //!
-//! impl AppState for App {
+//! impl AppState for MyApp {
 //!     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
 //!         // Setup App state. PixState contains engine specific state and
 //!         // utility functions for things like getting mouse coordinates,
 //!         // drawing shapes, etc.
 //!         Ok(())
 //!     }
+//!
 //!     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!         // Main render loop. Called roughly every 16ms.
 //!         Ok(())
 //!     }
+//!
 //!     fn on_stop(&mut self, s: &mut PixState) -> PixResult<()> {
 //!         // Teardown any state or resources before exiting.
 //!         Ok(())
 //!     }
 //! }
 //!
-//! pub fn main() {
+//! fn main() -> PixResult<()> {
 //!     let mut engine = PixEngine::builder()
 //!       .with_dimensions(800, 600)
-//!       .with_title("App Title")
+//!       .with_title("MyApp")
 //!       .position_centered()
-//!       .vsync_enabled()
 //!       .build();
-//!     let mut app = App;
-//!     engine.run(&mut app).expect("engine run");
+//!     let mut app = MyApp;
+//!     engine.run(&mut app)
 //! }
 //! ```
 
@@ -104,7 +111,7 @@ pub mod window;
 mod common;
 mod utils;
 
-/// Exports most commonly used types, traits, and functions for 2D.
+/// Exports most commonly used types, traits, and functions.
 pub mod prelude {
     use super::*;
     pub use color::{constants::*, Color, ColorError, ColorMode};
@@ -113,8 +120,10 @@ pub mod prelude {
     pub use engine::PixEngine;
     pub use event::{Axis, Button, Event, Key, KeyEvent, KeyMod, Mouse, WindowEvent};
     pub use image::{Image, PixelFormat};
+    pub use lighting::{Light, LightSource};
     pub use math::{constants, map, Scalar};
-    pub use shape::{Circle, Ellipse, Line, Point, Rect, Shape, ShapeNum, Triangle};
+    pub use shape::{Circle, Ellipse, Line, Point, Rect, Shape, Sphere, Triangle};
+    pub use sphere;
     pub use state::{
         settings::{AngleMode, ArcMode, BlendMode, DrawMode, FontStyle},
         AppState, PixState,
@@ -122,18 +131,11 @@ pub mod prelude {
     pub use texture::TextureId;
     pub use vector::Vector;
     pub use window::{Position, WindowBuilder, WindowId};
+    pub use {circle, ellipse, rect, square};
+    pub use {noise, random, vector};
     // Color macros
     pub use {color, hsb, hsl, rgb};
-    // Math macros
-    pub use {noise, random, vector};
     // Shape macros
-    pub use {circle, ellipse, point, rect, sphere, square};
-}
-
-/// Exports most commonly used types, traits, and functions for 3D.
-pub mod prelude_3d {
-    pub use super::*;
-    pub use lighting::{Light, LightSource};
-    pub use prelude::*;
-    pub use shape::Sphere;
+    pub use point;
+    // Math macros
 }

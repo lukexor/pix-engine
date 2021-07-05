@@ -1,4 +1,4 @@
-//! Audio functions.
+//! `Audio` functions.
 //!
 //! # Example
 //!

@@ -1,21 +1,27 @@
-//! 1D, 2D and 3D Euclidean [`Vector`] functions.
+//! [Euclidean][] [Vector] functions.
 //!
-//! Each [`Vector`] represents a 1D, 2D or 3D Euclidean (or geometric) vector with a magnitude and a
-//! direction. The `Vector`, however, contains 3 values for `x`, `y`, and `z`. The magnitude and direction are
-//! retrieved with the [`mag`](Vector::mag) and [`heading`](Vector::heading) methods.
+//! Each [Vector] represents a 1D, 2D or 3D [Euclidean][] (or geometric) vector with a magnitude
+//! and a direction. The [Vector] `struct`, however, contains 3 values for `x`, `y`, and `z`. The
+//! magnitude and direction are retrieved with the [mag][] and [heading][] methods.
 //!
-//! Some example uses of a `Vector` include modeling a position, velocity, or acceleration of an
+//! Some example uses of a [Vector] include modeling a position, velocity, or acceleration of an
 //! object or particle.
 //!
-//! The [`vector!`] macro allows for flexible construction which takes 0-3 parameters:
+//! The [vector!] macro allows for flexible construction which takes 0-3 parameters:
 //!
-//! - Zero parameters constructs a vector at the origin `(0.0, 0.0, 0.0)`
+//! - Zero parameters constructs a vector at the origin `(0, 0, 0)`
 //! - One, Two, or Three parameters constructs a vector with `x`, `y`, and `z` set with remaining
-//!   values set to `0.0`.
+//! values set to `0`.
 //!
-//! If you want randomized vectors, use the [`random_1d`](Vector::random_1d),
-//! [`random_2d`](Vector::random_2d) and [`random_3d`](Vector::random_3d) methods which create unit
-//! vectors with magnitudes in the range `-1.0..=1.0`.
+//! If you want randomized vectors, use the [random_1d][], [random_2d][] and [random_3d][] methods
+//! which create unit vectors with magnitudes in the range `-1.0..=1.0`.
+//!
+//! [Euclidean]: https://en.wikipedia.org/wiki/Euclidean_vector
+//! [mag]: Vector::mag
+//! [heading]: Vector::heading
+//! [random_1d]: Vector::random_1d
+//! [random_2d]: Vector::random_2d
+//! [random_3d]: Vector::random_3d
 //!
 //! # Examples
 //!
@@ -74,18 +80,23 @@ use std::{
     ops::*,
 };
 
-/// Represents a Euclidiean (also known as geometric) `Vector` in 2D or 3D space. A `Vector` has
-/// both a magnitude and a direction. The `Vector`, however, contains 3 values for `x`, `y`, and `z`.
+/// Represents a [Euclidean][] (also known as geometric) `Vector` in 2D or 3D space. A `Vector` has
+/// both a magnitude and a direction. The [Vector] struct, however, contains 3 values for `x`, `y`,
+/// and `z`.
 ///
-/// The magnitude and direction are retrieved with the [`mag`](Vector::mag) and
-/// [`heading`](Vector::heading) methods.
+/// The magnitude and direction are retrieved with the [mag][] and [heading][] methods.
 ///
-/// Some example uses of a `Vector` include modeling a position, velocity, or acceleration of an
+/// Some example uses of a [Vector] include modeling a position, velocity, or acceleration of an
 /// object or particle.
 ///
-/// `Vector`s can be combined using "vector" math, so for example two `Vector`s can be added together
-/// to form a new `Vector` using `let v3 = v1 + v2` or you can add one `Vector` to another by calling
+/// [Vector]s can be combined using [vector math][vecmath], so for example two [Vector]s can be added together
+/// to form a new [Vector] using `let v3 = v1 + v2` or you can add one [Vector] to another by calling
 /// `v1 += v2`.
+///
+/// [Euclidean]: https://en.wikipedia.org/wiki/Euclidean_vector
+/// [mag]: Vector::mag
+/// [heading]: Vector::heading
+/// [vecmath]: https://en.wikipedia.org/wiki/Vector_(mathematics_and_physics)
 #[derive(Default, Debug, Copy, Clone, PartialEq, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Vector<T = Scalar> {
@@ -97,7 +108,7 @@ pub struct Vector<T = Scalar> {
     pub z: T,
 }
 
-/// # Constructs a [`Vector<T>`].
+/// # Constructs a [Vector].
 ///
 /// # Examples
 ///
@@ -146,7 +157,7 @@ impl<T> Vector<T> {
         Self { x, y, z }
     }
 
-    /// Constructs a `Vector<T>` from a [`Point<T>`].
+    /// Constructs a `Vector<T>` from a [Point].
     ///
     /// # Example
     ///
@@ -196,7 +207,7 @@ impl<T> Vector<T> {
         [self.x, self.y, self.z]
     }
 
-    /// Set `Vector` coordinates from any type that implements [`Into<Vector<T>>`].
+    /// Set `Vector` coordinates from any type that implements [Into<Vector<T>>].
     ///
     /// # Examples
     ///
@@ -218,7 +229,7 @@ impl<T> Vector<T> {
         self.z = v.z;
     }
 
-    /// Returns an itereator over the `Vector`s coordinates `[x, y, z]`.
+    /// Returns an iterator over the `Vector`s coordinates `[x, y, z]`.
     ///
     /// # Example
     ///
@@ -236,7 +247,7 @@ impl<T> Vector<T> {
         Iter::new(self)
     }
 
-    /// Returns an itereator over the `Vector` that allows modifying each value.
+    /// Returns an iterator over the `Vector` that allows modifying each value.
     ///
     /// # Example
     ///
@@ -252,7 +263,7 @@ impl<T> Vector<T> {
         IterMut::new(self)
     }
 
-    /// Convert [`Vector<T>`] to [`Vector<U>`] using `as` operator.
+    /// Convert [Vector] to another primitive type using the `as` operator.
     #[inline]
     pub fn as_<U>(self) -> Vector<U>
     where
@@ -277,7 +288,7 @@ impl<T: Num> Vector<T> {
         Self::new(x, T::zero(), T::zero())
     }
 
-    /// Constructs a `Vector<T>` with only `x` and `y magnitudes.
+    /// Constructs a `Vector<T>` with only `x` and ``y` magnitudes.
     ///
     /// # Example
     ///
@@ -317,7 +328,7 @@ where
         v
     }
 
-    /// Constructs a unit `Vector<T>` of length `1.0` from another `Vector`.
+    /// Constructs a unit `Vector<T>` of length `1` from another `Vector`.
     ///
     /// # Example
     ///
@@ -336,8 +347,98 @@ where
         v
     }
 
+    /// Constructs a random unit `Vector<T>` in 1D space.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v: Vector<f64> = Vector::random_1d();
+    /// assert!(v.x > -1.0 && v.x < 1.0);
+    /// assert_eq!(v.y, 0.0);
+    /// assert_eq!(v.z, 0.0);
+    ///
+    /// // May make v's (x, y, z) values something like:
+    /// // (0.61554617, 0.0, 0.0) or
+    /// // (-0.4695841, 0.0, 0.0) or
+    /// // (0.6091097, 0.0, 0.0)
+    /// ```
+    pub fn random_1d() -> Self
+    where
+        T: SampleUniform,
+    {
+        Vector::new(random!(T::one()), T::zero(), T::zero())
+    }
+
+    /// Constructs a random unit `Vector<T>` in 2D space.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v: Vector<f64> = Vector::random_2d();
+    /// assert!(v.x > -1.0 && v.x < 1.0);
+    /// assert!(v.y > -1.0 && v.y < 1.0);
+    /// assert_eq!(v.z, 0.0);
+    ///
+    /// // May make v's (x, y, z) values something like:
+    /// // (0.61554617, -0.51195765, 0.0) or
+    /// // (-0.4695841, -0.14366731, 0.0) or
+    /// // (0.6091097, -0.22805278, 0.0)
+    /// ```
+    pub fn random_2d() -> Self
+    where
+        T: SampleUniform,
+    {
+        Self::from_angle(
+            random!(NumCast::from(TAU).unwrap_or_else(T::zero)),
+            T::one(),
+        )
+    }
+
+    /// Constructs a random unit `Vector<T>` in 3D space.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v: Vector<f64> = Vector::random_3d();
+    /// assert!(v.x > -1.0 && v.x < 1.0);
+    /// assert!(v.y > -1.0 && v.y < 1.0);
+    /// assert!(v.z > -1.0 && v.z < 1.0);
+    ///
+    /// // May make v's (x, y, z) values something like:
+    /// // (0.61554617, -0.51195765, 0.599168) or
+    /// // (-0.4695841, -0.14366731, -0.8711202) or
+    /// // (0.6091097, -0.22805278, -0.7595902)
+    /// ```
+    pub fn random_3d() -> Self
+    where
+        T: SampleUniform,
+    {
+        let (sin, cos) = random!(NumCast::from(TAU).unwrap_or_else(T::zero)).sin_cos();
+        let z: T = random!(-T::one(), T::one()); // Range from -1 to 1
+        let z_base = (T::one() - z * z).sqrt();
+        let x = z_base * cos;
+        let y = z_base * sin;
+        Self::new(x, y, z)
+    }
+
+    /// Returns `Vector` as a [Vec].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v = vector!(1.0, 1.0, 0.0);
+    /// assert_eq!(v.to_vec(), vec![1.0, 1.0, 0.0]);
+    /// ```
+    pub fn to_vec(self) -> Vec<T> {
+        vec![self.x, self.y, self.z]
+    }
+
     /// Constructs a 2D unit `Vector<T>` in the XY plane from a given angle. Angle is given as radians
-    /// and is unaffected by [`AngleMode`](crate::prelude::AngleMode).
+    /// and is unaffected by [AngleMode](crate::prelude::AngleMode).
     ///
     /// # Example
     ///
@@ -441,96 +542,6 @@ where
     {
         let normal = Self::normalized(normal);
         *self = normal * ((T::one() + T::one()) * self.dot(normal)) - *self;
-    }
-
-    /// Returns `Vector` as a [`Vec<T>`].
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v = vector!(1.0, 1.0, 0.0);
-    /// assert_eq!(v.to_vec(), vec![1.0, 1.0, 0.0]);
-    /// ```
-    pub fn to_vec(self) -> Vec<T> {
-        vec![self.x, self.y, self.z]
-    }
-
-    /// Constructs a random unit `Vector<T>` in 1D space.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v: Vector<f64> = Vector::random_1d();
-    /// assert!(v.x > -1.0 && v.x < 1.0);
-    /// assert_eq!(v.y, 0.0);
-    /// assert_eq!(v.z, 0.0);
-    ///
-    /// // May make v's (x, y, z) values something like:
-    /// // (0.61554617, 0.0, 0.0) or
-    /// // (-0.4695841, 0.0, 0.0) or
-    /// // (0.6091097, 0.0, 0.0)
-    /// ```
-    pub fn random_1d() -> Self
-    where
-        T: SampleUniform,
-    {
-        Vector::new(random!(T::one()), T::zero(), T::zero())
-    }
-
-    /// Constructs a random unit `Vector<T>` in 2D space.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v: Vector<f64> = Vector::random_2d();
-    /// assert!(v.x > -1.0 && v.x < 1.0);
-    /// assert!(v.y > -1.0 && v.y < 1.0);
-    /// assert_eq!(v.z, 0.0);
-    ///
-    /// // May make v's (x, y, z) values something like:
-    /// // (0.61554617, -0.51195765, 0.0) or
-    /// // (-0.4695841, -0.14366731, 0.0) or
-    /// // (0.6091097, -0.22805278, 0.0)
-    /// ```
-    pub fn random_2d() -> Self
-    where
-        T: SampleUniform,
-    {
-        Self::from_angle(
-            random!(NumCast::from(TAU).unwrap_or_else(T::zero)),
-            T::one(),
-        )
-    }
-
-    /// Constructs a random unit `Vector<T>` in 3D space.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v: Vector<f64> = Vector::random_3d();
-    /// assert!(v.x > -1.0 && v.x < 1.0);
-    /// assert!(v.y > -1.0 && v.y < 1.0);
-    /// assert!(v.z > -1.0 && v.z < 1.0);
-    ///
-    /// // May make v's (x, y, z) values something like:
-    /// // (0.61554617, -0.51195765, 0.599168) or
-    /// // (-0.4695841, -0.14366731, -0.8711202) or
-    /// // (0.6091097, -0.22805278, -0.7595902)
-    /// ```
-    pub fn random_3d() -> Self
-    where
-        T: SampleUniform,
-    {
-        let (sin, cos) = random!(NumCast::from(TAU).unwrap_or_else(T::zero)).sin_cos();
-        let z: T = random!(-T::one(), T::one()); // Range from -1 to 1
-        let z_base = (T::one() - z * z).sqrt();
-        let x = z_base * cos;
-        let y = z_base * sin;
-        Self::new(x, y, z)
     }
 
     /// Set the magnitude (length) of the `Vector`.
@@ -652,7 +663,7 @@ where
     }
 
     /// Rotate a 2D `Vector` by an angle in radians, magnitude remains the same. Unaffected by
-    /// [`AngleMode`](crate::prelude::AngleMode).
+    /// [AngleMode](crate::prelude::AngleMode).
     ///
     /// # Example
     ///
@@ -774,7 +785,7 @@ impl<T> IntoIterator for Vector<T> {
 
     /// Owned `Vector<T>` iterator over `[x, y, z]`.
     ///
-    /// This struct is created by the [`into_iter`](Vector::into_iter) method on [`Vector`]s.
+    /// This struct is created by the [into_iter](Vector::into_iter) method on [Vector]s.
     ///
     /// # Example
     ///
@@ -793,9 +804,9 @@ impl<T> IntoIterator for Vector<T> {
     }
 }
 
-/// Immutable `Vector<T>` iterator over `[x, y, z]`.
+/// Immutable [Vector] iterator over `[x, y, z]`.
 ///
-/// This struct is created by the [`iter`](Vector::iter) method on [`Vector`]s.
+/// This struct is created by the [iter](Vector::iter) method on [Vector]s.
 ///
 /// # Example
 ///
@@ -847,9 +858,9 @@ impl<'a, T> IntoIterator for &'a Vector<T> {
 
 type ThreeChain<T> = Chain<Chain<Once<T>, Once<T>>, Once<T>>;
 
-/// Mutable `Vector<T>` iterator over `[x, y, z]`.
+/// Mutable [Vector] iterator over `[x, y, z]`.
 ///
-/// This struct is created by the [`iter_mut`](Vector::iter_mut) method on [`Vector`]s.
+/// This struct is created by the [iter_mut](Vector::iter_mut) method on [Vector]s.
 ///
 /// # Example
 ///
@@ -1059,113 +1070,113 @@ impl_ops!(i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize, f32, f
 
 // Conversions from U to Vector<T>
 
-/// Convert [`Vector<T>`] to `[x]`.
+/// Convert [Vector] to `[x]`.
 impl<T> From<Vector<T>> for [T; 1] {
     fn from(v: Vector<T>) -> Self {
         [v.x]
     }
 }
-/// Convert [`&Vector<T>`] to `[x]`.
+/// Convert &[Vector] to `[x]`.
 impl<T: Copy> From<&Vector<T>> for [T; 1] {
     fn from(v: &Vector<T>) -> Self {
         [v.x]
     }
 }
 
-/// Convert [`Vector<T>`] to `[x, y]`.
+/// Convert [Vector] to `[x, y]`.
 impl<T> From<Vector<T>> for [T; 2] {
     fn from(v: Vector<T>) -> Self {
         [v.x, v.y]
     }
 }
-/// Convert [`&Vector<T>`] to `[x, y]`.
+/// Convert &[Vector] to `[x, y]`.
 impl<T: Copy> From<&Vector<T>> for [T; 2] {
     fn from(v: &Vector<T>) -> Self {
         [v.x, v.y]
     }
 }
 
-/// Convert [`Vector<T>`] to `[x, y, z]`.
+/// Convert [Vector] to `[x, y, z]`.
 impl<T> From<Vector<T>> for [T; 3] {
     fn from(v: Vector<T>) -> Self {
         [v.x, v.y, v.z]
     }
 }
-/// Convert [`&Vector<T>`] to `[x, y, z]`.
+/// Convert &[Vector] to `[x, y, z]`.
 impl<T: Copy> From<&Vector<T>> for [T; 3] {
     fn from(v: &Vector<T>) -> Self {
         [v.x, v.y, v.z]
     }
 }
 
-/// Convert `[U; 1]` to [`Vector<T>`].
+/// Convert `[U; 1]` to [Vector].
 impl<T: Num, U: Into<T>> From<[U; 1]> for Vector<T> {
     fn from([x]: [U; 1]) -> Self {
         Self::new(x.into(), T::zero(), T::zero())
     }
 }
-/// Convert `&[U; 1]` to [`Vector<T>`].
+/// Convert `&[U; 1]` to [Vector].
 impl<T: Num, U: Copy + Into<T>> From<&[U; 1]> for Vector<T> {
     fn from(&[x]: &[U; 1]) -> Self {
         Self::new(x.into(), T::zero(), T::zero())
     }
 }
 
-/// Convert `[U; 2]` to [`Vector<T>`].
+/// Convert `[U; 2]` to [Vector].
 impl<T: Num, U: Into<T>> From<[U; 2]> for Vector<T> {
     fn from([x, y]: [U; 2]) -> Self {
         Self::new(x.into(), y.into(), T::zero())
     }
 }
-/// Convert `&[U; 2]` to [`Vector<T>`].
+/// Convert `&[U; 2]` to [Vector].
 impl<T: Num, U: Copy + Into<T>> From<&[U; 2]> for Vector<T> {
     fn from(&[x, y]: &[U; 2]) -> Self {
         Self::new(x.into(), y.into(), T::zero())
     }
 }
 
-/// Convert `[U; 3]` to [`Vector<T>`].
+/// Convert `[U; 3]` to [Vector].
 impl<T, U: Into<T>> From<[U; 3]> for Vector<T> {
     fn from([x, y, z]: [U; 3]) -> Self {
         Self::new(x.into(), y.into(), z.into())
     }
 }
-/// Convert `&[U; 3]` to [`Vector<T>`].
+/// Convert `&[U; 3]` to [Vector].
 impl<T, U: Copy + Into<T>> From<&[U; 3]> for Vector<T> {
     fn from(&[x, y, z]: &[U; 3]) -> Self {
         Self::new(x.into(), y.into(), z.into())
     }
 }
 
-/// Converts [`Point<U>`] to [`Vector<T>`].
+/// Converts [Point] to [Vector].
 impl<T, U: Into<T>> From<Point<U>> for Vector<T> {
     fn from(p: Point<U>) -> Self {
         Self::new(p.x.into(), p.y.into(), p.z.into())
     }
 }
 
-/// Converts [`&Point<U>`] to [`Vector<T>`].
+/// Converts &[Point] to [Vector].
 impl<T, U: Copy + Into<T>> From<&Point<U>> for Vector<T> {
     fn from(p: &Point<U>) -> Self {
         Self::new(p.x.into(), p.y.into(), p.z.into())
     }
 }
 
-/// Converts [`Vector<U>`] to [`Point<T>`].
+/// Converts [Vector] to [Point].
 impl<T, U: Into<T>> From<Vector<U>> for Point<T> {
     fn from(v: Vector<U>) -> Self {
         Self::new(v.x.into(), v.y.into(), v.z.into())
     }
 }
 
-/// Converts [`&Vector<U>`] to [`Point<T>`].
+/// Converts &[Vector] to [Point].
 impl<T, U: Copy + Into<T>> From<&Vector<U>> for Point<T> {
     fn from(v: &Vector<U>) -> Self {
         Self::new(v.x.into(), v.y.into(), v.z.into())
     }
 }
 
-/// Display [`Vector<T>`] as "[x, y, z]".
+/// Display [Vector] as "[x, y, z]".
 impl<T> fmt::Display for Vector<T>
 where
     T: fmt::Display,

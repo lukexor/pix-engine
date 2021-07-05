@@ -1,7 +1,7 @@
-//! [`Circle`], [`Ellipse`], and [`Sphere`] types used for drawing.
+//! [Circle], [Ellipse], and [Sphere] types used for drawing.
 
 use crate::prelude::*;
-use num_traits::AsPrimitive;
+use num_traits::{AsPrimitive, Num};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -19,7 +19,7 @@ pub struct Ellipse<T = Scalar> {
     pub height: T,
 }
 
-/// # Constructs an [`Ellipse<T>`].
+/// # Constructs an [Ellipse].
 ///
 /// ```
 /// use pix_engine::prelude::*;
@@ -53,7 +53,23 @@ impl<T> Ellipse<T> {
         }
     }
 
-    /// Convert [`Ellipse<T>`] to [`Ellipse<U>`] using `as` operator.
+    /// Returns `Ellipse` as a [Vec].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let e = ellipse!(5, 10, 100, 100);
+    /// assert_eq!(e.to_vec(), vec![5, 10, 100, 100]);
+    /// ```
+    pub fn to_vec(self) -> Vec<T>
+    where
+        T: Copy,
+    {
+        vec![self.x, self.y, self.width, self.height]
+    }
+
+    /// Convert [Ellipse] to another primitive type using the `as` operator.
     #[inline]
     pub fn as_<U>(self) -> Ellipse<U>
     where
@@ -69,10 +85,13 @@ impl<T> Ellipse<T> {
     }
 }
 
-impl<T: ShapeNum> Shape<T> for Ellipse<T> {
+impl<T> Shape<T> for Ellipse<T>
+where
+    T: Num + Copy + PartialOrd,
+{
     type Item = Ellipse<T>;
 
-    /// Returns whether this ellipse contains a given [`Point<T>`].
+    /// Returns whether this ellipse contains a given [Point].
     fn contains_point<P>(&self, p: P) -> bool
     where
         P: Into<Point<T>>,
@@ -104,48 +123,48 @@ where
     T: Copy,
     Self: Into<Ellipse<Scalar>>,
 {
-    /// Draw ellipse to the current [`PixState`] canvas.
+    /// Draw ellipse to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.ellipse(*self)
     }
 }
 
-/// Convert [`Ellipse<T>`] to `[x, y, width, height]`.
+/// Convert [Ellipse] to `[x, y, width, height]`.
 impl<T> From<Ellipse<T>> for [T; 4] {
     fn from(e: Ellipse<T>) -> Self {
         [e.x, e.y, e.width, e.height]
     }
 }
 
-/// Convert [`&Ellipse<T>`] to `[x, y, width, height]`.
+/// Convert `&Ellipse<T>` to `[x, y, width, height]`.
 impl<T: Copy> From<&Ellipse<T>> for [T; 4] {
     fn from(e: &Ellipse<T>) -> Self {
         [e.x, e.y, e.width, e.height]
     }
 }
 
-/// Convert `[x, y, width, height]` to [`Ellipse<T>`].
+/// Convert `[x, y, width, height]` to [Ellipse].
 impl<T, U: Into<T>> From<[U; 4]> for Ellipse<T> {
     fn from([x, y, width, height]: [U; 4]) -> Self {
         Self::new(x.into(), y.into(), width.into(), height.into())
     }
 }
 
-/// Convert `&[x, y, width, height]` to [`Ellipse<T>`].
+/// Convert `&[x, y, width, height]` to [Ellipse].
 impl<T, U: Copy + Into<T>> From<&[U; 4]> for Ellipse<T> {
     fn from(&[x, y, width, height]: &[U; 4]) -> Self {
         Self::new(x.into(), y.into(), width.into(), height.into())
     }
 }
 
-/// Convert [`Circle<T>`] to [`Ellipse<T>`].
+/// Convert [Circle] to [Ellipse].
 impl<T: Copy> From<Circle<T>> for Ellipse<T> {
     fn from(c: Circle<T>) -> Self {
         Self::new(c.x, c.y, c.radius, c.radius)
     }
 }
 
-/// Convert [`&Circle<T>`] to [`Ellipse<T>`].
+/// Convert &[Circle] to [Ellipse].
 impl<T: Copy> From<&Circle<T>> for Ellipse<T> {
     fn from(c: &Circle<T>) -> Self {
         Self::new(c.x, c.y, c.radius, c.radius)
@@ -164,7 +183,7 @@ pub struct Circle<T = Scalar> {
     pub radius: T,
 }
 
-/// # Constructs a [`Circle<T>`].
+/// # Constructs a [Circle].
 ///
 /// ```
 /// use pix_engine::prelude::*;
@@ -189,17 +208,33 @@ impl<T> Circle<T> {
         Self { x, y, radius }
     }
 
-    /// Constructs a `Circle` from [`Point<T>`].
+    /// Constructs a `Circle` from [Point].
     pub fn from_point(p: Point<T>, radius: T) -> Self {
         Self::new(p.x, p.y, radius)
     }
 
-    /// Constructs a `Circle` from [`Vector<T>`].
+    /// Constructs a `Circle` from [Vector].
     pub fn from_vector(v: Vector<T>, radius: T) -> Self {
         Self::new(v.x, v.y, radius)
     }
 
-    /// Convert [`Circle<T>`] to [`Circle<U>`] using `as` operator.
+    /// Returns `Circle` as a [Vec].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = circle!(5, 10, 100);
+    /// assert_eq!(c.to_vec(), vec![5, 10, 100]);
+    /// ```
+    pub fn to_vec(self) -> Vec<T>
+    where
+        T: Copy,
+    {
+        vec![self.x, self.y, self.radius]
+    }
+
+    /// Convert [Circle] to another primitive type using the `as` operator.
     #[inline]
     pub fn as_<U>(self) -> Circle<U>
     where
@@ -210,10 +245,13 @@ impl<T> Circle<T> {
     }
 }
 
-impl<T: ShapeNum> Shape<T> for Circle<T> {
+impl<T> Shape<T> for Circle<T>
+where
+    T: Num + Copy + PartialOrd,
+{
     type Item = Circle<T>;
 
-    /// Returns whether this circle contains a given [`Point<T>`].
+    /// Returns whether this circle contains a given [Point].
     fn contains_point<P>(&self, p: P) -> bool
     where
         P: Into<Point<T>>,
@@ -243,34 +281,34 @@ where
     T: Copy,
     Self: Into<Circle<Scalar>>,
 {
-    /// Draw circle to the current [`PixState`] canvas.
+    /// Draw circle to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.circle(*self)
     }
 }
 
-/// Convert [`Circle<T>`] to `[x, y, radius]`.
+/// Convert [Circle] to `[x, y, radius]`.
 impl<T> From<Circle<T>> for [T; 3] {
     fn from(c: Circle<T>) -> Self {
         [c.x, c.y, c.radius]
     }
 }
 
-/// Convert [`&Circle<T>`] to `[x, y, radius]`.
+/// Convert &[Circle] to `[x, y, radius]`.
 impl<T: Copy> From<&Circle<T>> for [T; 3] {
     fn from(c: &Circle<T>) -> Self {
         [c.x, c.y, c.radius]
     }
 }
 
-/// Convert `[x, y, radius]` to [`Circle<T>`].
+/// Convert `[x, y, radius]` to [Circle].
 impl<T, U: Into<T>> From<[U; 3]> for Circle<T> {
     fn from([x, y, radius]: [U; 3]) -> Self {
         Self::new(x.into(), y.into(), radius.into())
     }
 }
 
-/// Convert `&[x, y, radius]` to [`Circle<T>`].
+/// Convert `&[x, y, radius]` to [Circle].
 impl<T, U: Copy + Into<T>> From<&[U; 3]> for Circle<T> {
     fn from(&[x, y, radius]: &[U; 3]) -> Self {
         Self::new(x.into(), y.into(), radius.into())
@@ -287,7 +325,7 @@ pub struct Sphere<T = Scalar> {
     pub radius: T,
 }
 
-/// # Constructs a [`Sphere<T>`].
+/// # Constructs a [Sphere].
 ///
 /// ```
 /// use pix_engine::prelude::*;
@@ -318,10 +356,13 @@ impl<T> Sphere<T> {
     }
 }
 
-impl<T: ShapeNum> Shape<T> for Sphere<T> {
+impl<T> Shape<T> for Sphere<T>
+where
+    T: Num + Copy + PartialOrd,
+{
     type Item = Sphere<T>;
 
-    /// Returns whether this sphere contains a given [`Point<T>`].
+    /// Returns whether this sphere contains a given [Point].
     fn contains<O>(&self, other: O) -> bool
     where
         O: Into<Self::Item>,
