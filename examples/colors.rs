@@ -15,26 +15,21 @@ impl Colors {
         Self { h: 0.0, auto: true }
     }
 
+    #[allow(clippy::many_single_char_names)]
     fn draw_gradient(&mut self, state: &mut PixState) -> PixResult<()> {
-        for x in (0..WIDTH / SIZE).into_iter() {
-            for y in (0..HEIGHT / SIZE).into_iter() {
-                let s = map((SIZE * x) as f64, 0.0, WIDTH as f64, 0.0, 100.0);
-                let v = map((SIZE * y) as f64, 0.0, HEIGHT as f64, 0.0, 100.0);
+        let w = WIDTH as Scalar;
+        let h = HEIGHT as Scalar;
+        let size = SIZE as Scalar;
+        for x in 0..WIDTH / SIZE {
+            for y in 0..HEIGHT / SIZE {
+                let x = (SIZE * x) as Scalar;
+                let y = (SIZE * y) as Scalar;
+                let s = map(x, 0.0, w, 0.0, 100.0);
+                let v = map(y, 0.0, h, 0.0, 100.0);
                 state.fill(hsb!(self.h, s, v));
-                state.rect(rect!(
-                    (SIZE * x) as i32,
-                    (SIZE * y) as i32,
-                    SIZE as i32,
-                    SIZE as i32
-                ))?;
+                state.rect(rect!(x, y, size, size))?;
             }
         }
-        state.fill(WHITE);
-        state.text(
-            [20, 100],
-            &format!("Press arrow keys to change Hue: {}", self.h),
-        )?;
-        state.text([20, 132], "Press Escape to return to demo mode.")?;
         Ok(())
     }
 
@@ -49,10 +44,17 @@ impl Colors {
 
 impl AppState for Colors {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.clear();
         if self.auto && s.frame_count() % 4 == 0 {
             self.modify_hue(1.0, true);
         }
         self.draw_gradient(s)?;
+        s.fill(WHITE);
+        s.text(
+            [20, 100],
+            &format!("Press arrow keys to change Hue: {}", self.h),
+        )?;
+        s.text([20, 132], "Press Escape to return to demo mode.")?;
         Ok(())
     }
 

@@ -1,6 +1,6 @@
 //! [`Point`] functions used for drawing.
 
-use crate::prelude::{Draw, PixResult, PixState, Scalar, Vector};
+use crate::prelude::*;
 use num_traits::{AsPrimitive, Float, Num};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -71,7 +71,10 @@ impl<T> Point<T> {
     /// let p = Point::from_vector(v);
     /// assert_eq!(p.get(), [1.0, 2.0, 0.0]);
     /// ```
-    pub fn from_vector(v: impl Into<Vector<T>>) -> Self {
+    pub fn from_vector<V>(v: V) -> Self
+    where
+        V: Into<Vector<T>>,
+    {
         let v = v.into();
         Self::new(v.x, v.y, v.z)
     }
@@ -126,7 +129,10 @@ impl<T> Point<T> {
     /// p1.set(p2);
     /// assert_eq!(p1.get(), [-2, 5, 1]);
     /// ```
-    pub fn set(&mut self, p: impl Into<Point<T>>) {
+    pub fn set<P>(&mut self, p: P)
+    where
+        P: Into<Point<T>>,
+    {
         let p = p.into();
         self.x = p.x;
         self.y = p.y;
@@ -167,36 +173,12 @@ impl<T> Point<T> {
         IterMut::new(self)
     }
 
-    /// Converts [`Point<T>`] to [`Point<i16>`].
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let p: Point<f32> = point!(f32::MAX, 2.0, 3.0);
-    /// let p = p.as_i16();
-    /// assert_eq!(p.get(), [i16::MAX, 2, 3]);
-    /// ```
-    pub fn as_i16(&self) -> Point<i16>
+    /// Convert [`Point<T>`] to [`Point<U>`] using `as` operator.
+    #[inline]
+    pub fn as_<U>(self) -> Point<U>
     where
-        T: AsPrimitive<i16>,
-    {
-        Point::new(self.x.as_(), self.y.as_(), self.z.as_())
-    }
-
-    /// Converts [`Point<T>`] to [`Point<i32>`].
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let p: Point<f32> = point!(f32::MAX, 2.0, 3.0);
-    /// let p = p.as_i32();
-    /// assert_eq!(p.get(), [i32::MAX, 2, 3]);
-    /// ```
-    pub fn as_i32(&self) -> Point<i32>
-    where
-        T: AsPrimitive<i32>,
+        T: AsPrimitive<U>,
+        U: 'static + Copy,
     {
         Point::new(self.x.as_(), self.y.as_(), self.z.as_())
     }
@@ -246,24 +228,6 @@ impl<T: Num> Point<T> {
         self * s
     }
 
-    /// Converts [`Point<T>`] to [`Vector<U>`].
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let p = point!(1, 2, 3);
-    /// let v: Vector<f64> = p.as_vector();
-    /// assert_eq!(v.get(), [1.0, 2.0, 3.0]);
-    /// ```
-    pub fn as_vector<U>(&self) -> Vector<U>
-    where
-        T: AsPrimitive<U>,
-        U: 'static + Copy,
-    {
-        Vector::new(self.x.as_(), self.y.as_(), self.z.as_())
-    }
-
     /// Returns whether two points are approximately equal.
     pub fn approx_eq(&self, other: Point<T>, epsilon: T) -> bool
     where
@@ -278,229 +242,12 @@ impl<T: Num> Point<T> {
 
 impl<T> Draw for Point<T>
 where
-    Point<T>: Copy + Into<Point<Scalar>>,
+    T: Copy,
+    Self: Into<Point<Scalar>>,
 {
     /// Draw point to the current [`PixState`] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.point(*self)
-    }
-}
-
-impl<T> Index<usize> for Point<T> {
-    type Output = T;
-    fn index(&self, idx: usize) -> &Self::Output {
-        match idx {
-            0 => &self.x,
-            1 => &self.y,
-            2 => &self.z,
-            _ => panic!("index out of bounds: the len is 3 but the index is {}", idx),
-        }
-    }
-}
-
-impl<T> IndexMut<usize> for Point<T> {
-    fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
-        match idx {
-            0 => &mut self.x,
-            1 => &mut self.y,
-            2 => &mut self.z,
-            _ => panic!("index out of bounds: the len is 3 but the index is {}", idx),
-        }
-    }
-}
-
-impl<T> Add for Point<T>
-where
-    T: Num,
-{
-    type Output = Self;
-    fn add(self, p: Point<T>) -> Self::Output {
-        Point::new(self.x + p.x, self.y + p.y, self.z + p.z)
-    }
-}
-
-impl<T, U> Add<U> for Point<T>
-where
-    T: Num + Add<U, Output = T>,
-    U: Num + Copy,
-{
-    type Output = Self;
-    fn add(self, val: U) -> Self::Output {
-        Point::new(self.x + val, self.y + val, self.z + val)
-    }
-}
-
-impl<T> AddAssign for Point<T>
-where
-    T: AddAssign,
-{
-    fn add_assign(&mut self, p: Point<T>) {
-        self.x += p.x;
-        self.y += p.y;
-        self.z += p.z;
-    }
-}
-
-impl<T, U> AddAssign<U> for Point<T>
-where
-    T: AddAssign<U>,
-    U: Num + Copy,
-{
-    fn add_assign(&mut self, val: U) {
-        self.x += val;
-        self.y += val;
-        self.z += val;
-    }
-}
-
-impl<T> Sub for Point<T>
-where
-    T: Num,
-{
-    type Output = Self;
-    fn sub(self, p: Point<T>) -> Self::Output {
-        Point::new(self.x - p.x, self.y - p.y, self.z - p.z)
-    }
-}
-
-impl<T, U> Sub<U> for Point<T>
-where
-    T: Num + Sub<U, Output = T>,
-    U: Num + Copy,
-{
-    type Output = Self;
-    fn sub(self, val: U) -> Self::Output {
-        Point::new(self.x - val, self.y - val, self.z - val)
-    }
-}
-
-impl<T> SubAssign for Point<T>
-where
-    T: SubAssign,
-{
-    fn sub_assign(&mut self, p: Point<T>) {
-        self.x -= p.x;
-        self.y -= p.y;
-        self.z -= p.z;
-    }
-}
-
-impl<T, U> SubAssign<U> for Point<T>
-where
-    T: SubAssign<U>,
-    U: Num + Copy,
-{
-    fn sub_assign(&mut self, val: U) {
-        self.x -= val;
-        self.y -= val;
-        self.z -= val;
-    }
-}
-
-impl<T> Neg for Point<T>
-where
-    T: Num + Neg<Output = T>,
-{
-    type Output = Self;
-    fn neg(self) -> Self::Output {
-        Point::new(-self.x, -self.y, -self.z)
-    }
-}
-
-impl<T, U> Mul<U> for Point<T>
-where
-    T: Num + Mul<U, Output = T>,
-    U: Num + Copy,
-{
-    type Output = Self;
-    fn mul(self, s: U) -> Self::Output {
-        Point::new(self.x * s, self.y * s, self.z * s)
-    }
-}
-
-impl<T, U> MulAssign<U> for Point<T>
-where
-    T: MulAssign<U>,
-    U: Num + Copy,
-{
-    fn mul_assign(&mut self, s: U) {
-        self.x *= s;
-        self.y *= s;
-        self.z *= s;
-    }
-}
-
-impl<T, U> Div<U> for Point<T>
-where
-    T: Num + Div<U, Output = T>,
-    U: Num + Copy,
-{
-    type Output = Self;
-    fn div(self, s: U) -> Self::Output {
-        Point::new(self.x / s, self.y / s, self.z / s)
-    }
-}
-
-impl<T, U> DivAssign<U> for Point<T>
-where
-    T: Num + DivAssign<U>,
-    U: Num + Copy,
-{
-    fn div_assign(&mut self, s: U) {
-        self.x /= s;
-        self.y /= s;
-        self.z /= s;
-    }
-}
-
-impl<T, U> Rem<U> for Point<T>
-where
-    T: Num + Rem<U, Output = T>,
-    U: Num + Copy,
-{
-    type Output = Self;
-    fn rem(self, s: U) -> Self::Output {
-        Point::new(self.x % s, self.y % s, self.z % s)
-    }
-}
-
-impl<T, U> RemAssign<U> for Point<T>
-where
-    T: Num + RemAssign<U>,
-    U: Num + Copy,
-{
-    fn rem_assign(&mut self, s: U) {
-        self.x %= s;
-        self.y %= s;
-        self.z %= s;
-    }
-}
-
-impl<T> Sum for Point<T>
-where
-    Self: Add<Output = Self>,
-    T: Num + Add,
-{
-    fn sum<I>(iter: I) -> Self
-    where
-        I: Iterator<Item = Self>,
-    {
-        let p = Point::new(T::zero(), T::zero(), T::zero());
-        iter.fold(p, |a, b| a + b)
-    }
-}
-
-impl<'a, T: 'a> Sum<&'a Point<T>> for Point<T>
-where
-    Self: Add<Output = Self>,
-    T: Num + Add + Copy,
-{
-    fn sum<I>(iter: I) -> Self
-    where
-        I: Iterator<Item = &'a Self>,
-    {
-        let p = Point::new(T::zero(), T::zero(), T::zero());
-        iter.fold(p, |a, b| a + *b)
     }
 }
 
@@ -646,6 +393,267 @@ impl<'a, T> IntoIterator for &'a mut Point<T> {
     }
 }
 
+impl<T> Index<usize> for Point<T> {
+    type Output = T;
+    fn index(&self, idx: usize) -> &Self::Output {
+        match idx {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
+            _ => panic!("index out of bounds: the len is 3 but the index is {}", idx),
+        }
+    }
+}
+
+impl<T> IndexMut<usize> for Point<T> {
+    fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
+        match idx {
+            0 => &mut self.x,
+            1 => &mut self.y,
+            2 => &mut self.z,
+            _ => panic!("index out of bounds: the len is 3 but the index is {}", idx),
+        }
+    }
+}
+
+impl<T> Add for Point<T>
+where
+    T: Num,
+{
+    type Output = Self;
+    fn add(self, p: Point<T>) -> Self::Output {
+        Point::new(self.x + p.x, self.y + p.y, self.z + p.z)
+    }
+}
+
+impl<T> Add<Vector<T>> for Point<T>
+where
+    T: Num,
+{
+    type Output = Vector<T>;
+    fn add(self, v: Vector<T>) -> Self::Output {
+        Vector::new(self.x + v.x, self.y + v.y, self.z + v.z)
+    }
+}
+
+impl<T, U> Add<U> for Point<T>
+where
+    T: Num + Add<U, Output = T>,
+    U: Num + Copy,
+{
+    type Output = Self;
+    fn add(self, val: U) -> Self::Output {
+        Point::new(self.x + val, self.y + val, self.z + val)
+    }
+}
+
+impl<T> AddAssign for Point<T>
+where
+    T: AddAssign,
+{
+    fn add_assign(&mut self, p: Point<T>) {
+        self.x += p.x;
+        self.y += p.y;
+        self.z += p.z;
+    }
+}
+
+impl<T> AddAssign<Vector<T>> for Point<T>
+where
+    T: AddAssign,
+{
+    fn add_assign(&mut self, v: Vector<T>) {
+        self.x += v.x;
+        self.y += v.y;
+        self.z += v.z;
+    }
+}
+
+impl<T, U> AddAssign<U> for Point<T>
+where
+    T: AddAssign<U>,
+    U: Num + Copy,
+{
+    fn add_assign(&mut self, val: U) {
+        self.x += val;
+        self.y += val;
+        self.z += val;
+    }
+}
+
+impl<T> Sub for Point<T>
+where
+    T: Num,
+{
+    type Output = Self;
+    fn sub(self, p: Point<T>) -> Self::Output {
+        Point::new(self.x - p.x, self.y - p.y, self.z - p.z)
+    }
+}
+
+impl<T> Sub<Vector<T>> for Point<T>
+where
+    T: Num,
+{
+    type Output = Vector<T>;
+    fn sub(self, v: Vector<T>) -> Self::Output {
+        Vector::new(self.x - v.x, self.y - v.y, self.z - v.z)
+    }
+}
+
+impl<T, U> Sub<U> for Point<T>
+where
+    T: Num + Sub<U, Output = T>,
+    U: Num + Copy,
+{
+    type Output = Self;
+    fn sub(self, val: U) -> Self::Output {
+        Point::new(self.x - val, self.y - val, self.z - val)
+    }
+}
+
+impl<T> SubAssign for Point<T>
+where
+    T: SubAssign,
+{
+    fn sub_assign(&mut self, p: Point<T>) {
+        self.x -= p.x;
+        self.y -= p.y;
+        self.z -= p.z;
+    }
+}
+
+impl<T> SubAssign<Vector<T>> for Point<T>
+where
+    T: SubAssign,
+{
+    fn sub_assign(&mut self, v: Vector<T>) {
+        self.x -= v.x;
+        self.y -= v.y;
+        self.z -= v.z;
+    }
+}
+
+impl<T, U> SubAssign<U> for Point<T>
+where
+    T: SubAssign<U>,
+    U: Num + Copy,
+{
+    fn sub_assign(&mut self, val: U) {
+        self.x -= val;
+        self.y -= val;
+        self.z -= val;
+    }
+}
+
+impl<T> Neg for Point<T>
+where
+    T: Num + Neg<Output = T>,
+{
+    type Output = Self;
+    fn neg(self) -> Self::Output {
+        Point::new(-self.x, -self.y, -self.z)
+    }
+}
+
+impl<T, U> Mul<U> for Point<T>
+where
+    T: Num + Mul<U, Output = T>,
+    U: Num + Copy,
+{
+    type Output = Self;
+    fn mul(self, s: U) -> Self::Output {
+        Point::new(self.x * s, self.y * s, self.z * s)
+    }
+}
+
+impl<T, U> MulAssign<U> for Point<T>
+where
+    T: MulAssign<U>,
+    U: Num + Copy,
+{
+    fn mul_assign(&mut self, s: U) {
+        self.x *= s;
+        self.y *= s;
+        self.z *= s;
+    }
+}
+
+impl<T, U> Div<U> for Point<T>
+where
+    T: Num + Div<U, Output = T>,
+    U: Num + Copy,
+{
+    type Output = Self;
+    fn div(self, s: U) -> Self::Output {
+        Point::new(self.x / s, self.y / s, self.z / s)
+    }
+}
+
+impl<T, U> DivAssign<U> for Point<T>
+where
+    T: Num + DivAssign<U>,
+    U: Num + Copy,
+{
+    fn div_assign(&mut self, s: U) {
+        self.x /= s;
+        self.y /= s;
+        self.z /= s;
+    }
+}
+
+impl<T, U> Rem<U> for Point<T>
+where
+    T: Num + Rem<U, Output = T>,
+    U: Num + Copy,
+{
+    type Output = Self;
+    fn rem(self, s: U) -> Self::Output {
+        Point::new(self.x % s, self.y % s, self.z % s)
+    }
+}
+
+impl<T, U> RemAssign<U> for Point<T>
+where
+    T: Num + RemAssign<U>,
+    U: Num + Copy,
+{
+    fn rem_assign(&mut self, s: U) {
+        self.x %= s;
+        self.y %= s;
+        self.z %= s;
+    }
+}
+
+impl<T> Sum for Point<T>
+where
+    Self: Add<Output = Self>,
+    T: Num + Add,
+{
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = Self>,
+    {
+        let p = Point::new(T::zero(), T::zero(), T::zero());
+        iter.fold(p, |a, b| a + b)
+    }
+}
+
+impl<'a, T: 'a> Sum<&'a Point<T>> for Point<T>
+where
+    Self: Add<Output = Self>,
+    T: Num + Add + Copy,
+{
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = &'a Self>,
+    {
+        let p = Point::new(T::zero(), T::zero(), T::zero());
+        iter.fold(p, |a, b| a + *b)
+    }
+}
+
+// Required because of orphan rules
 macro_rules! impl_ops {
     ($($target:ty),*) => {
         $(
@@ -659,107 +667,85 @@ macro_rules! impl_ops {
     };
 }
 
-impl_ops!(i8, u8, i16, u16, i32, u32, i128, u128, isize, usize, f32, f64);
+impl_ops!(i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize, f32, f64);
 
-macro_rules! impl_from {
-    ($from:ty => $to:ty) => {
-        impl From<Point<$from>> for Point<$to> {
-            fn from(p: Point<$from>) -> Self {
-                Point::new(p.x.into(), p.y.into(), p.z.into())
-            }
-        }
-    };
+// Conversions from U to Point<T>
+
+/// Convert [`Point<T>`] to `[x]`.
+impl<T> From<Point<T>> for [T; 1] {
+    fn from(p: Point<T>) -> Self {
+        [p.x]
+    }
+}
+/// Convert [`&Point<T>`] to `[x]`.
+impl<T: Copy> From<&Point<T>> for [T; 1] {
+    fn from(p: &Point<T>) -> Self {
+        [p.x]
+    }
 }
 
-impl_from!(i8 => Scalar);
-impl_from!(u8 => Scalar);
-impl_from!(i16 => Scalar);
-impl_from!(u16 => Scalar);
-impl_from!(i32 => Scalar);
-impl_from!(u32 => Scalar);
-impl_from!(f32 => Scalar);
+/// Convert [`Point<T>`] to `[x, y]`.
+impl<T> From<Point<T>> for [T; 2] {
+    fn from(p: Point<T>) -> Self {
+        [p.x, p.y]
+    }
+}
+/// Convert [`&Point<T>`] to `[x, y]`.
+impl<T: Copy> From<&Point<T>> for [T; 2] {
+    fn from(p: &Point<T>) -> Self {
+        [p.x, p.y]
+    }
+}
 
-/// Converts `[U; 1]` to [`Point<T>`].
+/// Convert [`Point<T>`] to `[x, y, z]`.
+impl<T> From<Point<T>> for [T; 3] {
+    fn from(p: Point<T>) -> Self {
+        [p.x, p.y, p.z]
+    }
+}
+/// Convert [`&Point<T>`] to `[x, y, z]`.
+impl<T: Copy> From<&Point<T>> for [T; 3] {
+    fn from(p: &Point<T>) -> Self {
+        [p.x, p.y, p.z]
+    }
+}
+
+/// Convert `[U; 1]` to [`Point<T>`].
 impl<T: Num, U: Into<T>> From<[U; 1]> for Point<T> {
     fn from([x]: [U; 1]) -> Self {
         Self::new(x.into(), T::zero(), T::zero())
     }
 }
-
-/// Converts `&[U; 1]` to [`Point<T>`].
-impl<T: Num, U: Into<T> + Copy> From<&[U; 1]> for Point<T> {
+/// Convert `&[U; 1]` to [`Point<T>`].
+impl<T: Num, U: Copy + Into<T>> From<&[U; 1]> for Point<T> {
     fn from(&[x]: &[U; 1]) -> Self {
         Self::new(x.into(), T::zero(), T::zero())
     }
 }
 
-/// Converts `[U; 2]` to [`Point<T>`].
+/// Convert `[U; 2]` to [`Point<T>`].
 impl<T: Num, U: Into<T>> From<[U; 2]> for Point<T> {
     fn from([x, y]: [U; 2]) -> Self {
         Self::new(x.into(), y.into(), T::zero())
     }
 }
-
-/// Converts `&[U; 2]` to [`Point<T>`].
-impl<T: Num, U: Into<T> + Copy> From<&[U; 2]> for Point<T> {
+/// Convert `&[U; 2]` to [`Point<T>`].
+impl<T: Num, U: Copy + Into<T>> From<&[U; 2]> for Point<T> {
     fn from(&[x, y]: &[U; 2]) -> Self {
         Self::new(x.into(), y.into(), T::zero())
     }
 }
 
-/// Converts `[U; 3]` to [`Point<T>`].
-impl<T: Num, U: Into<T>> From<[U; 3]> for Point<T> {
+/// Convert `[U; 3]` to [`Point<T>`].
+impl<T, U: Into<T>> From<[U; 3]> for Point<T> {
     fn from([x, y, z]: [U; 3]) -> Self {
         Self::new(x.into(), y.into(), z.into())
     }
 }
-
-/// Converts `&[U; 3]` to [`Point<T>`].
-impl<T: Num, U: Into<T> + Copy> From<&[U; 3]> for Point<T> {
+/// Convert `&[U; 3]` to [`Point<T>`].
+impl<T, U: Copy + Into<T>> From<&[U; 3]> for Point<T> {
     fn from(&[x, y, z]: &[U; 3]) -> Self {
         Self::new(x.into(), y.into(), z.into())
-    }
-}
-
-/// Converts [`Point<U>`] to `[x]`.
-impl<T: Num, U: Into<T>> From<Point<U>> for [T; 1] {
-    fn from(p: Point<U>) -> Self {
-        [p.x.into()]
-    }
-}
-
-/// Converts [`&Point<U>`] to `[x]`.
-impl<T: Num, U: Copy + Into<T>> From<&Point<U>> for [T; 1] {
-    fn from(p: &Point<U>) -> Self {
-        [p.x.into()]
-    }
-}
-
-/// Converts [`Point<U>`] to `[x, y]`.
-impl<T: Num, U: Into<T>> From<Point<U>> for [T; 2] {
-    fn from(p: Point<U>) -> Self {
-        [p.x.into(), p.y.into()]
-    }
-}
-
-/// Converts [`&Point<U>`] to `[x, y]`.
-impl<T: Num, U: Copy + Into<T>> From<&Point<U>> for [T; 2] {
-    fn from(p: &Point<U>) -> Self {
-        [p.x.into(), p.y.into()]
-    }
-}
-
-/// Converts [`Point<U>`] to `[x, y, z]`.
-impl<T: Num, U: Into<T>> From<Point<U>> for [T; 3] {
-    fn from(p: Point<U>) -> Self {
-        [p.x.into(), p.y.into(), p.z.into()]
-    }
-}
-
-/// Converts [`&Point<U>`] to `[x, y, z]`.
-impl<T: Num, U: Copy + Into<T>> From<&Point<U>> for [T; 3] {
-    fn from(p: &Point<U>) -> Self {
-        [p.x.into(), p.y.into(), p.z.into()]
     }
 }
 

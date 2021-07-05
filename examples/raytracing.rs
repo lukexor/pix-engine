@@ -21,7 +21,7 @@ struct App {
 
 fn intersect_ray_sphere(origin: Vector, direction: Vector, obj: &SphereObj) -> (Scalar, Scalar) {
     let r = obj.sphere.radius;
-    let center_origin = origin - obj.sphere.center.as_vector();
+    let center_origin = origin - obj.sphere.center.into();
 
     let a = direction.mag_sq();
     let b = 2.0 * center_origin.dot(direction);
@@ -114,7 +114,7 @@ impl App {
                 LightSource::Ambient => intensity += light.intensity,
                 _ => {
                     let (light_dir, t_max) = match light.source {
-                        LightSource::Point(p) => (p.as_vector() - position, 1.0),
+                        LightSource::Point(p) => (p - position, 1.0),
                         LightSource::Direction(d) => (d, Scalar::INFINITY),
                         _ => unreachable!("unreachable arm"),
                     };
@@ -162,7 +162,7 @@ impl App {
         if let Some(obj) = closest_sphere {
             // Local color
             let intersection = origin + closest_t * direction;
-            let normal = Vector::normalized(intersection - obj.sphere.center.as_vector());
+            let normal = Vector::normalized(intersection - obj.sphere.center.into());
             let local_color =
                 obj.color * self.compute_lighting(intersection, normal, -direction, obj.specular);
 
@@ -219,7 +219,7 @@ impl AppState for App {
         let half_h = s.height() as i32 / 2;
         for x in -half_w..=half_w {
             for y in -half_h..=half_h {
-                let direction = self.canvas_to_viewport(x, y, s).as_vector();
+                let direction = self.canvas_to_viewport(x, y, s).into();
                 let color = self.trace_ray(origin, direction, 1.0, Scalar::INFINITY, 3);
                 s.stroke(color);
                 s.point(self.canvas_to_screen(x, y, s))?;

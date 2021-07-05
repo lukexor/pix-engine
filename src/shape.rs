@@ -1,6 +1,6 @@
 //! Shape functions for drawing.
 
-use num_traits::{AsPrimitive, Num};
+use num_traits::{AsPrimitive, Float, Num};
 
 #[macro_use]
 pub mod ellipse;
@@ -32,15 +32,36 @@ where
     type Item;
 
     /// Returns whether this shape contains a given [`Point<T>`].
-    fn contains_point(&self, p: impl Into<Point<T>>) -> bool;
+    fn contains_point<P>(&self, _p: P) -> bool
+    where
+        P: Into<Point<T>>,
+    {
+        unimplemented!()
+    }
 
     /// Returns whether this shape completely contains another shape.
-    fn contains(&self, other: impl Into<Self::Item>) -> bool;
+    fn contains<O>(&self, _other: O) -> bool
+    where
+        O: Into<Self::Item>,
+    {
+        unimplemented!()
+    }
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
-    fn intersects_line(&self, line: impl Into<Line<f64>>) -> Option<(Point<f64>, f64)>;
+    fn intersects_line<L>(&self, _line: L) -> Option<(Point<T>, T)>
+    where
+        T: Float,
+        L: Into<Line<T>>,
+    {
+        unimplemented!()
+    }
 
     /// Returns whether this shape intersects with another shape.
-    fn intersects(&self, other: impl Into<Self::Item>) -> bool;
+    fn intersects<O>(&self, _other: O) -> bool
+    where
+        O: Into<Self::Item>,
+    {
+        unimplemented!()
+    }
 }

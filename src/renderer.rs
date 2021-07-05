@@ -1,9 +1,12 @@
 //! Graphics renderer functions.
 
-use crate::{prelude::*, state::Error as StateError, window, ASSET_DIR};
-use num_traits::AsPrimitive;
-use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
+use crate::{prelude::*, state::Error as StateError, window};
+use std::{borrow::Cow, error, ffi::NulError, fmt, result};
 
+#[cfg(not(target_arch = "wasm32"))]
+use crate::ASSET_DIR;
+#[cfg(not(target_arch = "wasm32"))]
+use std::{io, path::PathBuf};
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) mod sdl;
 #[cfg(not(target_arch = "wasm32"))]
@@ -48,7 +51,7 @@ impl Default for RendererSettings {
             #[cfg(not(target_arch = "wasm32"))]
             font: PathBuf::from(ASSET_DIR).join("emulogic.ttf"),
             #[cfg(target_arch = "wasm32")]
-            font: "Courier New",
+            font: "Courier New".to_string(),
             font_size: 16,
             #[cfg(not(target_arch = "wasm32"))]
             icon: None,
@@ -78,19 +81,14 @@ pub(crate) trait Rendering: Sized {
     /// Height of the current canvas.
     fn height(&self) -> u32;
 
-    /// Clears the current canvas to the given clear color.
+    /// Clears the current canvas to the given clear color
     fn clear(&mut self);
 
     /// Sets the color used by the renderer to draw the current canvas.
-    fn set_draw_color<C>(&mut self, color: C)
-    where
-        C: Into<Color>;
+    fn set_draw_color(&mut self, color: Color);
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    fn clip<T, R>(&mut self, rect: R)
-    where
-        T: AsPrimitive<Scalar>,
-        R: Into<Option<Rect<T>>>;
+    fn clip(&mut self, rect: Option<Rect<i32>>);
 
     /// Sets the blend mode used by the renderer to draw textures.
     fn blend_mode(&mut self, mode: BlendMode);
@@ -99,33 +97,35 @@ pub(crate) trait Rendering: Sized {
     fn present(&mut self);
 
     /// Scale the current canvas.
-    fn scale<T: AsPrimitive<f32>>(&mut self, x: T, y: T) -> Result<()>;
+    fn scale(&mut self, x: f32, y: f32) -> Result<()>;
 
     /// Create a texture to draw to.
-    fn create_texture<T, F>(&mut self, width: T, height: T, format: F) -> Result<TextureId>
-    where
-        T: Into<Scalar>,
-        F: Into<Option<PixelFormat>>;
+    fn create_texture(
+        &mut self,
+        width: u32,
+        height: u32,
+        format: Option<PixelFormat>,
+    ) -> Result<TextureId>;
 
     /// Delete a texture.
     fn delete_texture(&mut self, texture_id: TextureId) -> Result<()>;
 
     /// Update texture with pixel data.
-    fn update_texture<R, P>(
+    fn update_texture(
         &mut self,
         texture_id: TextureId,
-        rect: R,
-        pixels: P,
+        rect: Option<Rect<i32>>,
+        pixels: &[u8],
         pitch: usize,
-    ) -> Result<()>
-    where
-        R: Into<Option<Rect<Scalar>>>,
-        P: AsRef<[u8]>;
+    ) -> Result<()>;
 
     /// Draw texture canvas.
-    fn texture<R>(&mut self, texture_id: TextureId, src: R, dst: R) -> Result<()>
-    where
-        R: Into<Option<Rect<Scalar>>>;
+    fn texture(
+        &mut self,
+        texture_id: TextureId,
+        src: Option<Rect<i32>>,
+        dst: Option<Rect<i32>>,
+    ) -> Result<()>;
 
     /// Set the font size for drawing to the current canvas.
     fn font_size(&mut self, size: u32) -> Result<()>;
@@ -134,62 +134,56 @@ pub(crate) trait Rendering: Sized {
     fn font_style(&mut self, style: FontStyle);
 
     /// Set the font family for drawing to the current canvas.
-    fn font_family<S>(&mut self, family: S) -> Result<()>
-    where
-        S: Into<String>;
+    fn font_family(&mut self, family: &str) -> Result<()>;
 
     /// Draw text to the current canvas.
-    fn text<P, T, C>(&mut self, position: P, text: T, fill: C, stroke: C) -> Result<()>
-    where
-        P: Into<Point<Scalar>>,
-        T: AsRef<str>,
-        C: Into<Option<Color>>;
+    fn text(
+        &mut self,
+        position: Point<i32>,
+        text: &str,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()>;
 
     /// Draw a pixel to the current canvas.
-    fn point<P, C>(&mut self, p: P, color: C) -> Result<()>
-    where
-        P: Into<Point<Scalar>>,
-        C: Into<Option<Color>>;
+    fn point(&mut self, p: Point<i16>, color: Color) -> Result<()>;
 
     /// Draw a line to the current canvas.
-    fn line<L, C>(&mut self, line: L, color: C) -> Result<()>
-    where
-        L: Into<Line<Scalar>>,
-        C: Into<Option<Color>>;
+    fn line(&mut self, line: Line<i16>, color: Color) -> Result<()>;
 
     /// Draw a triangle to the current canvas.
-    fn triangle<T, C>(&mut self, tri: T, fill: C, stroke: C) -> Result<()>
-    where
-        T: Into<Triangle<Scalar>>,
-        C: Into<Option<Color>>;
+    fn triangle(
+        &mut self,
+        tri: Triangle<i16>,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()>;
 
     /// Draw a rectangle to the current canvas.
-    fn rect<R, C>(&mut self, rect: R, fill: C, stroke: C) -> Result<()>
-    where
-        R: Into<Rect<Scalar>>,
-        C: Into<Option<Color>>;
+    fn rect(&mut self, rect: Rect<i16>, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
 
     /// Draw a polygon to the current canvas.
-    fn polygon<C, V>(&mut self, vx: V, vy: V, fill: C, stroke: C) -> Result<()>
-    where
-        C: Into<Option<Color>>,
-        V: AsRef<[Scalar]>;
+    fn polygon(
+        &mut self,
+        vx: &[i16],
+        vy: &[i16],
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()>;
 
     /// Draw a ellipse to the current canvas.
-    fn ellipse<E, C>(&mut self, ellipse: E, fill: C, stroke: C) -> Result<()>
-    where
-        E: Into<Ellipse<Scalar>>,
-        C: Into<Option<Color>>;
+    fn ellipse(
+        &mut self,
+        ellipse: Ellipse<i16>,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()>;
 
     /// Draw an image to the current canvas.
-    fn image<P>(&mut self, position: P, img: &Image) -> Result<()>
-    where
-        P: Into<Point<Scalar>>;
+    fn image(&mut self, position: Point<i32>, img: &Image) -> Result<()>;
 
     /// Draw a resized image to the current canvas.
-    fn image_resized<R>(&mut self, dst_rect: R, img: &Image) -> Result<()>
-    where
-        R: Into<Rect<Scalar>>;
+    fn image_resized(&mut self, dst_rect: Rect<i32>, img: &Image) -> Result<()>;
 }
 
 /// The error type for `Renderer` operations.
@@ -199,6 +193,7 @@ pub enum Error {
     /// Renderer initialization errors.
     InitError,
     /// Renderer I/O errors.
+    #[cfg(not(target_arch = "wasm32"))]
     IoError(io::Error),
     /// Window errors.
     WindowError(window::Error),
@@ -228,9 +223,9 @@ impl fmt::Display for Error {
 
 impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        use Error::*;
         match self {
-            IoError(err) => err.source(),
+            #[cfg(not(target_arch = "wasm32"))]
+            Error::IoError(err) => err.source(),
             _ => None,
         }
     }

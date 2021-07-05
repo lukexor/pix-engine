@@ -186,7 +186,7 @@ impl RayScene {
             // Cast three rays - one at and one off to each side
             for offset in -1..=1 {
                 let angle = offset as Scalar / 10_000.0;
-                let mut r = p.as_vector() - o;
+                let mut r = Vector::from(p) - o;
                 r.rotate(angle);
                 if let Some(intersect) = self.cast_ray(o, r) {
                     self.polygons.push((r.heading(), intersect));
@@ -224,27 +224,26 @@ impl RayScene {
             return Ok(true);
         }
 
-        self.calc_visibility_polygons(mouse.as_vector());
+        self.calc_visibility_polygons(mouse.into());
 
         s.fill(WHITE);
         s.stroke(WHITE);
-        let mouse = mouse.into();
         if !self.polygons.is_empty() {
             for i in 0..self.polygons.len() - 1 {
                 let p1 = self.polygons[i].1;
                 let p2 = self.polygons[i + 1].1;
-                s.triangle([mouse, p1, p2])?;
+                s.triangle([mouse.as_(), p1, p2])?;
             }
             // Draw last triangle, connecting back to first point.
             // SAFETY: self.polygons has at least one element due to is_empty() check above
             let p1 = self.polygons.last().unwrap().1;
             let p2 = self.polygons[0].1;
-            s.triangle([mouse, p1, p2])?;
+            s.triangle([mouse.as_(), p1, p2])?;
         }
 
         s.fill(RED);
         s.no_stroke();
-        s.circle([mouse.x, mouse.y, 2.0])?;
+        s.circle([mouse.x, mouse.y, 2])?;
         Ok(true)
     }
 }
@@ -302,8 +301,8 @@ impl AppState for RayScene {
         s.fill(BLUE);
         s.stroke(BLUE);
         for cell in self.cells.iter().filter(|c| c.exists) {
-            let p = cell.pos.as_point();
-            s.square([p.x, p.y, BLOCK_SIZE as i32 + 1])?;
+            let p = cell.pos;
+            s.square([p.x, p.y, BLOCK_SIZE as Scalar + 1.0])?;
         }
 
         s.image([mouse.x - 255, mouse.y - 255], &self.light)?;

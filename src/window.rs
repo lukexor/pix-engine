@@ -1,6 +1,7 @@
 //! `Window` operations.
 
 use crate::prelude::{Event, PixError};
+use num_traits::AsPrimitive;
 use std::{borrow::Cow, error, ffi::NulError, fmt, result};
 
 /// The result type for `Renderer` operations.
@@ -39,7 +40,9 @@ pub(crate) trait Window {
     fn title(&self) -> &str;
 
     /// Set the current window title.
-    fn set_title(&mut self, title: &str) -> Result<()>;
+    fn set_title<S>(&mut self, title: S) -> Result<()>
+    where
+        S: AsRef<str>;
 
     /// Width of the window.
     fn window_width(&self) -> Result<u32>;
@@ -48,7 +51,9 @@ pub(crate) trait Window {
     fn window_height(&self) -> Result<u32>;
 
     /// Resize the window.
-    fn resize(&mut self, width: u32, height: u32) -> Result<()>;
+    fn resize<T>(&mut self, width: T, height: T) -> Result<()>
+    where
+        T: AsPrimitive<u32>;
 
     /// Returns whether the application is fullscreen or not.
     fn fullscreen(&self) -> bool;

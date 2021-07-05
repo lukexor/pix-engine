@@ -3,7 +3,7 @@
 //! [`PixEngine`]: crate::prelude::PixEngine
 
 use crate::{
-    prelude::{Color, PixResult, PixState, Rect, Scalar},
+    prelude::{Color, PixResult, PixState, Rect},
     renderer::Rendering,
     window::Window,
 };
@@ -148,14 +148,14 @@ impl PixState {
     /// Sets the clip rect used by the renderer to draw to the current canvas.
     pub fn clip<R>(&mut self, rect: R)
     where
-        R: Into<Rect<Scalar>>,
+        R: Into<Rect<i32>>,
     {
-        self.renderer.clip(rect.into());
+        self.renderer.clip(Some(rect.into()));
     }
 
     /// Clears the clip rect used by the renderer to draw to the current canvas.
     pub fn no_clip(&mut self) {
-        self.renderer.clip::<Scalar, _>(None);
+        self.renderer.clip(None);
     }
 
     /// Returns whether the application is fullscreen or not.
@@ -198,7 +198,7 @@ impl PixState {
 
     /// Set the rendering scale of the current canvas.
     pub fn scale<T: AsPrimitive<f32>>(&mut self, x: T, y: T) -> PixResult<()> {
-        Ok(self.renderer.scale(x, y)?)
+        Ok(self.renderer.scale(x.as_(), y.as_())?)
     }
 
     /// Set the font size for drawing to the current canvas.
@@ -212,10 +212,7 @@ impl PixState {
     }
 
     /// Set the font family for drawing to the current canvas.
-    pub fn font_family<S>(&mut self, family: S) -> PixResult<()>
-    where
-        S: Into<String>,
-    {
+    pub fn font_family<S>(&mut self, family: &str) -> PixResult<()> {
         Ok(self.renderer.font_family(family)?)
     }
 

@@ -1,6 +1,6 @@
 //! [`Circle`], [`Ellipse`], and [`Sphere`] types used for drawing.
 
-use crate::prelude::{Draw, Line, PixResult, PixState, Point, Scalar, Shape, ShapeNum, Vector};
+use crate::prelude::*;
 use num_traits::AsPrimitive;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -53,22 +53,12 @@ impl<T> Ellipse<T> {
         }
     }
 
-    /// Converts [`Ellipse<T>`] to [`Ellipse<i16>`].
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let e: Ellipse<f32> = Ellipse::new(f32::MAX, 2.0, 3.0, f32::MIN);
-    /// let e = e.as_i16();
-    /// assert_eq!(e.x, i16::MAX);
-    /// assert_eq!(e.y, 2);
-    /// assert_eq!(e.width, 3);
-    /// assert_eq!(e.height, i16::MIN);
-    /// ```
-    pub fn as_i16(&self) -> Ellipse<i16>
+    /// Convert [`Ellipse<T>`] to [`Ellipse<U>`] using `as` operator.
+    #[inline]
+    pub fn as_<U>(self) -> Ellipse<U>
     where
-        T: AsPrimitive<i16>,
+        T: AsPrimitive<U>,
+        U: 'static + Copy,
     {
         Ellipse::new(
             self.x.as_(),
@@ -83,7 +73,10 @@ impl<T: ShapeNum> Shape<T> for Ellipse<T> {
     type Item = Ellipse<T>;
 
     /// Returns whether this ellipse contains a given [`Point<T>`].
-    fn contains_point(&self, p: impl Into<Point<T>>) -> bool {
+    fn contains_point<P>(&self, p: P) -> bool
+    where
+        P: Into<Point<T>>,
+    {
         let p = p.into();
         let px = p.x - self.x;
         let py = p.y - self.y;
@@ -92,19 +85,11 @@ impl<T: ShapeNum> Shape<T> for Ellipse<T> {
         (px * px) / (rx * rx) + (py * py) / (ry * ry) <= T::one()
     }
 
-    /// Returns whether this ellipse completely contains another ellipse.
-    fn contains(&self, _other: impl Into<Self::Item>) -> bool {
-        todo!()
-    }
-
-    /// Returns the closest intersection point with a given line and distance along the line or
-    /// `None` if there is no intersection.
-    fn intersects_line(&self, _line: impl Into<Line<f64>>) -> Option<(Point<f64>, f64)> {
-        todo!()
-    }
-
     /// Returns whether this ellipse intersects with another ellipse.
-    fn intersects(&self, other: impl Into<Self::Item>) -> bool {
+    fn intersects<O>(&self, other: O) -> bool
+    where
+        O: Into<Self::Item>,
+    {
         let other = other.into();
         let px = self.x - other.x;
         let py = self.y - other.y;
@@ -116,11 +101,26 @@ impl<T: ShapeNum> Shape<T> for Ellipse<T> {
 
 impl<T> Draw for Ellipse<T>
 where
-    Ellipse<T>: Copy + Into<Ellipse<f64>>,
+    T: Copy,
+    Self: Into<Ellipse<Scalar>>,
 {
     /// Draw ellipse to the current [`PixState`] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.ellipse(*self)
+    }
+}
+
+/// Convert [`Ellipse<T>`] to `[x, y, width, height]`.
+impl<T> From<Ellipse<T>> for [T; 4] {
+    fn from(e: Ellipse<T>) -> Self {
+        [e.x, e.y, e.width, e.height]
+    }
+}
+
+/// Convert [`&Ellipse<T>`] to `[x, y, width, height]`.
+impl<T: Copy> From<&Ellipse<T>> for [T; 4] {
+    fn from(e: &Ellipse<T>) -> Self {
+        [e.x, e.y, e.width, e.height]
     }
 }
 
@@ -138,25 +138,17 @@ impl<T, U: Copy + Into<T>> From<&[U; 4]> for Ellipse<T> {
     }
 }
 
-/// Convert [`Ellipse<T>`] to `[x, y, width, height]`.
-impl<T: Copy, U: Into<T>> From<Ellipse<U>> for [T; 4] {
-    fn from(e: Ellipse<U>) -> Self {
-        [e.x.into(), e.y.into(), e.width.into(), e.height.into()]
+/// Convert [`Circle<T>`] to [`Ellipse<T>`].
+impl<T: Copy> From<Circle<T>> for Ellipse<T> {
+    fn from(c: Circle<T>) -> Self {
+        Self::new(c.x, c.y, c.radius, c.radius)
     }
 }
 
-/// Convert [`&Ellipse<T>`] to `[x, y, width, height]`.
-impl<T, U: Copy + Into<T>> From<&Ellipse<U>> for [T; 4] {
-    fn from(e: &Ellipse<U>) -> Self {
-        [e.x.into(), e.y.into(), e.width.into(), e.height.into()]
-    }
-}
-
-/// Convert [`Circle<U>`] to [`Ellipse<T>`].
-impl<T: Copy, U: Into<T>> From<Circle<U>> for Ellipse<T> {
-    fn from(c: Circle<U>) -> Self {
-        let radius = c.radius.into();
-        Self::new(c.x.into(), c.y.into(), radius, radius)
+/// Convert [`&Circle<T>`] to [`Ellipse<T>`].
+impl<T: Copy> From<&Circle<T>> for Ellipse<T> {
+    fn from(c: &Circle<T>) -> Self {
+        Self::new(c.x, c.y, c.radius, c.radius)
     }
 }
 
@@ -207,21 +199,12 @@ impl<T> Circle<T> {
         Self::new(v.x, v.y, radius)
     }
 
-    /// Converts [`Circle<T>`] to [`Circle<i16>`].
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c: Circle<f32> = Circle::new(f32::MIN, 2.0, f32::MAX);
-    /// let c = c.as_i16();
-    /// assert_eq!(c.x, i16::MIN);
-    /// assert_eq!(c.y, 2);
-    /// assert_eq!(c.radius, i16::MAX);
-    /// ```
-    pub fn as_i16(&self) -> Circle<i16>
+    /// Convert [`Circle<T>`] to [`Circle<U>`] using `as` operator.
+    #[inline]
+    pub fn as_<U>(self) -> Circle<U>
     where
-        T: AsPrimitive<i16>,
+        T: AsPrimitive<U>,
+        U: 'static + Copy,
     {
         Circle::new(self.x.as_(), self.y.as_(), self.radius.as_())
     }
@@ -231,7 +214,10 @@ impl<T: ShapeNum> Shape<T> for Circle<T> {
     type Item = Circle<T>;
 
     /// Returns whether this circle contains a given [`Point<T>`].
-    fn contains_point(&self, p: impl Into<Point<T>>) -> bool {
+    fn contains_point<P>(&self, p: P) -> bool
+    where
+        P: Into<Point<T>>,
+    {
         let p = p.into();
         let px = p.x - self.x;
         let py = p.y - self.y;
@@ -239,19 +225,11 @@ impl<T: ShapeNum> Shape<T> for Circle<T> {
         (px * px + py * py) < r
     }
 
-    /// Returns whether this circle completely contains another circle.
-    fn contains(&self, _other: impl Into<Self::Item>) -> bool {
-        todo!()
-    }
-
-    /// Returns the closest intersection point with a given line and distance along the line or
-    /// `None` if there is no intersection.
-    fn intersects_line(&self, _line: impl Into<Line<Scalar>>) -> Option<(Point<Scalar>, Scalar)> {
-        todo!()
-    }
-
     /// Returns whether this circle intersects with another circle.
-    fn intersects(&self, other: impl Into<Self::Item>) -> bool {
+    fn intersects<O>(&self, other: O) -> bool
+    where
+        O: Into<Self::Item>,
+    {
         let other = other.into();
         let px = self.x - other.x;
         let py = self.y - other.y;
@@ -262,11 +240,26 @@ impl<T: ShapeNum> Shape<T> for Circle<T> {
 
 impl<T> Draw for Circle<T>
 where
-    Circle<T>: Copy + Into<Circle<Scalar>>,
+    T: Copy,
+    Self: Into<Circle<Scalar>>,
 {
     /// Draw circle to the current [`PixState`] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.circle(*self)
+    }
+}
+
+/// Convert [`Circle<T>`] to `[x, y, radius]`.
+impl<T> From<Circle<T>> for [T; 3] {
+    fn from(c: Circle<T>) -> Self {
+        [c.x, c.y, c.radius]
+    }
+}
+
+/// Convert [`&Circle<T>`] to `[x, y, radius]`.
+impl<T: Copy> From<&Circle<T>> for [T; 3] {
+    fn from(c: &Circle<T>) -> Self {
+        [c.x, c.y, c.radius]
     }
 }
 
@@ -281,20 +274,6 @@ impl<T, U: Into<T>> From<[U; 3]> for Circle<T> {
 impl<T, U: Copy + Into<T>> From<&[U; 3]> for Circle<T> {
     fn from(&[x, y, radius]: &[U; 3]) -> Self {
         Self::new(x.into(), y.into(), radius.into())
-    }
-}
-
-/// Convert [`Circle<T>`] to `[x, y, radius]`.
-impl<T, U: Into<T>> From<Circle<U>> for [T; 3] {
-    fn from(c: Circle<U>) -> Self {
-        [c.x.into(), c.y.into(), c.radius.into()]
-    }
-}
-
-/// Convert [`&Circle<T>`] to `[x, y, radius]`.
-impl<T, U: Copy + Into<T>> From<&Circle<U>> for [T; 3] {
-    fn from(c: &Circle<U>) -> Self {
-        [c.x.into(), c.y.into(), c.radius.into()]
     }
 }
 
@@ -343,28 +322,23 @@ impl<T: ShapeNum> Shape<T> for Sphere<T> {
     type Item = Sphere<T>;
 
     /// Returns whether this sphere contains a given [`Point<T>`].
-    fn contains_point(&self, _p: impl Into<Point<T>>) -> bool {
-        todo!()
-    }
-
-    /// Returns whether this sphere contains a given [`Point<T>`].
-    fn contains(&self, s: impl Into<Self::Item>) -> bool {
-        let s = s.into();
-        let px = s.center.x - self.center.x;
-        let py = s.center.y - self.center.y;
-        let pz = s.center.z - self.center.z;
+    fn contains<O>(&self, other: O) -> bool
+    where
+        O: Into<Self::Item>,
+    {
+        let other = other.into();
+        let px = other.center.x - self.center.x;
+        let py = other.center.y - self.center.y;
+        let pz = other.center.z - self.center.z;
         let r = self.radius;
         (px * px + py * py + pz * pz) < r * r
     }
 
-    /// Returns the closest intersection point with a given line and distance along the line or
-    /// `None` if there is no intersection.
-    fn intersects_line(&self, _line: impl Into<Line<Scalar>>) -> Option<(Point<Scalar>, Scalar)> {
-        todo!()
-    }
-
     /// Returns whether this sphere intersects another sphere.
-    fn intersects(&self, other: impl Into<Self::Item>) -> bool {
+    fn intersects<O>(&self, other: O) -> bool
+    where
+        O: Into<Self::Item>,
+    {
         let other = other.into();
         let px = other.center.x - self.center.x;
         let py = other.center.y - self.center.y;

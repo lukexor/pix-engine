@@ -26,7 +26,6 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 bitflags = "^1.2"
-include_dir = "^0.6"
 lazy_static = "^1.4"
 num-traits = "^0.2"
 png = "^0.16"
@@ -36,6 +35,9 @@ rand = "^0.8"
 features = ["derive"]
 optional = true
 version = "^1.0"
+
+[target."cfg(not(target_arch = \"wasm32\"))".dependencies]
+include_dir = "^0.6"
 
 [target."cfg(not(target_arch = \"wasm32\"))".dependencies.sdl2]
 default_features = false

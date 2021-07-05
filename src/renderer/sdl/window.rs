@@ -3,6 +3,7 @@ use crate::{
     event::Event,
     window::{Result, Window, WindowId},
 };
+use num_traits::AsPrimitive;
 use sdl2::video::FullscreenType;
 
 impl Window for Renderer {
@@ -27,8 +28,11 @@ impl Window for Renderer {
     }
 
     /// Set the current window title.
-    fn set_title(&mut self, title: &str) -> Result<()> {
-        Ok(self.canvas.window_mut().set_title(title)?)
+    fn set_title<S>(&mut self, title: S) -> Result<()>
+    where
+        S: AsRef<str>,
+    {
+        Ok(self.canvas.window_mut().set_title(title.as_ref())?)
     }
 
     /// Width of the window.
@@ -44,8 +48,14 @@ impl Window for Renderer {
     }
 
     /// Resize the window.
-    fn resize(&mut self, width: u32, height: u32) -> Result<()> {
-        Ok(self.canvas.window_mut().set_size(width, height)?)
+    fn resize<T>(&mut self, width: T, height: T) -> Result<()>
+    where
+        T: AsPrimitive<u32>,
+    {
+        Ok(self
+            .canvas
+            .window_mut()
+            .set_size(width.as_(), height.as_())?)
     }
 
     /// Returns whether the application is fullscreen or not.

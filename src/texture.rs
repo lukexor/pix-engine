@@ -6,13 +6,22 @@ use crate::{prelude::*, renderer::Rendering};
 pub type TextureId = usize;
 
 impl PixState {
+    /// Draw the `Texture` to the current canvas.
+    pub fn texture(
+        &mut self,
+        texture_id: usize,
+        src: Option<Rect<i32>>,
+        dst: Option<Rect<i32>>,
+    ) -> PixResult<()> {
+        Ok(self.renderer.texture(texture_id, src, dst)?)
+    }
+
     /// Constructs a `Texture` to render to.
-    pub fn create_texture<T, F>(&mut self, width: T, height: T, format: F) -> PixResult<TextureId>
+    pub fn create_texture<F>(&mut self, width: u32, height: u32, format: F) -> PixResult<TextureId>
     where
-        T: Into<f64>,
         F: Into<Option<PixelFormat>>,
     {
-        Ok(self.renderer.create_texture(width, height, format)?)
+        Ok(self.renderer.create_texture(width, height, format.into())?)
     }
 
     /// Deletes a texture by [`TextureId`].
@@ -29,11 +38,11 @@ impl PixState {
         pitch: usize,
     ) -> PixResult<()>
     where
-        R: Into<Option<Rect<f64>>>,
+        R: Into<Option<Rect<i32>>>,
         P: AsRef<[u8]>,
     {
         Ok(self
             .renderer
-            .update_texture(texture_id, rect, pixels, pitch)?)
+            .update_texture(texture_id, rect.into(), pixels.as_ref(), pitch)?)
     }
 }

@@ -1,18 +1,16 @@
 //! Core [`PixEngine`] functions.
 
 use crate::{
-    common::Result,
-    event::{Event, KeyEvent, WindowEvent},
+    prelude::*,
     renderer::{Renderer, RendererSettings, Rendering},
-    state::{AppState, PixState},
-    window::Position,
     window::Window,
-    ASSETS, ASSET_DIR,
 };
 use std::time::Instant;
 
 #[cfg(not(target_arch = "wasm32"))]
-use std::path::PathBuf;
+use crate::{ASSETS, ASSET_DIR};
+#[cfg(not(target_arch = "wasm32"))]
+use std::{fs, io, path::PathBuf};
 
 /// Builds a [`PixEngine`] instance by providing several configration functions.
 #[non_exhaustive]
@@ -60,7 +58,7 @@ impl PixEngineBuilder {
     #[cfg(target_arch = "wasm32")]
     pub fn with_font<S>(&mut self, font: S, size: u16) -> &mut Self
     where
-        P: Into<String>,
+        S: Into<String>,
     {
         self.settings.font = font.into();
         self.settings.font_size = size;
@@ -154,13 +152,18 @@ impl PixEngine {
     }
 
     /// Starts the `PixEngine` application and begins executing the frame loop.
-    pub fn run<A>(&mut self, app: &mut A) -> Result<()>
+    pub fn run<A>(&mut self, app: &mut A) -> PixResult<()>
     where
         A: AppState,
     {
-        let _ = ASSETS.extract(ASSET_DIR);
+        #[cfg(not(target_arch = "wasm32"))]
+        fs::create_dir_all(ASSET_DIR)?;
+        #[cfg(not(target_arch = "wasm32"))]
+        match ASSETS.extract(ASSET_DIR) {
+            Err(e) if e.kind() != io::ErrorKind::AlreadyExists => return Err(e.into()),
+            _ => (),
+        }
 
-        // TODO: Explore creating context/texture_creator/ttf_context here - pass in with settings
         let renderer = Renderer::new(&self.settings)?;
         let mut state = PixState::new(&self.settings.title, renderer);
         state.show_frame_rate(self.settings.show_frame_rate);
@@ -223,7 +226,7 @@ impl PixEngine {
     }
 
     /// Handle user and system events.
-    fn handle_events<A>(&mut self, state: &mut PixState, app: &mut A) -> Result<()>
+    fn handle_events<A>(&mut self, state: &mut PixState, app: &mut A) -> PixResult<()>
     where
         A: AppState,
     {
@@ -286,7 +289,7 @@ impl PixEngine {
                 }
                 Event::MouseMotion { x, y, .. } => {
                     state.pmouse_pos = state.mouse_pos;
-                    state.mouse_pos = [x, y].into();
+                    state.mouse_pos = point!(x, y);
                     if state.mouse_down {
                         app.on_mouse_dragged(state)?;
                     }

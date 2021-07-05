@@ -252,36 +252,12 @@ impl<T> Vector<T> {
         IterMut::new(self)
     }
 
-    /// Converts [`Vector<T>`] to [`Vector<i16>`].
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v: Vector<f32> = vector!(f32::MAX, 2.0, 3.0);
-    /// let v = v.as_i16();
-    /// assert_eq!(v.get(), [i16::MAX, 2, 3]);
-    /// ```
-    pub fn as_i16(&self) -> Vector<i16>
+    /// Convert [`Vector<T>`] to [`Vector<U>`] using `as` operator.
+    #[inline]
+    pub fn as_<U>(self) -> Vector<U>
     where
-        T: AsPrimitive<i16>,
-    {
-        Vector::new(self.x.as_(), self.y.as_(), self.z.as_())
-    }
-
-    /// Converts [`Vector<T>`] to [`Vector<i32>`].
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v: Vector<f32> = vector!(f32::MAX, 2.0, 3.0);
-    /// let v = v.as_i32();
-    /// assert_eq!(v.get(), [i32::MAX, 2, 3]);
-    /// ```
-    pub fn as_i32(&self) -> Vector<i32>
-    where
-        T: AsPrimitive<i32>,
+        T: AsPrimitive<U>,
+        U: 'static + Copy,
     {
         Vector::new(self.x.as_(), self.y.as_(), self.z.as_())
     }
@@ -476,7 +452,7 @@ where
     /// let v = vector!(1.0, 1.0, 0.0);
     /// assert_eq!(v.to_vec(), vec![1.0, 1.0, 0.0]);
     /// ```
-    pub fn to_vec(&self) -> Vec<T> {
+    pub fn to_vec(self) -> Vec<T> {
         vec![self.x, self.y, self.z]
     }
 
@@ -770,23 +746,147 @@ where
             self.y = height + size;
         }
     }
+}
 
-    /// Converts `Vector<T>` to [`Point<U>`].
+impl<T> ExactSizeIterator for Iter<'_, T> {}
+impl<T> ExactSizeIterator for IterMut<'_, T> {}
+
+impl<T> FromIterator<T> for Vector<T>
+where
+    T: Num,
+{
+    fn from_iter<I>(iter: I) -> Self
+    where
+        I: IntoIterator<Item = T>,
+    {
+        let mut xyz = [T::zero(), T::zero(), T::zero()];
+        for (i, v) in iter.into_iter().enumerate() {
+            xyz[i] = v;
+        }
+        let [x, y, z] = xyz;
+        Self::new(x, y, z)
+    }
+}
+
+impl<T> IntoIterator for Vector<T> {
+    type Item = T;
+    type IntoIter = IntoIter<Self::Item, 3>;
+
+    /// Owned `Vector<T>` iterator over `[x, y, z]`.
+    ///
+    /// This struct is created by the [`into_iter`](Vector::into_iter) method on [`Vector`]s.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v = vector!(1.1, 2.0, 3.5);
-    /// let p: Point<i32> = v.as_point();
-    /// assert_eq!(p.get(), [1, 2, 3]);
+    /// let v: Vector<f64> = vector!(1.0, 2.0, -4.0);
+    /// let mut iterator = v.into_iter();
+    ///
+    /// assert_eq!(iterator.next(), Some(1.0));
+    /// assert_eq!(iterator.next(), Some(2.0));
+    /// assert_eq!(iterator.next(), Some(-4.0));
+    /// assert_eq!(iterator.next(), None);
     /// ```
-    pub fn as_point<U>(&self) -> Point<U>
-    where
-        T: AsPrimitive<U>,
-        U: 'static + Copy,
-    {
-        Point::new(self.x.as_(), self.y.as_(), self.z.as_())
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter::new([self.x, self.y, self.z])
+    }
+}
+
+/// Immutable `Vector<T>` iterator over `[x, y, z]`.
+///
+/// This struct is created by the [`iter`](Vector::iter) method on [`Vector`]s.
+///
+/// # Example
+///
+/// ```
+/// # use pix_engine::prelude::*;
+/// let v: Vector<f64> = vector!(1.0, 2.0, -4.0);
+/// let mut iterator = v.iter();
+///
+/// assert_eq!(iterator.next(), Some(&1.0));
+/// assert_eq!(iterator.next(), Some(&2.0));
+/// assert_eq!(iterator.next(), Some(&-4.0));
+/// assert_eq!(iterator.next(), None);
+/// ```
+#[derive(Debug, Clone)]
+pub struct Iter<'a, T = Scalar> {
+    inner: [&'a T; 3],
+    current: usize,
+}
+
+impl<'a, T> Iter<'a, T> {
+    #[inline]
+    fn new(v: &'a Vector<T>) -> Self {
+        Self {
+            inner: [&v.x, &v.y, &v.z],
+            current: 0,
+        }
+    }
+}
+
+impl<'a, T> Iterator for Iter<'a, T> {
+    type Item = &'a T;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current > 2 {
+            return None;
+        }
+        let next = self.inner[self.current];
+        self.current += 1;
+        Some(next)
+    }
+}
+
+impl<'a, T> IntoIterator for &'a Vector<T> {
+    type Item = &'a T;
+    type IntoIter = Iter<'a, T>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+type ThreeChain<T> = Chain<Chain<Once<T>, Once<T>>, Once<T>>;
+
+/// Mutable `Vector<T>` iterator over `[x, y, z]`.
+///
+/// This struct is created by the [`iter_mut`](Vector::iter_mut) method on [`Vector`]s.
+///
+/// # Example
+///
+/// ```
+/// # use pix_engine::prelude::*;
+/// let mut v = vector!(1.0, 2.0, -4.0);
+/// for value in v.iter_mut() {
+///     *value *= 2.0;
+/// }
+/// assert_eq!(v.get(), [2.0, 4.0, -8.0]);
+/// ```
+#[derive(Debug)]
+pub struct IterMut<'a, T = Scalar> {
+    inner: ThreeChain<&'a mut T>,
+}
+
+impl<'a, T> IterMut<'a, T> {
+    #[inline]
+    fn new(v: &'a mut Vector<T>) -> Self {
+        Self {
+            inner: once(&mut v.x).chain(once(&mut v.y)).chain(once(&mut v.z)),
+        }
+    }
+}
+
+impl<'a, T> Iterator for IterMut<'a, T> {
+    type Item = &'a mut T;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a mut Vector<T> {
+    type Item = &'a mut T;
+    type IntoIter = IterMut<'a, T>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
     }
 }
 
@@ -941,148 +1041,7 @@ where
     }
 }
 
-impl<T> ExactSizeIterator for Iter<'_, T> {}
-impl<T> ExactSizeIterator for IterMut<'_, T> {}
-
-impl<T> FromIterator<T> for Vector<T>
-where
-    T: Num,
-{
-    fn from_iter<I>(iter: I) -> Self
-    where
-        I: IntoIterator<Item = T>,
-    {
-        let mut xyz = [T::zero(), T::zero(), T::zero()];
-        for (i, v) in iter.into_iter().enumerate() {
-            xyz[i] = v;
-        }
-        let [x, y, z] = xyz;
-        Self::new(x, y, z)
-    }
-}
-
-impl<T> IntoIterator for Vector<T> {
-    type Item = T;
-    type IntoIter = IntoIter<Self::Item, 3>;
-
-    /// Owned `Vector<T>` iterator over `[x, y, z]`.
-    ///
-    /// This struct is created by the [`into_iter`](Vector::into_iter) method on [`Vector`]s.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v: Vector<f64> = vector!(1.0, 2.0, -4.0);
-    /// let mut iterator = v.into_iter();
-    ///
-    /// assert_eq!(iterator.next(), Some(1.0));
-    /// assert_eq!(iterator.next(), Some(2.0));
-    /// assert_eq!(iterator.next(), Some(-4.0));
-    /// assert_eq!(iterator.next(), None);
-    /// ```
-    fn into_iter(self) -> Self::IntoIter {
-        IntoIter::new([self.x, self.y, self.z])
-    }
-}
-
-/// Immutable `Vector<T>` iterator over `[x, y, z]`.
-///
-/// This struct is created by the [`iter`](Vector::iter) method on [`Vector`]s.
-///
-/// # Example
-///
-/// ```
-/// # use pix_engine::prelude::*;
-/// let v: Vector<f64> = vector!(1.0, 2.0, -4.0);
-/// let mut iterator = v.iter();
-///
-/// assert_eq!(iterator.next(), Some(&1.0));
-/// assert_eq!(iterator.next(), Some(&2.0));
-/// assert_eq!(iterator.next(), Some(&-4.0));
-/// assert_eq!(iterator.next(), None);
-/// ```
-#[derive(Debug, Clone)]
-pub struct Iter<'a, T = Scalar> {
-    inner: [&'a T; 3],
-    current: usize,
-}
-
-impl<'a, T> Iter<'a, T> {
-    #[inline]
-    fn new(v: &'a Vector<T>) -> Self {
-        Self {
-            inner: [&v.x, &v.y, &v.z],
-            current: 0,
-        }
-    }
-}
-
-impl<'a, T> Iterator for Iter<'a, T> {
-    type Item = &'a T;
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.current > 2 {
-            return None;
-        }
-        let next = self.inner[self.current];
-        self.current += 1;
-        Some(next)
-    }
-}
-
-impl<'a, T> IntoIterator for &'a Vector<T> {
-    type Item = &'a T;
-    type IntoIter = Iter<'a, T>;
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
-    }
-}
-
-type ThreeChain<T> = Chain<Chain<Once<T>, Once<T>>, Once<T>>;
-
-/// Mutable `Vector<T>` iterator over `[x, y, z]`.
-///
-/// This struct is created by the [`iter_mut`](Vector::iter_mut) method on [`Vector`]s.
-///
-/// # Example
-///
-/// ```
-/// # use pix_engine::prelude::*;
-/// let mut v = vector!(1.0, 2.0, -4.0);
-/// for value in v.iter_mut() {
-///     *value *= 2.0;
-/// }
-/// assert_eq!(v.get(), [2.0, 4.0, -8.0]);
-/// ```
-#[derive(Debug)]
-pub struct IterMut<'a, T = Scalar> {
-    inner: ThreeChain<&'a mut T>,
-}
-
-impl<'a, T> IterMut<'a, T> {
-    #[inline]
-    fn new(v: &'a mut Vector<T>) -> Self {
-        Self {
-            inner: once(&mut v.x).chain(once(&mut v.y)).chain(once(&mut v.z)),
-        }
-    }
-}
-
-impl<'a, T> Iterator for IterMut<'a, T> {
-    type Item = &'a mut T;
-    fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next()
-    }
-}
-
-impl<'a, T> IntoIterator for &'a mut Vector<T> {
-    type Item = &'a mut T;
-    type IntoIter = IterMut<'a, T>;
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter_mut()
-    }
-}
-
+// Required because of orphan rules
 macro_rules! impl_ops {
     ($($target:ty),*) => {
         $(
@@ -1096,95 +1055,85 @@ macro_rules! impl_ops {
     };
 }
 
-impl_ops!(i8, u8, i16, u16, i32, u32, i128, u128, isize, usize, f32, f64);
+impl_ops!(i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize, f32, f64);
 
-/// Converts `[U; 1]` to [`Vector<T>`].
-impl<T, U: Into<T>> From<[U; 1]> for Vector<T>
-where
-    T: Num,
-{
+// Conversions from U to Vector<T>
+
+/// Convert [`Vector<T>`] to `[x]`.
+impl<T> From<Vector<T>> for [T; 1] {
+    fn from(v: Vector<T>) -> Self {
+        [v.x]
+    }
+}
+/// Convert [`&Vector<T>`] to `[x]`.
+impl<T: Copy> From<&Vector<T>> for [T; 1] {
+    fn from(v: &Vector<T>) -> Self {
+        [v.x]
+    }
+}
+
+/// Convert [`Vector<T>`] to `[x, y]`.
+impl<T> From<Vector<T>> for [T; 2] {
+    fn from(v: Vector<T>) -> Self {
+        [v.x, v.y]
+    }
+}
+/// Convert [`&Vector<T>`] to `[x, y]`.
+impl<T: Copy> From<&Vector<T>> for [T; 2] {
+    fn from(v: &Vector<T>) -> Self {
+        [v.x, v.y]
+    }
+}
+
+/// Convert [`Vector<T>`] to `[x, y, z]`.
+impl<T> From<Vector<T>> for [T; 3] {
+    fn from(v: Vector<T>) -> Self {
+        [v.x, v.y, v.z]
+    }
+}
+/// Convert [`&Vector<T>`] to `[x, y, z]`.
+impl<T: Copy> From<&Vector<T>> for [T; 3] {
+    fn from(v: &Vector<T>) -> Self {
+        [v.x, v.y, v.z]
+    }
+}
+
+/// Convert `[U; 1]` to [`Vector<T>`].
+impl<T: Num, U: Into<T>> From<[U; 1]> for Vector<T> {
     fn from([x]: [U; 1]) -> Self {
         Self::new(x.into(), T::zero(), T::zero())
     }
 }
-
-/// Converts `&[U; 1]` to [`Vector<T>`].
-impl<T, U: Into<T> + Copy> From<&[U; 1]> for Vector<T>
-where
-    T: Num,
-{
+/// Convert `&[U; 1]` to [`Vector<T>`].
+impl<T: Num, U: Copy + Into<T>> From<&[U; 1]> for Vector<T> {
     fn from(&[x]: &[U; 1]) -> Self {
         Self::new(x.into(), T::zero(), T::zero())
     }
 }
 
-/// Converts `[U; 2]` to [`Vector<T>`].
+/// Convert `[U; 2]` to [`Vector<T>`].
 impl<T: Num, U: Into<T>> From<[U; 2]> for Vector<T> {
     fn from([x, y]: [U; 2]) -> Self {
         Self::new(x.into(), y.into(), T::zero())
     }
 }
-
-/// Converts `&[U; 2]` to [`Vector<T>`].
-impl<T: Num, U: Into<T> + Copy> From<&[U; 2]> for Vector<T> {
+/// Convert `&[U; 2]` to [`Vector<T>`].
+impl<T: Num, U: Copy + Into<T>> From<&[U; 2]> for Vector<T> {
     fn from(&[x, y]: &[U; 2]) -> Self {
         Self::new(x.into(), y.into(), T::zero())
     }
 }
 
-/// Converts `[U; 3]` to [`Vector<T>`].
+/// Convert `[U; 3]` to [`Vector<T>`].
 impl<T, U: Into<T>> From<[U; 3]> for Vector<T> {
     fn from([x, y, z]: [U; 3]) -> Self {
         Self::new(x.into(), y.into(), z.into())
     }
 }
-
-/// Converts `&[U; 3]` to [`Vector<T>`].
-impl<T, U: Into<T> + Copy> From<&[U; 3]> for Vector<T> {
+/// Convert `&[U; 3]` to [`Vector<T>`].
+impl<T, U: Copy + Into<T>> From<&[U; 3]> for Vector<T> {
     fn from(&[x, y, z]: &[U; 3]) -> Self {
         Self::new(x.into(), y.into(), z.into())
-    }
-}
-
-/// Converts [`Vector<U>`] to `[x]`.
-impl<T, U: Into<T>> From<Vector<U>> for [T; 1] {
-    fn from(v: Vector<U>) -> Self {
-        [v.x.into()]
-    }
-}
-
-/// Converts [`&Vector<U>`] to `[x]`.
-impl<T, U: Into<T> + Copy> From<&Vector<U>> for [T; 1] {
-    fn from(v: &Vector<U>) -> Self {
-        [v.x.into()]
-    }
-}
-
-/// Converts [`Vector<U>`] to `[x, y]`.
-impl<T, U: Into<T>> From<Vector<U>> for [T; 2] {
-    fn from(v: Vector<U>) -> Self {
-        [v.x.into(), v.y.into()]
-    }
-}
-
-/// Converts [`&Vector<U>`] to `[x, y]`.
-impl<T, U: Into<T> + Copy> From<&Vector<U>> for [T; 2] {
-    fn from(v: &Vector<U>) -> Self {
-        [v.x.into(), v.y.into()]
-    }
-}
-
-/// Converts [`Vector<U>`] to `[x, y, z]`.
-impl<T, U: Into<T>> From<Vector<U>> for [T; 3] {
-    fn from(v: Vector<U>) -> Self {
-        [v.x.into(), v.y.into(), v.z.into()]
-    }
-}
-
-/// Converts [`&Vector<U>`] to `[x, y, z]`.
-impl<T, U: Into<T> + Copy> From<&Vector<U>> for [T; 3] {
-    fn from(v: &Vector<U>) -> Self {
-        [v.x.into(), v.y.into(), v.z.into()]
     }
 }
 
