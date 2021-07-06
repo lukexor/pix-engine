@@ -948,6 +948,7 @@ impl<T> IndexMut<usize> for Vector<T> {
     }
 }
 
+/// [Vector] + [Vector] yields a [Vector].
 impl<T> Add for Vector<T>
 where
     T: Num,
@@ -958,6 +959,19 @@ where
     }
 }
 
+/// [Vector] + U.
+impl<T, U> Add<U> for Vector<T>
+where
+    T: Num + Add<U, Output = T>,
+    U: Num + Copy,
+{
+    type Output = Self;
+    fn add(self, val: U) -> Self::Output {
+        Self::Output::new(self.x + val, self.y + val, self.z + val)
+    }
+}
+
+/// [Vector] += [Vector].
 impl<T> AddAssign for Vector<T>
 where
     T: AddAssign,
@@ -969,6 +983,20 @@ where
     }
 }
 
+/// [Vector] += U.
+impl<T, U> AddAssign<U> for Vector<T>
+where
+    T: AddAssign<U>,
+    U: Num + Copy,
+{
+    fn add_assign(&mut self, val: U) {
+        self.x += val;
+        self.y += val;
+        self.z += val;
+    }
+}
+
+/// [Vector] - [Vector] yields a [Vector].
 impl<T> Sub for Vector<T>
 where
     T: Num,
@@ -979,6 +1007,19 @@ where
     }
 }
 
+/// [Vector] - U.
+impl<T, U> Sub<U> for Vector<T>
+where
+    T: Num + Sub<U, Output = T>,
+    U: Num + Copy,
+{
+    type Output = Self;
+    fn sub(self, val: U) -> Self::Output {
+        Self::Output::new(self.x - val, self.y - val, self.z - val)
+    }
+}
+
+/// [Vector] -= [Vector].
 impl<T> SubAssign for Vector<T>
 where
     T: SubAssign,
@@ -990,6 +1031,20 @@ where
     }
 }
 
+/// [Vector] -= U.
+impl<T, U> SubAssign<U> for Vector<T>
+where
+    T: SubAssign<U>,
+    U: Num + Copy,
+{
+    fn sub_assign(&mut self, val: U) {
+        self.x -= val;
+        self.y -= val;
+        self.z -= val;
+    }
+}
+
+/// ![Vector].
 impl<T> Neg for Vector<T>
 where
     T: Num + Neg<Output = T>,
@@ -1000,6 +1055,7 @@ where
     }
 }
 
+/// [Vector] * U.
 impl<T, U> Mul<U> for Vector<T>
 where
     T: Num + Mul<U, Output = T>,
@@ -1011,6 +1067,7 @@ where
     }
 }
 
+/// [Vector] *= U.
 impl<T, U> MulAssign<U> for Vector<T>
 where
     T: MulAssign<U>,
@@ -1023,6 +1080,7 @@ where
     }
 }
 
+/// [Vector] / U.
 impl<T, U> Div<U> for Vector<T>
 where
     T: Num + Div<U, Output = T>,
@@ -1034,6 +1092,7 @@ where
     }
 }
 
+/// [Vector] /= U.
 impl<T, U> DivAssign<U> for Vector<T>
 where
     T: Num + DivAssign<U>,
@@ -1045,6 +1104,22 @@ where
         self.z /= s;
     }
 }
+
+// Required because of orphan rules
+macro_rules! impl_primitive_mul {
+    ($($target:ty),*) => {
+        $(
+            impl Mul<Vector<$target>> for $target {
+                type Output = Vector<$target>;
+                fn mul(self, v: Vector<$target>) -> Self::Output {
+                    Vector::new(self * v.x, self * v.y, self * v.z)
+                }
+            }
+        )*
+    };
+}
+
+impl_primitive_mul!(i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize, f32, f64);
 
 impl<T> Sum for Vector<T>
 where
@@ -1073,22 +1148,6 @@ where
         iter.fold(v, |a, b| a + *b)
     }
 }
-
-// Required because of orphan rules
-macro_rules! impl_ops {
-    ($($target:ty),*) => {
-        $(
-            impl Mul<Vector<$target>> for $target {
-                type Output = Vector<$target>;
-                fn mul(self, v: Vector<$target>) -> Self::Output {
-                    Vector::new(self * v.x, self * v.y, self * v.z)
-                }
-            }
-        )*
-    };
-}
-
-impl_ops!(i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize, f32, f64);
 
 // Conversions from U to Vector<T>
 

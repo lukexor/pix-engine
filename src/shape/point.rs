@@ -443,26 +443,40 @@ impl<T> IndexMut<usize> for Point<T> {
     }
 }
 
+/// [Point] + [Point] yields a [Vector].
 impl<T> Add for Point<T>
 where
     T: Num,
 {
-    type Output = Self;
+    type Output = Vector<T>;
     fn add(self, p: Point<T>) -> Self::Output {
-        Point::new(self.x + p.x, self.y + p.y, self.z + p.z)
+        Self::Output::new(self.x + p.x, self.y + p.y, self.z + p.z)
     }
 }
 
+/// [Point] + [Vector] yields a [Point].
 impl<T> Add<Vector<T>> for Point<T>
 where
     T: Num,
 {
-    type Output = Vector<T>;
+    type Output = Point<T>;
     fn add(self, v: Vector<T>) -> Self::Output {
-        Vector::new(self.x + v.x, self.y + v.y, self.z + v.z)
+        Self::Output::new(self.x + v.x, self.y + v.y, self.z + v.z)
     }
 }
 
+/// [Vector] + [Point] yields a [Point].
+impl<T> Add<Point<T>> for Vector<T>
+where
+    T: Num,
+{
+    type Output = Point<T>;
+    fn add(self, p: Point<T>) -> Self::Output {
+        Self::Output::new(self.x + p.x, self.y + p.y, self.z + p.z)
+    }
+}
+
+/// [Point] + U.
 impl<T, U> Add<U> for Point<T>
 where
     T: Num + Add<U, Output = T>,
@@ -470,10 +484,11 @@ where
 {
     type Output = Self;
     fn add(self, val: U) -> Self::Output {
-        Point::new(self.x + val, self.y + val, self.z + val)
+        Self::Output::new(self.x + val, self.y + val, self.z + val)
     }
 }
 
+/// [Point] += [Point].
 impl<T> AddAssign for Point<T>
 where
     T: AddAssign,
@@ -485,6 +500,7 @@ where
     }
 }
 
+/// [Point] += [Vector].
 impl<T> AddAssign<Vector<T>> for Point<T>
 where
     T: AddAssign,
@@ -496,6 +512,7 @@ where
     }
 }
 
+/// [Point] += U.
 impl<T, U> AddAssign<U> for Point<T>
 where
     T: AddAssign<U>,
@@ -508,26 +525,29 @@ where
     }
 }
 
+/// [Point] - [Point] yields a [Vector].
 impl<T> Sub for Point<T>
 where
     T: Num,
 {
-    type Output = Self;
+    type Output = Vector<T>;
     fn sub(self, p: Point<T>) -> Self::Output {
-        Point::new(self.x - p.x, self.y - p.y, self.z - p.z)
+        Self::Output::new(self.x - p.x, self.y - p.y, self.z - p.z)
     }
 }
 
+/// [Point] - [Vector] yields a [Point].
 impl<T> Sub<Vector<T>> for Point<T>
 where
     T: Num,
 {
-    type Output = Vector<T>;
+    type Output = Point<T>;
     fn sub(self, v: Vector<T>) -> Self::Output {
-        Vector::new(self.x - v.x, self.y - v.y, self.z - v.z)
+        Self::Output::new(self.x - v.x, self.y - v.y, self.z - v.z)
     }
 }
 
+/// [Point] - U.
 impl<T, U> Sub<U> for Point<T>
 where
     T: Num + Sub<U, Output = T>,
@@ -535,10 +555,11 @@ where
 {
     type Output = Self;
     fn sub(self, val: U) -> Self::Output {
-        Point::new(self.x - val, self.y - val, self.z - val)
+        Self::Output::new(self.x - val, self.y - val, self.z - val)
     }
 }
 
+/// [Point] -= [Point].
 impl<T> SubAssign for Point<T>
 where
     T: SubAssign,
@@ -550,6 +571,7 @@ where
     }
 }
 
+/// [Point] -= [Vector].
 impl<T> SubAssign<Vector<T>> for Point<T>
 where
     T: SubAssign,
@@ -561,6 +583,7 @@ where
     }
 }
 
+/// [Point] -= U.
 impl<T, U> SubAssign<U> for Point<T>
 where
     T: SubAssign<U>,
@@ -573,16 +596,18 @@ where
     }
 }
 
+/// ![Point].
 impl<T> Neg for Point<T>
 where
     T: Num + Neg<Output = T>,
 {
     type Output = Self;
     fn neg(self) -> Self::Output {
-        Point::new(-self.x, -self.y, -self.z)
+        Self::Output::new(-self.x, -self.y, -self.z)
     }
 }
 
+/// [Point] * U.
 impl<T, U> Mul<U> for Point<T>
 where
     T: Num + Mul<U, Output = T>,
@@ -590,10 +615,11 @@ where
 {
     type Output = Self;
     fn mul(self, s: U) -> Self::Output {
-        Point::new(self.x * s, self.y * s, self.z * s)
+        Self::Output::new(self.x * s, self.y * s, self.z * s)
     }
 }
 
+/// [Point] *= U.
 impl<T, U> MulAssign<U> for Point<T>
 where
     T: MulAssign<U>,
@@ -606,6 +632,7 @@ where
     }
 }
 
+/// [Point] / U.
 impl<T, U> Div<U> for Point<T>
 where
     T: Num + Div<U, Output = T>,
@@ -613,10 +640,11 @@ where
 {
     type Output = Self;
     fn div(self, s: U) -> Self::Output {
-        Point::new(self.x / s, self.y / s, self.z / s)
+        Self::Output::new(self.x / s, self.y / s, self.z / s)
     }
 }
 
+/// [Point] /= U.
 impl<T, U> DivAssign<U> for Point<T>
 where
     T: Num + DivAssign<U>,
@@ -629,28 +657,22 @@ where
     }
 }
 
-impl<T, U> Rem<U> for Point<T>
-where
-    T: Num + Rem<U, Output = T>,
-    U: Num + Copy,
-{
-    type Output = Self;
-    fn rem(self, s: U) -> Self::Output {
-        Point::new(self.x % s, self.y % s, self.z % s)
-    }
+// Required because of orphan rules.
+macro_rules! impl_primitive_mul {
+    ($($target:ty),*) => {
+        $(
+            /// T * [Point].
+            impl Mul<Point<$target>> for $target {
+                type Output = Point<$target>;
+                fn mul(self, p: Point<$target>) -> Self::Output {
+                    Self::Output::new(self * p.x, self * p.y, self * p.z)
+                }
+            }
+        )*
+    };
 }
 
-impl<T, U> RemAssign<U> for Point<T>
-where
-    T: Num + RemAssign<U>,
-    U: Num + Copy,
-{
-    fn rem_assign(&mut self, s: U) {
-        self.x %= s;
-        self.y %= s;
-        self.z %= s;
-    }
-}
+impl_primitive_mul!(i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize, f32, f64);
 
 impl<T> Sum for Point<T>
 where
@@ -679,22 +701,6 @@ where
         iter.fold(p, |a, b| a + *b)
     }
 }
-
-// Required because of orphan rules
-macro_rules! impl_ops {
-    ($($target:ty),*) => {
-        $(
-            impl Mul<Point<$target>> for $target {
-                type Output = Point<$target>;
-                fn mul(self, p: Point<$target>) -> Self::Output {
-                    Point::new(self * p.x, self * p.y, self * p.z)
-                }
-            }
-        )*
-    };
-}
-
-impl_ops!(i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize, f32, f64);
 
 // Conversions from U to Point<T>
 

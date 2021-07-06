@@ -19,9 +19,9 @@ struct App {
     lights: [Light; 3],
 }
 
-fn intersect_ray_sphere(origin: Vector, direction: Vector, obj: &SphereObj) -> (Scalar, Scalar) {
+fn intersect_ray_sphere(origin: Point, direction: Vector, obj: &SphereObj) -> (Scalar, Scalar) {
     let r = obj.sphere.radius;
-    let center_origin = origin - obj.sphere.center.into();
+    let center_origin = origin - obj.sphere.center;
 
     let a = direction.mag_sq();
     let b = 2.0 * center_origin.dot(direction);
@@ -103,7 +103,7 @@ impl App {
 
     fn compute_lighting(
         &self,
-        position: Vector,
+        position: Point,
         normal: Vector,
         camera: Vector,
         specular: Option<i32>,
@@ -150,7 +150,7 @@ impl App {
 
     fn trace_ray(
         &self,
-        origin: Vector,
+        origin: Point,
         direction: Vector,
         t_min: Scalar,
         t_max: Scalar,
@@ -162,7 +162,7 @@ impl App {
         if let Some(obj) = closest_sphere {
             // Local color
             let intersection = origin + closest_t * direction;
-            let normal = Vector::normalized(intersection - obj.sphere.center.into());
+            let normal = Vector::normalized(intersection - obj.sphere.center);
             let local_color =
                 obj.color * self.compute_lighting(intersection, normal, -direction, obj.specular);
 
@@ -189,7 +189,7 @@ impl App {
 
     fn closest_intersection(
         &self,
-        origin: Vector,
+        origin: Point,
         direction: Vector,
         t_min: Scalar,
         t_max: Scalar,
@@ -214,7 +214,7 @@ impl App {
 impl AppState for App {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         s.fill(BLACK);
-        let origin = vector!(0.0, 0.0, -2.0);
+        let origin = point!(0.0, 0.0, -2.0);
         let half_w = s.width() as i32 / 2;
         let half_h = s.height() as i32 / 2;
         for x in -half_w..=half_w {
