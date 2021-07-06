@@ -1,4 +1,4 @@
-//! Environment related information for the [PixEngine].
+//! Environment information for the [PixEngine].
 //!
 //! [PixEngine]: crate::prelude::PixEngine
 use crate::{
@@ -65,7 +65,7 @@ impl PixState {
         todo!("close_window");
     }
 
-    /// The time elapsed since last frame.
+    /// The time elapsed since last frame in seconds.
     pub fn delta_time(&self) -> f64 {
         self.env.delta_time
     }
@@ -80,12 +80,13 @@ impl PixState {
         self.env.frame_rate
     }
 
-    /// Set a target frame rate to render at.
+    /// Set a target frame rate to render at, controls how often
+    /// [on_update](crate::prelude::AppState::on_update) is called.
     pub fn set_frame_rate(&mut self, rate: f64) {
         self.env.target_frame_rate = Some(rate);
     }
 
-    /// The dimensions of the current canvas as a tuple of (width, height).
+    /// The dimensions of the current canvas as `(width, height)`.
     pub fn dimensions(&self) -> (u32, u32) {
         (self.renderer.width(), self.renderer.height())
     }

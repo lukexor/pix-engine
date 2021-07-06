@@ -2,7 +2,7 @@
 
 use crate::{
     prelude::*,
-    renderer::{Error as RendererError, Renderer, Rendering},
+    renderer::{Error as RendererError, Renderer},
     window::Window,
 };
 use environment::Environment;
@@ -27,63 +27,66 @@ pub enum Error {
     Other(Cow<'static, str>),
 }
 
-/// Defines state changing operations that are called while the PixEngine is running.
+/// Trait for implementing methods the [PixEngine] will call while running and handling events,
+/// passing along a [`&mut PixState`](PixState) to allow interacting with the [PixEngine].
+#[allow(unused_variables)]
 pub trait AppState {
-    /// Called once upon engine start when `PixEngine::run()` is called.
-    fn on_start(&mut self, _s: &mut PixState) -> PixResult<()> {
+    /// Called once upon engine start when [PixEngine::run] is called.
+    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         Ok(())
     }
 
-    /// Called every frame based on the target_frame_rate. By default this is as often as possible.
-    fn on_update(&mut self, _s: &mut PixState) -> PixResult<()>;
+    /// Called every frame based on the [target frame rate](PixState::set_frame_rate). By
+    /// default this is as often as possible.
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()>;
 
     /// Called once when the engine detects a close/exit event.
-    fn on_stop(&mut self, _s: &mut PixState) -> PixResult<()> {
+    fn on_stop(&mut self, s: &mut PixState) -> PixResult<()> {
         Ok(())
     }
 
-    /// Called each time a key is pressed.
-    fn on_key_pressed(&mut self, _s: &mut PixState, _event: KeyEvent) -> PixResult<()> {
+    /// Called each time a [Key] is pressed.
+    fn on_key_pressed(&mut self, s: &mut PixState, _event: KeyEvent) -> PixResult<()> {
         Ok(())
     }
 
-    /// Called each time a key is released.
-    fn on_key_released(&mut self, _s: &mut PixState, _event: KeyEvent) -> PixResult<()> {
+    /// Called each time a [Key] is released.
+    fn on_key_released(&mut self, s: &mut PixState, _event: KeyEvent) -> PixResult<()> {
         Ok(())
     }
 
-    /// Called each time a key is typed. Ignores special keys like Backspace.
-    fn on_key_typed(&mut self, _s: &mut PixState, _text: &str) -> PixResult<()> {
+    /// Called each time a [Key] is typed. Ignores special keys like [Key::Backspace].
+    fn on_key_typed(&mut self, s: &mut PixState, _text: &str) -> PixResult<()> {
         Ok(())
     }
 
-    /// Called each time a mouse button is pressed.
-    fn on_mouse_dragged(&mut self, _s: &mut PixState) -> PixResult<()> {
+    /// Called each time a [Mouse] button is pressed.
+    fn on_mouse_dragged(&mut self, s: &mut PixState) -> PixResult<()> {
         Ok(())
     }
 
-    /// Called each time a mouse button is pressed.
-    fn on_mouse_pressed(&mut self, _s: &mut PixState, _btn: Mouse) -> PixResult<()> {
+    /// Called each time a [Mouse] button is pressed.
+    fn on_mouse_pressed(&mut self, s: &mut PixState, _btn: Mouse) -> PixResult<()> {
         Ok(())
     }
 
-    /// Called each time a mouse button is released.
-    fn on_mouse_released(&mut self, _s: &mut PixState, _btn: Mouse) -> PixResult<()> {
+    /// Called each time a [Mouse] button is released.
+    fn on_mouse_released(&mut self, s: &mut PixState, _btn: Mouse) -> PixResult<()> {
         Ok(())
     }
 
     /// Called each time the mouse wheel is scrolled.
-    fn on_mouse_wheel(&mut self, _s: &mut PixState, _x_delta: i32, _y_delta: i32) -> PixResult<()> {
+    fn on_mouse_wheel(&mut self, s: &mut PixState, _x_delta: i32, _y_delta: i32) -> PixResult<()> {
         Ok(())
     }
 
     /// Called each time the window is resized.
-    fn on_window_resized(&mut self, _s: &mut PixState) -> PixResult<()> {
+    fn on_window_resized(&mut self, s: &mut PixState) -> PixResult<()> {
         Ok(())
     }
 }
 
-/// Represents all engine-specific state and methods.
+/// Represents all state and methods for updating and interacting with the [PixEngine].
 #[non_exhaustive]
 #[derive(Debug)]
 pub struct PixState {
@@ -121,14 +124,6 @@ impl PixState {
         }
     }
 
-    /// Clears the render target to the current background color set by `PixState::background()`.
-    pub fn clear(&mut self) {
-        let color = self.settings.background;
-        self.renderer.set_draw_color(self.settings.background);
-        self.renderer.clear();
-        self.renderer.set_draw_color(color);
-    }
-
     /// Get the current window title.
     pub fn title(&self) -> &str {
         &self.title
@@ -149,12 +144,12 @@ impl PixState {
         Ok(())
     }
 
-    /// Returns the current mouse position coordinates as (x, y).
+    /// Returns the current mouse position coordinates as `(x, y)`.
     pub fn mouse_pos(&self) -> Point<i32> {
         self.mouse_pos
     }
 
-    /// Returns the previous mouse position coordinates last frame as (x, y).
+    /// Returns the previous mouse position coordinates last frame as `(x, y)`.
     pub fn pmouse_pos(&self) -> Point<i32> {
         self.pmouse_pos
     }

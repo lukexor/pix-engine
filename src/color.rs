@@ -96,10 +96,10 @@
 //!
 //! let c = Color::from_str("#F0F5BF5F")?; // 8-digit Hex string
 //! assert_eq!(c.channels(), [240, 245, 191, 95]);
-//! # Ok::<(), ColorError<f64>>(())
+//! # Ok::<(), ColorError<Scalar>>(())
 //! ```
 
-use crate::random;
+use crate::{prelude::Scalar, random};
 use conversion::{calculate_channels, clamp_levels, convert_levels, maxes};
 use ops::Iter;
 #[cfg(feature = "serde")]
@@ -133,7 +133,7 @@ pub struct Color {
     /// `Color` mode.
     mode: ColorMode,
     /// RGB values ranging `0.0..=1.0`.
-    levels: [f64; 4],
+    levels: [Scalar; 4],
     /// RGB values ranging from `0..=255`.
     channels: [u8; 4],
 }
@@ -149,7 +149,7 @@ impl Color {
     /// assert_eq!(c.channels(), [0, 0, 128, 255]);
     /// ```
     #[inline]
-    pub fn new<T: Into<f64>>(r: T, g: T, b: T) -> Self {
+    pub fn new<T: Into<Scalar>>(r: T, g: T, b: T) -> Self {
         Self::rgb(r, g, b)
     }
 
@@ -163,7 +163,7 @@ impl Color {
     /// assert_eq!(c.channels(), [0, 0, 128, 50]);
     /// ```
     #[inline]
-    pub fn new_alpha<T: Into<f64>>(r: T, g: T, b: T, a: T) -> Self {
+    pub fn new_alpha<T: Into<Scalar>>(r: T, g: T, b: T, a: T) -> Self {
         Self::rgba(r, g, b, a)
     }
 
@@ -179,7 +179,7 @@ impl Color {
     /// let c = Color::with_mode(ColorMode::Hsb, 126.0, 50.0, 100.0);
     /// assert_eq!(c.channels(), [128, 255, 140, 255]);
     /// ```
-    pub fn with_mode<T: Into<f64>>(mode: ColorMode, v1: T, v2: T, v3: T) -> Self {
+    pub fn with_mode<T: Into<Scalar>>(mode: ColorMode, v1: T, v2: T, v3: T) -> Self {
         // Normalize channels
         let [v1_max, v2_max, v3_max, _] = maxes(mode);
         let levels = clamp_levels([
@@ -212,7 +212,13 @@ impl Color {
     /// let c = Color::with_mode_alpha(ColorMode::Hsb, 126.0, 50.0, 100.0, 0.8);
     /// assert_eq!(c.channels(), [128, 255, 140, 204]);
     /// ```
-    pub fn with_mode_alpha<T: Into<f64>>(mode: ColorMode, v1: T, v2: T, v3: T, alpha: T) -> Self {
+    pub fn with_mode_alpha<T: Into<Scalar>>(
+        mode: ColorMode,
+        v1: T,
+        v2: T,
+        v3: T,
+        alpha: T,
+    ) -> Self {
         // Normalize channels
         let [v1_max, v2_max, v3_max, alpha_max] = maxes(mode);
         let levels = clamp_levels([
@@ -244,7 +250,7 @@ impl Color {
     /// assert_eq!(c.channels(), [128, 64, 0, 255]);
     /// ```
     #[inline]
-    pub fn rgb<T: Into<f64>>(r: T, g: T, b: T) -> Self {
+    pub fn rgb<T: Into<Scalar>>(r: T, g: T, b: T) -> Self {
         Self::with_mode(Rgb, r, g, b)
     }
 
@@ -258,7 +264,7 @@ impl Color {
     /// assert_eq!(c.channels(), [128, 64, 128, 128]);
     /// ```
     #[inline]
-    pub fn rgba<T: Into<f64>>(r: T, g: T, b: T, a: T) -> Self {
+    pub fn rgba<T: Into<Scalar>>(r: T, g: T, b: T, a: T) -> Self {
         Self::with_mode_alpha(Rgb, r, g, b, a)
     }
 
@@ -273,7 +279,7 @@ impl Color {
     /// assert_eq!(c.channels(), [25, 128, 36, 255]);
     /// ```
     #[inline]
-    pub fn hsb<T: Into<f64>>(h: T, s: T, b: T) -> Self {
+    pub fn hsb<T: Into<Scalar>>(h: T, s: T, b: T) -> Self {
         Self::with_mode(Hsb, h, s, b)
     }
 
@@ -288,7 +294,7 @@ impl Color {
     /// assert_eq!(c.channels(), [25, 128, 36, 128]);
     /// ```
     #[inline]
-    pub fn hsba<T: Into<f64>>(h: T, s: T, b: T, a: T) -> Self {
+    pub fn hsba<T: Into<Scalar>>(h: T, s: T, b: T, a: T) -> Self {
         Self::with_mode_alpha(Hsb, h, s, b, a)
     }
 
@@ -303,7 +309,7 @@ impl Color {
     /// assert_eq!(c.channels(), [25, 230, 46, 255]);
     /// ```
     #[inline]
-    pub fn hsl<T: Into<f64>>(h: T, s: T, l: T) -> Self {
+    pub fn hsl<T: Into<Scalar>>(h: T, s: T, l: T) -> Self {
         Self::with_mode(Hsl, h, s, l)
     }
 
@@ -318,7 +324,7 @@ impl Color {
     /// assert_eq!(c.channels(), [25, 230, 46, 128]);
     /// ```
     #[inline]
-    pub fn hsla<T: Into<f64>>(h: T, s: T, l: T, a: T) -> Self {
+    pub fn hsla<T: Into<Scalar>>(h: T, s: T, l: T, a: T) -> Self {
         Self::with_mode_alpha(Hsl, h, s, l, a)
     }
 
@@ -337,7 +343,13 @@ impl Color {
     /// let c = unsafe { Color::from_raw(ColorMode::Rgb, 0.4, 0.5, 1.0, 0.8) };
     /// assert_eq!(c.channels(), [102, 128, 255, 204]);
     /// ```
-    pub unsafe fn from_raw<T: Into<f64>>(mode: ColorMode, v1: T, v2: T, v3: T, alpha: T) -> Self {
+    pub unsafe fn from_raw<T: Into<Scalar>>(
+        mode: ColorMode,
+        v1: T,
+        v2: T,
+        v3: T,
+        alpha: T,
+    ) -> Self {
         let levels = [v1.into(), v2.into(), v3.into(), alpha.into()];
         Self {
             mode,
@@ -358,16 +370,16 @@ impl Color {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let vals: Vec<f64> = vec![128.0, 64.0, 0.0];
+    /// let vals: Vec<Scalar> = vec![128.0, 64.0, 0.0];
     /// let c = Color::from_slice(ColorMode::Rgb, &vals)?; // RGB Vec
     /// assert_eq!(c.channels(), [128, 64, 0, 255]);
     ///
-    /// let vals: [f64; 4] = [128.0, 64.0, 0.0, 128.0];
+    /// let vals: [Scalar; 4] = [128.0, 64.0, 0.0, 128.0];
     /// let c = Color::from_slice(ColorMode::Rgb, &vals[..])?; // RGBA slice
     /// assert_eq!(c.channels(), [128, 64, 0, 128]);
-    /// # Ok::<(), ColorError<f64>>(())
+    /// # Ok::<(), ColorError<Scalar>>(())
     /// ```
-    pub fn from_slice<T: Into<f64>>(mode: ColorMode, slice: &[T]) -> Result<Self, ColorError<T>>
+    pub fn from_slice<T: Into<Scalar>>(mode: ColorMode, slice: &[T]) -> Result<Self, ColorError<T>>
     where
         T: fmt::Debug + Copy + Clone,
     {
@@ -391,6 +403,7 @@ impl Color {
     /// // `c.channels()` will return something like:
     /// // [207, 12, 217, 255]
     /// ```
+    #[inline]
     pub fn random() -> Self {
         Self::new(random!(255), random!(255), random!(255))
     }
@@ -406,6 +419,7 @@ impl Color {
     /// // `c.channels()` will return something like:
     /// // [132, 159, 233, 76]
     /// ```
+    #[inline]
     pub fn random_alpha() -> Self {
         Self::new_alpha(random!(255), random!(255), random!(255), random!(255))
     }
@@ -422,6 +436,7 @@ impl Color {
     /// let c = Color::from_hex(0xF0FF0080);
     /// assert_eq!(c.channels(), [240, 255, 0, 128]);
     /// ```
+    #[inline]
     pub fn from_hex(hex: u32) -> Self {
         let [r, g, b, a] = hex.to_be_bytes();
         Self::rgba(r, g, b, a)
@@ -443,7 +458,7 @@ impl Color {
     /// assert_eq!(c.maxes(), [360.0, 100.0, 100.0, 1.0]);
     /// ```
     #[inline]
-    pub const fn maxes(&self) -> [f64; 4] {
+    pub const fn maxes(&self) -> [Scalar; 4] {
         maxes(self.mode)
     }
 
@@ -457,7 +472,7 @@ impl Color {
     /// assert_eq!(c.channels(), [128, 64, 128, 128]);
     /// ```
     #[inline]
-    pub const fn levels(&self) -> [f64; 4] {
+    pub const fn levels(&self) -> [Scalar; 4] {
         self.levels
     }
 
@@ -533,7 +548,7 @@ impl Color {
     /// assert_eq!(c.channels(), [100, 0, 0, 255]);
     /// ```
     #[inline]
-    pub fn set_red(&mut self, r: impl Into<f64>) {
+    pub fn set_red<R: Into<Scalar>>(&mut self, r: R) {
         let maxes = maxes(Rgb);
         self.levels[0] = r.into() / maxes[0];
         self.calculate_channels();
@@ -565,7 +580,7 @@ impl Color {
     /// assert_eq!(c.channels(), [0, 100, 0, 255]);
     /// ```
     #[inline]
-    pub fn set_green(&mut self, g: impl Into<f64>) {
+    pub fn set_green<G: Into<Scalar>>(&mut self, g: G) {
         let maxes = maxes(Rgb);
         self.levels[1] = g.into() / maxes[1];
         self.calculate_channels();
@@ -597,7 +612,7 @@ impl Color {
     /// assert_eq!(c.channels(), [0, 0, 100, 255]);
     /// ```
     #[inline]
-    pub fn set_blue(&mut self, b: impl Into<f64>) {
+    pub fn set_blue<B: Into<Scalar>>(&mut self, b: B) {
         let maxes = maxes(Rgb);
         self.levels[2] = b.into() / maxes[2];
         self.calculate_channels();
@@ -617,7 +632,7 @@ impl Color {
     /// assert_eq!(c.alpha(), 0.8);
     /// ```
     #[inline]
-    pub fn alpha(&self) -> f64 {
+    pub fn alpha(&self) -> Scalar {
         let maxes = self.maxes();
         self.levels[3] * maxes[3]
     }
@@ -640,7 +655,7 @@ impl Color {
     /// assert_eq!(c.channels(), [0, 0, 0, 204]);
     /// ```
     #[inline]
-    pub fn set_alpha(&mut self, a: impl Into<f64>) {
+    pub fn set_alpha<A: Into<Scalar>>(&mut self, a: A) {
         let maxes = self.maxes();
         self.levels[3] = a.into() / maxes[3];
         self.calculate_channels();
@@ -656,7 +671,7 @@ impl Color {
     /// assert_eq!(c.hue(), 120.0);
     /// ```
     #[inline]
-    pub fn hue(&self) -> f64 {
+    pub fn hue(&self) -> Scalar {
         let maxes = maxes(Hsb);
         let levels = convert_levels(self.levels, Rgb, Hsb);
         levels[0] * maxes[0]
@@ -674,7 +689,7 @@ impl Color {
     /// assert_eq!(c.channels(), [43, 128, 0, 255]);
     /// ```
     #[inline]
-    pub fn set_hue(&mut self, h: impl Into<f64>) {
+    pub fn set_hue<H: Into<Scalar>>(&mut self, h: H) {
         let maxes = maxes(Hsb);
         let mut levels = convert_levels(self.levels, Rgb, Hsb);
         levels[0] = h.into() / maxes[0];
@@ -692,7 +707,7 @@ impl Color {
     /// assert_eq!(c.saturation(), 100.0);
     /// ```
     #[inline]
-    pub fn saturation(&self) -> f64 {
+    pub fn saturation(&self) -> Scalar {
         let maxes = maxes(Hsb);
         let levels = convert_levels(self.levels, Rgb, Hsb);
         levels[1] * maxes[1]
@@ -717,7 +732,7 @@ impl Color {
     /// assert_eq!(c.channels(), [96, 32, 32, 255]);
     /// ```
     #[inline]
-    pub fn set_saturation(&mut self, s: impl Into<f64>) {
+    pub fn set_saturation<S: Into<Scalar>>(&mut self, s: S) {
         let mode = match self.mode {
             Hsb | Hsl => self.mode,
             _ => Hsb,
@@ -739,7 +754,7 @@ impl Color {
     /// assert_eq!(c.brightness(), 40.0);
     /// ```
     #[inline]
-    pub fn brightness(&self) -> f64 {
+    pub fn brightness(&self) -> Scalar {
         let maxes = maxes(Hsb);
         let levels = convert_levels(self.levels, Rgb, Hsb);
         levels[2] * maxes[2]
@@ -757,7 +772,7 @@ impl Color {
     /// assert_eq!(c.channels(), [230, 0, 0, 255]);
     /// ```
     #[inline]
-    pub fn set_brightness(&mut self, b: impl Into<f64>) {
+    pub fn set_brightness<B: Into<Scalar>>(&mut self, b: B) {
         let maxes = maxes(Hsb);
         let mut levels = convert_levels(self.levels, Rgb, Hsb);
         levels[2] = b.into() / maxes[2];
@@ -775,7 +790,7 @@ impl Color {
     /// assert_eq!(c.lightness(), 20.0);
     /// ```
     #[inline]
-    pub fn lightness(&self) -> f64 {
+    pub fn lightness(&self) -> Scalar {
         let maxes = maxes(Hsl);
         let levels = convert_levels(self.levels, Rgb, Hsl);
         levels[2] * maxes[2]
@@ -793,7 +808,7 @@ impl Color {
     /// assert_eq!(c.channels(), [255, 204, 204, 255]);
     /// ```
     #[inline]
-    pub fn set_lightness(&mut self, l: impl Into<f64>) {
+    pub fn set_lightness<L: Into<Scalar>>(&mut self, l: L) {
         let maxes = maxes(Hsl);
         let mut levels = convert_levels(self.levels, Rgb, Hsl);
         levels[2] = l.into() / maxes[2];
@@ -810,6 +825,7 @@ impl Color {
     /// let c = color!(100, 200, 50);
     /// assert_eq!(c.to_vec(), vec![100, 200, 50, 255]);
     /// ```
+    #[inline]
     pub fn to_vec(self) -> Vec<u8> {
         Vec::from(self.channels)
     }
@@ -829,6 +845,7 @@ impl Color {
     /// assert_eq!(iterator.next(), Some(255));
     /// assert_eq!(iterator.next(), None);
     /// ```
+    #[inline]
     pub fn iter(&self) -> Iter {
         Iter::new(self)
     }

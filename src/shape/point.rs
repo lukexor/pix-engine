@@ -57,6 +57,7 @@ impl<T> Point<T> {
     /// let p = Point::new(2, 3, 1);
     /// assert_eq!(p.get(), [2, 3, 1]);
     /// ```
+    #[inline]
     pub const fn new(x: T, y: T, z: T) -> Self {
         Self { x, y, z }
     }
@@ -67,15 +68,12 @@ impl<T> Point<T> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v: Vector<f64> = vector!(1.0, 2.0);
+    /// let v  = vector!(1.0, 2.0);
     /// let p = Point::from_vector(v);
     /// assert_eq!(p.get(), [1.0, 2.0, 0.0]);
     /// ```
-    pub fn from_vector<V>(v: V) -> Self
-    where
-        V: Into<Vector<T>>,
-    {
-        let v = v.into();
+    #[inline]
+    pub fn from_vector(v: Vector<T>) -> Self {
         Self::new(v.x, v.y, v.z)
     }
 
@@ -91,6 +89,7 @@ impl<T> Point<T> {
     /// assert_eq!(p1.get(), [1, 0, 1]);
     /// assert_eq!(p2.get(), [2, 0, 1]);
     /// ```
+    #[inline]
     pub fn copy(&self) -> Self
     where
         T: Copy,
@@ -107,6 +106,7 @@ impl<T> Point<T> {
     /// let p = point!(2, 1, 3);
     /// assert_eq!(p.get(), [2, 1, 3]);
     /// ```
+    #[inline]
     pub fn get(self) -> [T; 3]
     where
         T: Copy,
@@ -129,6 +129,7 @@ impl<T> Point<T> {
     /// p1.set(p2);
     /// assert_eq!(p1.get(), [-2, 5, 1]);
     /// ```
+    #[inline]
     pub fn set<P>(&mut self, p: P)
     where
         P: Into<Point<T>>,
@@ -148,6 +149,7 @@ impl<T> Point<T> {
     /// let p = point!(1, 1, 0);
     /// assert_eq!(p.to_vec(), vec![1, 1, 0]);
     /// ```
+    #[inline]
     pub fn to_vec(self) -> Vec<T>
     where
         T: Copy,
@@ -161,14 +163,15 @@ impl<T> Point<T> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let p: Point<i32> = point!(1, 2, -4);
+    /// let p: Point = point!(1.0, 2.0, -4.0);
     /// let mut iterator = p.iter();
     ///
-    /// assert_eq!(iterator.next(), Some(&1));
-    /// assert_eq!(iterator.next(), Some(&2));
-    /// assert_eq!(iterator.next(), Some(&-4));
+    /// assert_eq!(iterator.next(), Some(&1.0));
+    /// assert_eq!(iterator.next(), Some(&2.0));
+    /// assert_eq!(iterator.next(), Some(&-4.0));
     /// assert_eq!(iterator.next(), None);
     /// ```
+    #[inline]
     pub fn iter(&self) -> Iter<'_, T> {
         Iter::new(self)
     }
@@ -179,17 +182,18 @@ impl<T> Point<T> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let mut p: Point<i32> = point!(1, 2, -4);
+    /// let mut p: Point = point!(1.0, 2.0, -4.0);
     /// for value in p.iter_mut() {
-    ///     *value *= 2;
+    ///     *value *= 2.0;
     /// }
-    /// assert_eq!(p.get(), [2, 4, -8]);
+    /// assert_eq!(p.get(), [2.0, 4.0, -8.0]);
     /// ```
+    #[inline]
     pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         IterMut::new(self)
     }
 
-    /// Convert [Point] to another primitive type using the `as` operator.
+    /// Convert `Point<T>` to another primitive type using the `as` operator.
     #[inline]
     pub fn as_<U>(self) -> Point<U>
     where
@@ -210,6 +214,7 @@ impl<T: Num> Point<T> {
     /// let p = Point::with_x(2);
     /// assert_eq!(p.get(), [2, 0, 0]);
     /// ```
+    #[inline]
     pub fn with_x(x: T) -> Self {
         Self::new(x, T::zero(), T::zero())
     }
@@ -223,11 +228,13 @@ impl<T: Num> Point<T> {
     /// let p = Point::with_xy(2, 3);
     /// assert_eq!(p.get(), [2, 3, 0]);
     /// ```
+    #[inline]
     pub fn with_xy(x: T, y: T) -> Self {
         Self::new(x, y, T::zero())
     }
 
     /// Constructs a `Point<T>` by shifting coordinates by given x, y, and z values.
+    #[inline]
     pub fn offset<U>(self, x: U, y: U, z: U) -> Self
     where
         T: Add<U, Output = T>,
@@ -236,6 +243,7 @@ impl<T: Num> Point<T> {
     }
 
     /// Constructs a `Point<T>` by multiplying it by the given scale factor.
+    #[inline]
     pub fn scale<U>(self, s: U) -> Self
     where
         T: Mul<U, Output = T>,
@@ -262,6 +270,7 @@ where
     Self: Into<Point<Scalar>>,
 {
     /// Draw point to the current [PixState] canvas.
+    #[inline]
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.point(*self)
     }
@@ -299,20 +308,21 @@ impl<T> IntoIterator for Point<T> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let p: Point<i32> = point!(1, 2, -4);
+    /// let p: Point = point!(1.0, 2.0, -4.0);
     /// let mut iterator = p.into_iter();
     ///
-    /// assert_eq!(iterator.next(), Some(1));
-    /// assert_eq!(iterator.next(), Some(2));
-    /// assert_eq!(iterator.next(), Some(-4));
+    /// assert_eq!(iterator.next(), Some(1.0));
+    /// assert_eq!(iterator.next(), Some(2.0));
+    /// assert_eq!(iterator.next(), Some(-4.0));
     /// assert_eq!(iterator.next(), None);
     /// ```
+    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         IntoIter::new([self.x, self.y, self.z])
     }
 }
 
-/// Immutable `Point<T>` iterator over `[x, y, z]`.
+/// Immutable [Point] iterator over `[x, y, z]`.
 ///
 /// This struct is created by the [iter](Point::iter) method on [Point]s.
 ///
@@ -320,12 +330,12 @@ impl<T> IntoIterator for Point<T> {
 ///
 /// ```
 /// # use pix_engine::prelude::*;
-/// let p: Point<i32> = point!(1, 2, -4);
+/// let p: Point = point!(1.0, 2.0, -4.0);
 /// let mut iterator = p.iter();
 ///
-/// assert_eq!(iterator.next(), Some(&1));
-/// assert_eq!(iterator.next(), Some(&2));
-/// assert_eq!(iterator.next(), Some(&-4));
+/// assert_eq!(iterator.next(), Some(&1.0));
+/// assert_eq!(iterator.next(), Some(&2.0));
+/// assert_eq!(iterator.next(), Some(&-4.0));
 /// assert_eq!(iterator.next(), None);
 /// ```
 #[derive(Debug, Clone)]
@@ -359,6 +369,7 @@ impl<'a, T> Iterator for Iter<'a, T> {
 impl<'a, T> IntoIterator for &'a Point<T> {
     type Item = &'a T;
     type IntoIter = Iter<'a, T>;
+    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
@@ -366,7 +377,7 @@ impl<'a, T> IntoIterator for &'a Point<T> {
 
 type ThreeChain<T> = Chain<Chain<Once<T>, Once<T>>, Once<T>>;
 
-/// Mutable `Point<T>` iterator over `[x, y, z]`.
+/// Mutable [Point] iterator over `[x, y, z]`.
 ///
 /// This struct is created by the [iter_mut](Point::iter_mut) method on [Point]s.
 ///

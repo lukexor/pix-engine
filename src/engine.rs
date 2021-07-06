@@ -12,7 +12,7 @@ use crate::{ASSETS, ASSET_DIR};
 #[cfg(not(target_arch = "wasm32"))]
 use std::{fs, io, path::PathBuf};
 
-/// Builds a [`PixEngine`] instance by providing several configration functions.
+/// Builds a [PixEngine] instance by providing several configration functions.
 #[non_exhaustive]
 #[derive(Default, Debug, Clone)]
 pub struct PixEngineBuilder {
@@ -71,7 +71,7 @@ impl PixEngineBuilder {
         self
     }
 
-    /// Position the window at the given (x, y) coordinates of the display.
+    /// Position the window at the given `(x, y)` coordinates of the display.
     pub fn position(&mut self, x: i32, y: i32) -> &mut Self {
         self.settings.x = Position::Positioned(x);
         self.settings.y = Position::Positioned(y);
@@ -126,7 +126,7 @@ impl PixEngineBuilder {
         self
     }
 
-    /// Convert [`PixEngineBuilder`] to a [`PixEngine`] instance.
+    /// Convert [PixEngineBuilder] to a [PixEngine] instance.
     pub fn build(&self) -> PixEngine {
         PixEngine {
             settings: self.settings.clone(),
@@ -146,7 +146,7 @@ pub struct PixEngine {
 }
 
 impl PixEngine {
-    /// Constructs a default [`PixEngineBuilder`] which can build a `PixEngine` instance.
+    /// Constructs a default [PixEngineBuilder] which can build a `PixEngine` instance.
     pub fn builder() -> PixEngineBuilder {
         PixEngineBuilder::default()
     }

@@ -114,9 +114,9 @@ impl Default for WindowBuilder {
 pub enum Error {
     /// Invalid window title.
     InvalidTitle(&'static str, NulError),
-    /// Invalid `WindowId`.
+    /// Invalid [WindowId].
     InvalidWindow(WindowId),
-    /// Invalid (x, y) window position.
+    /// Invalid `(x, y)` window [Position].
     InvalidPosition(Position, Position),
     /// An overflow occurred.
     Overflow(Cow<'static, str>, u32),

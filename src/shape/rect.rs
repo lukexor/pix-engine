@@ -121,7 +121,7 @@ impl<T> Rect<T> {
         vec![self.x, self.y, self.width, self.height]
     }
 
-    /// Convert [Rect] to another primitive type using the `as` operator.
+    /// Convert `Rect<T>` to another primitive type using the `as` operator.
     #[inline]
     pub fn as_<U>(self) -> Rect<U>
     where
@@ -172,10 +172,13 @@ where
     T: Num + Copy,
 {
     /// Constructs a `Rect<T>` centered at position `(x, y)` with `width` and `height`.
-    pub fn from_center(p: impl Into<(T, T)>, width: T, height: T) -> Self {
-        let (x, y) = p.into();
+    pub fn from_center<P>(p: P, width: T, height: T) -> Self
+    where
+        P: Into<Point<T>>,
+    {
+        let p = p.into();
         let two = T::one() + T::one();
-        Self::new(x - width / two, y - height / two, width, height)
+        Self::new(p.x - width / two, p.y - height / two, width, height)
     }
 
     /// Returns the horizontal position of the left edge.
@@ -247,11 +250,14 @@ where
     }
 
     /// Set position centered on a [Point].
-    pub fn center_on(&mut self, p: impl Into<(T, T)>) {
-        let (x, y) = p.into();
+    pub fn center_on<P>(&mut self, p: P)
+    where
+        P: Into<Point<T>>,
+    {
+        let p = p.into();
         let two = T::one() + T::one();
-        self.x = x - self.width / two;
-        self.y = y - self.height / two;
+        self.x = p.x - self.width / two;
+        self.y = p.y - self.height / two;
     }
 }
 

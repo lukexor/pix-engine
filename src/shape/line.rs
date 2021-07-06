@@ -54,9 +54,10 @@ impl<T> Line<T> {
 
     /// Returns whether this line intersects with another line.
     #[allow(clippy::many_single_char_names)]
-    pub fn intersects(&self, other: impl Into<Line<T>>) -> Option<(Point<T>, T)>
+    pub fn intersects<L>(&self, other: L) -> Option<(Point<T>, T)>
     where
         T: Float,
+        L: Into<Line<T>>,
     {
         let [x1, y1, x2, y2] = [self.start.x, self.start.y, self.end.x, self.end.y];
         let other = other.into();
@@ -76,7 +77,7 @@ impl<T> Line<T> {
         }
     }
 
-    /// Convert [Line] to another primitive type using the `as` operator.
+    /// Convert `Line` to another primitive type using the `as` operator.
     #[inline]
     pub fn as_<U>(self) -> Line<U>
     where

@@ -18,7 +18,7 @@ pub struct Triangle<T = Scalar> {
 }
 
 impl<T> Triangle<T> {
-    /// Constructs a [Triangle].
+    /// Constructs a `Triangle<T>`.
     pub fn new<P>(p1: P, p2: P, p3: P) -> Self
     where
         P: Into<Point<T>>,
@@ -30,7 +30,7 @@ impl<T> Triangle<T> {
         }
     }
 
-    /// Convert [Triangle] to another primitive type using the `as` operator.
+    /// Convert `Triangle<T>` to another primitive type using the `as` operator.
     #[inline]
     pub fn as_<U>(self) -> Triangle<U>
     where

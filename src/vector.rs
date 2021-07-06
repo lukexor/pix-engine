@@ -28,7 +28,7 @@
 //! ```
 //! use pix_engine::prelude::*;
 //!
-//! let v: Vector<f64> = vector!(); // Vector placed at the origin (0.0, 0.0, 0.0)
+//! let v: Vector = vector!(); // Vector placed at the origin (0.0, 0.0, 0.0)
 //! assert_eq!(v.get(), [0.0, 0.0, 0.0]);
 //!
 //! let v = vector!(5.0); // 1D Vector parallel with the X-axis, magnitude 5
@@ -46,21 +46,21 @@
 //! ```
 //! use pix_engine::prelude::*;
 //!
-//! let v: Vector<f64> = Vector::random_1d();
+//! let v: Vector = Vector::random_1d();
 //! // `v.get()` will return something like:
 //! // [-0.9993116191591512, 0.03709835324533284, 0.0]
 //! assert!(v.x >= -1.0 && v.x <= 1.0);
 //! assert_eq!(v.y, 0.0);
 //! assert_eq!(v.z, 0.0);
 //!
-//! let v: Vector<f64> = Vector::random_2d();
+//! let v: Vector = Vector::random_2d();
 //! // `v.get()` will return something like:
 //! // [-0.9993116191591512, 0.03709835324533284, 0.0]
 //! assert!(v.x >= -1.0 && v.x <= 1.0);
 //! assert!(v.y >= -1.0 && v.y <= 1.0);
 //! assert_eq!(v.z, 0.0);
 //!
-//! let v: Vector<f64> = Vector::random_3d();
+//! let v: Vector = Vector::random_3d();
 //! // `v.get()` will return something like:
 //! // [-0.40038099206441835, 0.8985763512414204, 0.17959844705110184]
 //! assert!(v.x >= -1.0 && v.x <= 1.0);
@@ -115,7 +115,7 @@ pub struct Vector<T = Scalar> {
 /// ```
 /// use pix_engine::prelude::*;
 ///
-/// let v: Vector<f64> = vector!();
+/// let v: Vector = vector!();
 /// assert_eq!(v.get(), [0.0, 0.0, 0.0]);
 ///
 /// let v = vector!(1.0);
@@ -153,6 +153,7 @@ impl<T> Vector<T> {
     /// let v = Vector::new(2.1, 3.5, 1.0);
     /// assert_eq!(v.get(), [2.1, 3.5, 1.0]);
     /// ```
+    #[inline]
     pub const fn new(x: T, y: T, z: T) -> Self {
         Self { x, y, z }
     }
@@ -163,12 +164,12 @@ impl<T> Vector<T> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let p: Point<f64> = point!(1.0, 2.0);
+    /// let p = point!(1.0, 2.0);
     /// let v = Vector::from_point(p);
     /// assert_eq!(v.get(), [1.0, 2.0, 0.0]);
     /// ```
-    pub fn from_point(p: impl Into<Point<T>>) -> Self {
-        let p = p.into();
+    #[inline]
+    pub fn from_point(p: Point<T>) -> Self {
         Self::new(p.x, p.y, p.z)
     }
 
@@ -184,6 +185,7 @@ impl<T> Vector<T> {
     /// assert_eq!(v1.get(), [1.0, 0.0, 1.0]);
     /// assert_eq!(v2.get(), [2.0, 0.0, 1.0]);
     /// ```
+    #[inline]
     pub fn copy(&self) -> Self
     where
         T: Copy,
@@ -200,6 +202,7 @@ impl<T> Vector<T> {
     /// let v = vector!(2.0, 1.0, 3.0);
     /// assert_eq!(v.get(), [2.0, 1.0, 3.0]);
     /// ```
+    #[inline]
     pub fn get(&self) -> [T; 3]
     where
         T: Copy,
@@ -217,16 +220,12 @@ impl<T> Vector<T> {
     /// assert_eq!(v1.get(), [2.0, 1.0, 3.0]);
     /// v1.set([1.0, 2.0, 4.0]);
     /// assert_eq!(v1.get(), [1.0, 2.0, 4.0]);
-    ///
-    /// let v2 = Vector::new(-2.0, 5.0, 1.0);
-    /// v1.set(v2);
-    /// assert_eq!(v1.get(), [-2.0, 5.0, 1.0]);
     /// ```
-    pub fn set(&mut self, v: impl Into<Vector<T>>) {
-        let v = v.into();
-        self.x = v.x;
-        self.y = v.y;
-        self.z = v.z;
+    #[inline]
+    pub fn set(&mut self, [x, y, z]: [T; 3]) {
+        self.x = x;
+        self.y = y;
+        self.z = z;
     }
 
     /// Returns an iterator over the `Vector`s coordinates `[x, y, z]`.
@@ -235,7 +234,7 @@ impl<T> Vector<T> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v: Vector<f64> = vector!(1.0, 2.0, -4.0);
+    /// let v: Vector = vector!(1.0, 2.0, -4.0);
     /// let mut iterator = v.iter();
     ///
     /// assert_eq!(iterator.next(), Some(&1.0));
@@ -253,7 +252,7 @@ impl<T> Vector<T> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let mut v: Vector<f64> = vector!(1.0, 2.0, -4.0);
+    /// let mut v: Vector = vector!(1.0, 2.0, -4.0);
     /// for value in v.iter_mut() {
     ///     *value *= 2.0;
     /// }
@@ -263,7 +262,7 @@ impl<T> Vector<T> {
         IterMut::new(self)
     }
 
-    /// Convert [Vector] to another primitive type using the `as` operator.
+    /// Convert `Vector<T>` to another primitive type using the `as` operator.
     #[inline]
     pub fn as_<U>(self) -> Vector<U>
     where
@@ -284,6 +283,7 @@ impl<T: Num> Vector<T> {
     /// let v = Vector::new_x(2.1);
     /// assert_eq!(v.get(), [2.1, 0.0, 0.0]);
     /// ```
+    #[inline]
     pub fn new_x(x: T) -> Self {
         Self::new(x, T::zero(), T::zero())
     }
@@ -297,6 +297,7 @@ impl<T: Num> Vector<T> {
     /// let v = Vector::new_xy(2.1, 3.5);
     /// assert_eq!(v.get(), [2.1, 3.5, 0.0]);
     /// ```
+    #[inline]
     pub fn new_xy(x: T, y: T) -> Self {
         Self::new(x, y, T::zero())
     }
@@ -318,10 +319,11 @@ where
     /// let v2 = Vector::reflection(v1, normal);
     /// assert_eq!(v2.get(), [-1.0, 1.0, 0.0]);
     /// ```
+    #[inline]
     pub fn reflection<V>(v: V, normal: V) -> Self
     where
-        V: Into<Vector<T>>,
         T: MulAssign,
+        V: Into<Vector<T>>,
     {
         let mut v = v.into();
         v.reflect(normal);
@@ -338,9 +340,11 @@ where
     /// let v2 = Vector::normalized(v1);
     /// assert_eq!(v2.get(), [0.0, 1.0, 0.0]);
     /// ```
-    pub fn normalized(v: impl Into<Vector<T>>) -> Self
+    #[inline]
+    pub fn normalized<V>(v: V) -> Self
     where
         T: MulAssign,
+        V: Into<Vector<T>>,
     {
         let mut v = v.into();
         v.normalize();
@@ -353,7 +357,7 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v: Vector<f64> = Vector::random_1d();
+    /// let v: Vector = Vector::random_1d();
     /// assert!(v.x > -1.0 && v.x < 1.0);
     /// assert_eq!(v.y, 0.0);
     /// assert_eq!(v.z, 0.0);
@@ -363,6 +367,7 @@ where
     /// // (-0.4695841, 0.0, 0.0) or
     /// // (0.6091097, 0.0, 0.0)
     /// ```
+    #[inline]
     pub fn random_1d() -> Self
     where
         T: SampleUniform,
@@ -376,7 +381,7 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v: Vector<f64> = Vector::random_2d();
+    /// let v: Vector = Vector::random_2d();
     /// assert!(v.x > -1.0 && v.x < 1.0);
     /// assert!(v.y > -1.0 && v.y < 1.0);
     /// assert_eq!(v.z, 0.0);
@@ -386,6 +391,7 @@ where
     /// // (-0.4695841, -0.14366731, 0.0) or
     /// // (0.6091097, -0.22805278, 0.0)
     /// ```
+    #[inline]
     pub fn random_2d() -> Self
     where
         T: SampleUniform,
@@ -402,7 +408,7 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v: Vector<f64> = Vector::random_3d();
+    /// let v: Vector = Vector::random_3d();
     /// assert!(v.x > -1.0 && v.x < 1.0);
     /// assert!(v.y > -1.0 && v.y < 1.0);
     /// assert!(v.z > -1.0 && v.z < 1.0);
@@ -412,6 +418,7 @@ where
     /// // (-0.4695841, -0.14366731, -0.8711202) or
     /// // (0.6091097, -0.22805278, -0.7595902)
     /// ```
+    #[inline]
     pub fn random_3d() -> Self
     where
         T: SampleUniform,
@@ -433,6 +440,7 @@ where
     /// let v = vector!(1.0, 1.0, 0.0);
     /// assert_eq!(v.to_vec(), vec![1.0, 1.0, 0.0]);
     /// ```
+    #[inline]
     pub fn to_vec(self) -> Vec<T> {
         vec![self.x, self.y, self.z]
     }
@@ -444,12 +452,13 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v: Vector<f64> = Vector::from_angle(30.0, 15.0);
+    /// let v: Vector = Vector::from_angle(30.0, 15.0);
     /// let abs_difference_x = (v.x - 2.3137).abs();
     /// let abs_difference_y = (v.y - (-14.8204)).abs();
     /// assert!(abs_difference_x <= 1e-4);
     /// assert!(abs_difference_y <= 1e-4);
     /// ```
+    #[inline]
     pub fn from_angle(angle: T, length: T) -> Self {
         let (sin, cos) = angle.sin_cos();
         Self::new(length * cos, length * sin, T::zero())
@@ -463,10 +472,11 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v: Vector<f64> = vector!(1.0, 2.0, 3.0);
+    /// let v: Vector = vector!(1.0, 2.0, 3.0);
     /// let abs_difference = (v.mag() - 3.7416).abs();
     /// assert!(abs_difference <= 1e-4);
     /// ```
+    #[inline]
     pub fn mag(&self) -> T {
         self.mag_sq().sqrt()
     }
@@ -483,6 +493,7 @@ where
     /// let v = vector!(1.0, 2.0, 3.0);
     /// assert_eq!(v.mag_sq(), 14.0);
     /// ```
+    #[inline]
     pub fn mag_sq(&self) -> T {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
@@ -498,7 +509,8 @@ where
     /// let dot_product = v1.dot(v2);
     /// assert_eq!(dot_product, 20.0);
     /// ```
-    pub fn dot(&self, v: impl Into<Vector<T>>) -> T {
+    #[inline]
+    pub fn dot<V: Into<Vector<T>>>(&self, v: V) -> T {
         let v = v.into();
         self.x * v.x + self.y * v.y + self.z * v.z
     }
@@ -515,7 +527,8 @@ where
     /// let cross = v1.cross(v2);
     /// assert_eq!(cross.get(), [0.0, 0.0, 0.0]);
     /// ```
-    pub fn cross(&self, v: impl Into<Vector<T>>) -> Self {
+    #[inline]
+    pub fn cross<V: Into<Vector<T>>>(&self, v: V) -> Self {
         let v = v.into();
         Self::new(
             self.y * v.z - self.z * v.y,
@@ -536,7 +549,8 @@ where
     /// assert_eq!(v.x, -4.0);
     /// assert_eq!(v.y, 6.0);
     /// ```
-    pub fn reflect(&mut self, normal: impl Into<Vector<T>>)
+    #[inline]
+    pub fn reflect<V: Into<Vector<T>>>(&mut self, normal: V)
     where
         T: MulAssign,
     {
@@ -550,7 +564,7 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let mut v: Vector<f64> = vector!(10.0, 20.0, 2.0);
+    /// let mut v: Vector = vector!(10.0, 20.0, 2.0);
     /// v.set_mag(10.0);
     ///
     /// let abs_difference_mag = (v.mag() - 10.0).abs();
@@ -563,6 +577,7 @@ where
     /// assert!(abs_difference_y <= 1e-4);
     /// assert!(abs_difference_z <= 1e-4);
     /// ```
+    #[inline]
     pub fn set_mag(&mut self, mag: T)
     where
         T: MulAssign,
@@ -577,14 +592,15 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v1: Vector<f64> = vector!(1.0, 0.0, 0.0);
-    /// let v2: Vector<f64> = vector!(0.0, 1.0, 0.0);
+    /// let v1: Vector = vector!(1.0, 0.0, 0.0);
+    /// let v2: Vector = vector!(0.0, 1.0, 0.0);
     /// let dist = v1.dist(v2);
     ///
     /// let abs_difference = (dist - std::f64::consts::SQRT_2).abs();
     /// assert!(abs_difference <= 1e-4);
     /// ```
-    pub fn dist(&self, v: impl Into<Vector<T>>) -> T {
+    #[inline]
+    pub fn dist<V: Into<Vector<T>>>(&self, v: V) -> T {
         let v = v.into();
         (*self - v).mag()
     }
@@ -595,7 +611,7 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let mut v: Vector<f64> = vector!(10.0, 20.0, 2.0);
+    /// let mut v: Vector = vector!(10.0, 20.0, 2.0);
     /// v.normalize();
     ///
     /// let abs_difference_mag = (v.mag() - 1.0).abs();
@@ -609,6 +625,7 @@ where
     /// assert!(abs_difference_y <= 1e-4);
     /// assert!(abs_difference_z <= 1e-4);
     /// ```
+    #[inline]
     pub fn normalize(&mut self)
     where
         T: MulAssign,
@@ -626,7 +643,7 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let mut v: Vector<f64> = vector!(10.0, 20.0, 2.0);
+    /// let mut v: Vector = vector!(10.0, 20.0, 2.0);
     /// v.limit(5.0);
     ///
     /// let abs_difference_x = (v.x - 2.2271).abs();
@@ -637,6 +654,7 @@ where
     /// assert!(abs_difference_y <= 1e-4, "y {}", abs_difference_y);
     /// assert!(abs_difference_z <= 1e-4, "z {}", abs_difference_z);
     /// ```
+    #[inline]
     pub fn limit(&mut self, max: T)
     where
         T: DivAssign + MulAssign,
@@ -654,10 +672,11 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v: Vector<f64> = vector!(10.0, 10.0);
+    /// let v: Vector = vector!(10.0, 10.0);
     /// let heading = v.heading();
     /// assert_eq!(heading.to_degrees(), 45.0);
     /// ```
+    #[inline]
     pub fn heading(&self) -> T {
         self.y.atan2(self.x)
     }
@@ -669,7 +688,7 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let mut v: Vector<f64> = vector!(10.0, 20.0);
+    /// let mut v: Vector = vector!(10.0, 20.0);
     /// v.rotate(std::f64::consts::FRAC_PI_2);
     ///
     /// let abs_difference_x = (v.x - (-20.0)).abs();
@@ -678,6 +697,7 @@ where
     /// assert!(abs_difference_x <= 1e-4);
     /// assert!(abs_difference_y <= 1e-4);
     /// ```
+    #[inline]
     pub fn rotate(&mut self, angle: T) {
         let new_heading = self.heading() + angle;
         let mag = self.mag();
@@ -697,7 +717,8 @@ where
     /// let angle = v1.angle_between(v2);
     /// assert_eq!(angle, std::f64::consts::FRAC_PI_2);
     /// ```
-    pub fn angle_between(&self, v: impl Into<Vector<T>>) -> T {
+    #[inline]
+    pub fn angle_between<V: Into<Vector<T>>>(&self, v: V) -> T {
         let v = v.into();
         // This should range from -1.0 to 1.0, inclusive but could possibly land outside this range
         // due to floating-point rounding, so we'll need to clamp it to the correct range.
@@ -717,7 +738,7 @@ where
     /// let v3 = v1.lerp(v2, 0.5);
     /// assert_eq!(v3.get(), [2.0, 2.0, 0.0]);
     /// ```
-    pub fn lerp(&self, v: impl Into<Vector<T>>, amt: T) -> Self {
+    pub fn lerp<V: Into<Vector<T>>>(&self, v: V, amt: T) -> Self {
         let lerp = |start, stop, amt| amt * (stop - start) + start;
         let amt = clamp(amt, T::zero(), T::one());
 
@@ -791,7 +812,7 @@ impl<T> IntoIterator for Vector<T> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v: Vector<f64> = vector!(1.0, 2.0, -4.0);
+    /// let v: Vector = vector!(1.0, 2.0, -4.0);
     /// let mut iterator = v.into_iter();
     ///
     /// assert_eq!(iterator.next(), Some(1.0));
@@ -812,7 +833,7 @@ impl<T> IntoIterator for Vector<T> {
 ///
 /// ```
 /// # use pix_engine::prelude::*;
-/// let v: Vector<f64> = vector!(1.0, 2.0, -4.0);
+/// let v: Vector = vector!(1.0, 2.0, -4.0);
 /// let mut iterator = v.iter();
 ///
 /// assert_eq!(iterator.next(), Some(&1.0));
@@ -851,6 +872,7 @@ impl<'a, T> Iterator for Iter<'a, T> {
 impl<'a, T> IntoIterator for &'a Vector<T> {
     type Item = &'a T;
     type IntoIter = Iter<'a, T>;
+    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }

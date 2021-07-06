@@ -69,7 +69,7 @@ impl<T> Ellipse<T> {
         vec![self.x, self.y, self.width, self.height]
     }
 
-    /// Convert [Ellipse] to another primitive type using the `as` operator.
+    /// Convert `Ellipse<T>` to another primitive type using the `as` operator.
     #[inline]
     pub fn as_<U>(self) -> Ellipse<U>
     where
@@ -234,7 +234,7 @@ impl<T> Circle<T> {
         vec![self.x, self.y, self.radius]
     }
 
-    /// Convert [Circle] to another primitive type using the `as` operator.
+    /// Convert `Circle<T>` to another primitive type using the `as` operator.
     #[inline]
     pub fn as_<U>(self) -> Circle<U>
     where

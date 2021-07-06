@@ -8,11 +8,19 @@ use std::{borrow::Cow, iter::Iterator};
 
 /// Trait for objects that can be drawn to the screen.
 pub trait Draw {
-    /// Draw shape to the current [`PixState`] canvas.
+    /// Draw shape to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()>;
 }
 
 impl PixState {
+    /// Clears the render target to the current background [Color] set by [PixState::background].
+    pub fn clear(&mut self) {
+        let color = self.settings.background;
+        self.renderer.set_draw_color(self.settings.background);
+        self.renderer.clear();
+        self.renderer.set_draw_color(color);
+    }
+
     /// Draw text to the current canvas.
     pub fn text<P, S>(&mut self, p: P, text: S) -> PixResult<()>
     where
@@ -25,7 +33,7 @@ impl PixState {
             .text(p.into(), text.as_ref(), s.fill, s.stroke)?)
     }
 
-    /// Draw a [`Point`] to the current canvas.
+    /// Draw a [Point] to the current canvas.
     pub fn point<P>(&mut self, p: P) -> PixResult<()>
     where
         P: Into<Point>,
@@ -37,7 +45,7 @@ impl PixState {
         }
     }
 
-    /// Draw a line to the current canvas.
+    /// Draw a [Line] to the current canvas.
     pub fn line<L>(&mut self, line: L) -> PixResult<()>
     where
         L: Into<Line>,
@@ -49,7 +57,7 @@ impl PixState {
         }
     }
 
-    /// Draw a triangle to the current canvas.
+    /// Draw a [Triangle] to the current canvas.
     pub fn triangle<T>(&mut self, tri: T) -> PixResult<()>
     where
         T: Into<Triangle>,
@@ -58,7 +66,7 @@ impl PixState {
         Ok(self.renderer.triangle(tri.into().as_(), s.fill, s.stroke)?)
     }
 
-    /// Draw a square to the current canvas.
+    /// Draw a [Square](Rect) to the current canvas.
     pub fn square<R>(&mut self, square: R) -> PixResult<()>
     where
         R: Into<Rect>,
@@ -66,7 +74,7 @@ impl PixState {
         self.rect(square)
     }
 
-    /// Draw a rectangle to the current canvas.
+    /// Draw a [Rectangle](Rect) to the current canvas.
     pub fn rect<R>(&mut self, rect: R) -> PixResult<()>
     where
         R: Into<Rect>,
@@ -91,7 +99,7 @@ impl PixState {
         Ok(self.renderer.polygon(&vx, &vy, s.fill, s.stroke)?)
     }
 
-    /// Draw a circle to the current canvas.
+    /// Draw a [Circle] to the current canvas.
     pub fn circle<C>(&mut self, circle: C) -> PixResult<()>
     where
         C: Into<Circle>,
@@ -99,7 +107,7 @@ impl PixState {
         self.ellipse(circle.into())
     }
 
-    /// Draw a ellipse to the current canvas.
+    /// Draw a [Ellipse] to the current canvas.
     pub fn ellipse<E>(&mut self, ellipse: E) -> PixResult<()>
     where
         E: Into<Ellipse>,
@@ -116,7 +124,7 @@ impl PixState {
         Ok(self.renderer.ellipse(ellipse, s.fill, s.stroke)?)
     }
 
-    /// Draw an image to the current canvas.
+    /// Draw an [Image] to the current canvas.
     pub fn image<P>(&mut self, position: P, img: &Image) -> PixResult<()>
     where
         P: Into<Point<i32>>,
@@ -124,7 +132,7 @@ impl PixState {
         Ok(self.renderer.image(position.into(), img)?)
     }
 
-    /// Draw a resized image to the current canvas.
+    /// Draw a resized [Image] to the current canvas.
     pub fn image_resized<R>(&mut self, dst_rect: R, img: &Image) -> PixResult<()>
     where
         R: Into<Rect<i32>>,

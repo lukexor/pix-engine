@@ -1,10 +1,10 @@
-//! Integration tests using `PixEngine` must be run on the main thread.
+//! Integration tests using [PixEngine] must be run on the main thread.
 //!
 //! ```no_run
 //! cargo test engine -- --test-threads=1 --ignored
 //! ```
 //!
-//! This is due to SDL2 context needing to be on the main thread.
+//! This is due to `SDL2` context needing to be on the main thread.
 
 use pix_engine::prelude::*;
 

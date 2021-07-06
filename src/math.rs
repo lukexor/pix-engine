@@ -31,15 +31,16 @@ lazy_static! {
 }
 
 /// Returns a random number within a range.
-pub fn random_rng<T>(val: impl Into<Range<T>>) -> T
+pub fn random_rng<T, R>(val: R) -> T
 where
-    T: Num + SampleUniform + PartialOrd,
+    T: SampleUniform + PartialOrd,
+    R: Into<Range<T>>,
 {
     let val = val.into();
     rand::thread_rng().gen_range(val)
 }
 
-/// Returns a random number between zero and the given value.
+/// Returns a random number between `0` and a given `value`.
 pub fn random<T>(val: T) -> T
 where
     T: Num + SampleUniform + PartialOrd,
@@ -53,7 +54,10 @@ where
 
 /// Returns the [Perlin noise](https://en.wikipedia.org/wiki/Perlin_noise) value at specified coordinates.
 #[allow(clippy::many_single_char_names)]
-pub fn noise(v: impl Into<Vector<Scalar>>) -> Scalar {
+pub fn noise<V>(v: V) -> Scalar
+where
+    V: Into<Vector<Scalar>>,
+{
     let v = v.into();
 
     let x = v.x.abs();

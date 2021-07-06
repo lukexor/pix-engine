@@ -111,7 +111,7 @@ impl Default for Settings {
 }
 
 impl PixState {
-    /// Sets the `Color` value used to clear the canvas.
+    /// Sets the [Color] value used to clear the canvas.
     pub fn background<C>(&mut self, color: C)
     where
         C: Into<Color>,
@@ -119,7 +119,7 @@ impl PixState {
         self.settings.background = color.into();
     }
 
-    /// Sets the `Color` value used to fill shapes drawn on the canvas.
+    /// Sets the [Color] value used to fill shapes drawn on the canvas.
     pub fn fill<C>(&mut self, color: C)
     where
         C: Into<Color>,
@@ -132,7 +132,7 @@ impl PixState {
         self.settings.fill = None;
     }
 
-    /// Sets the `Color` value used to outline shapes drawn on the canvas.
+    /// Sets the [Color] value used to outline shapes drawn on the canvas.
     pub fn stroke<C>(&mut self, color: C)
     where
         C: Into<Color>,
@@ -145,7 +145,7 @@ impl PixState {
         self.settings.stroke = None;
     }
 
-    /// Sets the clip rect used by the renderer to draw to the current canvas.
+    /// Sets the clip [Rect] used by the renderer to draw to the current canvas.
     pub fn clip<R>(&mut self, rect: R)
     where
         R: Into<Rect<i32>>,
@@ -153,7 +153,7 @@ impl PixState {
         self.renderer.clip(Some(rect.into()));
     }
 
-    /// Clears the clip rect used by the renderer to draw to the current canvas.
+    /// Clears the clip [Rect] used by the renderer to draw to the current canvas.
     pub fn no_clip(&mut self) {
         self.renderer.clip(None);
     }
@@ -216,12 +216,14 @@ impl PixState {
         Ok(self.renderer.font_family(family)?)
     }
 
-    /// Change the way parameters are interpreted for drawing squares and rectangles.
+    /// Change the way parameters are interpreted for drawing [Square](Rect)s and
+    /// [Rectangle](Rect)s.
     pub fn rect_mode(&mut self, mode: DrawMode) {
         self.settings.rect_mode = mode;
     }
 
-    /// Change the way parameters are interpreted for drawing circles and ellipses.
+    /// Change the way parameters are interpreted for drawing [Circle](crate::prelude::Circle)s and
+    /// [Ellipse](crate::prelude::Ellipse)s.
     pub fn ellipse_mode(&mut self, mode: DrawMode) {
         self.settings.ellipse_mode = mode;
     }
