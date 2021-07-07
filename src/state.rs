@@ -179,9 +179,8 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use Error::*;
         match self {
-            IoError(err) => err.fmt(f),
-            RendererError(err) => err.fmt(f),
             Other(err) => write!(f, "image error: {}", err),
+            err => err.fmt(f),
         }
     }
 }

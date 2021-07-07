@@ -7,7 +7,7 @@ use std::{
     ffi::{OsStr, OsString},
     fmt,
     fs::File,
-    io::{self, BufReader},
+    io::{self, BufReader, BufWriter},
     path::Path,
     result,
 };
@@ -29,6 +29,8 @@ pub enum Error {
     IoError(io::Error),
     /// [png] decoding errors.
     DecodingError(png::DecodingError),
+    /// [png] encoding errors.
+    EncodingError(png::EncodingError),
     /// Unknown error.
     Other(Cow<'static, str>),
 }
@@ -133,11 +135,16 @@ impl Image {
     }
 
     /// Save the `Image` to a [png] file.
-    pub fn save<P>(&self, _path: P) -> Result<()>
+    pub fn save<P>(&self, path: P) -> PixResult<()>
     where
         P: AsRef<Path>,
     {
-        todo!("save image");
+        let path = path.as_ref();
+        let png_file = BufWriter::new(std::fs::File::create(&path)?);
+        let mut png = png::Encoder::new(png_file, self.width, self.height);
+        png.set_color(png::ColorType::RGBA);
+        let mut writer = png.write_header()?;
+        Ok(writer.write_image_data(self.bytes())?)
     }
 
     /// Returns the `Image` [TextureId].
@@ -211,13 +218,7 @@ impl PixState {
         let mut data = vec![0x00; info.buffer_size()];
         reader.next_frame(&mut data)?;
         let format = info.color_type.into();
-        Ok(Image {
-            width: info.width,
-            height: info.height,
-            data,
-            format,
-            texture_id: self.create_texture(info.width, info.height, format)?,
-        })
+        self.create_image_from_bytes(info.width, info.height, &data, format)
     }
 }
 
@@ -228,9 +229,8 @@ impl std::fmt::Display for Error {
             InvalidFileType(ext) => write!(f, "invalid file type: {:?}", ext),
             InvalidColorType(color_type) => write!(f, "invalid color type: {:?}", color_type),
             InvalidBitDepth(depth) => write!(f, "invalid bit depth: {:?}", depth),
-            IoError(err) => err.fmt(f),
-            DecodingError(err) => err.fmt(f),
             Other(err) => write!(f, "renderer error: {}", err),
+            err => err.fmt(f),
         }
     }
 }
@@ -261,5 +261,11 @@ impl From<io::Error> for PixError {
 impl From<png::DecodingError> for PixError {
     fn from(err: png::DecodingError) -> Self {
         Self::ImageError(Error::DecodingError(err))
+    }
+}
+
+impl From<png::EncodingError> for PixError {
+    fn from(err: png::EncodingError) -> Self {
+        Self::ImageError(Error::EncodingError(err))
     }
 }

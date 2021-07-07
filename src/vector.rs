@@ -1105,7 +1105,7 @@ where
     }
 }
 
-// Required because of orphan rules
+// Required because of orphan rules.
 macro_rules! impl_primitive_mul {
     ($($target:ty),*) => {
         $(
