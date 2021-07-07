@@ -16,7 +16,7 @@ pub(crate) struct Environment {
     pub(crate) focused: bool,
     pub(crate) focused_window: Option<WindowId>,
     pub(crate) delta_time: f64,
-    pub(crate) frame_rate: f64,
+    pub(crate) frame_rate: usize,
     pub(crate) target_frame_rate: Option<f64>,
     pub(crate) frame_count: usize,
     pub(crate) quit: bool,
@@ -28,7 +28,7 @@ impl Default for Environment {
             focused: false,
             focused_window: None,
             delta_time: 0.0,
-            frame_rate: 0.0,
+            frame_rate: 0,
             target_frame_rate: None,
             frame_count: 0,
             quit: false,
@@ -76,14 +76,14 @@ impl PixState {
     }
 
     /// The average frames per second rendered.
-    pub fn frame_rate(&self) -> f64 {
+    pub fn frame_rate(&self) -> usize {
         self.env.frame_rate
     }
 
     /// Set a target frame rate to render at, controls how often
     /// [on_update](crate::prelude::AppState::on_update) is called.
-    pub fn set_frame_rate(&mut self, rate: f64) {
-        self.env.target_frame_rate = Some(rate);
+    pub fn set_frame_rate(&mut self, rate: usize) {
+        self.env.target_frame_rate = Some(rate as f64);
     }
 
     /// The dimensions of the current canvas as `(width, height)`.

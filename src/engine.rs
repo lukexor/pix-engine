@@ -5,12 +5,17 @@ use crate::{
     renderer::{Renderer, RendererSettings, Rendering},
     window::Window,
 };
-use std::time::Instant;
+use std::{
+    collections::VecDeque,
+    time::{Duration, Instant},
+};
 
 #[cfg(not(target_arch = "wasm32"))]
 use crate::{ASSETS, ASSET_DIR};
 #[cfg(not(target_arch = "wasm32"))]
 use std::{fs, io, path::PathBuf};
+
+const ONE_SECOND: Duration = Duration::from_secs(1);
 
 /// Builds a [PixEngine] instance by providing several configration functions.
 #[non_exhaustive]
@@ -130,8 +135,9 @@ impl PixEngineBuilder {
     pub fn build(&self) -> PixEngine {
         PixEngine {
             settings: self.settings.clone(),
+            frames: VecDeque::with_capacity(128),
             last_frame_time: Instant::now(),
-            frame_timer: 1000.0,
+            frame_timer: Duration::from_secs(1),
         }
     }
 }
@@ -141,8 +147,9 @@ impl PixEngineBuilder {
 #[derive(Debug, Clone)]
 pub struct PixEngine {
     settings: RendererSettings,
-    frame_timer: f64,
+    frames: VecDeque<Instant>,
     last_frame_time: Instant,
+    frame_timer: Duration,
 }
 
 impl PixEngine {
@@ -191,17 +198,18 @@ impl PixEngine {
                 }
 
                 let now = Instant::now();
-                let time_since_last = (now - self.last_frame_time).as_millis() as f64;
-                self.frame_timer += time_since_last;
+                let time_since_last = now - self.last_frame_time;
+
+                // Target frame rate
                 let target_delta_time = state
                     .env
                     .target_frame_rate
                     .map(|rate| 1000.0 / rate)
                     .unwrap_or(0.0);
 
-                if state.settings.paused || time_since_last >= target_delta_time {
-                    state.env.frame_rate = 1000.0 / time_since_last;
-                    state.env.delta_time = (now - self.last_frame_time).as_secs_f64();
+                if state.settings.paused || time_since_last.as_millis() as f64 >= target_delta_time
+                {
+                    state.env.delta_time = time_since_last.as_secs_f64();
                     self.last_frame_time = now;
 
                     if !state.settings.paused {
@@ -210,10 +218,20 @@ impl PixEngine {
                     }
                 }
 
-                if state.settings.show_frame_rate && self.frame_timer >= 1000.0 {
-                    self.frame_timer -= 1000.0;
-                    let title = format!("{} - FPS: {:#.2}", state.title(), state.env.frame_rate);
-                    state.renderer.set_title(&title)?;
+                if state.settings.show_frame_rate {
+                    let a_second_ago = now - ONE_SECOND;
+                    while self.frames.front().map_or(false, |&t| t < a_second_ago) {
+                        self.frames.pop_front();
+                    }
+                    self.frames.push_back(now);
+
+                    self.frame_timer += time_since_last;
+                    if self.frame_timer >= ONE_SECOND {
+                        self.frame_timer -= ONE_SECOND;
+                        state.env.frame_rate = self.frames.len();
+                        let title = format!("{} - FPS: {}", state.title(), state.env.frame_rate);
+                        state.renderer.set_title(&title)?;
+                    }
                 }
             }
 
