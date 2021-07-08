@@ -758,13 +758,11 @@ where
     /// # use pix_engine::prelude::*;
     /// let mut v = vector!(200.0, 300.0);
     /// v.wrap_2d(150.0, 400.0, 10.0);
-    /// assert_eq!(v.x, -10.0);
-    /// assert_eq!(v.y, 300.0);
+    /// assert_eq!(v.get(), [-10.0, 300.0, 0.0]);
     ///
-    /// let mut v = vector!(200.0, 300.0);
-    /// v.wrap_2d(300.0, 200.0, 10.0);
-    /// assert_eq!(v.x, 200.0);
-    /// assert_eq!(v.y, -10.0);
+    /// let mut v = vector!(-100.0, 300.0);
+    /// v.wrap_2d(150.0, 400.0, 10.0);
+    /// assert_eq!(v.get(), [160.0, 300.0, 0.0]);
     /// ```
     pub fn wrap_2d(&mut self, width: T, height: T, size: T) {
         if self.x > width + size {
@@ -776,6 +774,38 @@ where
             self.y = -size;
         } else if self.y < -size {
             self.y = height + size;
+        }
+    }
+
+    /// Wraps `Vector` around the given width, height, depth, and size (radius).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut v = vector!(200.0, 300.0, 250.0);
+    /// v.wrap_3d(150.0, 400.0, 200.0, 10.0);
+    /// assert_eq!(v.get(), [-10.0, 300.0, -10.0]);
+    ///
+    /// let mut v = vector!(-100.0, 300.0, 250.0);
+    /// v.wrap_3d(150.0, 400.0, 200.0, 10.0);
+    /// assert_eq!(v.get(), [160.0, 300.0, -10.0]);
+    /// ```
+    pub fn wrap_3d(&mut self, width: T, height: T, depth: T, size: T) {
+        if self.x > width + size {
+            self.x = -size;
+        } else if self.x < -size {
+            self.x = width + size;
+        }
+        if self.y > height + size {
+            self.y = -size;
+        } else if self.y < -size {
+            self.y = height + size;
+        }
+        if self.z > depth + size {
+            self.z = -size;
+        } else if self.z < -size {
+            self.z = depth + size;
         }
     }
 }
