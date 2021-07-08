@@ -40,9 +40,7 @@ pub(crate) trait Window {
     fn title(&self) -> &str;
 
     /// Set the current window title.
-    fn set_title<S>(&mut self, title: S) -> Result<()>
-    where
-        S: AsRef<str>;
+    fn set_title(&mut self, title: &str) -> Result<()>;
 
     /// Dimensions of the primary window as `(width, height)`.
     fn dimensions(&self, id: WindowId) -> Result<(u32, u32)>;

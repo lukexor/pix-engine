@@ -13,8 +13,8 @@ use sdl2::{
     pixels::{Color as SdlColor, PixelFormatEnum as SdlPixelFormat},
     rect::Rect as SdlRect,
     render::{
-        BlendMode as SdlBlendMode, Canvas, Texture as SdlTexture, TextureCreator, TextureQuery,
-        TextureValueError, UpdateTextureError,
+        BlendMode as SdlBlendMode, Canvas, SdlError, TargetRenderError, Texture as SdlTexture,
+        TextureCreator, TextureQuery, TextureValueError, UpdateTextureError,
     },
     surface::Surface,
     ttf::{Font, FontError, FontStyle as SdlFontStyle, InitError, Sdl2TtfContext},
@@ -157,7 +157,7 @@ impl Rendering for Renderer {
     ) -> Result<TextureId> {
         let texture_id = self.textures.len();
         self.textures
-            .push(self.texture_creator.create_texture_streaming(
+            .push(self.texture_creator.create_texture_target(
                 format.map(|f| f.into()),
                 width,
                 height,
@@ -229,15 +229,6 @@ impl Rendering for Renderer {
     /// Set the font family for drawing to the current canvas.
     fn font_family(&mut self, family: &str) -> Result<()> {
         // TODO: use size_of
-        // let p = p.into();
-        // let p = match s.rect_mode {
-        //     DrawMode::Corner => p,
-        //     DrawMode::Center => {
-        //         let height = s.font.size as Scalar;
-        //         let width = text.as_ref().len() as Scalar * height;
-        //         point!(p.x - width / 2.0, p.y - height / 2.0)
-        //     }
-        // };
         self.font.0 = PathBuf::from(&family);
         if self.font_cache.get(&self.font).is_none() {
             self.font_cache
@@ -255,17 +246,30 @@ impl Rendering for Renderer {
         _stroke: Option<Color>,
     ) -> Result<()> {
         let font = self.font_cache.get(&self.font);
-        if let (Some(fill), Some(font)) = (fill, font) {
-            let surface = font.render(text).blended(fill)?;
-            let texture = self.texture_creator.create_texture_from_surface(&surface)?;
-            let TextureQuery { width, height, .. } = texture.query();
-            self.canvas.copy(
-                &texture,
-                None,
-                Some(SdlRect::new(pos.x, pos.y, width, height)),
-            )?;
+        match (fill, font) {
+            (Some(fill), Some(font)) => {
+                let surface = font.render(text).blended(fill)?;
+                let texture = self.texture_creator.create_texture_from_surface(&surface)?;
+                let TextureQuery { width, height, .. } = texture.query();
+                Ok(self.canvas.copy(
+                    &texture,
+                    None,
+                    Some(SdlRect::new(pos.x, pos.y, width, height)),
+                )?)
+            }
+            (Some(_), None) => Err(Error::InvalidFont(self.font.0.to_owned())),
+            (None, _) => Ok(()),
         }
-        Ok(())
+    }
+
+    /// Returns the rendered dimensions of the given text using the current font
+    /// as `(width, height)`.
+    fn size_of(&self, text: &str) -> Result<(u32, u32)> {
+        let font = self.font_cache.get(&self.font);
+        match font {
+            Some(font) => Ok(font.size_of(text)?),
+            None => Err(Error::InvalidFont(self.font.0.to_owned())),
+        }
     }
 
     /// Draw a pixel to the current canvas.
@@ -353,13 +357,20 @@ impl Rendering for Renderer {
     }
 
     /// Draw an image to the current canvas.
-    fn image(&mut self, pos: Point<i32>, img: &Image) -> Result<()> {
+    fn image(&mut self, pos: Point<i32>, img: &Image, tint: Option<Color>) -> Result<()> {
         if let Some(texture) = self.textures.get_mut(img.texture_id()) {
             texture.update(
                 None,
                 img.bytes(),
                 img.format().channels() * img.width() as usize,
             )?;
+            if let Some(tint) = tint {
+                self.canvas.with_texture_canvas(texture, |tex_canvas| {
+                    tex_canvas.set_blend_mode(SdlBlendMode::Mod);
+                    tex_canvas.set_draw_color(tint);
+                    let _ = tex_canvas.fill_rect(None);
+                })?;
+            }
             texture.set_blend_mode(self.blend_mode);
             let dst = SdlRect::new(pos.x, pos.y, img.width(), img.height());
             self.canvas.copy(&texture, None, dst)?;
@@ -368,13 +379,25 @@ impl Rendering for Renderer {
     }
 
     /// Draw an image to the current canvas.
-    fn image_resized(&mut self, dst_rect: Rect<i32>, img: &Image) -> Result<()> {
+    fn image_resized(
+        &mut self,
+        dst_rect: Rect<i32>,
+        img: &Image,
+        tint: Option<Color>,
+    ) -> Result<()> {
         if let Some(texture) = self.textures.get_mut(img.texture_id()) {
             texture.update(
                 None,
                 img.bytes(),
                 img.format().channels() * img.width() as usize,
             )?;
+            if let Some(tint) = tint {
+                self.canvas.with_texture_canvas(texture, |canvas| {
+                    canvas.set_blend_mode(SdlBlendMode::Add);
+                    canvas.set_draw_color(tint);
+                    let _ = canvas.fill_rect(None);
+                })?;
+            }
             texture.set_blend_mode(self.blend_mode);
             let dst_rect: SdlRect = dst_rect.into();
             self.canvas.copy(&texture, None, dst_rect)?;
@@ -548,6 +571,22 @@ impl From<TextureValueError> for Error {
             }
             SdlError(s) => Self::Other(Cow::from(s)),
         }
+    }
+}
+
+impl From<TargetRenderError> for Error {
+    fn from(err: TargetRenderError) -> Self {
+        use TargetRenderError::*;
+        match err {
+            NotSupported => Self::Other(Cow::from("Not supported")),
+            SdlError(s) => s.into(),
+        }
+    }
+}
+
+impl From<SdlError> for Error {
+    fn from(err: SdlError) -> Self {
+        Self::Other(Cow::from(err.to_string()))
     }
 }
 

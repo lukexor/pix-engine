@@ -225,7 +225,7 @@ impl AppState for App {
                 s.point(self.canvas_to_screen(x, y, s))?;
             }
         }
-        s.pause(true);
+        s.no_run();
         Ok(())
     }
 }

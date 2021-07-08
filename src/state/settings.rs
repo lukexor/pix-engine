@@ -29,7 +29,7 @@ pub enum DrawMode {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum ArcMode {
     /// Draws arc with fill as an open pie segment.
-    None,
+    Default,
     /// Draws arc with fill as an closed pie segment.
     Pie,
     /// Draws arc with fill as an open semi-circle.
@@ -88,10 +88,15 @@ pub(crate) struct Settings {
     pub(crate) background: Color,
     pub(crate) fill: Option<Color>,
     pub(crate) stroke: Option<Color>,
-    pub(crate) paused: bool,
+    pub(crate) running: bool,
+    pub(crate) run_count: usize,
     pub(crate) show_frame_rate: bool,
     pub(crate) rect_mode: DrawMode,
     pub(crate) ellipse_mode: DrawMode,
+    pub(crate) image_mode: DrawMode,
+    pub(crate) image_tint: Option<Color>,
+    pub(crate) arc_mode: ArcMode,
+    pub(crate) angle_mode: AngleMode,
     pub(crate) blend_mode: BlendMode,
 }
 
@@ -101,10 +106,15 @@ impl Default for Settings {
             background: Color::default(),
             fill: None,
             stroke: None,
-            paused: false,
+            running: true,
+            run_count: 0,
             show_frame_rate: false,
             rect_mode: DrawMode::Corner,
             ellipse_mode: DrawMode::Corner,
+            image_mode: DrawMode::Corner,
+            image_tint: None,
+            arc_mode: ArcMode::Default,
+            angle_mode: AngleMode::Radians,
             blend_mode: BlendMode::None,
         }
     }
@@ -181,14 +191,24 @@ impl PixState {
         todo!("cursor_icon");
     }
 
-    /// Whether the render loop is paused or not.
-    pub fn paused(&mut self) -> bool {
-        self.settings.paused
+    /// Whether the render loop is running or not.
+    pub fn running(&mut self) -> bool {
+        self.settings.running
     }
 
-    /// Pause or unpause the render loop.
-    pub fn pause(&mut self, paused: bool) {
-        self.settings.paused = paused;
+    /// Unpause the render loop.
+    pub fn run(&mut self) {
+        self.settings.running = true;
+    }
+
+    /// Pause the render loop.
+    pub fn no_run(&mut self) {
+        self.settings.running = false;
+    }
+
+    /// Run the render loop N times.
+    pub fn run_times(&mut self, n: usize) {
+        self.settings.run_count = n;
     }
 
     /// Set whether to show the current frame rate per second in the title or not.
@@ -222,10 +242,37 @@ impl PixState {
         self.settings.rect_mode = mode;
     }
 
-    /// Change the way parameters are interpreted for drawing [Circle](crate::prelude::Circle)s and
-    /// [Ellipse](crate::prelude::Ellipse)s.
+    /// Change the way parameters are interpreted for drawing [Circle]s and
+    /// [Ellipse]s.
+    ///
+    /// [Circle]: crate::prelude::Circle
+    /// [Ellipse]: crate::prelude::Ellipse
     pub fn ellipse_mode(&mut self, mode: DrawMode) {
         self.settings.ellipse_mode = mode;
+    }
+
+    /// Change the way parameters are interpreted for drawing [Image]s.
+    pub fn image_mode(&mut self, mode: DrawMode) {
+        self.settings.image_mode = mode;
+    }
+
+    /// Add a color tint to [Image]s when drawing.
+    pub fn image_tint<C>(&mut self, tint: C)
+    where
+        C: Into<Option<Color>>,
+    {
+        let tint = tint.into();
+        self.settings.image_tint = tint;
+    }
+
+    /// Change the way arcs are drawn.
+    pub fn arc_mode(&mut self, mode: ArcMode) {
+        self.settings.arc_mode = mode;
+    }
+
+    /// Change the way angles are interprted for matrix transformations.
+    pub fn angle_mode(&mut self, mode: AngleMode) {
+        self.settings.angle_mode = mode;
     }
 
     /// Change the way textures are blended together.

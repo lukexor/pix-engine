@@ -207,14 +207,16 @@ impl PixEngine {
                     .map(|rate| 1000.0 / rate)
                     .unwrap_or(0.0);
 
-                if state.settings.paused || time_since_last.as_millis() as f64 >= target_delta_time
-                {
+                if time_since_last.as_millis() as f64 >= target_delta_time {
                     state.env.delta_time = time_since_last.as_secs_f64();
                     self.last_frame_time = now;
 
-                    if !state.settings.paused {
+                    if state.settings.running || state.settings.run_count > 0 {
                         app.on_update(&mut state)?;
                         state.renderer.present();
+                        if state.settings.run_count > 0 {
+                            state.settings.run_count -= 1;
+                        }
                     }
                 }
 

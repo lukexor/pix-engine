@@ -139,6 +139,10 @@ pub(crate) trait Rendering: Sized {
         stroke: Option<Color>,
     ) -> Result<()>;
 
+    /// Returns the rendered dimensions of the given text using the current font
+    /// as `(width, height)`.
+    fn size_of(&self, text: &str) -> Result<(u32, u32)>;
+
     /// Draw a pixel to the current canvas.
     fn point(&mut self, p: Point<i16>, color: Color) -> Result<()>;
 
@@ -174,10 +178,15 @@ pub(crate) trait Rendering: Sized {
     ) -> Result<()>;
 
     /// Draw an image to the current canvas.
-    fn image(&mut self, position: Point<i32>, img: &Image) -> Result<()>;
+    fn image(&mut self, position: Point<i32>, img: &Image, tint: Option<Color>) -> Result<()>;
 
     /// Draw a resized image to the current canvas.
-    fn image_resized(&mut self, dst_rect: Rect<i32>, img: &Image) -> Result<()>;
+    fn image_resized(
+        &mut self,
+        dst_rect: Rect<i32>,
+        img: &Image,
+        tint: Option<Color>,
+    ) -> Result<()>;
 }
 
 /// The error type for `Renderer` operations.
@@ -193,6 +202,9 @@ pub enum Error {
     WindowError(window::Error),
     /// Invalid text.
     InvalidText(&'static str, NulError),
+    /// Invalid font.
+    #[cfg(not(target_arch = "wasm32"))]
+    InvalidFont(PathBuf),
     /// Invalid Texture.
     InvalidTexture(TextureId),
     /// An overflow occurred.

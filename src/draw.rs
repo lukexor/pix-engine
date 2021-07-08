@@ -28,9 +28,16 @@ impl PixState {
         S: AsRef<str>,
     {
         let s = &self.settings;
-        Ok(self
-            .renderer
-            .text(p.into(), text.as_ref(), s.fill, s.stroke)?)
+        let p = p.into();
+        let text = text.as_ref();
+        let p = match s.rect_mode {
+            DrawMode::Corner => p,
+            DrawMode::Center => {
+                let (width, height) = self.renderer.size_of(text)?;
+                point!(p.x - width as i32 / 2, p.y - height as i32 / 2)
+            }
+        };
+        Ok(self.renderer.text(p, text, s.fill, s.stroke)?)
     }
 
     /// Draw a [Point] to the current canvas.
@@ -84,8 +91,9 @@ impl PixState {
         let rect = match s.rect_mode {
             DrawMode::Corner => rect,
             DrawMode::Center => {
-                let [x, y, width, height]: [i16; 4] = rect.into();
-                rect!(x - width / 2, y - height / 2, width, height)
+                let width = rect.width;
+                let height = rect.height;
+                rect!(rect.x - width / 2, rect.y - height / 2, width, height)
             }
         };
         Ok(self.renderer.rect(rect, s.fill, s.stroke)?)
@@ -117,8 +125,9 @@ impl PixState {
         let ellipse = match s.ellipse_mode {
             DrawMode::Corner => ellipse,
             DrawMode::Center => {
-                let [x, y, width, height]: [i16; 4] = ellipse.into();
-                ellipse!(x - width / 2, y - height / 2, width, height)
+                let width = ellipse.width;
+                let height = ellipse.height;
+                ellipse!(ellipse.x - width / 2, ellipse.y - height / 2, width, height)
             }
         };
         Ok(self.renderer.ellipse(ellipse, s.fill, s.stroke)?)
@@ -129,15 +138,32 @@ impl PixState {
     where
         P: Into<Point<i32>>,
     {
-        Ok(self.renderer.image(position.into(), img)?)
+        let p = position.into();
+        let s = &self.settings;
+        let position = match s.image_mode {
+            DrawMode::Corner => p,
+            DrawMode::Center => point!(p.x - img.width() as i32 / 2, p.y - img.height() as i32 / 2),
+        };
+        Ok(self.renderer.image(position, img, s.image_tint)?)
     }
 
     /// Draw a resized [Image] to the current canvas.
-    pub fn image_resized<R>(&mut self, dst_rect: R, img: &Image) -> PixResult<()>
+    pub fn image_resized<R>(&mut self, rect: R, img: &Image) -> PixResult<()>
     where
         R: Into<Rect<i32>>,
     {
-        Ok(self.renderer.image_resized(dst_rect.into(), img)?)
+        let rect = rect.into();
+        let s = &self.settings;
+        let rect = match s.image_mode {
+            DrawMode::Corner => rect,
+            DrawMode::Center => rect!(
+                rect.x - rect.width / 2,
+                rect.y - rect.height / 2,
+                rect.width,
+                rect.height
+            ),
+        };
+        Ok(self.renderer.image_resized(rect, img, s.image_tint)?)
     }
 
     /// Draw a wireframe to the current canvas.

@@ -40,22 +40,22 @@ impl Window for Renderer {
     }
 
     /// Set the current window title.
-    fn set_title<S>(&mut self, title: S) -> WindowResult<()>
-    where
-        S: AsRef<str>,
-    {
-        let _ = title.as_ref();
+    fn set_title(&mut self, title: &str) -> WindowResult<()> {
+        let _ = title;
         todo!("set_title")
     }
 
-    /// Width of the window.
-    fn window_width(&self) -> WindowResult<u32> {
-        todo!("window_width")
+    /// Dimensions of the primary window as `(width, height)`.
+    fn dimensions(&self, id: WindowId) -> WindowResult<(u32, u32)> {
+        let _ = id;
+        todo!("dimensions")
     }
 
-    /// Height of the window.
-    fn window_height(&self) -> WindowResult<u32> {
-        todo!("window_height")
+    /// Set dimensions of the primary window as `(width, height)`.
+    fn set_dimensions(&mut self, id: WindowId, dimensions: (u32, u32)) -> WindowResult<()> {
+        let _ = id;
+        let _ = dimensions;
+        todo!("set_dimensions")
     }
 
     /// Resize the window.
@@ -93,21 +93,14 @@ impl Rendering for Renderer {
     }
 
     /// Sets the color used by the renderer to draw the current canvas.
-    fn set_draw_color<C>(&mut self, color: C)
-    where
-        C: Into<Color>,
-    {
-        let _ = color.into();
+    fn set_draw_color(&mut self, color: Color) {
+        let _ = color;
         todo!("set_draw_color")
     }
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    fn clip<T, R>(&mut self, rect: R)
-    where
-        T: AsPrimitive<i32>,
-        R: Into<Option<Rect<T>>>,
-    {
-        let _ = rect.into();
+    fn clip(&mut self, rect: Option<Rect<i32>>) {
+        let _ = rect;
         todo!("set_clip_rect")
     }
 
@@ -122,34 +115,23 @@ impl Rendering for Renderer {
         todo!("present")
     }
 
-    /// Width of the current canvas.
-    fn width(&self) -> u32 {
-        todo!("width")
-    }
-
-    /// Height of the current canvas.
-    fn height(&self) -> u32 {
-        todo!("height")
-    }
-
     /// Scale the current canvas.
-    fn scale<T>(&mut self, x: T, y: T) -> Result<()>
-    where
-        T: AsPrimitive<f32>,
-    {
-        let _ = x.as_();
-        let _ = y.as_();
+    fn scale(&mut self, x: f32, y: f32) -> Result<()> {
+        let _ = x;
+        let _ = y;
         todo!("set_scale")
     }
 
     /// Create a texture to draw to.
-    fn create_texture<F>(&mut self, width: u32, height: u32, format: F) -> Result<TextureId>
-    where
-        F: Into<Option<PixelFormat>>,
-    {
+    fn create_texture(
+        &mut self,
+        width: u32,
+        height: u32,
+        format: Option<PixelFormat>,
+    ) -> Result<TextureId> {
         let _ = width;
         let _ = height;
-        let _ = format.into();
+        let _ = format;
         todo!("create_teture")
     }
 
@@ -160,19 +142,16 @@ impl Rendering for Renderer {
     }
 
     /// Update texture with pixel data.
-    fn update_texture<P>(
+    fn update_texture(
         &mut self,
         texture_id: TextureId,
         rect: Option<Rect<i32>>,
-        pixels: P,
+        pixels: &[u8],
         pitch: usize,
-    ) -> Result<()>
-    where
-        P: AsRef<[u8]>,
-    {
+    ) -> Result<()> {
         let _ = texture_id;
         let _ = rect;
-        let _ = pixels.as_ref();
+        let _ = pixels;
         let _ = pitch;
         todo!("update_texture")
     }
@@ -203,118 +182,114 @@ impl Rendering for Renderer {
     }
 
     /// Set the font family for drawing to the current canvas.
-    fn font_family<S>(&mut self, family: S) -> Result<()>
-    where
-        S: Into<String>,
-    {
-        let _ = family.into();
+    fn font_family(&mut self, family: &str) -> Result<()> {
+        let _ = family;
         todo!("font_family")
     }
 
     /// Draw text to the current canvas.
-    fn text<P, T, C>(&mut self, position: P, text: T, fill: C, stroke: C) -> Result<()>
-    where
-        P: Into<Point<Scalar>>,
-        T: AsRef<str>,
-        C: Into<Option<Color>>,
-    {
-        let _ = position.into();
-        let _ = text.as_ref();
-        if let Some(_) = fill.into() {}
-        if let Some(_) = stroke.into() {}
+    fn text(
+        &mut self,
+        position: Point<i32>,
+        text: &str,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()> {
+        let _ = position;
+        let _ = text;
+        if let Some(_) = fill {}
+        if let Some(_) = stroke {}
         todo!("text")
     }
 
+    /// Returns the rendered dimensions of the given text using the current font
+    /// as `(width, height)`.
+    fn size_of(&self, text: &str) -> Result<(u32, u32)> {
+        let _ = text;
+        todo!("size_of")
+    }
+
     /// Draw a pixel to the current canvas.
-    fn point<P, C>(&mut self, p: P, color: C) -> Result<()>
-    where
-        P: Into<Point<Scalar>>,
-        C: Into<Option<Color>>,
-    {
-        if let Some(_) = color.into() {
-            let _ = p.into();
-        }
+    fn point(&mut self, p: Point<i16>, color: Color) -> Result<()> {
+        let _ = p;
+        let _ = color;
         todo!("pixels")
     }
 
     /// Draw a line to the current canvas.
-    fn line<L, C>(&mut self, line: L, color: C) -> Result<()>
-    where
-        L: Into<Line<Scalar>>,
-        C: Into<Option<Color>>,
-    {
-        if let Some(_) = color.into() {
-            let _ = line.into();
-        }
+    fn line(&mut self, line: Line<i16>, color: Color) -> Result<()> {
+        let _ = line;
+        let _ = color;
         todo!("line")
     }
 
     /// Draw a triangle to the current canvas.
-    fn triangle<T, C>(&mut self, tri: T, fill: C, stroke: C) -> Result<()>
-    where
-        T: Into<Triangle<Scalar>>,
-        C: Into<Option<Color>>,
-    {
-        let _ = tri.into();
-        if let Some(_) = fill.into() {}
-        if let Some(_) = stroke.into() {}
+    fn triangle(
+        &mut self,
+        tri: Triangle<i16>,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()> {
+        let _ = tri;
+        if let Some(_) = fill {}
+        if let Some(_) = stroke {}
         todo!("triangle")
     }
 
     /// Draw a rectangle to the current canvas.
-    fn rect<R, C>(&mut self, rect: R, fill: C, stroke: C) -> Result<()>
-    where
-        R: Into<Rect<Scalar>>,
-        C: Into<Option<Color>>,
-    {
-        let _ = rect.into();
-        if let Some(_) = fill.into() {}
-        if let Some(_) = stroke.into() {}
+    fn rect(&mut self, rect: Rect<i16>, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
+        let _ = rect;
+        if let Some(_) = fill {}
+        if let Some(_) = stroke {}
         todo!("rect")
     }
 
     /// Draw a polygon to the current canvas.
-    fn polygon<C, V>(&mut self, vx: V, vy: V, fill: C, stroke: C) -> Result<()>
-    where
-        C: Into<Option<Color>>,
-        V: AsRef<[Scalar]>,
-    {
-        let _: Vec<i16> = vx.as_ref().iter().map(|v| v.round() as i16).collect();
-        let _: Vec<i16> = vy.as_ref().iter().map(|v| v.round() as i16).collect();
-        if let Some(_) = fill.into() {}
-        if let Some(_) = stroke.into() {}
+    fn polygon(
+        &mut self,
+        vx: &[i16],
+        vy: &[i16],
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()> {
+        let _ = vx;
+        let _ = vy;
+        if let Some(_) = fill {}
+        if let Some(_) = stroke {}
         todo!("polygon")
     }
 
     /// Draw a ellipse to the current canvas.
-    fn ellipse<E, C>(&mut self, ellipse: E, fill: C, stroke: C) -> Result<()>
-    where
-        E: Into<Ellipse<Scalar>>,
-        C: Into<Option<Color>>,
-    {
-        let _ = ellipse.into();
-        if let Some(_) = fill.into() {}
-        if let Some(_) = stroke.into() {}
+    fn ellipse(
+        &mut self,
+        ellipse: Ellipse<i16>,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()> {
+        let _ = ellipse;
+        if let Some(_) = fill {}
+        if let Some(_) = stroke {}
         todo!("ellipse")
     }
 
     /// Draw an image to the current canvas.
-    fn image<P>(&mut self, position: P, img: &Image) -> Result<()>
-    where
-        P: Into<Point<Scalar>>,
-    {
-        let _ = position.into();
+    fn image(&mut self, position: Point<i32>, img: &Image, tint: Option<Color>) -> Result<()> {
+        let _ = position;
         let _ = img.texture_id();
+        let _ = tint;
         todo!("image")
     }
 
     /// Draw a resized image to the current canvas.
-    fn image_resized<R>(&mut self, dst_rect: R, img: &Image) -> Result<()>
-    where
-        R: Into<Rect<Scalar>>,
-    {
-        let _ = dst_rect.into();
+    fn image_resized(
+        &mut self,
+        dst_rect: Rect<i32>,
+        img: &Image,
+        tint: Option<Color>,
+    ) -> Result<()> {
+        let _ = dst_rect;
         let _ = img.texture_id();
+        let _ = tint;
         todo!("image_resized")
     }
 }

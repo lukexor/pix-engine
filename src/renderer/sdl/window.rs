@@ -28,11 +28,8 @@ impl Window for Renderer {
     }
 
     /// Set the current window title.
-    fn set_title<S>(&mut self, title: S) -> Result<()>
-    where
-        S: AsRef<str>,
-    {
-        Ok(self.canvas.window_mut().set_title(title.as_ref())?)
+    fn set_title(&mut self, title: &str) -> Result<()> {
+        Ok(self.canvas.window_mut().set_title(title)?)
     }
 
     /// Set dimensions of the primary window as `(width, height)`.

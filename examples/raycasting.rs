@@ -274,7 +274,7 @@ impl AppState for RayScene {
         self.convert_edges_to_poly_map()?;
 
         self.light = s.create_image_from_file(PathBuf::from(ASSET_DIR).join("light.png"))?;
-        s.blend_mode(BlendMode::Mod);
+        s.image_tint(color![255, 255, 153]);
 
         Ok(())
     }
@@ -305,7 +305,9 @@ impl AppState for RayScene {
             s.square([p.x, p.y, BLOCK_SIZE as Scalar + 1.0])?;
         }
 
+        s.blend_mode(BlendMode::Mod);
         s.image([mouse.x - 255, mouse.y - 255], &self.light)?;
+        s.blend_mode(BlendMode::None);
 
         Ok(())
     }
