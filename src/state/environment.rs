@@ -3,7 +3,6 @@
 //! [PixEngine]: crate::prelude::PixEngine
 use crate::{
     prelude::{PixResult, PixState, WindowBuilder, WindowId},
-    renderer::Rendering,
     window::Window,
 };
 #[cfg(feature = "serde")]
@@ -86,19 +85,53 @@ impl PixState {
         self.env.target_frame_rate = Some(rate as f64);
     }
 
-    /// The dimensions of the current canvas as `(width, height)`.
+    /// The dimensions of the primary window as `(width, height)`.
     pub fn dimensions(&self) -> (u32, u32) {
-        (self.renderer.width(), self.renderer.height())
+        // SAFETY: Primary window_id should always exist
+        let window_id = self.window_id();
+        self.renderer.dimensions(window_id).unwrap()
     }
 
-    /// The width of the current canvas.
+    /// Set the dimensions of the primary window from `(width, height)`.
+    pub fn set_dimensions(&mut self, dimensions: (u32, u32)) {
+        // SAFETY: Primary window_id should always exist
+        let window_id = self.window_id();
+        self.renderer.set_dimensions(window_id, dimensions).unwrap()
+    }
+
+    /// The width of the primary window.
     pub fn width(&self) -> u32 {
-        self.renderer.width()
+        // SAFETY: Primary window_id should always exist
+        let window_id = self.window_id();
+        let (width, _) = self.renderer.dimensions(window_id).unwrap();
+        width
     }
 
-    /// The height of the current canvas.
+    /// Set the width of the primary window.
+    pub fn set_width(&mut self, width: u32) {
+        let window_id = self.window_id();
+        // SAFETY: Primary window_id should always exist
+        let (_, height) = self.renderer.dimensions(window_id).unwrap();
+        self.renderer
+            .set_dimensions(window_id, (width, height))
+            .unwrap();
+    }
+
+    /// The height of the primary window.
     pub fn height(&self) -> u32 {
-        self.renderer.height()
+        // SAFETY: Primary window_id should always exist
+        let (_, height) = self.renderer.dimensions(self.window_id()).unwrap();
+        height
+    }
+
+    /// Set the height of the primary window.
+    pub fn set_height(&mut self, height: u32) {
+        let window_id = self.window_id();
+        // SAFETY: Primary window_id should always exist
+        let (width, _) = self.renderer.dimensions(window_id).unwrap();
+        self.renderer
+            .set_dimensions(window_id, (width, height))
+            .unwrap();
     }
 
     /// Trigger exiting of the game loop.

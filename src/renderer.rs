@@ -75,12 +75,6 @@ pub(crate) trait Rendering: Sized {
     /// Creates a new Renderer instance.
     fn new(settings: &RendererSettings) -> Result<Self>;
 
-    /// Width of the current canvas.
-    fn width(&self) -> u32;
-
-    /// Height of the current canvas.
-    fn height(&self) -> u32;
-
     /// Clears the current canvas to the given clear color
     fn clear(&mut self);
 

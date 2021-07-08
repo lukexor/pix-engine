@@ -143,18 +143,6 @@ impl Rendering for Renderer {
         self.canvas.present();
     }
 
-    /// Width of the current canvas.
-    fn width(&self) -> u32 {
-        let (width, _) = self.canvas.output_size().unwrap_or((0, 0));
-        width
-    }
-
-    /// Height of the current canvas.
-    fn height(&self) -> u32 {
-        let (_, height) = self.canvas.output_size().unwrap_or((0, 0));
-        height
-    }
-
     /// Scale the current canvas.
     fn scale(&mut self, x: f32, y: f32) -> Result<()> {
         Ok(self.canvas.set_scale(x, y)?)

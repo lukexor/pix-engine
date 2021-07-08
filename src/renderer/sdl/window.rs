@@ -35,16 +35,24 @@ impl Window for Renderer {
         Ok(self.canvas.window_mut().set_title(title.as_ref())?)
     }
 
-    /// Width of the window.
-    fn window_width(&self) -> Result<u32> {
-        let (width, _) = self.canvas.window().size();
-        Ok(width)
+    /// Set dimensions of the primary window as `(width, height)`.
+    fn set_dimensions(&mut self, id: WindowId, (width, height): (u32, u32)) -> Result<()> {
+        if id == self.window_id {
+            self.canvas.window_mut().set_size(width, height)?
+        } else {
+            unimplemented!("secondary windows are not yet implemented");
+        };
+        Ok(())
     }
 
-    /// Height of the window.
-    fn window_height(&self) -> Result<u32> {
-        let (_, height) = self.canvas.window().size();
-        Ok(height)
+    /// Dimensions of the primary window as `(width, height)`.
+    fn dimensions(&self, id: WindowId) -> Result<(u32, u32)> {
+        let dimensions = if id == self.window_id {
+            self.canvas.window().size()
+        } else {
+            unimplemented!("secondary windows are not yet implemented");
+        };
+        Ok(dimensions)
     }
 
     /// Resize the window.

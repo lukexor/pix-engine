@@ -44,11 +44,11 @@ pub(crate) trait Window {
     where
         S: AsRef<str>;
 
-    /// Width of the window.
-    fn window_width(&self) -> Result<u32>;
+    /// Dimensions of the primary window as `(width, height)`.
+    fn dimensions(&self, id: WindowId) -> Result<(u32, u32)>;
 
-    /// Height of the window.
-    fn window_height(&self) -> Result<u32>;
+    /// Set dimensions of the primary window as `(width, height)`.
+    fn set_dimensions(&mut self, id: WindowId, dimensions: (u32, u32)) -> Result<()>;
 
     /// Resize the window.
     fn resize<T>(&mut self, width: T, height: T) -> Result<()>
