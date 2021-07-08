@@ -11,7 +11,6 @@ use bitflags::bitflags;
 use num_traits::AsPrimitive;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 
 /// Drawing mode which changes how `(x, y)` coordinates are interpreted.
 #[non_exhaustive]
@@ -32,10 +31,6 @@ pub enum ArcMode {
     Default,
     /// Draws arc with fill as an closed pie segment.
     Pie,
-    /// Draws arc with fill as an open semi-circle.
-    Open,
-    /// Draws arc with fill as a closed semi-circle.
-    Chord,
 }
 
 /// Drawing mode which changes how textures are blended together.
@@ -181,14 +176,6 @@ impl PixState {
     /// Set whether the cursor is shown or not.
     pub fn cursor(&mut self, show: bool) {
         self.renderer.cursor(show);
-    }
-
-    /// Set the cursor icon.
-    pub fn cursor_icon<P>(&mut self, _path: P)
-    where
-        P: AsRef<Path>,
-    {
-        todo!("cursor_icon");
     }
 
     /// Whether the render loop is running or not.

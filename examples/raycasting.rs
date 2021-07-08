@@ -241,7 +241,7 @@ impl RayScene {
             s.triangle([mouse.as_(), p1, p2])?;
         }
 
-        s.fill(RED);
+        s.fill(BLACK);
         s.no_stroke();
         s.circle([mouse.x, mouse.y, 2])?;
         Ok(true)

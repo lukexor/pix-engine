@@ -81,7 +81,7 @@ pub trait AppState {
     }
 
     /// Called each time the window is resized.
-    fn on_window_resized(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn on_window_resized(&mut self, s: &mut PixState, _width: i32, height: i32) -> PixResult<()> {
         Ok(())
     }
 }
@@ -125,11 +125,13 @@ impl PixState {
     }
 
     /// Get the current window title.
+    #[inline]
     pub fn title(&self) -> &str {
         &self.title
     }
 
     /// Set the current window title.
+    #[inline]
     pub fn set_title<S>(&mut self, title: S) -> PixResult<()>
     where
         S: Into<String>,
@@ -145,11 +147,13 @@ impl PixState {
     }
 
     /// Returns the current mouse position coordinates as `(x, y)`.
+    #[inline]
     pub fn mouse_pos(&self) -> Point<i32> {
         self.mouse_pos
     }
 
     /// Returns the previous mouse position coordinates last frame as `(x, y)`.
+    #[inline]
     pub fn pmouse_pos(&self) -> Point<i32> {
         self.pmouse_pos
     }

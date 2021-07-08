@@ -3,6 +3,7 @@ use crate::audio::Audio;
 
 impl Audio for Renderer {
     /// Add audio samples to the audio buffer queue.
+    #[inline]
     fn enqueue_audio(&mut self, samples: &[f32]) {
         // Don't let queue overflow
         let sample_rate = self.audio_device.spec().freq as u32;

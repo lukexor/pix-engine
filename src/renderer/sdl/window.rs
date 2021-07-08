@@ -18,16 +18,19 @@ impl Window for Renderer {
     }
 
     /// Returns a single event or None if the event pump is empty.
+    #[inline]
     fn poll_event(&mut self) -> Option<Event> {
         self.event_pump.poll_event().map(|evt| evt.into())
     }
 
     /// Get the current window title.
+    #[inline]
     fn title(&self) -> &str {
         self.canvas.window().title()
     }
 
     /// Set the current window title.
+    #[inline]
     fn set_title(&mut self, title: &str) -> Result<()> {
         Ok(self.canvas.window_mut().set_title(title)?)
     }
@@ -37,7 +40,7 @@ impl Window for Renderer {
         if id == self.window_id {
             self.canvas.window_mut().set_size(width, height)?
         } else {
-            unimplemented!("secondary windows are not yet implemented");
+            todo!("secondary windows are not yet implemented");
         };
         Ok(())
     }
@@ -47,7 +50,7 @@ impl Window for Renderer {
         let dimensions = if id == self.window_id {
             self.canvas.window().size()
         } else {
-            unimplemented!("secondary windows are not yet implemented");
+            todo!("secondary windows are not yet implemented");
         };
         Ok(dimensions)
     }

@@ -73,9 +73,9 @@ impl WindowBuilder {
     /// Creates a new WindowBuilder instance.
     pub fn new(width: u32, height: u32) -> Self {
         Self {
+            title: String::new(),
             width,
             height,
-            ..Default::default()
         }
     }
 
@@ -92,17 +92,13 @@ impl WindowBuilder {
     ///
     /// Returns Err if any options provided are invalid.
     pub fn build(&self) -> Result<WindowId> {
-        todo!("WindowBuilder::build");
+        todo!("secondary windows are not yet implemented");
     }
 }
 
 impl Default for WindowBuilder {
     fn default() -> Self {
-        Self {
-            title: String::new(),
-            width: 400,
-            height: 400,
-        }
+        Self::new(400, 400)
     }
 }
 

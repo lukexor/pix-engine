@@ -1,5 +1,7 @@
 //! Drawing functions.
 
+use num_traits::AsPrimitive;
+
 use crate::{
     prelude::*,
     renderer::{Error as RendererError, Rendering},
@@ -14,6 +16,7 @@ pub trait Draw {
 
 impl PixState {
     /// Clears the render target to the current background [Color] set by [PixState::background].
+    #[inline]
     pub fn clear(&mut self) {
         let color = self.settings.background;
         self.renderer.set_draw_color(self.settings.background);
@@ -41,6 +44,7 @@ impl PixState {
     }
 
     /// Draw a [Point] to the current canvas.
+    #[inline]
     pub fn point<P>(&mut self, p: P) -> PixResult<()>
     where
         P: Into<Point>,
@@ -53,6 +57,7 @@ impl PixState {
     }
 
     /// Draw a [Line] to the current canvas.
+    #[inline]
     pub fn line<L>(&mut self, line: L) -> PixResult<()>
     where
         L: Into<Line>,
@@ -74,11 +79,22 @@ impl PixState {
     }
 
     /// Draw a [Square](Rect) to the current canvas.
+    #[inline]
     pub fn square<R>(&mut self, square: R) -> PixResult<()>
     where
         R: Into<Rect>,
     {
         self.rect(square)
+    }
+
+    /// Draw a rounded [Square](Rect) to the current canvas.
+    #[inline]
+    pub fn rounded_square<R, T>(&mut self, square: R, radius: T) -> PixResult<()>
+    where
+        R: Into<Rect>,
+        T: Into<Scalar>,
+    {
+        self.rounded_rect(square, radius)
     }
 
     /// Draw a [Rectangle](Rect) to the current canvas.
@@ -91,12 +107,33 @@ impl PixState {
         let rect = match s.rect_mode {
             DrawMode::Corner => rect,
             DrawMode::Center => {
-                let width = rect.width;
-                let height = rect.height;
-                rect!(rect.x - width / 2, rect.y - height / 2, width, height)
+                let x = rect.x - rect.width / 2;
+                let y = rect.y - rect.height / 2;
+                rect!(x, y, rect.width, rect.height)
             }
         };
         Ok(self.renderer.rect(rect, s.fill, s.stroke)?)
+    }
+
+    /// Draw a rounded [Rectangle](Rect) to the current canvas.
+    pub fn rounded_rect<R, T>(&mut self, rect: R, radius: T) -> PixResult<()>
+    where
+        R: Into<Rect>,
+        T: Into<Scalar>,
+    {
+        let s = &self.settings;
+        let rect = rect.into().as_();
+        let rect = match s.rect_mode {
+            DrawMode::Corner => rect,
+            DrawMode::Center => {
+                let x = rect.x - rect.width / 2;
+                let y = rect.y - rect.height / 2;
+                rect!(x, y, rect.width, rect.height)
+            }
+        };
+        Ok(self
+            .renderer
+            .rounded_rect(rect, radius.into().as_(), s.fill, s.stroke)?)
     }
 
     /// Draw a polygon to the current canvas.
@@ -108,6 +145,7 @@ impl PixState {
     }
 
     /// Draw a [Circle] to the current canvas.
+    #[inline]
     pub fn circle<C>(&mut self, circle: C) -> PixResult<()>
     where
         C: Into<Circle>,
@@ -131,6 +169,24 @@ impl PixState {
             }
         };
         Ok(self.renderer.ellipse(ellipse, s.fill, s.stroke)?)
+    }
+
+    /// Draw an arc to the current canvas.
+    pub fn arc<P, T>(&mut self, p: P, radius: T, start: T, end: T) -> PixResult<()>
+    where
+        P: Into<Point>,
+        T: Into<Scalar>,
+    {
+        let s = &self.settings;
+        Ok(self.renderer.arc(
+            p.into().as_(),
+            radius.into().as_(),
+            start.into().as_(),
+            end.into().as_(),
+            s.arc_mode,
+            s.fill,
+            s.stroke,
+        )?)
     }
 
     /// Draw an [Image] to the current canvas.

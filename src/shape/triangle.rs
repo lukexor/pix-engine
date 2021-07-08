@@ -47,6 +47,7 @@ where
     Self: Into<Triangle<Scalar>>,
 {
     /// Draw triangle to the current [PixState] canvas.
+    #[inline]
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.triangle(*self)
     }

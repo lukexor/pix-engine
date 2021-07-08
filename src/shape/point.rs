@@ -251,12 +251,11 @@ impl<T: Num> Point<T> {
     {
         self * s
     }
+}
 
-    /// Returns whether two points are approximately equal.
-    pub fn approx_eq(&self, other: Point<T>, epsilon: T) -> bool
-    where
-        T: Float,
-    {
+impl<T: Float> Point<T> {
+    /// Returns whether two `Point`s are approximately equal.
+    pub fn approx_eq(&self, other: Point<T>, epsilon: T) -> bool {
         let xd = (self.x - other.x).abs();
         let yd = (self.y - other.y).abs();
         let zd = (self.z - other.z).abs();

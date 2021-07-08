@@ -242,6 +242,7 @@ impl<T> Vector<T> {
     /// assert_eq!(iterator.next(), Some(&-4.0));
     /// assert_eq!(iterator.next(), None);
     /// ```
+    #[inline]
     pub fn iter(&self) -> Iter<'_, T> {
         Iter::new(self)
     }
@@ -258,6 +259,7 @@ impl<T> Vector<T> {
     /// }
     /// assert_eq!(v.get(), [2.0, 4.0, -8.0]);
     /// ```
+    #[inline]
     pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         IterMut::new(self)
     }
@@ -807,6 +809,14 @@ where
         } else if self.z < -size {
             self.z = depth + size;
         }
+    }
+
+    /// Returns whether two `Vector`s are approximately equal.
+    pub fn approx_eq(&self, other: Vector<T>, epsilon: T) -> bool {
+        let xd = (self.x - other.x).abs();
+        let yd = (self.y - other.y).abs();
+        let zd = (self.z - other.z).abs();
+        xd < epsilon && yd < epsilon && zd < epsilon
     }
 }
 

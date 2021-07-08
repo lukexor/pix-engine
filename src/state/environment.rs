@@ -55,16 +55,22 @@ impl PixState {
     }
 
     /// Create a new [WindowBuilder].
-    pub fn create_window(&self, width: u32, height: u32) -> WindowBuilder {
+    pub fn create_window(&mut self, width: u32, height: u32) -> WindowBuilder {
         WindowBuilder::new(width, height)
     }
 
     /// Close an open window.
-    pub fn close_window(&self, _window_id: WindowId) -> PixResult<()> {
-        todo!("close_window");
+    pub fn close_window(&mut self, window_id: WindowId) -> PixResult<()> {
+        if window_id == self.renderer.window_id() {
+            self.env.quit = true;
+        } else {
+            todo!("secondary windows are not yet implemented");
+        }
+        Ok(())
     }
 
     /// The time elapsed since last frame in seconds.
+    #[inline]
     pub fn delta_time(&self) -> f64 {
         self.env.delta_time
     }
@@ -142,20 +148,5 @@ impl PixState {
     /// Abort exiting of the game loop.
     pub fn abort_quit(&mut self) {
         self.env.quit = false;
-    }
-
-    /// The display width of the primary monitor.
-    pub fn display_width(&self) -> u32 {
-        todo!("display_width")
-    }
-
-    /// The display height of the primary monitor.
-    pub fn display_height(&self) -> u32 {
-        todo!("display_height")
-    }
-
-    /// The display pixel density of the primary monitor.
-    pub fn display_density(&self) -> u32 {
-        todo!("display_density")
     }
 }

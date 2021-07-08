@@ -335,6 +335,7 @@ where
     Self: Into<Rect<Scalar>>,
 {
     /// Draw rectangle to the current [PixState] canvas.
+    #[inline]
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.rect(*self)
     }

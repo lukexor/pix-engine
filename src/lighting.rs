@@ -27,33 +27,35 @@ pub struct Light<T = Scalar> {
 }
 
 impl<T> Light<T> {
-    /// Constructs a `Light<T>` with `source` as [LightSource::Ambient].
-    pub fn ambient(intensity: T) -> Self {
-        Self {
-            source: LightSource::Ambient,
-            intensity,
-        }
+    /// Constructs a new `Light`.
+    pub fn new(source: LightSource<T>, intensity: T) -> Self {
+        Self { source, intensity }
     }
 
-    /// Constructs a `Light<T>` with `source` as [LightSource::Point].
+    /// Constructs a `Light` with `source` as [LightSource::Ambient].
+    pub fn ambient(intensity: T) -> Self {
+        Self::new(LightSource::Ambient, intensity)
+    }
+
+    /// Constructs a `Light` with `source` as [LightSource::Point].
     pub fn point<P>(intensity: T, position: P) -> Self
     where
         P: Into<Point<T>>,
     {
-        Self {
-            source: LightSource::Point(position.into()),
-            intensity,
-        }
+        Self::new(LightSource::Point(position.into()), intensity)
     }
 
-    /// Constructs a `Light<T>` with source as [LightSource::Direction].
+    /// Constructs a `Light` with source as [LightSource::Direction].
     pub fn direction<V>(intensity: T, direction: V) -> Self
     where
         V: Into<Vector<T>>,
     {
-        Self {
-            source: LightSource::Direction(direction.into()),
-            intensity,
-        }
+        Self::new(LightSource::Direction(direction.into()), intensity)
+    }
+}
+
+impl Default for Light {
+    fn default() -> Self {
+        Self::new(LightSource::Ambient, 1.0)
     }
 }

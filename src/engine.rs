@@ -246,6 +246,7 @@ impl PixEngine {
     }
 
     /// Handle user and system events.
+    #[inline]
     fn handle_events<A>(&mut self, state: &mut PixState, app: &mut A) -> PixResult<()>
     where
         A: AppState,
@@ -265,8 +266,9 @@ impl PixEngine {
                         state.env.focused = false;
                         state.env.focused_window = None;
                     }
-                    WindowEvent::Resized(_, _) | WindowEvent::SizeChanged(_, _) => {
-                        app.on_window_resized(state)?
+                    WindowEvent::Resized(width, height)
+                    | WindowEvent::SizeChanged(width, height) => {
+                        app.on_window_resized(state, width, height)?
                     }
                     _ => (),
                 },

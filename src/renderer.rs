@@ -160,6 +160,15 @@ pub(crate) trait Rendering: Sized {
     /// Draw a rectangle to the current canvas.
     fn rect(&mut self, rect: Rect<i16>, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
 
+    /// Draw a rounded rectangle to the current canvas.
+    fn rounded_rect(
+        &mut self,
+        rect: Rect<i16>,
+        radius: i16,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()>;
+
     /// Draw a polygon to the current canvas.
     fn polygon(
         &mut self,
@@ -173,6 +182,19 @@ pub(crate) trait Rendering: Sized {
     fn ellipse(
         &mut self,
         ellipse: Ellipse<i16>,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()>;
+
+    /// Draw an arc to the current canvas.
+    #[allow(clippy::too_many_arguments)]
+    fn arc(
+        &mut self,
+        p: Point<i16>,
+        radius: i16,
+        start: i16,
+        end: i16,
+        mode: ArcMode,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()>;

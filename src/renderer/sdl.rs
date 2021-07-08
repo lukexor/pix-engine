@@ -1,4 +1,3 @@
-//! SDL Renderer implementation
 use crate::{
     prelude::*,
     renderer::{Error, RendererSettings, Rendering, Result},
@@ -118,32 +117,38 @@ impl Rendering for Renderer {
     }
 
     /// Clears the canvas to the current clear color.
+    #[inline]
     fn clear(&mut self) {
         self.canvas.clear();
     }
 
     /// Sets the color used by the renderer to draw to the current canvas.
+    #[inline]
     fn set_draw_color(&mut self, color: Color) {
         self.canvas.set_draw_color(color);
     }
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
+    #[inline]
     fn clip(&mut self, rect: Option<Rect<i32>>) {
         let rect = rect.map(|rect| rect.into());
         self.canvas.set_clip_rect(rect);
     }
 
     /// Sets the blend mode used by the renderer to draw textures.
+    #[inline]
     fn blend_mode(&mut self, mode: BlendMode) {
         self.blend_mode = mode.into();
     }
 
     /// Updates the canvas from the current back buffer.
+    #[inline]
     fn present(&mut self) {
         self.canvas.present();
     }
 
     /// Scale the current canvas.
+    #[inline]
     fn scale(&mut self, x: f32, y: f32) -> Result<()> {
         Ok(self.canvas.set_scale(x, y)?)
     }
@@ -210,6 +215,7 @@ impl Rendering for Renderer {
     }
 
     /// Set the font size for drawing to the current canvas.
+    #[inline]
     fn font_size(&mut self, size: u32) -> Result<()> {
         self.font.1 = size as u16;
         if self.font_cache.get(&self.font).is_none() {
@@ -220,6 +226,7 @@ impl Rendering for Renderer {
     }
 
     /// Set the font style for drawing to the current canvas.
+    #[inline]
     fn font_style(&mut self, style: FontStyle) {
         if let Some(font) = self.font_cache.get_mut(&self.font) {
             font.set_style(style.into());
@@ -227,6 +234,7 @@ impl Rendering for Renderer {
     }
 
     /// Set the font family for drawing to the current canvas.
+    #[inline]
     fn font_family(&mut self, family: &str) -> Result<()> {
         // TODO: use size_of
         self.font.0 = PathBuf::from(&family);
@@ -264,6 +272,7 @@ impl Rendering for Renderer {
 
     /// Returns the rendered dimensions of the given text using the current font
     /// as `(width, height)`.
+    #[inline]
     fn size_of(&self, text: &str) -> Result<(u32, u32)> {
         let font = self.font_cache.get(&self.font);
         match font {
@@ -273,12 +282,13 @@ impl Rendering for Renderer {
     }
 
     /// Draw a pixel to the current canvas.
+    #[inline]
     fn point(&mut self, p: Point<i16>, color: Color) -> Result<()> {
-        self.canvas.pixel(p.x, p.y, color)?;
-        Ok(())
+        Ok(self.canvas.pixel(p.x, p.y, color)?)
     }
 
     /// Draw a line to the current canvas.
+    #[inline]
     fn line(&mut self, line: Line<i16>, color: Color) -> Result<()> {
         let [x1, y1, x2, y2]: [i16; 4] = line.into();
         if y1 == y2 {
@@ -312,12 +322,30 @@ impl Rendering for Renderer {
     fn rect(&mut self, rect: Rect<i16>, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
         let [x, y, width, height]: [i16; 4] = rect.into();
         if let Some(fill) = fill {
+            self.canvas.box_(x, y, x + width, y + height, fill)?;
+        }
+        if let Some(stroke) = stroke {
+            self.canvas.rectangle(x, y, x + width, y + height, stroke)?;
+        }
+        Ok(())
+    }
+
+    /// Draw a rounded rectangle to the current canvas.
+    fn rounded_rect(
+        &mut self,
+        rect: Rect<i16>,
+        radius: i16,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()> {
+        let [x, y, width, height]: [i16; 4] = rect.into();
+        if let Some(fill) = fill {
             self.canvas
-                .box_(x, y, x + width - 1, y + height - 1, fill)?;
+                .rounded_box(x, y, x + width, y + height, radius, fill)?;
         }
         if let Some(stroke) = stroke {
             self.canvas
-                .rectangle(x, y, x + width - 1, y + height - 1, stroke)?;
+                .rounded_rectangle(x, y, x + width, y + height, radius, stroke)?;
         }
         Ok(())
     }
@@ -356,26 +384,60 @@ impl Rendering for Renderer {
         Ok(())
     }
 
-    /// Draw an image to the current canvas.
-    fn image(&mut self, pos: Point<i32>, img: &Image, tint: Option<Color>) -> Result<()> {
-        if let Some(texture) = self.textures.get_mut(img.texture_id()) {
-            texture.update(
-                None,
-                img.bytes(),
-                img.format().channels() * img.width() as usize,
-            )?;
-            if let Some(tint) = tint {
-                self.canvas.with_texture_canvas(texture, |tex_canvas| {
-                    tex_canvas.set_blend_mode(SdlBlendMode::Mod);
-                    tex_canvas.set_draw_color(tint);
-                    let _ = tex_canvas.fill_rect(None);
-                })?;
+    /// Draw an arc to the current canvas.
+    fn arc(
+        &mut self,
+        p: Point<i16>,
+        radius: i16,
+        start: i16,
+        end: i16,
+        mode: ArcMode,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()> {
+        use ArcMode::*;
+        let [x, y]: [i16; 2] = p.into();
+        match mode {
+            Default => {
+                if let Some(stroke) = stroke {
+                    self.canvas.arc(x, y, radius, start, end, stroke)?;
+                }
             }
-            texture.set_blend_mode(self.blend_mode);
-            let dst = SdlRect::new(pos.x, pos.y, img.width(), img.height());
-            self.canvas.copy(&texture, None, dst)?;
+            Pie => {
+                if let Some(stroke) = stroke {
+                    self.canvas.pie(x, y, radius, start, end, stroke)?;
+                }
+                if let Some(fill) = fill {
+                    self.canvas.filled_pie(x, y, radius, start, end, fill)?;
+                }
+            }
         }
         Ok(())
+    }
+
+    /// Draw an image to the current canvas.
+    fn image(&mut self, pos: Point<i32>, img: &Image, tint: Option<Color>) -> Result<()> {
+        let texture_id = img.texture_id();
+        match self.textures.get_mut(texture_id) {
+            Some(texture) => {
+                texture.update(
+                    None,
+                    img.bytes(),
+                    img.format().channels() * img.width() as usize,
+                )?;
+                if let Some(tint) = tint {
+                    self.canvas.with_texture_canvas(texture, |tex_canvas| {
+                        tex_canvas.set_blend_mode(SdlBlendMode::Mod);
+                        tex_canvas.set_draw_color(tint);
+                        let _ = tex_canvas.fill_rect(None);
+                    })?;
+                }
+                texture.set_blend_mode(self.blend_mode);
+                let dst = SdlRect::new(pos.x, pos.y, img.width(), img.height());
+                Ok(self.canvas.copy(&texture, None, dst)?)
+            }
+            None => Err(Error::InvalidTexture(texture_id)),
+        }
     }
 
     /// Draw an image to the current canvas.
@@ -385,24 +447,27 @@ impl Rendering for Renderer {
         img: &Image,
         tint: Option<Color>,
     ) -> Result<()> {
-        if let Some(texture) = self.textures.get_mut(img.texture_id()) {
-            texture.update(
-                None,
-                img.bytes(),
-                img.format().channels() * img.width() as usize,
-            )?;
-            if let Some(tint) = tint {
-                self.canvas.with_texture_canvas(texture, |canvas| {
-                    canvas.set_blend_mode(SdlBlendMode::Add);
-                    canvas.set_draw_color(tint);
-                    let _ = canvas.fill_rect(None);
-                })?;
+        let texture_id = img.texture_id();
+        match self.textures.get_mut(texture_id) {
+            Some(texture) => {
+                texture.update(
+                    None,
+                    img.bytes(),
+                    img.format().channels() * img.width() as usize,
+                )?;
+                if let Some(tint) = tint {
+                    self.canvas.with_texture_canvas(texture, |canvas| {
+                        canvas.set_blend_mode(SdlBlendMode::Add);
+                        canvas.set_draw_color(tint);
+                        let _ = canvas.fill_rect(None);
+                    })?;
+                }
+                texture.set_blend_mode(self.blend_mode);
+                let dst_rect: SdlRect = dst_rect.into();
+                Ok(self.canvas.copy(&texture, None, dst_rect)?)
             }
-            texture.set_blend_mode(self.blend_mode);
-            let dst_rect: SdlRect = dst_rect.into();
-            self.canvas.copy(&texture, None, dst_rect)?;
+            None => Err(Error::InvalidTexture(texture_id)),
         }
-        Ok(())
     }
 }
 

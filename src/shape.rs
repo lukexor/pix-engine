@@ -28,7 +28,7 @@ pub trait Shape<T> {
     where
         P: Into<Point<T>>,
     {
-        unimplemented!()
+        unimplemented!("contains_point is not implemented")
     }
 
     /// Returns whether this shape completely contains another shape.
@@ -36,7 +36,7 @@ pub trait Shape<T> {
     where
         O: Into<Self::Item>,
     {
-        unimplemented!()
+        unimplemented!("contains is not implemented")
     }
 
     /// Returns the closest intersection point with a given line and distance along the line or
@@ -46,7 +46,7 @@ pub trait Shape<T> {
         T: Float,
         L: Into<Line<T>>,
     {
-        unimplemented!()
+        unimplemented!("intersects_line is not implemented")
     }
 
     /// Returns whether this shape intersects with another shape.
@@ -54,6 +54,6 @@ pub trait Shape<T> {
     where
         O: Into<Self::Item>,
     {
-        unimplemented!()
+        unimplemented!("intersects is not implemented")
     }
 }

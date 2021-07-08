@@ -94,6 +94,7 @@ where
     Self: Into<Line<Scalar>>,
 {
     /// Draw line to the current [PixState] canvas.
+    #[inline]
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.line(*self)
     }

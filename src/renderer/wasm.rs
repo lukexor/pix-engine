@@ -88,34 +88,40 @@ impl Rendering for Renderer {
     }
 
     /// Clears the current canvas to the given clear color.
+    #[inline]
     fn clear(&mut self) {
         todo!("clear")
     }
 
     /// Sets the color used by the renderer to draw the current canvas.
+    #[inline]
     fn set_draw_color(&mut self, color: Color) {
         let _ = color;
         todo!("set_draw_color")
     }
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
+    #[inline]
     fn clip(&mut self, rect: Option<Rect<i32>>) {
         let _ = rect;
         todo!("set_clip_rect")
     }
 
     /// Sets the blend mode used by the renderer to draw textures.
+    #[inline]
     fn blend_mode(&mut self, mode: BlendMode) {
         let _ = mode;
         todo!("blend_mode")
     }
 
     /// Updates the canvas from the current back buffer.
+    #[inline]
     fn present(&mut self) {
         todo!("present")
     }
 
     /// Scale the current canvas.
+    #[inline]
     fn scale(&mut self, x: f32, y: f32) -> Result<()> {
         let _ = x;
         let _ = y;
@@ -170,18 +176,21 @@ impl Rendering for Renderer {
     }
 
     /// Set the font size for drawing to the current canvas.
+    #[inline]
     fn font_size(&mut self, size: u32) -> Result<()> {
         let _ = size;
         todo!("font_size")
     }
 
     /// Set the font style for drawing to the current canvas.
+    #[inline]
     fn font_style(&mut self, style: FontStyle) {
         let _ = style;
         todo!("font_style")
     }
 
     /// Set the font family for drawing to the current canvas.
+    #[inline]
     fn font_family(&mut self, family: &str) -> Result<()> {
         let _ = family;
         todo!("font_family")
@@ -204,12 +213,14 @@ impl Rendering for Renderer {
 
     /// Returns the rendered dimensions of the given text using the current font
     /// as `(width, height)`.
+    #[inline]
     fn size_of(&self, text: &str) -> Result<(u32, u32)> {
         let _ = text;
         todo!("size_of")
     }
 
     /// Draw a pixel to the current canvas.
+    #[inline]
     fn point(&mut self, p: Point<i16>, color: Color) -> Result<()> {
         let _ = p;
         let _ = color;
@@ -217,6 +228,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw a line to the current canvas.
+    #[inline]
     fn line(&mut self, line: Line<i16>, color: Color) -> Result<()> {
         let _ = line;
         let _ = color;
@@ -242,6 +254,21 @@ impl Rendering for Renderer {
         if let Some(_) = fill {}
         if let Some(_) = stroke {}
         todo!("rect")
+    }
+
+    /// Draw a rounded rectangle to the current canvas.
+    fn rounded_rect(
+        &mut self,
+        rect: Rect<i16>,
+        radius: i16,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()> {
+        let _ = rect;
+        let _ = radius;
+        if let Some(_) = fill {}
+        if let Some(_) = stroke {}
+        todo!("rounded_rect")
     }
 
     /// Draw a polygon to the current canvas.
@@ -270,6 +297,23 @@ impl Rendering for Renderer {
         if let Some(_) = fill {}
         if let Some(_) = stroke {}
         todo!("ellipse")
+    }
+
+    /// Draw an arc to the current canvas.
+    fn arc(
+        &mut self,
+        p: Point<i16>,
+        radius: i16,
+        start: i16,
+        end: i16,
+        stroke: Option<Color>,
+    ) -> Result<()> {
+        let _ = p;
+        let _ = radius;
+        let _ = start;
+        let _ = end;
+        if let Some(_) = stroke {}
+        todo!("arc")
     }
 
     /// Draw an image to the current canvas.
