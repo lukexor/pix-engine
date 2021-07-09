@@ -274,11 +274,14 @@ impl PixState {
 
     /// Saves the current draw settings and transforms.
     pub fn push(&mut self) {
-        todo!("push");
+        self.setting_stack.push(self.settings.clone());
     }
 
-    /// Restores the current draw settings and transforms.
+    /// Restores the previous draw settings and transforms, if present. If the settings stack is
+    /// empty, the settings will remain unchanged.
     pub fn pop(&mut self) {
-        todo!("pop");
+        if let Some(settings) = self.setting_stack.pop() {
+            self.settings = settings;
+        }
     }
 }

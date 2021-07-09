@@ -307,18 +307,29 @@ impl PixEngine {
                 Event::TextInput { text, .. } => {
                     app.on_key_typed(state, &text)?;
                 }
-                Event::MouseMotion { x, y, .. } => {
+                Event::MouseMotion { x, y, xrel, yrel } => {
                     state.pmouse.pos = state.mouse.pos;
                     state.mouse.pos = point!(x, y);
                     if state.mouse.is_pressed() {
                         app.on_mouse_dragged(state)?;
                     }
+                    app.on_mouse_motion(state, x, y, xrel, yrel)?;
                 }
                 Event::MouseDown { button, .. } => {
                     state.mouse.press(button);
                     app.on_mouse_pressed(state, button)?;
                 }
                 Event::MouseUp { button, .. } => {
+                    if state.mouse.is_down(button) {
+                        let now = Instant::now();
+                        if let Some(&clicked) = state.mouse.last_clicked(&button) {
+                            if now - clicked < Duration::from_millis(500) {
+                                app.on_mouse_dbl_clicked(state, button)?;
+                            }
+                        }
+                        state.mouse.click(button, now);
+                        app.on_mouse_clicked(state, button)?;
+                    }
                     state.mouse.release(&button);
                     app.on_mouse_released(state, button)?;
                 }

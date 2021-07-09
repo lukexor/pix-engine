@@ -6,10 +6,13 @@ use crate::{
     window::Window,
 };
 use environment::Environment;
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
 use settings::Settings;
-use std::{borrow::Cow, collections::HashSet, error, fmt, io, result};
+use std::{
+    borrow::Cow,
+    collections::{HashMap, HashSet},
+    error, fmt, io, result,
+    time::Instant,
+};
 
 pub mod environment;
 pub mod settings;
@@ -121,10 +124,10 @@ impl PixState {
 }
 
 #[derive(Default, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(super) struct MouseState {
     pub(super) pos: Point<i32>,
     pub(super) pressed: HashSet<Mouse>,
+    pub(super) last_clicked: HashMap<Mouse, Instant>,
 }
 
 impl MouseState {
@@ -151,10 +154,21 @@ impl MouseState {
     pub(super) fn release(&mut self, btn: &Mouse) {
         self.pressed.remove(btn);
     }
+
+    /// Store last time a [Mouse] button was clicked.
+    #[inline]
+    pub(super) fn click(&mut self, btn: Mouse, time: Instant) {
+        self.last_clicked.insert(btn, time);
+    }
+
+    /// Get last time a [Mouse] button was clicked.
+    #[inline]
+    pub(super) fn last_clicked(&mut self, btn: &Mouse) -> Option<&Instant> {
+        self.last_clicked.get(&btn)
+    }
 }
 
 #[derive(Default, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(super) struct KeyState {
     pub(super) pressed: HashSet<Key>,
 }

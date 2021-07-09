@@ -52,6 +52,28 @@ pub trait AppState {
         Ok(())
     }
 
+    /// Called each time a [Mouse] button is pressed followed by a release.
+    fn on_mouse_clicked(&mut self, s: &mut PixState, _btn: Mouse) -> PixResult<()> {
+        Ok(())
+    }
+
+    /// Called each time a [Mouse] button is pressed twice within 500ms.
+    fn on_mouse_dbl_clicked(&mut self, s: &mut PixState, _btn: Mouse) -> PixResult<()> {
+        Ok(())
+    }
+
+    /// Called each time the [Mouse] is moved.
+    fn on_mouse_motion(
+        &mut self,
+        s: &mut PixState,
+        _x: i32,
+        _y: i32,
+        _xrel: i32,
+        _yrel: i32,
+    ) -> PixResult<()> {
+        Ok(())
+    }
+
     /// Called each time the mouse wheel is scrolled.
     fn on_mouse_wheel(&mut self, s: &mut PixState, _x_delta: i32, _y_delta: i32) -> PixResult<()> {
         Ok(())
