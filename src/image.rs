@@ -52,6 +52,7 @@ pub enum PixelFormat {
 
 impl PixelFormat {
     /// Returns the number of channels associated with the format.
+    #[inline]
     pub fn channels(&self) -> usize {
         use PixelFormat::*;
         match self {
@@ -100,36 +101,43 @@ pub struct Image {
 
 impl Image {
     /// `Image` width.
+    #[inline]
     pub fn width(&self) -> u32 {
         self.width
     }
 
     /// `Image` height.
+    #[inline]
     pub fn height(&self) -> u32 {
         self.height
     }
 
     /// Returns the `Image` dimensions as `(width, height)`.
+    #[inline]
     pub fn dimensions(&self) -> (u32, u32) {
         (self.width, self.height)
     }
 
     /// Returns the `Image` pixel data as a [u8] [slice].
+    #[inline]
     pub fn bytes(&self) -> &[u8] {
         &self.data
     }
 
     /// Returns the `Image` pixel data as a mutable [u8] [slice].
+    #[inline]
     pub fn bytes_mut(&mut self) -> &mut [u8] {
         &mut self.data
     }
 
     /// Update the `Image` with a  [u8] [slice] representing RGB/A values.
+    #[inline]
     pub fn update_bytes(&mut self, bytes: &[u8]) {
         self.data.clone_from_slice(bytes);
     }
 
     /// Returns the `Image` pixel format.
+    #[inline]
     pub fn format(&self) -> PixelFormat {
         self.format
     }
@@ -148,6 +156,7 @@ impl Image {
     }
 
     /// Returns the `Image` [TextureId].
+    #[inline]
     pub(crate) fn texture_id(&self) -> TextureId {
         self.texture_id
     }
@@ -155,6 +164,7 @@ impl Image {
 
 impl PixState {
     /// Constructs an empty RGBA `Image` with given `width` and `height`.
+    #[inline]
     pub fn create_image(&mut self, width: u32, height: u32) -> PixResult<Image> {
         self.create_rgba_image(width, height)
     }

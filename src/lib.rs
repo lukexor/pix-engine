@@ -124,7 +124,7 @@ pub mod prelude {
     pub use image::{Image, PixelFormat};
     pub use lighting::{Light, LightSource};
     pub use math::{constants, map, Scalar};
-    pub use shape::{Circle, Ellipse, Line, Point, Rect, Shape, Sphere, Triangle};
+    pub use shape::{Circle, Ellipse, Line, Point, Quad, Rect, Shape, Sphere, Triangle};
     pub use sphere;
     pub use state::{
         settings::{AngleMode, ArcMode, BlendMode, DrawMode, FontStyle},

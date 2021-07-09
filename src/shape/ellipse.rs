@@ -5,20 +5,6 @@ use num_traits::{AsPrimitive, Num};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// An `Ellipse` positioned at `(x, y)`, with `width` and `height`.
-#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Ellipse<T = Scalar> {
-    /// Center x-coord
-    pub x: T,
-    /// Center y-coord
-    pub y: T,
-    /// Width
-    pub width: T,
-    /// Height
-    pub height: T,
-}
-
 /// # Constructs an [Ellipse].
 ///
 /// ```
@@ -42,6 +28,39 @@ macro_rules! ellipse {
     };
 }
 
+/// # Constructs a [Circle].
+///
+/// ```
+/// use pix_engine::prelude::*;
+/// let c = circle!(10, 20, 100);
+/// assert_eq!(c.x, 10);
+/// assert_eq!(c.y, 20);
+/// assert_eq!(c.radius, 100);
+/// ```
+#[macro_export]
+macro_rules! circle {
+    ($p:expr, $r:expr$(,)?) => {
+        circle!($p.x, $p.y, $r)
+    };
+    ($x:expr, $y:expr, $r:expr$(,)?) => {
+        $crate::shape::ellipse::Circle::new($x, $y, $r)
+    };
+}
+
+/// An `Ellipse` positioned at `(x, y)`, with `width` and `height`.
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Ellipse<T = Scalar> {
+    /// Center x-coord
+    pub x: T,
+    /// Center y-coord
+    pub y: T,
+    /// Width
+    pub width: T,
+    /// Height
+    pub height: T,
+}
+
 impl<T> Ellipse<T> {
     /// Constructs an `Ellipse`.
     pub const fn new(x: T, y: T, width: T, height: T) -> Self {
@@ -51,22 +70,6 @@ impl<T> Ellipse<T> {
             width,
             height,
         }
-    }
-
-    /// Returns `Ellipse` as a [Vec].
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let e = ellipse!(5, 10, 100, 100);
-    /// assert_eq!(e.to_vec(), vec![5, 10, 100, 100]);
-    /// ```
-    pub fn to_vec(self) -> Vec<T>
-    where
-        T: Copy,
-    {
-        vec![self.x, self.y, self.width, self.height]
     }
 
     /// Convert `Ellipse<T>` to another primitive type using the `as` operator.
@@ -82,6 +85,21 @@ impl<T> Ellipse<T> {
             self.width.as_(),
             self.height.as_(),
         )
+    }
+}
+
+impl<T: Copy> Ellipse<T> {
+    /// Returns `Ellipse` as a [Vec].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let e = ellipse!(5, 10, 100, 100);
+    /// assert_eq!(e.to_vec(), vec![5, 10, 100, 100]);
+    /// ```
+    pub fn to_vec(self) -> Vec<T> {
+        vec![self.x, self.y, self.width, self.height]
     }
 }
 
@@ -124,7 +142,6 @@ where
     Self: Into<Ellipse<Scalar>>,
 {
     /// Draw ellipse to the current [PixState] canvas.
-    #[inline]
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.ellipse(*self)
     }
@@ -184,25 +201,6 @@ pub struct Circle<T = Scalar> {
     pub radius: T,
 }
 
-/// # Constructs a [Circle].
-///
-/// ```
-/// use pix_engine::prelude::*;
-/// let c = circle!(10, 20, 100);
-/// assert_eq!(c.x, 10);
-/// assert_eq!(c.y, 20);
-/// assert_eq!(c.radius, 100);
-/// ```
-#[macro_export]
-macro_rules! circle {
-    ($p:expr, $r:expr$(,)?) => {
-        circle!($p.x, $p.y, $r)
-    };
-    ($x:expr, $y:expr, $r:expr$(,)?) => {
-        $crate::shape::ellipse::Circle::new($x, $y, $r)
-    };
-}
-
 impl<T> Circle<T> {
     /// Constructs a `Circle`.
     pub const fn new(x: T, y: T, radius: T) -> Self {
@@ -219,6 +217,18 @@ impl<T> Circle<T> {
         Self::new(v.x, v.y, radius)
     }
 
+    /// Convert `Circle<T>` to another primitive type using the `as` operator.
+    #[inline]
+    pub fn as_<U>(self) -> Circle<U>
+    where
+        T: AsPrimitive<U>,
+        U: 'static + Copy,
+    {
+        Circle::new(self.x.as_(), self.y.as_(), self.radius.as_())
+    }
+}
+
+impl<T: Copy> Circle<T> {
     /// Returns `Circle` as a [Vec].
     ///
     /// # Example
@@ -228,21 +238,8 @@ impl<T> Circle<T> {
     /// let c = circle!(5, 10, 100);
     /// assert_eq!(c.to_vec(), vec![5, 10, 100]);
     /// ```
-    pub fn to_vec(self) -> Vec<T>
-    where
-        T: Copy,
-    {
+    pub fn to_vec(self) -> Vec<T> {
         vec![self.x, self.y, self.radius]
-    }
-
-    /// Convert `Circle<T>` to another primitive type using the `as` operator.
-    #[inline]
-    pub fn as_<U>(self) -> Circle<U>
-    where
-        T: AsPrimitive<U>,
-        U: 'static + Copy,
-    {
-        Circle::new(self.x.as_(), self.y.as_(), self.radius.as_())
     }
 }
 

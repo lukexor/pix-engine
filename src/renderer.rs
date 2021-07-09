@@ -169,6 +169,9 @@ pub(crate) trait Rendering: Sized {
         stroke: Option<Color>,
     ) -> Result<()>;
 
+    /// Draw a quadrilateral to the current canvas.
+    fn quad(&mut self, quad: Quad<i16>, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
+
     /// Draw a polygon to the current canvas.
     fn polygon(
         &mut self,

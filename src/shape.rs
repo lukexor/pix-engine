@@ -15,7 +15,7 @@ pub mod triangle;
 pub use ellipse::{Circle, Ellipse, Sphere};
 pub use line::Line;
 pub use point::Point;
-pub use rect::Rect;
+pub use rect::{Quad, Rect};
 pub use triangle::Triangle;
 
 /// Trait for operations on a geometric shape.

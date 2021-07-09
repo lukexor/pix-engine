@@ -16,7 +16,6 @@ pub trait Draw {
 
 impl PixState {
     /// Clears the render target to the current background [Color] set by [PixState::background].
-    #[inline]
     pub fn clear(&mut self) {
         let color = self.settings.background;
         self.renderer.set_draw_color(self.settings.background);
@@ -44,7 +43,6 @@ impl PixState {
     }
 
     /// Draw a [Point] to the current canvas.
-    #[inline]
     pub fn point<P>(&mut self, p: P) -> PixResult<()>
     where
         P: Into<Point>,
@@ -57,7 +55,6 @@ impl PixState {
     }
 
     /// Draw a [Line] to the current canvas.
-    #[inline]
     pub fn line<L>(&mut self, line: L) -> PixResult<()>
     where
         L: Into<Line>,
@@ -79,7 +76,6 @@ impl PixState {
     }
 
     /// Draw a [Square](Rect) to the current canvas.
-    #[inline]
     pub fn square<R>(&mut self, square: R) -> PixResult<()>
     where
         R: Into<Rect>,
@@ -88,7 +84,6 @@ impl PixState {
     }
 
     /// Draw a rounded [Square](Rect) to the current canvas.
-    #[inline]
     pub fn rounded_square<R, T>(&mut self, square: R, radius: T) -> PixResult<()>
     where
         R: Into<Rect>,
@@ -136,6 +131,15 @@ impl PixState {
             .rounded_rect(rect, radius.into().as_(), s.fill, s.stroke)?)
     }
 
+    /// Draw a [Quadrilateral](Quad) to the current canvas.
+    pub fn quad<Q>(&mut self, quad: Q) -> PixResult<()>
+    where
+        Q: Into<Quad>,
+    {
+        let s = &self.settings;
+        Ok(self.renderer.quad(quad.into().as_(), s.fill, s.stroke)?)
+    }
+
     /// Draw a polygon to the current canvas.
     pub fn polygon(&mut self, vx: &[Scalar], vy: &[Scalar]) -> PixResult<()> {
         let s = &self.settings;
@@ -145,7 +149,6 @@ impl PixState {
     }
 
     /// Draw a [Circle] to the current canvas.
-    #[inline]
     pub fn circle<C>(&mut self, circle: C) -> PixResult<()>
     where
         C: Into<Circle>,

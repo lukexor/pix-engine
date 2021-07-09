@@ -38,7 +38,6 @@ where
 impl<T> error::Error for ColorError<T> where T: fmt::Debug + Clone {}
 
 /// Return the max value for each [ColorMode].
-#[inline]
 pub(crate) const fn maxes(mode: ColorMode) -> [Scalar; 4] {
     match mode {
         Rgb => [255.0; 4],
@@ -48,7 +47,6 @@ pub(crate) const fn maxes(mode: ColorMode) -> [Scalar; 4] {
 }
 
 /// Clamp levels to `0.0..=1.0`.
-#[inline]
 pub(crate) fn clamp_levels(levels: [Scalar; 4]) -> [Scalar; 4] {
     [
         levels[0].clamp(0.0, 1.0),
@@ -59,7 +57,6 @@ pub(crate) fn clamp_levels(levels: [Scalar; 4]) -> [Scalar; 4] {
 }
 
 /// Converts levels from one [ColorMode] to another.
-#[inline]
 pub(crate) fn convert_levels(levels: [Scalar; 4], from: ColorMode, to: ColorMode) -> [Scalar; 4] {
     match (from, to) {
         (Hsb, Rgb) => hsb_to_rgb(levels),
@@ -226,7 +223,6 @@ pub(crate) fn hsb_to_hsl([h, s, b, a]: [Scalar; 4]) -> [Scalar; 4] {
 }
 
 /// Converts levels to [u8] RGBA channels.
-#[inline]
 pub(crate) fn calculate_channels(levels: [Scalar; 4]) -> [u8; 4] {
     let [r, g, b, a] = levels;
     let [r_max, g_max, b_max, a_max] = maxes(Rgb);
@@ -351,7 +347,6 @@ impl FromStr for Color {
 impl TryFrom<&str> for Color {
     type Error = ColorError<Scalar>;
     /// Try to create a `Color` from a hexadecimal string.
-    #[inline]
     fn try_from(s: &str) -> Result<Self, Self::Error> {
         Self::from_str(s)
     }
@@ -362,7 +357,6 @@ macro_rules! impl_from {
         $(
             impl From<$source> for Color {
                 /// Convert from `value` to grayscale `Color`.
-                #[inline]
                 fn from(gray: $source) -> Self {
                     let gray = Scalar::from(gray);
                     Self::with_mode(Rgb, gray, gray, gray)
@@ -371,7 +365,6 @@ macro_rules! impl_from {
 
             impl From<[$source; 1]> for Color {
                 /// Convert from `[value]` to grayscale `Color`.
-                #[inline]
                 fn from([gray]: [$source; 1]) -> Self {
                     let gray = Scalar::from(gray);
                     Self::with_mode(Rgb, gray, gray, gray)
@@ -380,7 +373,6 @@ macro_rules! impl_from {
 
             impl From<[$source; 2]> for Color {
                 /// Convert from `[value, alpha]` to grayscale `Color` with alpha.
-                #[inline]
                 fn from([gray, alpha]: [$source; 2]) -> Self {
                     let gray = Scalar::from(gray);
                     let alpha = Scalar::from(alpha);
@@ -390,7 +382,6 @@ macro_rules! impl_from {
 
             impl From<[$source; 3]> for Color {
                 /// Convert from `[r, g, b]` to `Color` with max alpha.
-                #[inline]
                 fn from([r, g, b]: [$source; 3]) -> Self {
                     Self::with_mode(Rgb, Scalar::from(r), Scalar::from(g), Scalar::from(b))
                 }
@@ -398,7 +389,6 @@ macro_rules! impl_from {
 
             impl From<[$source; 4]> for Color {
                 /// Convert from `[r, g, b, a]` to `Color`.
-                #[inline]
                 fn from([r, g, b, a]: [$source; 4]) -> Self {
                     Self::with_mode_alpha(Rgb, Scalar::from(r), Scalar::from(g), Scalar::from(b), Scalar::from(a))
                 }

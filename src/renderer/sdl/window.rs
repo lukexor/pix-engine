@@ -18,13 +18,11 @@ impl Window for Renderer {
     }
 
     /// Returns a single event or None if the event pump is empty.
-    #[inline]
     fn poll_event(&mut self) -> Option<Event> {
         self.event_pump.poll_event().map(|evt| evt.into())
     }
 
     /// Get the current window title.
-    #[inline]
     fn title(&self) -> &str {
         self.canvas.window().title()
     }

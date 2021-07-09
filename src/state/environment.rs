@@ -70,7 +70,6 @@ impl PixState {
     }
 
     /// The time elapsed since last frame in seconds.
-    #[inline]
     pub fn delta_time(&self) -> f64 {
         self.env.delta_time
     }

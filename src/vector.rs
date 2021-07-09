@@ -153,7 +153,6 @@ impl<T> Vector<T> {
     /// let v = Vector::new(2.1, 3.5, 1.0);
     /// assert_eq!(v.get(), [2.1, 3.5, 1.0]);
     /// ```
-    #[inline]
     pub const fn new(x: T, y: T, z: T) -> Self {
         Self { x, y, z }
     }
@@ -168,7 +167,6 @@ impl<T> Vector<T> {
     /// let v = Vector::from_point(p);
     /// assert_eq!(v.get(), [1.0, 2.0, 0.0]);
     /// ```
-    #[inline]
     pub fn from_point(p: Point<T>) -> Self {
         Self::new(p.x, p.y, p.z)
     }
@@ -185,7 +183,6 @@ impl<T> Vector<T> {
     /// assert_eq!(v1.get(), [1.0, 0.0, 1.0]);
     /// assert_eq!(v2.get(), [2.0, 0.0, 1.0]);
     /// ```
-    #[inline]
     pub fn copy(&self) -> Self
     where
         T: Copy,
@@ -202,7 +199,6 @@ impl<T> Vector<T> {
     /// let v = vector!(2.0, 1.0, 3.0);
     /// assert_eq!(v.get(), [2.0, 1.0, 3.0]);
     /// ```
-    #[inline]
     pub fn get(&self) -> [T; 3]
     where
         T: Copy,
@@ -221,7 +217,6 @@ impl<T> Vector<T> {
     /// v1.set([1.0, 2.0, 4.0]);
     /// assert_eq!(v1.get(), [1.0, 2.0, 4.0]);
     /// ```
-    #[inline]
     pub fn set(&mut self, [x, y, z]: [T; 3]) {
         self.x = x;
         self.y = y;
@@ -242,7 +237,6 @@ impl<T> Vector<T> {
     /// assert_eq!(iterator.next(), Some(&-4.0));
     /// assert_eq!(iterator.next(), None);
     /// ```
-    #[inline]
     pub fn iter(&self) -> Iter<'_, T> {
         Iter::new(self)
     }
@@ -259,7 +253,6 @@ impl<T> Vector<T> {
     /// }
     /// assert_eq!(v.get(), [2.0, 4.0, -8.0]);
     /// ```
-    #[inline]
     pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         IterMut::new(self)
     }
@@ -285,7 +278,6 @@ impl<T: Num> Vector<T> {
     /// let v = Vector::new_x(2.1);
     /// assert_eq!(v.get(), [2.1, 0.0, 0.0]);
     /// ```
-    #[inline]
     pub fn new_x(x: T) -> Self {
         Self::new(x, T::zero(), T::zero())
     }
@@ -299,7 +291,6 @@ impl<T: Num> Vector<T> {
     /// let v = Vector::new_xy(2.1, 3.5);
     /// assert_eq!(v.get(), [2.1, 3.5, 0.0]);
     /// ```
-    #[inline]
     pub fn new_xy(x: T, y: T) -> Self {
         Self::new(x, y, T::zero())
     }
@@ -321,7 +312,6 @@ where
     /// let v2 = Vector::reflection(v1, normal);
     /// assert_eq!(v2.get(), [-1.0, 1.0, 0.0]);
     /// ```
-    #[inline]
     pub fn reflection<V>(v: V, normal: V) -> Self
     where
         T: MulAssign,
@@ -342,7 +332,6 @@ where
     /// let v2 = Vector::normalized(v1);
     /// assert_eq!(v2.get(), [0.0, 1.0, 0.0]);
     /// ```
-    #[inline]
     pub fn normalized<V>(v: V) -> Self
     where
         T: MulAssign,
@@ -369,7 +358,6 @@ where
     /// // (-0.4695841, 0.0, 0.0) or
     /// // (0.6091097, 0.0, 0.0)
     /// ```
-    #[inline]
     pub fn random_1d() -> Self
     where
         T: SampleUniform,
@@ -393,7 +381,6 @@ where
     /// // (-0.4695841, -0.14366731, 0.0) or
     /// // (0.6091097, -0.22805278, 0.0)
     /// ```
-    #[inline]
     pub fn random_2d() -> Self
     where
         T: SampleUniform,
@@ -420,7 +407,6 @@ where
     /// // (-0.4695841, -0.14366731, -0.8711202) or
     /// // (0.6091097, -0.22805278, -0.7595902)
     /// ```
-    #[inline]
     pub fn random_3d() -> Self
     where
         T: SampleUniform,
@@ -442,7 +428,6 @@ where
     /// let v = vector!(1.0, 1.0, 0.0);
     /// assert_eq!(v.to_vec(), vec![1.0, 1.0, 0.0]);
     /// ```
-    #[inline]
     pub fn to_vec(self) -> Vec<T> {
         vec![self.x, self.y, self.z]
     }
@@ -460,7 +445,6 @@ where
     /// assert!(abs_difference_x <= 1e-4);
     /// assert!(abs_difference_y <= 1e-4);
     /// ```
-    #[inline]
     pub fn from_angle(angle: T, length: T) -> Self {
         let (sin, cos) = angle.sin_cos();
         Self::new(length * cos, length * sin, T::zero())
@@ -478,7 +462,6 @@ where
     /// let abs_difference = (v.mag() - 3.7416).abs();
     /// assert!(abs_difference <= 1e-4);
     /// ```
-    #[inline]
     pub fn mag(&self) -> T {
         self.mag_sq().sqrt()
     }
@@ -495,7 +478,6 @@ where
     /// let v = vector!(1.0, 2.0, 3.0);
     /// assert_eq!(v.mag_sq(), 14.0);
     /// ```
-    #[inline]
     pub fn mag_sq(&self) -> T {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
@@ -511,7 +493,6 @@ where
     /// let dot_product = v1.dot(v2);
     /// assert_eq!(dot_product, 20.0);
     /// ```
-    #[inline]
     pub fn dot<V: Into<Vector<T>>>(&self, v: V) -> T {
         let v = v.into();
         self.x * v.x + self.y * v.y + self.z * v.z
@@ -529,7 +510,6 @@ where
     /// let cross = v1.cross(v2);
     /// assert_eq!(cross.get(), [0.0, 0.0, 0.0]);
     /// ```
-    #[inline]
     pub fn cross<V: Into<Vector<T>>>(&self, v: V) -> Self {
         let v = v.into();
         Self::new(
@@ -551,7 +531,6 @@ where
     /// assert_eq!(v.x, -4.0);
     /// assert_eq!(v.y, 6.0);
     /// ```
-    #[inline]
     pub fn reflect<V: Into<Vector<T>>>(&mut self, normal: V)
     where
         T: MulAssign,
@@ -579,7 +558,6 @@ where
     /// assert!(abs_difference_y <= 1e-4);
     /// assert!(abs_difference_z <= 1e-4);
     /// ```
-    #[inline]
     pub fn set_mag(&mut self, mag: T)
     where
         T: MulAssign,
@@ -601,7 +579,6 @@ where
     /// let abs_difference = (dist - std::f64::consts::SQRT_2).abs();
     /// assert!(abs_difference <= 1e-4);
     /// ```
-    #[inline]
     pub fn dist<V: Into<Vector<T>>>(&self, v: V) -> T {
         let v = v.into();
         (*self - v).mag()
@@ -627,7 +604,6 @@ where
     /// assert!(abs_difference_y <= 1e-4);
     /// assert!(abs_difference_z <= 1e-4);
     /// ```
-    #[inline]
     pub fn normalize(&mut self)
     where
         T: MulAssign,
@@ -656,7 +632,6 @@ where
     /// assert!(abs_difference_y <= 1e-4, "y {}", abs_difference_y);
     /// assert!(abs_difference_z <= 1e-4, "z {}", abs_difference_z);
     /// ```
-    #[inline]
     pub fn limit(&mut self, max: T)
     where
         T: DivAssign + MulAssign,
@@ -678,7 +653,6 @@ where
     /// let heading = v.heading();
     /// assert_eq!(heading.to_degrees(), 45.0);
     /// ```
-    #[inline]
     pub fn heading(&self) -> T {
         self.y.atan2(self.x)
     }
@@ -699,7 +673,6 @@ where
     /// assert!(abs_difference_x <= 1e-4);
     /// assert!(abs_difference_y <= 1e-4);
     /// ```
-    #[inline]
     pub fn rotate(&mut self, angle: T) {
         let new_heading = self.heading() + angle;
         let mag = self.mag();
@@ -719,7 +692,6 @@ where
     /// let angle = v1.angle_between(v2);
     /// assert_eq!(angle, std::f64::consts::FRAC_PI_2);
     /// ```
-    #[inline]
     pub fn angle_between<V: Into<Vector<T>>>(&self, v: V) -> T {
         let v = v.into();
         // This should range from -1.0 to 1.0, inclusive but could possibly land outside this range
@@ -888,7 +860,6 @@ pub struct Iter<'a, T = Scalar> {
 }
 
 impl<'a, T> Iter<'a, T> {
-    #[inline]
     fn new(v: &'a Vector<T>) -> Self {
         Self {
             inner: [&v.x, &v.y, &v.z],
@@ -912,7 +883,6 @@ impl<'a, T> Iterator for Iter<'a, T> {
 impl<'a, T> IntoIterator for &'a Vector<T> {
     type Item = &'a T;
     type IntoIter = Iter<'a, T>;
-    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
@@ -940,7 +910,6 @@ pub struct IterMut<'a, T = Scalar> {
 }
 
 impl<'a, T> IterMut<'a, T> {
-    #[inline]
     fn new(v: &'a mut Vector<T>) -> Self {
         Self {
             inner: once(&mut v.x).chain(once(&mut v.y)).chain(once(&mut v.z)),

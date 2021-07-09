@@ -148,7 +148,6 @@ impl Color {
     /// let c = Color::new(0, 0, 128);
     /// assert_eq!(c.channels(), [0, 0, 128, 255]);
     /// ```
-    #[inline]
     pub fn new<T: Into<Scalar>>(r: T, g: T, b: T) -> Self {
         Self::rgb(r, g, b)
     }
@@ -162,7 +161,6 @@ impl Color {
     /// let c = Color::new_alpha(0, 0, 128, 50);
     /// assert_eq!(c.channels(), [0, 0, 128, 50]);
     /// ```
-    #[inline]
     pub fn new_alpha<T: Into<Scalar>>(r: T, g: T, b: T, a: T) -> Self {
         Self::rgba(r, g, b, a)
     }
@@ -249,7 +247,6 @@ impl Color {
     /// let c = Color::rgb(128, 64, 0);
     /// assert_eq!(c.channels(), [128, 64, 0, 255]);
     /// ```
-    #[inline]
     pub fn rgb<T: Into<Scalar>>(r: T, g: T, b: T) -> Self {
         Self::with_mode(Rgb, r, g, b)
     }
@@ -263,7 +260,6 @@ impl Color {
     /// let c = Color::rgba(128, 64, 128, 128);
     /// assert_eq!(c.channels(), [128, 64, 128, 128]);
     /// ```
-    #[inline]
     pub fn rgba<T: Into<Scalar>>(r: T, g: T, b: T, a: T) -> Self {
         Self::with_mode_alpha(Rgb, r, g, b, a)
     }
@@ -278,7 +274,6 @@ impl Color {
     /// let c = Color::hsb(126.0, 80.0, 50.0);
     /// assert_eq!(c.channels(), [25, 128, 36, 255]);
     /// ```
-    #[inline]
     pub fn hsb<T: Into<Scalar>>(h: T, s: T, b: T) -> Self {
         Self::with_mode(Hsb, h, s, b)
     }
@@ -293,7 +288,6 @@ impl Color {
     /// let c = Color::hsba(126.0, 80.0, 50.0, 0.5);
     /// assert_eq!(c.channels(), [25, 128, 36, 128]);
     /// ```
-    #[inline]
     pub fn hsba<T: Into<Scalar>>(h: T, s: T, b: T, a: T) -> Self {
         Self::with_mode_alpha(Hsb, h, s, b, a)
     }
@@ -308,7 +302,6 @@ impl Color {
     /// let c = Color::hsl(126.0, 80.0, 50.0);
     /// assert_eq!(c.channels(), [25, 230, 46, 255]);
     /// ```
-    #[inline]
     pub fn hsl<T: Into<Scalar>>(h: T, s: T, l: T) -> Self {
         Self::with_mode(Hsl, h, s, l)
     }
@@ -323,7 +316,6 @@ impl Color {
     /// let c = Color::hsla(126.0, 80.0, 50.0, 0.5);
     /// assert_eq!(c.channels(), [25, 230, 46, 128]);
     /// ```
-    #[inline]
     pub fn hsla<T: Into<Scalar>>(h: T, s: T, l: T, a: T) -> Self {
         Self::with_mode_alpha(Hsl, h, s, l, a)
     }
@@ -403,7 +395,6 @@ impl Color {
     /// // `c.channels()` will return something like:
     /// // [207, 12, 217, 255]
     /// ```
-    #[inline]
     pub fn random() -> Self {
         Self::new(random!(255), random!(255), random!(255))
     }
@@ -419,7 +410,6 @@ impl Color {
     /// // `c.channels()` will return something like:
     /// // [132, 159, 233, 76]
     /// ```
-    #[inline]
     pub fn random_alpha() -> Self {
         Self::new_alpha(random!(255), random!(255), random!(255), random!(255))
     }
@@ -436,7 +426,6 @@ impl Color {
     /// let c = Color::from_hex(0xF0FF0080);
     /// assert_eq!(c.channels(), [240, 255, 0, 128]);
     /// ```
-    #[inline]
     pub fn from_hex(hex: u32) -> Self {
         let [r, g, b, a] = hex.to_be_bytes();
         Self::rgba(r, g, b, a)
@@ -457,7 +446,6 @@ impl Color {
     /// let c = Color::hsl(0.0, 0.0, 0.0);
     /// assert_eq!(c.maxes(), [360.0, 100.0, 100.0, 1.0]);
     /// ```
-    #[inline]
     pub const fn maxes(&self) -> [Scalar; 4] {
         maxes(self.mode)
     }
@@ -471,7 +459,6 @@ impl Color {
     /// let c = Color::rgba(128, 64, 128, 128);
     /// assert_eq!(c.channels(), [128, 64, 128, 128]);
     /// ```
-    #[inline]
     pub const fn levels(&self) -> [Scalar; 4] {
         self.levels
     }
@@ -485,7 +472,6 @@ impl Color {
     /// let c = Color::rgba(128, 64, 128, 128);
     /// assert_eq!(c.channels(), [128, 64, 128, 128]);
     /// ```
-    #[inline]
     pub const fn channels(&self) -> [u8; 4] {
         self.channels
     }
@@ -502,7 +488,6 @@ impl Color {
     /// let c = Color::hsb(100.0, 0.0, 0.0);
     /// assert_eq!(c.mode(), ColorMode::Hsb);
     /// ```
-    #[inline]
     pub const fn mode(&self) -> ColorMode {
         self.mode
     }
@@ -517,7 +502,6 @@ impl Color {
     /// c.set_mode(ColorMode::Hsb);
     /// assert_eq!(c.mode(), ColorMode::Hsb);
     /// ```
-    #[inline]
     pub fn set_mode(&mut self, mode: ColorMode) {
         self.mode = mode;
     }
@@ -531,7 +515,6 @@ impl Color {
     /// let c = Color::rgb(100, 0, 0);
     /// assert_eq!(c.red(), 100);
     /// ```
-    #[inline]
     pub const fn red(&self) -> u8 {
         self.channels[0]
     }
@@ -547,7 +530,6 @@ impl Color {
     /// c.set_red(100);
     /// assert_eq!(c.channels(), [100, 0, 0, 255]);
     /// ```
-    #[inline]
     pub fn set_red<R: Into<Scalar>>(&mut self, r: R) {
         let maxes = maxes(Rgb);
         self.levels[0] = r.into() / maxes[0];
@@ -563,7 +545,6 @@ impl Color {
     /// let c = Color::rgb(0, 100, 0);
     /// assert_eq!(c.green(), 100);
     /// ```
-    #[inline]
     pub const fn green(&self) -> u8 {
         self.channels[1]
     }
@@ -579,7 +560,6 @@ impl Color {
     /// c.set_green(100);
     /// assert_eq!(c.channels(), [0, 100, 0, 255]);
     /// ```
-    #[inline]
     pub fn set_green<G: Into<Scalar>>(&mut self, g: G) {
         let maxes = maxes(Rgb);
         self.levels[1] = g.into() / maxes[1];
@@ -595,7 +575,6 @@ impl Color {
     /// let c = Color::rgb(0, 0, 100);
     /// assert_eq!(c.blue(), 100);
     /// ```
-    #[inline]
     pub const fn blue(&self) -> u8 {
         self.channels[2]
     }
@@ -611,7 +590,6 @@ impl Color {
     /// c.set_blue(100);
     /// assert_eq!(c.channels(), [0, 0, 100, 255]);
     /// ```
-    #[inline]
     pub fn set_blue<B: Into<Scalar>>(&mut self, b: B) {
         let maxes = maxes(Rgb);
         self.levels[2] = b.into() / maxes[2];
@@ -631,7 +609,6 @@ impl Color {
     /// let c = Color::hsba(0.0, 0.0, 0.0, 0.8);
     /// assert_eq!(c.alpha(), 0.8);
     /// ```
-    #[inline]
     pub fn alpha(&self) -> Scalar {
         let maxes = self.maxes();
         self.levels[3] * maxes[3]
@@ -654,7 +631,6 @@ impl Color {
     /// c.set_alpha(0.8);
     /// assert_eq!(c.channels(), [0, 0, 0, 204]);
     /// ```
-    #[inline]
     pub fn set_alpha<A: Into<Scalar>>(&mut self, a: A) {
         let maxes = self.maxes();
         self.levels[3] = a.into() / maxes[3];
@@ -670,7 +646,6 @@ impl Color {
     /// let c = Color::rgb(0, 100, 0);
     /// assert_eq!(c.hue(), 120.0);
     /// ```
-    #[inline]
     pub fn hue(&self) -> Scalar {
         let maxes = maxes(Hsb);
         let levels = convert_levels(self.levels, Rgb, Hsb);
@@ -688,7 +663,6 @@ impl Color {
     /// c.set_hue(100.0);
     /// assert_eq!(c.channels(), [43, 128, 0, 255]);
     /// ```
-    #[inline]
     pub fn set_hue<H: Into<Scalar>>(&mut self, h: H) {
         let maxes = maxes(Hsb);
         let mut levels = convert_levels(self.levels, Rgb, Hsb);
@@ -706,7 +680,6 @@ impl Color {
     /// let c = Color::rgb(0, 100, 0);
     /// assert_eq!(c.saturation(), 100.0);
     /// ```
-    #[inline]
     pub fn saturation(&self) -> Scalar {
         let maxes = maxes(Hsb);
         let levels = convert_levels(self.levels, Rgb, Hsb);
@@ -731,7 +704,6 @@ impl Color {
     /// c.set_saturation(50.0);
     /// assert_eq!(c.channels(), [96, 32, 32, 255]);
     /// ```
-    #[inline]
     pub fn set_saturation<S: Into<Scalar>>(&mut self, s: S) {
         let mode = match self.mode {
             Hsb | Hsl => self.mode,
@@ -753,7 +725,6 @@ impl Color {
     /// let c = Color::rgb(0, 102, 0);
     /// assert_eq!(c.brightness(), 40.0);
     /// ```
-    #[inline]
     pub fn brightness(&self) -> Scalar {
         let maxes = maxes(Hsb);
         let levels = convert_levels(self.levels, Rgb, Hsb);
@@ -771,7 +742,6 @@ impl Color {
     /// c.set_brightness(90.0);
     /// assert_eq!(c.channels(), [230, 0, 0, 255]);
     /// ```
-    #[inline]
     pub fn set_brightness<B: Into<Scalar>>(&mut self, b: B) {
         let maxes = maxes(Hsb);
         let mut levels = convert_levels(self.levels, Rgb, Hsb);
@@ -789,7 +759,6 @@ impl Color {
     /// let c = Color::rgb(0, 102, 0);
     /// assert_eq!(c.lightness(), 20.0);
     /// ```
-    #[inline]
     pub fn lightness(&self) -> Scalar {
         let maxes = maxes(Hsl);
         let levels = convert_levels(self.levels, Rgb, Hsl);
@@ -807,7 +776,6 @@ impl Color {
     /// c.set_lightness(90.0);
     /// assert_eq!(c.channels(), [255, 204, 204, 255]);
     /// ```
-    #[inline]
     pub fn set_lightness<L: Into<Scalar>>(&mut self, l: L) {
         let maxes = maxes(Hsl);
         let mut levels = convert_levels(self.levels, Rgb, Hsl);
@@ -825,7 +793,6 @@ impl Color {
     /// let c = color!(100, 200, 50);
     /// assert_eq!(c.to_vec(), vec![100, 200, 50, 255]);
     /// ```
-    #[inline]
     pub fn to_vec(self) -> Vec<u8> {
         Vec::from(self.channels)
     }
@@ -845,7 +812,6 @@ impl Color {
     /// assert_eq!(iterator.next(), Some(255));
     /// assert_eq!(iterator.next(), None);
     /// ```
-    #[inline]
     pub fn iter(&self) -> Iter {
         Iter::new(self)
     }

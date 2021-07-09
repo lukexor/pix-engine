@@ -27,7 +27,6 @@ pub(crate) trait Audio {
 
 impl PixState {
     /// Add samples to the audio buffer queue.
-    #[inline]
     pub fn enqueue_audio(&mut self, samples: &[f32]) {
         self.renderer.enqueue_audio(samples);
     }

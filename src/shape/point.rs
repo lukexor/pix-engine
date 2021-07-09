@@ -57,7 +57,6 @@ impl<T> Point<T> {
     /// let p = Point::new(2, 3, 1);
     /// assert_eq!(p.get(), [2, 3, 1]);
     /// ```
-    #[inline]
     pub const fn new(x: T, y: T, z: T) -> Self {
         Self { x, y, z }
     }
@@ -72,7 +71,6 @@ impl<T> Point<T> {
     /// let p = Point::from_vector(v);
     /// assert_eq!(p.get(), [1.0, 2.0, 0.0]);
     /// ```
-    #[inline]
     pub fn from_vector(v: Vector<T>) -> Self {
         Self::new(v.x, v.y, v.z)
     }
@@ -89,7 +87,6 @@ impl<T> Point<T> {
     /// assert_eq!(p1.get(), [1, 0, 1]);
     /// assert_eq!(p2.get(), [2, 0, 1]);
     /// ```
-    #[inline]
     pub fn copy(&self) -> Self
     where
         T: Copy,
@@ -106,7 +103,6 @@ impl<T> Point<T> {
     /// let p = point!(2, 1, 3);
     /// assert_eq!(p.get(), [2, 1, 3]);
     /// ```
-    #[inline]
     pub fn get(self) -> [T; 3]
     where
         T: Copy,
@@ -129,7 +125,6 @@ impl<T> Point<T> {
     /// p1.set(p2);
     /// assert_eq!(p1.get(), [-2, 5, 1]);
     /// ```
-    #[inline]
     pub fn set<P>(&mut self, p: P)
     where
         P: Into<Point<T>>,
@@ -149,7 +144,6 @@ impl<T> Point<T> {
     /// let p = point!(1, 1, 0);
     /// assert_eq!(p.to_vec(), vec![1, 1, 0]);
     /// ```
-    #[inline]
     pub fn to_vec(self) -> Vec<T>
     where
         T: Copy,
@@ -171,7 +165,6 @@ impl<T> Point<T> {
     /// assert_eq!(iterator.next(), Some(&-4.0));
     /// assert_eq!(iterator.next(), None);
     /// ```
-    #[inline]
     pub fn iter(&self) -> Iter<'_, T> {
         Iter::new(self)
     }
@@ -188,7 +181,6 @@ impl<T> Point<T> {
     /// }
     /// assert_eq!(p.get(), [2.0, 4.0, -8.0]);
     /// ```
-    #[inline]
     pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         IterMut::new(self)
     }
@@ -214,7 +206,6 @@ impl<T: Num> Point<T> {
     /// let p = Point::with_x(2);
     /// assert_eq!(p.get(), [2, 0, 0]);
     /// ```
-    #[inline]
     pub fn with_x(x: T) -> Self {
         Self::new(x, T::zero(), T::zero())
     }
@@ -228,13 +219,11 @@ impl<T: Num> Point<T> {
     /// let p = Point::with_xy(2, 3);
     /// assert_eq!(p.get(), [2, 3, 0]);
     /// ```
-    #[inline]
     pub fn with_xy(x: T, y: T) -> Self {
         Self::new(x, y, T::zero())
     }
 
     /// Constructs a `Point<T>` by shifting coordinates by given x, y, and z values.
-    #[inline]
     pub fn offset<U>(self, x: U, y: U, z: U) -> Self
     where
         T: Add<U, Output = T>,
@@ -243,7 +232,6 @@ impl<T: Num> Point<T> {
     }
 
     /// Constructs a `Point<T>` by multiplying it by the given scale factor.
-    #[inline]
     pub fn scale<U>(self, s: U) -> Self
     where
         T: Mul<U, Output = T>,
@@ -269,7 +257,6 @@ where
     Self: Into<Point<Scalar>>,
 {
     /// Draw point to the current [PixState] canvas.
-    #[inline]
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.point(*self)
     }
@@ -315,7 +302,6 @@ impl<T> IntoIterator for Point<T> {
     /// assert_eq!(iterator.next(), Some(-4.0));
     /// assert_eq!(iterator.next(), None);
     /// ```
-    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         IntoIter::new([self.x, self.y, self.z])
     }
@@ -344,7 +330,6 @@ pub struct Iter<'a, T = Scalar> {
 }
 
 impl<'a, T> Iter<'a, T> {
-    #[inline]
     fn new(p: &'a Point<T>) -> Self {
         Self {
             inner: [&p.x, &p.y, &p.z],
@@ -368,7 +353,6 @@ impl<'a, T> Iterator for Iter<'a, T> {
 impl<'a, T> IntoIterator for &'a Point<T> {
     type Item = &'a T;
     type IntoIter = Iter<'a, T>;
-    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
@@ -396,7 +380,6 @@ pub struct IterMut<'a, T = Scalar> {
 }
 
 impl<'a, T> IterMut<'a, T> {
-    #[inline]
     fn new(p: &'a mut Point<T>) -> Self {
         Self {
             inner: once(&mut p.x).chain(once(&mut p.y)).chain(once(&mut p.z)),

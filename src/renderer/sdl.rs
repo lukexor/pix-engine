@@ -117,38 +117,32 @@ impl Rendering for Renderer {
     }
 
     /// Clears the canvas to the current clear color.
-    #[inline]
     fn clear(&mut self) {
         self.canvas.clear();
     }
 
     /// Sets the color used by the renderer to draw to the current canvas.
-    #[inline]
     fn set_draw_color(&mut self, color: Color) {
         self.canvas.set_draw_color(color);
     }
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    #[inline]
     fn clip(&mut self, rect: Option<Rect<i32>>) {
         let rect = rect.map(|rect| rect.into());
         self.canvas.set_clip_rect(rect);
     }
 
     /// Sets the blend mode used by the renderer to draw textures.
-    #[inline]
     fn blend_mode(&mut self, mode: BlendMode) {
         self.blend_mode = mode.into();
     }
 
     /// Updates the canvas from the current back buffer.
-    #[inline]
     fn present(&mut self) {
         self.canvas.present();
     }
 
     /// Scale the current canvas.
-    #[inline]
     fn scale(&mut self, x: f32, y: f32) -> Result<()> {
         Ok(self.canvas.set_scale(x, y)?)
     }
@@ -215,7 +209,6 @@ impl Rendering for Renderer {
     }
 
     /// Set the font size for drawing to the current canvas.
-    #[inline]
     fn font_size(&mut self, size: u32) -> Result<()> {
         self.font.1 = size as u16;
         if self.font_cache.get(&self.font).is_none() {
@@ -226,7 +219,6 @@ impl Rendering for Renderer {
     }
 
     /// Set the font style for drawing to the current canvas.
-    #[inline]
     fn font_style(&mut self, style: FontStyle) {
         if let Some(font) = self.font_cache.get_mut(&self.font) {
             font.set_style(style.into());
@@ -234,7 +226,6 @@ impl Rendering for Renderer {
     }
 
     /// Set the font family for drawing to the current canvas.
-    #[inline]
     fn font_family(&mut self, family: &str) -> Result<()> {
         // TODO: use size_of
         self.font.0 = PathBuf::from(&family);
@@ -272,7 +263,6 @@ impl Rendering for Renderer {
 
     /// Returns the rendered dimensions of the given text using the current font
     /// as `(width, height)`.
-    #[inline]
     fn size_of(&self, text: &str) -> Result<(u32, u32)> {
         let font = self.font_cache.get(&self.font);
         match font {
@@ -282,13 +272,11 @@ impl Rendering for Renderer {
     }
 
     /// Draw a pixel to the current canvas.
-    #[inline]
     fn point(&mut self, p: Point<i16>, color: Color) -> Result<()> {
         Ok(self.canvas.pixel(p.x, p.y, color)?)
     }
 
     /// Draw a line to the current canvas.
-    #[inline]
     fn line(&mut self, line: Line<i16>, color: Color) -> Result<()> {
         let [x1, y1, x2, y2]: [i16; 4] = line.into();
         if y1 == y2 {
@@ -346,6 +334,20 @@ impl Rendering for Renderer {
         if let Some(stroke) = stroke {
             self.canvas
                 .rounded_rectangle(x, y, x + width, y + height, radius, stroke)?;
+        }
+        Ok(())
+    }
+
+    /// Draw a quadrilateral to the current canvas.
+    fn quad(&mut self, quad: Quad<i16>, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
+        let [x1, y1, x2, y2, x3, y3, x4, y4]: [i16; 8] = quad.into();
+        let vx = [x1, x2, x3, x4];
+        let vy = [y1, y2, y3, y4];
+        if let Some(fill) = fill {
+            self.canvas.filled_polygon(&vx, &vy, fill)?;
+        }
+        if let Some(stroke) = stroke {
+            self.canvas.polygon(&vx, &vy, stroke)?;
         }
         Ok(())
     }

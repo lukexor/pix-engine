@@ -5,20 +5,6 @@ use num_traits::{AsPrimitive, Float, Num};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// A `Rectangle` positioned at `(x, y)` with `width` and `height`.
-#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Rect<T = Scalar> {
-    /// X-coord
-    pub x: T,
-    /// Y-coord
-    pub y: T,
-    /// Width
-    pub width: T,
-    /// Height
-    pub height: T,
-}
-
 /// # Constructs a [Rect].
 ///
 /// ```
@@ -68,6 +54,20 @@ macro_rules! square {
     };
 }
 
+/// A `Rectangle` positioned at `(x, y)` with `width` and `height`.
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Rect<T = Scalar> {
+    /// X-coord
+    pub x: T,
+    /// Y-coord
+    pub y: T,
+    /// Width
+    pub width: T,
+    /// Height
+    pub height: T,
+}
+
 impl<T> Rect<T> {
     /// Constructs a `Rect<T>` at position `(x, y)` with `width` and `height`.
     pub const fn new(x: T, y: T, width: T, height: T) -> Self {
@@ -77,48 +77,6 @@ impl<T> Rect<T> {
             width,
             height,
         }
-    }
-
-    /// Set the horizontal position of the left edge.
-    pub fn set_x(&mut self, x: T) {
-        self.x = x;
-    }
-
-    /// Set the vertical position of the top edge.
-    pub fn set_y(&mut self, y: T) {
-        self.y = y;
-    }
-
-    /// Set the width.
-    pub fn set_width(&mut self, width: T) {
-        self.width = width;
-    }
-
-    /// Set the height.
-    pub fn set_height(&mut self, height: T) {
-        self.height = height;
-    }
-
-    /// Set the dimensions as `(width, height)`.
-    pub fn set_dimensions(&mut self, (width, height): (T, T)) {
-        self.width = width;
-        self.height = height;
-    }
-
-    /// Returns `Rect` as a [Vec].
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let r = rect!(5, 10, 100, 100);
-    /// assert_eq!(r.to_vec(), vec![5, 10, 100, 100]);
-    /// ```
-    pub fn to_vec(self) -> Vec<T>
-    where
-        T: Copy,
-    {
-        vec![self.x, self.y, self.width, self.height]
     }
 
     /// Convert `Rect<T>` to another primitive type using the `as` operator.
@@ -137,40 +95,22 @@ impl<T> Rect<T> {
     }
 }
 
-impl<T> Rect<T>
-where
-    T: Copy,
-{
-    /// Returns the horizontal position of the left edge.
-    pub fn x(&self) -> T {
-        self.x
-    }
-
-    /// Returns the vertical position of the top edge.
-    pub fn y(&self) -> T {
-        self.y
-    }
-
-    /// Returns the width.
-    pub fn width(&self) -> T {
-        self.width
-    }
-
-    /// Returns the height.
-    pub fn height(&self) -> T {
-        self.height
-    }
-
-    /// Returns the dimensions as `(width, height)`.
-    pub fn dimensions(&self) -> (T, T) {
-        (self.width, self.height)
+impl<T: Copy> Rect<T> {
+    /// Returns `Rect` as a [Vec].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let r = rect!(5, 10, 100, 100);
+    /// assert_eq!(r.to_vec(), vec![5, 10, 100, 100]);
+    /// ```
+    pub fn to_vec(self) -> Vec<T> {
+        vec![self.x, self.y, self.width, self.height]
     }
 }
 
-impl<T> Rect<T>
-where
-    T: Num + Copy,
-{
+impl<T: Num + Copy> Rect<T> {
     /// Constructs a `Rect<T>` centered at position `(x, y)` with `width` and `height`.
     pub fn from_center<P>(p: P, width: T, height: T) -> Self
     where
@@ -203,22 +143,22 @@ where
 
     /// Set the horizontal position of the left edge.
     pub fn set_left(&mut self, left: T) {
-        self.set_x(left);
+        self.x = left;
     }
 
     /// Set the horizontal position of the right edge.
     pub fn set_right(&mut self, right: T) {
-        self.set_x(right - self.width);
+        self.x = right - self.width;
     }
 
     /// Set the vertical position of the top edge.
     pub fn set_top(&mut self, top: T) {
-        self.set_y(top);
+        self.y = top;
     }
 
     /// Set the vertical position of the bottom edge.
     pub fn set_bottom(&mut self, bottom: T) {
-        self.set_y(bottom - self.height);
+        self.y = bottom - self.height;
     }
 
     /// Returns the center position as [Point].
@@ -335,7 +275,6 @@ where
     Self: Into<Rect<Scalar>>,
 {
     /// Draw rectangle to the current [PixState] canvas.
-    #[inline]
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.rect(*self)
     }
@@ -382,6 +321,200 @@ impl<T, U: Into<T>> From<[U; 4]> for Rect<T> {
 impl<T, U: Copy + Into<T>> From<&[U; 4]> for Rect<T> {
     fn from(&[x, y, width, height]: &[U; 4]) -> Self {
         Self::new(x.into(), y.into(), width.into(), height.into())
+    }
+}
+
+/// A `Quad` or quadrilateral, a four-sided polygon. Similar to [Rect] but the
+/// angles between edges are not constrained to 90 degrees.
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Quad<T = Scalar> {
+    /// Point 1
+    pub p1: Point<T>,
+    /// Point 2
+    pub p2: Point<T>,
+    /// Point 3
+    pub p3: Point<T>,
+    /// Point 4
+    pub p4: Point<T>,
+}
+
+impl<T> Quad<T> {
+    /// Constructs a `Quad<T>` with the given [Point]s.
+    ///
+    /// ```
+    /// use pix_engine::prelude::*;
+    /// let quad: Quad<i32> = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
+    /// assert_eq!(quad.p1.get(), [10, 20, 0]);
+    /// assert_eq!(quad.p2.get(), [30, 10, 0]);
+    /// assert_eq!(quad.p3.get(), [20, 25, 0]);
+    /// assert_eq!(quad.p4.get(), [15, 15, 0]);
+    /// ```
+    pub fn new<P>(p1: P, p2: P, p3: P, p4: P) -> Self
+    where
+        P: Into<Point<T>>,
+    {
+        Self {
+            p1: p1.into(),
+            p2: p2.into(),
+            p3: p3.into(),
+            p4: p4.into(),
+        }
+    }
+
+    /// Convert `Quad<T>` to another primitive type using the `as` operator.
+    #[inline]
+    pub fn as_<U>(self) -> Quad<U>
+    where
+        T: AsPrimitive<U>,
+        U: 'static + Copy,
+    {
+        Quad::new(self.p1.as_(), self.p2.as_(), self.p3.as_(), self.p4.as_())
+    }
+}
+
+impl<T: Copy> Quad<T> {
+    /// Returns `Quad` as a [Vec].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let quad: Quad<i32> = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
+    /// assert_eq!(quad.to_vec(), vec![
+    ///     vec![10, 20, 0],
+    ///     vec![30, 10, 0],
+    ///     vec![20, 25, 0],
+    ///     vec![15, 15, 0],
+    /// ]);
+    /// ```
+    pub fn to_vec(self) -> Vec<Vec<T>> {
+        vec![
+            self.p1.to_vec(),
+            self.p2.to_vec(),
+            self.p3.to_vec(),
+            self.p4.to_vec(),
+        ]
+    }
+}
+
+impl<T> Draw for Quad<T>
+where
+    T: Copy,
+    Self: Into<Quad<Scalar>>,
+{
+    /// Draw `Quad` to the current [PixState] canvas.
+    fn draw(&self, s: &mut PixState) -> PixResult<()> {
+        s.quad(*self)
+    }
+}
+
+/// Convert [Quad] to `[x1, y1, x2, y2, x3, y3, x4, y4]`.
+impl<T> From<Quad<T>> for [T; 8] {
+    fn from(quad: Quad<T>) -> Self {
+        let [x1, y1]: [T; 2] = quad.p1.into();
+        let [x2, y2]: [T; 2] = quad.p2.into();
+        let [x3, y3]: [T; 2] = quad.p3.into();
+        let [x4, y4]: [T; 2] = quad.p4.into();
+        [x1, y1, x2, y2, x3, y3, x4, y4]
+    }
+}
+
+/// Convert &[Quad] to `[x1, y1, x2, y2, x3, y3, x4, y4]`.
+impl<T: Copy> From<&Quad<T>> for [T; 8] {
+    fn from(quad: &Quad<T>) -> Self {
+        let [x1, y1]: [T; 2] = quad.p1.into();
+        let [x2, y2]: [T; 2] = quad.p2.into();
+        let [x3, y3]: [T; 2] = quad.p3.into();
+        let [x4, y4]: [T; 2] = quad.p4.into();
+        [x1, y1, x2, y2, x3, y3, x4, y4]
+    }
+}
+
+/// Convert `[x1, y1, x2, y2, x3, y3]` to [Quad].
+impl<T: Num, U: Into<T>> From<[U; 8]> for Quad<T> {
+    fn from([x1, y1, x2, y2, x3, y3, x4, y4]: [U; 8]) -> Self {
+        Self::new([x1, y1], [x2, y2], [x3, y3], [x4, y4])
+    }
+}
+
+/// Convert `[Point<U>; 4]` to [Quad].
+impl<T, U: Into<T>> From<[Point<U>; 4]> for Quad<T>
+where
+    Point<U>: Into<Point<T>>,
+{
+    fn from([p1, p2, p3, p4]: [Point<U>; 4]) -> Self {
+        Self::new(p1, p2, p3, p4)
+    }
+}
+
+/// Convert [Quad] to `[Point<U>; 4]`.
+impl<T, U: Into<T>> From<Quad<U>> for [Point<T>; 4]
+where
+    Point<U>: Into<Point<T>>,
+{
+    fn from(quad: Quad<U>) -> Self {
+        [
+            quad.p1.into(),
+            quad.p2.into(),
+            quad.p3.into(),
+            quad.p4.into(),
+        ]
+    }
+}
+
+/// Convert &[Quad] to `[Point<U>; 4]`.
+impl<T, U: Copy + Into<T>> From<&Quad<U>> for [Point<T>; 4]
+where
+    Point<U>: Into<Point<T>>,
+{
+    fn from(quad: &Quad<U>) -> Self {
+        [
+            quad.p1.into(),
+            quad.p2.into(),
+            quad.p3.into(),
+            quad.p4.into(),
+        ]
+    }
+}
+
+/// Convert `[Vector<U>; 4]` to [Quad].
+impl<T, U: Into<T>> From<[Vector<U>; 4]> for Quad<T>
+where
+    Vector<U>: Into<Point<T>>,
+{
+    fn from([v1, v2, v3, v4]: [Vector<U>; 4]) -> Self {
+        Self::new(v1, v2, v3, v4)
+    }
+}
+
+/// Convert [Quad] to `[Vector<U>; 4]`.
+impl<T, U: Into<T>> From<Quad<U>> for [Vector<T>; 4]
+where
+    Point<U>: Into<Vector<T>>,
+{
+    fn from(quad: Quad<U>) -> Self {
+        [
+            quad.p1.into(),
+            quad.p2.into(),
+            quad.p3.into(),
+            quad.p4.into(),
+        ]
+    }
+}
+
+/// Convert &[Quad] to `[Vector<U>; 4]`.
+impl<T, U: Copy + Into<T>> From<&Quad<U>> for [Vector<T>; 4]
+where
+    Point<U>: Into<Vector<T>>,
+{
+    fn from(quad: &Quad<U>) -> Self {
+        [
+            quad.p1.into(),
+            quad.p2.into(),
+            quad.p3.into(),
+            quad.p4.into(),
+        ]
     }
 }
 

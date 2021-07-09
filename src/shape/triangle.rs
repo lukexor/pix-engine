@@ -18,7 +18,15 @@ pub struct Triangle<T = Scalar> {
 }
 
 impl<T> Triangle<T> {
-    /// Constructs a `Triangle<T>`.
+    /// Constructs a `Triangle<T>` with the given [Point]s.
+    ///
+    /// ```
+    /// use pix_engine::prelude::*;
+    /// let tri: Triangle<i32> = Triangle::new([10, 20], [30, 10], [20, 25]);
+    /// assert_eq!(tri.p1.get(), [10, 20, 0]);
+    /// assert_eq!(tri.p2.get(), [30, 10, 0]);
+    /// assert_eq!(tri.p3.get(), [20, 25, 0]);
+    /// ```
     pub fn new<P>(p1: P, p2: P, p3: P) -> Self
     where
         P: Into<Point<T>>,
@@ -41,13 +49,31 @@ impl<T> Triangle<T> {
     }
 }
 
+impl<T: Copy> Triangle<T> {
+    /// Returns `Triangle` as a [Vec].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let tri: Triangle<i32> = Triangle::new([10, 20], [30, 10], [20, 25]);
+    /// assert_eq!(tri.to_vec(), vec![
+    ///     vec![10, 20, 0],
+    ///     vec![30, 10, 0],
+    ///     vec![20, 25, 0],
+    /// ]);
+    /// ```
+    pub fn to_vec(self) -> Vec<Vec<T>> {
+        vec![self.p1.to_vec(), self.p2.to_vec(), self.p3.to_vec()]
+    }
+}
+
 impl<T> Draw for Triangle<T>
 where
     T: Copy,
     Self: Into<Triangle<Scalar>>,
 {
-    /// Draw triangle to the current [PixState] canvas.
-    #[inline]
+    /// Draw `Triangle` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.triangle(*self)
     }

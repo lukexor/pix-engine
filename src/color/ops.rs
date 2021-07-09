@@ -123,7 +123,6 @@ impl IntoIterator for Color {
     /// assert_eq!(iterator.next(), Some(255));
     /// assert_eq!(iterator.next(), None);
     /// ```
-    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         IntoIter::new(self.channels())
     }
@@ -153,7 +152,6 @@ pub struct Iter {
 }
 
 impl Iter {
-    #[inline]
     pub(super) fn new(color: &Color) -> Self {
         Self {
             inner: color.channels(),
@@ -177,7 +175,6 @@ impl Iterator for Iter {
 impl IntoIterator for &Color {
     type Item = u8;
     type IntoIter = Iter;
-    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
