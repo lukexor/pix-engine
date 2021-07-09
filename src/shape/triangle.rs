@@ -106,6 +106,13 @@ impl<T: Num, U: Into<T>> From<[U; 6]> for Triangle<T> {
     }
 }
 
+/// Convert `&[x1, y1, x2, y2, x3, y3]` to [Triangle].
+impl<T: Num, U: Copy + Into<T>> From<&[U; 6]> for Triangle<T> {
+    fn from(&[x1, y1, x2, y2, x3, y3]: &[U; 6]) -> Self {
+        Self::new([x1, y1], [x2, y2], [x3, y3])
+    }
+}
+
 /// Convert `[Point<U>; 3]` to [Triangle].
 impl<T, U: Into<T>> From<[Point<U>; 3]> for Triangle<T>
 where

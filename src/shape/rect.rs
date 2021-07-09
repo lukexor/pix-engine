@@ -438,6 +438,49 @@ impl<T: Num, U: Into<T>> From<[U; 8]> for Quad<T> {
     }
 }
 
+/// Convert `&[x1, y1, x2, y2, x3, y3]` to [Quad].
+impl<T: Num, U: Copy + Into<T>> From<&[U; 8]> for Quad<T> {
+    fn from(&[x1, y1, x2, y2, x3, y3, x4, y4]: &[U; 8]) -> Self {
+        Self::new([x1, y1], [x2, y2], [x3, y3], [x4, y4])
+    }
+}
+
+/// Convert [Quad] to `[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]`.
+impl<T> From<Quad<T>> for [T; 12] {
+    fn from(quad: Quad<T>) -> Self {
+        let [x1, y1, z1]: [T; 3] = quad.p1.into();
+        let [x2, y2, z2]: [T; 3] = quad.p2.into();
+        let [x3, y3, z3]: [T; 3] = quad.p3.into();
+        let [x4, y4, z4]: [T; 3] = quad.p4.into();
+        [x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]
+    }
+}
+
+/// Convert &[Quad] to `[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]`.
+impl<T: Copy> From<&Quad<T>> for [T; 12] {
+    fn from(quad: &Quad<T>) -> Self {
+        let [x1, y1, z1]: [T; 3] = quad.p1.into();
+        let [x2, y2, z2]: [T; 3] = quad.p2.into();
+        let [x3, y3, z3]: [T; 3] = quad.p3.into();
+        let [x4, y4, z4]: [T; 3] = quad.p4.into();
+        [x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]
+    }
+}
+
+/// Convert `[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]` to [Quad].
+impl<T: Num, U: Into<T>> From<[U; 12]> for Quad<T> {
+    fn from([x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]: [U; 12]) -> Self {
+        Self::new([x1, y1, z1], [x2, y2, z2], [x3, y3, z3], [x4, y4, z4])
+    }
+}
+
+/// Convert `&[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]` to [Quad].
+impl<T: Num, U: Copy + Into<T>> From<&[U; 12]> for Quad<T> {
+    fn from(&[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]: &[U; 12]) -> Self {
+        Self::new([x1, y1, z1], [x2, y2, z2], [x3, y3, z3], [x4, y4, z4])
+    }
+}
+
 /// Convert `[Point<U>; 4]` to [Quad].
 impl<T, U: Into<T>> From<[Point<U>; 4]> for Quad<T>
 where
