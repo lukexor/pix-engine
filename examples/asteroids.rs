@@ -181,13 +181,13 @@ impl AppState for Asteroids {
         let elapsed = s.delta_time();
 
         // Steer
-        if s.key_pressed(Key::Left) {
+        if s.key_down(Key::Left) {
             self.ship.angle -= 5.0 * elapsed;
         } else if s.keys().contains(&Key::Right) {
             self.ship.angle += 5.0 * elapsed;
         }
         // Thrust
-        if s.key_pressed(Key::Up) {
+        if s.key_down(Key::Up) {
             self.ship.vel += Vector::from_angle(self.ship.angle, SHIP_THRUST * elapsed);
         }
 

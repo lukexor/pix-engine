@@ -89,6 +89,7 @@ pub const ASSET_DIR: &str = "/tmp/pix-engine";
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) const ASSETS: Dir<'_> = include_dir!("./assets");
 
+pub mod app_state;
 #[macro_use]
 pub mod color;
 pub mod audio;
@@ -114,6 +115,7 @@ mod utils;
 /// Exports most commonly used types, traits, and functions.
 pub mod prelude {
     use super::*;
+    pub use app_state::AppState;
     pub use color::{constants::*, Color, ColorError, ColorMode};
     pub use common::{Error as PixError, Result as PixResult};
     pub use draw::Draw;
@@ -126,7 +128,7 @@ pub mod prelude {
     pub use sphere;
     pub use state::{
         settings::{AngleMode, ArcMode, BlendMode, DrawMode, FontStyle},
-        AppState, PixState,
+        PixState,
     };
     pub use texture::TextureId;
     pub use vector::Vector;

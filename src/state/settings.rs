@@ -239,11 +239,15 @@ impl PixState {
     }
 
     /// Change the way parameters are interpreted for drawing [Image]s.
+    ///
+    /// [Image]: crate::prelude::Image
     pub fn image_mode(&mut self, mode: DrawMode) {
         self.settings.image_mode = mode;
     }
 
     /// Add a color tint to [Image]s when drawing.
+    ///
+    /// [Image]: crate::prelude::Image
     pub fn image_tint<C>(&mut self, tint: C)
     where
         C: Into<Option<Color>>,

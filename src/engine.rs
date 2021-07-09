@@ -277,8 +277,7 @@ impl PixEngine {
                     keymod,
                     repeat,
                 } => {
-                    state.key_down = true;
-                    state.keys.insert(key);
+                    state.keys.press(key);
                     app.on_key_pressed(
                         state,
                         KeyEvent {
@@ -294,8 +293,7 @@ impl PixEngine {
                     keymod,
                     repeat,
                 } => {
-                    state.key_down = false;
-                    state.keys.remove(&key);
+                    state.keys.release(&key);
                     app.on_key_released(
                         state,
                         KeyEvent {
@@ -310,20 +308,18 @@ impl PixEngine {
                     app.on_key_typed(state, &text)?;
                 }
                 Event::MouseMotion { x, y, .. } => {
-                    state.pmouse_pos = state.mouse_pos;
-                    state.mouse_pos = point!(x, y);
-                    if state.mouse_down {
+                    state.pmouse.pos = state.mouse.pos;
+                    state.mouse.pos = point!(x, y);
+                    if state.mouse.is_pressed() {
                         app.on_mouse_dragged(state)?;
                     }
                 }
                 Event::MouseDown { button, .. } => {
-                    state.mouse_down = true;
-                    state.mouse_buttons.insert(button);
+                    state.mouse.press(button);
                     app.on_mouse_pressed(state, button)?;
                 }
                 Event::MouseUp { button, .. } => {
-                    state.mouse_down = false;
-                    state.mouse_buttons.remove(&button);
+                    state.mouse.release(&button);
                     app.on_mouse_released(state, button)?;
                 }
                 Event::MouseWheel { x, y, .. } => {
