@@ -1158,7 +1158,25 @@ where
     }
 }
 
-// Conversions from U to Vector<T>
+macro_rules! impl_from {
+    ($from:ty => $($to:ty),*) => {
+        $(
+            /// Convert [Vector] to [Vector].
+            impl From<Vector<$from>> for Vector<$to> {
+                fn from(v: Vector<$from>) -> Self {
+                    Self::new(v.x.into(), v.y.into(), v.z.into())
+                }
+            }
+        )*
+    };
+}
+
+impl_from!(i8 => i16, i32, i64, isize, f32, f64);
+impl_from!(u8 => i16, u16, i32, u32, i64, u64, isize, usize, f32, f64);
+impl_from!(i16 => i32, i64, isize, f32, f64);
+impl_from!(u16 => i32, u32, i64, u64, usize, f32, f64);
+impl_from!(i32 => i64, f64);
+impl_from!(u32 => i64, u64, f64);
 
 /// Convert [Vector] to `[x]`.
 impl<T> From<Vector<T>> for [T; 1] {

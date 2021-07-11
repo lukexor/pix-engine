@@ -684,7 +684,25 @@ where
     }
 }
 
-// Conversions from U to Point<T>
+macro_rules! impl_from {
+    ($from:ty => $($to:ty),*) => {
+        $(
+            /// Convert [Point] to [Point].
+            impl From<Point<$from>> for Point<$to> {
+                fn from(p: Point<$from>) -> Self {
+                    Self::new(p.x.into(), p.y.into(), p.z.into())
+                }
+            }
+        )*
+    };
+}
+
+impl_from!(i8 => i16, i32, i64, isize, f32, f64);
+impl_from!(u8 => i16, u16, i32, u32, i64, u64, isize, usize, f32, f64);
+impl_from!(i16 => i32, i64, isize, f32, f64);
+impl_from!(u16 => i32, u32, i64, u64, usize, f32, f64);
+impl_from!(i32 => i64, f64);
+impl_from!(u32 => i64, u64, f64);
 
 /// Convert [Point] to `[x]`.
 impl<T> From<Point<T>> for [T; 1] {
