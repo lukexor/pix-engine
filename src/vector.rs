@@ -75,6 +75,7 @@ use rand::distributions::uniform::SampleUniform;
 use serde::{Deserialize, Serialize};
 use std::{
     array::IntoIter,
+    convert::{TryFrom, TryInto},
     fmt,
     iter::{once, Chain, FromIterator, Once, Sum},
     ops::*,
@@ -1161,7 +1162,6 @@ where
 macro_rules! impl_from {
     ($from:ty => $($to:ty),*) => {
         $(
-            /// Convert [Vector] to [Vector].
             impl From<Vector<$from>> for Vector<$to> {
                 fn from(v: Vector<$from>) -> Self {
                     Self::new(v.x.into(), v.y.into(), v.z.into())
@@ -1177,6 +1177,31 @@ impl_from!(i16 => i32, i64, isize, f32, f64);
 impl_from!(u16 => i32, u32, i64, u64, usize, f32, f64);
 impl_from!(i32 => i64, f64);
 impl_from!(u32 => i64, u64, f64);
+impl_from!(f32 => f64);
+
+macro_rules! impl_try_from {
+    ($from:ty => $($to:ty),*) => {
+        $(
+            impl TryFrom<Vector<$from>> for Vector<$to> {
+                type Error = std::num::TryFromIntError;
+                fn try_from(v: Vector<$from>) -> Result<Self, Self::Error> {
+                    Ok(Self::new(v.x.try_into()?, v.y.try_into()?, v.z.try_into()?))
+                }
+            }
+        )*
+    };
+}
+
+impl_try_from!(i8 => u8, u16, u32, u64, usize);
+impl_try_from!(u8 => i8);
+impl_try_from!(i16 => i8, u8, u16, u32, u64, usize);
+impl_try_from!(u16 => i8, u8, i16, isize);
+impl_try_from!(i32 => i8, u8, i16, u32, u64, isize, usize);
+impl_try_from!(u32 => i8, u8, i16, i32, isize, usize);
+impl_try_from!(i64 => i8, u8, i16, i32, u32, u64, isize, usize);
+impl_try_from!(u64 => i8, u8, i16, i32, u32, i64, isize, usize);
+impl_try_from!(isize => i8, u8, i16, u16, i32, u32, i64, u64, usize);
+impl_try_from!(usize => i8, u8, i16, u16, i32, u32, i64, u64, isize);
 
 /// Convert [Vector] to `[x]`.
 impl<T> From<Vector<T>> for [T; 1] {

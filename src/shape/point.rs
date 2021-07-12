@@ -6,6 +6,7 @@ use num_traits::{AsPrimitive, Float, Num};
 use serde::{Deserialize, Serialize};
 use std::{
     array::IntoIter,
+    convert::{TryFrom, TryInto},
     fmt,
     iter::{once, Chain, FromIterator, Once, Sum},
     ops::*,
@@ -687,7 +688,6 @@ where
 macro_rules! impl_from {
     ($from:ty => $($to:ty),*) => {
         $(
-            /// Convert [Point] to [Point].
             impl From<Point<$from>> for Point<$to> {
                 fn from(p: Point<$from>) -> Self {
                     Self::new(p.x.into(), p.y.into(), p.z.into())
@@ -703,6 +703,31 @@ impl_from!(i16 => i32, i64, isize, f32, f64);
 impl_from!(u16 => i32, u32, i64, u64, usize, f32, f64);
 impl_from!(i32 => i64, f64);
 impl_from!(u32 => i64, u64, f64);
+impl_from!(f32 => f64);
+
+macro_rules! impl_try_from {
+    ($from:ty => $($to:ty),*) => {
+        $(
+            impl TryFrom<Point<$from>> for Point<$to> {
+                type Error = std::num::TryFromIntError;
+                fn try_from(p: Point<$from>) -> Result<Self, Self::Error> {
+                    Ok(Self::new(p.x.try_into()?, p.y.try_into()?, p.z.try_into()?))
+                }
+            }
+        )*
+    };
+}
+
+impl_try_from!(i8 => u8, u16, u32, u64, usize);
+impl_try_from!(u8 => i8);
+impl_try_from!(i16 => i8, u8, u16, u32, u64, usize);
+impl_try_from!(u16 => i8, u8, i16, isize);
+impl_try_from!(i32 => i8, u8, i16, u32, u64, isize, usize);
+impl_try_from!(u32 => i8, u8, i16, i32, isize, usize);
+impl_try_from!(i64 => i8, u8, i16, i32, u32, u64, isize, usize);
+impl_try_from!(u64 => i8, u8, i16, i32, u32, i64, isize, usize);
+impl_try_from!(isize => i8, u8, i16, u16, i32, u32, i64, u64, usize);
+impl_try_from!(usize => i8, u8, i16, u16, i32, u32, i64, u64, isize);
 
 /// Convert [Point] to `[x]`.
 impl<T> From<Point<T>> for [T; 1] {
