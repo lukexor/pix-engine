@@ -259,6 +259,14 @@ impl Rendering for Renderer {
         todo!("rounded_rect")
     }
 
+    /// Draw a quadrilateral to the current canvas.
+    fn quad(&mut self, quad: Quad<i16>, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
+        let _ = quad;
+        if let Some(_) = fill {}
+        if let Some(_) = stroke {}
+        todo!("quad")
+    }
+
     /// Draw a polygon to the current canvas.
     fn polygon(
         &mut self,
@@ -288,18 +296,23 @@ impl Rendering for Renderer {
     }
 
     /// Draw an arc to the current canvas.
+    #[allow(clippy::too_many_arguments)]
     fn arc(
         &mut self,
         p: Point<i16>,
         radius: i16,
         start: i16,
         end: i16,
+        mode: ArcMode,
+        fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
         let _ = p;
         let _ = radius;
         let _ = start;
         let _ = end;
+        let _ = mode;
+        if let Some(_) = fill {}
         if let Some(_) = stroke {}
         todo!("arc")
     }

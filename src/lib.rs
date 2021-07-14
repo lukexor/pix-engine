@@ -133,11 +133,10 @@ pub mod prelude {
     pub use texture::TextureId;
     pub use vector::Vector;
     pub use window::{Position, WindowBuilder, WindowId};
-    pub use {circle, ellipse, rect, square};
+    // Shape macros
+    pub use {circle, ellipse, point, rect, square};
+    // Math macros
     pub use {noise, random, vector};
     // Color macros
     pub use {color, hsb, hsl, rgb};
-    // Shape macros
-    pub use point;
-    // Math macros
 }
