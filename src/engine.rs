@@ -213,14 +213,14 @@ impl PixEngine {
 
                     if state.settings.running || state.settings.run_count > 0 {
                         app.on_update(&mut state)?;
-                        state.renderer.present();
                         if state.settings.run_count > 0 {
                             state.settings.run_count -= 1;
                         }
+                        state.renderer.present();
                     }
                 }
 
-                if state.settings.show_frame_rate {
+                if state.settings.running && state.settings.show_frame_rate {
                     let a_second_ago = now - ONE_SECOND;
                     while self.frames.front().map_or(false, |&t| t < a_second_ago) {
                         self.frames.pop_front();

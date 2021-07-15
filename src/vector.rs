@@ -69,7 +69,7 @@
 //! ```
 
 use crate::prelude::{constants::TAU, random, Point, Scalar};
-use num_traits::{clamp, AsPrimitive, Float, Num, NumCast};
+use num_traits::{clamp, AsPrimitive, Float, Num, NumCast, Signed};
 use rand::distributions::uniform::SampleUniform;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -294,6 +294,71 @@ impl<T: Num> Vector<T> {
     /// ```
     pub fn new_xy(x: T, y: T) -> Self {
         Self::new(x, y, T::zero())
+    }
+
+    /// Wraps `Vector` around the given width, height, and size (radius).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut v = vector!(200.0, 300.0);
+    /// v.wrap_2d(150.0, 400.0, 10.0);
+    /// assert_eq!(v.get(), [-10.0, 300.0, 0.0]);
+    ///
+    /// let mut v = vector!(-100.0, 300.0);
+    /// v.wrap_2d(150.0, 400.0, 10.0);
+    /// assert_eq!(v.get(), [160.0, 300.0, 0.0]);
+    /// ```
+    pub fn wrap_2d(&mut self, width: T, height: T, size: T)
+    where
+        T: Copy + PartialOrd + Signed,
+    {
+        if self.x > width + size {
+            self.x = -size;
+        } else if self.x < -size {
+            self.x = width + size;
+        }
+        if self.y > height + size {
+            self.y = -size;
+        } else if self.y < -size {
+            self.y = height + size;
+        }
+    }
+
+    /// Wraps `Vector` around the given width, height, depth, and size (radius).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut v = vector!(200.0, 300.0, 250.0);
+    /// v.wrap_3d(150.0, 400.0, 200.0, 10.0);
+    /// assert_eq!(v.get(), [-10.0, 300.0, -10.0]);
+    ///
+    /// let mut v = vector!(-100.0, 300.0, 250.0);
+    /// v.wrap_3d(150.0, 400.0, 200.0, 10.0);
+    /// assert_eq!(v.get(), [160.0, 300.0, -10.0]);
+    /// ```
+    pub fn wrap_3d(&mut self, width: T, height: T, depth: T, size: T)
+    where
+        T: Copy + PartialOrd + Signed,
+    {
+        if self.x > width + size {
+            self.x = -size;
+        } else if self.x < -size {
+            self.x = width + size;
+        }
+        if self.y > height + size {
+            self.y = -size;
+        } else if self.y < -size {
+            self.y = height + size;
+        }
+        if self.z > depth + size {
+            self.z = -size;
+        } else if self.z < -size {
+            self.z = depth + size;
+        }
     }
 }
 
@@ -723,65 +788,6 @@ where
             lerp(self.y, v.y, amt),
             lerp(self.z, v.z, amt),
         )
-    }
-
-    /// Wraps `Vector` around the given width, height, and size (radius).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let mut v = vector!(200.0, 300.0);
-    /// v.wrap_2d(150.0, 400.0, 10.0);
-    /// assert_eq!(v.get(), [-10.0, 300.0, 0.0]);
-    ///
-    /// let mut v = vector!(-100.0, 300.0);
-    /// v.wrap_2d(150.0, 400.0, 10.0);
-    /// assert_eq!(v.get(), [160.0, 300.0, 0.0]);
-    /// ```
-    pub fn wrap_2d(&mut self, width: T, height: T, size: T) {
-        if self.x > width + size {
-            self.x = -size;
-        } else if self.x < -size {
-            self.x = width + size;
-        }
-        if self.y > height + size {
-            self.y = -size;
-        } else if self.y < -size {
-            self.y = height + size;
-        }
-    }
-
-    /// Wraps `Vector` around the given width, height, depth, and size (radius).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let mut v = vector!(200.0, 300.0, 250.0);
-    /// v.wrap_3d(150.0, 400.0, 200.0, 10.0);
-    /// assert_eq!(v.get(), [-10.0, 300.0, -10.0]);
-    ///
-    /// let mut v = vector!(-100.0, 300.0, 250.0);
-    /// v.wrap_3d(150.0, 400.0, 200.0, 10.0);
-    /// assert_eq!(v.get(), [160.0, 300.0, -10.0]);
-    /// ```
-    pub fn wrap_3d(&mut self, width: T, height: T, depth: T, size: T) {
-        if self.x > width + size {
-            self.x = -size;
-        } else if self.x < -size {
-            self.x = width + size;
-        }
-        if self.y > height + size {
-            self.y = -size;
-        } else if self.y < -size {
-            self.y = height + size;
-        }
-        if self.z > depth + size {
-            self.z = -size;
-        } else if self.z < -size {
-            self.z = depth + size;
-        }
     }
 
     /// Returns whether two `Vector`s are approximately equal.
