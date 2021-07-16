@@ -33,9 +33,9 @@ impl PixEngineBuilder {
     }
 
     /// Set window dimensions.
-    pub fn with_dimensions(&mut self, width: u32, height: u32) -> &mut Self {
-        self.settings.width = width;
-        self.settings.height = height;
+    pub fn with_dimensions(&mut self, width: Primitive, height: Primitive) -> &mut Self {
+        self.settings.width = width as u32;
+        self.settings.height = height as u32;
         self
     }
 
@@ -50,23 +50,23 @@ impl PixEngineBuilder {
 
     /// Set a True-Type Font for text rendering.
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn with_font<P>(&mut self, path: P, size: u16) -> &mut Self
+    pub fn with_font<P>(&mut self, path: P, size: Primitive) -> &mut Self
     where
         P: Into<PathBuf>,
     {
         self.settings.font = path.into();
-        self.settings.font_size = size;
+        self.settings.font_size = size as u16;
         self
     }
 
     /// Set font for text rendering.
     #[cfg(target_arch = "wasm32")]
-    pub fn with_font<S>(&mut self, font: S, size: u16) -> &mut Self
+    pub fn with_font<S>(&mut self, font: S, size: Primitive) -> &mut Self
     where
         S: Into<String>,
     {
         self.settings.font = font.into();
-        self.settings.font_size = size;
+        self.settings.font_size = size as u16;
         self
     }
 
@@ -77,7 +77,7 @@ impl PixEngineBuilder {
     }
 
     /// Position the window at the given `(x, y)` coordinates of the display.
-    pub fn position(&mut self, x: i32, y: i32) -> &mut Self {
+    pub fn position(&mut self, x: Primitive, y: Primitive) -> &mut Self {
         self.settings.x = Position::Positioned(x);
         self.settings.y = Position::Positioned(y);
         self
@@ -282,7 +282,7 @@ impl PixEngine {
                 } => match win_event {
                     WindowEvent::FocusGained => {
                         state.env.focused = true;
-                        state.env.focused_window = Some(window_id);
+                        state.env.focused_window = Some(window_id as usize);
                     }
                     WindowEvent::FocusLost => {
                         state.env.focused = false;

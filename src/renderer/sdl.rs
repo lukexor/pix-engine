@@ -72,7 +72,7 @@ impl Rendering for Renderer {
         }
 
         let window = window_builder.build()?;
-        let window_id = window.id();
+        let window_id = window.id() as usize;
         let mut canvas_builder = window.into_canvas().target_texture();
         if s.vsync {
             canvas_builder = canvas_builder.present_vsync();
@@ -447,7 +447,7 @@ impl Rendering for Renderer {
                     })?;
                 }
                 texture.set_blend_mode(self.blend_mode);
-                let dst = SdlRect::new(pos.x, pos.y, img.width(), img.height());
+                let dst = SdlRect::new(pos.x, pos.y, img.width() as u32, img.height() as u32);
                 Ok(self.canvas.copy(&texture, None, dst)?)
             }
             None => Err(Error::InvalidTexture(texture_id)),

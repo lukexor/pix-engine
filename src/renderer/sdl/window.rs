@@ -1,9 +1,8 @@
 use super::Renderer;
 use crate::{
     core::window::{Result, Window, WindowId},
-    event::Event,
+    prelude::{Event, Primitive},
 };
-use num_traits::AsPrimitive;
 use sdl2::video::FullscreenType;
 
 impl Window for Renderer {
@@ -34,9 +33,15 @@ impl Window for Renderer {
     }
 
     /// Set dimensions of the primary window as `(width, height)`.
-    fn set_dimensions(&mut self, id: WindowId, (width, height): (u32, u32)) -> Result<()> {
+    fn set_dimensions(
+        &mut self,
+        id: WindowId,
+        (width, height): (Primitive, Primitive),
+    ) -> Result<()> {
         if id == self.window_id {
-            self.canvas.window_mut().set_size(width, height)?
+            self.canvas
+                .window_mut()
+                .set_size(width as u32, height as u32)?
         } else {
             todo!("secondary windows are not yet implemented");
         };
@@ -44,24 +49,13 @@ impl Window for Renderer {
     }
 
     /// Dimensions of the primary window as `(width, height)`.
-    fn dimensions(&self, id: WindowId) -> Result<(u32, u32)> {
-        let dimensions = if id == self.window_id {
+    fn dimensions(&self, id: WindowId) -> Result<(Primitive, Primitive)> {
+        let (width, height) = if id == self.window_id {
             self.canvas.window().size()
         } else {
             todo!("secondary windows are not yet implemented");
         };
-        Ok(dimensions)
-    }
-
-    /// Resize the window.
-    fn resize<T>(&mut self, width: T, height: T) -> Result<()>
-    where
-        T: AsPrimitive<u32>,
-    {
-        Ok(self
-            .canvas
-            .window_mut()
-            .set_size(width.as_(), height.as_())?)
+        Ok((width as i32, height as i32))
     }
 
     /// Returns whether the application is fullscreen or not.

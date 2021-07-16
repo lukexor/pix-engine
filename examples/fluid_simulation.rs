@@ -1,11 +1,10 @@
 use pix_engine::prelude::*;
 
-const TITLE: &str = "Fluid Simulation";
-const WIDTH: u32 = 300;
-const HEIGHT: u32 = 300;
+const WIDTH: Primitive = 300;
+const HEIGHT: Primitive = 300;
 
-const SCALE: i32 = 1;
-const N: usize = (WIDTH / SCALE as u32) as usize;
+const SCALE: Primitive = 1;
+const N: usize = (WIDTH / SCALE) as usize;
 const NLEN: usize = N - 1;
 const N_SCALAR: Scalar = N as Scalar;
 const ITER: usize = 2;
@@ -14,7 +13,7 @@ const VEL: Scalar = 1.4; // Velocity of fluid
 const TIME_INC: Scalar = 0.5; // Amount to step time each draw
 
 const SPACING: usize = 20;
-const COUNT: usize = (WIDTH / SCALE as u32) as usize / SPACING + 1;
+const COUNT: usize = (WIDTH / SCALE) as usize / SPACING + 1;
 
 const DT: Scalar = 0.005;
 const DTX: Scalar = DT * (N_SCALAR - 2.0);
@@ -311,7 +310,7 @@ impl AppState for App {
 pub fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
-        .with_title(TITLE)
+        .with_title("Fluid Simulation")
         .with_frame_rate()
         .scale(2.0, 2.0)
         .position_centered()

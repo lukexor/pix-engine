@@ -1,33 +1,30 @@
-use std::{thread, time::Duration};
-
 use pix_engine::prelude::*;
 
-const TITLE: &str = "Maze";
-const WIDTH: u32 = 300;
-const HEIGHT: u32 = 240;
-const SIZE: i32 = 4;
+const WIDTH: Primitive = 300;
+const HEIGHT: Primitive = 240;
+const SIZE: Primitive = 4;
 const SCALE: f32 = 3.0;
 
-const PATH_N: i32 = 0x01;
-const PATH_E: i32 = 0x02;
-const PATH_S: i32 = 0x04;
-const PATH_W: i32 = 0x08;
-const VISITED: i32 = 0x10;
+const PATH_N: Primitive = 0x01;
+const PATH_E: Primitive = 0x02;
+const PATH_S: Primitive = 0x04;
+const PATH_W: Primitive = 0x08;
+const VISITED: Primitive = 0x10;
 
 struct Maze {
-    width: i32,
-    height: i32,
-    maze: Vec<i32>,
-    neighbors: Vec<i32>,
+    width: Primitive,
+    height: Primitive,
+    maze: Vec<Primitive>,
+    neighbors: Vec<Primitive>,
     size: usize,
     visited: usize,
-    stack: Vec<Point<i32>>,
+    stack: Vec<Point<Primitive>>,
 }
 
 impl Maze {
     fn new() -> Self {
-        let width: i32 = WIDTH as i32 / (SIZE + 1);
-        let height: i32 = HEIGHT as i32 / (SIZE + 1);
+        let width = WIDTH / (SIZE + 1);
+        let height = HEIGHT / (SIZE + 1);
         let size = (width * height) as usize;
         let mut maze = vec![0; size];
         let mut stack = Vec::with_capacity(size);
@@ -48,11 +45,11 @@ impl Maze {
         }
     }
 
-    fn idx(&self, x: i32, y: i32) -> usize {
+    fn idx(&self, x: Primitive, y: Primitive) -> usize {
         (y * self.width + x) as usize
     }
 
-    fn offset(&self, x: i32, y: i32) -> usize {
+    fn offset(&self, x: Primitive, y: Primitive) -> usize {
         match self.stack.last() {
             Some(top) => ((top.y + y) * self.width + top.x + x) as usize,
             None => 0,
@@ -124,8 +121,12 @@ impl Maze {
 }
 
 impl AppState for Maze {
+    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.no_stroke();
+        Ok(())
+    }
+
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        thread::sleep(Duration::from_millis(10));
         if self.visited < self.size {
             if self.has_neighbors() {
                 self.visit_neighbor();
@@ -163,8 +164,9 @@ impl AppState for Maze {
 pub fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
-        .with_title(TITLE)
+        .with_title("Maze Generation")
         .with_frame_rate()
+        .target_frame_rate(30)
         .scale(SCALE, SCALE)
         .position_centered()
         .vsync_enabled()

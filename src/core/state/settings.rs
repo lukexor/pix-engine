@@ -149,7 +149,7 @@ impl PixState {
     /// Sets the clip [Rect] used by the renderer to draw to the current canvas.
     pub fn clip<R>(&mut self, rect: R)
     where
-        R: Into<Rect<i32>>,
+        R: Into<Rect<Primitive>>,
     {
         self.renderer.clip(Some(rect.into()));
     }
@@ -221,13 +221,13 @@ impl PixState {
     }
 
     /// Set the rendering scale of the current canvas.
-    pub fn scale<T: AsPrimitive<f32>>(&mut self, x: T, y: T) -> PixResult<()> {
-        Ok(self.renderer.scale(x.as_(), y.as_())?)
+    pub fn scale<T: AsPrimitive<Scalar>>(&mut self, x: T, y: T) -> PixResult<()> {
+        Ok(self.renderer.scale(x.as_() as f32, y.as_() as f32)?)
     }
 
     /// Set the font size for drawing to the current canvas.
-    pub fn font_size(&mut self, size: u32) -> PixResult<()> {
-        Ok(self.renderer.font_size(size)?)
+    pub fn font_size(&mut self, size: Primitive) -> PixResult<()> {
+        Ok(self.renderer.font_size(size as u32)?)
     }
 
     /// Set the font style for drawing to the current canvas.

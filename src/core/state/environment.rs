@@ -1,10 +1,7 @@
 //! Environment information for the [PixEngine].
 //!
 //! [PixEngine]: crate::prelude::PixEngine
-use crate::{
-    core::window::Window,
-    prelude::{PixResult, PixState, WindowBuilder, WindowId},
-};
+use crate::{core::window::Window, prelude::*};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -55,7 +52,7 @@ impl PixState {
     }
 
     /// Create a new [WindowBuilder].
-    pub fn create_window(&mut self, width: u32, height: u32) -> WindowBuilder {
+    pub fn create_window(&mut self, width: Primitive, height: Primitive) -> WindowBuilder {
         WindowBuilder::new(width, height)
     }
 
@@ -70,7 +67,7 @@ impl PixState {
     }
 
     /// The time elapsed since last frame in seconds.
-    pub fn delta_time(&self) -> f64 {
+    pub fn delta_time(&self) -> Scalar {
         self.env.delta_time
     }
 
@@ -87,25 +84,25 @@ impl PixState {
     /// Set a target frame rate to render at, controls how often
     /// [on_update](crate::prelude::AppState::on_update) is called.
     pub fn set_frame_rate(&mut self, rate: usize) {
-        self.env.target_frame_rate = Some(rate as f64);
+        self.env.target_frame_rate = Some(rate as Scalar);
     }
 
     /// The dimensions of the primary window as `(width, height)`.
-    pub fn dimensions(&self) -> (u32, u32) {
+    pub fn dimensions(&self) -> (Primitive, Primitive) {
         // SAFETY: Primary window_id should always exist
         let window_id = self.window_id();
         self.renderer.dimensions(window_id).unwrap()
     }
 
     /// Set the dimensions of the primary window from `(width, height)`.
-    pub fn set_dimensions(&mut self, dimensions: (u32, u32)) {
+    pub fn set_dimensions(&mut self, dimensions: (Primitive, Primitive)) {
         // SAFETY: Primary window_id should always exist
         let window_id = self.window_id();
         self.renderer.set_dimensions(window_id, dimensions).unwrap()
     }
 
     /// The width of the primary window.
-    pub fn width(&self) -> u32 {
+    pub fn width(&self) -> Primitive {
         // SAFETY: Primary window_id should always exist
         let window_id = self.window_id();
         let (width, _) = self.renderer.dimensions(window_id).unwrap();
@@ -113,7 +110,7 @@ impl PixState {
     }
 
     /// Set the width of the primary window.
-    pub fn set_width(&mut self, width: u32) {
+    pub fn set_width(&mut self, width: Primitive) {
         let window_id = self.window_id();
         // SAFETY: Primary window_id should always exist
         let (_, height) = self.renderer.dimensions(window_id).unwrap();
@@ -123,14 +120,14 @@ impl PixState {
     }
 
     /// The height of the primary window.
-    pub fn height(&self) -> u32 {
+    pub fn height(&self) -> Primitive {
         // SAFETY: Primary window_id should always exist
         let (_, height) = self.renderer.dimensions(self.window_id()).unwrap();
         height
     }
 
     /// Set the height of the primary window.
-    pub fn set_height(&mut self, height: u32) {
+    pub fn set_height(&mut self, height: Primitive) {
         let window_id = self.window_id();
         // SAFETY: Primary window_id should always exist
         let (width, _) = self.renderer.dimensions(window_id).unwrap();

@@ -78,9 +78,9 @@ impl Default for PixelFormat {
 #[derive(Default, Clone)]
 pub struct Image {
     /// `Image` width.
-    width: u32,
+    width: Primitive,
     /// `Image` height.
-    height: u32,
+    height: Primitive,
     /// Raw pixel data.
     data: Vec<u8>,
     /// Pixel Format.
@@ -104,19 +104,19 @@ impl std::fmt::Debug for Image {
 impl Image {
     /// `Image` width.
     #[inline]
-    pub fn width(&self) -> u32 {
+    pub fn width(&self) -> Primitive {
         self.width
     }
 
     /// `Image` height.
     #[inline]
-    pub fn height(&self) -> u32 {
+    pub fn height(&self) -> Primitive {
         self.height
     }
 
     /// Returns the `Image` dimensions as `(width, height)`.
     #[inline]
-    pub fn dimensions(&self) -> (u32, u32) {
+    pub fn dimensions(&self) -> (Primitive, Primitive) {
         (self.width, self.height)
     }
 
@@ -151,7 +151,7 @@ impl Image {
     {
         let path = path.as_ref();
         let png_file = BufWriter::new(std::fs::File::create(&path)?);
-        let mut png = png::Encoder::new(png_file, self.width, self.height);
+        let mut png = png::Encoder::new(png_file, self.width as u32, self.height as u32);
         png.set_color(png::ColorType::RGBA);
         let mut writer = png.write_header()?;
         Ok(writer.write_image_data(self.bytes())?)
@@ -167,12 +167,12 @@ impl Image {
 impl PixState {
     /// Constructs an empty RGBA `Image` with given `width` and `height`.
     #[inline]
-    pub fn create_image(&mut self, width: u32, height: u32) -> PixResult<Image> {
+    pub fn create_image(&mut self, width: Primitive, height: Primitive) -> PixResult<Image> {
         self.create_rgba_image(width, height)
     }
 
     /// Constructs an empty RGBA `Image` with given `width` and `height`.
-    pub fn create_rgba_image(&mut self, width: u32, height: u32) -> PixResult<Image> {
+    pub fn create_rgba_image(&mut self, width: Primitive, height: Primitive) -> PixResult<Image> {
         let format = PixelFormat::Rgba;
         Ok(Image {
             width,
@@ -184,7 +184,7 @@ impl PixState {
     }
 
     /// Constructs an empty RGB `Image` with given `width` and `height`.
-    pub fn create_rgb_image(&mut self, width: u32, height: u32) -> PixResult<Image> {
+    pub fn create_rgb_image(&mut self, width: Primitive, height: Primitive) -> PixResult<Image> {
         let format = PixelFormat::Rgb;
         Ok(Image {
             width,
@@ -198,8 +198,8 @@ impl PixState {
     /// Constructs an `Image` from a [u8] [slice] representing RGB/A values.
     pub fn create_image_from_bytes(
         &mut self,
-        width: u32,
-        height: u32,
+        width: Primitive,
+        height: Primitive,
         bytes: &[u8],
         format: PixelFormat,
     ) -> PixResult<Image> {
@@ -236,7 +236,7 @@ impl PixState {
         let mut data = vec![0x00; info.buffer_size()];
         reader.next_frame(&mut data)?;
         let format = info.color_type.into();
-        self.create_image_from_bytes(info.width, info.height, &data, format)
+        self.create_image_from_bytes(info.width as i32, info.height as i32, &data, format)
     }
 }
 

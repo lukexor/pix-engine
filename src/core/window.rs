@@ -1,7 +1,6 @@
 //! `Window` functions.
 
-use crate::prelude::{Event, PixError};
-use num_traits::AsPrimitive;
+use crate::prelude::*;
 use std::{borrow::Cow, error, ffi::NulError, fmt, result};
 
 /// The result type for `Renderer` operations.
@@ -11,7 +10,7 @@ pub type Result<T> = result::Result<T, Error>;
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Position {
     /// A positioned `(x, y)` coordinate.
-    Positioned(i32),
+    Positioned(Primitive),
     /// A coordinate placed in the center of the display.
     Centered,
 }
@@ -23,7 +22,7 @@ impl Default for Position {
 }
 
 /// Window Identifier
-pub type WindowId = u32;
+pub type WindowId = usize;
 
 /// Trait representing window operations.
 pub(crate) trait Window {
@@ -43,15 +42,10 @@ pub(crate) trait Window {
     fn set_title(&mut self, title: &str) -> Result<()>;
 
     /// Dimensions of the primary window as `(width, height)`.
-    fn dimensions(&self, id: WindowId) -> Result<(u32, u32)>;
+    fn dimensions(&self, id: WindowId) -> Result<(Primitive, Primitive)>;
 
     /// Set dimensions of the primary window as `(width, height)`.
-    fn set_dimensions(&mut self, id: WindowId, dimensions: (u32, u32)) -> Result<()>;
-
-    /// Resize the window.
-    fn resize<T>(&mut self, width: T, height: T) -> Result<()>
-    where
-        T: AsPrimitive<u32>;
+    fn set_dimensions(&mut self, id: WindowId, dimensions: (Primitive, Primitive)) -> Result<()>;
 
     /// Returns whether the application is fullscreen or not.
     fn fullscreen(&self) -> bool;
@@ -71,11 +65,11 @@ pub struct WindowBuilder {
 
 impl WindowBuilder {
     /// Creates a new WindowBuilder instance.
-    pub fn new(width: u32, height: u32) -> Self {
+    pub fn new(width: Primitive, height: Primitive) -> Self {
         Self {
             title: String::new(),
-            width,
-            height,
+            width: width as u32,
+            height: height as u32,
         }
     }
 

@@ -1,12 +1,11 @@
 use pix_engine::prelude::*;
 use std::{borrow::Cow, cmp::Ordering::Less};
 
-const TITLE: &str = "Raycasting";
-const WIDTH: u32 = 1000;
-const HEIGHT: u32 = 800;
-const SCALE: u32 = 1;
+const WIDTH: Primitive = 1000;
+const HEIGHT: Primitive = 800;
+const SCALE: Primitive = 1;
 
-const BLOCK_SIZE: u32 = 40;
+const BLOCK_SIZE: Primitive = 40;
 const NORTH: usize = 0;
 const SOUTH: usize = 1;
 const EAST: usize = 2;
@@ -40,8 +39,8 @@ struct RayScene {
     edges: Vec<Line>,
     points: Vec<Point>,
     polygons: Vec<(Scalar, Point)>,
-    xcells: u32,
-    ycells: u32,
+    xcells: Primitive,
+    ycells: Primitive,
     drawing: bool,
     light: Image,
 }
@@ -69,7 +68,7 @@ impl RayScene {
     }
 
     fn get_cell_index(&self, x: i32, y: i32) -> usize {
-        ((y / BLOCK_SIZE as i32) * self.xcells as i32 + (x / BLOCK_SIZE as i32)) as usize
+        ((y / BLOCK_SIZE) * self.xcells + (x / BLOCK_SIZE)) as usize
     }
 
     fn exists(&self, i: usize) -> bool {
@@ -93,20 +92,18 @@ impl RayScene {
 
     #[allow(clippy::many_single_char_names)]
     fn convert_edges_to_poly_map(&mut self) -> PixResult<()> {
-        let s = Rect::new(0, 0, self.xcells as i32, self.ycells as i32);
-        let pitch = self.xcells as i32;
-        let block_size = BLOCK_SIZE as i32;
+        let rect = Rect::new(0, 0, self.xcells, self.ycells);
+        let pitch = self.xcells;
+        let block_size = BLOCK_SIZE;
         // Reset edges state, keeping only the window boundaries
         self.edges.truncate(4);
         for c in self.cells.iter_mut() {
             c.reset();
         }
-        let width = s.width as i32;
-        let height = s.height as i32;
-        for x in 0..width {
-            for y in 0..height {
-                let x_off = x + s.x;
-                let y_off = y + s.y;
+        for x in 0..rect.width {
+            for y in 0..rect.height {
+                let x_off = x + rect.x;
+                let y_off = y + rect.y;
                 let i = (y_off * pitch + x_off) as usize; // This
                 let n = ((y_off - 1) * pitch + x_off) as usize; // Northern neighbor
                 let s = ((y_off + 1) * pitch + x_off) as usize; // Sourthern neighbor
@@ -136,7 +133,7 @@ impl RayScene {
                         }
                     }
                     // No eastern neighbor, so needs an edge
-                    if x < width && !self.exists(e) {
+                    if x < rect.width && !self.exists(e) {
                         // Can extend down from northern neighbors EAST edge
                         if self.has_edge(n, EAST) {
                             let edge_id = self.get_edge_index(n, EAST)?;
@@ -171,7 +168,7 @@ impl RayScene {
                         }
                     }
                     // No southern neighbor, so needs an edge
-                    if y < height && !self.exists(s) {
+                    if y < rect.height && !self.exists(s) {
                         // Can extend from western neighbors SOUTH edge
                         if self.has_edge(w, SOUTH) {
                             let edge_id = self.get_edge_index(w, SOUTH)?;
@@ -241,7 +238,7 @@ impl RayScene {
 
     fn draw_visibility_polygons(&mut self, s: &mut PixState) -> PixResult<()> {
         let mouse = s.mouse_pos();
-        if !rect![0, 0, s.width() as i32, s.height() as i32].contains_point(mouse) {
+        if !rect![0, 0, s.width(), s.height()].contains_point(mouse) {
             return Ok(());
         }
 
@@ -275,8 +272,8 @@ impl AppState for RayScene {
         s.scale(SCALE, SCALE)?;
         s.cursor(false);
 
-        let w = (self.xcells * BLOCK_SIZE) as i32;
-        let h = (self.ycells * BLOCK_SIZE) as i32;
+        let w = self.xcells * BLOCK_SIZE;
+        let h = self.ycells * BLOCK_SIZE;
 
         // Random scattered cells to start with
         for _ in 0..50 {
@@ -345,7 +342,7 @@ impl AppState for RayScene {
     fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse) -> PixResult<()> {
         if btn == Mouse::Left {
             let m = s.mouse_pos();
-            if rect![0, 0, s.width() as i32, s.height() as i32].contains_point(m) {
+            if rect![0, 0, s.width(), s.height()].contains_point(m) {
                 let i = self.get_cell_index(m.x, m.y);
                 self.cells[i].exists = !self.cells[i].exists;
                 self.drawing = self.cells[i].exists;
@@ -359,7 +356,7 @@ impl AppState for RayScene {
         if s.mouse_buttons().contains(&Mouse::Left) {
             let m = s.mouse_pos();
             let pm = s.pmouse_pos();
-            if rect![0, 0, s.width() as i32, s.height() as i32].contains_point(m) {
+            if rect![0, 0, s.width(), s.height()].contains_point(m) {
                 if m != pm {
                     let i = self.get_cell_index(m.x, m.y);
                     self.cells[i].exists = self.drawing;
@@ -374,7 +371,7 @@ impl AppState for RayScene {
 fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
-        .with_title(TITLE)
+        .with_title("2D Raycasting")
         .with_frame_rate()
         .position_centered()
         .vsync_enabled()

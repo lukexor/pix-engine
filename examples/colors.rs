@@ -1,9 +1,8 @@
 use pix_engine::{math::map, prelude::*};
 
-const TITLE: &str = "Colors";
-const WIDTH: u32 = 800;
-const HEIGHT: u32 = 600;
-const SIZE: u32 = 4;
+const WIDTH: Primitive = 800;
+const HEIGHT: Primitive = 600;
+const SIZE: Primitive = 4;
 
 struct Colors {
     h: f64,
@@ -48,6 +47,7 @@ impl AppState for Colors {
             self.modify_hue(1.0, true);
         }
         self.draw_gradient(s)?;
+        s.no_stroke();
         s.fill(WHITE);
         s.text(
             [20, 100],
@@ -73,7 +73,7 @@ impl AppState for Colors {
 pub fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
-        .with_title(TITLE)
+        .with_title("Colors")
         .with_frame_rate()
         .position_centered()
         .vsync_enabled()

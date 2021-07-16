@@ -1,8 +1,7 @@
 use pix_engine::prelude::*;
 
-const TITLE: &str = "Flocking Simulation";
-const WIDTH: u32 = 1000;
-const HEIGHT: u32 = 800;
+const WIDTH: Primitive = 1000;
+const HEIGHT: Primitive = 800;
 
 const BOID_COUNT: usize = 500;
 const BOID_MODEL: [Vector; 13] = [
@@ -197,7 +196,7 @@ impl AppState for App {
 pub fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
-        .with_title(TITLE)
+        .with_title("Flocking")
         .with_frame_rate()
         .position_centered()
         .vsync_enabled()

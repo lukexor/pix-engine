@@ -183,10 +183,7 @@ impl PixState {
         let s = &self.settings;
         let position = match s.image_mode {
             DrawMode::Corner => p,
-            DrawMode::Center => point!(
-                p.x - img.width() as Primitive / 2,
-                p.y - img.height() as Primitive / 2
-            ),
+            DrawMode::Center => point!(p.x - img.width() / 2, p.y - img.height() / 2),
         };
         Ok(self.renderer.image(&position, img, s.image_tint)?)
     }

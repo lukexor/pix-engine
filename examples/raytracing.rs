@@ -1,13 +1,9 @@
 use pix_engine::prelude::*;
 
-const TITLE: &str = "Example App";
-const WIDTH: u32 = 800;
-const HEIGHT: u32 = 800;
-
 struct SphereObj {
     sphere: Sphere,
     color: Color,
-    specular: Option<i32>,
+    specular: Option<Primitive>,
     reflective: Scalar,
 }
 
@@ -232,8 +228,8 @@ impl AppState for App {
 
 pub fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
-        .with_dimensions(WIDTH, HEIGHT)
-        .with_title(TITLE)
+        .with_dimensions(800, 800)
+        .with_title("3D Raytracing")
         .with_frame_rate()
         .position_centered()
         .build();
