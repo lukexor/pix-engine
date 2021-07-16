@@ -1,5 +1,8 @@
 //! `Audio` functions.
 //!
+//! Enables queuing audio samples using the [PixState] instance in your application implementing
+//! [AppState] by calling [PixState::enqueue_audio].
+//!
 //! # Example
 //!
 //! ```no_run
@@ -15,6 +18,9 @@
 //! }
 //! # }
 //! ```
+//!
+//! [PixState]: crate::prelude::PixState
+//! [AppState]: crate::prelude::AppState
 
 use crate::prelude::PixState;
 
@@ -31,8 +37,8 @@ impl PixState {
     /// # struct App;
     /// # impl AppState for App {
     /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     let samples = [0.12, 0.23, 0.51];
-    ///     s.enqueue_audio(&samples);
+    /// let samples = [0.12, 0.23, 0.51];
+    /// s.enqueue_audio(&samples);
     /// #   Ok(())
     /// # }
     /// # }

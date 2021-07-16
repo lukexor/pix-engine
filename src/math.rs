@@ -42,6 +42,17 @@ lazy_static! {
 }
 
 /// Returns a random number within a range.
+///
+/// # Examples
+///
+/// ```
+/// use pix_engine::math::random_rng;
+///
+/// let x = random_rng(0.0..1.0); // x will range from (0.0..1.0]
+/// assert!(x >= 0.0 && x < 1.0);
+///
+/// let x = random_rng(20..50); // x will range from (20..50]
+/// assert!(x >= 20 && x < 50);
 pub fn random_rng<T, R>(val: R) -> T
 where
     T: SampleUniform + PartialOrd,
@@ -52,6 +63,17 @@ where
 }
 
 /// Returns a random number between `0` and a given `value`.
+///
+/// # Examples
+///
+/// ```
+/// use pix_engine::math::random;
+///
+/// let x = random(100); // x will range from (0..100]
+/// assert!(x >= 0 && x < 100);
+///
+/// let x = random(100.0); // x will range from (0.0..100.0]
+/// assert!(x >= 0.0 && x < 100.0);
 pub fn random<T>(val: T) -> T
 where
     T: Num + SampleUniform + PartialOrd,
@@ -64,6 +86,21 @@ where
 }
 
 /// Returns the [Perlin noise](https://en.wikipedia.org/wiki/Perlin_noise) value at specified coordinates.
+///
+/// # Examples
+///
+/// ```
+/// use pix_engine::math::noise;
+///
+/// let n = noise([5.0]);
+/// assert!(n >= 0.0 && n < 1.0);
+///
+/// let n = noise([2.0, 1.5]);
+/// assert!(n >= 0.0 && n < 1.0);
+///
+/// let n = noise([2.0, 1.5, 3.0]);
+/// assert!(n >= 0.0 && n < 1.0);
+/// ```
 #[allow(clippy::many_single_char_names)]
 pub fn noise<V>(v: V) -> Scalar
 where
@@ -208,8 +245,7 @@ macro_rules! noise {
 /// # Example
 ///
 /// ```
-/// use pix_engine::prelude::*;
-///
+/// # use pix_engine::prelude::*;
 /// let value = 25;
 /// let m = map(value, 0, 100, 0, 800);
 /// assert_eq!(m, 200);

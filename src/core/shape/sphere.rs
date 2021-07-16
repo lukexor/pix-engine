@@ -17,8 +17,13 @@ pub struct Sphere<T = Scalar> {
 /// # Constructs a [Sphere].
 ///
 /// ```
-/// use pix_engine::prelude::*;
-/// let s = sphere!([10, 20, 10], 100);
+/// # use pix_engine::prelude::*;
+/// let p = point!(10, 20, 10);
+/// let s = sphere!(p, 100);
+/// assert_eq!(s.center, point!(10, 20, 10));
+/// assert_eq!(s.radius, 100);
+///
+/// let s = sphere!(10, 20, 10, 100);
 /// assert_eq!(s.center, point!(10, 20, 10));
 /// assert_eq!(s.radius, 100);
 /// ```
@@ -27,7 +32,7 @@ macro_rules! sphere {
     ($p:expr, $r:expr$(,)?) => {
         $crate::prelude::Sphere::new($p, $r)
     };
-    ([$x:expr, $y:expr, $z:expr], $r:expr$(,)?) => {
+    ($x:expr, $y:expr, $z:expr, $r:expr$(,)?) => {
         $crate::prelude::Sphere::new([$x, $y, $z], $r)
     };
 }
