@@ -188,12 +188,33 @@ impl PixState {
         self.settings.running = true;
     }
 
-    /// Pause the render loop.
+    /// Pause the render loop by no longer calling [AppState::on_update] every frame.
+    ///
+    /// [AppState::on_update]: crate::prelude::AppState::on_update
     pub fn no_run(&mut self) {
         self.settings.running = false;
     }
 
-    /// Run the render loop N times.
+    /// Run the render loop 1 time by calling [AppState::on_update].
+    ///
+    /// This can be used to only redraw in response to user actions such as
+    /// [AppState::on_mouse_pressed] or [AppState::on_key_pressed].
+    ///
+    /// [AppState::on_update]: crate::prelude::AppState::on_update
+    /// [AppState::on_mouse_pressed]: crate::prelude::AppState::on_mouse_pressed
+    /// [AppState::on_key_pressed]: crate::prelude::AppState::on_key_pressed
+    pub fn redraw(&mut self) {
+        self.settings.run_count = 1;
+    }
+
+    /// Run the render loop N times by calling [AppState::on_update].
+    ///
+    /// This can be used to only redraw in response to user actions such as
+    /// [AppState::on_mouse_pressed] or [AppState::on_key_pressed].
+    ///
+    /// [AppState::on_update]: crate::prelude::AppState::on_update
+    /// [AppState::on_mouse_pressed]: crate::prelude::AppState::on_mouse_pressed
+    /// [AppState::on_key_pressed]: crate::prelude::AppState::on_key_pressed
     pub fn run_times(&mut self, n: usize) {
         self.settings.run_count = n;
     }

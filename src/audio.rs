@@ -14,7 +14,6 @@
 //!     Ok(())
 //! }
 //! # }
-//! # Ok::<(), PixError>(())
 //! ```
 
 use crate::state::PixState;
@@ -27,6 +26,17 @@ pub(crate) trait Audio {
 
 impl PixState {
     /// Add samples to the audio buffer queue.
+    /// ```no_run
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     let samples = [0.12, 0.23, 0.51];
+    ///     s.enqueue_audio(&samples);
+    /// #   Ok(())
+    /// # }
+    /// # }
+    /// ```
     pub fn enqueue_audio(&mut self, samples: &[f32]) {
         self.renderer.enqueue_audio(samples);
     }

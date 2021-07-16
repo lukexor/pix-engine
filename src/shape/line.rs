@@ -1,7 +1,7 @@
 //! [Line] type used for drawing.
 
 use crate::prelude::*;
-use num_traits::{AsPrimitive, Float, Num};
+use num_traits::{AsPrimitive, Float};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -27,6 +27,35 @@ impl<T> Line<T> {
         }
     }
 
+    /// Convert `Line` to another primitive type using the `as` operator.
+    #[inline]
+    pub fn as_<U>(self) -> Line<U>
+    where
+        T: AsPrimitive<U>,
+        U: 'static + Copy,
+    {
+        Line::new(self.start.as_(), self.end.as_())
+    }
+}
+
+impl<T: Number> Line<T> {
+    /// Returns `Line` coordinates as `[x1, y1, z1, x2, y2, z2]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p1 = point!(5, 10);
+    /// let p2 = point!(100, 100);
+    /// let l: Line<i32> = Line::new(p1, p2);
+    /// assert_eq!(l.values(), [5, 10, 0, 100, 100, 0]);
+    /// ```
+    pub fn values(&self) -> [T; 6] {
+        let [x1, y1, z1] = self.start.values();
+        let [x2, y2, z2] = self.end.values();
+        [x1, y1, z1, x2, y2, z2]
+    }
+
     /// Returns `Line` as a [Vec].
     ///
     /// # Example
@@ -35,32 +64,36 @@ impl<T> Line<T> {
     /// # use pix_engine::prelude::*;
     /// let p1 = point!(5, 10);
     /// let p2 = point!(100, 100);
-    /// let l = Line::new(p1, p2);
+    /// let l: Line<i32> = Line::new(p1, p2);
     /// assert_eq!(l.to_vec(), vec![5, 10, 0, 100, 100, 0]);
     /// ```
-    pub fn to_vec(self) -> Vec<T>
-    where
-        T: Copy,
-    {
-        vec![
-            self.start.x,
-            self.start.y,
-            self.start.z,
-            self.end.x,
-            self.end.y,
-            self.end.z,
-        ]
+    pub fn to_vec(self) -> Vec<T> {
+        let [x1, y1, z1] = self.start.values();
+        let [x2, y2, z2] = self.end.values();
+        vec![x1, y1, z1, x2, y2, z2]
     }
+}
+
+impl<T: Float> Line<T> {
+    /// Returns `Line` with values rounded to the nearest integer number. Round half-way cases
+    /// away from `0.0`.
+    pub fn round(&self) -> Self {
+        Self::new(self.start.round(), self.end.round())
+    }
+}
+
+impl<T: Number> Shape<T> for Line<T> {
+    type Item = Line<T>;
 
     /// Returns whether this line intersects with another line.
     #[allow(clippy::many_single_char_names)]
-    pub fn intersects<L>(&self, other: L) -> Option<(Point<T>, T)>
+    fn intersects_line<L>(&self, other: L) -> Option<(Point<T>, T)>
     where
         T: Float,
         L: Into<Line<T>>,
     {
-        let [x1, y1, x2, y2] = [self.start.x, self.start.y, self.end.x, self.end.y];
         let other = other.into();
+        let [x1, y1, x2, y2] = [self.start.x, self.start.y, self.end.x, self.end.y];
         let [x3, y3, x4, y4] = [other.start.x, other.start.y, other.end.x, other.end.y];
         let d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
         if d == T::zero() {
@@ -76,22 +109,12 @@ impl<T> Line<T> {
             None
         }
     }
-
-    /// Convert `Line` to another primitive type using the `as` operator.
-    #[inline]
-    pub fn as_<U>(self) -> Line<U>
-    where
-        T: AsPrimitive<U>,
-        U: 'static + Copy,
-    {
-        Line::new(self.start.as_(), self.end.as_())
-    }
 }
 
 impl<T> Draw for Line<T>
 where
-    T: Copy,
-    Self: Into<Line<Scalar>>,
+    T: Number,
+    Self: Into<Line>,
 {
     /// Draw line to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
@@ -99,73 +122,82 @@ where
     }
 }
 
+impl<T: Number> From<&mut Line<T>> for Line<T> {
+    fn from(line: &mut Line<T>) -> Self {
+        line.to_owned()
+    }
+}
+
+impl<T: Number> From<&Line<T>> for Line<T> {
+    fn from(line: &Line<T>) -> Self {
+        *line
+    }
+}
+
 /// Convert [Line] to `[x1, y1, x2, y2]`.
-impl<T> From<Line<T>> for [T; 4] {
+impl<T: Number> From<Line<T>> for [T; 4] {
     fn from(line: Line<T>) -> Self {
-        let [x1, y1]: [T; 2] = line.start.into();
-        let [x2, y2]: [T; 2] = line.end.into();
+        let [x1, y1, _] = line.start.values();
+        let [x2, y2, _] = line.end.values();
         [x1, y1, x2, y2]
     }
 }
 
 /// Convert &[Line] to `[x1, y1, x2, y2]`.
-impl<T: Copy> From<&Line<T>> for [T; 4] {
+impl<T: Number> From<&Line<T>> for [T; 4] {
     fn from(line: &Line<T>) -> Self {
-        let [x1, y1]: [T; 2] = line.start.into();
-        let [x2, y2]: [T; 2] = line.end.into();
+        let [x1, y1, _] = line.start.values();
+        let [x2, y2, _] = line.end.values();
         [x1, y1, x2, y2]
     }
 }
 
 /// Convert `[x1, y1, x2, y2]` to [Line].
-impl<T: Num, U: Into<T>> From<[U; 4]> for Line<T> {
+impl<T: Number, U: Into<T>> From<[U; 4]> for Line<T> {
     fn from([x1, y1, x2, y2]: [U; 4]) -> Self {
         Self::new([x1, y1], [x2, y2])
     }
 }
 
 /// Convert `&[x1, y1, x2, y2]` to [Line].
-impl<T: Num, U: Copy + Into<T>> From<&[U; 4]> for Line<T> {
+impl<T: Number, U: Copy + Into<T>> From<&[U; 4]> for Line<T> {
     fn from(&[x1, y1, x2, y2]: &[U; 4]) -> Self {
         Self::new([x1, y1], [x2, y2])
     }
 }
 
 /// Convert [Line] to `[x1, y1, z1, x2, y2, z2]`.
-impl<T> From<Line<T>> for [T; 6] {
+impl<T: Number> From<Line<T>> for [T; 6] {
     fn from(line: Line<T>) -> Self {
-        let [x1, y1, z1]: [T; 3] = line.start.into();
-        let [x2, y2, z2]: [T; 3] = line.end.into();
-        [x1, y1, z1, x2, y2, z2]
+        line.values()
     }
 }
 
 /// Convert &[Line] to `[x1, y1, z1, x2, y2, z2]`.
-impl<T: Copy> From<&Line<T>> for [T; 6] {
+impl<T: Number> From<&Line<T>> for [T; 6] {
     fn from(line: &Line<T>) -> Self {
-        let [x1, y1, z1]: [T; 3] = line.start.into();
-        let [x2, y2, z2]: [T; 3] = line.end.into();
-        [x1, y1, z1, x2, y2, z2]
+        line.values()
     }
 }
 
 /// Convert `[x1, y1, z1, x2, y2, z2]` to [Line].
-impl<T: Num, U: Into<T>> From<[U; 6]> for Line<T> {
+impl<T: Number, U: Into<T>> From<[U; 6]> for Line<T> {
     fn from([x1, y1, z1, x2, y2, z2]: [U; 6]) -> Self {
         Self::new([x1, y1, z1], [x2, y2, z2])
     }
 }
 
 /// Convert `&[x1, y1, z1, x2, y2, z2]` to [Line].
-impl<T: Num, U: Copy + Into<T>> From<&[U; 6]> for Line<T> {
+impl<T: Number, U: Copy + Into<T>> From<&[U; 6]> for Line<T> {
     fn from(&[x1, y1, z1, x2, y2, z2]: &[U; 6]) -> Self {
         Self::new([x1, y1, z1], [x2, y2, z2])
     }
 }
 
 /// Convert `[Point<U>; 2]` to [Line].
-impl<T, U: Into<T>> From<[Point<U>; 2]> for Line<T>
+impl<T, U> From<[Point<U>; 2]> for Line<T>
 where
+    T: Number,
     Point<U>: Into<Point<T>>,
 {
     fn from([p1, p2]: [Point<U>; 2]) -> Self {
@@ -174,8 +206,10 @@ where
 }
 
 /// Convert `&[Point<U>; 2]` to [Line].
-impl<T, U: Copy + Into<T>> From<&[Point<U>; 2]> for Line<T>
+impl<T, U> From<&[Point<U>; 2]> for Line<T>
 where
+    T: Number,
+    U: Copy,
     Point<U>: Into<Point<T>>,
 {
     fn from(&[p1, p2]: &[Point<U>; 2]) -> Self {
@@ -184,8 +218,9 @@ where
 }
 
 /// Convert [Line] to `[Point<T>; 2]`.
-impl<T: Num, U: Into<T>> From<Line<U>> for [Point<T>; 2]
+impl<T, U> From<Line<U>> for [Point<T>; 2]
 where
+    T: Number,
     Point<U>: Into<Point<T>>,
 {
     fn from(line: Line<U>) -> Self {
@@ -194,8 +229,10 @@ where
 }
 
 /// Convert &[Line] to `[Point<T>; 2]`.
-impl<T: Num, U: Into<T> + Copy> From<&Line<U>> for [Point<T>; 2]
+impl<T, U> From<&Line<U>> for [Point<T>; 2]
 where
+    T: Number,
+    U: Copy,
     Point<U>: Into<Point<T>>,
 {
     fn from(line: &Line<U>) -> Self {
@@ -204,8 +241,9 @@ where
 }
 
 /// Convert `[Vector<U>; 2]` to [Line].
-impl<T: Num, U: Into<T>> From<[Vector<U>; 2]> for Line<T>
+impl<T, U> From<[Vector<U>; 2]> for Line<T>
 where
+    T: Number,
     Vector<U>: Into<Point<T>>,
 {
     fn from([v1, v2]: [Vector<U>; 2]) -> Self {
@@ -214,8 +252,10 @@ where
 }
 
 /// Convert `&[Vector<U>; 2]` to [Line].
-impl<T: Num, U: Copy + Into<T>> From<&[Vector<U>; 2]> for Line<T>
+impl<T, U> From<&[Vector<U>; 2]> for Line<T>
 where
+    T: Number,
+    U: Copy,
     Vector<U>: Into<Point<T>>,
 {
     fn from(&[v1, v2]: &[Vector<U>; 2]) -> Self {
@@ -224,8 +264,9 @@ where
 }
 
 /// Convert [Line] to `[Vector<T>; 2]`.
-impl<T: Num, U: Into<T> + Copy> From<Line<U>> for [Vector<T>; 2]
+impl<T, U> From<Line<U>> for [Vector<T>; 2]
 where
+    T: Number,
     Point<U>: Into<Vector<T>>,
 {
     fn from(line: Line<U>) -> Self {
@@ -234,8 +275,10 @@ where
 }
 
 /// Convert &[Line] to `[Vector<T>; 2]`.
-impl<T: Num, U: Into<T> + Copy> From<&Line<U>> for [Vector<T>; 2]
+impl<T, U> From<&Line<U>> for [Vector<T>; 2]
 where
+    T: Number,
+    U: Copy,
     Point<U>: Into<Vector<T>>,
 {
     fn from(line: &Line<U>) -> Self {

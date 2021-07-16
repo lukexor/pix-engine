@@ -99,7 +99,7 @@ impl Rendering for Renderer {
     }
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    fn clip(&mut self, rect: Option<Rect<i32>>) {
+    fn clip(&mut self, rect: Option<Rect<Primitive>>) {
         let _ = rect;
         todo!("set_clip_rect")
     }
@@ -145,7 +145,7 @@ impl Rendering for Renderer {
     fn update_texture(
         &mut self,
         texture_id: TextureId,
-        rect: Option<Rect<i32>>,
+        rect: Option<Rect<Primitive>>,
         pixels: &[u8],
         pitch: usize,
     ) -> Result<()> {
@@ -160,8 +160,8 @@ impl Rendering for Renderer {
     fn texture(
         &mut self,
         texture_id: usize,
-        src: Option<Rect<i32>>,
-        dst: Option<Rect<i32>>,
+        src: Option<Rect<Primitive>>,
+        dst: Option<Rect<Primitive>>,
     ) -> Result<()> {
         let _ = texture_id;
         let _ = src;
@@ -190,7 +190,7 @@ impl Rendering for Renderer {
     /// Draw text to the current canvas.
     fn text(
         &mut self,
-        position: Point<i32>,
+        position: &Point<Primitive>,
         text: &str,
         fill: Option<Color>,
         stroke: Option<Color>,
@@ -210,14 +210,14 @@ impl Rendering for Renderer {
     }
 
     /// Draw a pixel to the current canvas.
-    fn point(&mut self, p: Point<i16>, color: Color) -> Result<()> {
+    fn point(&mut self, p: &Point<DrawPrimitive>, color: Color) -> Result<()> {
         let _ = p;
         let _ = color;
         todo!("pixels")
     }
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, line: Line<i16>, color: Color) -> Result<()> {
+    fn line(&mut self, line: &Line<DrawPrimitive>, color: Color) -> Result<()> {
         let _ = line;
         let _ = color;
         todo!("line")
@@ -226,7 +226,7 @@ impl Rendering for Renderer {
     /// Draw a triangle to the current canvas.
     fn triangle(
         &mut self,
-        tri: Triangle<i16>,
+        tri: &Triangle<DrawPrimitive>,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
@@ -237,7 +237,12 @@ impl Rendering for Renderer {
     }
 
     /// Draw a rectangle to the current canvas.
-    fn rect(&mut self, rect: Rect<i16>, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
+    fn rect(
+        &mut self,
+        rect: &Rect<DrawPrimitive>,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()> {
         let _ = rect;
         if let Some(_) = fill {}
         if let Some(_) = stroke {}
@@ -247,8 +252,8 @@ impl Rendering for Renderer {
     /// Draw a rounded rectangle to the current canvas.
     fn rounded_rect(
         &mut self,
-        rect: Rect<i16>,
-        radius: i16,
+        rect: &Rect<DrawPrimitive>,
+        radius: DrawPrimitive,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
@@ -260,7 +265,12 @@ impl Rendering for Renderer {
     }
 
     /// Draw a quadrilateral to the current canvas.
-    fn quad(&mut self, quad: Quad<i16>, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
+    fn quad(
+        &mut self,
+        quad: &Quad<DrawPrimitive>,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()> {
         let _ = quad;
         if let Some(_) = fill {}
         if let Some(_) = stroke {}
@@ -270,8 +280,8 @@ impl Rendering for Renderer {
     /// Draw a polygon to the current canvas.
     fn polygon(
         &mut self,
-        vx: &[i16],
-        vy: &[i16],
+        vx: &[DrawPrimitive],
+        vy: &[DrawPrimitive],
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
@@ -285,7 +295,7 @@ impl Rendering for Renderer {
     /// Draw a ellipse to the current canvas.
     fn ellipse(
         &mut self,
-        ellipse: Ellipse<i16>,
+        ellipse: &Ellipse<DrawPrimitive>,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
@@ -299,10 +309,10 @@ impl Rendering for Renderer {
     #[allow(clippy::too_many_arguments)]
     fn arc(
         &mut self,
-        p: Point<i16>,
-        radius: i16,
-        start: i16,
-        end: i16,
+        p: &Point<DrawPrimitive>,
+        radius: DrawPrimitive,
+        start: DrawPrimitive,
+        end: DrawPrimitive,
         mode: ArcMode,
         fill: Option<Color>,
         stroke: Option<Color>,
@@ -318,7 +328,12 @@ impl Rendering for Renderer {
     }
 
     /// Draw an image to the current canvas.
-    fn image(&mut self, position: Point<i32>, img: &Image, tint: Option<Color>) -> Result<()> {
+    fn image(
+        &mut self,
+        position: &Point<Primitive>,
+        img: &Image,
+        tint: Option<Color>,
+    ) -> Result<()> {
         let _ = position;
         let _ = img.texture_id();
         let _ = tint;
@@ -328,7 +343,7 @@ impl Rendering for Renderer {
     /// Draw a resized image to the current canvas.
     fn image_resized(
         &mut self,
-        dst_rect: Rect<i32>,
+        dst_rect: &Rect<Primitive>,
         img: &Image,
         tint: Option<Color>,
     ) -> Result<()> {

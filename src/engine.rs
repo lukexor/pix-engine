@@ -11,7 +11,7 @@ use std::{
 };
 
 #[cfg(not(target_arch = "wasm32"))]
-use crate::{ASSETS, ASSET_DIR};
+use crate::ASSETS;
 #[cfg(not(target_arch = "wasm32"))]
 use std::{fs, io, path::PathBuf};
 
@@ -90,16 +90,6 @@ impl PixEngineBuilder {
         self
     }
 
-    /// Set a window icon.
-    #[cfg(not(target_arch = "wasm32"))]
-    pub fn icon<P>(&mut self, path: P) -> &mut Self
-    where
-        P: Into<PathBuf>,
-    {
-        self.settings.icon = Some(path.into());
-        self
-    }
-
     /// Start window in fullscreen mode.
     pub fn fullscreen(&mut self) -> &mut Self {
         self.settings.fullscreen = true;
@@ -128,6 +118,26 @@ impl PixEngineBuilder {
     /// Set audio sample rate.
     pub fn audio_sample_rate(&mut self, sample_rate: i32) -> &mut Self {
         self.settings.audio_sample_rate = sample_rate;
+        self
+    }
+
+    /// Set a window icon.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn icon<P>(&mut self, path: P) -> &mut Self
+    where
+        P: Into<PathBuf>,
+    {
+        self.settings.icon = Some(path.into());
+        self
+    }
+
+    /// Set the temporary directory for extraction of static library assets.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn asset_dir<P>(&mut self, path: P) -> &mut Self
+    where
+        P: Into<PathBuf>,
+    {
+        self.settings.asset_dir = path.into();
         self
     }
 
@@ -164,11 +174,12 @@ impl PixEngine {
         A: AppState,
     {
         #[cfg(not(target_arch = "wasm32"))]
-        fs::create_dir_all(ASSET_DIR)?;
-        #[cfg(not(target_arch = "wasm32"))]
-        match ASSETS.extract(ASSET_DIR) {
-            Err(e) if e.kind() != io::ErrorKind::AlreadyExists => return Err(e.into()),
-            _ => (),
+        {
+            fs::create_dir_all(&self.settings.asset_dir)?;
+            match ASSETS.extract(&self.settings.asset_dir) {
+                Err(e) if e.kind() != io::ErrorKind::AlreadyExists => return Err(e.into()),
+                _ => (),
+            }
         }
 
         let renderer = Renderer::new(&self.settings)?;

@@ -1,14 +1,21 @@
 //! [Circle], [Ellipse], and [Sphere] types used for drawing.
 
 use crate::prelude::*;
-use num_traits::{AsPrimitive, Num};
+use num_traits::{AsPrimitive, Float};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 /// # Constructs an [Ellipse].
 ///
 /// ```
-/// use pix_engine::prelude::*;
+/// # use pix_engine::prelude::*;
+/// let p = point!(10, 20);
+/// let e = ellipse!(p, 100, 200);
+/// assert_eq!(e.x, 10);
+/// assert_eq!(e.y, 20);
+/// assert_eq!(e.width, 100);
+/// assert_eq!(e.height, 200);
+///
 /// let e = ellipse!(10, 20, 100, 200);
 /// assert_eq!(e.x, 10);
 /// assert_eq!(e.y, 20);
@@ -31,7 +38,13 @@ macro_rules! ellipse {
 /// # Constructs a [Circle].
 ///
 /// ```
-/// use pix_engine::prelude::*;
+/// # use pix_engine::prelude::*;
+/// let p = point!(10, 20);
+/// let c = circle!(p, 100);
+/// assert_eq!(c.x, 10);
+/// assert_eq!(c.y, 20);
+/// assert_eq!(c.radius, 100);
+///
 /// let c = circle!(10, 20, 100);
 /// assert_eq!(c.x, 10);
 /// assert_eq!(c.y, 20);
@@ -88,7 +101,20 @@ impl<T> Ellipse<T> {
     }
 }
 
-impl<T: Copy> Ellipse<T> {
+impl<T: Number> Ellipse<T> {
+    /// Returns `Ellipse` values as `[x, y, width, height]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let e = ellipse!(5, 10, 100, 100);
+    /// assert_eq!(e.values(), [5, 10, 100, 100]);
+    /// ```
+    pub fn values(&self) -> [T; 4] {
+        [self.x, self.y, self.width, self.height]
+    }
+
     /// Returns `Ellipse` as a [Vec].
     ///
     /// # Example
@@ -103,10 +129,20 @@ impl<T: Copy> Ellipse<T> {
     }
 }
 
-impl<T> Shape<T> for Ellipse<T>
-where
-    T: Num + Copy + PartialOrd,
-{
+impl<T: Float> Ellipse<T> {
+    /// Returns `Ellipse` with values rounded to the nearest integer number. Round half-way cases
+    /// away from `0.0`.
+    pub fn round(&self) -> Self {
+        Self::new(
+            self.x.round(),
+            self.y.round(),
+            self.width.round(),
+            self.height.round(),
+        )
+    }
+}
+
+impl<T: Number> Shape<T> for Ellipse<T> {
     type Item = Ellipse<T>;
 
     /// Returns whether this ellipse contains a given [Point].
@@ -138,8 +174,8 @@ where
 
 impl<T> Draw for Ellipse<T>
 where
-    T: Copy,
-    Self: Into<Ellipse<Scalar>>,
+    T: Number,
+    Self: Into<Ellipse>,
 {
     /// Draw ellipse to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
@@ -147,43 +183,55 @@ where
     }
 }
 
+impl<T: Number> From<&mut Ellipse<T>> for Ellipse<T> {
+    fn from(ellipse: &mut Ellipse<T>) -> Self {
+        ellipse.to_owned()
+    }
+}
+
+impl<T: Number> From<&Ellipse<T>> for Ellipse<T> {
+    fn from(ellipse: &Ellipse<T>) -> Self {
+        *ellipse
+    }
+}
+
 /// Convert [Ellipse] to `[x, y, width, height]`.
-impl<T> From<Ellipse<T>> for [T; 4] {
+impl<T: Number> From<Ellipse<T>> for [T; 4] {
     fn from(e: Ellipse<T>) -> Self {
         [e.x, e.y, e.width, e.height]
     }
 }
 
 /// Convert `&Ellipse<T>` to `[x, y, width, height]`.
-impl<T: Copy> From<&Ellipse<T>> for [T; 4] {
+impl<T: Number> From<&Ellipse<T>> for [T; 4] {
     fn from(e: &Ellipse<T>) -> Self {
         [e.x, e.y, e.width, e.height]
     }
 }
 
 /// Convert `[x, y, width, height]` to [Ellipse].
-impl<T, U: Into<T>> From<[U; 4]> for Ellipse<T> {
+impl<T: Number, U: Into<T>> From<[U; 4]> for Ellipse<T> {
     fn from([x, y, width, height]: [U; 4]) -> Self {
         Self::new(x.into(), y.into(), width.into(), height.into())
     }
 }
 
 /// Convert `&[x, y, width, height]` to [Ellipse].
-impl<T, U: Copy + Into<T>> From<&[U; 4]> for Ellipse<T> {
+impl<T: Number, U: Copy + Into<T>> From<&[U; 4]> for Ellipse<T> {
     fn from(&[x, y, width, height]: &[U; 4]) -> Self {
         Self::new(x.into(), y.into(), width.into(), height.into())
     }
 }
 
 /// Convert [Circle] to [Ellipse].
-impl<T: Copy> From<Circle<T>> for Ellipse<T> {
+impl<T: Number> From<Circle<T>> for Ellipse<T> {
     fn from(c: Circle<T>) -> Self {
         Self::new(c.x, c.y, c.radius, c.radius)
     }
 }
 
 /// Convert &[Circle] to [Ellipse].
-impl<T: Copy> From<&Circle<T>> for Ellipse<T> {
+impl<T: Number> From<&Circle<T>> for Ellipse<T> {
     fn from(c: &Circle<T>) -> Self {
         Self::new(c.x, c.y, c.radius, c.radius)
     }
@@ -228,7 +276,20 @@ impl<T> Circle<T> {
     }
 }
 
-impl<T: Copy> Circle<T> {
+impl<T: Number> Circle<T> {
+    /// Returns `Circle` values as `[x, y, radius]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = circle!(5, 10, 100);
+    /// assert_eq!(c.values(), [5, 10, 100]);
+    /// ```
+    pub fn values(&self) -> [T; 3] {
+        [self.x, self.y, self.radius]
+    }
+
     /// Returns `Circle` as a [Vec].
     ///
     /// # Example
@@ -243,10 +304,15 @@ impl<T: Copy> Circle<T> {
     }
 }
 
-impl<T> Shape<T> for Circle<T>
-where
-    T: Num + Copy + PartialOrd,
-{
+impl<T: Float> Circle<T> {
+    /// Returns `Circle` with values rounded to the nearest integer number. Round half-way cases
+    /// away from `0.0`.
+    pub fn round(&self) -> Self {
+        Self::new(self.x.round(), self.y.round(), self.radius.round())
+    }
+}
+
+impl<T: Number> Shape<T> for Circle<T> {
     type Item = Circle<T>;
 
     /// Returns whether this circle contains a given [Point].
@@ -276,8 +342,8 @@ where
 
 impl<T> Draw for Circle<T>
 where
-    T: Copy,
-    Self: Into<Circle<Scalar>>,
+    T: Number,
+    Self: Into<Circle>,
 {
     /// Draw circle to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
@@ -285,29 +351,41 @@ where
     }
 }
 
+impl<T: Number> From<&mut Circle<T>> for Circle<T> {
+    fn from(circle: &mut Circle<T>) -> Self {
+        circle.to_owned()
+    }
+}
+
+impl<T: Number> From<&Circle<T>> for Circle<T> {
+    fn from(circle: &Circle<T>) -> Self {
+        *circle
+    }
+}
+
 /// Convert [Circle] to `[x, y, radius]`.
-impl<T> From<Circle<T>> for [T; 3] {
+impl<T: Number> From<Circle<T>> for [T; 3] {
     fn from(c: Circle<T>) -> Self {
         [c.x, c.y, c.radius]
     }
 }
 
 /// Convert &[Circle] to `[x, y, radius]`.
-impl<T: Copy> From<&Circle<T>> for [T; 3] {
+impl<T: Number> From<&Circle<T>> for [T; 3] {
     fn from(c: &Circle<T>) -> Self {
         [c.x, c.y, c.radius]
     }
 }
 
 /// Convert `[x, y, radius]` to [Circle].
-impl<T, U: Into<T>> From<[U; 3]> for Circle<T> {
+impl<T: Number, U: Into<T>> From<[U; 3]> for Circle<T> {
     fn from([x, y, radius]: [U; 3]) -> Self {
         Self::new(x.into(), y.into(), radius.into())
     }
 }
 
 /// Convert `&[x, y, radius]` to [Circle].
-impl<T, U: Copy + Into<T>> From<&[U; 3]> for Circle<T> {
+impl<T: Number, U: Copy + Into<T>> From<&[U; 3]> for Circle<T> {
     fn from(&[x, y, radius]: &[U; 3]) -> Self {
         Self::new(x.into(), y.into(), radius.into())
     }
@@ -354,10 +432,7 @@ impl<T> Sphere<T> {
     }
 }
 
-impl<T> Shape<T> for Sphere<T>
-where
-    T: Num + Copy + PartialOrd,
-{
+impl<T: Number> Shape<T> for Sphere<T> {
     type Item = Sphere<T>;
 
     /// Returns whether this sphere contains a given [Point].

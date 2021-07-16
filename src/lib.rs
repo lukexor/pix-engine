@@ -31,7 +31,7 @@
 //!     }
 //!
 //!     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-//!         // Main render loop. Called roughly every 16ms.
+//!         // Main render loop. Called as often as possible, or based on `target frame rate`.
 //!         Ok(())
 //!     }
 //!
@@ -82,10 +82,7 @@ use getrandom as _; // Used to set "js" feature for rand
 #[cfg(not(target_arch = "wasm32"))]
 use include_dir::{include_dir, Dir};
 
-/// Temporary directory to store libray assets.
-#[cfg(not(target_arch = "wasm32"))]
-pub const ASSET_DIR: &str = "/tmp/pix-engine";
-// Bundles static binary assets with crate
+/// Bundles static binary assets with crate.
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) const ASSETS: Dir<'_> = include_dir!("./assets");
 
@@ -118,12 +115,14 @@ pub mod prelude {
     pub use app_state::AppState;
     pub use color::{constants::*, Color, ColorError, ColorMode};
     pub use common::{Error as PixError, Result as PixResult};
-    pub use draw::Draw;
+    pub use draw::{AsDrawPrimitive, Draw, DrawPrimitive};
     pub use engine::PixEngine;
     pub use event::{Axis, Button, Event, Key, KeyEvent, KeyMod, Mouse, WindowEvent};
     pub use image::{Image, PixelFormat};
     pub use lighting::{Light, LightSource};
-    pub use math::{constants, map, Scalar};
+    pub use math::{constants::*, map, Number, Primitive, Scalar};
+    #[cfg(not(target_arch = "wasm32"))]
+    pub use renderer::DEFAULT_ASSET_DIR;
     pub use shape::{Circle, Ellipse, Line, Point, Quad, Rect, Shape, Sphere, Triangle};
     pub use sphere;
     pub use state::{

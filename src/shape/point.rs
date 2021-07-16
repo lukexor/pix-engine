@@ -1,7 +1,7 @@
 //! [Point] functions used for drawing.
 
 use crate::prelude::*;
-use num_traits::{AsPrimitive, Float, Num, Signed};
+use num_traits::{AsPrimitive, Float, Signed};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::{
@@ -30,7 +30,7 @@ pub struct Point<T = Scalar> {
 /// use pix_engine::prelude::*;
 ///
 /// let p = point!(1, 2, 0);
-/// assert_eq!(p.get(), [1, 2, 0]);
+/// assert_eq!(p.values(), [1, 2, 0]);
 /// ```
 #[macro_export]
 macro_rules! point {
@@ -56,7 +56,7 @@ impl<T> Point<T> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let p = Point::new(2, 3, 1);
-    /// assert_eq!(p.get(), [2, 3, 1]);
+    /// assert_eq!(p.values(), [2, 3, 1]);
     /// ```
     pub const fn new(x: T, y: T, z: T) -> Self {
         Self { x, y, z }
@@ -70,45 +70,10 @@ impl<T> Point<T> {
     /// # use pix_engine::prelude::*;
     /// let v  = vector!(1.0, 2.0);
     /// let p = Point::from_vector(v);
-    /// assert_eq!(p.get(), [1.0, 2.0, 0.0]);
+    /// assert_eq!(p.values(), [1.0, 2.0, 0.0]);
     /// ```
     pub fn from_vector(v: Vector<T>) -> Self {
         Self::new(v.x, v.y, v.z)
-    }
-
-    /// Copy the current `Point`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let p1 = point!(1, 0, 1);
-    /// let mut p2 = p1.copy();
-    /// p2.x = 2;
-    /// assert_eq!(p1.get(), [1, 0, 1]);
-    /// assert_eq!(p2.get(), [2, 0, 1]);
-    /// ```
-    pub fn copy(&self) -> Self
-    where
-        T: Copy,
-    {
-        *self
-    }
-
-    /// Returns `Point` coordinates as `[x, y, z]`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let p = point!(2, 1, 3);
-    /// assert_eq!(p.get(), [2, 1, 3]);
-    /// ```
-    pub fn get(self) -> [T; 3]
-    where
-        T: Copy,
-    {
-        [self.x, self.y, self.z]
     }
 
     /// Set `Point` coordinates from any type that implements [Into<Point<T>>].
@@ -118,13 +83,13 @@ impl<T> Point<T> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let mut p1 = Point::new(2, 1, 3);
-    /// assert_eq!(p1.get(), [2, 1, 3]);
+    /// assert_eq!(p1.values(), [2, 1, 3]);
     /// p1.set([1, 2, 4]);
-    /// assert_eq!(p1.get(), [1, 2, 4]);
+    /// assert_eq!(p1.values(), [1, 2, 4]);
     ///
     /// let p2 = Point::new(-2, 5, 1);
     /// p1.set(p2);
-    /// assert_eq!(p1.get(), [-2, 5, 1]);
+    /// assert_eq!(p1.values(), [-2, 5, 1]);
     /// ```
     pub fn set<P>(&mut self, p: P)
     where
@@ -136,6 +101,31 @@ impl<T> Point<T> {
         self.z = p.z;
     }
 
+    /// Convert `Point<T>` to another primitive type using the `as` operator.
+    #[inline]
+    pub fn as_<U>(self) -> Point<U>
+    where
+        T: AsPrimitive<U>,
+        U: 'static + Copy,
+    {
+        Point::new(self.x.as_(), self.y.as_(), self.z.as_())
+    }
+}
+
+impl<T: Number> Point<T> {
+    /// Returns `Point` coordinates as `[x, y, z]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p = point!(2, 1, 3);
+    /// assert_eq!(p.values(), [2, 1, 3]);
+    /// ```
+    pub fn values(&self) -> [T; 3] {
+        [self.x, self.y, self.z]
+    }
+
     /// Returns `Point` as a [Vec].
     ///
     /// # Example
@@ -145,11 +135,51 @@ impl<T> Point<T> {
     /// let p = point!(1, 1, 0);
     /// assert_eq!(p.to_vec(), vec![1, 1, 0]);
     /// ```
-    pub fn to_vec(self) -> Vec<T>
-    where
-        T: Copy,
-    {
+    pub fn to_vec(self) -> Vec<T> {
         vec![self.x, self.y, self.z]
+    }
+
+    /// Constructs a `Point<T>` with only an `x` magnitude.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p = Point::with_x(2);
+    /// assert_eq!(p.values(), [2, 0, 0]);
+    /// ```
+    pub fn with_x(x: T) -> Self {
+        Self::new(x, T::zero(), T::zero())
+    }
+
+    /// Constructs a `Point<T>` with only `x` and `y magnitudes.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p = Point::with_xy(2, 3);
+    /// assert_eq!(p.values(), [2, 3, 0]);
+    /// ```
+    pub fn with_xy(x: T, y: T) -> Self {
+        Self::new(x, y, T::zero())
+    }
+
+    /// Constructs a `Point<T>` by shifting coordinates by given x, y, and z values.
+    pub fn offset<U>(self, x: U, y: U, z: U) -> Self
+    where
+        T: Add<U, Output = T>,
+    {
+        Self::new(self.x + x, self.y + y, self.z + z)
+    }
+
+    /// Constructs a `Point<T>` by multiplying it by the given scale factor.
+    pub fn scale<U>(self, s: U) -> Self
+    where
+        T: Mul<U, Output = T>,
+        U: Number,
+    {
+        self * s
     }
 
     /// Returns an iterator over the `Point`s coordinates `[x, y, z]`.
@@ -180,65 +210,10 @@ impl<T> Point<T> {
     /// for value in p.iter_mut() {
     ///     *value *= 2.0;
     /// }
-    /// assert_eq!(p.get(), [2.0, 4.0, -8.0]);
+    /// assert_eq!(p.values(), [2.0, 4.0, -8.0]);
     /// ```
     pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         IterMut::new(self)
-    }
-
-    /// Convert `Point<T>` to another primitive type using the `as` operator.
-    #[inline]
-    pub fn as_<U>(self) -> Point<U>
-    where
-        T: AsPrimitive<U>,
-        U: 'static + Copy,
-    {
-        Point::new(self.x.as_(), self.y.as_(), self.z.as_())
-    }
-}
-
-impl<T: Num> Point<T> {
-    /// Constructs a `Point<T>` with only an `x` magnitude.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let p = Point::with_x(2);
-    /// assert_eq!(p.get(), [2, 0, 0]);
-    /// ```
-    pub fn with_x(x: T) -> Self {
-        Self::new(x, T::zero(), T::zero())
-    }
-
-    /// Constructs a `Point<T>` with only `x` and `y magnitudes.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let p = Point::with_xy(2, 3);
-    /// assert_eq!(p.get(), [2, 3, 0]);
-    /// ```
-    pub fn with_xy(x: T, y: T) -> Self {
-        Self::new(x, y, T::zero())
-    }
-
-    /// Constructs a `Point<T>` by shifting coordinates by given x, y, and z values.
-    pub fn offset<U>(self, x: U, y: U, z: U) -> Self
-    where
-        T: Add<U, Output = T>,
-    {
-        Self::new(self.x + x, self.y + y, self.z + z)
-    }
-
-    /// Constructs a `Point<T>` by multiplying it by the given scale factor.
-    pub fn scale<U>(self, s: U) -> Self
-    where
-        T: Mul<U, Output = T>,
-        U: Num + Copy,
-    {
-        self * s
     }
 
     /// Wraps `Point` around the given width, height, and size (radius).
@@ -249,15 +224,15 @@ impl<T: Num> Point<T> {
     /// # use pix_engine::prelude::*;
     /// let mut p = point!(200.0, 300.0);
     /// p.wrap_2d(150.0, 400.0, 10.0);
-    /// assert_eq!(p.get(), [-10.0, 300.0, 0.0]);
+    /// assert_eq!(p.values(), [-10.0, 300.0, 0.0]);
     ///
     /// let mut p = point!(-100.0, 300.0);
     /// p.wrap_2d(150.0, 400.0, 10.0);
-    /// assert_eq!(p.get(), [160.0, 300.0, 0.0]);
+    /// assert_eq!(p.values(), [160.0, 300.0, 0.0]);
     /// ```
     pub fn wrap_2d(&mut self, width: T, height: T, size: T)
     where
-        T: Copy + PartialOrd + Signed,
+        T: Signed,
     {
         if self.x > width + size {
             self.x = -size;
@@ -279,15 +254,15 @@ impl<T: Num> Point<T> {
     /// # use pix_engine::prelude::*;
     /// let mut p = point!(200.0, 300.0, 250.0);
     /// p.wrap_3d(150.0, 400.0, 200.0, 10.0);
-    /// assert_eq!(v.get(), [-10.0, 300.0, -10.0]);
+    /// assert_eq!(p.values(), [-10.0, 300.0, -10.0]);
     ///
     /// let mut p = point!(-100.0, 300.0, 250.0);
     /// p.wrap_3d(150.0, 400.0, 200.0, 10.0);
-    /// assert_eq!(p.get(), [160.0, 300.0, -10.0]);
+    /// assert_eq!(p.values(), [160.0, 300.0, -10.0]);
     /// ```
     pub fn wrap_3d(&mut self, width: T, height: T, depth: T, size: T)
     where
-        T: Copy + PartialOrd + Signed,
+        T: Signed,
     {
         if self.x > width + size {
             self.x = -size;
@@ -308,6 +283,12 @@ impl<T: Num> Point<T> {
 }
 
 impl<T: Float> Point<T> {
+    /// Returns `Point` with values rounded to the nearest integer number. Round half-way cases
+    /// away from `0.0`.
+    pub fn round(&self) -> Self {
+        Self::new(self.x.round(), self.y.round(), self.z.round())
+    }
+
     /// Returns whether two `Point`s are approximately equal.
     pub fn approx_eq(&self, other: Point<T>, epsilon: T) -> bool {
         let xd = (self.x - other.x).abs();
@@ -319,8 +300,8 @@ impl<T: Float> Point<T> {
 
 impl<T> Draw for Point<T>
 where
-    T: Copy,
-    Self: Into<Point<Scalar>>,
+    T: Number,
+    Self: Into<Point>,
 {
     /// Draw point to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
@@ -328,13 +309,22 @@ where
     }
 }
 
-impl<T> ExactSizeIterator for Iter<'_, T> {}
-impl<T> ExactSizeIterator for IterMut<'_, T> {}
+impl<T: Number> From<&mut Point<T>> for Point<T> {
+    fn from(p: &mut Point<T>) -> Self {
+        p.to_owned()
+    }
+}
 
-impl<T> FromIterator<T> for Point<T>
-where
-    T: Num,
-{
+impl<T: Number> From<&Point<T>> for Point<T> {
+    fn from(p: &Point<T>) -> Self {
+        *p
+    }
+}
+
+impl<T: Number> ExactSizeIterator for Iter<'_, T> {}
+impl<T: Number> ExactSizeIterator for IterMut<'_, T> {}
+
+impl<T: Number> FromIterator<T> for Point<T> {
     fn from_iter<I>(iter: I) -> Self
     where
         I: IntoIterator<Item = T>,
@@ -348,7 +338,7 @@ where
     }
 }
 
-impl<T> IntoIterator for Point<T> {
+impl<T: Number> IntoIterator for Point<T> {
     type Item = T;
     type IntoIter = IntoIter<Self::Item, 3>;
 
@@ -395,7 +385,7 @@ pub struct Iter<'a, T = Scalar> {
     current: usize,
 }
 
-impl<'a, T> Iter<'a, T> {
+impl<'a, T: Number> Iter<'a, T> {
     fn new(p: &'a Point<T>) -> Self {
         Self {
             inner: [&p.x, &p.y, &p.z],
@@ -404,7 +394,7 @@ impl<'a, T> Iter<'a, T> {
     }
 }
 
-impl<'a, T> Iterator for Iter<'a, T> {
+impl<'a, T: Number> Iterator for Iter<'a, T> {
     type Item = &'a T;
     fn next(&mut self) -> Option<Self::Item> {
         if self.current > 2 {
@@ -416,7 +406,7 @@ impl<'a, T> Iterator for Iter<'a, T> {
     }
 }
 
-impl<'a, T> IntoIterator for &'a Point<T> {
+impl<'a, T: Number> IntoIterator for &'a Point<T> {
     type Item = &'a T;
     type IntoIter = Iter<'a, T>;
     fn into_iter(self) -> Self::IntoIter {
@@ -438,14 +428,14 @@ type ThreeChain<T> = Chain<Chain<Once<T>, Once<T>>, Once<T>>;
 /// for value in p.iter_mut() {
 ///     *value *= 2;
 /// }
-/// assert_eq!(p.get(), [2, 4, -8]);
+/// assert_eq!(p.values(), [2, 4, -8]);
 /// ```
 #[derive(Debug)]
 pub struct IterMut<'a, T = Scalar> {
     inner: ThreeChain<&'a mut T>,
 }
 
-impl<'a, T> IterMut<'a, T> {
+impl<'a, T: Number> IterMut<'a, T> {
     fn new(p: &'a mut Point<T>) -> Self {
         Self {
             inner: once(&mut p.x).chain(once(&mut p.y)).chain(once(&mut p.z)),
@@ -453,14 +443,14 @@ impl<'a, T> IterMut<'a, T> {
     }
 }
 
-impl<'a, T> Iterator for IterMut<'a, T> {
+impl<'a, T: Number> Iterator for IterMut<'a, T> {
     type Item = &'a mut T;
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next()
     }
 }
 
-impl<'a, T> IntoIterator for &'a mut Point<T> {
+impl<'a, T: Number> IntoIterator for &'a mut Point<T> {
     type Item = &'a mut T;
     type IntoIter = IterMut<'a, T>;
     fn into_iter(self) -> Self::IntoIter {
@@ -468,7 +458,7 @@ impl<'a, T> IntoIterator for &'a mut Point<T> {
     }
 }
 
-impl<T> Index<usize> for Point<T> {
+impl<T: Number> Index<usize> for Point<T> {
     type Output = T;
     fn index(&self, idx: usize) -> &Self::Output {
         match idx {
@@ -480,7 +470,7 @@ impl<T> Index<usize> for Point<T> {
     }
 }
 
-impl<T> IndexMut<usize> for Point<T> {
+impl<T: Number> IndexMut<usize> for Point<T> {
     fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
         match idx {
             0 => &mut self.x,
@@ -492,10 +482,7 @@ impl<T> IndexMut<usize> for Point<T> {
 }
 
 /// [Point] + [Point] yields a [Vector].
-impl<T> Add for Point<T>
-where
-    T: Num,
-{
+impl<T: Number> Add for Point<T> {
     type Output = Vector<T>;
     fn add(self, p: Point<T>) -> Self::Output {
         Self::Output::new(self.x + p.x, self.y + p.y, self.z + p.z)
@@ -503,10 +490,7 @@ where
 }
 
 /// [Point] + [Vector] yields a [Point].
-impl<T> Add<Vector<T>> for Point<T>
-where
-    T: Num,
-{
+impl<T: Number> Add<Vector<T>> for Point<T> {
     type Output = Point<T>;
     fn add(self, v: Vector<T>) -> Self::Output {
         Self::Output::new(self.x + v.x, self.y + v.y, self.z + v.z)
@@ -514,10 +498,7 @@ where
 }
 
 /// [Vector] + [Point] yields a [Point].
-impl<T> Add<Point<T>> for Vector<T>
-where
-    T: Num,
-{
+impl<T: Number> Add<Point<T>> for Vector<T> {
     type Output = Point<T>;
     fn add(self, p: Point<T>) -> Self::Output {
         Self::Output::new(self.x + p.x, self.y + p.y, self.z + p.z)
@@ -527,8 +508,8 @@ where
 /// [Point] + U.
 impl<T, U> Add<U> for Point<T>
 where
-    T: Num + Add<U, Output = T>,
-    U: Num + Copy,
+    T: Number + Add<U, Output = T>,
+    U: Number,
 {
     type Output = Self;
     fn add(self, val: U) -> Self::Output {
@@ -564,7 +545,7 @@ where
 impl<T, U> AddAssign<U> for Point<T>
 where
     T: AddAssign<U>,
-    U: Num + Copy,
+    U: Number,
 {
     fn add_assign(&mut self, val: U) {
         self.x += val;
@@ -574,10 +555,7 @@ where
 }
 
 /// [Point] - [Point] yields a [Vector].
-impl<T> Sub for Point<T>
-where
-    T: Num,
-{
+impl<T: Number> Sub for Point<T> {
     type Output = Vector<T>;
     fn sub(self, p: Point<T>) -> Self::Output {
         Self::Output::new(self.x - p.x, self.y - p.y, self.z - p.z)
@@ -585,10 +563,7 @@ where
 }
 
 /// [Point] - [Vector] yields a [Point].
-impl<T> Sub<Vector<T>> for Point<T>
-where
-    T: Num,
-{
+impl<T: Number> Sub<Vector<T>> for Point<T> {
     type Output = Point<T>;
     fn sub(self, v: Vector<T>) -> Self::Output {
         Self::Output::new(self.x - v.x, self.y - v.y, self.z - v.z)
@@ -598,8 +573,8 @@ where
 /// [Point] - U.
 impl<T, U> Sub<U> for Point<T>
 where
-    T: Num + Sub<U, Output = T>,
-    U: Num + Copy,
+    T: Number + Sub<U, Output = T>,
+    U: Number,
 {
     type Output = Self;
     fn sub(self, val: U) -> Self::Output {
@@ -635,7 +610,7 @@ where
 impl<T, U> SubAssign<U> for Point<T>
 where
     T: SubAssign<U>,
-    U: Num + Copy,
+    U: Number,
 {
     fn sub_assign(&mut self, val: U) {
         self.x -= val;
@@ -645,10 +620,7 @@ where
 }
 
 /// ![Point].
-impl<T> Neg for Point<T>
-where
-    T: Num + Neg<Output = T>,
-{
+impl<T: Number + Neg<Output = T>> Neg for Point<T> {
     type Output = Self;
     fn neg(self) -> Self::Output {
         Self::Output::new(-self.x, -self.y, -self.z)
@@ -658,8 +630,8 @@ where
 /// [Point] * U.
 impl<T, U> Mul<U> for Point<T>
 where
-    T: Num + Mul<U, Output = T>,
-    U: Num + Copy,
+    T: Number + Mul<U, Output = T>,
+    U: Number,
 {
     type Output = Self;
     fn mul(self, s: U) -> Self::Output {
@@ -671,7 +643,7 @@ where
 impl<T, U> MulAssign<U> for Point<T>
 where
     T: MulAssign<U>,
-    U: Num + Copy,
+    U: Number,
 {
     fn mul_assign(&mut self, s: U) {
         self.x *= s;
@@ -683,8 +655,8 @@ where
 /// [Point] / U.
 impl<T, U> Div<U> for Point<T>
 where
-    T: Num + Div<U, Output = T>,
-    U: Num + Copy,
+    T: Number + Div<U, Output = T>,
+    U: Number,
 {
     type Output = Self;
     fn div(self, s: U) -> Self::Output {
@@ -695,8 +667,8 @@ where
 /// [Point] /= U.
 impl<T, U> DivAssign<U> for Point<T>
 where
-    T: Num + DivAssign<U>,
-    U: Num + Copy,
+    T: Number + DivAssign<U>,
+    U: Number,
 {
     fn div_assign(&mut self, s: U) {
         self.x /= s;
@@ -724,8 +696,8 @@ impl_primitive_mul!(i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usi
 
 impl<T> Sum for Point<T>
 where
+    T: Number,
     Self: Add<Output = Self>,
-    T: Num + Add,
 {
     fn sum<I>(iter: I) -> Self
     where
@@ -738,8 +710,8 @@ where
 
 impl<'a, T: 'a> Sum<&'a Point<T>> for Point<T>
 where
+    T: Number,
     Self: Add<Output = Self>,
-    T: Num + Add + Copy,
 {
     fn sum<I>(iter: I) -> Self
     where
@@ -795,78 +767,78 @@ impl_try_from!(isize => i8, u8, i16, u16, i32, u32, i64, u64, usize);
 impl_try_from!(usize => i8, u8, i16, u16, i32, u32, i64, u64, isize);
 
 /// Convert [Point] to `[x]`.
-impl<T> From<Point<T>> for [T; 1] {
+impl<T: Number> From<Point<T>> for [T; 1] {
     fn from(p: Point<T>) -> Self {
         [p.x]
     }
 }
 /// Convert &[Point] to `[x]`.
-impl<T: Copy> From<&Point<T>> for [T; 1] {
+impl<T: Number> From<&Point<T>> for [T; 1] {
     fn from(p: &Point<T>) -> Self {
         [p.x]
     }
 }
 
 /// Convert [Point] to `[x, y]`.
-impl<T> From<Point<T>> for [T; 2] {
+impl<T: Number> From<Point<T>> for [T; 2] {
     fn from(p: Point<T>) -> Self {
         [p.x, p.y]
     }
 }
 /// Convert &[Point] to `[x, y]`.
-impl<T: Copy> From<&Point<T>> for [T; 2] {
+impl<T: Number> From<&Point<T>> for [T; 2] {
     fn from(p: &Point<T>) -> Self {
         [p.x, p.y]
     }
 }
 
 /// Convert [Point] to `[x, y, z]`.
-impl<T> From<Point<T>> for [T; 3] {
+impl<T: Number> From<Point<T>> for [T; 3] {
     fn from(p: Point<T>) -> Self {
         [p.x, p.y, p.z]
     }
 }
 /// Convert &[Point] to `[x, y, z]`.
-impl<T: Copy> From<&Point<T>> for [T; 3] {
+impl<T: Number> From<&Point<T>> for [T; 3] {
     fn from(p: &Point<T>) -> Self {
         [p.x, p.y, p.z]
     }
 }
 
 /// Convert `[U; 1]` to [Point].
-impl<T: Num, U: Into<T>> From<[U; 1]> for Point<T> {
+impl<T: Number, U: Into<T>> From<[U; 1]> for Point<T> {
     fn from([x]: [U; 1]) -> Self {
         Self::new(x.into(), T::zero(), T::zero())
     }
 }
 /// Convert `&[U; 1]` to [Point].
-impl<T: Num, U: Copy + Into<T>> From<&[U; 1]> for Point<T> {
+impl<T: Number, U: Copy + Into<T>> From<&[U; 1]> for Point<T> {
     fn from(&[x]: &[U; 1]) -> Self {
         Self::new(x.into(), T::zero(), T::zero())
     }
 }
 
 /// Convert `[U; 2]` to [Point].
-impl<T: Num, U: Into<T>> From<[U; 2]> for Point<T> {
+impl<T: Number, U: Into<T>> From<[U; 2]> for Point<T> {
     fn from([x, y]: [U; 2]) -> Self {
         Self::new(x.into(), y.into(), T::zero())
     }
 }
 /// Convert `&[U; 2]` to [Point].
-impl<T: Num, U: Copy + Into<T>> From<&[U; 2]> for Point<T> {
+impl<T: Number, U: Copy + Into<T>> From<&[U; 2]> for Point<T> {
     fn from(&[x, y]: &[U; 2]) -> Self {
         Self::new(x.into(), y.into(), T::zero())
     }
 }
 
 /// Convert `[U; 3]` to [Point].
-impl<T, U: Into<T>> From<[U; 3]> for Point<T> {
+impl<T: Number, U: Into<T>> From<[U; 3]> for Point<T> {
     fn from([x, y, z]: [U; 3]) -> Self {
         Self::new(x.into(), y.into(), z.into())
     }
 }
 /// Convert `&[U; 3]` to [Point].
-impl<T, U: Copy + Into<T>> From<&[U; 3]> for Point<T> {
+impl<T: Number, U: Copy + Into<T>> From<&[U; 3]> for Point<T> {
     fn from(&[x, y, z]: &[U; 3]) -> Self {
         Self::new(x.into(), y.into(), z.into())
     }
@@ -890,25 +862,25 @@ mod tests {
         ($val:expr) => {
             // Mul<T> for Point
             let p = point!(2, -5, 0) * $val;
-            assert_eq!(p.get(), [4, -10, 0]);
+            assert_eq!(p.values(), [4, -10, 0]);
 
             // Mul<point> for T
             let p = $val * point!(2, -5, 0);
-            assert_eq!(p.get(), [4, -10, 0]);
+            assert_eq!(p.values(), [4, -10, 0]);
 
             // MulAssign<T> for point
             let mut p = point!(2, -5, 0);
             p *= $val;
-            assert_eq!(p.get(), [4, -10, 0]);
+            assert_eq!(p.values(), [4, -10, 0]);
 
             // Div<T> for point
             let p = point!(2, -6, 0) / $val;
-            assert_eq!(p.get(), [1, -3, 0]);
+            assert_eq!(p.values(), [1, -3, 0]);
 
             // DivAssign<T> for point
             let mut p = point!(2, -4, 0);
             p /= $val;
-            assert_eq!(p.get(), [1, -2, 0]);
+            assert_eq!(p.values(), [1, -2, 0]);
         };
     }
 
@@ -918,25 +890,25 @@ mod tests {
         let p1 = point!(2, 5, 1);
         let p2 = point!(1, 5, -1);
         let p3 = p1 + p2;
-        assert_eq!(p3.get(), [3, 10, 0]);
+        assert_eq!(p3.values(), [3, 10, 0]);
 
         // AddAssign
         let mut p1 = point!(2, 5, 1);
         let p2 = point!(1, 5, -1);
         p1 += p2;
-        assert_eq!(p1.get(), [3, 10, 0]);
+        assert_eq!(p1.values(), [3, 10, 0]);
 
         // Sub
         let p1 = point!(2, 1, 2);
         let p2 = point!(1, 5, 3);
         let p3 = p1 - p2;
-        assert_eq!(p3.get(), [1, -4, -1]);
+        assert_eq!(p3.values(), [1, -4, -1]);
 
         // SubAssign
         let mut p1 = point!(2, 1, 2);
         let p2 = point!(1, 5, 3);
         p1 -= p2;
-        assert_eq!(p1.get(), [1, -4, -1]);
+        assert_eq!(p1.values(), [1, -4, -1]);
 
         test_ops!(2i32);
         test_ops!(2i32);

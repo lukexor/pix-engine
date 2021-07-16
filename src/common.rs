@@ -3,10 +3,14 @@
 use crate::{image, renderer, state, window};
 use std::{borrow::Cow, error, fmt, result};
 
-/// The result type for [PixEngine](crate::prelude::PixEngine) operations.
+/// The result type for [PixEngine] operations.
+///
+/// [PixEngine]: crate::prelude::PixEngine
 pub type Result<T> = result::Result<T, Error>;
 
-/// The error type for [PixEngine](crate::prelude::PixEngine) operations.
+/// The error type for [PixEngine] operations.
+///
+/// [PixEngine]: crate::prelude::PixEngine
 #[non_exhaustive]
 #[derive(Debug)]
 pub enum Error {

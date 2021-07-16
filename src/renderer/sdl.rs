@@ -4,7 +4,6 @@ use crate::{
     window::Error as WindowError,
 };
 use lazy_static::lazy_static;
-use num_traits::AsPrimitive;
 use sdl2::{
     audio::{AudioQueue, AudioSpecDesired},
     gfx::primitives::{DrawRenderer, ToColor},
@@ -127,7 +126,7 @@ impl Rendering for Renderer {
     }
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    fn clip(&mut self, rect: Option<Rect<i32>>) {
+    fn clip(&mut self, rect: Option<Rect<Primitive>>) {
         let rect = rect.map(|rect| rect.into());
         self.canvas.set_clip_rect(rect);
     }
@@ -180,7 +179,7 @@ impl Rendering for Renderer {
     fn update_texture(
         &mut self,
         texture_id: TextureId,
-        rect: Option<Rect<i32>>,
+        rect: Option<Rect<Primitive>>,
         pixels: &[u8],
         pitch: usize,
     ) -> Result<()> {
@@ -196,12 +195,12 @@ impl Rendering for Renderer {
     fn texture(
         &mut self,
         texture_id: usize,
-        src: Option<Rect<i32>>,
-        dst: Option<Rect<i32>>,
+        src: Option<Rect<Primitive>>,
+        dst: Option<Rect<Primitive>>,
     ) -> Result<()> {
         if let Some(texture) = self.textures.get_mut(texture_id) {
-            let src: Option<SdlRect> = src.map(|r| r.into());
-            let dst: Option<SdlRect> = dst.map(|r| r.into());
+            let src = src.map(|r| r.into());
+            let dst = dst.map(|r| r.into());
             Ok(self.canvas.copy(texture, src, dst)?)
         } else {
             Err(Error::InvalidTexture(texture_id))
@@ -239,7 +238,7 @@ impl Rendering for Renderer {
     /// Draw text to the current canvas.
     fn text(
         &mut self,
-        pos: Point<i32>,
+        pos: &Point<Primitive>,
         text: &str,
         fill: Option<Color>,
         _stroke: Option<Color>,
@@ -272,17 +271,17 @@ impl Rendering for Renderer {
     }
 
     /// Draw a pixel to the current canvas.
-    fn point(&mut self, p: Point<i16>, color: Color) -> Result<()> {
+    fn point(&mut self, p: &Point<DrawPrimitive>, color: Color) -> Result<()> {
         Ok(self.canvas.pixel(p.x, p.y, color)?)
     }
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, line: Line<i16>, color: Color) -> Result<()> {
-        let [x1, y1, x2, y2]: [i16; 4] = line.into();
+    fn line(&mut self, line: &Line<DrawPrimitive>, color: Color) -> Result<()> {
+        let [x1, y1, _, x2, y2, _] = line.values();
         if y1 == y2 {
             self.canvas.hline(x1, x2, y1, color)?;
         } else if x1 == x2 {
-            self.canvas.vline(y1, y2, x1, color)?;
+            self.canvas.vline(x1, y1, y2, color)?;
         } else {
             self.canvas.line(x1, y1, x2, y2, color)?;
         }
@@ -292,11 +291,11 @@ impl Rendering for Renderer {
     /// Draw a triangle to the current canvas.
     fn triangle(
         &mut self,
-        tri: Triangle<i16>,
+        tri: &Triangle<DrawPrimitive>,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
-        let [x1, y1, x2, y2, x3, y3]: [i16; 6] = tri.into();
+        let [x1, y1, _, x2, y2, _, x3, y3, _] = tri.values();
         if let Some(fill) = fill {
             self.canvas.filled_trigon(x1, y1, x2, y2, x3, y3, fill)?;
         }
@@ -307,8 +306,13 @@ impl Rendering for Renderer {
     }
 
     /// Draw a rectangle to the current canvas.
-    fn rect(&mut self, rect: Rect<i16>, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
-        let [x, y, width, height]: [i16; 4] = rect.into();
+    fn rect(
+        &mut self,
+        rect: &Rect<DrawPrimitive>,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()> {
+        let [x, y, width, height] = rect.values();
         if let Some(fill) = fill {
             self.canvas.box_(x, y, x + width, y + height, fill)?;
         }
@@ -321,12 +325,12 @@ impl Rendering for Renderer {
     /// Draw a rounded rectangle to the current canvas.
     fn rounded_rect(
         &mut self,
-        rect: Rect<i16>,
-        radius: i16,
+        rect: &Rect<DrawPrimitive>,
+        radius: DrawPrimitive,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
-        let [x, y, width, height]: [i16; 4] = rect.into();
+        let [x, y, width, height] = rect.values();
         if let Some(fill) = fill {
             self.canvas
                 .rounded_box(x, y, x + width, y + height, radius, fill)?;
@@ -339,8 +343,13 @@ impl Rendering for Renderer {
     }
 
     /// Draw a quadrilateral to the current canvas.
-    fn quad(&mut self, quad: Quad<i16>, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
-        let [x1, y1, x2, y2, x3, y3, x4, y4]: [i16; 8] = quad.into();
+    fn quad(
+        &mut self,
+        quad: &Quad<DrawPrimitive>,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()> {
+        let [x1, y1, _, x2, y2, _, x3, y3, _, x4, y4, _] = quad.values();
         let vx = [x1, x2, x3, x4];
         let vy = [y1, y2, y3, y4];
         if let Some(fill) = fill {
@@ -355,8 +364,8 @@ impl Rendering for Renderer {
     /// Draw a polygon to the current canvas.
     fn polygon(
         &mut self,
-        vx: &[i16],
-        vy: &[i16],
+        vx: &[DrawPrimitive],
+        vy: &[DrawPrimitive],
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
@@ -372,11 +381,11 @@ impl Rendering for Renderer {
     /// Draw a ellipse to the current canvas.
     fn ellipse(
         &mut self,
-        ellipse: Ellipse<i16>,
+        ellipse: &Ellipse<DrawPrimitive>,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
-        let [x, y, width, height]: [i16; 4] = ellipse.into();
+        let [x, y, width, height] = ellipse.values();
         if let Some(fill) = fill {
             self.canvas.filled_ellipse(x, y, width, height, fill)?;
         }
@@ -389,16 +398,16 @@ impl Rendering for Renderer {
     /// Draw an arc to the current canvas.
     fn arc(
         &mut self,
-        p: Point<i16>,
-        radius: i16,
-        start: i16,
-        end: i16,
+        p: &Point<DrawPrimitive>,
+        radius: DrawPrimitive,
+        start: DrawPrimitive,
+        end: DrawPrimitive,
         mode: ArcMode,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
         use ArcMode::*;
-        let [x, y]: [i16; 2] = p.into();
+        let [x, y, _] = p.values();
         match mode {
             Default => {
                 if let Some(stroke) = stroke {
@@ -418,7 +427,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw an image to the current canvas.
-    fn image(&mut self, pos: Point<i32>, img: &Image, tint: Option<Color>) -> Result<()> {
+    fn image(&mut self, pos: &Point<Primitive>, img: &Image, tint: Option<Color>) -> Result<()> {
         let texture_id = img.texture_id();
         match self.textures.get_mut(texture_id) {
             Some(texture) => {
@@ -445,7 +454,7 @@ impl Rendering for Renderer {
     /// Draw an image to the current canvas.
     fn image_resized(
         &mut self,
-        dst_rect: Rect<i32>,
+        dst_rect: &Rect<Primitive>,
         img: &Image,
         tint: Option<Color>,
     ) -> Result<()> {
@@ -520,17 +529,15 @@ impl From<FontStyle> for SdlFontStyle {
     }
 }
 
-impl<T> From<Rect<T>> for SdlRect
-where
-    T: AsPrimitive<i32>,
-{
-    fn from(rect: Rect<T>) -> Self {
-        Self::new(
-            rect.x.as_(),
-            rect.y.as_(),
-            rect.width.as_() as u32,
-            rect.height.as_() as u32,
-        )
+impl From<Rect<Primitive>> for SdlRect {
+    fn from(rect: Rect<Primitive>) -> Self {
+        Self::new(rect.x, rect.y, rect.width as u32, rect.height as u32)
+    }
+}
+
+impl From<&Rect<Primitive>> for SdlRect {
+    fn from(rect: &Rect<Primitive>) -> Self {
+        Self::new(rect.x, rect.y, rect.width as u32, rect.height as u32)
     }
 }
 

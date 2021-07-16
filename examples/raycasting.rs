@@ -1,5 +1,5 @@
-use pix_engine::{prelude::*, ASSET_DIR};
-use std::{borrow::Cow, cmp::Ordering::Less, path::PathBuf};
+use pix_engine::prelude::*;
+use std::{borrow::Cow, cmp::Ordering::Less};
 
 const TITLE: &str = "Raycasting";
 const WIDTH: u32 = 1000;
@@ -11,6 +11,29 @@ const NORTH: usize = 0;
 const SOUTH: usize = 1;
 const EAST: usize = 2;
 const WEST: usize = 3;
+
+#[derive(Debug)]
+struct Cell {
+    pos: Vector,
+    edges: [(bool, usize); 4],
+    exists: bool,
+}
+
+// 0,0 -> 0,0,16,16
+// 1,0 -> 16,0,32,16
+impl Cell {
+    pub fn new<P: Into<Vector>>(pos: P) -> Self {
+        Self {
+            pos: pos.into() * BLOCK_SIZE as Scalar,
+            edges: [(false, 0); 4],
+            exists: false,
+        }
+    }
+
+    fn reset(&mut self) {
+        self.edges = [(false, 0); 4];
+    }
+}
 
 struct RayScene {
     cells: Vec<Cell>,
@@ -180,14 +203,13 @@ impl RayScene {
         Ok(())
     }
 
-    fn calc_visibility_polygons(&mut self, o: Vector) {
+    fn calc_visibility_polygons(&mut self, o: Point) {
         self.polygons.clear();
         for &p in self.points.iter() {
             // Cast three rays - one at and one off to each side
             for offset in -1..=1 {
                 let angle = offset as Scalar / 10_000.0;
-                let mut r = Vector::from(p) - o;
-                r.rotate(angle);
+                let r = Vector::rotated(p - o, angle);
                 if let Some(intersect) = self.cast_ray(o, r) {
                     self.polygons.push((r.heading(), intersect));
                     continue;
@@ -199,15 +221,15 @@ impl RayScene {
         self.polygons
             .sort_unstable_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(Less));
         self.polygons
-            .dedup_by(|a, b| (a.1.x - b.1.x).abs() <= 0.1 && (a.1.y - b.1.y).abs() <= 0.1);
+            .dedup_by(|a, b| (a.1.x - b.1.x).abs() < 0.5 && (a.1.y - b.1.y).abs() < 0.5);
     }
 
-    fn cast_ray(&self, o: Vector, r: Vector) -> Option<Point> {
+    fn cast_ray(&self, o: Point, r: Vector) -> Option<Point> {
         let mut intersect = None;
         let mut closest_param = Scalar::INFINITY;
-        let ray: Line = Line::new(o, r + o);
+        let ray: Line = Line::new(o, o + r);
         for &e in self.edges.iter() {
-            if let Some((point, param)) = ray.intersects(e) {
+            if let Some((point, param)) = ray.intersects_line(e) {
                 if intersect.is_none() || param < closest_param {
                     intersect = Some(point);
                     closest_param = param;
@@ -217,34 +239,33 @@ impl RayScene {
         intersect
     }
 
-    fn draw_visibility_polygons(&mut self, s: &mut PixState) -> PixResult<bool> {
+    fn draw_visibility_polygons(&mut self, s: &mut PixState) -> PixResult<()> {
         let mouse = s.mouse_pos();
-        if mouse.x <= 0 || mouse.x > s.width() as i32 || mouse.y <= 0 || mouse.y > s.height() as i32
-        {
-            return Ok(true);
+        if !rect![0, 0, s.width() as i32, s.height() as i32].contains_point(mouse) {
+            return Ok(());
         }
 
-        self.calc_visibility_polygons(mouse.into());
+        self.calc_visibility_polygons(mouse.as_());
 
         s.fill(WHITE);
-        s.stroke(WHITE);
+        s.no_stroke();
         if !self.polygons.is_empty() {
             for i in 0..self.polygons.len() - 1 {
                 let p1 = self.polygons[i].1;
                 let p2 = self.polygons[i + 1].1;
-                s.triangle([mouse.as_(), p1, p2])?;
+                s.triangle([mouse.into(), p1, p2])?;
             }
             // Draw last triangle, connecting back to first point.
             // SAFETY: self.polygons has at least one element due to is_empty() check above
             let p1 = self.polygons.last().unwrap().1;
             let p2 = self.polygons[0].1;
-            s.triangle([mouse.as_(), p1, p2])?;
+            s.triangle([mouse.into(), p1, p2])?;
         }
 
         s.fill(BLACK);
         s.no_stroke();
         s.circle([mouse.x, mouse.y, 2])?;
-        Ok(true)
+        Ok(())
     }
 }
 
@@ -254,12 +275,12 @@ impl AppState for RayScene {
         s.scale(SCALE, SCALE)?;
         s.cursor(false);
 
-        let w = (self.xcells * BLOCK_SIZE) as i32 - 1;
-        let h = (self.ycells * BLOCK_SIZE) as i32 - 1;
+        let w = (self.xcells * BLOCK_SIZE) as i32;
+        let h = (self.ycells * BLOCK_SIZE) as i32;
 
         // Random scattered cells to start with
         for _ in 0..50 {
-            let i = self.get_cell_index(random!(w - 1), random!(h - 1));
+            let i = self.get_cell_index(random!(w), random!(h));
             self.cells[i].exists = !self.cells[i].exists;
         }
 
@@ -273,7 +294,7 @@ impl AppState for RayScene {
 
         self.convert_edges_to_poly_map()?;
 
-        self.light = s.create_image_from_file(PathBuf::from(ASSET_DIR).join("light.png"))?;
+        self.light = s.create_image_from_file(DEFAULT_ASSET_DIR.join("light.png"))?;
         s.image_tint(color![255, 255, 153]);
 
         Ok(())
@@ -299,15 +320,26 @@ impl AppState for RayScene {
         self.draw_visibility_polygons(s)?;
 
         s.fill(BLUE);
-        s.stroke(BLUE);
+        let mut in_cell = None;
         for cell in self.cells.iter().filter(|c| c.exists) {
-            let p = cell.pos;
-            s.square([p.x, p.y, BLOCK_SIZE as Scalar + 1.0])?;
+            let sq = square![cell.pos, BLOCK_SIZE as Scalar];
+            if sq.contains_point(mouse.as_::<Scalar>()) {
+                in_cell = Some(cell);
+                break;
+            }
+            s.square(sq)?;
         }
 
         s.blend_mode(BlendMode::Mod);
         s.image([mouse.x - 255, mouse.y - 255], &self.light)?;
         s.blend_mode(BlendMode::None);
+
+        if let Some(cell) = in_cell {
+            s.clear();
+            s.square([cell.pos.x, cell.pos.y, BLOCK_SIZE as Scalar])?;
+            s.fill(YELLOW);
+            s.circle([mouse.x, mouse.y, 2])?;
+        }
 
         Ok(())
     }
@@ -315,7 +347,7 @@ impl AppState for RayScene {
     fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse) -> PixResult<()> {
         if btn == Mouse::Left {
             let m = s.mouse_pos();
-            if m.x > 0 && m.x <= s.width() as i32 && m.y > 0 && m.y <= s.height() as i32 {
+            if rect![0, 0, s.width() as i32, s.height() as i32].contains_point(m) {
                 let i = self.get_cell_index(m.x, m.y);
                 self.cells[i].exists = !self.cells[i].exists;
                 self.drawing = self.cells[i].exists;
@@ -329,7 +361,7 @@ impl AppState for RayScene {
         if s.mouse_buttons().contains(&Mouse::Left) {
             let m = s.mouse_pos();
             let pm = s.pmouse_pos();
-            if m.x > 0 && m.x <= s.width() as i32 && m.y > 0 && m.y <= s.height() as i32 {
+            if rect![0, 0, s.width() as i32, s.height() as i32].contains_point(m) {
                 if m != pm {
                     let i = self.get_cell_index(m.x, m.y);
                     self.cells[i].exists = self.drawing;
@@ -341,29 +373,6 @@ impl AppState for RayScene {
     }
 }
 
-#[derive(Debug)]
-struct Cell {
-    pos: Vector,
-    edges: [(bool, usize); 4],
-    exists: bool,
-}
-
-// 0,0 -> 0,0,16,16
-// 1,0 -> 16,0,32,16
-impl Cell {
-    pub fn new<P: Into<Vector>>(pos: P) -> Self {
-        Self {
-            pos: pos.into() * BLOCK_SIZE as Scalar,
-            edges: [(false, 0); 4],
-            exists: false,
-        }
-    }
-
-    fn reset(&mut self) {
-        self.edges = [(false, 0); 4];
-    }
-}
-
 fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
@@ -371,8 +380,8 @@ fn main() -> PixResult<()> {
         .with_frame_rate()
         .position_centered()
         .vsync_enabled()
-        .icon(PathBuf::from(ASSET_DIR).join("light.png"))
         .resizable()
+        .icon(DEFAULT_ASSET_DIR.join("light.png"))
         .build();
     let mut app = RayScene::new();
     engine.run(&mut app)

@@ -6,6 +6,9 @@ use num_traits::{Num, NumCast};
 use rand::{self, distributions::uniform::SampleUniform, Rng};
 use std::ops::{AddAssign, Range};
 
+/// Default primitive type used for objects and shapes.
+pub type Primitive = i32;
+
 /// Default scalar type used for math operations.
 pub type Scalar = f64;
 
@@ -13,6 +16,11 @@ pub type Scalar = f64;
 pub mod constants {
     pub use std::f64::consts::*;
 }
+
+/// Default number trait used for objects and shapes.
+pub trait Number: Num + Copy + PartialOrd {}
+
+impl<T> Number for T where T: Num + Copy + PartialOrd {}
 
 const PERLIN_YWRAPB: usize = 4;
 const PERLIN_YWRAP: usize = 1 << PERLIN_YWRAPB;
@@ -161,7 +169,8 @@ macro_rules! random {
     }};
 }
 
-/// Returns the Perlin noise value at specified coordinates.
+/// Returns the [Perlin noise](https://en.wikipedia.org/wiki/Perlin_noise) value at specified
+/// coordinates.
 ///
 /// # Examples
 ///

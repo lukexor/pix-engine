@@ -1,10 +1,10 @@
 //! Graphics renderer functions.
 
 use crate::{prelude::*, state::Error as StateError, window};
+#[cfg(not(target_arch = "wasm32"))]
+use lazy_static::lazy_static;
 use std::{borrow::Cow, error, ffi::NulError, fmt, result};
 
-#[cfg(not(target_arch = "wasm32"))]
-use crate::ASSET_DIR;
 #[cfg(not(target_arch = "wasm32"))]
 use std::{io, path::PathBuf};
 #[cfg(not(target_arch = "wasm32"))]
@@ -16,6 +16,12 @@ pub(crate) use sdl::Renderer;
 pub(crate) mod wasm;
 #[cfg(target_arch = "wasm32")]
 pub(crate) use wasm::Renderer;
+
+#[cfg(not(target_arch = "wasm32"))]
+lazy_static! {
+    /// Default directory to extract static library assets into.
+    pub static ref DEFAULT_ASSET_DIR: PathBuf = PathBuf::from("/tmp/pix-engine");
+}
 
 /// The result type for `Renderer` operations.
 pub type Result<T> = result::Result<T, Error>;
@@ -31,6 +37,8 @@ pub(crate) struct RendererSettings {
     pub(crate) font_size: u16,
     #[cfg(not(target_arch = "wasm32"))]
     pub(crate) icon: Option<PathBuf>,
+    #[cfg(not(target_arch = "wasm32"))]
+    pub(crate) asset_dir: PathBuf,
     pub(crate) x: Position,
     pub(crate) y: Position,
     pub(crate) width: u32,
@@ -49,12 +57,14 @@ impl Default for RendererSettings {
         Self {
             title: String::new(),
             #[cfg(not(target_arch = "wasm32"))]
-            font: PathBuf::from(ASSET_DIR).join("emulogic.ttf"),
+            font: DEFAULT_ASSET_DIR.join("emulogic.ttf"),
             #[cfg(target_arch = "wasm32")]
             font: "Courier New".to_string(),
             font_size: 16,
             #[cfg(not(target_arch = "wasm32"))]
             icon: None,
+            #[cfg(not(target_arch = "wasm32"))]
+            asset_dir: DEFAULT_ASSET_DIR.clone(),
             x: Position::default(),
             y: Position::default(),
             width: 400,
@@ -82,7 +92,7 @@ pub(crate) trait Rendering: Sized {
     fn set_draw_color(&mut self, color: Color);
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    fn clip(&mut self, rect: Option<Rect<i32>>);
+    fn clip(&mut self, rect: Option<Rect<Primitive>>);
 
     /// Sets the blend mode used by the renderer to draw textures.
     fn blend_mode(&mut self, mode: BlendMode);
@@ -108,7 +118,7 @@ pub(crate) trait Rendering: Sized {
     fn update_texture(
         &mut self,
         texture_id: TextureId,
-        rect: Option<Rect<i32>>,
+        rect: Option<Rect<Primitive>>,
         pixels: &[u8],
         pitch: usize,
     ) -> Result<()>;
@@ -117,8 +127,8 @@ pub(crate) trait Rendering: Sized {
     fn texture(
         &mut self,
         texture_id: TextureId,
-        src: Option<Rect<i32>>,
-        dst: Option<Rect<i32>>,
+        src: Option<Rect<Primitive>>,
+        dst: Option<Rect<Primitive>>,
     ) -> Result<()>;
 
     /// Set the font size for drawing to the current canvas.
@@ -133,7 +143,7 @@ pub(crate) trait Rendering: Sized {
     /// Draw text to the current canvas.
     fn text(
         &mut self,
-        position: Point<i32>,
+        position: &Point<Primitive>,
         text: &str,
         fill: Option<Color>,
         stroke: Option<Color>,
@@ -144,33 +154,33 @@ pub(crate) trait Rendering: Sized {
     fn size_of(&self, text: &str) -> Result<(u32, u32)>;
 
     /// Draw a pixel to the current canvas.
-    fn point(&mut self, p: Point<i16>, color: Color) -> Result<()>;
+    fn point(&mut self, p: &Point<i16>, color: Color) -> Result<()>;
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, line: Line<i16>, color: Color) -> Result<()>;
+    fn line(&mut self, line: &Line<i16>, color: Color) -> Result<()>;
 
     /// Draw a triangle to the current canvas.
     fn triangle(
         &mut self,
-        tri: Triangle<i16>,
+        tri: &Triangle<i16>,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()>;
 
     /// Draw a rectangle to the current canvas.
-    fn rect(&mut self, rect: Rect<i16>, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
+    fn rect(&mut self, rect: &Rect<i16>, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
 
     /// Draw a rounded rectangle to the current canvas.
     fn rounded_rect(
         &mut self,
-        rect: Rect<i16>,
+        rect: &Rect<i16>,
         radius: i16,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()>;
 
     /// Draw a quadrilateral to the current canvas.
-    fn quad(&mut self, quad: Quad<i16>, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
+    fn quad(&mut self, quad: &Quad<i16>, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
 
     /// Draw a polygon to the current canvas.
     fn polygon(
@@ -184,7 +194,7 @@ pub(crate) trait Rendering: Sized {
     /// Draw a ellipse to the current canvas.
     fn ellipse(
         &mut self,
-        ellipse: Ellipse<i16>,
+        ellipse: &Ellipse<i16>,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()>;
@@ -193,7 +203,7 @@ pub(crate) trait Rendering: Sized {
     #[allow(clippy::too_many_arguments)]
     fn arc(
         &mut self,
-        p: Point<i16>,
+        p: &Point<i16>,
         radius: i16,
         start: i16,
         end: i16,
@@ -203,12 +213,17 @@ pub(crate) trait Rendering: Sized {
     ) -> Result<()>;
 
     /// Draw an image to the current canvas.
-    fn image(&mut self, position: Point<i32>, img: &Image, tint: Option<Color>) -> Result<()>;
+    fn image(
+        &mut self,
+        position: &Point<Primitive>,
+        img: &Image,
+        tint: Option<Color>,
+    ) -> Result<()>;
 
     /// Draw a resized image to the current canvas.
     fn image_resized(
         &mut self,
-        dst_rect: Rect<i32>,
+        dst_rect: &Rect<Primitive>,
         img: &Image,
         tint: Option<Color>,
     ) -> Result<()>;

@@ -1,13 +1,11 @@
 use lazy_static::lazy_static;
-use pix_engine::{
-    math::constants::{FRAC_PI_2, PI, TAU},
-    prelude::*,
-};
+use pix_engine::prelude::*;
 
 const SHIP_SCALE: Scalar = 4.0;
 const ASTEROID_SIZE: u32 = 64;
 const MIN_ASTEROID_SIZE: u32 = 16;
 const SHIP_THRUST: Scalar = 150.0;
+const MAX_THRUST: Scalar = 600.0;
 const MAX_ASTEROID_SPEED: Scalar = 50.0;
 const SHATTERED_ASTEROID_SPEED: Scalar = 80.0;
 const BULLET_SPEED: Scalar = 200.0;
@@ -168,6 +166,7 @@ impl Asteroids {
         // Thrust
         if s.key_down(Key::Up) {
             self.ship.vel += Vector::from_angle(self.ship.angle, SHIP_THRUST * elapsed);
+            self.ship.vel.limit(MAX_THRUST);
         }
     }
 
@@ -340,7 +339,7 @@ impl AppState for Asteroids {
             Key::Space if !self.gameover => {
                 self.bullets.push(SpaceObj::new(
                     self.ship.pos,
-                    Vector::from_angle(self.ship.angle, BULLET_SPEED),
+                    Vector::from_angle(self.ship.angle, self.ship.vel.mag() + BULLET_SPEED),
                     1,
                     0.0,
                 ));
