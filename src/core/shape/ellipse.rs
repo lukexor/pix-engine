@@ -1,4 +1,4 @@
-//! [Circle], [Ellipse], and [Sphere] types used for drawing.
+//! [Circle], [Ellipse] types used for drawing.
 
 use crate::prelude::*;
 use num_traits::{AsPrimitive, Float};
@@ -28,10 +28,10 @@ macro_rules! ellipse {
         ellipse!($p, $r, $r)
     };
     ($p:expr, $width:expr, $height:expr$(,)?) => {
-        ellipse!($p.x, $p.y, $width, $height)
+        $crate::prelude::Ellipse::with_point($p, $width, $height)
     };
     ($x:expr, $y:expr, $width:expr, $height:expr$(,)?) => {
-        $crate::shape::ellipse::Ellipse::new($x, $y, $width, $height)
+        $crate::prelude::Ellipse::new($x, $y, $width, $height)
     };
 }
 
@@ -53,10 +53,10 @@ macro_rules! ellipse {
 #[macro_export]
 macro_rules! circle {
     ($p:expr, $r:expr$(,)?) => {
-        circle!($p.x, $p.y, $r)
+        $crate::prelude::Circle::with_point($p, $r)
     };
     ($x:expr, $y:expr, $r:expr$(,)?) => {
-        $crate::shape::ellipse::Circle::new($x, $y, $r)
+        $crate::prelude::Circle::new($x, $y, $r)
     };
 }
 
@@ -75,7 +75,7 @@ pub struct Ellipse<T = Scalar> {
 }
 
 impl<T> Ellipse<T> {
-    /// Constructs an `Ellipse`.
+    /// Constructs an `Ellipse<T>` at position `(x, y)` with `width` and `height`.
     pub const fn new(x: T, y: T, width: T, height: T) -> Self {
         Self {
             x,
@@ -83,6 +83,12 @@ impl<T> Ellipse<T> {
             width,
             height,
         }
+    }
+
+    /// Constructs an `Ellipse<T>` at position [Point] with `width` and `height`.
+    pub fn with_point<P: Into<Point<T>>>(p: P, width: T, height: T) -> Self {
+        let p = p.into();
+        Self::new(p.x, p.y, width, height)
     }
 
     /// Convert `Ellipse<T>` to another primitive type using the `as` operator.
@@ -250,19 +256,15 @@ pub struct Circle<T = Scalar> {
 }
 
 impl<T> Circle<T> {
-    /// Constructs a `Circle`.
+    /// Constructs a `Circle<T>` at position `(x, y)` with `radius`.
     pub const fn new(x: T, y: T, radius: T) -> Self {
         Self { x, y, radius }
     }
 
-    /// Constructs a `Circle` from [Point].
-    pub fn from_point(p: Point<T>, radius: T) -> Self {
+    /// Constructs a `Circle<T>` at position [Point] with `radius`.
+    pub fn with_point<P: Into<Point<T>>>(p: P, radius: T) -> Self {
+        let p = p.into();
         Self::new(p.x, p.y, radius)
-    }
-
-    /// Constructs a `Circle` from [Vector].
-    pub fn from_vector(v: Vector<T>, radius: T) -> Self {
-        Self::new(v.x, v.y, radius)
     }
 
     /// Convert `Circle<T>` to another primitive type using the `as` operator.
@@ -388,76 +390,5 @@ impl<T: Number, U: Into<T>> From<[U; 3]> for Circle<T> {
 impl<T: Number, U: Copy + Into<T>> From<&[U; 3]> for Circle<T> {
     fn from(&[x, y, radius]: &[U; 3]) -> Self {
         Self::new(x.into(), y.into(), radius.into())
-    }
-}
-
-/// A `Sphere` positioned at `(x, y, z)` with `radius`.
-#[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Sphere<T = Scalar> {
-    /// Center position
-    pub center: Point<T>,
-    /// Radius
-    pub radius: T,
-}
-
-/// # Constructs a [Sphere].
-///
-/// ```
-/// use pix_engine::prelude::*;
-/// let s = sphere!([10, 20, 10], 100);
-/// assert_eq!(s.center, point!(10, 20, 10));
-/// assert_eq!(s.radius, 100);
-/// ```
-#[macro_export]
-macro_rules! sphere {
-    ($p:expr, $r:expr$(,)?) => {
-        $crate::shape::ellipse::Sphere::new($p, $r)
-    };
-    ([$x:expr, $y:expr, $z:expr], $r:expr$(,)?) => {
-        $crate::shape::ellipse::Sphere::new([$x, $y, $z], $r)
-    };
-}
-
-impl<T> Sphere<T> {
-    /// Constructs a `Sphere`.
-    pub fn new<P>(center: P, radius: T) -> Self
-    where
-        P: Into<Point<T>>,
-    {
-        Self {
-            center: center.into(),
-            radius,
-        }
-    }
-}
-
-impl<T: Number> Shape<T> for Sphere<T> {
-    type Item = Sphere<T>;
-
-    /// Returns whether this sphere contains a given [Point].
-    fn contains<O>(&self, other: O) -> bool
-    where
-        O: Into<Self::Item>,
-    {
-        let other = other.into();
-        let px = other.center.x - self.center.x;
-        let py = other.center.y - self.center.y;
-        let pz = other.center.z - self.center.z;
-        let r = self.radius;
-        (px * px + py * py + pz * pz) < r * r
-    }
-
-    /// Returns whether this sphere intersects another sphere.
-    fn intersects<O>(&self, other: O) -> bool
-    where
-        O: Into<Self::Item>,
-    {
-        let other = other.into();
-        let px = other.center.x - self.center.x;
-        let py = other.center.y - self.center.y;
-        let pz = other.center.z - self.center.z;
-        let r = other.radius + self.radius;
-        (px * px + py * py + pz * pz) < r * r
     }
 }

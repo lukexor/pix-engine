@@ -1,6 +1,9 @@
 //! Common crate functions and error types.
 
-use crate::{image, renderer, state, window};
+use crate::{
+    core::{state, window},
+    image, renderer,
+};
 use std::{borrow::Cow, error, fmt, result};
 
 /// The result type for [PixEngine] operations.

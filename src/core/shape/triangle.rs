@@ -1,6 +1,6 @@
 //! [Triangle] type used for drawing.
 
-use crate::{prelude::*, vector::Vector};
+use crate::prelude::*;
 use num_traits::{AsPrimitive, Float};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};

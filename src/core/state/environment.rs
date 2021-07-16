@@ -2,8 +2,8 @@
 //!
 //! [PixEngine]: crate::prelude::PixEngine
 use crate::{
+    core::window::Window,
     prelude::{PixResult, PixState, WindowBuilder, WindowId},
-    window::Window,
 };
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};

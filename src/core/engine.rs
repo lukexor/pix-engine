@@ -1,9 +1,9 @@
 //! [PixEngine] functions.
 
 use crate::{
+    core::window::Window,
     prelude::*,
     renderer::{Renderer, RendererSettings, Rendering},
-    window::Window,
 };
 use std::{
     collections::VecDeque,

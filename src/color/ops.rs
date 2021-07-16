@@ -152,7 +152,7 @@ pub struct Iter {
 }
 
 impl Iter {
-    pub(super) fn new(color: &Color) -> Self {
+    pub(crate) fn new(color: &Color) -> Self {
         Self {
             inner: color.channels(),
             current: 0,

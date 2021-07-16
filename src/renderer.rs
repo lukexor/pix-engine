@@ -1,6 +1,9 @@
 //! Graphics renderer functions.
 
-use crate::{prelude::*, state::Error as StateError, window};
+use crate::{
+    core::{state::Error as StateError, window},
+    prelude::*,
+};
 #[cfg(not(target_arch = "wasm32"))]
 use lazy_static::lazy_static;
 use std::{borrow::Cow, error, ffi::NulError, fmt, result};

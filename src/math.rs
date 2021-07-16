@@ -1,10 +1,13 @@
 //! Math functions and constants.
 
-use crate::vector::Vector;
 use lazy_static::lazy_static;
 use num_traits::{Num, NumCast};
 use rand::{self, distributions::uniform::SampleUniform, Rng};
 use std::ops::{AddAssign, Range};
+use vector::Vector;
+
+#[macro_use]
+pub mod vector;
 
 /// Default primitive type used for objects and shapes.
 pub type Primitive = i32;

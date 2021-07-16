@@ -1,7 +1,7 @@
 use crate::{
+    core::window::Error as WindowError,
     prelude::*,
     renderer::{Error, RendererSettings, Rendering, Result},
-    window::Error as WindowError,
 };
 use lazy_static::lazy_static;
 use sdl2::{

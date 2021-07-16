@@ -10,12 +10,17 @@ pub mod line;
 pub mod point;
 #[macro_use]
 pub mod rect;
+pub mod quad;
+#[macro_use]
+pub mod sphere;
 pub mod triangle;
 
-pub use ellipse::{Circle, Ellipse, Sphere};
+pub use ellipse::{Circle, Ellipse};
 pub use line::Line;
 pub use point::Point;
-pub use rect::{Quad, Rect};
+pub use quad::Quad;
+pub use rect::Rect;
+pub use sphere::Sphere;
 pub use triangle::Triangle;
 
 /// Trait for operations on a geometric shape.
