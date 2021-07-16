@@ -20,6 +20,9 @@
 //! [WASM]: https://www.rust-lang.org/what/wasm
 //! [`Tetanes`]: https://crates.io/crates/tetanes
 //! [NES]: https://en.wikipedia.org/wiki/Nintendo_Entertainment_System
+//! [AppState]: crate::prelude::AppState
+//! [AppState::on_update]: crate::prelude::AppState::on_update
+//! [PixState]: crate::prelude::PixState
 //!
 //! ```no_run
 //! # #![allow(unused_variables)]
@@ -32,13 +35,20 @@
 //!         // Setup App state. PixState contains engine specific state and
 //!         // utility functions for things like getting mouse coordinates,
 //!         // drawing shapes, etc.
+//!         s.background(220);
+//!         s.circle([10, 10, 100])?;
 //!         Ok(())
 //!     }
 //!
 //!     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!         // Main render loop. Called as often as possible, or based on `target frame rate`.
-//!         s.background(220);
-//!         s.circle([10, 10, 100])?;
+//!         if s.mouse_pressed() {
+//!             s.fill(0);
+//!         } else {
+//!             s.fill(255);
+//!         }
+//!         let m = s.mouse_pos();
+//!         s.circle([m.x, m.y, 80])?;
 //!         Ok(())
 //!     }
 //!

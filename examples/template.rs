@@ -20,13 +20,17 @@ impl AppState for MyApp {
         s.circle([m.x, m.y, 80])?;
         Ok(())
     }
+
+    fn on_stop(&mut self, _s: &mut PixState) -> PixResult<()> {
+        // Teardown any state or resources before exiting.
+        Ok(())
+    }
 }
 
 fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(800, 600)
         .with_title("MyApp")
-        .with_frame_rate()
         .position_centered()
         .build();
     let mut app = MyApp;

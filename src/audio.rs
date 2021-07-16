@@ -19,7 +19,6 @@
 //! # }
 //! ```
 //!
-//! [PixState]: crate::prelude::PixState
 //! [AppState]: crate::prelude::AppState
 
 use crate::prelude::PixState;
