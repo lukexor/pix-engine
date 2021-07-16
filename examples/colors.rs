@@ -44,7 +44,6 @@ impl Colors {
 
 impl AppState for Colors {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.clear();
         if self.auto && s.frame_count() % 4 == 0 {
             self.modify_hue(1.0, true);
         }

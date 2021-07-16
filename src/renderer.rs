@@ -53,6 +53,7 @@ pub(crate) struct RendererSettings {
     pub(crate) vsync: bool,
     pub(crate) resizable: bool,
     pub(crate) show_frame_rate: bool,
+    pub(crate) target_frame_rate: Option<f64>,
 }
 
 impl Default for RendererSettings {
@@ -79,6 +80,7 @@ impl Default for RendererSettings {
             vsync: false,
             resizable: false,
             show_frame_rate: false,
+            target_frame_rate: None,
         }
     }
 }

@@ -72,7 +72,7 @@ impl Rendering for Renderer {
 
         let window = window_builder.build()?;
         let window_id = window.id();
-        let mut canvas_builder = window.into_canvas().accelerated().target_texture();
+        let mut canvas_builder = window.into_canvas().target_texture();
         if s.vsync {
             canvas_builder = canvas_builder.present_vsync();
         }

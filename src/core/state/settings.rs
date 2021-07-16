@@ -2,11 +2,7 @@
 //!
 //! [PixEngine]: crate::prelude::PixEngine
 
-use crate::{
-    core::window::Window,
-    prelude::{Color, PixResult, PixState, Rect},
-    renderer::Rendering,
-};
+use crate::{core::window::Window, prelude::*, renderer::Rendering};
 use bitflags::bitflags;
 use num_traits::AsPrimitive;
 #[cfg(feature = "serde")]
@@ -99,8 +95,8 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             background: Color::default(),
-            fill: None,
-            stroke: None,
+            fill: Some(WHITE),
+            stroke: Some(BLACK),
             running: true,
             run_count: 0,
             show_frame_rate: false,

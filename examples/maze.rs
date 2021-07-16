@@ -134,8 +134,6 @@ impl AppState for Maze {
             }
         }
 
-        s.clear();
-
         for x in 0..self.width {
             for y in 0..self.height {
                 let cell = self.maze[self.idx(x, y)];
