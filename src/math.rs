@@ -1,10 +1,13 @@
 //! Math functions and constants.
 
-use crate::vector::Vector;
 use lazy_static::lazy_static;
 use num_traits::{Num, NumCast};
 use rand::{self, distributions::uniform::SampleUniform, Rng};
 use std::ops::{AddAssign, Range};
+use vector::Vector;
+
+#[macro_use]
+pub mod vector;
 
 /// Default primitive type used for objects and shapes.
 pub type Primitive = i32;
@@ -141,8 +144,7 @@ where
 /// # Examples
 ///
 /// ```
-/// use pix_engine::prelude::*;
-///
+/// # use pix_engine::prelude::*;
 /// let x = random!(); // x will range from (0.0..1.0]
 /// assert!(x >= 0.0 && x < 1.0);
 ///
@@ -175,8 +177,7 @@ macro_rules! random {
 /// # Examples
 ///
 /// ```
-/// use pix_engine::prelude::*;
-///
+/// # use pix_engine::prelude::*;
 /// let n = noise!(5.0);
 /// assert!(n >= 0.0 && n < 1.0);
 ///

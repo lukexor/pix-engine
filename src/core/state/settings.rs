@@ -3,9 +3,9 @@
 //! [PixEngine]: crate::prelude::PixEngine
 
 use crate::{
+    core::window::Window,
     prelude::{Color, PixResult, PixState, Rect},
     renderer::Rendering,
-    window::Window,
 };
 use bitflags::bitflags;
 use num_traits::AsPrimitive;

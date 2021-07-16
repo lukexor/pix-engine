@@ -11,11 +11,6 @@ use std::{borrow::Cow, iter::Iterator};
 /// Default primitive type used for drawing.
 pub type DrawPrimitive = i16;
 
-/// Default primitive trait bound used for drawing.
-pub trait AsDrawPrimitive: AsPrimitive<DrawPrimitive> {}
-
-impl<T> AsDrawPrimitive for T where T: AsPrimitive<DrawPrimitive> {}
-
 /// Trait for objects that can be drawn to the screen.
 pub trait Draw {
     /// Draw shape to the current [PixState] canvas.

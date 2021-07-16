@@ -820,6 +820,23 @@ impl Color {
 /// # Constructs a [Rgb] [Color].
 ///
 /// Alias for [rgb!].
+///
+/// # Examples
+///
+/// ```
+/// # use pix_engine::prelude::*;
+/// let c = color!(128); // Gray
+/// assert_eq!(c.channels(), [128, 128, 128, 255]);
+///
+/// let c = color!(128, 64); // Gray with alpha
+/// assert_eq!(c.channels(), [128, 128, 128, 64]);
+///
+/// let c = color!(128, 64, 0); // Red, Green, Blue
+/// assert_eq!(c.channels(), [128, 64, 0, 255]);
+///
+/// let c = color!(128, 64, 128, 128); // Red, Green, Blue, Alpha
+/// assert_eq!(c.channels(), [128, 64, 128, 128]);
+/// ```
 #[macro_export]
 macro_rules! color {
     ($gray:expr) => {
@@ -841,8 +858,7 @@ macro_rules! color {
 /// # Examples
 ///
 /// ```
-/// use pix_engine::prelude::*;
-///
+/// # use pix_engine::prelude::*;
 /// let c = rgb!(128); // Gray
 /// assert_eq!(c.channels(), [128, 128, 128, 255]);
 ///
@@ -876,8 +892,7 @@ macro_rules! rgb {
 /// # Examples
 ///
 /// ```
-/// use pix_engine::prelude::*;
-///
+/// # use pix_engine::prelude::*;
 /// let c = hsb!(50.0); // Gray
 /// assert_eq!(c.channels(), [128, 128, 128, 255]);
 ///
@@ -911,8 +926,7 @@ macro_rules! hsb {
 /// # Examples
 ///
 /// ```
-/// use pix_engine::prelude::*;
-///
+/// # use pix_engine::prelude::*;
 /// let c = hsl!(50.0); // Gray
 /// assert_eq!(c.channels(), [128, 128, 128, 255]);
 ///

@@ -1,7 +1,7 @@
 use super::Renderer;
 use crate::{
+    core::window::{Result, Window, WindowId},
     event::Event,
-    window::{Result, Window, WindowId},
 };
 use num_traits::AsPrimitive;
 use sdl2::video::FullscreenType;

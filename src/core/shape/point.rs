@@ -27,24 +27,32 @@ pub struct Point<T = Scalar> {
 /// # Constructs a [Point].
 ///
 /// ```
-/// use pix_engine::prelude::*;
+/// # use pix_engine::prelude::*;
+/// let p: Point = point!();
+/// assert_eq!(p.values(), [0.0, 0.0, 0.0]);
 ///
-/// let p = point!(1, 2, 0);
-/// assert_eq!(p.values(), [1, 2, 0]);
+/// let p = point!(1.0);
+/// assert_eq!(p.values(), [1.0, 0.0, 0.0]);
+///
+/// let p = point!(1.0, 2.0);
+/// assert_eq!(p.values(), [1.0, 2.0, 0.0]);
+///
+/// let p = point!(1.0, -2.0, 1.0);
+/// assert_eq!(p.values(), [1.0, -2.0, 1.0]);
 /// ```
 #[macro_export]
 macro_rules! point {
     () => {
-        $crate::shape::point::Point::default()
+        $crate::prelude::Point::default()
     };
     ($x:expr) => {
-        $crate::shape::point::Point::with_x($x)
+        $crate::prelude::Point::with_x($x)
     };
     ($x:expr, $y:expr$(,)?) => {
-        $crate::shape::point::Point::with_xy($x, $y)
+        $crate::prelude::Point::with_xy($x, $y)
     };
     ($x:expr, $y:expr, $z:expr$(,)?) => {
-        $crate::shape::point::Point::new($x, $y, $z)
+        $crate::prelude::Point::new($x, $y, $z)
     };
 }
 

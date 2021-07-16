@@ -1,9 +1,9 @@
 //! [PixState] functions for the [PixEngine] and [AppState].
 
 use crate::{
+    core::window::Window,
     prelude::*,
     renderer::{Error as RendererError, Renderer},
-    window::Window,
 };
 use environment::Environment;
 use settings::Settings;
@@ -24,19 +24,19 @@ pub type Result<T> = result::Result<T, Error>;
 #[non_exhaustive]
 #[derive(Debug)]
 pub struct PixState {
-    pub(super) title: String,
-    pub(super) renderer: Renderer,
-    pub(super) env: Environment,
-    pub(super) settings: Settings,
-    pub(super) mouse: MouseState,
-    pub(super) pmouse: MouseState,
-    pub(super) keys: KeyState,
-    pub(super) setting_stack: Vec<Settings>,
+    pub(crate) title: String,
+    pub(crate) renderer: Renderer,
+    pub(crate) env: Environment,
+    pub(crate) settings: Settings,
+    pub(crate) mouse: MouseState,
+    pub(crate) pmouse: MouseState,
+    pub(crate) keys: KeyState,
+    pub(crate) setting_stack: Vec<Settings>,
 }
 
 impl PixState {
     /// Constructs `PixState` with a given `Renderer`.
-    pub(super) fn new<S>(title: S, renderer: Renderer) -> Self
+    pub(crate) fn new<S>(title: S, renderer: Renderer) -> Self
     where
         S: Into<String>,
     {
@@ -115,67 +115,67 @@ impl PixState {
 }
 
 #[derive(Default, Debug, Clone, PartialEq)]
-pub(super) struct MouseState {
-    pub(super) pos: Point<i32>,
-    pub(super) pressed: HashSet<Mouse>,
-    pub(super) last_clicked: HashMap<Mouse, Instant>,
+pub(crate) struct MouseState {
+    pub(crate) pos: Point<i32>,
+    pub(crate) pressed: HashSet<Mouse>,
+    pub(crate) last_clicked: HashMap<Mouse, Instant>,
 }
 
 impl MouseState {
     /// Whether any [Mouse] buttons are pressed.
-    pub(super) fn is_pressed(&self) -> bool {
+    pub(crate) fn is_pressed(&self) -> bool {
         !self.pressed.is_empty()
     }
 
     /// Returns if a specific [Mouse] button is currently being held.
-    pub(super) fn is_down(&self, btn: Mouse) -> bool {
+    pub(crate) fn is_down(&self, btn: Mouse) -> bool {
         self.pressed.contains(&btn)
     }
 
     /// Store a pressed [Mouse] button.
-    pub(super) fn press(&mut self, btn: Mouse) {
+    pub(crate) fn press(&mut self, btn: Mouse) {
         self.pressed.insert(btn);
     }
 
     /// Remove a pressed [Mouse] button.
-    pub(super) fn release(&mut self, btn: &Mouse) {
+    pub(crate) fn release(&mut self, btn: &Mouse) {
         self.pressed.remove(btn);
     }
 
     /// Store last time a [Mouse] button was clicked.
-    pub(super) fn click(&mut self, btn: Mouse, time: Instant) {
+    pub(crate) fn click(&mut self, btn: Mouse, time: Instant) {
         self.last_clicked.insert(btn, time);
     }
 
     /// Get last time a [Mouse] button was clicked.
-    pub(super) fn last_clicked(&mut self, btn: &Mouse) -> Option<&Instant> {
+    pub(crate) fn last_clicked(&mut self, btn: &Mouse) -> Option<&Instant> {
         self.last_clicked.get(&btn)
     }
 }
 
 #[derive(Default, Debug, Clone, PartialEq)]
-pub(super) struct KeyState {
-    pub(super) pressed: HashSet<Key>,
+pub(crate) struct KeyState {
+    pub(crate) pressed: HashSet<Key>,
 }
 
 impl KeyState {
     /// Returns if any [Key] is currently being held.
-    pub(super) fn is_pressed(&self) -> bool {
+    pub(crate) fn is_pressed(&self) -> bool {
         !self.pressed.is_empty()
     }
 
     /// Returns if a specific [Key] is currently being held.
-    pub(super) fn is_down(&self, key: Key) -> bool {
+    pub(crate) fn is_down(&self, key: Key) -> bool {
         self.pressed.contains(&key)
     }
 
     /// Store a pressed [Key].
-    pub(super) fn press(&mut self, key: Key) {
+    pub(crate) fn press(&mut self, key: Key) {
         self.pressed.insert(key);
     }
 
     /// Remove a pressed [Key].
-    pub(super) fn release(&mut self, key: &Key) {
+    pub(crate) fn release(&mut self, key: &Key) {
         self.pressed.remove(key);
     }
 }

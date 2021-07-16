@@ -114,8 +114,7 @@ pub struct Vector<T = Scalar> {
 /// # Examples
 ///
 /// ```
-/// use pix_engine::prelude::*;
-///
+/// # use pix_engine::prelude::*;
 /// let v: Vector = vector!();
 /// assert_eq!(v.values(), [0.0, 0.0, 0.0]);
 ///
@@ -131,16 +130,16 @@ pub struct Vector<T = Scalar> {
 #[macro_export]
 macro_rules! vector {
     () => {
-        $crate::vector::Vector::default()
+        $crate::prelude::Vector::default()
     };
     ($x:expr) => {
-        $crate::vector::Vector::with_x($x)
+        $crate::prelude::Vector::with_x($x)
     };
     ($x:expr, $y:expr$(,)?) => {
-        $crate::vector::Vector::with_xy($x, $y)
+        $crate::prelude::Vector::with_xy($x, $y)
     };
     ($x:expr, $y:expr, $z:expr$(,)?) => {
-        $crate::vector::Vector::new($x, $y, $z)
+        $crate::prelude::Vector::new($x, $y, $z)
     };
 }
 

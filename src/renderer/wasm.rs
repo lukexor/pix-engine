@@ -1,8 +1,8 @@
 use crate::{
     audio::Audio,
+    core::window::{Result as WindowResult, Window},
     prelude::*,
     renderer::{RendererSettings, Rendering, Result},
-    window::{Result as WindowResult, Window},
 };
 use num_traits::AsPrimitive;
 

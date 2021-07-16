@@ -16,7 +16,7 @@
 //! # }
 //! ```
 
-use crate::state::PixState;
+use crate::prelude::PixState;
 
 /// Trait representing audio support.
 pub(crate) trait Audio {

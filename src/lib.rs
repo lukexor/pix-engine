@@ -86,52 +86,44 @@ use include_dir::{include_dir, Dir};
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) const ASSETS: Dir<'_> = include_dir!("./assets");
 
-pub mod app_state;
 #[macro_use]
 pub mod color;
 pub mod audio;
-pub mod draw;
-pub mod engine;
+#[macro_use]
+pub mod core;
 pub mod event;
+pub mod graphics;
 pub mod image;
-pub mod lighting;
 #[macro_use]
 pub mod math;
 pub mod renderer;
-#[macro_use]
-pub mod shape;
-pub mod state;
-#[macro_use]
-pub mod vector;
-pub mod texture;
-pub mod window;
 
-mod common;
 mod utils;
 
 /// Exports most commonly used types, traits, and functions.
 pub mod prelude {
+    pub use self::core::{
+        appstate::AppState,
+        common::{Error as PixError, Result as PixResult},
+        draw::{Draw, DrawPrimitive},
+        engine::PixEngine,
+        shape::{Circle, Ellipse, Line, Point, Quad, Rect, Shape, Sphere, Triangle},
+        state::{
+            settings::{AngleMode, ArcMode, BlendMode, DrawMode, FontStyle},
+            PixState,
+        },
+        texture::TextureId,
+        window::{Position, WindowBuilder, WindowId},
+    };
     use super::*;
-    pub use app_state::AppState;
     pub use color::{constants::*, Color, ColorError, ColorMode};
-    pub use common::{Error as PixError, Result as PixResult};
-    pub use draw::{AsDrawPrimitive, Draw, DrawPrimitive};
-    pub use engine::PixEngine;
     pub use event::{Axis, Button, Event, Key, KeyEvent, KeyMod, Mouse, WindowEvent};
+    pub use graphics::lighting::{Light, LightSource};
     pub use image::{Image, PixelFormat};
-    pub use lighting::{Light, LightSource};
-    pub use math::{constants::*, map, Number, Primitive, Scalar};
+    pub use math::{constants::*, map, random_rng, vector::Vector, Number, Primitive, Scalar};
     #[cfg(not(target_arch = "wasm32"))]
     pub use renderer::DEFAULT_ASSET_DIR;
-    pub use shape::{Circle, Ellipse, Line, Point, Quad, Rect, Shape, Sphere, Triangle};
     pub use sphere;
-    pub use state::{
-        settings::{AngleMode, ArcMode, BlendMode, DrawMode, FontStyle},
-        PixState,
-    };
-    pub use texture::TextureId;
-    pub use vector::Vector;
-    pub use window::{Position, WindowBuilder, WindowId};
     // Shape macros
     pub use {circle, ellipse, point, rect, square};
     // Math macros
