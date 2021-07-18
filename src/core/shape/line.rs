@@ -1,4 +1,21 @@
-//! [Line] type used for drawing.
+//! A 2D/3D shape type representing a line used for drawing.
+//!
+//! # Examples
+//!
+//! You can create a [Line] using [Line::new]:
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! // 2D
+//! let line: Line<i32> = Line::new([10, 20], [30, 10]);
+//!
+//! let p1 = point![10, 20];
+//! let p2 = point![30, 10];
+//! let line: Line<i32> = Line::new(p1, p2);
+//!
+//! // 3D
+//! let line: Line<i32> = Line::new([10, 20, 5], [30, 10, 5]);
+//! ```
 
 use crate::prelude::*;
 use num_traits::{AsPrimitive, Float};

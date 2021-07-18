@@ -1,4 +1,25 @@
-//! [Point] functions used for drawing.
+//! A 1D/2D/3D shape type representing a point used for drawing.
+//!
+//! # Examples
+//!
+//! You can create a [Point] using [Point::new]:
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! let p = Point::new(10, 20, 15);
+//! ```
+//! ...or by using the [point!] macro:
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! let p: Point<i32> = point!(); // origin point at (0, 0, 0)
+//!
+//! let p = point!(5); // 1D point on the x-axis
+//!
+//! let p = point!(5, 10); // 2D point in the x/y-plane
+//!
+//! let p = point!(5, 10, 7); // 3D point
+//! ```
 
 use crate::prelude::*;
 use num_traits::{AsPrimitive, Float, Signed};
@@ -12,7 +33,7 @@ use std::{
     ops::*,
 };
 
-/// A `Point`.
+/// A `Point` in 2D or 3D space.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Point<T = Scalar> {
@@ -28,17 +49,17 @@ pub struct Point<T = Scalar> {
 ///
 /// ```
 /// # use pix_engine::prelude::*;
-/// let p: Point = point!();
-/// assert_eq!(p.values(), [0.0, 0.0, 0.0]);
+/// let p: Point<i32> = point!();
+/// assert_eq!(p.values(), [0, 0, 0]);
 ///
-/// let p = point!(1.0);
-/// assert_eq!(p.values(), [1.0, 0.0, 0.0]);
+/// let p = point!(1);
+/// assert_eq!(p.values(), [1, 0, 0]);
 ///
-/// let p = point!(1.0, 2.0);
-/// assert_eq!(p.values(), [1.0, 2.0, 0.0]);
+/// let p = point!(1, 2);
+/// assert_eq!(p.values(), [1, 2, 0]);
 ///
-/// let p = point!(1.0, -2.0, 1.0);
-/// assert_eq!(p.values(), [1.0, -2.0, 1.0]);
+/// let p = point!(1, -2, 1);
+/// assert_eq!(p.values(), [1, -2, 1]);
 /// ```
 #[macro_export]
 macro_rules! point {
@@ -371,7 +392,7 @@ impl<T: Number> IntoIterator for Point<T> {
     }
 }
 
-/// Immutable [Point] iterator over `[x, y, z]`.
+/// Immutable iterator over `[x, y, z]` of `Point`.
 ///
 /// This struct is created by the [iter](Point::iter) method on [Point]s.
 ///
@@ -424,7 +445,7 @@ impl<'a, T: Number> IntoIterator for &'a Point<T> {
 
 type ThreeChain<T> = Chain<Chain<Once<T>, Once<T>>, Once<T>>;
 
-/// Mutable [Point] iterator over `[x, y, z]`.
+/// Mutable iterator over `[x, y, z]` of `Point`.
 ///
 /// This struct is created by the [iter_mut](Point::iter_mut) method on [Point]s.
 ///

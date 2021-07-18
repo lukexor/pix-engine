@@ -1,11 +1,35 @@
-//! [Rect] types used for drawing.
+//! A 2D shape type representing squares and rectangles used for drawing.
+//!
+//! # Examples
+//!
+//! You can create a [Rect] or square using [Rect::new] or [Rect::square]:
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! let r = Rect::new(10, 20, 100, 200);
+//! let s = Rect::square(10, 20, 100);
+//! ```
+//!
+//! ...or by using the [rect!] or [square!] macros:
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! let r = rect!(10, 20, 100, 200);
+//! let s = square!(10, 20, 100);
+//!
+//! // using a point
+//! let r = rect!([10, 20], 100, 200);
+//! let r = rect!(point![10, 20], 100, 200);
+//! let s = square!([10, 20], 100);
+//! let s = square!(point![10, 20], 100);
+//! ```
 
 use crate::prelude::*;
 use num_traits::{AsPrimitive, Float};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// # Constructs a [Rect].
+/// Constructs a `Rect<T>` at position `(x, y)` with `width` and `height`.
 ///
 /// ```
 /// # use pix_engine::prelude::*;
@@ -24,18 +48,18 @@ use serde::{Deserialize, Serialize};
 /// ```
 #[macro_export]
 macro_rules! rect {
-    ($p:expr, $size:expr$(,)?) => {
-        rect!($p, $size, $size)
+    ($p1:expr, $p2:expr$(,)?) => {
+        $crate::prelude::Rect::with_points($p1, $p2)
     };
     ($p:expr, $width:expr, $height:expr$(,)?) => {
-        $crate::prelude::Rect::with_point($p, $width, $height)
+        $crate::prelude::Rect::with_position($p, $width, $height)
     };
     ($x:expr, $y:expr, $width:expr, $height:expr$(,)?) => {
         $crate::prelude::Rect::new($x, $y, $width, $height)
     };
 }
 
-/// # Constructs a [Rect] with the same `width` and `height`.
+/// Constructs a square `Rect<T>` at position `(x, y)` with the same `width` and `height`.
 ///
 /// ```
 /// # use pix_engine::prelude::*;
@@ -55,7 +79,7 @@ macro_rules! rect {
 #[macro_export]
 macro_rules! square {
     ($p:expr, $size:expr$(,)?) => {{
-        $crate::prelude::Rect::square_with_point($p, $size)
+        $crate::prelude::Rect::square_with_position($p, $size)
     }};
     ($x:expr, $y:expr, $size:expr$(,)?) => {
         $crate::prelude::Rect::square($x, $y, $size)
@@ -88,7 +112,7 @@ impl<T> Rect<T> {
     }
 
     /// Constructs a `Rect<T>` at position [Point] with `width` and `height`.
-    pub fn with_point<P: Into<Point<T>>>(p: P, width: T, height: T) -> Self {
+    pub fn with_position<P: Into<Point<T>>>(p: P, width: T, height: T) -> Self {
         let p = p.into();
         Self::new(p.x, p.y, width, height)
     }
@@ -102,11 +126,11 @@ impl<T> Rect<T> {
     }
 
     /// Constructs a square `Rect<T>` at position [Point] with `size`.
-    pub fn square_with_point<P: Into<Point<T>>>(p: P, size: T) -> Self
+    pub fn square_with_position<P: Into<Point<T>>>(p: P, size: T) -> Self
     where
         T: Copy,
     {
-        Self::with_point(p, size, size)
+        Self::with_position(p, size, size)
     }
 
     /// Convert `Rect<T>` to another primitive type using the `as` operator.
@@ -126,14 +150,59 @@ impl<T> Rect<T> {
 }
 
 impl<T: Number> Rect<T> {
+    /// Constructs a `Rect<T>` by providing top-left and bottom-right [Point]s.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `p2 <= p1`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let r: Rect<i32> = Rect::with_points([50, 50], [150, 150]);
+    /// assert_eq!(r.values(), [50, 50, 100, 100]);
+    /// ```
+    pub fn with_points<P: Into<Point<T>>>(p1: P, p2: P) -> Self {
+        let p1 = p1.into();
+        let p2 = p2.into();
+        if p2 <= p1 {
+            panic!("bottom-right point must be greater than top-right");
+        }
+        let width = p2.x - p1.x;
+        let height = p2.y - p1.y;
+        Self::new(p1.x, p1.y, width, height)
+    }
+
     /// Constructs a `Rect<T>` centered at position `(x, y)` with `width` and `height`.
-    pub fn from_center<P>(p: P, width: T, height: T) -> Self
-    where
-        P: Into<Point<T>>,
-    {
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let r = Rect::from_center([50, 50], 100, 100);
+    /// assert_eq!(r.values(), [0, 0, 100, 100]);
+    /// ```
+    pub fn from_center<P: Into<Point<T>>>(p: P, width: T, height: T) -> Self {
         let p = p.into();
         let two = T::one() + T::one();
         Self::new(p.x - width / two, p.y - height / two, width, height)
+    }
+
+    /// Constructs a square `Rect<T>` centered at position `(x, y)` with the same `width` and
+    /// `height`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let s = Rect::square_from_center([50, 50], 100);
+    /// assert_eq!(s.values(), [0, 0, 100, 100]);
+    /// ```
+    pub fn square_from_center<P: Into<Point<T>>>(p: P, size: T) -> Self {
+        let p = p.into();
+        let two = T::one() + T::one();
+        Self::new(p.x - size / two, p.y - size / two, size, size)
     }
 
     /// Returns `Rect` values as `[x, y, width, height]`.
@@ -231,10 +300,7 @@ impl<T: Number> Rect<T> {
     }
 
     /// Set position centered on a [Point].
-    pub fn center_on<P>(&mut self, p: P)
-    where
-        P: Into<Point<T>>,
-    {
+    pub fn center_on<P: Into<Point<T>>>(&mut self, p: P) {
         let p = p.into();
         let two = T::one() + T::one();
         self.x = p.x - self.width / two;
@@ -259,19 +325,13 @@ impl<T: Number> Shape<T> for Rect<T> {
     type Item = Rect<T>;
 
     /// Returns whether this rectangle contains a given [Point].
-    fn contains_point<P>(&self, p: P) -> bool
-    where
-        P: Into<Point<T>>,
-    {
+    fn contains_point<P: Into<Point<T>>>(&self, p: P) -> bool {
         let p = p.into();
         p.x >= self.left() && p.x < self.right() && p.y >= self.top() && p.y < self.bottom()
     }
 
     /// Returns whether this rectangle completely contains another rectangle.
-    fn contains<O>(&self, other: O) -> bool
-    where
-        O: Into<Self::Item>,
-    {
+    fn contains<O: Into<Self::Item>>(&self, other: O) -> bool {
         let other = other.into();
         other.left() >= self.left()
             && other.right() < self.right()
@@ -306,10 +366,7 @@ impl<T: Number> Shape<T> for Rect<T> {
     }
 
     /// Returns whether this rectangle intersects with another rectangle.
-    fn intersects<O>(&self, other: O) -> bool
-    where
-        O: Into<Self::Item>,
-    {
+    fn intersects<O: Into<Self::Item>>(&self, other: O) -> bool {
         let other = other.into();
         let tl = self.top_left();
         let br = self.bottom_right();
@@ -325,48 +382,50 @@ where
     T: Number,
     Self: Into<Rect>,
 {
-    /// Draw rectangle to the current [PixState] canvas.
+    /// Draw `Rect` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.rect(*self)
     }
 }
 
 impl<T: Number> From<&mut Rect<T>> for Rect<T> {
+    /// Convert `&mut Rect<T>` to [Rect].
     fn from(rect: &mut Rect<T>) -> Self {
         rect.to_owned()
     }
 }
 
 impl<T: Number> From<&Rect<T>> for Rect<T> {
+    /// Convert `&Rect<T>` to [Rect].
     fn from(rect: &Rect<T>) -> Self {
         *rect
     }
 }
 
-/// Convert [Rect] to `[x, y, width, height]`.
 impl<T: Number> From<Rect<T>> for [T; 4] {
+    /// Convert [Rect] to `[x, y, width, height]`.
     fn from(r: Rect<T>) -> Self {
         [r.x, r.y, r.width, r.height]
     }
 }
 
-/// Convert &[Rect] to `[x, y, width, height]`.
 impl<T: Number> From<&Rect<T>> for [T; 4] {
+    /// Convert `&Rect` to `[x, y, width, height]`.
     fn from(r: &Rect<T>) -> Self {
         [r.x, r.y, r.width, r.height]
     }
 }
 
-/// Convert `[x, y, size]` to [Rect].
 impl<T: Number, U: Into<T>> From<[U; 3]> for Rect<T> {
+    /// Convert `[x, y, size]` to [Rect].
     fn from([x, y, size]: [U; 3]) -> Self {
         let size = size.into();
         Self::new(x.into(), y.into(), size, size)
     }
 }
 
-/// Convert `&[x, y, size]` to [Rect].
 impl<T: Number, U: Copy + Into<T>> From<&[U; 3]> for Rect<T> {
+    /// Convert `&[x, y, size]` to [Rect].
     fn from(&[x, y, size]: &[U; 3]) -> Self {
         let size = size.into();
         Self::new(x.into(), y.into(), size, size)

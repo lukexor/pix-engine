@@ -1,4 +1,19 @@
-//! [Triangle] type used for drawing.
+//! A 2D/3D shape type representing a triangle used for drawing.
+//!
+//! # Examples
+//!
+//! You can create a [Triangle] using [Triangle::new]:
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! // 2D
+//! let tri = Triangle::new(10, 20, 30, 10, 20, 25);
+//!
+//! let p1 = point![10, 20];
+//! let p2 = point![30, 10];
+//! let p3 = point![20, 25];
+//! let tri: Triangle<i32> = Triangle::with_points(p1, p2, p3);
+//! ```
 
 use crate::prelude::*;
 use num_traits::{AsPrimitive, Float};
@@ -20,21 +35,39 @@ pub struct Triangle<T = Scalar> {
 impl<T> Triangle<T> {
     /// Constructs a `Triangle<T>` with the given [Point]s.
     ///
+    /// # Example
+    ///
     /// ```
-    /// use pix_engine::prelude::*;
-    /// let tri: Triangle<i32> = Triangle::new([10, 20], [30, 10], [20, 25]);
+    /// # use pix_engine::prelude::*;
+    /// let tri: Triangle<i32> = Triangle::with_points([10, 20], [30, 10], [20, 25]);
     /// assert_eq!(tri.p1.values(), [10, 20, 0]);
     /// assert_eq!(tri.p2.values(), [30, 10, 0]);
     /// assert_eq!(tri.p3.values(), [20, 25, 0]);
     /// ```
-    pub fn new<P>(p1: P, p2: P, p3: P) -> Self
-    where
-        P: Into<Point<T>>,
-    {
+    pub fn with_points<P: Into<Point<T>>>(p1: P, p2: P, p3: P) -> Self {
         Self {
             p1: p1.into(),
             p2: p2.into(),
             p3: p3.into(),
+        }
+    }
+}
+
+impl<T: Number> Triangle<T> {
+    /// Constructs a `Triangle<T>` with the given set of `(x, y)` coordinates.
+    ///
+    /// ```
+    /// use pix_engine::prelude::*;
+    /// let tri = Triangle::new(10, 20, 30, 10, 20, 25);
+    /// assert_eq!(tri.p1.values(), [10, 20, 0]);
+    /// assert_eq!(tri.p2.values(), [30, 10, 0]);
+    /// assert_eq!(tri.p3.values(), [20, 25, 0]);
+    /// ```
+    pub fn new(x1: T, y1: T, x2: T, y2: T, x3: T, y3: T) -> Self {
+        Self {
+            p1: point!(x1, y1),
+            p2: point!(x2, y2),
+            p3: point!(x3, y3),
         }
     }
 
@@ -45,18 +78,16 @@ impl<T> Triangle<T> {
         T: AsPrimitive<U>,
         U: 'static + Copy,
     {
-        Triangle::new(self.p1.as_(), self.p2.as_(), self.p3.as_())
+        Triangle::with_points(self.p1.as_(), self.p2.as_(), self.p3.as_())
     }
-}
 
-impl<T: Number> Triangle<T> {
     /// Returns `Triangle` coordinates as `[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]`.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let tri: Triangle<i32> = Triangle::new([10, 20], [30, 10], [20, 25]);
+    /// let tri= Triangle::new(10, 20, 30, 10, 20, 25);
     /// assert_eq!(tri.values(), [10, 20, 0, 30, 10, 0, 20, 25, 0]);
     /// ```
     pub fn values(&self) -> [T; 9] {
@@ -72,7 +103,7 @@ impl<T: Number> Triangle<T> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let tri: Triangle<i32> = Triangle::new([10, 20], [30, 10], [20, 25]);
+    /// let tri= Triangle::new(10, 20, 30, 10, 20, 25);
     /// assert_eq!(tri.to_vec(), vec![10, 20, 0, 30, 10, 0, 20, 25, 0]);
     /// ```
     pub fn to_vec(self) -> Vec<T> {
@@ -87,7 +118,7 @@ impl<T: Float> Triangle<T> {
     /// Returns `Triangle` with values rounded to the nearest integer number. Round half-way cases
     /// away from `0.0`.
     pub fn round(&self) -> Self {
-        Self::new(self.p1.round(), self.p2.round(), self.p3.round())
+        Self::with_points(self.p1.round(), self.p2.round(), self.p3.round())
     }
 }
 
@@ -137,14 +168,28 @@ impl<T: Number> From<&Triangle<T>> for [T; 6] {
 /// Convert `[x1, y1, x2, y2, x3, y3]` to [Triangle].
 impl<T: Number, U: Into<T>> From<[U; 6]> for Triangle<T> {
     fn from([x1, y1, x2, y2, x3, y3]: [U; 6]) -> Self {
-        Self::new([x1, y1], [x2, y2], [x3, y3])
+        Self::new(
+            x1.into(),
+            y1.into(),
+            x2.into(),
+            y2.into(),
+            x3.into(),
+            y3.into(),
+        )
     }
 }
 
 /// Convert `&[x1, y1, x2, y2, x3, y3]` to [Triangle].
 impl<T: Number, U: Copy + Into<T>> From<&[U; 6]> for Triangle<T> {
     fn from(&[x1, y1, x2, y2, x3, y3]: &[U; 6]) -> Self {
-        Self::new([x1, y1], [x2, y2], [x3, y3])
+        Self::new(
+            x1.into(),
+            y1.into(),
+            x2.into(),
+            y2.into(),
+            x3.into(),
+            y3.into(),
+        )
     }
 }
 
@@ -155,7 +200,7 @@ where
     Point<U>: Into<Point<T>>,
 {
     fn from([p1, p2, p3]: [Point<U>; 3]) -> Self {
-        Self::new(p1, p2, p3)
+        Self::with_points(p1, p2, p3)
     }
 }
 
@@ -190,7 +235,7 @@ where
     Vector<U>: Into<Point<T>>,
 {
     fn from([v1, v2, v3]: [Vector<U>; 3]) -> Self {
-        Self::new(v1, v2, v3)
+        Self::with_points(v1, v2, v3)
     }
 }
 

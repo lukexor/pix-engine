@@ -73,8 +73,7 @@
 #![doc(
     html_root_url = "https://docs.rs/pix-engine/0.3.5",
     html_favicon_url = "",
-    html_logo_url = "",
-    test(attr(deny(warnings)))
+    html_logo_url = ""
 )]
 
 #[cfg(target_arch = "wasm32")]

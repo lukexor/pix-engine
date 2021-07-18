@@ -1,11 +1,35 @@
-//! [Circle], [Ellipse] types used for drawing.
+//! 2D shape types representing circles and ellipses used for drawing.
+//!
+//! # Examples
+//!
+//! You can create an [Ellipse] or [Circle] using [Ellipse::new] or [Circle::new]:
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! let e = Ellipse::new(10, 20, 100, 200);
+//! let c = Circle::new(10, 20, 100);
+//! ```
+//!
+//! ...or by using the [ellipse!] or [circle!] macros:
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! let e = ellipse!(10, 20, 100, 200);
+//! let c = circle!(10, 20, 100);
+//!
+//! // using a point
+//! let e = ellipse!([10, 20], 100, 200);
+//! let e = ellipse!(point![10, 20], 100, 200);
+//! let c = circle!([10, 20], 100);
+//! let c = circle!(point![10, 20], 100);
+//! ```
 
 use crate::prelude::*;
 use num_traits::{AsPrimitive, Float};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// # Constructs an [Ellipse].
+/// Constructs an `Ellipse<T>` at position `(x, y)` with `width` and `height`.
 ///
 /// ```
 /// # use pix_engine::prelude::*;
@@ -28,14 +52,14 @@ macro_rules! ellipse {
         ellipse!($p, $r, $r)
     };
     ($p:expr, $width:expr, $height:expr$(,)?) => {
-        $crate::prelude::Ellipse::with_point($p, $width, $height)
+        $crate::prelude::Ellipse::with_position($p, $width, $height)
     };
     ($x:expr, $y:expr, $width:expr, $height:expr$(,)?) => {
         $crate::prelude::Ellipse::new($x, $y, $width, $height)
     };
 }
 
-/// # Constructs a [Circle].
+/// # Constructs a `Circle<T>` at position `(x, y`) with `radius`.
 ///
 /// ```
 /// # use pix_engine::prelude::*;
@@ -53,7 +77,7 @@ macro_rules! ellipse {
 #[macro_export]
 macro_rules! circle {
     ($p:expr, $r:expr$(,)?) => {
-        $crate::prelude::Circle::with_point($p, $r)
+        $crate::prelude::Circle::with_position($p, $r)
     };
     ($x:expr, $y:expr, $r:expr$(,)?) => {
         $crate::prelude::Circle::new($x, $y, $r)
@@ -86,7 +110,7 @@ impl<T> Ellipse<T> {
     }
 
     /// Constructs an `Ellipse<T>` at position [Point] with `width` and `height`.
-    pub fn with_point<P: Into<Point<T>>>(p: P, width: T, height: T) -> Self {
+    pub fn with_position<P: Into<Point<T>>>(p: P, width: T, height: T) -> Self {
         let p = p.into();
         Self::new(p.x, p.y, width, height)
     }
@@ -108,6 +132,21 @@ impl<T> Ellipse<T> {
 }
 
 impl<T: Number> Ellipse<T> {
+    /// Constructs a `Ellipse<T>` centered at position `(x, y)` with `width` and `height`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let e = Ellipse::from_center([50, 50], 100, 100);
+    /// assert_eq!(e.values(), [0, 0, 100, 100]);
+    /// ```
+    pub fn from_center<P: Into<Point<T>>>(p: P, width: T, height: T) -> Self {
+        let p = p.into();
+        let two = T::one() + T::one();
+        Self::new(p.x - width / two, p.y - height / two, width, height)
+    }
+
     /// Returns `Ellipse` values as `[x, y, width, height]`.
     ///
     /// # Example
@@ -133,6 +172,78 @@ impl<T: Number> Ellipse<T> {
     pub fn to_vec(self) -> Vec<T> {
         vec![self.x, self.y, self.width, self.height]
     }
+
+    /// Returns the horizontal position of the left edge.
+    pub fn left(&self) -> T {
+        self.x
+    }
+
+    /// Returns the horizontal position of the right edge.
+    pub fn right(&self) -> T {
+        self.x + self.width
+    }
+
+    /// Returns the horizontal position of the top edge.
+    pub fn top(&self) -> T {
+        self.y
+    }
+
+    /// Returns the vertical position of the bottom edge.
+    pub fn bottom(&self) -> T {
+        self.y + self.height
+    }
+
+    /// Set the horizontal position of the left edge.
+    pub fn set_left(&mut self, left: T) {
+        self.x = left;
+    }
+
+    /// Set the horizontal position of the right edge.
+    pub fn set_right(&mut self, right: T) {
+        self.x = right - self.width;
+    }
+
+    /// Set the vertical position of the top edge.
+    pub fn set_top(&mut self, top: T) {
+        self.y = top;
+    }
+
+    /// Set the vertical position of the bottom edge.
+    pub fn set_bottom(&mut self, bottom: T) {
+        self.y = bottom - self.height;
+    }
+
+    /// Returns the center position as [Point].
+    pub fn center(&self) -> Point<T> {
+        point!(self.x, self.y)
+    }
+
+    /// Returns the top-left position as [Point].
+    pub fn top_left(&self) -> Point<T> {
+        point!(self.x, self.y)
+    }
+
+    /// Returns the top-right position as [Point].
+    pub fn top_right(&self) -> Point<T> {
+        point!(self.x + self.width, self.y)
+    }
+
+    /// Returns the bottom-left position as [Point].
+    pub fn bottom_left(&self) -> Point<T> {
+        point!(self.x, self.y + self.height)
+    }
+
+    /// Returns the bottom-right position as [Point].
+    pub fn bottom_right(&self) -> Point<T> {
+        point!(self.x + self.width, self.y + self.height)
+    }
+
+    /// Set position centered on a [Point].
+    pub fn center_on<P: Into<Point<T>>>(&mut self, p: P) {
+        let p = p.into();
+        self.x = p.x;
+        self.y = p.y;
+    }
 }
 
 impl<T: Float> Ellipse<T> {
@@ -152,10 +263,7 @@ impl<T: Number> Shape<T> for Ellipse<T> {
     type Item = Ellipse<T>;
 
     /// Returns whether this ellipse contains a given [Point].
-    fn contains_point<P>(&self, p: P) -> bool
-    where
-        P: Into<Point<T>>,
-    {
+    fn contains_point<P: Into<Point<T>>>(&self, p: P) -> bool {
         let p = p.into();
         let px = p.x - self.x;
         let py = p.y - self.y;
@@ -165,10 +273,7 @@ impl<T: Number> Shape<T> for Ellipse<T> {
     }
 
     /// Returns whether this ellipse intersects with another ellipse.
-    fn intersects<O>(&self, other: O) -> bool
-    where
-        O: Into<Self::Item>,
-    {
+    fn contains<O: Into<Self::Item>>(&self, other: O) -> bool {
         let other = other.into();
         let px = self.x - other.x;
         let py = self.y - other.y;
@@ -183,54 +288,56 @@ where
     T: Number,
     Self: Into<Ellipse>,
 {
-    /// Draw ellipse to the current [PixState] canvas.
+    /// Draw `Ellipse` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.ellipse(*self)
     }
 }
 
 impl<T: Number> From<&mut Ellipse<T>> for Ellipse<T> {
+    /// Convert `&mut Ellipse<T>` to [Ellipse].
     fn from(ellipse: &mut Ellipse<T>) -> Self {
         ellipse.to_owned()
     }
 }
 
 impl<T: Number> From<&Ellipse<T>> for Ellipse<T> {
+    /// Convert `&Ellipse<T>` to [Ellipse].
     fn from(ellipse: &Ellipse<T>) -> Self {
         *ellipse
     }
 }
 
-/// Convert [Ellipse] to `[x, y, width, height]`.
 impl<T: Number> From<Ellipse<T>> for [T; 4] {
+    /// Convert [Ellipse] to `[x, y, width, height]`.
     fn from(e: Ellipse<T>) -> Self {
         [e.x, e.y, e.width, e.height]
     }
 }
 
-/// Convert `&Ellipse<T>` to `[x, y, width, height]`.
 impl<T: Number> From<&Ellipse<T>> for [T; 4] {
+    /// Convert `&Ellipse<T>` to `[x, y, width, height]`.
     fn from(e: &Ellipse<T>) -> Self {
         [e.x, e.y, e.width, e.height]
     }
 }
 
-/// Convert `[x, y, width, height]` to [Ellipse].
 impl<T: Number, U: Into<T>> From<[U; 4]> for Ellipse<T> {
+    /// Convert `[x, y, width, height]` to [Ellipse].
     fn from([x, y, width, height]: [U; 4]) -> Self {
         Self::new(x.into(), y.into(), width.into(), height.into())
     }
 }
 
-/// Convert `&[x, y, width, height]` to [Ellipse].
 impl<T: Number, U: Copy + Into<T>> From<&[U; 4]> for Ellipse<T> {
+    /// Convert `&[x, y, width, height]` to [Ellipse].
     fn from(&[x, y, width, height]: &[U; 4]) -> Self {
         Self::new(x.into(), y.into(), width.into(), height.into())
     }
 }
 
-/// Convert [Circle] to [Ellipse].
 impl<T: Number> From<Circle<T>> for Ellipse<T> {
+    /// Convert [Circle] to [Ellipse].
     fn from(c: Circle<T>) -> Self {
         Self::new(c.x, c.y, c.radius, c.radius)
     }
@@ -262,7 +369,7 @@ impl<T> Circle<T> {
     }
 
     /// Constructs a `Circle<T>` at position [Point] with `radius`.
-    pub fn with_point<P: Into<Point<T>>>(p: P, radius: T) -> Self {
+    pub fn with_position<P: Into<Point<T>>>(p: P, radius: T) -> Self {
         let p = p.into();
         Self::new(p.x, p.y, radius)
     }
@@ -279,6 +386,21 @@ impl<T> Circle<T> {
 }
 
 impl<T: Number> Circle<T> {
+    /// Constructs a `Circle<T>` centered at position `(x, y)` with `radius`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Circle::from_center([50, 50], 100);
+    /// assert_eq!(c.values(), [0, 0, 100]);
+    /// ```
+    pub fn from_center<P: Into<Point<T>>>(p: P, radius: T) -> Self {
+        let p = p.into();
+        let two = T::one() + T::one();
+        Self::new(p.x - radius / two, p.y - radius / two, radius)
+    }
+
     /// Returns `Circle` values as `[x, y, radius]`.
     ///
     /// # Example
@@ -303,6 +425,78 @@ impl<T: Number> Circle<T> {
     /// ```
     pub fn to_vec(self) -> Vec<T> {
         vec![self.x, self.y, self.radius]
+    }
+
+    /// Returns the horizontal position of the left edge.
+    pub fn left(&self) -> T {
+        self.x
+    }
+
+    /// Returns the horizontal position of the right edge.
+    pub fn right(&self) -> T {
+        self.x + self.radius
+    }
+
+    /// Returns the horizontal position of the top edge.
+    pub fn top(&self) -> T {
+        self.y
+    }
+
+    /// Returns the vertical position of the bottom edge.
+    pub fn bottom(&self) -> T {
+        self.y + self.radius
+    }
+
+    /// Set the horizontal position of the left edge.
+    pub fn set_left(&mut self, left: T) {
+        self.x = left;
+    }
+
+    /// Set the horizontal position of the right edge.
+    pub fn set_right(&mut self, right: T) {
+        self.x = right - self.radius;
+    }
+
+    /// Set the vertical position of the top edge.
+    pub fn set_top(&mut self, top: T) {
+        self.y = top;
+    }
+
+    /// Set the vertical position of the bottom edge.
+    pub fn set_bottom(&mut self, bottom: T) {
+        self.y = bottom - self.radius;
+    }
+
+    /// Returns the center position as [Point].
+    pub fn center(&self) -> Point<T> {
+        point!(self.x, self.y)
+    }
+
+    /// Returns the top-left position as [Point].
+    pub fn top_left(&self) -> Point<T> {
+        point!(self.x, self.y)
+    }
+
+    /// Returns the top-right position as [Point].
+    pub fn top_right(&self) -> Point<T> {
+        point!(self.x + self.radius, self.y)
+    }
+
+    /// Returns the bottom-left position as [Point].
+    pub fn bottom_left(&self) -> Point<T> {
+        point!(self.x, self.y + self.radius)
+    }
+
+    /// Returns the bottom-right position as [Point].
+    pub fn bottom_right(&self) -> Point<T> {
+        point!(self.x + self.radius, self.y + self.radius)
+    }
+
+    /// Set position centered on a [Point].
+    pub fn center_on<P: Into<Point<T>>>(&mut self, p: P) {
+        let p = p.into();
+        self.x = p.x;
+        self.y = p.y;
     }
 }
 
