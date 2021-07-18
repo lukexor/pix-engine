@@ -1,27 +1,46 @@
-//! [Euclidean][] [Vector] functions.
+//! A [Euclidean] `Vector` in 1D, 2D or 3D space.
 //!
-//! Each [Vector] represents a 1D, 2D or 3D [Euclidean][] (or geometric) vector with a magnitude
+//! Each [Vector] represents a 1D, 2D or 3D [Euclidean] (or geometric) vector with a magnitude
 //! and a direction. The [Vector] `struct`, however, contains 3 values for `x`, `y`, and `z`. The
-//! magnitude and direction are retrieved with the [mag][] and [heading][] methods.
+//! magnitude and direction are retrieved with the [Vector::mag] and [Vector::heading] methods.
 //!
 //! Some example uses of a [Vector] include modeling a position, velocity, or acceleration of an
 //! object or particle.
 //!
-//! The [vector!] macro allows for flexible construction which takes 0-3 parameters:
+//! # Examples
 //!
-//! - Zero parameters constructs a vector at the origin `(0, 0, 0)`
-//! - One, Two, or Three parameters constructs a vector with `x`, `y`, and `z` set with remaining
-//! values set to `0`.
+//! You can create a [Vector] using [Vector::new]:
 //!
-//! If you want randomized vectors, use the [random_1d][], [random_2d][] and [random_3d][] methods
-//! which create unit vectors with magnitudes in the range `-1.0..=1.0`.
+//! ```
+//! # use pix_engine::prelude::*;
+//! let v = Vector::new(10.0, 20.0, 15.0);
+//! ```
+//! ...or by using the [vector!] macro:
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! let v: Vector<i32> = vector!(); // vector at the origin with no direction or magnitude
+//!
+//! let v = vector!(5.0); // 1D vector on the x-axis with magnitude 5
+//!
+//! let v = vector!(5.0, 10.0); // 2D vector in the x/y-plane
+//!
+//! let v = vector!(5.0, 10.0, 7.0); // 3D vector
+//! ```
+//!
+//! You can also create random `Vector`s using [Vector::random_1d], [Vector::random_2d] or
+//! [Vector::random_3d] which create unit vectors with magnitudes in the range `-1.0..=1.0`.
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! let v: Vector<f64> = Vector::random_1d();
+//!
+//! let v: Vector<f64> = Vector::random_2d();
+//!
+//! let v: Vector<f64> = Vector::random_3d();
+//! ```
 //!
 //! [Euclidean]: https://en.wikipedia.org/wiki/Euclidean_vector
-//! [mag]: Vector::mag
-//! [heading]: Vector::heading
-//! [random_1d]: Vector::random_1d
-//! [random_2d]: Vector::random_2d
-//! [random_3d]: Vector::random_3d
 //!
 //! # Examples
 //!
@@ -81,11 +100,12 @@ use std::{
     ops::*,
 };
 
-/// Represents a [Euclidean][] (also known as geometric) `Vector` in 2D or 3D space. A `Vector` has
-/// both a magnitude and a direction. The [Vector] struct, however, contains 3 values for `x`, `y`,
-/// and `z`.
+/// A [Euclidean] `Vector` in 1D 2D or 3D space.
 ///
-/// The magnitude and direction are retrieved with the [mag][] and [heading][] methods.
+/// Also known as a geometric vector. A `Vector` has both a magnitude and a direction. The [Vector]
+/// struct, however, contains 3 values for `x`, `y`, and `z`.
+///
+/// The magnitude and direction are retrieved with the [mag] and [heading] methods.
 ///
 /// Some example uses of a [Vector] include modeling a position, velocity, or acceleration of an
 /// object or particle.
@@ -830,7 +850,7 @@ impl<T> IntoIterator for Vector<T> {
     }
 }
 
-/// Immutable [Vector] iterator over `[x, y, z]`.
+/// Immutable iterator over `[x, y, z]` of `Vector`.
 ///
 /// This struct is created by the [iter](Vector::iter) method on [Vector]s.
 ///
@@ -883,7 +903,7 @@ impl<'a, T: Number> IntoIterator for &'a Vector<T> {
 
 type ThreeChain<T> = Chain<Chain<Once<T>, Once<T>>, Once<T>>;
 
-/// Mutable [Vector] iterator over `[x, y, z]`.
+/// Mutable iterator over `[x, y, z]` of `Vector`.
 ///
 /// This struct is created by the [iter_mut](Vector::iter_mut) method on [Vector]s.
 ///

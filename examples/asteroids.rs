@@ -52,7 +52,7 @@ impl SpaceObj {
     }
 
     fn new_asteroid(ship: &SpaceObj, mut pos: Point) -> Self {
-        if Circle::with_point(ship.pos, ASTEROID_SAFE_RADIUS).contains_point(pos) {
+        if Circle::with_position(ship.pos, ASTEROID_SAFE_RADIUS).contains_point(pos) {
             pos -= ship.pos
         }
         let vel = vector!(random!(-MAX_ASTEROID_SPEED, MAX_ASTEROID_SPEED));
@@ -67,13 +67,13 @@ impl SpaceObj {
 
 impl From<SpaceObj> for Circle {
     fn from(obj: SpaceObj) -> Self {
-        Self::with_point(obj.pos, obj.size as Scalar)
+        Self::with_position(obj.pos, obj.size as Scalar)
     }
 }
 
 impl From<&SpaceObj> for Circle {
     fn from(obj: &SpaceObj) -> Self {
-        Self::with_point(obj.pos, obj.size as Scalar)
+        Self::with_position(obj.pos, obj.size as Scalar)
     }
 }
 

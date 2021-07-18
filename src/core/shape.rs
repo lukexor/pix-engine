@@ -28,19 +28,13 @@ pub trait Shape<T> {
     /// The shape type. e.g. [Rect<T>].
     type Item;
 
-    /// Returns whether this shape contains a given [Point<T>].
-    fn contains_point<P>(&self, _p: P) -> bool
-    where
-        P: Into<Point<T>>,
-    {
+    /// Returns whether this shape contains a given [Point].
+    fn contains_point<P: Into<Point<T>>>(&self, _p: P) -> bool {
         unimplemented!("contains_point is not implemented")
     }
 
-    /// Returns whether this shape completely contains another shape.
-    fn contains<O>(&self, _other: O) -> bool
-    where
-        O: Into<Self::Item>,
-    {
+    /// Returns whether this shape completely contains another shape of the same type.
+    fn contains<O: Into<Self::Item>>(&self, _other: O) -> bool {
         unimplemented!("contains is not implemented")
     }
 
@@ -54,11 +48,8 @@ pub trait Shape<T> {
         unimplemented!("intersects_line is not implemented")
     }
 
-    /// Returns whether this shape intersects with another shape.
-    fn intersects<O>(&self, _other: O) -> bool
-    where
-        O: Into<Self::Item>,
-    {
+    /// Returns whether this shape intersects with another shape of the same type.
+    fn intersects<O: Into<Self::Item>>(&self, _other: O) -> bool {
         unimplemented!("intersects is not implemented")
     }
 }

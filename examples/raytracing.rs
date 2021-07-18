@@ -17,7 +17,7 @@ struct App {
 
 fn intersect_ray_sphere(origin: Point, direction: Vector, obj: &SphereObj) -> (Scalar, Scalar) {
     let r = obj.sphere.radius;
-    let center_origin = origin - obj.sphere.center;
+    let center_origin = origin - obj.sphere.center();
 
     let a = direction.mag_sq();
     let b = 2.0 * center_origin.dot(direction);
@@ -158,7 +158,7 @@ impl App {
         if let Some(obj) = closest_sphere {
             // Local color
             let intersection = origin + closest_t * direction;
-            let normal = Vector::normalized(intersection - obj.sphere.center);
+            let normal = Vector::normalized(intersection - obj.sphere.center());
             let local_color =
                 obj.color * self.compute_lighting(intersection, normal, -direction, obj.specular);
 

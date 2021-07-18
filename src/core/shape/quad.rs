@@ -1,12 +1,39 @@
-//! [Quad] type used for drawing.
+//! A 2D/3D shape type representing a quadrilateral used for drawing.
+//!
+//! `Quad` is similar to [Rect] but the angles between edges are not constrained to 90 degrees and
+//! can also be used to represent a `Plane` in 3D space.
+//!
+//! # Examples
+//!
+//! You can create a [Quad] using [Quad::new]:
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! let quad = Quad::new(10, 20, 30, 10, 20, 25, 15, 15);
+//!
+//! let quad: Quad<i32> = Quad::with_points(
+//!     [10, 20],
+//!     [30, 10],
+//!     [20, 25],
+//!     [15, 15]
+//! );
+//!
+//! let plane: Quad<i32> = Quad::with_points(
+//!     [10, 20, 10],
+//!     [30, 10, 5],
+//!     [20, 25, 20],
+//!     [15, 15, 10],
+//! );
+//! ```
 
 use crate::prelude::*;
 use num_traits::{AsPrimitive, Float};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-/// A `Quad` or quadrilateral, a four-sided polygon. Similar to [Rect] but the
-/// angles between edges are not constrained to 90 degrees.
+/// A `Quad` or quadrilateral, a four-sided polygon.
+///
+/// `Quad` is similar to [Rect] but the angles between edges are not constrained to 90 degrees.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Quad<T = Scalar> {
@@ -25,13 +52,13 @@ impl<T> Quad<T> {
     ///
     /// ```
     /// use pix_engine::prelude::*;
-    /// let quad: Quad<i32> = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
+    /// let quad: Quad<i32> = Quad::with_points([10, 20], [30, 10], [20, 25], [15, 15]);
     /// assert_eq!(quad.p1.values(), [10, 20, 0]);
     /// assert_eq!(quad.p2.values(), [30, 10, 0]);
     /// assert_eq!(quad.p3.values(), [20, 25, 0]);
     /// assert_eq!(quad.p4.values(), [15, 15, 0]);
     /// ```
-    pub fn new<P>(p1: P, p2: P, p3: P, p4: P) -> Self
+    pub fn with_points<P>(p1: P, p2: P, p3: P, p4: P) -> Self
     where
         P: Into<Point<T>>,
     {
@@ -50,18 +77,38 @@ impl<T> Quad<T> {
         T: AsPrimitive<U>,
         U: 'static + Copy,
     {
-        Quad::new(self.p1.as_(), self.p2.as_(), self.p3.as_(), self.p4.as_())
+        Quad::with_points(self.p1.as_(), self.p2.as_(), self.p3.as_(), self.p4.as_())
     }
 }
 
 impl<T: Number> Quad<T> {
+    /// Constructs a `Quad<T>` with the given [Point]s.
+    ///
+    /// ```
+    /// use pix_engine::prelude::*;
+    /// let quad: Quad<i32> = Quad::with_points([10, 20], [30, 10], [20, 25], [15, 15]);
+    /// assert_eq!(quad.p1.values(), [10, 20, 0]);
+    /// assert_eq!(quad.p2.values(), [30, 10, 0]);
+    /// assert_eq!(quad.p3.values(), [20, 25, 0]);
+    /// assert_eq!(quad.p4.values(), [15, 15, 0]);
+    /// ```
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(x1: T, y1: T, x2: T, y2: T, x3: T, y3: T, x4: T, y4: T) -> Self {
+        Self {
+            p1: point!(x1, y1),
+            p2: point!(x2, y2),
+            p3: point!(x3, y3),
+            p4: point!(x4, y4),
+        }
+    }
+
     /// Returns `Quad` coordinates as `[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]`.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let quad: Quad<i32> = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
+    /// let quad: Quad<i32> = Quad::with_points([10, 20], [30, 10], [20, 25], [15, 15]);
     /// assert_eq!(quad.values(), [10, 20, 0, 30, 10, 0, 20, 25, 0, 15, 15, 0]);
     /// ```
     pub fn values(&self) -> [T; 12] {
@@ -78,7 +125,7 @@ impl<T: Number> Quad<T> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let quad: Quad<i32> = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
+    /// let quad: Quad<i32> = Quad::with_points([10, 20], [30, 10], [20, 25], [15, 15]);
     /// assert_eq!(quad.to_vec(), vec![10, 20, 0, 30, 10, 0, 20, 25, 0, 15, 15, 0]);
     /// ```
     pub fn to_vec(self) -> Vec<T> {
@@ -94,7 +141,7 @@ impl<T: Float> Quad<T> {
     /// Returns `Quad` with values rounded to the nearest integer number. Round half-way cases
     /// away from `0.0`.
     pub fn round(&self) -> Self {
-        Self::new(
+        Self::with_points(
             self.p1.round(),
             self.p2.round(),
             self.p3.round(),
@@ -151,14 +198,32 @@ impl<T: Number> From<&Quad<T>> for [T; 8] {
 /// Convert `[x1, y1, x2, y2, x3, y3]` to [Quad].
 impl<T: Number, U: Into<T>> From<[U; 8]> for Quad<T> {
     fn from([x1, y1, x2, y2, x3, y3, x4, y4]: [U; 8]) -> Self {
-        Self::new([x1, y1], [x2, y2], [x3, y3], [x4, y4])
+        Self::new(
+            x1.into(),
+            y1.into(),
+            x2.into(),
+            y2.into(),
+            x3.into(),
+            y3.into(),
+            x4.into(),
+            y4.into(),
+        )
     }
 }
 
 /// Convert `&[x1, y1, x2, y2, x3, y3]` to [Quad].
 impl<T: Number, U: Copy + Into<T>> From<&[U; 8]> for Quad<T> {
     fn from(&[x1, y1, x2, y2, x3, y3, x4, y4]: &[U; 8]) -> Self {
-        Self::new([x1, y1], [x2, y2], [x3, y3], [x4, y4])
+        Self::new(
+            x1.into(),
+            y1.into(),
+            x2.into(),
+            y2.into(),
+            x3.into(),
+            y3.into(),
+            x4.into(),
+            y4.into(),
+        )
     }
 }
 
@@ -179,14 +244,14 @@ impl<T: Number> From<&Quad<T>> for [T; 12] {
 /// Convert `[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]` to [Quad].
 impl<T: Number, U: Into<T>> From<[U; 12]> for Quad<T> {
     fn from([x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]: [U; 12]) -> Self {
-        Self::new([x1, y1, z1], [x2, y2, z2], [x3, y3, z3], [x4, y4, z4])
+        Self::with_points([x1, y1, z1], [x2, y2, z2], [x3, y3, z3], [x4, y4, z4])
     }
 }
 
 /// Convert `&[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]` to [Quad].
 impl<T: Number, U: Copy + Into<T>> From<&[U; 12]> for Quad<T> {
     fn from(&[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]: &[U; 12]) -> Self {
-        Self::new([x1, y1, z1], [x2, y2, z2], [x3, y3, z3], [x4, y4, z4])
+        Self::with_points([x1, y1, z1], [x2, y2, z2], [x3, y3, z3], [x4, y4, z4])
     }
 }
 
@@ -197,7 +262,7 @@ where
     Point<U>: Into<Point<T>>,
 {
     fn from([p1, p2, p3, p4]: [Point<U>; 4]) -> Self {
-        Self::new(p1, p2, p3, p4)
+        Self::with_points(p1, p2, p3, p4)
     }
 }
 
@@ -209,7 +274,7 @@ where
     Point<U>: Into<Point<T>>,
 {
     fn from(&[p1, p2, p3, p4]: &[Point<U>; 4]) -> Self {
-        Self::new(p1, p2, p3, p4)
+        Self::with_points(p1, p2, p3, p4)
     }
 }
 
@@ -248,7 +313,7 @@ where
     Vector<U>: Into<Point<T>>,
 {
     fn from([v1, v2, v3, v4]: [Vector<U>; 4]) -> Self {
-        Self::new(v1, v2, v3, v4)
+        Self::with_points(v1, v2, v3, v4)
     }
 }
 
@@ -260,7 +325,7 @@ where
     Vector<U>: Into<Point<T>>,
 {
     fn from(&[v1, v2, v3, v4]: &[Vector<U>; 4]) -> Self {
-        Self::new(v1, v2, v3, v4)
+        Self::with_points(v1, v2, v3, v4)
     }
 }
 
