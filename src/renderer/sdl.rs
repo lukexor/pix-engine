@@ -34,6 +34,7 @@ pub(crate) struct Renderer {
     context: Sdl,
     font: (PathBuf, u16),
     font_cache: HashMap<(PathBuf, u16), Font<'static, 'static>>,
+    font_style: SdlFontStyle,
     event_pump: EventPump,
     window_id: WindowId,
     canvas: Canvas<SdlWindow>,
@@ -72,7 +73,7 @@ impl Rendering for Renderer {
 
         let window = window_builder.build()?;
         let window_id = window.id();
-        let mut canvas_builder = window.into_canvas().accelerated().target_texture();
+        let mut canvas_builder = window.into_canvas().target_texture();
         if s.vsync {
             canvas_builder = canvas_builder.present_vsync();
         }
@@ -105,6 +106,7 @@ impl Rendering for Renderer {
             context,
             font,
             font_cache,
+            font_style: SdlFontStyle::NORMAL,
             event_pump,
             window_id,
             canvas,
@@ -220,13 +222,14 @@ impl Rendering for Renderer {
     /// Set the font style for drawing to the current canvas.
     fn font_style(&mut self, style: FontStyle) {
         if let Some(font) = self.font_cache.get_mut(&self.font) {
-            font.set_style(style.into());
+            let style = style.into();
+            self.font_style = style;
+            font.set_style(style);
         }
     }
 
     /// Set the font family for drawing to the current canvas.
     fn font_family(&mut self, family: &str) -> Result<()> {
-        // TODO: use size_of
         self.font.0 = PathBuf::from(&family);
         if self.font_cache.get(&self.font).is_none() {
             self.font_cache
@@ -484,17 +487,19 @@ impl Rendering for Renderer {
 
 impl std::fmt::Debug for Renderer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let (width, height) = self.canvas.output_size().unwrap_or((0, 0));
-        write!(
-            f,
-            "SdlRenderer {{ window_id: {}, title: {}, width: {}, height: {}, draw_color: {:?}, blend_mode: {:?} }}",
-            self.window_id,
-            self.canvas.window().title(),
-            width,
-            height,
-            self.canvas.draw_color(),
-            self.blend_mode,
-        )
+        f.debug_struct("SdlRenderer")
+            .field("title", &self.canvas.window().title())
+            .field("window_id", &self.window_id)
+            .field("dimensions", &self.canvas.output_size().unwrap_or((0, 0)))
+            .field("scale", &self.canvas.scale())
+            .field("draw_color", &self.canvas.draw_color())
+            .field("blend_mode", &self.blend_mode)
+            .field("clip", &self.canvas.clip_rect())
+            .field("font_path", &self.font.0)
+            .field("font_size", &self.font.1)
+            .field("font_style", &self.font_style)
+            .field("texture_count", &self.textures.len())
+            .finish()
     }
 }
 
@@ -557,9 +562,6 @@ impl From<PixelFormat> for SdlPixelFormat {
     fn from(format: PixelFormat) -> Self {
         use PixelFormat::*;
         match format {
-            Indexed => SdlPixelFormat::Index8,
-            Grayscale => SdlPixelFormat::Index8,
-            GrayscaleAlpha => SdlPixelFormat::Index8, // TODO: This is likely not correct
             Rgb => SdlPixelFormat::RGB24,
             Rgba => SdlPixelFormat::RGBA32,
         }

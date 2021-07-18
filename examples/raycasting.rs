@@ -301,8 +301,6 @@ impl AppState for RayScene {
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.clear();
-
         let mouse = s.mouse_pos();
 
         let (cx, cw) = if mouse.x - 254 < 0 {

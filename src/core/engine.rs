@@ -121,6 +121,13 @@ impl PixEngineBuilder {
         self
     }
 
+    /// Set a target frame rate to render at, controls how often
+    /// [on_update](crate::prelude::AppState::on_update) is called.
+    pub fn target_frame_rate(&mut self, rate: usize) -> &mut Self {
+        self.settings.target_frame_rate = Some(rate as f64);
+        self
+    }
+
     /// Set a window icon.
     #[cfg(not(target_arch = "wasm32"))]
     pub fn icon<P>(&mut self, path: P) -> &mut Self
@@ -185,10 +192,13 @@ impl PixEngine {
         let renderer = Renderer::new(&self.settings)?;
         let mut state = PixState::new(&self.settings.title, renderer);
         state.show_frame_rate(self.settings.show_frame_rate);
+        state.env.target_frame_rate = self.settings.target_frame_rate;
 
-        // Clear and present once on start
-        state.clear();
-        state.renderer.present();
+        // Clear and present once on start for both front and back buffers
+        for _ in 0..1 {
+            state.clear();
+            state.renderer.present();
+        }
 
         // Handle events before on_start to initialize window
         self.handle_events(&mut state, app)?;
@@ -223,27 +233,28 @@ impl PixEngine {
                     self.last_frame_time = now;
 
                     if state.settings.running || state.settings.run_count > 0 {
+                        state.clear();
                         app.on_update(&mut state)?;
+                        state.renderer.present();
                         if state.settings.run_count > 0 {
                             state.settings.run_count -= 1;
                         }
-                        state.renderer.present();
                     }
-                }
 
-                if state.settings.running && state.settings.show_frame_rate {
-                    let a_second_ago = now - ONE_SECOND;
-                    while self.frames.front().map_or(false, |&t| t < a_second_ago) {
-                        self.frames.pop_front();
-                    }
-                    self.frames.push_back(now);
+                    if state.settings.running && state.settings.show_frame_rate {
+                        let a_second_ago = now - ONE_SECOND;
+                        while self.frames.front().map_or(false, |&t| t < a_second_ago) {
+                            self.frames.pop_front();
+                        }
+                        self.frames.push_back(now);
 
-                    self.frame_timer += time_since_last;
-                    if self.frame_timer >= ONE_SECOND {
-                        self.frame_timer -= ONE_SECOND;
-                        state.env.frame_rate = self.frames.len();
-                        let title = format!("{} - FPS: {}", state.title, state.env.frame_rate);
-                        state.renderer.set_title(&title)?;
+                        self.frame_timer += time_since_last;
+                        if self.frame_timer >= ONE_SECOND {
+                            self.frame_timer -= ONE_SECOND;
+                            state.env.frame_rate = self.frames.len();
+                            let title = format!("{} - FPS: {}", state.title, state.env.frame_rate);
+                            state.renderer.set_title(&title)?;
+                        }
                     }
                 }
             }

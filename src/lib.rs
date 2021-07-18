@@ -11,10 +11,18 @@
 //! It is intended to be more than just a toy library, however, and can be used to drive complex
 //! applications. For example, the [`Tetanes`][] [NES][] emulator.
 //!
+//! Creating an application is as simple as implementing the only required trait of [AppState] for
+//! your application: [AppState::on_update] which gets executed as often as possible. Within that
+//! function you'll have access to a mutable [PixState] object which provides several methods for
+//! changing settings, responding to events, and drawing to the screen.
+//!
 //! [SDL2]: https://crates.io/crates/sdl2/
 //! [WASM]: https://www.rust-lang.org/what/wasm
 //! [`Tetanes`]: https://crates.io/crates/tetanes
 //! [NES]: https://en.wikipedia.org/wiki/Nintendo_Entertainment_System
+//! [AppState]: crate::prelude::AppState
+//! [AppState::on_update]: crate::prelude::AppState::on_update
+//! [PixState]: crate::prelude::PixState
 //!
 //! ```no_run
 //! # #![allow(unused_variables)]
@@ -27,11 +35,20 @@
 //!         // Setup App state. PixState contains engine specific state and
 //!         // utility functions for things like getting mouse coordinates,
 //!         // drawing shapes, etc.
+//!         s.background(220);
+//!         s.circle([10, 10, 100])?;
 //!         Ok(())
 //!     }
 //!
 //!     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!         // Main render loop. Called as often as possible, or based on `target frame rate`.
+//!         if s.mouse_pressed() {
+//!             s.fill(0);
+//!         } else {
+//!             s.fill(255);
+//!         }
+//!         let m = s.mouse_pos();
+//!         s.circle([m.x, m.y, 80])?;
 //!         Ok(())
 //!     }
 //!

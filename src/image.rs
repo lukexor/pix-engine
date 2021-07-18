@@ -22,9 +22,9 @@ pub enum Error {
     /// Invalid file type.
     InvalidFileType(Option<OsString>),
     /// Invalid color type.
-    InvalidColorType(png::ColorType),
+    UnsupportedColorType(png::ColorType),
     /// Invalid bit depth.
-    InvalidBitDepth(png::BitDepth),
+    UnsupportedBitDepth(png::BitDepth),
     /// I/O errors.
     IoError(io::Error),
     /// [png] decoding errors.
@@ -38,12 +38,6 @@ pub enum Error {
 /// Format for interpreting bytes when using textures.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum PixelFormat {
-    /// 8-bit Indexed color
-    Indexed,
-    /// 8-bit Gray
-    Grayscale,
-    /// u-bit Gray with Alpha
-    GrayscaleAlpha,
     /// 8-bit Red, Green, Blue
     Rgb,
     /// 8-bit Red, Green, Blue, Alpha
@@ -56,8 +50,6 @@ impl PixelFormat {
     pub fn channels(&self) -> usize {
         use PixelFormat::*;
         match self {
-            Indexed | Grayscale => 1,
-            GrayscaleAlpha => 2,
             Rgb => 3,
             Rgba => 4,
         }
@@ -68,11 +60,9 @@ impl From<png::ColorType> for PixelFormat {
     fn from(color_type: png::ColorType) -> Self {
         use png::ColorType::*;
         match color_type {
-            Indexed => Self::Indexed,
-            Grayscale => Self::Grayscale,
-            GrayscaleAlpha => Self::GrayscaleAlpha,
             RGB => Self::Rgb,
             RGBA => Self::Rgba,
+            _ => unimplemented!("{:?} is not supported.", color_type),
         }
     }
 }
@@ -85,7 +75,7 @@ impl Default for PixelFormat {
 
 /// An `Image` representing a buffer of pixel color values.
 #[non_exhaustive]
-#[derive(Debug, Default, Clone)]
+#[derive(Default, Clone)]
 pub struct Image {
     /// `Image` width.
     width: u32,
@@ -97,6 +87,18 @@ pub struct Image {
     format: PixelFormat,
     /// Texture Identifier.
     texture_id: usize,
+}
+
+impl std::fmt::Debug for Image {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Image")
+            .field("width", &self.width)
+            .field("height", &self.height)
+            .field("format", &self.format)
+            .field("texture_id", &self.texture_id)
+            .field("size", &self.data.len())
+            .finish()
+    }
 }
 
 impl Image {
@@ -225,6 +227,12 @@ impl PixState {
         let png = png::Decoder::new(png_file);
         let (info, mut reader) = png.read_info()?;
 
+        if info.bit_depth != png::BitDepth::Eight {
+            return Err(Error::UnsupportedBitDepth(info.bit_depth).into());
+        } else if !matches!(info.color_type, png::ColorType::RGB | png::ColorType::RGBA) {
+            return Err(Error::UnsupportedColorType(info.color_type).into());
+        }
+
         let mut data = vec![0x00; info.buffer_size()];
         reader.next_frame(&mut data)?;
         let format = info.color_type.into();
@@ -237,8 +245,8 @@ impl std::fmt::Display for Error {
         use Error::*;
         match self {
             InvalidFileType(ext) => write!(f, "invalid file type: {:?}", ext),
-            InvalidColorType(color_type) => write!(f, "invalid color type: {:?}", color_type),
-            InvalidBitDepth(depth) => write!(f, "invalid bit depth: {:?}", depth),
+            UnsupportedColorType(color_type) => write!(f, "invalid color type: {:?}", color_type),
+            UnsupportedBitDepth(depth) => write!(f, "invalid bit depth: {:?}", depth),
             Other(err) => write!(f, "renderer error: {}", err),
             err => err.fmt(f),
         }
