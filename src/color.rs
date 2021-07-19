@@ -139,7 +139,7 @@ pub struct Color {
 }
 
 impl Color {
-    /// Constructs a [Rgb] `Color` with max alpha.
+    /// Constructs a `Color` with `red`, `green`, `blue` and max `alpha`.
     ///
     /// # Example
     ///
@@ -152,7 +152,7 @@ impl Color {
         Self::rgb(r, g, b)
     }
 
-    /// Constructs a [Rgb] `Color` with alpha.
+    /// Constructs a `Color` with `red`, `green`, `blue` and `alpha`.
     ///
     /// # Example
     ///
@@ -237,8 +237,7 @@ impl Color {
         }
     }
 
-    /// Constructs a [Rgb] `Color` containing red, green, and blue with alpha of
-    /// `255`.
+    /// Constructs a `Color` with `red`, `green`, `blue` and max `alpha`.
     ///
     /// # Example
     ///
@@ -251,7 +250,7 @@ impl Color {
         Self::with_mode(Rgb, r, g, b)
     }
 
-    /// Constructs a [Rgb] `Color` containing red, green, blue, and alpha.
+    /// Constructs a `Color` with `red`, `green`, `blue` and `alpha`.
     ///
     /// # Example
     ///
@@ -264,8 +263,7 @@ impl Color {
         Self::with_mode_alpha(Rgb, r, g, b, a)
     }
 
-    /// Constructs a [Hsb] `Color` containing hue, saturation, and brightness
-    /// with alpha of `1.0`.
+    /// Constructs a `Color` with `hue`, `saturation`, `brightness` and max `alpha`.
     ///
     /// # Example
     ///
@@ -278,8 +276,7 @@ impl Color {
         Self::with_mode(Hsb, h, s, b)
     }
 
-    /// Constructs a [Hsb] `Color` containing hue, saturation, brightness and
-    /// alpha.
+    /// Constructs a `Color` with `hue`, `saturation`, `brightness` and `alpha`.
     ///
     /// # Example
     ///
@@ -292,8 +289,7 @@ impl Color {
         Self::with_mode_alpha(Hsb, h, s, b, a)
     }
 
-    /// Constructs a [Hsl] `Color` containing hue, saturation, and lightness
-    /// with alpha of `1.0`.
+    /// Constructs a `Color` with `hue`, `saturation`, `lightness` and max `alpha`.
     ///
     /// # Example
     ///
@@ -306,8 +302,7 @@ impl Color {
         Self::with_mode(Hsl, h, s, l)
     }
 
-    /// Constructs a [Hsl] `Color` containing hue, saturation, lightness and
-    /// alpha.
+    /// Constructs a `Color` with `hue`, `saturation`, `lightness` and `alpha`.
     ///
     /// # Example
     ///
@@ -320,7 +315,7 @@ impl Color {
         Self::with_mode_alpha(Hsl, h, s, l, a)
     }
 
-    /// Constructs a raw `Color` with the given [ColorMode] and alpha using the levels passed in
+    /// Constructs a `Color` with the given [ColorMode] and alpha using the raw levels passed in
     /// as-is without normalizing them.
     ///
     /// # Safety
@@ -384,7 +379,7 @@ impl Color {
         };
         Ok(result)
     }
-    /// Constructs a random [Rgb] `Color` with max alpha.
+    /// Constructs a random `Color` with `red`, `green`, `blue` and max alpha.
     ///
     /// # Example
     ///
@@ -399,7 +394,7 @@ impl Color {
         Self::new(random!(255), random!(255), random!(255))
     }
 
-    /// Constructs a random [Rgb] `Color` with alpha.
+    /// Constructs a random `Color` with `red`, `green`, `blue` and alpha.
     ///
     /// # Example
     ///
@@ -414,7 +409,7 @@ impl Color {
         Self::new_alpha(random!(255), random!(255), random!(255), random!(255))
     }
 
-    /// Constructs a [Rgb] `Color` from a [u32] RGBA hexadecimal value.
+    /// Constructs a `Color` from a [u32] RGBA hexadecimal value.
     ///
     /// # Examples
     ///
@@ -463,7 +458,7 @@ impl Color {
         self.levels
     }
 
-    /// Returns the [Rgb] `Color` channels which range from `0..=255`.
+    /// Returns the `Color` channels as `[red, green, blue, alpha]` which range from `0..=255`.
     ///
     /// # Example
     ///
@@ -637,7 +632,7 @@ impl Color {
         self.calculate_channels();
     }
 
-    /// Returns the hue `Color` channel ranging from `0.0..=360.0`.
+    /// Returns the hue ranging from `0.0..=360.0`.
     ///
     /// # Example
     ///
@@ -652,7 +647,7 @@ impl Color {
         levels[0] * maxes[0]
     }
 
-    /// Set the hue `Color` channel ranging from `0.0..=360.0`.
+    /// Set the hue ranging from `0.0..=360.0`.
     ///
     /// # Example
     ///
@@ -671,7 +666,7 @@ impl Color {
         self.calculate_channels();
     }
 
-    /// Returns the saturation `Color` channel ranging from `0.0..=100.0`.
+    /// Returns the saturation ranging from `0.0..=100.0`.
     ///
     /// # Example
     ///
@@ -686,7 +681,7 @@ impl Color {
         levels[1] * maxes[1]
     }
 
-    /// Set the saturation `Color` channel ranging from `0.0..=100.0`. Defaults to [Hsb] if the
+    /// Set the saturation ranging from `0.0..=100.0`. Defaults to [Hsb] if the
     /// current mode is not [Hsb] or [Hsl] already.
     ///
     /// # Examples
@@ -716,7 +711,7 @@ impl Color {
         self.calculate_channels();
     }
 
-    /// Returns the brightness `Color` channel ranging from `0.0..=100.0`.
+    /// Returns the brightness ranging from `0.0..=100.0`.
     ///
     /// # Example
     ///
@@ -731,7 +726,7 @@ impl Color {
         levels[2] * maxes[2]
     }
 
-    /// Set the brightness `Color` channel ranging from `0.0..=100.0`.
+    /// Set the brightness ranging from `0.0..=100.0`.
     ///
     /// # Example
     ///
@@ -750,7 +745,7 @@ impl Color {
         self.calculate_channels();
     }
 
-    /// Returns the lightness `Color` channel ranging from `0.0..=100.0`.
+    /// Returns the lightness ranging from `0.0..=100.0`.
     ///
     /// # Example
     ///
@@ -765,7 +760,7 @@ impl Color {
         levels[2] * maxes[2]
     }
 
-    /// Set the lightness `Color` channel ranging from `0.0..=100.0`.
+    /// Set the lightness ranging from `0.0..=100.0`.
     ///
     /// # Example
     ///
@@ -784,7 +779,7 @@ impl Color {
         self.calculate_channels();
     }
 
-    /// Returns `Color` as a [Vec] of `RGB` channels.
+    /// Returns `Color` as a [Vec] of `[red, green, blue, alpha]`.
     ///
     /// # Example
     ///
@@ -797,7 +792,7 @@ impl Color {
         Vec::from(self.channels)
     }
 
-    /// Returns an iterator over the `Color` RGBA channels `[r, g, b, a]`.
+    /// Returns an iterator over the `Color` RGBA channels `[red, green, blue, alpha]`.
     ///
     /// # Example
     ///
@@ -817,7 +812,7 @@ impl Color {
     }
 }
 
-/// # Constructs a [Rgb] [Color].
+/// Constructs a `Color` with `red`, `green`, `blue` and optional `alpha`.
 ///
 /// Alias for [rgb!].
 ///
@@ -853,7 +848,7 @@ macro_rules! color {
     };
 }
 
-/// # Constructs a [Rgb] [Color].
+/// Constructs a `Color` with `red`, `green`, `blue` and optional `alpha`.
 ///
 /// # Examples
 ///
@@ -887,7 +882,7 @@ macro_rules! rgb {
     };
 }
 
-/// # Constructs a [Hsb] [Color].
+/// Constructs a `Color` with `hue`, `saturation`, `brightness` and optional `alpha`.
 ///
 /// # Examples
 ///
@@ -921,7 +916,7 @@ macro_rules! hsb {
     };
 }
 
-/// # Constructs a [Hsl] [Color].
+/// Constructs a `Color` with `hue`, `saturation`, `lightness` and optional `alpha`.
 ///
 /// # Examples
 ///
