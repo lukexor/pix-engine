@@ -45,7 +45,7 @@ pub struct Point<T = Scalar> {
     pub z: T,
 }
 
-/// # Constructs a [Point].
+/// # Constructs a `Point<T>` with `(x, y, z)`.
 ///
 /// ```
 /// # use pix_engine::prelude::*;

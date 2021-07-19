@@ -38,7 +38,7 @@ pub struct Sphere<T = Scalar> {
     pub radius: T,
 }
 
-/// # Constructs a [Sphere].
+/// # Constructs a `Sphere<T>` at position `(x, y, z)` with `radius`.
 ///
 /// ```
 /// # use pix_engine::prelude::*;
@@ -66,12 +66,12 @@ macro_rules! sphere {
 }
 
 impl<T> Sphere<T> {
-    /// Constructs a `Sphere<T>` at position `(x, y, z)` with `radius.
+    /// Constructs a `Sphere<T>` at position `(x, y, z)` with `radius`.
     pub const fn new(x: T, y: T, z: T, radius: T) -> Self {
         Self { x, y, z, radius }
     }
 
-    /// Constructs a `Sphere<T>` at position [Point] with `radius.
+    /// Constructs a `Sphere<T>` at position [Point] with `radius`.
     pub fn with_position<P: Into<Point<T>>>(p: P, radius: T) -> Self {
         let p = p.into();
         Self::new(p.x, p.y, p.z, radius)

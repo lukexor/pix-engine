@@ -8,8 +8,9 @@
 //! The primary goal of this library is to be simple to setup and use for graphics or algorithm
 //! exploration and is not meant to be as fully-featured as other, larger graphics libraries.
 //!
-//! It is intended to be more than just a toy library, however, and can be used to drive complex
-//! applications. For example, the [`Tetanes`][] [NES][] emulator.
+//! It is intended to be more than just a toy library, however, and can be used to drive real
+//! applications. The [`Tetanes`][] [NES][] emulator, for example uses `pix_engine` for rendering,
+//! window and event handling.
 //!
 //! Creating an application is as simple as implementing the only required trait of [AppState] for
 //! your application: [AppState::on_update] which gets executed as often as possible. Within that

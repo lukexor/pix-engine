@@ -38,9 +38,9 @@ pub enum Error {
 /// Format for interpreting bytes when using textures.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum PixelFormat {
-    /// 8-bit Red, Green, Blue
+    /// 8-bit Red, Green, and Blue
     Rgb,
-    /// 8-bit Red, Green, Blue, Alpha
+    /// 8-bit Red, Green, Blue, and Alpha
     Rgba,
 }
 

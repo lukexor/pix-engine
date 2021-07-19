@@ -166,9 +166,10 @@ impl<T: Number> Rect<T> {
     pub fn with_points<P: Into<Point<T>>>(p1: P, p2: P) -> Self {
         let p1 = p1.into();
         let p2 = p2.into();
-        if p2 <= p1 {
-            panic!("bottom-right point must be greater than top-right");
-        }
+        assert!(
+            p2 <= p1,
+            "bottom-right point must be greater than top-right"
+        );
         let width = p2.x - p1.x;
         let height = p2.y - p1.y;
         Self::new(p1.x, p1.y, width, height)
