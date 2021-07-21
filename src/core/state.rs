@@ -35,23 +35,6 @@ pub struct PixState {
 }
 
 impl PixState {
-    /// Constructs `PixState` with a given `Renderer`.
-    pub(crate) fn new<S>(title: S, renderer: Renderer) -> Self
-    where
-        S: Into<String>,
-    {
-        Self {
-            title: title.into(),
-            renderer,
-            env: Environment::default(),
-            settings: Settings::default(),
-            mouse: MouseState::default(),
-            pmouse: MouseState::default(),
-            keys: KeyState::default(),
-            setting_stack: Vec::new(),
-        }
-    }
-
     /// Get the current window title.
     pub fn title(&self) -> &str {
         &self.title
@@ -114,14 +97,39 @@ impl PixState {
     }
 }
 
+impl PixState {
+    /// Constructs `PixState` with a given `Renderer`.
+    pub(crate) fn new<S>(title: S, renderer: Renderer) -> Self
+    where
+        S: Into<String>,
+    {
+        Self {
+            title: title.into(),
+            renderer,
+            env: Environment::default(),
+            settings: Settings::default(),
+            mouse: MouseState::default(),
+            pmouse: MouseState::default(),
+            keys: KeyState::default(),
+            setting_stack: Vec::new(),
+        }
+    }
+}
+
 #[derive(Default, Debug, Clone, PartialEq)]
 pub(crate) struct MouseState {
     pub(crate) pos: Point<i32>,
     pub(crate) pressed: HashSet<Mouse>,
+    pub(crate) clicked: HashSet<Mouse>,
     pub(crate) last_clicked: HashMap<Mouse, Instant>,
 }
 
 impl MouseState {
+    /// Clear transient [Mouse] state.
+    pub(crate) fn clear(&mut self) {
+        self.clicked.clear();
+    }
+
     /// Whether any [Mouse] buttons are pressed.
     pub(crate) fn is_pressed(&self) -> bool {
         !self.pressed.is_empty()
@@ -144,10 +152,16 @@ impl MouseState {
 
     /// Store last time a [Mouse] button was clicked.
     pub(crate) fn click(&mut self, btn: Mouse, time: Instant) {
+        self.clicked.insert(btn);
         self.last_clicked.insert(btn, time);
     }
 
-    /// Get last time a [Mouse] button was clicked.
+    /// Returns if [Mouse] button was clicked last frame.
+    pub(crate) fn was_clicked(&mut self, btn: &Mouse) -> bool {
+        self.clicked.contains(&btn)
+    }
+
+    /// Returns last time a [Mouse] button was clicked.
     pub(crate) fn last_clicked(&mut self, btn: &Mouse) -> Option<&Instant> {
         self.last_clicked.get(&btn)
     }

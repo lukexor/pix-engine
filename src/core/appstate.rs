@@ -62,22 +62,42 @@ pub trait AppState {
     }
 
     /// Called each time a [Mouse] button is pressed.
-    fn on_mouse_pressed(&mut self, s: &mut PixState, _btn: Mouse) -> PixResult<()> {
+    fn on_mouse_pressed(
+        &mut self,
+        s: &mut PixState,
+        _btn: Mouse,
+        _pos: Point<i32>,
+    ) -> PixResult<()> {
         Ok(())
     }
 
     /// Called each time a [Mouse] button is released.
-    fn on_mouse_released(&mut self, s: &mut PixState, _btn: Mouse) -> PixResult<()> {
+    fn on_mouse_released(
+        &mut self,
+        s: &mut PixState,
+        _btn: Mouse,
+        _pos: Point<i32>,
+    ) -> PixResult<()> {
         Ok(())
     }
 
     /// Called each time a [Mouse] button is clicked (a press followed by a release).
-    fn on_mouse_clicked(&mut self, s: &mut PixState, _btn: Mouse) -> PixResult<()> {
+    fn on_mouse_clicked(
+        &mut self,
+        s: &mut PixState,
+        _btn: Mouse,
+        _pos: Point<i32>,
+    ) -> PixResult<()> {
         Ok(())
     }
 
     /// Called each time a [Mouse] button is clicked twice within 500ms.
-    fn on_mouse_dbl_clicked(&mut self, s: &mut PixState, _btn: Mouse) -> PixResult<()> {
+    fn on_mouse_dbl_clicked(
+        &mut self,
+        s: &mut PixState,
+        _btn: Mouse,
+        _pos: Point<i32>,
+    ) -> PixResult<()> {
         Ok(())
     }
 
@@ -86,8 +106,7 @@ pub trait AppState {
     fn on_mouse_motion(
         &mut self,
         s: &mut PixState,
-        _x: i32,
-        _y: i32,
+        _pos: Point<i32>,
         _xrel: i32,
         _yrel: i32,
     ) -> PixResult<()> {
@@ -95,7 +114,7 @@ pub trait AppState {
     }
 
     /// Called each time the [Mouse] wheel is scrolled with the `(x, y)` delta since last frame.
-    fn on_mouse_wheel(&mut self, s: &mut PixState, _x_delta: i32, _y_delta: i32) -> PixResult<()> {
+    fn on_mouse_wheel(&mut self, s: &mut PixState, _pos: Point<i32>) -> PixResult<()> {
         Ok(())
     }
 

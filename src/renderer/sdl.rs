@@ -19,7 +19,7 @@ use sdl2::{
     video::{Window as SdlWindow, WindowBuildError, WindowContext},
     EventPump, IntegerOrSdlError, Sdl,
 };
-use std::{borrow::Cow, collections::HashMap, ffi::NulError, path::PathBuf};
+use std::{borrow::Cow, collections::HashMap, path::PathBuf};
 
 mod audio;
 mod event;
@@ -55,6 +55,7 @@ impl Rendering for Renderer {
         let win_width = (s.scale_x * s.width as f32).floor() as u32;
         let win_height = (s.scale_y * s.height as f32).floor() as u32;
         let mut window_builder = video_subsys.window(&s.title, win_width, win_height);
+        window_builder.opengl();
         match (s.x, s.y) {
             (Position::Centered, Position::Centered) => {
                 window_builder.position_centered();
@@ -69,6 +70,9 @@ impl Rendering for Renderer {
         }
         if s.resizable {
             window_builder.resizable();
+        }
+        if s.borderless {
+            window_builder.borderless();
         }
 
         let window = window_builder.build()?;
@@ -200,7 +204,7 @@ impl Rendering for Renderer {
         src: Option<Rect<Primitive>>,
         dst: Option<Rect<Primitive>>,
     ) -> Result<()> {
-        if let Some(texture) = self.textures.get_mut(texture_id) {
+        if let Some(texture) = self.textures.get(texture_id) {
             let src = src.map(|r| r.into());
             let dst = dst.map(|r| r.into());
             Ok(self.canvas.copy(texture, src, dst)?)
@@ -572,12 +576,6 @@ impl From<PixelFormat> for SdlPixelFormat {
  * Error Conversions
  */
 
-impl From<String> for Error {
-    fn from(err: String) -> Self {
-        Self::Other(Cow::from(err))
-    }
-}
-
 impl From<InitError> for Error {
     fn from(err: InitError) -> Self {
         use InitError::*;
@@ -617,16 +615,6 @@ impl From<WindowBuildError> for Error {
 }
 
 impl From<IntegerOrSdlError> for Error {
-    fn from(err: IntegerOrSdlError) -> Self {
-        use IntegerOrSdlError::*;
-        match err {
-            IntegerOverflows(s, v) => Self::Overflow(Cow::from(s), v),
-            SdlError(s) => Self::Other(Cow::from(s)),
-        }
-    }
-}
-
-impl From<IntegerOrSdlError> for WindowError {
     fn from(err: IntegerOrSdlError) -> Self {
         use IntegerOrSdlError::*;
         match err {
@@ -688,11 +676,5 @@ impl From<UpdateTextureError> for Error {
             }
             SdlError(s) => Self::Other(Cow::from(s)),
         }
-    }
-}
-
-impl From<NulError> for Error {
-    fn from(err: NulError) -> Self {
-        Self::InvalidText("unknown nul error", err)
     }
 }

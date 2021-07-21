@@ -119,6 +119,8 @@ mod utils;
 
 /// Exports most commonly used types, traits, and functions.
 pub mod prelude {
+    use super::*;
+
     pub use self::core::{
         appstate::AppState,
         common::{Error as PixError, Result as PixResult},
@@ -130,11 +132,10 @@ pub mod prelude {
             PixState,
         },
         texture::TextureId,
-        window::{Position, WindowBuilder, WindowId},
+        window::{Cursor, Position, SystemCursor, WindowBuilder, WindowId},
     };
-    use super::*;
     pub use color::{constants::*, Color, ColorError, ColorMode};
-    pub use event::{Axis, Button, Event, Key, KeyEvent, KeyMod, Mouse, WindowEvent};
+    pub use event::{Axis, ControllerButton, Event, Key, KeyEvent, KeyMod, Mouse, WindowEvent};
     pub use graphics::lighting::{Light, LightSource};
     pub use image::{Image, PixelFormat};
     pub use math::{constants::*, map, random_rng, vector::Vector, Number, Primitive, Scalar};

@@ -220,22 +220,22 @@ impl<T: Number> Ellipse<T> {
 
     /// Returns the top-left position as [Point].
     pub fn top_left(&self) -> Point<T> {
-        point!(self.x, self.y)
+        point!(self.left(), self.top())
     }
 
     /// Returns the top-right position as [Point].
     pub fn top_right(&self) -> Point<T> {
-        point!(self.x + self.width, self.y)
+        point!(self.right(), self.top())
     }
 
     /// Returns the bottom-left position as [Point].
     pub fn bottom_left(&self) -> Point<T> {
-        point!(self.x, self.y + self.height)
+        point!(self.left(), self.bottom())
     }
 
     /// Returns the bottom-right position as [Point].
     pub fn bottom_right(&self) -> Point<T> {
-        point!(self.x + self.width, self.y + self.height)
+        point!(self.right(), self.bottom())
     }
 
     /// Set position centered on a [Point].
@@ -474,22 +474,22 @@ impl<T: Number> Circle<T> {
 
     /// Returns the top-left position as [Point].
     pub fn top_left(&self) -> Point<T> {
-        point!(self.x, self.y)
+        point!(self.left(), self.top())
     }
 
     /// Returns the top-right position as [Point].
     pub fn top_right(&self) -> Point<T> {
-        point!(self.x + self.radius, self.y)
+        point!(self.right(), self.top())
     }
 
     /// Returns the bottom-left position as [Point].
     pub fn bottom_left(&self) -> Point<T> {
-        point!(self.x, self.y + self.radius)
+        point!(self.left(), self.bottom())
     }
 
     /// Returns the bottom-right position as [Point].
     pub fn bottom_right(&self) -> Point<T> {
-        point!(self.x + self.radius, self.y + self.radius)
+        point!(self.right(), self.bottom())
     }
 
     /// Set position centered on a [Point].

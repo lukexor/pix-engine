@@ -166,10 +166,7 @@ impl<T: Number> Rect<T> {
     pub fn with_points<P: Into<Point<T>>>(p1: P, p2: P) -> Self {
         let p1 = p1.into();
         let p2 = p2.into();
-        assert!(
-            p2 <= p1,
-            "bottom-right point must be greater than top-right"
-        );
+        assert!(p2 > p1, "bottom-right point must be greater than top-right",);
         let width = p2.x - p1.x;
         let height = p2.y - p1.y;
         Self::new(p1.x, p1.y, width, height)
@@ -282,22 +279,22 @@ impl<T: Number> Rect<T> {
 
     /// Returns the top-left position as [Point].
     pub fn top_left(&self) -> Point<T> {
-        point!(self.x, self.y)
+        point!(self.left(), self.top())
     }
 
     /// Returns the top-right position as [Point].
     pub fn top_right(&self) -> Point<T> {
-        point!(self.x + self.width, self.y)
+        point!(self.right(), self.top())
     }
 
     /// Returns the bottom-left position as [Point].
     pub fn bottom_left(&self) -> Point<T> {
-        point!(self.x, self.y + self.height)
+        point!(self.left(), self.bottom())
     }
 
     /// Returns the bottom-right position as [Point].
     pub fn bottom_right(&self) -> Point<T> {
-        point!(self.x + self.width, self.y + self.height)
+        point!(self.right(), self.bottom())
     }
 
     /// Set position centered on a [Point].

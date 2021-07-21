@@ -102,6 +102,12 @@ impl PixEngineBuilder {
         self
     }
 
+    /// Removes the window decoration.
+    pub fn borderless(&mut self) -> &mut Self {
+        self.settings.borderless = true;
+        self
+    }
+
     /// Scales the window.
     pub fn scale(&mut self, x: f32, y: f32) -> &mut Self {
         self.settings.scale_x = x;
@@ -273,6 +279,7 @@ impl PixEngine {
     where
         A: AppState,
     {
+        state.mouse.clear();
         while let Some(event) = state.renderer.poll_event() {
             match event {
                 Event::Quit { .. } | Event::AppTerminating { .. } => state.quit(),
@@ -335,28 +342,28 @@ impl PixEngine {
                     if state.mouse.is_pressed() {
                         app.on_mouse_dragged(state)?;
                     }
-                    app.on_mouse_motion(state, x, y, xrel, yrel)?;
+                    app.on_mouse_motion(state, state.mouse.pos, xrel, yrel)?;
                 }
-                Event::MouseDown { button, .. } => {
+                Event::MouseDown { button, x, y } => {
                     state.mouse.press(button);
-                    app.on_mouse_pressed(state, button)?;
+                    app.on_mouse_pressed(state, button, point!(x, y))?;
                 }
-                Event::MouseUp { button, .. } => {
+                Event::MouseUp { button, x, y } => {
                     if state.mouse.is_down(button) {
                         let now = Instant::now();
                         if let Some(&clicked) = state.mouse.last_clicked(&button) {
                             if now - clicked < Duration::from_millis(500) {
-                                app.on_mouse_dbl_clicked(state, button)?;
+                                app.on_mouse_dbl_clicked(state, button, point!(x, y))?;
                             }
                         }
                         state.mouse.click(button, now);
-                        app.on_mouse_clicked(state, button)?;
+                        app.on_mouse_clicked(state, button, point!(x, y))?;
                     }
                     state.mouse.release(&button);
-                    app.on_mouse_released(state, button)?;
+                    app.on_mouse_released(state, button, point!(x, y))?;
                 }
                 Event::MouseWheel { x, y, .. } => {
-                    app.on_mouse_wheel(state, x, y)?;
+                    app.on_mouse_wheel(state, point!(x, y))?;
                 }
                 _ => (),
             }

@@ -1,13 +1,16 @@
 //! `Window` functions.
 
 use crate::prelude::*;
-use std::{borrow::Cow, error, ffi::NulError, fmt, result};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+use std::{borrow::Cow, error, ffi::NulError, fmt, path::PathBuf, result};
 
 /// The result type for `Renderer` operations.
 pub type Result<T> = result::Result<T, Error>;
 
 /// Represents a possible screen position.
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Position {
     /// A positioned `(x, y)` coordinate.
     Positioned(Primitive),
@@ -21,16 +24,74 @@ impl Default for Position {
     }
 }
 
-/// Window Identifier
+/// Window Identifier.
 pub type WindowId = usize;
+
+#[allow(missing_docs)]
+#[non_exhaustive]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[allow(variant_size_differences)]
+pub enum Cursor {
+    System(SystemCursor),
+    Image(PathBuf),
+}
+
+impl Default for Cursor {
+    fn default() -> Self {
+        Self::System(SystemCursor::Arrow)
+    }
+}
+
+impl Cursor {
+    /// Constructs a `Cursor` from a file path.
+    pub fn new<P: Into<PathBuf>>(path: P) -> Self {
+        Self::Image(path.into())
+    }
+
+    /// Constructs a `Cursor` with `SystemCursor::Arrow`.
+    pub fn arrow() -> Self {
+        Self::System(SystemCursor::Arrow)
+    }
+
+    /// Constructs a `Cursor` with `SystemCursor::IBeam`.
+    pub fn ibeam() -> Self {
+        Self::System(SystemCursor::IBeam)
+    }
+
+    /// Constructs a `Cursor` with `SystemCursor::Hand`.
+    pub fn hand() -> Self {
+        Self::System(SystemCursor::Hand)
+    }
+}
+
+/// System Cursor Icon.
+#[allow(missing_docs)]
+#[non_exhaustive]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum SystemCursor {
+    Arrow,
+    IBeam,
+    Wait,
+    Crosshair,
+    WaitArrow,
+    SizeNWSE,
+    SizeNESW,
+    SizeWE,
+    SizeNS,
+    SizeAll,
+    No,
+    Hand,
+}
 
 /// Trait representing window operations.
 pub(crate) trait Window {
     /// Get the primary window id.
     fn window_id(&self) -> WindowId;
 
-    /// Set whether the cursor is shown or not.
-    fn cursor(&mut self, show: bool);
+    /// Set the mouse cursor to a predefined symbol or image, or hides cursor if `None`.
+    fn cursor(&mut self, cursor: Option<Cursor>) -> Result<()>;
 
     /// Returns a single event or None if the event pump is empty.
     fn poll_event(&mut self) -> Option<Event>;
@@ -130,6 +191,12 @@ impl error::Error for Error {}
 impl From<Error> for PixError {
     fn from(err: Error) -> Self {
         Self::WindowError(err)
+    }
+}
+
+impl From<String> for Error {
+    fn from(err: String) -> Self {
+        Self::Other(Cow::from(err))
     }
 }
 

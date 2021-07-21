@@ -118,6 +118,7 @@ impl PixState {
         C: Into<Color>,
     {
         self.settings.background = color.into();
+        self.clear();
     }
 
     /// Sets the [Color] value used to fill shapes drawn on the canvas.
@@ -169,9 +170,15 @@ impl PixState {
         self.renderer.set_fullscreen(val)
     }
 
-    /// Set whether the cursor is shown or not.
-    pub fn cursor(&mut self, show: bool) {
-        self.renderer.cursor(show);
+    /// Set the mouse cursor to a predefined symbol or image.
+    pub fn cursor(&mut self, cursor: Cursor) -> PixResult<()> {
+        Ok(self.renderer.cursor(Some(cursor))?)
+    }
+
+    /// Hide the mouse cursor.
+    pub fn no_cursor(&mut self) {
+        // SAFETY: Setting to NONE to hide cursor can't error.
+        self.renderer.cursor(None).expect("hiding cursor");
     }
 
     /// Whether the render loop is running or not.

@@ -1,6 +1,6 @@
 //! [Image] and [PixelFormat] functions.
 
-use crate::prelude::*;
+use crate::{prelude::*, renderer::Rendering};
 use std::{
     borrow::Cow,
     error,
@@ -237,6 +237,39 @@ impl PixState {
         reader.next_frame(&mut data)?;
         let format = info.color_type.into();
         self.create_image_from_bytes(info.width as i32, info.height as i32, &data, format)
+    }
+
+    /// Draw an [Image] to the current canvas.
+    pub fn image<P>(&mut self, position: P, img: &Image) -> PixResult<()>
+    where
+        P: Into<Point<Primitive>>,
+    {
+        let p = position.into();
+        let s = &self.settings;
+        let position = match s.image_mode {
+            DrawMode::Corner => p,
+            DrawMode::Center => point!(p.x - img.width() / 2, p.y - img.height() / 2),
+        };
+        Ok(self.renderer.image(&position, img, s.image_tint)?)
+    }
+
+    /// Draw a resized [Image] to the current canvas.
+    pub fn image_resized<R>(&mut self, rect: R, img: &Image) -> PixResult<()>
+    where
+        R: Into<Rect<Primitive>>,
+    {
+        let rect = rect.into();
+        let s = &self.settings;
+        let rect = match s.image_mode {
+            DrawMode::Corner => rect,
+            DrawMode::Center => rect!(
+                rect.x - rect.width / 2,
+                rect.y - rect.height / 2,
+                rect.width,
+                rect.height
+            ),
+        };
+        Ok(self.renderer.image_resized(&rect, img, s.image_tint)?)
     }
 }
 

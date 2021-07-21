@@ -52,6 +52,7 @@ pub(crate) struct RendererSettings {
     pub(crate) fullscreen: bool,
     pub(crate) vsync: bool,
     pub(crate) resizable: bool,
+    pub(crate) borderless: bool,
     pub(crate) show_frame_rate: bool,
     pub(crate) target_frame_rate: Option<f64>,
 }
@@ -79,6 +80,7 @@ impl Default for RendererSettings {
             fullscreen: false,
             vsync: false,
             resizable: false,
+            borderless: false,
             show_frame_rate: false,
             target_frame_rate: None,
         }
@@ -294,8 +296,20 @@ impl From<Error> for StateError {
     }
 }
 
+impl From<String> for Error {
+    fn from(err: String) -> Self {
+        Self::Other(Cow::from(err))
+    }
+}
+
 impl From<std::num::TryFromIntError> for Error {
     fn from(err: std::num::TryFromIntError) -> Self {
         Self::Other(Cow::from(err.to_string()))
+    }
+}
+
+impl From<NulError> for Error {
+    fn from(err: NulError) -> Self {
+        Self::InvalidText("unknown nul error", err)
     }
 }

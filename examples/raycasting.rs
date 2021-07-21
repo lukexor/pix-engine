@@ -270,7 +270,7 @@ impl AppState for RayScene {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         s.background(BLACK);
         s.scale(SCALE, SCALE)?;
-        s.cursor(false);
+        s.no_cursor();
 
         let w = self.xcells * BLOCK_SIZE;
         let h = self.ycells * BLOCK_SIZE;
@@ -339,15 +339,12 @@ impl AppState for RayScene {
         Ok(())
     }
 
-    fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse) -> PixResult<()> {
-        if btn == Mouse::Left {
-            let m = s.mouse_pos();
-            if rect![0, 0, s.width(), s.height()].contains_point(m) {
-                let i = self.get_cell_index(m.x, m.y);
-                self.cells[i].exists = !self.cells[i].exists;
-                self.drawing = self.cells[i].exists;
-                self.convert_edges_to_poly_map()?;
-            }
+    fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse, pos: Point<i32>) -> PixResult<()> {
+        if btn == Mouse::Left && rect![0, 0, s.width(), s.height()].contains_point(pos) {
+            let i = self.get_cell_index(pos.x, pos.y);
+            self.cells[i].exists = !self.cells[i].exists;
+            self.drawing = self.cells[i].exists;
+            self.convert_edges_to_poly_map()?;
         }
         Ok(())
     }

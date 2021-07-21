@@ -872,7 +872,7 @@ pub struct Iter<'a, T = Scalar> {
     current: usize,
 }
 
-impl<'a, T> Iter<'a, T> {
+impl<'a, T: Number> Iter<'a, T> {
     fn new(v: &'a Vector<T>) -> Self {
         Self {
             inner: [&v.x, &v.y, &v.z],
@@ -881,7 +881,7 @@ impl<'a, T> Iter<'a, T> {
     }
 }
 
-impl<'a, T> Iterator for Iter<'a, T> {
+impl<'a, T: Number> Iterator for Iter<'a, T> {
     type Item = &'a T;
     fn next(&mut self) -> Option<Self::Item> {
         if self.current > 2 {
@@ -947,7 +947,7 @@ impl<'a, T: Number> IntoIterator for &'a mut Vector<T> {
 
 // Operations
 
-impl<T> Index<usize> for Vector<T> {
+impl<T: Number> Index<usize> for Vector<T> {
     type Output = T;
     fn index(&self, idx: usize) -> &Self::Output {
         match idx {
@@ -959,7 +959,7 @@ impl<T> Index<usize> for Vector<T> {
     }
 }
 
-impl<T> IndexMut<usize> for Vector<T> {
+impl<T: Number> IndexMut<usize> for Vector<T> {
     fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
         match idx {
             0 => &mut self.x,
@@ -1086,7 +1086,7 @@ where
 /// [Vector] *= U.
 impl<T, U> MulAssign<U> for Vector<T>
 where
-    T: MulAssign<U>,
+    T: Number + MulAssign<U>,
     U: Number,
 {
     fn mul_assign(&mut self, s: U) {

@@ -1,4 +1,4 @@
-use crate::event::{Axis, Button, Event, Key, KeyMod, Mouse, WindowEvent};
+use crate::event::{Axis, ControllerButton, Event, Key, KeyMod, Mouse, WindowEvent};
 use sdl2::{
     controller::{Axis as SdlAxis, Button as SdlButton},
     event::{Event as SdlEvent, WindowEvent as SdlWindowEvent},
@@ -343,9 +343,9 @@ impl From<SdlMouseButton> for Mouse {
     }
 }
 
-impl From<SdlButton> for Button {
+impl From<SdlButton> for ControllerButton {
     fn from(button: SdlButton) -> Self {
-        use Button::*;
+        use ControllerButton::*;
         match button {
             SdlButton::A => A,
             SdlButton::B => B,

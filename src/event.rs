@@ -81,11 +81,11 @@ pub enum Event {
     },
     ControllerDown {
         controller_id: u32,
-        button: Button,
+        button: ControllerButton,
     },
     ControllerUp {
         controller_id: u32,
-        button: Button,
+        button: ControllerButton,
     },
     ControllerAdded {
         controller_id: u32,
@@ -256,7 +256,7 @@ impl Default for Axis {
 #[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub enum Button {
+pub enum ControllerButton {
     A,
     B,
     X,
@@ -275,7 +275,7 @@ pub enum Button {
     Unknown,
 }
 
-impl Default for Button {
+impl Default for ControllerButton {
     fn default() -> Self {
         Self::Unknown
     }

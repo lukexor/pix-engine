@@ -1,9 +1,16 @@
 use super::Renderer;
 use crate::{
-    core::window::{Result, Window, WindowId},
-    prelude::{Event, Primitive},
+    core::window::{Error, Result, Window, WindowId},
+    prelude::{Cursor, Event, Primitive, SystemCursor},
 };
-use sdl2::video::FullscreenType;
+use sdl2::{
+    image::LoadSurface,
+    mouse::{Cursor as SdlCursor, SystemCursor as SdlSystemCursor},
+    surface::Surface,
+    video::FullscreenType,
+    IntegerOrSdlError,
+};
+use std::borrow::Cow;
 
 impl Window for Renderer {
     /// Get the primary window id.
@@ -11,9 +18,23 @@ impl Window for Renderer {
         self.window_id
     }
 
-    /// Set whether the cursor is shown or not.
-    fn cursor(&mut self, show: bool) {
-        self.context.mouse().show_cursor(show);
+    /// Set the mouse cursor to a predefined symbol or image, or hides cursor if `None`.
+    fn cursor(&mut self, cursor: Option<Cursor>) -> Result<()> {
+        match cursor {
+            Some(cursor) => {
+                let cursor = match cursor {
+                    Cursor::System(cursor) => SdlCursor::from_system(cursor.into())?,
+                    Cursor::Image(path) => {
+                        let surface = Surface::from_file(path)?;
+                        SdlCursor::from_surface(surface, 0, 0)?
+                    }
+                };
+                cursor.set();
+                self.context.mouse().show_cursor(true);
+            }
+            None => self.context.mouse().show_cursor(false),
+        }
+        Ok(())
     }
 
     /// Returns a single event or None if the event pump is empty.
@@ -73,5 +94,35 @@ impl Window for Renderer {
         };
         // Don't care if this fails or not.
         let _ = self.canvas.window_mut().set_fullscreen(fullscreen_type);
+    }
+}
+
+impl From<SystemCursor> for SdlSystemCursor {
+    fn from(cursor: SystemCursor) -> Self {
+        use SdlSystemCursor::*;
+        match cursor {
+            SystemCursor::Arrow => Arrow,
+            SystemCursor::IBeam => IBeam,
+            SystemCursor::Wait => Wait,
+            SystemCursor::Crosshair => Crosshair,
+            SystemCursor::WaitArrow => WaitArrow,
+            SystemCursor::SizeNWSE => SizeNWSE,
+            SystemCursor::SizeNESW => SizeNESW,
+            SystemCursor::SizeWE => SizeWE,
+            SystemCursor::SizeNS => SizeNS,
+            SystemCursor::SizeAll => SizeAll,
+            SystemCursor::No => No,
+            SystemCursor::Hand => Hand,
+        }
+    }
+}
+
+impl From<IntegerOrSdlError> for Error {
+    fn from(err: IntegerOrSdlError) -> Self {
+        use IntegerOrSdlError::*;
+        match err {
+            IntegerOverflows(s, v) => Self::Overflow(Cow::from(s), v),
+            SdlError(s) => Self::Other(Cow::from(s)),
+        }
     }
 }
