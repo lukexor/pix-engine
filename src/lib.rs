@@ -113,6 +113,7 @@ pub mod graphics;
 pub mod image;
 #[macro_use]
 pub mod math;
+pub mod gui;
 pub mod renderer;
 
 mod utils;

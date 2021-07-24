@@ -240,7 +240,9 @@ impl PixEngine {
 
                     if state.settings.running || state.settings.run_count > 0 {
                         state.clear();
+                        state.pre_update();
                         app.on_update(&mut state)?;
+                        state.post_update();
                         state.renderer.present();
                         if state.settings.run_count > 0 {
                             state.settings.run_count -= 1;
@@ -279,7 +281,6 @@ impl PixEngine {
     where
         A: AppState,
     {
-        state.mouse.clear();
         while let Some(event) = state.renderer.poll_event() {
             match event {
                 Event::Quit { .. } | Event::AppTerminating { .. } => state.quit(),

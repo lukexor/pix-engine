@@ -114,6 +114,18 @@ impl PixState {
             setting_stack: Vec::new(),
         }
     }
+
+    /// Handle state changes this frame prior to calling [AppState::on_update].
+    pub(crate) fn pre_update(&mut self) {
+        self.renderer
+            .cursor(self.settings.cursor.as_ref())
+            .expect("valid cursor");
+    }
+
+    /// Handle state changes this frame after calling [AppState::on_update].
+    pub(crate) fn post_update(&mut self) {
+        self.mouse.clear();
+    }
 }
 
 #[derive(Default, Debug, Clone, PartialEq)]

@@ -19,18 +19,20 @@ impl Window for Renderer {
     }
 
     /// Set the mouse cursor to a predefined symbol or image, or hides cursor if `None`.
-    fn cursor(&mut self, cursor: Option<Cursor>) -> Result<()> {
+    fn cursor(&mut self, cursor: Option<&Cursor>) -> Result<()> {
         match cursor {
             Some(cursor) => {
-                let cursor = match cursor {
+                self.cursor = match cursor {
                     Cursor::System(cursor) => SdlCursor::from_system(cursor.into())?,
                     Cursor::Image(path) => {
                         let surface = Surface::from_file(path)?;
                         SdlCursor::from_surface(surface, 0, 0)?
                     }
                 };
-                cursor.set();
-                self.context.mouse().show_cursor(true);
+                self.cursor.set();
+                if !self.context.mouse().is_cursor_showing() {
+                    self.context.mouse().show_cursor(true);
+                }
             }
             None => self.context.mouse().show_cursor(false),
         }
@@ -97,8 +99,8 @@ impl Window for Renderer {
     }
 }
 
-impl From<SystemCursor> for SdlSystemCursor {
-    fn from(cursor: SystemCursor) -> Self {
+impl From<&SystemCursor> for SdlSystemCursor {
+    fn from(cursor: &SystemCursor) -> Self {
         use SdlSystemCursor::*;
         match cursor {
             SystemCursor::Arrow => Arrow,

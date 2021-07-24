@@ -89,6 +89,7 @@ pub(crate) struct Settings {
     pub(crate) arc_mode: ArcMode,
     pub(crate) angle_mode: AngleMode,
     pub(crate) blend_mode: BlendMode,
+    pub(crate) cursor: Option<Cursor>,
 }
 
 impl Default for Settings {
@@ -107,6 +108,7 @@ impl Default for Settings {
             arc_mode: ArcMode::Default,
             angle_mode: AngleMode::Radians,
             blend_mode: BlendMode::None,
+            cursor: Some(Cursor::default()),
         }
     }
 }
@@ -171,12 +173,21 @@ impl PixState {
     }
 
     /// Set the mouse cursor to a predefined symbol or image.
-    pub fn cursor(&mut self, cursor: Cursor) -> PixResult<()> {
+    pub fn cursor(&mut self, cursor: &Cursor) -> PixResult<()> {
+        self.settings.cursor = Some(cursor.clone());
+        Ok(self.renderer.cursor(Some(cursor))?)
+    }
+
+    /// Set the mouse cursor to a predefined symbol or image for a single frame.
+    ///
+    /// Cursor will get reset to the current setting next frame.
+    pub(crate) fn frame_cursor(&mut self, cursor: &Cursor) -> PixResult<()> {
         Ok(self.renderer.cursor(Some(cursor))?)
     }
 
     /// Hide the mouse cursor.
     pub fn no_cursor(&mut self) {
+        self.settings.cursor = None;
         // SAFETY: Setting to NONE to hide cursor can't error.
         self.renderer.cursor(None).expect("hiding cursor");
     }
@@ -234,7 +245,7 @@ impl PixState {
 
     /// Set the font size for drawing to the current canvas.
     pub fn font_size(&mut self, size: Primitive) -> PixResult<()> {
-        Ok(self.renderer.font_size(size as u32)?)
+        Ok(self.renderer.font_size(size)?)
     }
 
     /// Set the font style for drawing to the current canvas.

@@ -4,7 +4,6 @@ use crate::{
     prelude::*,
     renderer::{RendererSettings, Rendering, Result},
 };
-use num_traits::AsPrimitive;
 
 /// A Web-Assembly [Renderer] implementation.
 pub(crate) struct Renderer {}
@@ -24,8 +23,8 @@ impl Window for Renderer {
     }
 
     /// Set whether the cursor is shown or not.
-    fn cursor(&mut self, show: bool) {
-        let _ = show;
+    fn cursor(&mut self, cursor: Option<&Cursor>) -> WindowResult<()> {
+        let _ = cursor;
         todo!("show_cursor")
     }
 
@@ -46,26 +45,20 @@ impl Window for Renderer {
     }
 
     /// Dimensions of the primary window as `(width, height)`.
-    fn dimensions(&self, id: WindowId) -> WindowResult<(u32, u32)> {
+    fn dimensions(&self, id: WindowId) -> WindowResult<(Primitive, Primitive)> {
         let _ = id;
         todo!("dimensions")
     }
 
     /// Set dimensions of the primary window as `(width, height)`.
-    fn set_dimensions(&mut self, id: WindowId, dimensions: (u32, u32)) -> WindowResult<()> {
+    fn set_dimensions(
+        &mut self,
+        id: WindowId,
+        dimensions: (Primitive, Primitive),
+    ) -> WindowResult<()> {
         let _ = id;
         let _ = dimensions;
         todo!("set_dimensions")
-    }
-
-    /// Resize the window.
-    fn resize<T>(&mut self, width: T, height: T) -> WindowResult<()>
-    where
-        T: AsPrimitive<u32>,
-    {
-        let _ = width.as_();
-        let _ = height.as_();
-        todo!("resize")
     }
 
     /// Returns whether the application is fullscreen or not.
@@ -125,8 +118,8 @@ impl Rendering for Renderer {
     /// Create a texture to draw to.
     fn create_texture(
         &mut self,
-        width: u32,
-        height: u32,
+        width: Primitive,
+        height: Primitive,
         format: Option<PixelFormat>,
     ) -> Result<TextureId> {
         let _ = width;
@@ -170,7 +163,7 @@ impl Rendering for Renderer {
     }
 
     /// Set the font size for drawing to the current canvas.
-    fn font_size(&mut self, size: u32) -> Result<()> {
+    fn font_size(&mut self, size: Primitive) -> Result<()> {
         let _ = size;
         todo!("font_size")
     }
@@ -204,7 +197,7 @@ impl Rendering for Renderer {
 
     /// Returns the rendered dimensions of the given text using the current font
     /// as `(width, height)`.
-    fn size_of(&self, text: &str) -> Result<(u32, u32)> {
+    fn size_of(&self, text: &str) -> Result<(Primitive, Primitive)> {
         let _ = text;
         todo!("size_of")
     }

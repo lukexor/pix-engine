@@ -113,8 +113,8 @@ pub(crate) trait Rendering: Sized {
     /// Create a texture to draw to.
     fn create_texture(
         &mut self,
-        width: u32,
-        height: u32,
+        width: Primitive,
+        height: Primitive,
         format: Option<PixelFormat>,
     ) -> Result<TextureId>;
 
@@ -139,7 +139,7 @@ pub(crate) trait Rendering: Sized {
     ) -> Result<()>;
 
     /// Set the font size for drawing to the current canvas.
-    fn font_size(&mut self, size: u32) -> Result<()>;
+    fn font_size(&mut self, size: Primitive) -> Result<()>;
 
     /// Set the font style for drawing to the current canvas.
     fn font_style(&mut self, style: FontStyle);
@@ -158,7 +158,7 @@ pub(crate) trait Rendering: Sized {
 
     /// Returns the rendered dimensions of the given text using the current font
     /// as `(width, height)`.
-    fn size_of(&self, text: &str) -> Result<(u32, u32)>;
+    fn size_of(&self, text: &str) -> Result<(Primitive, Primitive)>;
 
     /// Draw a pixel to the current canvas.
     fn point(&mut self, p: &Point<i16>, color: Color) -> Result<()>;

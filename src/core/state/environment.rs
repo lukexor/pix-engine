@@ -87,6 +87,12 @@ impl PixState {
         self.env.target_frame_rate = Some(rate as Scalar);
     }
 
+    /// Remove target frame rate and call [on_update](crate::prelude::AppState::on_update) as often
+    /// as possible.
+    pub fn clear_frame_rate(&mut self) {
+        self.env.target_frame_rate = None;
+    }
+
     /// The dimensions of the primary window as `(width, height)`.
     pub fn dimensions(&self) -> (Primitive, Primitive) {
         // SAFETY: Primary window_id should always exist

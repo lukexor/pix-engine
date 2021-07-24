@@ -7,7 +7,8 @@ use lazy_static::lazy_static;
 use sdl2::{
     audio::{AudioQueue, AudioSpecDesired},
     gfx::primitives::{DrawRenderer, ToColor},
-    image::LoadSurface,
+    image::{InitFlag, LoadSurface, Sdl2ImageContext},
+    mouse::{Cursor, SystemCursor},
     pixels::{Color as SdlColor, PixelFormatEnum as SdlPixelFormat},
     rect::Rect as SdlRect,
     render::{
@@ -27,6 +28,8 @@ mod window;
 
 lazy_static! {
     static ref TTF: Sdl2TtfContext = sdl2::ttf::init().expect("sdl2_ttf initialized");
+    static ref IMAGE: Sdl2ImageContext =
+        sdl2::image::init(InitFlag::PNG | InitFlag::JPG).expect("sdl2_image initialized");
 }
 
 /// An SDL [Renderer] implementation.
@@ -37,6 +40,7 @@ pub(crate) struct Renderer {
     font_style: SdlFontStyle,
     event_pump: EventPump,
     window_id: WindowId,
+    cursor: Cursor,
     canvas: Canvas<SdlWindow>,
     audio_device: AudioQueue<f32>,
     texture_creator: TextureCreator<WindowContext>,
@@ -55,7 +59,6 @@ impl Rendering for Renderer {
         let win_width = (s.scale_x * s.width as f32).floor() as u32;
         let win_height = (s.scale_y * s.height as f32).floor() as u32;
         let mut window_builder = video_subsys.window(&s.title, win_width, win_height);
-        window_builder.opengl();
         match (s.x, s.y) {
             (Position::Centered, Position::Centered) => {
                 window_builder.position_centered();
@@ -85,6 +88,9 @@ impl Rendering for Renderer {
         canvas.set_logical_size(win_width, win_height)?;
         canvas.set_scale(s.scale_x, s.scale_y)?;
 
+        let cursor = Cursor::from_system(SystemCursor::Arrow)?;
+        cursor.set();
+
         if let Some(icon) = &s.icon {
             let surface = Surface::from_file(icon)?;
             canvas.window_mut().set_icon(surface);
@@ -113,6 +119,7 @@ impl Rendering for Renderer {
             font_style: SdlFontStyle::NORMAL,
             event_pump,
             window_id,
+            cursor,
             canvas,
             audio_device,
             texture_creator,
@@ -155,16 +162,16 @@ impl Rendering for Renderer {
     /// Create a texture to render to.
     fn create_texture(
         &mut self,
-        width: u32,
-        height: u32,
+        width: Primitive,
+        height: Primitive,
         format: Option<PixelFormat>,
     ) -> Result<TextureId> {
         let texture_id = self.textures.len();
         self.textures
             .push(self.texture_creator.create_texture_target(
                 format.map(|f| f.into()),
-                width,
-                height,
+                width as u32,
+                height as u32,
             )?);
         Ok(texture_id)
     }
@@ -214,7 +221,7 @@ impl Rendering for Renderer {
     }
 
     /// Set the font size for drawing to the current canvas.
-    fn font_size(&mut self, size: u32) -> Result<()> {
+    fn font_size(&mut self, size: Primitive) -> Result<()> {
         self.font.1 = size as u16;
         if self.font_cache.get(&self.font).is_none() {
             self.font_cache
@@ -269,10 +276,13 @@ impl Rendering for Renderer {
 
     /// Returns the rendered dimensions of the given text using the current font
     /// as `(width, height)`.
-    fn size_of(&self, text: &str) -> Result<(u32, u32)> {
+    fn size_of(&self, text: &str) -> Result<(Primitive, Primitive)> {
         let font = self.font_cache.get(&self.font);
         match font {
-            Some(font) => Ok(font.size_of(text)?),
+            Some(font) => {
+                let (w, h) = font.size_of(text)?;
+                Ok((w as i32, h as i32))
+            }
             None => Err(Error::InvalidFont(self.font.0.to_owned())),
         }
     }

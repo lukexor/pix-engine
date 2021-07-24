@@ -26,9 +26,7 @@ impl PixState {
     where
         F: Into<Option<PixelFormat>>,
     {
-        Ok(self
-            .renderer
-            .create_texture(width as u32, height as u32, format.into())?)
+        Ok(self.renderer.create_texture(width, height, format.into())?)
     }
 
     /// Deletes a texture by [TextureId].

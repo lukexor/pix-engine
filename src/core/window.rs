@@ -91,7 +91,7 @@ pub(crate) trait Window {
     fn window_id(&self) -> WindowId;
 
     /// Set the mouse cursor to a predefined symbol or image, or hides cursor if `None`.
-    fn cursor(&mut self, cursor: Option<Cursor>) -> Result<()>;
+    fn cursor(&mut self, cursor: Option<&Cursor>) -> Result<()>;
 
     /// Returns a single event or None if the event pump is empty.
     fn poll_event(&mut self) -> Option<Event>;
