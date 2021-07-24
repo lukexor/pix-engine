@@ -96,7 +96,7 @@ impl Sdl2Driver {
         let desired_spec = AudioSpecDesired {
             freq: Some(
                 opts.audio_sample_rate
-                    .unwrap_or_else(|| DEFAULT_SAMPLE_RATE),
+                    .unwrap_or(DEFAULT_SAMPLE_RATE),
             ),
             channels: Some(1),
             samples: None,
@@ -123,7 +123,7 @@ impl Sdl2Driver {
     fn assign_controller(&mut self, id: u32) -> PixEngineResult<()> {
         if self.controller_sub.is_game_controller(id) {
             if let Some(controller) = &self.controller1 {
-                if id as i32 == controller.instance_id() {
+                if id == controller.instance_id() {
                     return Ok(());
                 }
             } else {

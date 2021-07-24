@@ -3,6 +3,7 @@ use crate::{image::Image, state::StateData};
 type Matrix = [[f32; 3]; 3];
 
 // Represents an Affine Transformation
+#[derive(Copy, Clone)]
 pub struct Transform {
     // [row][col] or [y][x]
     source: Matrix,    // Current matrix

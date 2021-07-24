@@ -1,3 +1,5 @@
+#![deny(rust_2018_idioms, missing_copy_implementations)]
+
 use std::{error, fmt};
 
 pub mod event;
@@ -28,13 +30,13 @@ impl PixEngineErr {
 }
 
 impl fmt::Display for PixEngineErr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.description)
     }
 }
 
 impl fmt::Debug for PixEngineErr {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "{{ err: {}, file: {}, line: {} }}",
