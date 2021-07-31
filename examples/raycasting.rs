@@ -291,7 +291,7 @@ impl AppState for RayScene {
 
         self.convert_edges_to_poly_map()?;
 
-        self.light = s.create_image_from_file(DEFAULT_ASSET_DIR.join("light.png"))?;
+        self.light = Image::from_file(DEFAULT_ASSET_DIR.join("light.png"))?;
         s.image_tint(color![255, 255, 153]);
 
         Ok(())

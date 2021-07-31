@@ -4,7 +4,7 @@ use crate::{
     core::{state, window},
     image, renderer,
 };
-use std::{borrow::Cow, error, fmt, result};
+use std::{borrow::Cow, error, fmt, io, result};
 
 /// The result type for [PixEngine] operations.
 ///
@@ -25,6 +25,8 @@ pub enum Error {
     StateError(state::Error),
     /// An error from [Image](crate::prelude::Image)
     ImageError(image::Error),
+    /// I/O errors.
+    IoError(io::Error),
     /// Unknown errors.
     Other(Cow<'static, str>),
 }
@@ -40,3 +42,15 @@ impl fmt::Display for Error {
 }
 
 impl error::Error for Error {}
+
+impl From<io::Error> for Error {
+    fn from(err: io::Error) -> Self {
+        Error::IoError(err)
+    }
+}
+
+impl From<&'static str> for Error {
+    fn from(err: &'static str) -> Self {
+        Error::Other(Cow::from(err))
+    }
+}

@@ -3,6 +3,7 @@
 use crate::{prelude::*, renderer::Rendering};
 use std::{
     borrow::Cow,
+    cell::Cell,
     error,
     ffi::{OsStr, OsString},
     fmt,
@@ -14,26 +15,6 @@ use std::{
 
 /// The result type for [Image] operations.
 pub type Result<T> = result::Result<T, Error>;
-
-/// The error type for [Image] operations.
-#[non_exhaustive]
-#[derive(Debug)]
-pub enum Error {
-    /// Invalid file type.
-    InvalidFileType(Option<OsString>),
-    /// Invalid color type.
-    UnsupportedColorType(png::ColorType),
-    /// Invalid bit depth.
-    UnsupportedBitDepth(png::BitDepth),
-    /// I/O errors.
-    IoError(io::Error),
-    /// [png] decoding errors.
-    DecodingError(png::DecodingError),
-    /// [png] encoding errors.
-    EncodingError(png::EncodingError),
-    /// Unknown error.
-    Other(Cow<'static, str>),
-}
 
 /// Format for interpreting bytes when using textures.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -86,7 +67,7 @@ pub struct Image {
     /// Pixel Format.
     format: PixelFormat,
     /// Texture Identifier.
-    texture_id: usize,
+    texture_id: Cell<Option<usize>>,
 }
 
 impl std::fmt::Debug for Image {
@@ -102,6 +83,82 @@ impl std::fmt::Debug for Image {
 }
 
 impl Image {
+    /// Constructs an empty RGBA `Image` with given `width` and `height`. Alias for
+    /// [Image::new_rgba].
+    #[inline]
+    pub fn new(width: Primitive, height: Primitive) -> Self {
+        Self::new_rgba(width, height)
+    }
+
+    /// Constructs an empty RGBA `Image` with given `width` and `height`.
+    pub fn new_rgba(width: Primitive, height: Primitive) -> Self {
+        let format = PixelFormat::Rgba;
+        let data = vec![0x00; format.channels() * (width * height) as usize];
+        Self::from_vec(width, height, data, format)
+    }
+
+    /// Constructs an empty RGB `Image` with given `width` and `height`.
+    pub fn new_rgb(width: Primitive, height: Primitive) -> Self {
+        let format = PixelFormat::Rgb;
+        let data = vec![0x00; format.channels() * (width * height) as usize];
+        Self::from_vec(width, height, data, format)
+    }
+
+    /// Constructs an `Image` from a [u8] [slice] representing RGB/A values.
+    pub fn from_bytes(
+        width: Primitive,
+        height: Primitive,
+        bytes: &[u8],
+        format: PixelFormat,
+    ) -> Self {
+        Self::from_vec(width, height, bytes.to_vec(), format)
+    }
+
+    /// Constructs an `Image` from a [Vec<u8>] representing RGB/A values.
+    pub fn from_vec(
+        width: Primitive,
+        height: Primitive,
+        data: Vec<u8>,
+        format: PixelFormat,
+    ) -> Self {
+        Self {
+            width,
+            height,
+            data,
+            format,
+            texture_id: Cell::new(None),
+        }
+    }
+
+    /// Constructs an `Image` from a [png] file.
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
+        let path = path.as_ref();
+        let ext = path.extension();
+        if ext != Some(OsStr::new("png")) {
+            return Err(Error::InvalidFileType(ext.map(|e| e.to_os_string())));
+        }
+
+        let png_file = BufReader::new(File::open(&path)?);
+        let png = png::Decoder::new(png_file);
+        let (info, mut reader) = png.read_info()?;
+
+        if info.bit_depth != png::BitDepth::Eight {
+            return Err(Error::UnsupportedBitDepth(info.bit_depth));
+        } else if !matches!(info.color_type, png::ColorType::RGB | png::ColorType::RGBA) {
+            return Err(Error::UnsupportedColorType(info.color_type));
+        }
+
+        let mut data = vec![0x00; info.buffer_size()];
+        reader.next_frame(&mut data)?;
+        let format = info.color_type.into();
+        Ok(Self::from_bytes(
+            info.width as i32,
+            info.height as i32,
+            &data,
+            format,
+        ))
+    }
+
     /// `Image` width.
     #[inline]
     pub fn width(&self) -> Primitive {
@@ -159,86 +216,18 @@ impl Image {
 
     /// Returns the `Image` [TextureId].
     #[inline]
-    pub(crate) fn texture_id(&self) -> TextureId {
-        self.texture_id
+    pub(crate) fn texture_id(&self) -> Option<TextureId> {
+        self.texture_id.get()
+    }
+
+    /// Set the `Image` [TextureId].
+    #[inline]
+    pub(crate) fn set_texture_id(&self, texture_id: TextureId) {
+        self.texture_id.set(Some(texture_id));
     }
 }
 
 impl PixState {
-    /// Constructs an empty RGBA `Image` with given `width` and `height`.
-    #[inline]
-    pub fn create_image(&mut self, width: Primitive, height: Primitive) -> PixResult<Image> {
-        self.create_rgba_image(width, height)
-    }
-
-    /// Constructs an empty RGBA `Image` with given `width` and `height`.
-    pub fn create_rgba_image(&mut self, width: Primitive, height: Primitive) -> PixResult<Image> {
-        let format = PixelFormat::Rgba;
-        Ok(Image {
-            width,
-            height,
-            data: vec![0x00; format.channels() * (width * height) as usize],
-            format,
-            texture_id: self.create_texture(width, height, format)?,
-        })
-    }
-
-    /// Constructs an empty RGB `Image` with given `width` and `height`.
-    pub fn create_rgb_image(&mut self, width: Primitive, height: Primitive) -> PixResult<Image> {
-        let format = PixelFormat::Rgb;
-        Ok(Image {
-            width,
-            height,
-            data: vec![0x00; format.channels() * (width * height) as usize],
-            format,
-            texture_id: self.create_texture(width, height, format)?,
-        })
-    }
-
-    /// Constructs an `Image` from a [u8] [slice] representing RGB/A values.
-    pub fn create_image_from_bytes(
-        &mut self,
-        width: Primitive,
-        height: Primitive,
-        bytes: &[u8],
-        format: PixelFormat,
-    ) -> PixResult<Image> {
-        Ok(Image {
-            width,
-            height,
-            data: bytes.to_vec(),
-            format,
-            texture_id: self.create_texture(width, height, format)?,
-        })
-    }
-
-    /// Constructs an `Image` from a [png] file.
-    pub fn create_image_from_file<P>(&mut self, path: P) -> PixResult<Image>
-    where
-        P: AsRef<Path>,
-    {
-        let path = path.as_ref();
-        let ext = path.extension();
-        if ext != Some(OsStr::new("png")) {
-            return Err(Error::InvalidFileType(ext.map(|e| e.to_os_string())).into());
-        }
-
-        let png_file = BufReader::new(File::open(&path)?);
-        let png = png::Decoder::new(png_file);
-        let (info, mut reader) = png.read_info()?;
-
-        if info.bit_depth != png::BitDepth::Eight {
-            return Err(Error::UnsupportedBitDepth(info.bit_depth).into());
-        } else if !matches!(info.color_type, png::ColorType::RGB | png::ColorType::RGBA) {
-            return Err(Error::UnsupportedColorType(info.color_type).into());
-        }
-
-        let mut data = vec![0x00; info.buffer_size()];
-        reader.next_frame(&mut data)?;
-        let format = info.color_type.into();
-        self.create_image_from_bytes(info.width as i32, info.height as i32, &data, format)
-    }
-
     /// Draw an [Image] to the current canvas.
     pub fn image<P>(&mut self, position: P, img: &Image) -> PixResult<()>
     where
@@ -273,6 +262,26 @@ impl PixState {
     }
 }
 
+/// The error type for [Image] operations.
+#[non_exhaustive]
+#[derive(Debug)]
+pub enum Error {
+    /// Invalid file type.
+    InvalidFileType(Option<OsString>),
+    /// Invalid color type.
+    UnsupportedColorType(png::ColorType),
+    /// Invalid bit depth.
+    UnsupportedBitDepth(png::BitDepth),
+    /// I/O errors.
+    IoError(io::Error),
+    /// [png] decoding errors.
+    DecodingError(png::DecodingError),
+    /// [png] encoding errors.
+    EncodingError(png::EncodingError),
+    /// Unknown error.
+    Other(Cow<'static, str>),
+}
+
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use Error::*;
@@ -303,20 +312,26 @@ impl From<Error> for PixError {
     }
 }
 
-impl From<io::Error> for PixError {
+impl From<io::Error> for Error {
     fn from(err: io::Error) -> Self {
-        Self::ImageError(Error::IoError(err))
+        Error::IoError(err)
     }
 }
 
-impl From<png::DecodingError> for PixError {
+impl From<png::DecodingError> for Error {
     fn from(err: png::DecodingError) -> Self {
-        Self::ImageError(Error::DecodingError(err))
+        Error::DecodingError(err)
+    }
+}
+
+impl From<png::EncodingError> for Error {
+    fn from(err: png::EncodingError) -> Self {
+        Error::EncodingError(err)
     }
 }
 
 impl From<png::EncodingError> for PixError {
     fn from(err: png::EncodingError) -> Self {
-        Self::ImageError(Error::EncodingError(err))
+        PixError::ImageError(Error::EncodingError(err))
     }
 }

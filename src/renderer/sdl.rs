@@ -445,27 +445,8 @@ impl Rendering for Renderer {
 
     /// Draw an image to the current canvas.
     fn image(&mut self, pos: &Point<Primitive>, img: &Image, tint: Option<Color>) -> Result<()> {
-        let texture_id = img.texture_id();
-        match self.textures.get_mut(texture_id) {
-            Some(texture) => {
-                texture.update(
-                    None,
-                    img.bytes(),
-                    img.format().channels() * img.width() as usize,
-                )?;
-                if let Some(tint) = tint {
-                    self.canvas.with_texture_canvas(texture, |tex_canvas| {
-                        tex_canvas.set_blend_mode(SdlBlendMode::Mod);
-                        tex_canvas.set_draw_color(tint);
-                        let _ = tex_canvas.fill_rect(None);
-                    })?;
-                }
-                texture.set_blend_mode(self.blend_mode);
-                let dst = SdlRect::new(pos.x, pos.y, img.width() as u32, img.height() as u32);
-                Ok(self.canvas.copy(&texture, None, dst)?)
-            }
-            None => Err(Error::InvalidTexture(texture_id)),
-        }
+        let dst = SdlRect::new(pos.x, pos.y, img.width() as u32, img.height() as u32);
+        self.image_texture(img, tint, dst)
     }
 
     /// Draw an image to the current canvas.
@@ -475,7 +456,25 @@ impl Rendering for Renderer {
         img: &Image,
         tint: Option<Color>,
     ) -> Result<()> {
-        let texture_id = img.texture_id();
+        self.image_texture(img, tint, dst_rect.into())
+    }
+}
+
+impl Renderer {
+    fn get_texture_id(&mut self, img: &Image) -> Result<TextureId> {
+        match img.texture_id() {
+            Some(texture_id) => Ok(texture_id),
+            None => {
+                let texture_id =
+                    self.create_texture(img.width(), img.height(), img.format().into())?;
+                img.set_texture_id(texture_id);
+                Ok(texture_id)
+            }
+        }
+    }
+
+    fn image_texture(&mut self, img: &Image, tint: Option<Color>, dst: SdlRect) -> Result<()> {
+        let texture_id = self.get_texture_id(img)?;
         match self.textures.get_mut(texture_id) {
             Some(texture) => {
                 texture.update(
@@ -484,15 +483,18 @@ impl Rendering for Renderer {
                     img.format().channels() * img.width() as usize,
                 )?;
                 if let Some(tint) = tint {
+                    let blend_mode = match self.blend_mode {
+                        SdlBlendMode::None => SdlBlendMode::Blend,
+                        mode => mode,
+                    };
                     self.canvas.with_texture_canvas(texture, |canvas| {
-                        canvas.set_blend_mode(SdlBlendMode::Add);
+                        canvas.set_blend_mode(blend_mode);
                         canvas.set_draw_color(tint);
                         let _ = canvas.fill_rect(None);
                     })?;
                 }
                 texture.set_blend_mode(self.blend_mode);
-                let dst_rect: SdlRect = dst_rect.into();
-                Ok(self.canvas.copy(&texture, None, dst_rect)?)
+                Ok(self.canvas.copy(&texture, None, dst)?)
             }
             None => Err(Error::InvalidTexture(texture_id)),
         }
