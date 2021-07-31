@@ -84,21 +84,21 @@ impl std::fmt::Debug for Image {
 
 impl Image {
     /// Constructs an empty RGBA `Image` with given `width` and `height`. Alias for
-    /// [Image::new_rgba].
+    /// [Image::with_rgba].
     #[inline]
     pub fn new(width: Primitive, height: Primitive) -> Self {
-        Self::new_rgba(width, height)
+        Self::with_rgba(width, height)
     }
 
     /// Constructs an empty RGBA `Image` with given `width` and `height`.
-    pub fn new_rgba(width: Primitive, height: Primitive) -> Self {
+    pub fn with_rgba(width: Primitive, height: Primitive) -> Self {
         let format = PixelFormat::Rgba;
         let data = vec![0x00; format.channels() * (width * height) as usize];
         Self::from_vec(width, height, data, format)
     }
 
     /// Constructs an empty RGB `Image` with given `width` and `height`.
-    pub fn new_rgb(width: Primitive, height: Primitive) -> Self {
+    pub fn with_rgb(width: Primitive, height: Primitive) -> Self {
         let format = PixelFormat::Rgb;
         let data = vec![0x00; format.channels() * (width * height) as usize];
         Self::from_vec(width, height, data, format)
