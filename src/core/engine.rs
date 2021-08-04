@@ -13,7 +13,7 @@ use std::{
 #[cfg(not(target_arch = "wasm32"))]
 use crate::ASSETS;
 #[cfg(not(target_arch = "wasm32"))]
-use std::{fs, io, path::PathBuf};
+use std::{fs, path::PathBuf};
 
 const ONE_SECOND: Duration = Duration::from_secs(1);
 
@@ -188,11 +188,11 @@ impl PixEngine {
     {
         #[cfg(not(target_arch = "wasm32"))]
         {
-            fs::create_dir_all(&self.settings.asset_dir)?;
-            match ASSETS.extract(&self.settings.asset_dir) {
-                Err(e) if e.kind() != io::ErrorKind::AlreadyExists => return Err(e.into()),
-                _ => (),
+            if self.settings.asset_dir.exists() {
+                fs::remove_dir_all(&self.settings.asset_dir)?;
             }
+            fs::create_dir_all(&self.settings.asset_dir)?;
+            ASSETS.extract(&self.settings.asset_dir)?;
         }
 
         let renderer = Renderer::new(&self.settings)?;

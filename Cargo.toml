@@ -54,11 +54,9 @@ wasm-bindgen-test = "0.3.24"
 
 [profile.dev]
 split-debuginfo = "unpacked"
-
-[profile.dev.package.sdl2]
 opt-level = 2
 
-[profile.test.package.sdl2]
+[profile.test]
 opt-level = 2
 
 [profile.release]
