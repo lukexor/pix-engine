@@ -41,7 +41,7 @@ impl AppState for ImageDemo {
 fn main() -> PixResult<()> {
     let args: Vec<_> = env::args().collect();
     if args.len() < 2 {
-        Err(PixError::from("Usage: cargo run /path/to/image.(png|jpg)"))
+        Err(PixError::from("Usage: cargo run /path/to/image.png"))
     } else {
         let mut engine = PixEngine::builder()
             .with_dimensions(WIDTH, HEIGHT)
