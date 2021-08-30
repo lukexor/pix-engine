@@ -297,7 +297,7 @@ where
 impl<T: Number> From<&mut Ellipse<T>> for Ellipse<T> {
     /// Convert `&mut Ellipse<T>` to [Ellipse].
     fn from(ellipse: &mut Ellipse<T>) -> Self {
-        ellipse.to_owned()
+        ellipse.clone()
     }
 }
 
@@ -549,7 +549,7 @@ where
 
 impl<T: Number> From<&mut Circle<T>> for Circle<T> {
     fn from(circle: &mut Circle<T>) -> Self {
-        circle.to_owned()
+        circle.clone()
     }
 }
 

@@ -4,14 +4,12 @@ use crate::{prelude::*, renderer::Rendering};
 
 impl PixState {
     /// Draw text to the current canvas.
-    pub fn text<P, S>(&mut self, p: P, text: S) -> PixResult<()>
+    pub fn text<P>(&mut self, p: P, text: &str) -> PixResult<()>
     where
         P: Into<Point<Primitive>>,
-        S: AsRef<str>,
     {
         let s = &self.settings;
         let p = p.into();
-        let text = text.as_ref();
         let p = match s.rect_mode {
             DrawMode::Corner => p,
             DrawMode::Center => {

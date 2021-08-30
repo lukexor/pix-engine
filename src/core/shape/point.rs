@@ -340,7 +340,7 @@ where
 
 impl<T: Number> From<&mut Point<T>> for Point<T> {
     fn from(p: &mut Point<T>) -> Self {
-        p.to_owned()
+        p.clone()
     }
 }
 

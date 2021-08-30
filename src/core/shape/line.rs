@@ -141,7 +141,7 @@ where
 
 impl<T: Number> From<&mut Line<T>> for Line<T> {
     fn from(line: &mut Line<T>) -> Self {
-        line.to_owned()
+        line.clone()
     }
 }
 

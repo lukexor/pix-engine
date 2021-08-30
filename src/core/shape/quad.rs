@@ -163,7 +163,7 @@ where
 
 impl<T: Number> From<&mut Quad<T>> for Quad<T> {
     fn from(quad: &mut Quad<T>) -> Self {
-        quad.to_owned()
+        quad.clone()
     }
 }
 

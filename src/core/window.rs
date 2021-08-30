@@ -135,11 +135,8 @@ impl WindowBuilder {
     }
 
     /// Set a window title.
-    pub fn with_title<S>(&mut self, title: S) -> &mut Self
-    where
-        S: AsRef<str>,
-    {
-        self.title = title.as_ref().to_owned();
+    pub fn with_title(&mut self, title: String) -> &mut Self {
+        self.title = title;
         self
     }
 

@@ -10,21 +10,20 @@ use std::{borrow::Cow, convert::TryFrom, error, fmt, str::FromStr};
 /// The error type for [Color] operations.
 #[non_exhaustive]
 #[derive(Debug, Clone)]
-pub enum ColorError<T>
+pub enum ColorError<'a, T>
 where
-    T: 'static,
-    [T]: ToOwned,
-    <[T] as ToOwned>::Owned: fmt::Debug,
+    [T]: ToOwned<Owned = Vec<T>>,
 {
     /// Error when creating a [Color] from an invalid [slice].
-    InvalidSlice(Cow<'static, [T]>),
+    InvalidSlice(Cow<'a, [T]>),
     /// Error when creating a [Color] from an invalid string using [FromStr](std::str::FromStr).
-    InvalidString(Cow<'static, str>),
+    InvalidString(Cow<'a, str>),
 }
 
-impl<T> fmt::Display for ColorError<T>
+impl<'a, T> fmt::Display for ColorError<'a, T>
 where
-    T: fmt::Debug + Clone,
+    T: fmt::Debug,
+    [T]: ToOwned<Owned = Vec<T>>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use ColorError::*;
@@ -35,7 +34,7 @@ where
     }
 }
 
-impl<T> error::Error for ColorError<T> where T: fmt::Debug + Clone {}
+impl<'a, T> error::Error for ColorError<'a, T> where T: fmt::Debug + Clone {}
 
 /// Return the max value for each [ColorMode].
 pub(crate) const fn maxes(mode: ColorMode) -> [Scalar; 4] {
@@ -282,7 +281,7 @@ impl Color {
 }
 
 impl FromStr for Color {
-    type Err = ColorError<Scalar>;
+    type Err = ColorError<'static, Scalar>;
 
     /// Converts to [Color] from a hexadecimal string.
     ///
@@ -345,7 +344,7 @@ impl FromStr for Color {
 }
 
 impl TryFrom<&str> for Color {
-    type Error = ColorError<Scalar>;
+    type Error = ColorError<'static, Scalar>;
     /// Try to create a `Color` from a hexadecimal string.
     fn try_from(s: &str) -> Result<Self, Self::Error> {
         Self::from_str(s)

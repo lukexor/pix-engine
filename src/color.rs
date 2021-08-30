@@ -366,9 +366,10 @@ impl Color {
     /// assert_eq!(c.channels(), [128, 64, 0, 128]);
     /// # Ok::<(), ColorError<Scalar>>(())
     /// ```
-    pub fn from_slice<T: Into<Scalar>>(mode: ColorMode, slice: &[T]) -> Result<Self, ColorError<T>>
+    pub fn from_slice<T>(mode: ColorMode, slice: &[T]) -> Result<Self, ColorError<'static, T>>
     where
-        T: fmt::Debug + Copy + Clone,
+        T: Copy + Into<Scalar>,
+        [T]: ToOwned<Owned = Vec<T>>,
     {
         let result = match *slice {
             [gray] => Self::with_mode(mode, gray, gray, gray),

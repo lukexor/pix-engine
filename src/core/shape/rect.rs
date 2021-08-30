@@ -389,7 +389,7 @@ where
 impl<T: Number> From<&mut Rect<T>> for Rect<T> {
     /// Convert `&mut Rect<T>` to [Rect].
     fn from(rect: &mut Rect<T>) -> Self {
-        rect.to_owned()
+        rect.clone()
     }
 }
 

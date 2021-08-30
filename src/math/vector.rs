@@ -798,7 +798,7 @@ impl<T: Float> Vector<T> {
 
 impl<T: Number> From<&mut Vector<T>> for Vector<T> {
     fn from(v: &mut Vector<T>) -> Self {
-        v.to_owned()
+        v.clone()
     }
 }
 

@@ -135,7 +135,7 @@ where
 
 impl<T: Number> From<&mut Triangle<T>> for Triangle<T> {
     fn from(tri: &mut Triangle<T>) -> Self {
-        tri.to_owned()
+        tri.clone()
     }
 }
 
