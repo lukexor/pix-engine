@@ -30,10 +30,12 @@ impl MazeCreator {
             self.visited.insert(current.id());
             let next = self.get_random_neighbor(&current, maze);
             if let Some((direction, next)) = next {
-                maze.get_cell_mut(current.id())
-                    .map(|cell| cell.remove_wall(direction));
-                maze.get_cell_mut(next.id())
-                    .map(|cell| cell.remove_wall(direction.opposite()));
+                if let Some(cell) = maze.get_cell_mut(current.id()) {
+                    cell.remove_wall(direction);
+                }
+                if let Some(cell) = maze.get_cell_mut(next.id()) {
+                    cell.remove_wall(direction.opposite());
+                }
                 self.stack.push(next);
                 self.current = Some(next);
             } else {

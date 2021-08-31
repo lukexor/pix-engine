@@ -169,12 +169,12 @@ impl MouseState {
     }
 
     /// Returns if [Mouse] button was clicked last frame.
-    pub(crate) fn was_clicked(&mut self, btn: &Mouse) -> bool {
+    pub(crate) fn was_clicked(&self, btn: &Mouse) -> bool {
         self.clicked.contains(&btn)
     }
 
     /// Returns last time a [Mouse] button was clicked.
-    pub(crate) fn last_clicked(&mut self, btn: &Mouse) -> Option<&Instant> {
+    pub(crate) fn last_clicked(&self, btn: &Mouse) -> Option<&Instant> {
         self.last_clicked.get(&btn)
     }
 }

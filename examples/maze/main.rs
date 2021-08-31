@@ -127,17 +127,16 @@ impl MazeApp {
                 self.solver.draw(s, &self.maze)?;
             }
         }
-        // TODO: Refine button interface to have `clicked()`
-        if s.button([10, HEIGHT - 50, 125, 40], "Create")? {
+        if s.button([10, HEIGHT - 50, 125, 40], "Create")?.clicked() {
             self.start_create_maze();
         }
-        if s.button([140, HEIGHT - 50, 40, 40], ">>")? {
+        if s.button([140, HEIGHT - 50, 40, 40], ">>")?.clicked() {
             self.create_maze()?;
         }
-        if s.button([200, HEIGHT - 50, 140, 40], "Solve A*")? {
+        if s.button([200, HEIGHT - 50, 140, 40], "Solve A*")?.clicked() {
             self.start_solve_maze(Algorithm::AStar)?;
         }
-        if s.button([345, HEIGHT - 50, 40, 40], ">>")? {
+        if s.button([345, HEIGHT - 50, 40, 40], ">>")?.clicked() {
             self.solve_maze()?;
         }
         s.fill(GREEN);
