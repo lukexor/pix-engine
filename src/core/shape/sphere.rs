@@ -27,16 +27,7 @@ use serde::{Deserialize, Serialize};
 /// A `Sphere` positioned at `(x, y, z)` with `radius`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Sphere<T = Scalar> {
-    /// Center x-coord
-    pub x: T,
-    /// Center y-coord
-    pub y: T,
-    /// Center z-coord
-    pub z: T,
-    /// Radius
-    pub radius: T,
-}
+pub struct Sphere<T = Scalar>([T; 4]);
 
 /// # Constructs a `Sphere<T>` at position `(x, y, z)` with `radius`.
 ///
@@ -44,16 +35,16 @@ pub struct Sphere<T = Scalar> {
 /// # use pix_engine::prelude::*;
 /// let p = point!(10, 20, 10);
 /// let s = sphere!(p, 100);
-/// assert_eq!(s.x, 10);
-/// assert_eq!(s.y, 20);
-/// assert_eq!(s.z, 10);
-/// assert_eq!(s.radius, 100);
+/// assert_eq!(s.x(), 10);
+/// assert_eq!(s.y(), 20);
+/// assert_eq!(s.z(), 10);
+/// assert_eq!(s.radius(), 100);
 ///
 /// let s = sphere!(10, 20, 10, 100);
-/// assert_eq!(s.x, 10);
-/// assert_eq!(s.y, 20);
-/// assert_eq!(s.z, 10);
-/// assert_eq!(s.radius, 100);
+/// assert_eq!(s.x(), 10);
+/// assert_eq!(s.y(), 20);
+/// assert_eq!(s.z(), 10);
+/// assert_eq!(s.radius(), 100);
 /// ```
 #[macro_export]
 macro_rules! sphere {
@@ -68,20 +59,68 @@ macro_rules! sphere {
 impl<T> Sphere<T> {
     /// Constructs a `Sphere<T>` at position `(x, y, z)` with `radius`.
     pub const fn new(x: T, y: T, z: T, radius: T) -> Self {
-        Self { x, y, z, radius }
-    }
-
-    /// Constructs a `Sphere<T>` at position [Point] with `radius`.
-    pub fn with_position<P: Into<Point<T>>>(p: P, radius: T) -> Self {
-        let p = p.into();
-        Self::new(p.x, p.y, p.z, radius)
+        Self([x, y, z, radius])
     }
 }
 
 impl<T: Number> Sphere<T> {
+    /// Constructs a `Sphere<T>` at position [Point] with `radius`.
+    pub fn with_position<P: Into<Point<T>>>(p: P, radius: T) -> Self {
+        let p = p.into();
+        Self::new(p.x(), p.y(), p.z(), radius)
+    }
+
+    /// Returns the `x-coordinate` of the sphere.
+    #[inline(always)]
+    pub fn x(&self) -> T {
+        self.0[0]
+    }
+
+    /// Sets the `x-coordinate` of the sphere.
+    #[inline(always)]
+    pub fn set_x(&mut self, x: T) {
+        self.0[0] = x;
+    }
+
+    /// Returns the `y-coordinate` of the sphere.
+    #[inline(always)]
+    pub fn y(&self) -> T {
+        self.0[1]
+    }
+
+    /// Sets the `y-coordinate` of the sphere.
+    #[inline(always)]
+    pub fn set_y(&mut self, y: T) {
+        self.0[1] = y;
+    }
+
+    /// Returns the `z-coordinate` of the sphere.
+    #[inline(always)]
+    pub fn z(&self) -> T {
+        self.0[2]
+    }
+
+    /// Sets the `z-coordinate` of the sphere.
+    #[inline(always)]
+    pub fn set_z(&mut self, z: T) {
+        self.0[2] = z;
+    }
+
+    /// Returns the `radius` of the sphere.
+    #[inline(always)]
+    pub fn radius(&self) -> T {
+        self.0[3]
+    }
+
+    /// Sets the `radius` of the sphere.
+    #[inline(always)]
+    pub fn set_radius(&mut self, radius: T) {
+        self.0[3] = radius;
+    }
+
     /// Returns the center [Point].
     pub fn center(&self) -> Point<T> {
-        point!(self.x, self.y, self.z)
+        point!(self.x(), self.y(), self.z())
     }
 }
 
@@ -94,10 +133,10 @@ impl<T: Number> Shape<T> for Sphere<T> {
         O: Into<Self::Item>,
     {
         let other = other.into();
-        let px = other.x - self.x;
-        let py = other.y - self.y;
-        let pz = other.z - self.z;
-        let r = self.radius;
+        let px = other.x() - self.x();
+        let py = other.y() - self.y();
+        let pz = other.z() - self.z();
+        let r = self.radius();
         (px * px + py * py + pz * pz) < r * r
     }
 
@@ -107,10 +146,10 @@ impl<T: Number> Shape<T> for Sphere<T> {
         O: Into<Self::Item>,
     {
         let other = other.into();
-        let px = other.x - self.x;
-        let py = other.y - self.y;
-        let pz = other.z - self.z;
-        let r = other.radius + self.radius;
+        let px = other.x() - self.x();
+        let py = other.y() - self.y();
+        let pz = other.z() - self.z();
+        let r = other.radius() + self.radius();
         (px * px + py * py + pz * pz) < r * r
     }
 }

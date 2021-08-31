@@ -269,8 +269,8 @@ impl App {
         for i in 0..628 {
             let (sin, cos) = (i as Scalar * 0.01).sin_cos();
             let idx = get_idx(
-                ((m.x / SCALE) as Scalar + r * cos).floor() as usize,
-                ((m.y / SCALE) as Scalar + r * sin).floor() as usize,
+                ((m.x() / SCALE) as Scalar + r * cos).floor() as usize,
+                ((m.y() / SCALE) as Scalar + r * sin).floor() as usize,
             );
             self.fluid.add_density(idx, random!(500.0));
         }

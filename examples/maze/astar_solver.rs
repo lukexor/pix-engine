@@ -22,6 +22,10 @@ impl AStarCell {
         }
     }
 
+    fn id(&self) -> usize {
+        self.cell.id()
+    }
+
     fn heuristic(&self, cell: &Cell) -> Scalar {
         let a = self.cell.col() - cell.col();
         let b = self.cell.row() - cell.row();
@@ -65,7 +69,7 @@ impl AStarSolver {
         let end = maze.random_cell();
         let start = maze.random_cell();
         let cells = maze
-            .cells
+            .cells()
             .iter()
             .map(|cell| AStarCell::new(*cell))
             .collect();
@@ -78,7 +82,7 @@ impl AStarSolver {
         heap.push(current);
 
         let mut open_set = HashSet::new();
-        open_set.insert(start.id);
+        open_set.insert(start.id());
 
         Self {
             start,
@@ -113,27 +117,27 @@ impl AStarSolver {
                 previous = cell.previous;
             }
 
-            if current.cell.id == self.end.id {
+            if current.id() == self.end.id() {
                 self.heap.clear();
                 self.open_set.clear();
                 self.completed = true;
             } else {
-                self.closed_set.insert(current.cell.id);
+                self.closed_set.insert(current.id());
                 current
                     .cell
-                    .walls
+                    .walls()
                     .iter()
                     .enumerate()
                     .filter(|(_, wall)| !*wall) // Filter only valid paths without a wall
                     .for_each(|(i, _)| {
                         if let Some(neighbor) = self.get_neighbor(&maze, &current.cell, i) {
-                            if !self.closed_set.contains(&neighbor.cell.id) {
+                            if !self.closed_set.contains(&neighbor.id()) {
                                 let tmp_g = current.g + 1.0;
                                 if tmp_g < neighbor.g {
                                     let neighbor = self.update_heuristic(&neighbor, &current);
-                                    if !self.open_set.contains(&neighbor.cell.id) {
+                                    if !self.open_set.contains(&neighbor.id()) {
                                         self.heap.push(neighbor);
-                                        self.open_set.insert(neighbor.cell.id);
+                                        self.open_set.insert(neighbor.id());
                                     }
                                 }
                             }
@@ -146,12 +150,12 @@ impl AStarSolver {
     }
 
     pub fn draw(&self, s: &mut PixState, maze: &Maze) -> PixResult<()> {
-        for cell in &maze.cells {
-            if self.path_set.contains(&cell.id) {
+        for cell in maze.cells().iter() {
+            if self.path_set.contains(&cell.id()) {
                 cell.draw(s, [0, 125, 125])?;
-            } else if self.closed_set.contains(&cell.id) {
+            } else if self.closed_set.contains(&cell.id()) {
                 cell.draw(s, [125, 0, 0])?;
-            } else if self.open_set.contains(&cell.id) {
+            } else if self.open_set.contains(&cell.id()) {
                 cell.draw(s, [225, 125, 0])?;
             } else {
                 cell.draw(s, 51)?;
@@ -177,8 +181,8 @@ impl AStarSolver {
     }
 
     fn update_heuristic(&mut self, cell: &AStarCell, current: &AStarCell) -> AStarCell {
-        let mut neighbor = &mut self.cells[cell.cell.id];
-        neighbor.previous = Some(current.cell.id);
+        let mut neighbor = &mut self.cells[cell.id()];
+        neighbor.previous = Some(current.id());
         neighbor.g = current.g + 1.0;
         neighbor.h = neighbor.heuristic(&self.end);
         neighbor.f = neighbor.g + neighbor.h;

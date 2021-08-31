@@ -41,8 +41,8 @@ impl PixState {
         let (tx, ty): (Vec<i16>, Vec<i16>) = vertexes
             .iter()
             .map(|v| {
-                let x = (v.x * cos - v.y * sin) * scale + p.x;
-                let y = (v.x * sin + v.y * cos) * scale + p.y;
+                let x = (v.x() * cos - v.y() * sin) * scale + p.x();
+                let y = (v.x() * sin + v.y() * cos) * scale + p.y();
                 (x as i16, y as i16)
             })
             .unzip();

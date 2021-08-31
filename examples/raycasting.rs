@@ -100,10 +100,10 @@ impl RayScene {
         for c in self.cells.iter_mut() {
             c.reset();
         }
-        for x in 0..rect.width {
-            for y in 0..rect.height {
-                let x_off = x + rect.x;
-                let y_off = y + rect.y;
+        for x in 0..rect.width() {
+            for y in 0..rect.height() {
+                let x_off = x + rect.x();
+                let y_off = y + rect.y();
                 let i = (y_off * pitch + x_off) as usize; // This
                 let n = ((y_off - 1) * pitch + x_off) as usize; // Northern neighbor
                 let s = ((y_off + 1) * pitch + x_off) as usize; // Sourthern neighbor
@@ -120,12 +120,13 @@ impl RayScene {
                         // Can extend down from northern neighbors WEST edge
                         if self.has_edge(n, WEST) {
                             let edge_id = self.get_edge_index(n, WEST)?;
-                            self.get_edge_mut(edge_id)?.end.y += block_size as Scalar;
+                            let edge = self.get_edge_mut(edge_id)?;
+                            edge.set_end([edge.end().x(), edge.end().y() + block_size as Scalar]);
                             self.cells[i].edges[WEST] = (true, edge_id);
                         } else {
                             // Create WEST edge extending downward
                             let start = vector!(x_off * block_size, y_off * block_size);
-                            let end = vector!(start.x, start.y + block_size as Scalar);
+                            let end = vector!(start.x(), start.y() + block_size as Scalar);
                             let edge = Line::new(start, end);
                             let edge_id = self.edges.len();
                             self.edges.push(edge);
@@ -133,17 +134,18 @@ impl RayScene {
                         }
                     }
                     // No eastern neighbor, so needs an edge
-                    if x < rect.width && !self.exists(e) {
+                    if x < rect.width() && !self.exists(e) {
                         // Can extend down from northern neighbors EAST edge
                         if self.has_edge(n, EAST) {
                             let edge_id = self.get_edge_index(n, EAST)?;
-                            self.get_edge_mut(edge_id)?.end.y += block_size as Scalar;
+                            let edge = self.get_edge_mut(edge_id)?;
+                            edge.set_end([edge.end().x(), edge.end().y() + block_size as Scalar]);
                             self.cells[i].edges[EAST] = (true, edge_id);
                         } else {
                             // Create EAST edge extending downward
                             let start =
                                 vector!(x_off * block_size + block_size, y_off * block_size);
-                            let end = vector!(start.x, start.y + block_size as Scalar);
+                            let end = vector!(start.x(), start.y() + block_size as Scalar);
                             let edge = Line::new(start, end);
                             let edge_id = self.edges.len();
                             self.edges.push(edge);
@@ -155,12 +157,13 @@ impl RayScene {
                         // Can extend from western neighbors NORTH edge
                         if self.has_edge(w, NORTH) {
                             let edge_id = self.get_edge_index(w, NORTH)?;
-                            self.get_edge_mut(edge_id)?.end.x += block_size as Scalar;
+                            let edge = self.get_edge_mut(edge_id)?;
+                            edge.set_end([edge.end().x() + block_size as Scalar, edge.end().y()]);
                             self.cells[i].edges[NORTH] = (true, edge_id);
                         } else {
                             // Create NORTH edge extending right
                             let start = vector!(x_off * block_size, y_off * block_size);
-                            let end = vector!(start.x + block_size as Scalar, start.y);
+                            let end = vector!(start.x() + block_size as Scalar, start.y());
                             let edge = Line::new(start, end);
                             let edge_id = self.edges.len();
                             self.edges.push(edge);
@@ -168,17 +171,18 @@ impl RayScene {
                         }
                     }
                     // No southern neighbor, so needs an edge
-                    if y < rect.height && !self.exists(s) {
+                    if y < rect.height() && !self.exists(s) {
                         // Can extend from western neighbors SOUTH edge
                         if self.has_edge(w, SOUTH) {
                             let edge_id = self.get_edge_index(w, SOUTH)?;
-                            self.get_edge_mut(edge_id)?.end.x += block_size as Scalar;
+                            let edge = self.get_edge_mut(edge_id)?;
+                            edge.set_end([edge.end().x() + block_size as Scalar, edge.end().y()]);
                             self.cells[i].edges[SOUTH] = (true, edge_id);
                         } else {
                             // Create SOUTH edge extending right
                             let start =
                                 vector!(x_off * block_size, y_off * block_size + block_size);
-                            let end = vector!(start.x + block_size as Scalar, start.y);
+                            let end = vector!(start.x() + block_size as Scalar, start.y());
                             let edge = Line::new(start, end);
                             let edge_id = self.edges.len();
                             self.edges.push(edge);
@@ -191,8 +195,8 @@ impl RayScene {
 
         self.points.clear();
         for edge in &self.edges {
-            self.points.push(edge.start);
-            self.points.push(edge.end);
+            self.points.push(edge.start());
+            self.points.push(edge.end());
         }
         self.points
             .sort_unstable_by(|a, b| a.partial_cmp(&b).unwrap_or(Less));
@@ -218,7 +222,7 @@ impl RayScene {
         self.polygons
             .sort_unstable_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(Less));
         self.polygons
-            .dedup_by(|a, b| (a.1.x - b.1.x).abs() < 0.5 && (a.1.y - b.1.y).abs() < 0.5);
+            .dedup_by(|a, b| (a.1.x() - b.1.x()).abs() < 0.5 && (a.1.y() - b.1.y()).abs() < 0.5);
     }
 
     fn cast_ray(&self, o: Point, r: Vector) -> Option<Point> {
@@ -261,7 +265,7 @@ impl RayScene {
 
         s.fill(BLACK);
         s.no_stroke();
-        s.circle([mouse.x, mouse.y, 2])?;
+        s.circle([mouse.x(), mouse.y(), 2])?;
         Ok(())
     }
 }
@@ -300,15 +304,15 @@ impl AppState for RayScene {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         let mouse = s.mouse_pos();
 
-        let (cx, cw) = if mouse.x - 254 < 0 {
-            (0, mouse.x + 255)
+        let (cx, cw) = if mouse.x() - 254 < 0 {
+            (0, mouse.x() + 255)
         } else {
-            (mouse.x - 254, 511)
+            (mouse.x() - 254, 511)
         };
-        let (cy, ch) = if mouse.y - 254 < 0 {
-            (0, mouse.y + 255)
+        let (cy, ch) = if mouse.y() - 254 < 0 {
+            (0, mouse.y() + 255)
         } else {
-            (mouse.y - 254, 511)
+            (mouse.y() - 254, 511)
         };
         s.clip([cx, cy, cw, ch]);
 
@@ -326,14 +330,14 @@ impl AppState for RayScene {
         }
 
         s.blend_mode(BlendMode::Mod);
-        s.image([mouse.x - 255, mouse.y - 255], &self.light)?;
+        s.image([mouse.x() - 255, mouse.y() - 255], &self.light)?;
         s.blend_mode(BlendMode::None);
 
         if let Some(cell) = in_cell {
             s.clear();
-            s.square([cell.pos.x, cell.pos.y, BLOCK_SIZE as Scalar])?;
+            s.square([cell.pos.x(), cell.pos.y(), BLOCK_SIZE as Scalar])?;
             s.fill(YELLOW);
-            s.circle([mouse.x, mouse.y, 2])?;
+            s.circle([mouse.x(), mouse.y(), 2])?;
         }
 
         Ok(())
@@ -341,7 +345,7 @@ impl AppState for RayScene {
 
     fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse, pos: Point<i32>) -> PixResult<()> {
         if btn == Mouse::Left && rect![0, 0, s.width(), s.height()].contains_point(pos) {
-            let i = self.get_cell_index(pos.x, pos.y);
+            let i = self.get_cell_index(pos.x(), pos.y());
             self.cells[i].exists = !self.cells[i].exists;
             self.drawing = self.cells[i].exists;
             self.convert_edges_to_poly_map()?;
@@ -355,7 +359,7 @@ impl AppState for RayScene {
             let pm = s.pmouse_pos();
             if rect![0, 0, s.width(), s.height()].contains_point(m) {
                 if m != pm {
-                    let i = self.get_cell_index(m.x, m.y);
+                    let i = self.get_cell_index(m.x(), m.y());
                     self.cells[i].exists = self.drawing;
                 }
                 self.convert_edges_to_poly_map()?;

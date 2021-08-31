@@ -9,13 +9,10 @@ impl PixState {
         P: Into<Point<Primitive>>,
     {
         let s = &self.settings;
-        let p = p.into();
-        let p = match s.rect_mode {
-            DrawMode::Corner => p,
-            DrawMode::Center => {
-                let (width, height) = self.renderer.size_of(text)?;
-                point!(p.x - width / 2, p.y - height / 2)
-            }
+        let mut p = p.into();
+        if let DrawMode::Center = s.rect_mode {
+            let (width, height) = self.renderer.size_of(text)?;
+            p = point!(p.x() - width / 2, p.y() - height / 2);
         };
         Ok(self.renderer.text(&p, text, s.fill, s.stroke)?)
     }

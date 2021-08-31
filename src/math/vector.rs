@@ -68,23 +68,23 @@
 //! let v: Vector = Vector::random_1d();
 //! // `v.values()` will return something like:
 //! // [-0.9993116191591512, 0.03709835324533284, 0.0]
-//! assert!(v.x >= -1.0 && v.x <= 1.0);
-//! assert_eq!(v.y, 0.0);
-//! assert_eq!(v.z, 0.0);
+//! assert!(v.x() >= -1.0 && v.x() <= 1.0);
+//! assert_eq!(v.y(), 0.0);
+//! assert_eq!(v.z(), 0.0);
 //!
 //! let v: Vector = Vector::random_2d();
 //! // `v.values()` will return something like:
 //! // [-0.9993116191591512, 0.03709835324533284, 0.0]
-//! assert!(v.x >= -1.0 && v.x <= 1.0);
-//! assert!(v.y >= -1.0 && v.y <= 1.0);
-//! assert_eq!(v.z, 0.0);
+//! assert!(v.x() >= -1.0 && v.x() <= 1.0);
+//! assert!(v.y() >= -1.0 && v.y() <= 1.0);
+//! assert_eq!(v.z(), 0.0);
 //!
 //! let v: Vector = Vector::random_3d();
 //! // `v.values()` will return something like:
 //! // [-0.40038099206441835, 0.8985763512414204, 0.17959844705110184]
-//! assert!(v.x >= -1.0 && v.x <= 1.0);
-//! assert!(v.y >= -1.0 && v.y <= 1.0);
-//! assert!(v.z >= -1.0 && v.z <= 1.0);
+//! assert!(v.x() >= -1.0 && v.x() <= 1.0);
+//! assert!(v.y() >= -1.0 && v.y() <= 1.0);
+//! assert!(v.z() >= -1.0 && v.z() <= 1.0);
 //! ```
 
 use crate::prelude::*;
@@ -93,10 +93,9 @@ use rand::distributions::uniform::SampleUniform;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::{
-    array::IntoIter,
     convert::{TryFrom, TryInto},
     fmt,
-    iter::{once, Chain, FromIterator, Once, Sum},
+    iter::{FromIterator, Sum},
     ops::*,
 };
 
@@ -117,17 +116,10 @@ use std::{
 /// [Euclidean]: https://en.wikipedia.org/wiki/Euclidean_vector
 /// [mag]: Vector::mag
 /// [heading]: Vector::heading
-/// [vecmath]: https://en.wikipedia.org/wiki/Vector_(mathematics_and_physics)
+/// [vecmath]: https://en.wikipedia.org/wiki/Vector_(mathematics_and_p.y()sics)
 #[derive(Default, Debug, Copy, Clone, PartialEq, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Vector<T = Scalar> {
-    /// X magnitude
-    pub x: T,
-    /// Y magnitude
-    pub y: T,
-    /// Z magnitude
-    pub z: T,
-}
+pub struct Vector<T = Scalar>([T; 3]);
 
 /// # Constructs a [Vector].
 ///
@@ -174,9 +166,26 @@ impl<T> Vector<T> {
     /// assert_eq!(v.values(), [2.1, 3.5, 1.0]);
     /// ```
     pub const fn new(x: T, y: T, z: T) -> Self {
-        Self { x, y, z }
+        Self([x, y, z])
     }
 
+    /// Set `Vector` coordinates from any type that implements [Into<Vector<T>>].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut v = Vector::new(2.0, 1.0, 3.0);
+    /// assert_eq!(v.values(), [2.0, 1.0, 3.0]);
+    /// v.set([1.0, 2.0, 4.0]);
+    /// assert_eq!(v.values(), [1.0, 2.0, 4.0]);
+    /// ```
+    pub fn set(&mut self, [x, y, z]: [T; 3]) {
+        self.0 = [x, y, z];
+    }
+}
+
+impl<T: Number> Vector<T> {
     /// Constructs a `Vector<T>` from a [Point].
     ///
     /// # Example
@@ -188,38 +197,45 @@ impl<T> Vector<T> {
     /// assert_eq!(v.values(), [1.0, 2.0, 0.0]);
     /// ```
     pub fn from_point(p: Point<T>) -> Self {
-        Self::new(p.x, p.y, p.z)
+        Self::new(p.x(), p.y(), p.z())
     }
 
-    /// Set `Vector` coordinates from any type that implements [Into<Vector<T>>].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let mut v1 = Vector::new(2.0, 1.0, 3.0);
-    /// assert_eq!(v1.values(), [2.0, 1.0, 3.0]);
-    /// v1.set([1.0, 2.0, 4.0]);
-    /// assert_eq!(v1.values(), [1.0, 2.0, 4.0]);
-    /// ```
-    pub fn set(&mut self, [x, y, z]: [T; 3]) {
-        self.x = x;
-        self.y = y;
-        self.z = z;
+    /// Returns the `x-magnitude`.
+    #[inline(always)]
+    pub fn x(&self) -> T {
+        self.0[0]
     }
 
-    /// Convert `Vector<T>` to another primitive type using the `as` operator.
-    #[inline]
-    pub fn as_<U>(self) -> Vector<U>
-    where
-        T: AsPrimitive<U>,
-        U: 'static + Copy,
-    {
-        Vector::new(self.x.as_(), self.y.as_(), self.z.as_())
+    /// Sets the `x-magnitude`.
+    #[inline(always)]
+    pub fn set_x(&mut self, x: T) {
+        self.0[0] = x;
     }
-}
 
-impl<T: Number> Vector<T> {
+    /// Returns the `y-magnitude`.
+    #[inline(always)]
+    pub fn y(&self) -> T {
+        self.0[1]
+    }
+
+    /// Sets the `y-magnitude`.
+    #[inline(always)]
+    pub fn set_y(&mut self, y: T) {
+        self.0[1] = y;
+    }
+
+    /// Returns the `z-magnitude`.
+    #[inline(always)]
+    pub fn z(&self) -> T {
+        self.0[2]
+    }
+
+    /// Sets the `z-magnitude`.
+    #[inline(always)]
+    pub fn set_z(&mut self, z: T) {
+        self.0[2] = z;
+    }
+
     /// Get `Vector` coordinates as `[x, y, z]`.
     ///
     /// # Example
@@ -230,7 +246,7 @@ impl<T: Number> Vector<T> {
     /// assert_eq!(v.values(), [2.0, 1.0, 3.0]);
     /// ```
     pub fn values(&self) -> [T; 3] {
-        [self.x, self.y, self.z]
+        [self.x(), self.y(), self.z()]
     }
 
     /// Constructs a `Vector<T>` with only an `x` magnitude.
@@ -259,47 +275,23 @@ impl<T: Number> Vector<T> {
         Self::new(x, y, T::zero())
     }
 
-    /// Constructs a `Vector<T>` by multiplying it by the given scale factor.
+    /// Convert `Vector<T>` to another primitive type using the `as` operator.
+    #[inline]
+    pub fn as_<U>(self) -> Vector<U>
+    where
+        T: AsPrimitive<U>,
+        U: 'static + Copy,
+    {
+        Vector::new(self.x().as_(), self.y().as_(), self.z().as_())
+    }
+
+    /// Constructs a `Vector<T>` by multip.y()ing it by the given scale factor.
     pub fn scale<U>(self, s: U) -> Self
     where
         T: Mul<U, Output = T>,
         U: Number,
     {
         self * s
-    }
-
-    /// Returns an iterator over the `Vector`s coordinates `[x, y, z]`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v = vector!(1.0, 2.0, -4.0);
-    /// let mut iterator = v.iter();
-    ///
-    /// assert_eq!(iterator.next(), Some(&1.0));
-    /// assert_eq!(iterator.next(), Some(&2.0));
-    /// assert_eq!(iterator.next(), Some(&-4.0));
-    /// assert_eq!(iterator.next(), None);
-    /// ```
-    pub fn iter(&self) -> Iter<'_, T> {
-        Iter::new(self)
-    }
-
-    /// Returns an iterator over the `Vector` that allows modifying each value.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let mut v = vector!(1.0, 2.0, -4.0);
-    /// for value in v.iter_mut() {
-    ///     *value *= 2.0;
-    /// }
-    /// assert_eq!(v.values(), [2.0, 4.0, -8.0]);
-    /// ```
-    pub fn iter_mut(&mut self) -> IterMut<'_, T> {
-        IterMut::new(self)
     }
 
     /// Wraps `Vector` around the given width, height, and size (radius).
@@ -320,15 +312,15 @@ impl<T: Number> Vector<T> {
     where
         T: Copy + PartialOrd + Signed,
     {
-        if self.x > width + size {
-            self.x = -size;
-        } else if self.x < -size {
-            self.x = width + size;
+        if self.x() > width + size {
+            self.set_x(-size);
+        } else if self.x() < -size {
+            self.set_x(width + size);
         }
-        if self.y > height + size {
-            self.y = -size;
-        } else if self.y < -size {
-            self.y = height + size;
+        if self.y() > height + size {
+            self.set_y(-size);
+        } else if self.y() < -size {
+            self.set_y(height + size);
         }
     }
 
@@ -350,20 +342,20 @@ impl<T: Number> Vector<T> {
     where
         T: Copy + PartialOrd + Signed,
     {
-        if self.x > width + size {
-            self.x = -size;
-        } else if self.x < -size {
-            self.x = width + size;
+        if self.x() > width + size {
+            self.set_x(-size);
+        } else if self.x() < -size {
+            self.set_x(width + size);
         }
-        if self.y > height + size {
-            self.y = -size;
-        } else if self.y < -size {
-            self.y = height + size;
+        if self.y() > height + size {
+            self.set_y(-size);
+        } else if self.y() < -size {
+            self.set_y(height + size);
         }
-        if self.z > depth + size {
-            self.z = -size;
-        } else if self.z < -size {
-            self.z = depth + size;
+        if self.z() > depth + size {
+            self.set_z(-size);
+        } else if self.z() < -size {
+            self.set_z(depth + size);
         }
     }
 }
@@ -372,7 +364,7 @@ impl<T: Float> Vector<T> {
     /// Returns `Vector` with values rounded to the nearest integer number. Round half-way cases
     /// away from `0.0`.
     pub fn round(&self) -> Self {
-        Self::new(self.x.round(), self.y.round(), self.z.round())
+        Self::new(self.x().round(), self.y().round(), self.z().round())
     }
 
     /// Constructs a `Vector<T>` from a reflection about a normal to a line in 2D space or a plane in 3D
@@ -445,9 +437,9 @@ impl<T: Float> Vector<T> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let v: Vector = Vector::random_1d();
-    /// assert!(v.x > -1.0 && v.x < 1.0);
-    /// assert_eq!(v.y, 0.0);
-    /// assert_eq!(v.z, 0.0);
+    /// assert!(v.x() > -1.0 && v.x() < 1.0);
+    /// assert_eq!(v.y(), 0.0);
+    /// assert_eq!(v.z(), 0.0);
     ///
     /// // May make v's (x, y, z) values something like:
     /// // (0.61554617, 0.0, 0.0) or
@@ -468,9 +460,9 @@ impl<T: Float> Vector<T> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let v: Vector = Vector::random_2d();
-    /// assert!(v.x > -1.0 && v.x < 1.0);
-    /// assert!(v.y > -1.0 && v.y < 1.0);
-    /// assert_eq!(v.z, 0.0);
+    /// assert!(v.x() > -1.0 && v.x() < 1.0);
+    /// assert!(v.y() > -1.0 && v.y() < 1.0);
+    /// assert_eq!(v.z(), 0.0);
     ///
     /// // May make v's (x, y, z) values something like:
     /// // (0.61554617, -0.51195765, 0.0) or
@@ -494,9 +486,9 @@ impl<T: Float> Vector<T> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let v: Vector = Vector::random_3d();
-    /// assert!(v.x > -1.0 && v.x < 1.0);
-    /// assert!(v.y > -1.0 && v.y < 1.0);
-    /// assert!(v.z > -1.0 && v.z < 1.0);
+    /// assert!(v.x() > -1.0 && v.x() < 1.0);
+    /// assert!(v.y() > -1.0 && v.y() < 1.0);
+    /// assert!(v.z() > -1.0 && v.z() < 1.0);
     ///
     /// // May make v's (x, y, z) values something like:
     /// // (0.61554617, -0.51195765, 0.599168) or
@@ -525,7 +517,7 @@ impl<T: Float> Vector<T> {
     /// assert_eq!(v.to_vec(), vec![1.0, 1.0, 0.0]);
     /// ```
     pub fn to_vec(self) -> Vec<T> {
-        vec![self.x, self.y, self.z]
+        self.0.to_vec()
     }
 
     /// Constructs a 2D unit `Vector<T>` in the XY plane from a given angle. Angle is given as radians
@@ -572,7 +564,7 @@ impl<T: Float> Vector<T> {
     /// assert_eq!(v.mag_sq(), 14.0);
     /// ```
     pub fn mag_sq(&self) -> T {
-        self.x * self.x + self.y * self.y + self.z * self.z
+        self.x() * self.x() + self.y() * self.y() + self.z() * self.z()
     }
 
     /// Returns the [dot product](https://en.wikipedia.org/wiki/Dot_product) betwen two `Vector`s.
@@ -588,7 +580,7 @@ impl<T: Float> Vector<T> {
     /// ```
     pub fn dot<V: Into<Vector<T>>>(&self, v: V) -> T {
         let v = v.into();
-        self.x * v.x + self.y * v.y + self.z * v.z
+        self.x() * v.x() + self.y() * v.y() + self.z() * v.z()
     }
 
     /// Returns the [cross product](https://en.wikipedia.org/wiki/Cross_product) between two
@@ -606,9 +598,9 @@ impl<T: Float> Vector<T> {
     pub fn cross<V: Into<Vector<T>>>(&self, v: V) -> Self {
         let v = v.into();
         Self::new(
-            self.y * v.z - self.z * v.y,
-            self.z * v.x - self.x * v.z,
-            self.x * v.y - self.y * v.x,
+            self.y() * v.z() - self.z() * v.y(),
+            self.z() * v.x() - self.x() * v.z(),
+            self.x() * v.y() - self.y() * v.x(),
         )
     }
 
@@ -621,8 +613,8 @@ impl<T: Float> Vector<T> {
     /// let mut v = vector!(4.0, 6.0); // Vector heading right and down
     /// let n = vector!(0.0, 1.0); // Surface normal facing up
     /// v.reflect(n); // Reflect about the surface normal (e.g. the x-axis)
-    /// assert_eq!(v.x, -4.0);
-    /// assert_eq!(v.y, 6.0);
+    /// assert_eq!(v.x(), -4.0);
+    /// assert_eq!(v.y(), 6.0);
     /// ```
     pub fn reflect<V: Into<Vector<T>>>(&mut self, normal: V)
     where
@@ -684,7 +676,7 @@ impl<T: Float> Vector<T> {
     {
         let len = self.mag();
         if len != T::zero() {
-            // Multiply by the reciprocol so we don't duplicate a div by zero check
+            // Multip.y() by the reciprocol so we don't duplicate a div by zero check
             *self *= len.recip();
         }
     }
@@ -721,7 +713,7 @@ impl<T: Float> Vector<T> {
     /// assert_eq!(heading.to_degrees(), 45.0);
     /// ```
     pub fn heading(&self) -> T {
-        self.y.atan2(self.x)
+        self.y().atan2(self.x())
     }
 
     /// Rotate a 2D `Vector` by an angle in radians, magnitude remains the same. Unaffected by
@@ -740,8 +732,8 @@ impl<T: Float> Vector<T> {
         let new_heading = self.heading() + angle;
         let mag = self.mag();
         let (sin, cos) = new_heading.sin_cos();
-        self.x = cos * mag;
-        self.y = sin * mag;
+        self.set_x(cos * mag);
+        self.set_y(sin * mag);
     }
 
     /// Returns the angle between two `Vector`s in radians.
@@ -760,7 +752,7 @@ impl<T: Float> Vector<T> {
         // This should range from -1.0 to 1.0, inclusive but could possibly land outside this range
         // due to floating-point rounding, so we'll need to clamp it to the correct range.
         let dot_mag_product = clamp(self.dot(v) / (self.mag() * v.mag()), -T::one(), T::one());
-        dot_mag_product.acos() * self.cross(v).z.signum()
+        dot_mag_product.acos() * self.cross(v).z().signum()
     }
 
     /// Constructs a `Vector<T>` by linear interpolating between two `Vector`s by a given amount
@@ -781,24 +773,24 @@ impl<T: Float> Vector<T> {
 
         let v = v.into();
         Self::new(
-            lerp(self.x, v.x, amt),
-            lerp(self.y, v.y, amt),
-            lerp(self.z, v.z, amt),
+            lerp(self.x(), v.x(), amt),
+            lerp(self.y(), v.y(), amt),
+            lerp(self.z(), v.z(), amt),
         )
     }
 
     /// Returns whether two `Vector`s are approximately equal.
     pub fn approx_eq(&self, other: Vector<T>, epsilon: T) -> bool {
-        let xd = (self.x - other.x).abs();
-        let yd = (self.y - other.y).abs();
-        let zd = (self.z - other.z).abs();
+        let xd = (self.x() - other.x()).abs();
+        let yd = (self.y() - other.y()).abs();
+        let zd = (self.z() - other.z()).abs();
         xd < epsilon && yd < epsilon && zd < epsilon
     }
 }
 
 impl<T: Number> From<&mut Vector<T>> for Vector<T> {
     fn from(v: &mut Vector<T>) -> Self {
-        v.clone()
+        *v
     }
 }
 
@@ -808,140 +800,30 @@ impl<T: Number> From<&Vector<T>> for Vector<T> {
     }
 }
 
-impl<T: Number> ExactSizeIterator for Iter<'_, T> {}
-impl<T: Number> ExactSizeIterator for IterMut<'_, T> {}
-
 impl<T: Number> FromIterator<T> for Vector<T> {
     fn from_iter<I>(iter: I) -> Self
     where
         I: IntoIterator<Item = T>,
     {
-        let mut xyz = [T::zero(), T::zero(), T::zero()];
-        for (i, v) in iter.into_iter().enumerate() {
-            xyz[i] = v;
-        }
-        let [x, y, z] = xyz;
-        Self::new(x, y, z)
+        let mut iter = iter.into_iter();
+        Self([
+            iter.next().unwrap_or_else(T::zero),
+            iter.next().unwrap_or_else(T::zero),
+            iter.next().unwrap_or_else(T::zero),
+        ])
     }
 }
 
-impl<T> IntoIterator for Vector<T> {
-    type Item = T;
-    type IntoIter = IntoIter<Self::Item, 3>;
-
-    /// Owned `Vector<T>` iterator over `[x, y, z]`.
-    ///
-    /// This struct is created by the [into_iter](Vector::into_iter) method on [Vector]s.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v = vector!(1.0, 2.0, -4.0);
-    /// let mut iterator = v.into_iter();
-    ///
-    /// assert_eq!(iterator.next(), Some(1.0));
-    /// assert_eq!(iterator.next(), Some(2.0));
-    /// assert_eq!(iterator.next(), Some(-4.0));
-    /// assert_eq!(iterator.next(), None);
-    /// ```
-    fn into_iter(self) -> Self::IntoIter {
-        IntoIter::new([self.x, self.y, self.z])
+impl<T> Deref for Vector<T> {
+    type Target = [T; 3];
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
-/// Immutable iterator over `[x, y, z]` of `Vector`.
-///
-/// This struct is created by the [iter](Vector::iter) method on [Vector]s.
-///
-/// # Example
-///
-/// ```
-/// # use pix_engine::prelude::*;
-/// let v = vector!(1.0, 2.0, -4.0);
-/// let mut iterator = v.iter();
-///
-/// assert_eq!(iterator.next(), Some(&1.0));
-/// assert_eq!(iterator.next(), Some(&2.0));
-/// assert_eq!(iterator.next(), Some(&-4.0));
-/// assert_eq!(iterator.next(), None);
-/// ```
-#[derive(Debug, Clone)]
-pub struct Iter<'a, T = Scalar> {
-    inner: [&'a T; 3],
-    current: usize,
-}
-
-impl<'a, T: Number> Iter<'a, T> {
-    fn new(v: &'a Vector<T>) -> Self {
-        Self {
-            inner: [&v.x, &v.y, &v.z],
-            current: 0,
-        }
-    }
-}
-
-impl<'a, T: Number> Iterator for Iter<'a, T> {
-    type Item = &'a T;
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.current > 2 {
-            return None;
-        }
-        let next = self.inner[self.current];
-        self.current += 1;
-        Some(next)
-    }
-}
-
-impl<'a, T: Number> IntoIterator for &'a Vector<T> {
-    type Item = &'a T;
-    type IntoIter = Iter<'a, T>;
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
-    }
-}
-
-type ThreeChain<T> = Chain<Chain<Once<T>, Once<T>>, Once<T>>;
-
-/// Mutable iterator over `[x, y, z]` of `Vector`.
-///
-/// This struct is created by the [iter_mut](Vector::iter_mut) method on [Vector]s.
-///
-/// # Example
-///
-/// ```
-/// # use pix_engine::prelude::*;
-/// let mut v = vector!(1.0, 2.0, -4.0);
-/// for value in v.iter_mut() {
-///     *value *= 2.0;
-/// }
-/// assert_eq!(v.values(), [2.0, 4.0, -8.0]);
-/// ```
-#[derive(Debug)]
-pub struct IterMut<'a, T = Scalar> {
-    inner: ThreeChain<&'a mut T>,
-}
-
-impl<'a, T: Number> IterMut<'a, T> {
-    fn new(v: &'a mut Vector<T>) -> Self {
-        Self {
-            inner: once(&mut v.x).chain(once(&mut v.y)).chain(once(&mut v.z)),
-        }
-    }
-}
-
-impl<'a, T: Number> Iterator for IterMut<'a, T> {
-    type Item = &'a mut T;
-    fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next()
-    }
-}
-
-impl<'a, T: Number> IntoIterator for &'a mut Vector<T> {
-    type Item = &'a mut T;
-    type IntoIter = IterMut<'a, T>;
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter_mut()
+impl<T> DerefMut for Vector<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
@@ -950,23 +832,13 @@ impl<'a, T: Number> IntoIterator for &'a mut Vector<T> {
 impl<T: Number> Index<usize> for Vector<T> {
     type Output = T;
     fn index(&self, idx: usize) -> &Self::Output {
-        match idx {
-            0 => &self.x,
-            1 => &self.y,
-            2 => &self.z,
-            _ => panic!("index out of bounds: the len is 3 but the index is {}", idx),
-        }
+        &self.0[idx]
     }
 }
 
 impl<T: Number> IndexMut<usize> for Vector<T> {
     fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
-        match idx {
-            0 => &mut self.x,
-            1 => &mut self.y,
-            2 => &mut self.z,
-            _ => panic!("index out of bounds: the len is 3 but the index is {}", idx),
-        }
+        &mut self.0[idx]
     }
 }
 
@@ -974,7 +846,7 @@ impl<T: Number> IndexMut<usize> for Vector<T> {
 impl<T: Number> Add for Vector<T> {
     type Output = Self;
     fn add(self, v: Vector<T>) -> Self::Output {
-        Vector::new(self.x + v.x, self.y + v.y, self.z + v.z)
+        Self::Output::new(self.x() + v.x(), self.y() + v.y(), self.z() + v.z())
     }
 }
 
@@ -986,32 +858,32 @@ where
 {
     type Output = Self;
     fn add(self, val: U) -> Self::Output {
-        Self::Output::new(self.x + val, self.y + val, self.z + val)
+        Self::Output::new(self.x() + val, self.y() + val, self.z() + val)
     }
 }
 
 /// [Vector] += [Vector].
 impl<T> AddAssign for Vector<T>
 where
-    T: AddAssign,
+    T: Number + Add<Output = T>,
 {
     fn add_assign(&mut self, v: Vector<T>) {
-        self.x += v.x;
-        self.y += v.y;
-        self.z += v.z;
+        self.set_x(self.x() + v.x());
+        self.set_y(self.y() + v.y());
+        self.set_z(self.z() + v.z());
     }
 }
 
 /// [Vector] += U.
 impl<T, U> AddAssign<U> for Vector<T>
 where
-    T: AddAssign<U>,
+    T: Number + Add<U, Output = T>,
     U: Number,
 {
     fn add_assign(&mut self, val: U) {
-        self.x += val;
-        self.y += val;
-        self.z += val;
+        self.set_x(self.x() + val);
+        self.set_y(self.y() + val);
+        self.set_z(self.z() + val);
     }
 }
 
@@ -1019,7 +891,7 @@ where
 impl<T: Number> Sub for Vector<T> {
     type Output = Self;
     fn sub(self, v: Vector<T>) -> Self::Output {
-        Vector::new(self.x - v.x, self.y - v.y, self.z - v.z)
+        Self::Output::new(self.x() - v.x(), self.y() - v.y(), self.z() - v.z())
     }
 }
 
@@ -1031,32 +903,32 @@ where
 {
     type Output = Self;
     fn sub(self, val: U) -> Self::Output {
-        Self::Output::new(self.x - val, self.y - val, self.z - val)
+        Self::Output::new(self.x() - val, self.y() - val, self.z() - val)
     }
 }
 
 /// [Vector] -= [Vector].
 impl<T> SubAssign for Vector<T>
 where
-    T: SubAssign,
+    T: Number + Sub<Output = T>,
 {
     fn sub_assign(&mut self, v: Vector<T>) {
-        self.x -= v.x;
-        self.y -= v.y;
-        self.z -= v.z;
+        self.set_x(self.x() - v.x());
+        self.set_y(self.y() - v.y());
+        self.set_z(self.z() - v.z());
     }
 }
 
 /// [Vector] -= U.
 impl<T, U> SubAssign<U> for Vector<T>
 where
-    T: SubAssign<U>,
+    T: Number + Sub<U, Output = T>,
     U: Number,
 {
     fn sub_assign(&mut self, val: U) {
-        self.x -= val;
-        self.y -= val;
-        self.z -= val;
+        self.set_x(self.x() - val);
+        self.set_y(self.y() - val);
+        self.set_z(self.z() - val);
     }
 }
 
@@ -1067,7 +939,7 @@ where
 {
     type Output = Self;
     fn neg(self) -> Self::Output {
-        Vector::new(-self.x, -self.y, -self.z)
+        Self::Output::new(-self.x(), -self.y(), -self.z())
     }
 }
 
@@ -1079,20 +951,20 @@ where
 {
     type Output = Self;
     fn mul(self, s: U) -> Self::Output {
-        Vector::new(self.x * s, self.y * s, self.z * s)
+        Self::Output::new(self.x() * s, self.y() * s, self.z() * s)
     }
 }
 
 /// [Vector] *= U.
 impl<T, U> MulAssign<U> for Vector<T>
 where
-    T: Number + MulAssign<U>,
+    T: Number + Mul<U, Output = T>,
     U: Number,
 {
     fn mul_assign(&mut self, s: U) {
-        self.x *= s;
-        self.y *= s;
-        self.z *= s;
+        self.set_x(self.x() * s);
+        self.set_y(self.y() * s);
+        self.set_z(self.z() * s);
     }
 }
 
@@ -1104,20 +976,20 @@ where
 {
     type Output = Self;
     fn div(self, s: U) -> Self::Output {
-        Vector::new(self.x / s, self.y / s, self.z / s)
+        Self::Output::new(self.x() / s, self.y() / s, self.z() / s)
     }
 }
 
 /// [Vector] /= U.
 impl<T, U> DivAssign<U> for Vector<T>
 where
-    T: Number + DivAssign<U>,
+    T: Number + Div<U, Output = T>,
     U: Number,
 {
     fn div_assign(&mut self, s: U) {
-        self.x /= s;
-        self.y /= s;
-        self.z /= s;
+        self.set_x(self.x() / s);
+        self.set_y(self.y() / s);
+        self.set_z(self.z() / s);
     }
 }
 
@@ -1128,7 +1000,7 @@ macro_rules! impl_primitive_mul {
             impl Mul<Vector<$target>> for $target {
                 type Output = Vector<$target>;
                 fn mul(self, v: Vector<$target>) -> Self::Output {
-                    Vector::new(self * v.x, self * v.y, self * v.z)
+                    Self::Output::new(self * v.x(), self * v.y(), self * v.z())
                 }
             }
         )*
@@ -1170,7 +1042,7 @@ macro_rules! impl_from {
         $(
             impl From<Vector<$from>> for Vector<$to> {
                 fn from(v: Vector<$from>) -> Self {
-                    Self::new(v.x.into(), v.y.into(), v.z.into())
+                    Self::new(v.x().into(), v.y().into(), v.z().into())
                 }
             }
         )*
@@ -1191,7 +1063,7 @@ macro_rules! impl_try_from {
             impl TryFrom<Vector<$from>> for Vector<$to> {
                 type Error = std::num::TryFromIntError;
                 fn try_from(v: Vector<$from>) -> Result<Self, Self::Error> {
-                    Ok(Self::new(v.x.try_into()?, v.y.try_into()?, v.z.try_into()?))
+                    Ok(Self::new(v.x().try_into()?, v.y().try_into()?, v.z().try_into()?))
                 }
             }
         )*
@@ -1212,39 +1084,39 @@ impl_try_from!(usize => i8, u8, i16, u16, i32, u32, i64, u64, isize);
 /// Convert [Vector] to `[x]`.
 impl<T: Number> From<Vector<T>> for [T; 1] {
     fn from(v: Vector<T>) -> Self {
-        [v.x]
+        [v.x()]
     }
 }
 /// Convert &[Vector] to `[x]`.
 impl<T: Number> From<&Vector<T>> for [T; 1] {
     fn from(v: &Vector<T>) -> Self {
-        [v.x]
+        [v.x()]
     }
 }
 
 /// Convert [Vector] to `[x, y]`.
 impl<T: Number> From<Vector<T>> for [T; 2] {
     fn from(v: Vector<T>) -> Self {
-        [v.x, v.y]
+        [v.x(), v.y()]
     }
 }
 /// Convert &[Vector] to `[x, y]`.
 impl<T: Number> From<&Vector<T>> for [T; 2] {
     fn from(v: &Vector<T>) -> Self {
-        [v.x, v.y]
+        [v.x(), v.y()]
     }
 }
 
 /// Convert [Vector] to `[x, y, z]`.
 impl<T: Number> From<Vector<T>> for [T; 3] {
     fn from(v: Vector<T>) -> Self {
-        [v.x, v.y, v.z]
+        [v.x(), v.y(), v.z()]
     }
 }
 /// Convert &[Vector] to `[x, y, z]`.
 impl<T: Number> From<&Vector<T>> for [T; 3] {
     fn from(v: &Vector<T>) -> Self {
-        [v.x, v.y, v.z]
+        [v.x(), v.y(), v.z()]
     }
 }
 
@@ -1288,40 +1160,40 @@ impl<T: Number, U: Copy + Into<T>> From<&[U; 3]> for Vector<T> {
 }
 
 /// Converts [Point] to [Vector].
-impl<T: Number, U: Into<T>> From<Point<U>> for Vector<T> {
+impl<T: Number, U: Number + Into<T>> From<Point<U>> for Vector<T> {
     fn from(p: Point<U>) -> Self {
-        Self::new(p.x.into(), p.y.into(), p.z.into())
+        Self::new(p.x().into(), p.y().into(), p.z().into())
     }
 }
 
 /// Converts &[Point] to [Vector].
-impl<T: Number, U: Copy + Into<T>> From<&Point<U>> for Vector<T> {
+impl<T: Number, U: Number + Into<T>> From<&Point<U>> for Vector<T> {
     fn from(p: &Point<U>) -> Self {
-        Self::new(p.x.into(), p.y.into(), p.z.into())
+        Self::new(p.x().into(), p.y().into(), p.z().into())
     }
 }
 
 /// Converts [Vector] to [Point].
-impl<T: Number, U: Into<T>> From<Vector<U>> for Point<T> {
+impl<T: Number, U: Number + Into<T>> From<Vector<U>> for Point<T> {
     fn from(v: Vector<U>) -> Self {
-        Self::new(v.x.into(), v.y.into(), v.z.into())
+        Self::new(v.x().into(), v.y().into(), v.z().into())
     }
 }
 
 /// Converts &[Vector] to [Point].
-impl<T: Number, U: Copy + Into<T>> From<&Vector<U>> for Point<T> {
+impl<T: Number, U: Number + Into<T>> From<&Vector<U>> for Point<T> {
     fn from(v: &Vector<U>) -> Self {
-        Self::new(v.x.into(), v.y.into(), v.z.into())
+        Self::new(v.x().into(), v.y().into(), v.z().into())
     }
 }
 
 /// Display [Vector] as "[x, y, z]".
 impl<T> fmt::Display for Vector<T>
 where
-    T: fmt::Display,
+    T: Number + fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "[{}, {}, {}]", self.x, self.y, self.z)
+        write!(f, "[{}, {}, {}]", self.x(), self.y(), self.z())
     }
 }
 

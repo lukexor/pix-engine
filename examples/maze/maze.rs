@@ -7,7 +7,7 @@ pub struct Maze {
     cols: Primitive,
     rows: Primitive,
     size: Primitive,
-    pub cells: Vec<Cell>,
+    cells: Vec<Cell>,
 }
 
 impl Maze {
@@ -33,6 +33,14 @@ impl Maze {
         } else {
             None
         }
+    }
+
+    pub fn cells(&self) -> &Vec<Cell> {
+        &self.cells
+    }
+
+    pub fn get_cell_mut(&mut self, idx: usize) -> Option<&mut Cell> {
+        self.cells.get_mut(idx)
     }
 
     pub fn get_neighbor(&self, cell: &Cell, index: usize) -> Option<(Direction, Cell)> {

@@ -266,7 +266,7 @@ impl Rendering for Renderer {
                 Ok(self.canvas.copy(
                     &texture,
                     None,
-                    Some(SdlRect::new(pos.x, pos.y, width, height)),
+                    Some(SdlRect::new(pos.x(), pos.y(), width, height)),
                 )?)
             }
             (Some(_), None) => Err(Error::InvalidFont(self.font.0.to_owned())),
@@ -289,7 +289,7 @@ impl Rendering for Renderer {
 
     /// Draw a pixel to the current canvas.
     fn point(&mut self, p: &Point<DrawPrimitive>, color: Color) -> Result<()> {
-        Ok(self.canvas.pixel(p.x, p.y, color)?)
+        Ok(self.canvas.pixel(p.x(), p.y(), color)?)
     }
 
     /// Draw a line to the current canvas.
@@ -445,7 +445,7 @@ impl Rendering for Renderer {
 
     /// Draw an image to the current canvas.
     fn image(&mut self, pos: &Point<Primitive>, img: &Image, tint: Option<Color>) -> Result<()> {
-        let dst = SdlRect::new(pos.x, pos.y, img.width() as u32, img.height() as u32);
+        let dst = SdlRect::new(pos.x(), pos.y(), img.width() as u32, img.height() as u32);
         self.image_texture(img, tint, dst)
     }
 
@@ -552,13 +552,23 @@ impl From<FontStyle> for SdlFontStyle {
 
 impl From<Rect<Primitive>> for SdlRect {
     fn from(rect: Rect<Primitive>) -> Self {
-        Self::new(rect.x, rect.y, rect.width as u32, rect.height as u32)
+        Self::new(
+            rect.x(),
+            rect.y(),
+            rect.width() as u32,
+            rect.height() as u32,
+        )
     }
 }
 
 impl From<&Rect<Primitive>> for SdlRect {
     fn from(rect: &Rect<Primitive>) -> Self {
-        Self::new(rect.x, rect.y, rect.width as u32, rect.height as u32)
+        Self::new(
+            rect.x(),
+            rect.y(),
+            rect.width() as u32,
+            rect.height() as u32,
+        )
     }
 }
 

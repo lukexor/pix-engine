@@ -97,14 +97,9 @@ impl PixState {
     /// Draw a [Rectangle](Rect) to the current canvas.
     pub fn rect<R: Into<Rect>>(&mut self, rect: R) -> PixResult<()> {
         let s = &self.settings;
-        let rect = rect.into().round().as_();
-        let rect = match s.rect_mode {
-            DrawMode::Corner => rect,
-            DrawMode::Center => {
-                let x = rect.x - rect.width / 2;
-                let y = rect.y - rect.height / 2;
-                rect!(x, y, rect.width, rect.height)
-            }
+        let mut rect = rect.into().round().as_();
+        if let DrawMode::Center = s.rect_mode {
+            rect.center_on(rect.center());
         };
         Ok(self.renderer.rect(&rect, s.fill, s.stroke)?)
     }
@@ -116,14 +111,9 @@ impl PixState {
         radius: T,
     ) -> PixResult<()> {
         let s = &self.settings;
-        let rect = rect.into().round().as_();
-        let rect = match s.rect_mode {
-            DrawMode::Corner => rect,
-            DrawMode::Center => {
-                let x = rect.x - rect.width / 2;
-                let y = rect.y - rect.height / 2;
-                rect!(x, y, rect.width, rect.height)
-            }
+        let mut rect = rect.into().round().as_();
+        if let DrawMode::Center = s.rect_mode {
+            rect.center_on(rect.center());
         };
         Ok(self
             .renderer
@@ -154,14 +144,9 @@ impl PixState {
     /// Draw a [Ellipse] to the current canvas.
     pub fn ellipse<E: Into<Ellipse>>(&mut self, ellipse: E) -> PixResult<()> {
         let s = &self.settings;
-        let ellipse = ellipse.into().round().as_();
-        let ellipse = match s.ellipse_mode {
-            DrawMode::Corner => ellipse,
-            DrawMode::Center => {
-                let width = ellipse.width;
-                let height = ellipse.height;
-                ellipse!(ellipse.x - width / 2, ellipse.y - height / 2, width, height)
-            }
+        let mut ellipse = ellipse.into().round().as_();
+        if let DrawMode::Center = s.ellipse_mode {
+            ellipse.center_on(ellipse.center());
         };
         Ok(self.renderer.ellipse(&ellipse, s.fill, s.stroke)?)
     }

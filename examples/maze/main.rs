@@ -68,41 +68,45 @@ impl MazeApp {
         self.timer.start();
     }
 
-    fn create_maze(&mut self) {
+    fn create_maze(&mut self) -> PixResult<()> {
         self.maze = Maze::new(self.cols, self.rows, self.size);
         self.creator = MazeCreator::new(&self.maze);
         self.timer.start();
         while !self.creator.completed() {
-            self.step_create_maze();
+            self.step_create_maze()?;
         }
+        Ok(())
     }
 
-    fn start_solve_maze(&mut self, algorithm: Algorithm) {
+    fn step_create_maze(&mut self) -> PixResult<()> {
+        self.creator.step(&mut self.maze)?;
+        if self.creator.completed() {
+            self.timer.stop();
+            self.mode = MazeMode::Unsolved;
+        }
+        Ok(())
+    }
+
+    fn start_solve_maze(&mut self, algorithm: Algorithm) -> PixResult<()> {
         if let MazeMode::Idle | MazeMode::Creating = self.mode {
-            self.create_maze();
+            self.create_maze()?;
         }
         self.mode = MazeMode::Solving(algorithm);
         self.solver = AStarSolver::new(&self.maze);
         self.timer.start();
+        Ok(())
     }
 
-    fn solve_maze(&mut self) {
+    fn solve_maze(&mut self) -> PixResult<()> {
         if let MazeMode::Idle | MazeMode::Creating = self.mode {
-            self.create_maze();
+            self.create_maze()?;
         }
         self.solver = AStarSolver::new(&self.maze);
         self.timer.start();
         while !self.solver.completed() {
             self.step_solve_astar();
         }
-    }
-
-    fn step_create_maze(&mut self) {
-        self.creator.step(&mut self.maze);
-        if self.creator.completed() {
-            self.timer.stop();
-            self.mode = MazeMode::Unsolved;
-        }
+        Ok(())
     }
 
     fn step_solve_astar(&mut self) {
@@ -128,17 +132,19 @@ impl MazeApp {
             self.start_create_maze();
         }
         if s.button([140, HEIGHT - 50, 40, 40], ">>")? {
-            self.create_maze();
+            self.create_maze()?;
         }
         if s.button([200, HEIGHT - 50, 140, 40], "Solve A*")? {
-            self.start_solve_maze(Algorithm::AStar);
+            self.start_solve_maze(Algorithm::AStar)?;
         }
         if s.button([345, HEIGHT - 50, 40, 40], ">>")? {
-            self.solve_maze();
+            self.solve_maze()?;
         }
         s.fill(GREEN);
+        let rate = s.target_frame_rate().unwrap_or(60);
+        s.text([WIDTH - 400, HEIGHT - 50], &format!("Target FPS: {}", rate))?;
         s.text(
-            [WIDTH - 250, HEIGHT - 40],
+            [WIDTH - 400, HEIGHT - 25],
             &format!("Elapsed: {:.3}", self.timer.elapsed()),
         )?;
         Ok(())
@@ -154,7 +160,7 @@ impl AppState for MazeApp {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         self.draw(s)?;
         match self.mode {
-            MazeMode::Creating => self.step_create_maze(),
+            MazeMode::Creating => self.step_create_maze()?,
             MazeMode::Solving(Algorithm::AStar) => self.step_solve_astar(),
             _ => (),
         }
@@ -162,7 +168,7 @@ impl AppState for MazeApp {
     }
 
     fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<()> {
-        let frame_rate = s.frame_rate();
+        let frame_rate = s.target_frame_rate().unwrap_or(60);
         match event.key {
             Key::Up if frame_rate >= 60 => {
                 s.clear_frame_rate();
@@ -186,6 +192,7 @@ pub fn main() -> PixResult<()> {
         .with_frame_rate()
         .scale(SCALE, SCALE)
         .position_centered()
+        .vsync_enabled()
         .build();
     let mut app = MazeApp::new(COLS, ROWS, SIZE);
     engine.run(&mut app)

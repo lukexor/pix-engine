@@ -24,11 +24,11 @@ impl Direction {
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Cell {
-    pub id: usize,
+    id: usize,
     col: Primitive,
     row: Primitive,
     rect: Rect,
-    pub walls: [bool; 4],
+    walls: [bool; 4],
 }
 
 impl Cell {
@@ -42,12 +42,20 @@ impl Cell {
         }
     }
 
+    pub fn id(&self) -> usize {
+        self.id
+    }
+
     pub fn col(&self) -> Primitive {
         self.col
     }
 
     pub fn row(&self) -> Primitive {
         self.row
+    }
+
+    pub fn walls(&self) -> &[bool] {
+        &self.walls
     }
 
     pub fn remove_wall(&mut self, direction: Direction) {

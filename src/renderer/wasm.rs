@@ -329,6 +329,7 @@ impl Rendering for Renderer {
     ) -> Result<()> {
         let _ = position;
         let _ = img.texture_id();
+        img.set_texture_id(0);
         let _ = tint;
         todo!("image")
     }

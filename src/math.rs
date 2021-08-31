@@ -108,9 +108,9 @@ where
 {
     let v = v.into();
 
-    let x = v.x.abs();
-    let y = v.y.abs();
-    let z = v.z.abs();
+    let x = v.x().abs();
+    let y = v.y().abs();
+    let z = v.z().abs();
 
     let mut xi: usize = x.trunc() as usize;
     let mut yi: usize = y.trunc() as usize;

@@ -16,7 +16,7 @@ struct App {
 }
 
 fn intersect_ray_sphere(origin: Point, direction: Vector, obj: &SphereObj) -> (Scalar, Scalar) {
-    let r = obj.sphere.radius;
+    let r = obj.sphere.radius();
     let center_origin = origin - obj.sphere.center();
 
     let a = direction.mag_sq();

@@ -49,7 +49,7 @@
 //!             s.fill(255);
 //!         }
 //!         let m = s.mouse_pos();
-//!         s.circle([m.x, m.y, 80])?;
+//!         s.circle([m.x(), m.y(), 80])?;
 //!         Ok(())
 //!     }
 //!

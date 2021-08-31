@@ -28,6 +28,7 @@ use crate::prelude::*;
 use num_traits::{AsPrimitive, Float};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+use std::ops::{Deref, DerefMut};
 
 /// Constructs a `Rect<T>` at position `(x, y)` with `width` and `height`.
 ///
@@ -35,16 +36,16 @@ use serde::{Deserialize, Serialize};
 /// # use pix_engine::prelude::*;
 /// let p = point!(10, 20);
 /// let r = rect!(p, 100, 200);
-/// assert_eq!(r.x, 10);
-/// assert_eq!(r.y, 20);
-/// assert_eq!(r.width, 100);
-/// assert_eq!(r.height, 200);
+/// assert_eq!(r.x(), 10);
+/// assert_eq!(r.y(), 20);
+/// assert_eq!(r.width(), 100);
+/// assert_eq!(r.height(), 200);
 ///
 /// let r = rect!(10, 20, 100, 200);
-/// assert_eq!(r.x, 10);
-/// assert_eq!(r.y, 20);
-/// assert_eq!(r.width, 100);
-/// assert_eq!(r.height, 200);
+/// assert_eq!(r.x(), 10);
+/// assert_eq!(r.y(), 20);
+/// assert_eq!(r.width(), 100);
+/// assert_eq!(r.height(), 200);
 /// ```
 #[macro_export]
 macro_rules! rect {
@@ -65,16 +66,16 @@ macro_rules! rect {
 /// # use pix_engine::prelude::*;
 /// let p = point!(10, 20);
 /// let s = square!(p, 100);
-/// assert_eq!(s.x, 10);
-/// assert_eq!(s.y, 20);
-/// assert_eq!(s.width, 100);
-/// assert_eq!(s.height, 100);
+/// assert_eq!(s.x(), 10);
+/// assert_eq!(s.y(), 20);
+/// assert_eq!(s.width(), 100);
+/// assert_eq!(s.height(), 100);
 ///
 /// let s = square!(10, 20, 100);
-/// assert_eq!(s.x, 10);
-/// assert_eq!(s.y, 20);
-/// assert_eq!(s.width, 100);
-/// assert_eq!(s.height, 100);
+/// assert_eq!(s.x(), 10);
+/// assert_eq!(s.y(), 20);
+/// assert_eq!(s.width(), 100);
+/// assert_eq!(s.height(), 100);
 /// ```
 #[macro_export]
 macro_rules! square {
@@ -89,32 +90,12 @@ macro_rules! square {
 /// A `Rectangle` positioned at `(x, y)` with `width` and `height`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Rect<T = Scalar> {
-    /// X-coord
-    pub x: T,
-    /// Y-coord
-    pub y: T,
-    /// Width
-    pub width: T,
-    /// Height
-    pub height: T,
-}
+pub struct Rect<T = Scalar>([T; 4]);
 
 impl<T> Rect<T> {
     /// Constructs a `Rect<T>` at position `(x, y)` with `width` and `height`.
     pub const fn new(x: T, y: T, width: T, height: T) -> Self {
-        Self {
-            x,
-            y,
-            width,
-            height,
-        }
-    }
-
-    /// Constructs a `Rect<T>` at position [Point] with `width` and `height`.
-    pub fn with_position<P: Into<Point<T>>>(p: P, width: T, height: T) -> Self {
-        let p = p.into();
-        Self::new(p.x, p.y, width, height)
+        Self([x, y, width, height])
     }
 
     /// Constructs a square `Rect<T>` at position `(x, y)` with `size`.
@@ -124,32 +105,20 @@ impl<T> Rect<T> {
     {
         Self::new(x, y, size, size)
     }
-
-    /// Constructs a square `Rect<T>` at position [Point] with `size`.
-    pub fn square_with_position<P: Into<Point<T>>>(p: P, size: T) -> Self
-    where
-        T: Copy,
-    {
-        Self::with_position(p, size, size)
-    }
-
-    /// Convert `Rect<T>` to another primitive type using the `as` operator.
-    #[inline]
-    pub fn as_<U>(self) -> Rect<U>
-    where
-        T: AsPrimitive<U>,
-        U: 'static + Copy,
-    {
-        Rect::new(
-            self.x.as_(),
-            self.y.as_(),
-            self.width.as_(),
-            self.height.as_(),
-        )
-    }
 }
 
 impl<T: Number> Rect<T> {
+    /// Constructs a `Rect<T>` at position [Point] with `width` and `height`.
+    pub fn with_position<P: Into<Point<T>>>(p: P, width: T, height: T) -> Self {
+        let p = p.into();
+        Self::new(p.x(), p.y(), width, height)
+    }
+
+    /// Constructs a square `Rect<T>` at position [Point] with `size`.
+    pub fn square_with_position<P: Into<Point<T>>>(p: P, size: T) -> Self {
+        Self::with_position(p, size, size)
+    }
+
     /// Constructs a `Rect<T>` by providing top-left and bottom-right [Point]s.
     ///
     /// # Panics
@@ -167,9 +136,9 @@ impl<T: Number> Rect<T> {
         let p1 = p1.into();
         let p2 = p2.into();
         assert!(p2 > p1, "bottom-right point must be greater than top-right",);
-        let width = p2.x - p1.x;
-        let height = p2.y - p1.y;
-        Self::new(p1.x, p1.y, width, height)
+        let width = p2.x() - p1.x();
+        let height = p2.y() - p1.y();
+        Self::new(p1.x(), p1.y(), width, height)
     }
 
     /// Constructs a `Rect<T>` centered at position `(x, y)` with `width` and `height`.
@@ -184,7 +153,7 @@ impl<T: Number> Rect<T> {
     pub fn from_center<P: Into<Point<T>>>(p: P, width: T, height: T) -> Self {
         let p = p.into();
         let two = T::one() + T::one();
-        Self::new(p.x - width / two, p.y - height / two, width, height)
+        Self::new(p.x() - width / two, p.y() - height / two, width, height)
     }
 
     /// Constructs a square `Rect<T>` centered at position `(x, y)` with the same `width` and
@@ -200,7 +169,70 @@ impl<T: Number> Rect<T> {
     pub fn square_from_center<P: Into<Point<T>>>(p: P, size: T) -> Self {
         let p = p.into();
         let two = T::one() + T::one();
-        Self::new(p.x - size / two, p.y - size / two, size, size)
+        Self::new(p.x() - size / two, p.y() - size / two, size, size)
+    }
+
+    /// Returns the `x-coordinate` of the rectangle.
+    #[inline(always)]
+    pub fn x(&self) -> T {
+        self.0[0]
+    }
+
+    /// Sets the `x-coordinate` of the rectangle.
+    #[inline(always)]
+    pub fn set_x(&mut self, x: T) {
+        self.0[0] = x;
+    }
+
+    /// Returns the `y-coordinate` of the rectangle.
+    #[inline(always)]
+    pub fn y(&self) -> T {
+        self.0[1]
+    }
+
+    /// Sets the `y-coordinate` of the rectangle.
+    #[inline(always)]
+    pub fn set_y(&mut self, y: T) {
+        self.0[1] = y;
+    }
+
+    /// Returns the `width` of the rectangle.
+    #[inline(always)]
+    pub fn width(&self) -> T {
+        self.0[2]
+    }
+
+    /// Sets the `width` of the rectangle.
+    #[inline(always)]
+    pub fn set_width(&mut self, width: T) {
+        self.0[2] = width;
+    }
+
+    /// Returns the `height` of the rectangle.
+    #[inline(always)]
+    pub fn height(&self) -> T {
+        self.0[3]
+    }
+
+    /// Sets the `height` of the rectangle.
+    #[inline(always)]
+    pub fn set_height(&mut self, height: T) {
+        self.0[3] = height;
+    }
+
+    /// Convert `Rect<T>` to another primitive type using the `as` operator.
+    #[inline]
+    pub fn as_<U>(self) -> Rect<U>
+    where
+        T: AsPrimitive<U>,
+        U: 'static + Copy,
+    {
+        Rect::new(
+            self.x().as_(),
+            self.y().as_(),
+            self.width().as_(),
+            self.height().as_(),
+        )
     }
 
     /// Returns `Rect` values as `[x, y, width, height]`.
@@ -213,7 +245,7 @@ impl<T: Number> Rect<T> {
     /// assert_eq!(r.values(), [5, 10, 100, 100]);
     /// ```
     pub fn values(&self) -> [T; 4] {
-        [self.x, self.y, self.width, self.height]
+        [self.x(), self.y(), self.width(), self.height()]
     }
 
     /// Returns `Rect` as a [Vec].
@@ -226,55 +258,56 @@ impl<T: Number> Rect<T> {
     /// assert_eq!(r.to_vec(), vec![5, 10, 100, 100]);
     /// ```
     pub fn to_vec(self) -> Vec<T> {
-        vec![self.x, self.y, self.width, self.height]
+        vec![self.x(), self.y(), self.width(), self.height()]
     }
 
     /// Returns the horizontal position of the left edge.
     pub fn left(&self) -> T {
-        self.x
+        self.x()
     }
 
     /// Returns the horizontal position of the right edge.
     pub fn right(&self) -> T {
-        self.x + self.width
+        self.x() + self.width()
     }
 
     /// Returns the horizontal position of the top edge.
     pub fn top(&self) -> T {
-        self.y
+        self.y()
     }
 
     /// Returns the vertical position of the bottom edge.
     pub fn bottom(&self) -> T {
-        self.y + self.height
+        self.y() + self.height()
     }
 
     /// Set the horizontal position of the left edge.
     pub fn set_left(&mut self, left: T) {
-        self.x = left;
+        self.set_x(left);
     }
 
     /// Set the horizontal position of the right edge.
     pub fn set_right(&mut self, right: T) {
-        self.x = right - self.width;
+        self.set_x(right - self.width());
     }
 
     /// Set the vertical position of the top edge.
     pub fn set_top(&mut self, top: T) {
-        self.y = top;
+        self.set_y(top);
     }
 
     /// Set the vertical position of the bottom edge.
     pub fn set_bottom(&mut self, bottom: T) {
-        self.y = bottom - self.height;
+        self.set_y(bottom - self.height());
     }
 
     /// Returns the center position as [Point].
     pub fn center(&self) -> Point<T> {
         let two = T::one() + T::one();
-        let x = self.x + (self.width / two);
-        let y = self.y + (self.height / two);
-        point!(x, y)
+        point!(
+            self.x() + self.width() / two,
+            self.y() + self.height() / two
+        )
     }
 
     /// Returns the top-left position as [Point].
@@ -301,8 +334,8 @@ impl<T: Number> Rect<T> {
     pub fn center_on<P: Into<Point<T>>>(&mut self, p: P) {
         let p = p.into();
         let two = T::one() + T::one();
-        self.x = p.x - self.width / two;
-        self.y = p.y - self.height / two;
+        self.set_x(p.x() - self.width() / two);
+        self.set_y(p.y() - self.height() / two);
     }
 }
 
@@ -311,10 +344,10 @@ impl<T: Float> Rect<T> {
     /// away from `0.0`.
     pub fn round(&self) -> Self {
         Self::new(
-            self.x.round(),
-            self.y.round(),
-            self.width.round(),
-            self.height.round(),
+            self.x().round(),
+            self.y().round(),
+            self.width().round(),
+            self.height().round(),
         )
     }
 }
@@ -325,7 +358,7 @@ impl<T: Number> Shape<T> for Rect<T> {
     /// Returns whether this rectangle contains a given [Point].
     fn contains_point<P: Into<Point<T>>>(&self, p: P) -> bool {
         let p = p.into();
-        p.x >= self.left() && p.x < self.right() && p.y >= self.top() && p.y < self.bottom()
+        p.x() >= self.left() && p.x() < self.right() && p.y() >= self.top() && p.y() < self.bottom()
     }
 
     /// Returns whether this rectangle completely contains another rectangle.
@@ -371,7 +404,7 @@ impl<T: Number> Shape<T> for Rect<T> {
         let otl = other.top_left();
         let obr = other.bottom_right();
         // Both rectangle corner x and y values overlap ranges
-        tl.x < obr.x && br.x > otl.x && tl.y < otl.y && br.y > obr.y
+        tl.x() < obr.x() && br.x() > otl.x() && tl.y() < otl.y() && br.y() > obr.y()
     }
 }
 
@@ -386,10 +419,23 @@ where
     }
 }
 
+impl<T> Deref for Rect<T> {
+    type Target = [T; 4];
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T> DerefMut for Rect<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 impl<T: Number> From<&mut Rect<T>> for Rect<T> {
     /// Convert `&mut Rect<T>` to [Rect].
     fn from(rect: &mut Rect<T>) -> Self {
-        rect.clone()
+        *rect
     }
 }
 
@@ -400,21 +446,7 @@ impl<T: Number> From<&Rect<T>> for Rect<T> {
     }
 }
 
-impl<T: Number> From<Rect<T>> for [T; 4] {
-    /// Convert [Rect] to `[x, y, width, height]`.
-    fn from(r: Rect<T>) -> Self {
-        [r.x, r.y, r.width, r.height]
-    }
-}
-
-impl<T: Number> From<&Rect<T>> for [T; 4] {
-    /// Convert `&Rect` to `[x, y, width, height]`.
-    fn from(r: &Rect<T>) -> Self {
-        [r.x, r.y, r.width, r.height]
-    }
-}
-
-impl<T: Number, U: Into<T>> From<[U; 3]> for Rect<T> {
+impl<T: Number, U: Number + Into<T>> From<[U; 3]> for Rect<T> {
     /// Convert `[x, y, size]` to [Rect].
     fn from([x, y, size]: [U; 3]) -> Self {
         let size = size.into();
@@ -422,7 +454,7 @@ impl<T: Number, U: Into<T>> From<[U; 3]> for Rect<T> {
     }
 }
 
-impl<T: Number, U: Copy + Into<T>> From<&[U; 3]> for Rect<T> {
+impl<T: Number, U: Number + Into<T>> From<&[U; 3]> for Rect<T> {
     /// Convert `&[x, y, size]` to [Rect].
     fn from(&[x, y, size]: &[U; 3]) -> Self {
         let size = size.into();
@@ -431,14 +463,14 @@ impl<T: Number, U: Copy + Into<T>> From<&[U; 3]> for Rect<T> {
 }
 
 /// Convert `[x, y, width, height]` to [Rect].
-impl<T: Number, U: Into<T>> From<[U; 4]> for Rect<T> {
+impl<T: Number, U: Number + Into<T>> From<[U; 4]> for Rect<T> {
     fn from([x, y, width, height]: [U; 4]) -> Self {
         Self::new(x.into(), y.into(), width.into(), height.into())
     }
 }
 
 /// Convert `&[x, y, width, height]` to [Rect].
-impl<T: Number, U: Copy + Into<T>> From<&[U; 4]> for Rect<T> {
+impl<T: Number, U: Number + Into<T>> From<&[U; 4]> for Rect<T> {
     fn from(&[x, y, width, height]: &[U; 4]) -> Self {
         Self::new(x.into(), y.into(), width.into(), height.into())
     }

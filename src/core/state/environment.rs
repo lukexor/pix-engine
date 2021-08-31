@@ -81,6 +81,11 @@ impl PixState {
         self.env.frame_rate
     }
 
+    /// Get the target frame rate to render at.
+    pub fn target_frame_rate(&mut self) -> Option<usize> {
+        self.env.target_frame_rate.map(|rate| rate as usize)
+    }
+
     /// Set a target frame rate to render at, controls how often
     /// [on_update](crate::prelude::AppState::on_update) is called.
     pub fn set_frame_rate(&mut self, rate: usize) {
