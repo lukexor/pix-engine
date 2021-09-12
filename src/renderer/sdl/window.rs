@@ -52,10 +52,17 @@ impl Window for Renderer {
     }
 
     /// Set the current window title.
-    #[inline]
     fn set_title(&mut self, title: &str) -> Result<()> {
         self.settings.title = title.to_owned();
         Ok(self.canvas.window_mut().set_title(title)?)
+    }
+
+    #[inline(always)]
+    fn set_fps_title(&mut self, fps: usize) -> Result<()> {
+        Ok(self
+            .canvas
+            .window_mut()
+            .set_title(&format!("{} - FPS: {}", self.settings.title, fps))?)
     }
 
     /// Set dimensions of the primary window as `(width, height)`.

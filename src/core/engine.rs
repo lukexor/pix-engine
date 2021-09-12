@@ -258,12 +258,7 @@ impl PixEngine {
                         if self.frame_timer >= ONE_SECOND {
                             self.frame_timer -= ONE_SECOND;
                             state.env.frame_rate = self.frames.len();
-                            // let title = format!(
-                            //     state.renderer.title(),
-                            //     "{} - FPS: {}",
-                            //     state.env.frame_rate
-                            // );
-                            // state.renderer.set_title(&title)?;
+                            state.renderer.set_fps_title(state.env.frame_rate)?;
                         }
                     }
                 }

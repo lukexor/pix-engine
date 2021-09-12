@@ -102,6 +102,9 @@ pub(crate) trait Window {
     /// Set the current window title.
     fn set_title(&mut self, title: &str) -> Result<()>;
 
+    /// Set the current window title with FPS appended.
+    fn set_fps_title(&mut self, fps: usize) -> Result<()>;
+
     /// Dimensions of the primary window as `(width, height)`.
     fn dimensions(&self, id: WindowId) -> Result<(u32, u32)>;
 
