@@ -10,15 +10,12 @@ use settings::Settings;
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
-    error, fmt, io, result,
+    error, fmt, io,
     time::Instant,
 };
 
 pub mod environment;
 pub mod settings;
-
-/// The result type for [PixState] operations.
-pub type Result<T> = result::Result<T, Error>;
 
 /// Represents all state and methods for updating and interacting with the [PixEngine].
 #[non_exhaustive]

@@ -10,9 +10,11 @@ impl PixState {
     pub fn texture(
         &mut self,
         texture_id: TextureId,
-        src: Option<Rect<i32>>,
-        dst: Option<Rect<i32>>,
+        src: Option<Rect>,
+        dst: Option<Rect>,
     ) -> PixResult<()> {
+        let src = src.map(|src| src.round().as_());
+        let dst = dst.map(|dst| dst.round().as_());
         Ok(self.renderer.texture(texture_id, src, dst)?)
     }
 
@@ -38,11 +40,12 @@ impl PixState {
         pitch: usize,
     ) -> PixResult<()>
     where
-        R: Into<Option<Rect<i32>>>,
+        R: Into<Option<Rect>>,
         P: AsRef<[u8]>,
     {
+        let rect = rect.into().map(|rect| rect.round().as_());
         Ok(self
             .renderer
-            .update_texture(texture_id, rect.into(), pixels.as_ref(), pitch)?)
+            .update_texture(texture_id, rect, pixels.as_ref(), pitch)?)
     }
 }

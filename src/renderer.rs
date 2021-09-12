@@ -29,6 +29,9 @@ lazy_static! {
 /// The result type for `Renderer` operations.
 pub type Result<T> = result::Result<T, Error>;
 
+/// Default audio sample rate.
+const DEFAULT_SAMPLE_RATE: i32 = 44_100; // in Hz
+
 /// Settings used to set up the renderer.
 #[derive(Debug, Clone)]
 pub(crate) struct RendererSettings {
@@ -76,7 +79,7 @@ impl Default for RendererSettings {
             height: 400,
             scale_x: 1.0,
             scale_y: 1.0,
-            audio_sample_rate: 44_100,
+            audio_sample_rate: DEFAULT_SAMPLE_RATE,
             fullscreen: false,
             vsync: false,
             resizable: false,
