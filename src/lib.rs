@@ -136,7 +136,7 @@ pub mod prelude {
         texture::TextureId,
         window::{Cursor, Position, SystemCursor, WindowBuilder, WindowId},
     };
-    pub use color::{constants::*, Color, ColorMode};
+    pub use color::{constants::*, Color, ColorMode, Error as ColorError};
     pub use event::{Axis, ControllerButton, Event, Key, KeyEvent, KeyMod, Mouse, WindowEvent};
     pub use graphics::lighting::{Light, LightSource};
     pub use image::{Image, PixelFormat};

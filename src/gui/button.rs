@@ -15,7 +15,7 @@
 //!     }
 //!     Ok(())
 //! }
-//! #}
+//! # }
 //! ```
 
 use crate::{core::state::MouseState, prelude::*};
