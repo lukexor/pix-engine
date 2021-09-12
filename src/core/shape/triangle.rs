@@ -19,7 +19,10 @@ use crate::prelude::*;
 use num_traits::{AsPrimitive, Float};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::ops::{Deref, DerefMut};
+use std::{
+    convert::TryInto,
+    ops::{Deref, DerefMut},
+};
 
 /// A `Triangle` with three [Point]s.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -103,20 +106,49 @@ impl<T: Number> Triangle<T> {
         Triangle::with_points(self.p1().as_(), self.p2().as_(), self.p3().as_())
     }
 
-    /// Returns `Triangle` coordinates as `[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]`.
+    /// Returns `Triangle` points as `[Point<T>; 3]`.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let tri= Triangle::new(10, 20, 30, 10, 20, 25);
-    /// assert_eq!(tri.values(), [10, 20, 0, 30, 10, 0, 20, 25, 0]);
+    /// let tri = Triangle::new(10, 20, 30, 10, 20, 25);
+    /// assert_eq!(tri.values(), [
+    ///     point!(10, 20, 0),
+    ///     point!(30, 10, 0),
+    ///     point!(20, 25, 0),
+    /// ]);
     /// ```
-    pub fn values(&self) -> [T; 9] {
-        let [x1, y1, z1] = self.p1().values();
-        let [x2, y2, z2] = self.p2().values();
-        let [x3, y3, z3] = self.p3().values();
-        [x1, y1, z1, x2, y2, z2, x3, y3, z3]
+    pub fn values(&self) -> [Point<T>; 3] {
+        [self.p1(), self.p2(), self.p3()]
+    }
+
+    /// Tries to convert `Triangle` coordinates as `[Point<T>; 3]` from `T` to `U` of `T`
+    /// implements `TryInto<U>`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let tri: Triangle<i32> = Triangle::new(10, 20, 30, 10, 20, 25);
+    /// assert_eq!(tri.try_into_values()?, [
+    ///     point!(10i16, 20, 0),
+    ///     point!(30i16, 10, 0),
+    ///     point!(20i16, 25, 0),
+    /// ]);
+    /// # Ok::<(), PixError>(())
+    /// ```
+    pub fn try_into_values<U>(&self) -> PixResult<[Point<U>; 3]>
+    where
+        T: TryInto<U>,
+        U: Number,
+        PixError: From<<T as TryInto<U>>::Error>,
+    {
+        Ok([
+            self.p1().try_into_values()?.into(),
+            self.p2().try_into_values()?.into(),
+            self.p3().try_into_values()?.into(),
+        ])
     }
 
     /// Returns `Triangle` as a [Vec].

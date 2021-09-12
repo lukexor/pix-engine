@@ -1,7 +1,7 @@
 use pix_engine::prelude::*;
 
-const WIDTH: Primitive = 1000;
-const HEIGHT: Primitive = 800;
+const WIDTH: u32 = 1000;
+const HEIGHT: u32 = 800;
 
 const BOID_COUNT: usize = 500;
 const BOID_MODEL: [Vector; 13] = [

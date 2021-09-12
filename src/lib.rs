@@ -1,7 +1,7 @@
 //! # Getting Started
 //!
 //! `pix_engine` is a cross-platform graphics & UI library for simple games, visualizations,
-//! digital art, and graphics applications written in Rust, supporting [SDL2][] and
+//! digital art, and graphics applications written in [Rust][], supporting [SDL2][] and
 //! [Web-Assembly][WASM]
 //! renderers.
 //!
@@ -17,6 +17,7 @@
 //! function you'll have access to a mutable [PixState] object which provides several methods for
 //! changing settings, responding to events, and drawing to the screen.
 //!
+//! [Rust]: https://www.rust-lang.org/
 //! [SDL2]: https://crates.io/crates/sdl2/
 //! [WASM]: https://www.rust-lang.org/what/wasm
 //! [`Tetanes`]: https://crates.io/crates/tetanes
@@ -125,7 +126,7 @@ pub mod prelude {
     pub use self::core::{
         appstate::AppState,
         common::{Error as PixError, Result as PixResult},
-        draw::{Draw, DrawPrimitive},
+        draw::Draw,
         engine::PixEngine,
         shape::{Circle, Ellipse, Line, Point, Quad, Rect, Shape, Sphere, Triangle},
         state::{
@@ -135,11 +136,11 @@ pub mod prelude {
         texture::TextureId,
         window::{Cursor, Position, SystemCursor, WindowBuilder, WindowId},
     };
-    pub use color::{constants::*, Color, ColorError, ColorMode};
+    pub use color::{constants::*, Color, ColorMode};
     pub use event::{Axis, ControllerButton, Event, Key, KeyEvent, KeyMod, Mouse, WindowEvent};
     pub use graphics::lighting::{Light, LightSource};
     pub use image::{Image, PixelFormat};
-    pub use math::{constants::*, map, random_rng, vector::Vector, Number, Primitive, Scalar};
+    pub use math::{constants::*, map, random_rng, vector::Vector, Number, Scalar};
     #[cfg(not(target_arch = "wasm32"))]
     pub use renderer::DEFAULT_ASSET_DIR;
     pub use sphere;

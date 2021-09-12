@@ -27,8 +27,8 @@ impl AStarCell {
     }
 
     fn heuristic(&self, cell: &Cell) -> Scalar {
-        let a = self.cell.col() - cell.col();
-        let b = self.cell.row() - cell.row();
+        let a = self.cell.col() as i32 - cell.col() as i32;
+        let b = self.cell.row() as i32 - cell.row() as i32;
         ((a.pow(2) + b.pow(2)) as Scalar).sqrt()
     }
 }
@@ -166,16 +166,16 @@ impl AStarSolver {
         Ok(())
     }
 
-    fn get_cell(&self, maze: &Maze, col: Primitive, row: Primitive) -> Option<AStarCell> {
+    fn get_cell(&self, maze: &Maze, col: u32, row: u32) -> Option<AStarCell> {
         maze.idx(col, row).map(|idx| self.cells[idx])
     }
 
     fn get_neighbor(&self, maze: &Maze, cell: &Cell, index: usize) -> Option<AStarCell> {
         match index {
-            0 => self.get_cell(maze, cell.col(), cell.row() - 1),
+            0 if cell.row() > 0 => self.get_cell(maze, cell.col(), cell.row() - 1),
             1 => self.get_cell(maze, cell.col() + 1, cell.row()),
             2 => self.get_cell(maze, cell.col(), cell.row() + 1),
-            3 => self.get_cell(maze, cell.col() - 1, cell.row()),
+            3 if cell.col() > 0 => self.get_cell(maze, cell.col() - 1, cell.row()),
             _ => None,
         }
     }

@@ -21,7 +21,10 @@ use crate::prelude::*;
 use num_traits::{AsPrimitive, Float};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::ops::{Deref, DerefMut};
+use std::{
+    convert::TryInto,
+    ops::{Deref, DerefMut},
+};
 
 /// A `Line` with a starting [Point] and ending [Point<T>].
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -88,6 +91,30 @@ impl<T: Number> Line<T> {
         let [x1, y1, z1] = self.start().values();
         let [x2, y2, z2] = self.end().values();
         [x1, y1, z1, x2, y2, z2]
+    }
+
+    /// Tries to convert `Line` coordinates as `[x1, y1, z1, x2, y2, z2]` from `T` to `U` of `T`
+    /// implements `TryInto<U>`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p1 = point!(5, 10);
+    /// let p2 = point!(100, 100);
+    /// let l: Line<i32> = Line::new(p1, p2);
+    /// let values: [i16; 6] = l.try_into_values()?;
+    /// assert_eq!(values, [5i16, 10, 0, 100, 100, 0]);
+    /// # Ok::<(), PixError>(())
+    /// ```
+    pub fn try_into_values<U>(&self) -> PixResult<[U; 6]>
+    where
+        T: TryInto<U>,
+        PixError: From<<T as TryInto<U>>::Error>,
+    {
+        let [x1, y1, z1] = self.start().try_into_values()?;
+        let [x2, y2, z2] = self.end().try_into_values()?;
+        Ok([x1, y1, z1, x2, y2, z2])
     }
 
     /// Returns `Line` as a [Vec].

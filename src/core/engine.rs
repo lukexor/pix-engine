@@ -18,8 +18,7 @@ use std::{fs, path::PathBuf};
 const ONE_SECOND: Duration = Duration::from_secs(1);
 
 /// Builds a [PixEngine] instance by providing several configration functions.
-#[non_exhaustive]
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug)]
 pub struct PixEngineBuilder {
     settings: RendererSettings,
 }
@@ -33,9 +32,9 @@ impl PixEngineBuilder {
     }
 
     /// Set window dimensions.
-    pub fn with_dimensions(&mut self, width: Primitive, height: Primitive) -> &mut Self {
-        self.settings.width = width as u32;
-        self.settings.height = height as u32;
+    pub fn with_dimensions(&mut self, width: u32, height: u32) -> &mut Self {
+        self.settings.width = width;
+        self.settings.height = height;
         self
     }
 
@@ -50,23 +49,23 @@ impl PixEngineBuilder {
 
     /// Set a True-Type Font for text rendering.
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn with_font<P>(&mut self, path: P, size: Primitive) -> &mut Self
+    pub fn with_font<P>(&mut self, path: P, size: u32) -> &mut Self
     where
         P: Into<PathBuf>,
     {
         self.settings.font = path.into();
-        self.settings.font_size = size as u16;
+        self.settings.font_size = size;
         self
     }
 
     /// Set font for text rendering.
     #[cfg(target_arch = "wasm32")]
-    pub fn with_font<S>(&mut self, font: S, size: Primitive) -> &mut Self
+    pub fn with_font<S>(&mut self, font: S, size: u32) -> &mut Self
     where
         S: Into<String>,
     {
         self.settings.font = font.into();
-        self.settings.font_size = size as u16;
+        self.settings.font_size = size;
         self
     }
 
@@ -77,7 +76,7 @@ impl PixEngineBuilder {
     }
 
     /// Position the window at the given `(x, y)` coordinates of the display.
-    pub fn position(&mut self, x: Primitive, y: Primitive) -> &mut Self {
+    pub fn position(&mut self, x: i32, y: i32) -> &mut Self {
         self.settings.x = Position::Positioned(x);
         self.settings.y = Position::Positioned(y);
         self
@@ -166,8 +165,7 @@ impl PixEngineBuilder {
 }
 
 /// The core engine that maintains the render loop, state, drawing functions, event handling, etc.
-#[non_exhaustive]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct PixEngine {
     settings: RendererSettings,
     frames: VecDeque<Instant>,
@@ -195,8 +193,8 @@ impl PixEngine {
             ASSETS.extract(&self.settings.asset_dir)?;
         }
 
-        let renderer = Renderer::new(&self.settings)?;
-        let mut state = PixState::new(&self.settings.title, renderer);
+        let renderer = Renderer::new(self.settings.clone())?;
+        let mut state = PixState::new(renderer);
         state.show_frame_rate(self.settings.show_frame_rate);
         state.env.target_frame_rate = self.settings.target_frame_rate;
 
@@ -260,8 +258,12 @@ impl PixEngine {
                         if self.frame_timer >= ONE_SECOND {
                             self.frame_timer -= ONE_SECOND;
                             state.env.frame_rate = self.frames.len();
-                            let title = format!("{} - FPS: {}", state.title, state.env.frame_rate);
-                            state.renderer.set_title(&title)?;
+                            // let title = format!(
+                            //     state.renderer.title(),
+                            //     "{} - FPS: {}",
+                            //     state.env.frame_rate
+                            // );
+                            // state.renderer.set_title(&title)?;
                         }
                     }
                 }
@@ -286,7 +288,7 @@ impl PixEngine {
                 Event::Quit { .. } | Event::AppTerminating { .. } => state.quit(),
                 Event::Window {
                     window_id,
-                    win_event,
+                    ref win_event,
                 } => match win_event {
                     WindowEvent::FocusGained => {
                         state.env.focused = true;
@@ -298,7 +300,7 @@ impl PixEngine {
                     }
                     WindowEvent::Resized(width, height)
                     | WindowEvent::SizeChanged(width, height) => {
-                        app.on_window_resized(state, width, height)?
+                        app.on_window_resized(state, *width, *height)?
                     }
                     _ => (),
                 },
@@ -334,8 +336,8 @@ impl PixEngine {
                         },
                     )?;
                 }
-                Event::TextInput { text, .. } => {
-                    app.on_key_typed(state, &text)?;
+                Event::TextInput { ref text, .. } => {
+                    app.on_key_typed(state, text)?;
                 }
                 Event::MouseMotion { x, y, xrel, yrel } => {
                     state.pmouse.pos = state.mouse.pos;
@@ -368,6 +370,7 @@ impl PixEngine {
                 }
                 _ => (),
             }
+            app.on_event(state, event)?;
         }
         Ok(())
     }

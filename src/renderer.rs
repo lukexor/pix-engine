@@ -37,7 +37,7 @@ pub(crate) struct RendererSettings {
     pub(crate) font: PathBuf,
     #[cfg(target_arch = "wasm32")]
     pub(crate) font: String,
-    pub(crate) font_size: u16,
+    pub(crate) font_size: u32,
     #[cfg(not(target_arch = "wasm32"))]
     pub(crate) icon: Option<PathBuf>,
     #[cfg(not(target_arch = "wasm32"))]
@@ -90,7 +90,7 @@ impl Default for RendererSettings {
 /// Trait for operations on the underlying `Renderer`.
 pub(crate) trait Rendering: Sized {
     /// Creates a new Renderer instance.
-    fn new(settings: &RendererSettings) -> Result<Self>;
+    fn new(settings: RendererSettings) -> Result<Self>;
 
     /// Clears the current canvas to the given clear color
     fn clear(&mut self);
@@ -99,7 +99,7 @@ pub(crate) trait Rendering: Sized {
     fn set_draw_color(&mut self, color: Color);
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    fn clip(&mut self, rect: Option<Rect<Primitive>>);
+    fn clip(&mut self, rect: Option<Rect<i32>>);
 
     /// Sets the blend mode used by the renderer to draw textures.
     fn blend_mode(&mut self, mode: BlendMode);
@@ -113,8 +113,8 @@ pub(crate) trait Rendering: Sized {
     /// Create a texture to draw to.
     fn create_texture(
         &mut self,
-        width: Primitive,
-        height: Primitive,
+        width: u32,
+        height: u32,
         format: Option<PixelFormat>,
     ) -> Result<TextureId>;
 
@@ -125,7 +125,7 @@ pub(crate) trait Rendering: Sized {
     fn update_texture(
         &mut self,
         texture_id: TextureId,
-        rect: Option<Rect<Primitive>>,
+        rect: Option<Rect<i32>>,
         pixels: &[u8],
         pitch: usize,
     ) -> Result<()>;
@@ -134,12 +134,12 @@ pub(crate) trait Rendering: Sized {
     fn texture(
         &mut self,
         texture_id: TextureId,
-        src: Option<Rect<Primitive>>,
-        dst: Option<Rect<Primitive>>,
+        src: Option<Rect<i32>>,
+        dst: Option<Rect<i32>>,
     ) -> Result<()>;
 
     /// Set the font size for drawing to the current canvas.
-    fn font_size(&mut self, size: Primitive) -> Result<()>;
+    fn font_size(&mut self, size: u32) -> Result<()>;
 
     /// Set the font style for drawing to the current canvas.
     fn font_style(&mut self, style: FontStyle);
@@ -150,7 +150,7 @@ pub(crate) trait Rendering: Sized {
     /// Draw text to the current canvas.
     fn text(
         &mut self,
-        position: &Point<Primitive>,
+        position: &Point<i32>,
         text: &str,
         fill: Option<Color>,
         stroke: Option<Color>,
@@ -158,50 +158,46 @@ pub(crate) trait Rendering: Sized {
 
     /// Returns the rendered dimensions of the given text using the current font
     /// as `(width, height)`.
-    fn size_of(&self, text: &str) -> Result<(Primitive, Primitive)>;
+    fn size_of(&self, text: &str) -> Result<(u32, u32)>;
 
     /// Draw a pixel to the current canvas.
-    fn point(&mut self, p: &Point<i16>, color: Color) -> Result<()>;
+    fn point(&mut self, p: &Point<i32>, color: Color) -> Result<()>;
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, line: &Line<i16>, color: Color) -> Result<()>;
+    fn line(&mut self, line: &Line<i32>, color: Color) -> Result<()>;
 
     /// Draw a triangle to the current canvas.
     fn triangle(
         &mut self,
-        tri: &Triangle<i16>,
+        tri: &Triangle<i32>,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()>;
 
     /// Draw a rectangle to the current canvas.
-    fn rect(&mut self, rect: &Rect<i16>, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
+    fn rect(&mut self, rect: &Rect<i32>, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
 
     /// Draw a rounded rectangle to the current canvas.
     fn rounded_rect(
         &mut self,
-        rect: &Rect<i16>,
-        radius: i16,
+        rect: &Rect<i32>,
+        radius: i32,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()>;
 
     /// Draw a quadrilateral to the current canvas.
-    fn quad(&mut self, quad: &Quad<i16>, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
+    fn quad(&mut self, quad: &Quad<i32>, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
 
     /// Draw a polygon to the current canvas.
-    fn polygon(
-        &mut self,
-        vx: &[i16],
-        vy: &[i16],
-        fill: Option<Color>,
-        stroke: Option<Color>,
-    ) -> Result<()>;
+    fn polygon<P>(&mut self, ps: P, fill: Option<Color>, stroke: Option<Color>) -> Result<()>
+    where
+        P: IntoIterator<Item = Point<i32>>;
 
     /// Draw a ellipse to the current canvas.
     fn ellipse(
         &mut self,
-        ellipse: &Ellipse<i16>,
+        ellipse: &Ellipse<i32>,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()>;
@@ -210,27 +206,22 @@ pub(crate) trait Rendering: Sized {
     #[allow(clippy::too_many_arguments)]
     fn arc(
         &mut self,
-        p: &Point<i16>,
-        radius: i16,
-        start: i16,
-        end: i16,
+        p: &Point<i32>,
+        radius: i32,
+        start: i32,
+        end: i32,
         mode: ArcMode,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()>;
 
     /// Draw an image to the current canvas.
-    fn image(
-        &mut self,
-        position: &Point<Primitive>,
-        img: &Image,
-        tint: Option<Color>,
-    ) -> Result<()>;
+    fn image(&mut self, position: &Point<i32>, img: &Image, tint: Option<Color>) -> Result<()>;
 
     /// Draw a resized image to the current canvas.
     fn image_resized(
         &mut self,
-        dst_rect: &Rect<Primitive>,
+        dst_rect: &Rect<i32>,
         img: &Image,
         tint: Option<Color>,
     ) -> Result<()>;
@@ -254,6 +245,8 @@ pub enum Error {
     InvalidFont(PathBuf),
     /// Invalid Texture.
     InvalidTexture(TextureId),
+    /// An error from invalid type conversions.
+    Conversion(Cow<'static, str>),
     /// An overflow occurred.
     Overflow(Cow<'static, str>, u32),
     /// Any other unknown error as a string.
@@ -267,6 +260,7 @@ impl fmt::Display for Error {
             InitError => write!(f, "renderer initialization error"),
             InvalidText(msg, err) => write!(f, "invalid text: {}, {}", msg, err),
             InvalidTexture(id) => write!(f, "invalid texture_id: {}", id),
+            Conversion(err) => write!(f, "conversion error: {}", err),
             Overflow(err, val) => write!(f, "overflow {}: {}", err, val),
             Other(err) => write!(f, "unknown renderer error: {}", err),
             _ => self.fmt(f),
@@ -298,18 +292,33 @@ impl From<Error> for StateError {
 
 impl From<String> for Error {
     fn from(err: String) -> Self {
-        Self::Other(Cow::from(err))
+        Self::Other(err.into())
     }
 }
 
 impl From<std::num::TryFromIntError> for Error {
     fn from(err: std::num::TryFromIntError) -> Self {
-        Self::Other(Cow::from(err.to_string()))
+        Self::Conversion(err.to_string().into())
     }
 }
 
 impl From<NulError> for Error {
     fn from(err: NulError) -> Self {
         Self::InvalidText("unknown nul error", err)
+    }
+}
+
+impl From<PixError> for Error {
+    fn from(err: PixError) -> Self {
+        use PixError::*;
+        match err {
+            RendererError(err) => err,
+            WindowError(err) => Error::WindowError(err),
+            Conversion(err) => Error::Conversion(err),
+            IoError(err) => Error::IoError(err),
+            StateError(err) => Error::Other(err.to_string().into()),
+            ImageError(err) => Error::Other(err.to_string().into()),
+            Other(err) => Error::Other(err),
+        }
     }
 }

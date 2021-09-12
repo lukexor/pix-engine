@@ -25,6 +25,8 @@ pub enum Error {
     StateError(state::Error),
     /// An error from [Image](crate::prelude::Image)
     ImageError(image::Error),
+    /// An error from invalid type conversions.
+    Conversion(Cow<'static, str>),
     /// I/O errors.
     IoError(io::Error),
     /// Unknown errors.
@@ -35,6 +37,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use Error::*;
         match self {
+            Conversion(err) => write!(f, "conversion error: {}", err),
             Other(err) => write!(f, "unknown error: {}", err),
             _ => self.fmt(f),
         }
@@ -51,6 +54,12 @@ impl From<io::Error> for Error {
 
 impl From<&'static str> for Error {
     fn from(err: &'static str) -> Self {
-        Error::Other(Cow::from(err))
+        Error::Other(err.into())
+    }
+}
+
+impl From<std::num::TryFromIntError> for Error {
+    fn from(err: std::num::TryFromIntError) -> Self {
+        Error::Conversion(err.to_string().into())
     }
 }

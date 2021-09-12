@@ -122,4 +122,9 @@ pub trait AppState {
     fn on_window_resized(&mut self, s: &mut PixState, _width: i32, height: i32) -> PixResult<()> {
         Ok(())
     }
+
+    /// Called for any system or user event.
+    fn on_event(&mut self, s: &mut PixState, event: Event) -> PixResult<()> {
+        Ok(())
+    }
 }

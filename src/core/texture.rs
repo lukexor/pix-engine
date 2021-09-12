@@ -10,19 +10,14 @@ impl PixState {
     pub fn texture(
         &mut self,
         texture_id: TextureId,
-        src: Option<Rect<Primitive>>,
-        dst: Option<Rect<Primitive>>,
+        src: Option<Rect<i32>>,
+        dst: Option<Rect<i32>>,
     ) -> PixResult<()> {
         Ok(self.renderer.texture(texture_id, src, dst)?)
     }
 
     /// Constructs a `Texture` to render to.
-    pub fn create_texture<F>(
-        &mut self,
-        width: Primitive,
-        height: Primitive,
-        format: F,
-    ) -> PixResult<TextureId>
+    pub fn create_texture<F>(&mut self, width: u32, height: u32, format: F) -> PixResult<TextureId>
     where
         F: Into<Option<PixelFormat>>,
     {
@@ -43,7 +38,7 @@ impl PixState {
         pitch: usize,
     ) -> PixResult<()>
     where
-        R: Into<Option<Rect<Primitive>>>,
+        R: Into<Option<Rect<i32>>>,
         P: AsRef<[u8]>,
     {
         Ok(self

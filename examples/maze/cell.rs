@@ -25,14 +25,14 @@ impl Direction {
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Cell {
     id: usize,
-    col: Primitive,
-    row: Primitive,
+    col: u32,
+    row: u32,
     rect: Rect,
     walls: [bool; 4],
 }
 
 impl Cell {
-    pub fn new(id: usize, col: Primitive, row: Primitive) -> Self {
+    pub fn new(id: usize, col: u32, row: u32) -> Self {
         Self {
             id,
             col,
@@ -46,11 +46,11 @@ impl Cell {
         self.id
     }
 
-    pub fn col(&self) -> Primitive {
+    pub fn col(&self) -> u32 {
         self.col
     }
 
-    pub fn row(&self) -> Primitive {
+    pub fn row(&self) -> u32 {
         self.row
     }
 

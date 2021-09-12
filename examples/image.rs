@@ -1,8 +1,8 @@
 use pix_engine::prelude::*;
 use std::{env, path::Path};
 
-const WIDTH: i32 = 800;
-const HEIGHT: i32 = 600;
+const WIDTH: u32 = 800;
+const HEIGHT: u32 = 600;
 
 struct ImageDemo(Image);
 
@@ -20,7 +20,7 @@ impl AppState for ImageDemo {
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.image_resized([0, 0, WIDTH, HEIGHT], &self.0)?;
+        s.image_resized([0, 0, WIDTH as i32, HEIGHT as i32], &self.0)?;
         Ok(())
     }
 

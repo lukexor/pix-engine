@@ -1,6 +1,6 @@
 //! [Image] and [PixelFormat] functions.
 
-use crate::{prelude::*, renderer::Rendering};
+use crate::{color::Result as ColorResult, prelude::*, renderer::Rendering};
 use std::{
     borrow::Cow,
     cell::Cell,
@@ -59,9 +59,9 @@ impl Default for PixelFormat {
 #[derive(Default, Clone)]
 pub struct Image {
     /// `Image` width.
-    width: Primitive,
+    width: u32,
     /// `Image` height.
-    height: Primitive,
+    height: u32,
     /// Raw pixel data.
     data: Vec<u8>,
     /// Pixel Format.
@@ -86,41 +86,34 @@ impl Image {
     /// Constructs an empty RGBA `Image` with given `width` and `height`. Alias for
     /// [Image::with_rgba].
     #[inline]
-    pub fn new(width: Primitive, height: Primitive) -> Self {
+    pub fn new(width: u32, height: u32) -> Self {
         Self::with_rgba(width, height)
     }
 
     /// Constructs an empty RGBA `Image` with given `width` and `height`.
-    pub fn with_rgba(width: Primitive, height: Primitive) -> Self {
+    pub fn with_rgba(width: u32, height: u32) -> Self {
         let format = PixelFormat::Rgba;
         let data = vec![0x00; format.channels() * (width * height) as usize];
         Self::from_vec(width, height, data, format)
     }
 
     /// Constructs an empty RGB `Image` with given `width` and `height`.
-    pub fn with_rgb(width: Primitive, height: Primitive) -> Self {
+    pub fn with_rgb(width: u32, height: u32) -> Self {
         let format = PixelFormat::Rgb;
         let data = vec![0x00; format.channels() * (width * height) as usize];
         Self::from_vec(width, height, data, format)
     }
 
     /// Constructs an `Image` from a [u8] [slice] representing RGB/A values.
-    pub fn from_bytes(
-        width: Primitive,
-        height: Primitive,
-        bytes: &[u8],
-        format: PixelFormat,
-    ) -> Self {
-        Self::from_vec(width, height, bytes.to_vec(), format)
+    pub fn from_bytes(width: u32, height: u32, bytes: &[u8], format: PixelFormat) -> Result<Self> {
+        if bytes.len() != (format.channels() * width as usize * height as usize) {
+            return Err(Error::InvalidImage((width, height), bytes.len(), format));
+        }
+        Ok(Self::from_vec(width, height, bytes.to_vec(), format))
     }
 
     /// Constructs an `Image` from a [Vec<u8>] representing RGB/A values.
-    pub fn from_vec(
-        width: Primitive,
-        height: Primitive,
-        data: Vec<u8>,
-        format: PixelFormat,
-    ) -> Self {
+    pub fn from_vec(width: u32, height: u32, data: Vec<u8>, format: PixelFormat) -> Self {
         Self {
             width,
             height,
@@ -151,29 +144,24 @@ impl Image {
         let mut data = vec![0x00; info.buffer_size()];
         reader.next_frame(&mut data)?;
         let format = info.color_type.into();
-        Ok(Self::from_bytes(
-            info.width as i32,
-            info.height as i32,
-            &data,
-            format,
-        ))
+        Self::from_bytes(info.width, info.height, &data, format)
     }
 
     /// `Image` width.
     #[inline]
-    pub fn width(&self) -> Primitive {
+    pub fn width(&self) -> u32 {
         self.width
     }
 
     /// `Image` height.
     #[inline]
-    pub fn height(&self) -> Primitive {
+    pub fn height(&self) -> u32 {
         self.height
     }
 
     /// Returns the `Image` dimensions as `(width, height)`.
     #[inline]
-    pub fn dimensions(&self) -> (Primitive, Primitive) {
+    pub fn dimensions(&self) -> (u32, u32) {
         (self.width, self.height)
     }
 
@@ -187,6 +175,23 @@ impl Image {
     #[inline]
     pub fn bytes_mut(&mut self) -> &mut [u8] {
         &mut self.data
+    }
+
+    /// Returns the color value at the given `(x, y)` position.
+    #[inline]
+    pub fn get_pixel(&self, x: u32, y: u32) -> ColorResult<'_, Color, u8> {
+        let idx = self.idx(x, y);
+        let channels = self.format.channels();
+        Color::from_slice(ColorMode::Rgb, &self.data[idx..idx + channels])
+    }
+
+    /// Sets the color value at the given `(x, y)` position.
+    #[inline]
+    pub fn set_pixel<C: Into<Color>>(&mut self, x: u32, y: u32, color: C) {
+        let color = color.into();
+        let idx = self.idx(x, y);
+        let channels = self.format.channels();
+        self.data[idx..(idx + channels)].clone_from_slice(&color.channels()[..channels]);
     }
 
     /// Update the `Image` with a  [u8] [slice] representing RGB/A values.
@@ -208,7 +213,7 @@ impl Image {
     {
         let path = path.as_ref();
         let png_file = BufWriter::new(std::fs::File::create(&path)?);
-        let mut png = png::Encoder::new(png_file, self.width as u32, self.height as u32);
+        let mut png = png::Encoder::new(png_file, self.width, self.height);
         png.set_color(png::ColorType::RGBA);
         let mut writer = png.write_header()?;
         Ok(writer.write_image_data(self.bytes())?)
@@ -227,16 +232,25 @@ impl Image {
     }
 }
 
+impl Image {
+    fn idx(&self, x: u32, y: u32) -> usize {
+        self.format.channels() * (y * self.width + x) as usize
+    }
+}
+
 impl PixState {
     /// Draw an [Image] to the current canvas.
     pub fn image<P>(&mut self, position: P, img: &Image) -> PixResult<()>
     where
-        P: Into<Point<Primitive>>,
+        P: Into<Point>,
     {
         let s = &self.settings;
-        let mut pos = position.into();
+        let mut pos = position.into().round().as_();
         if let DrawMode::Center = s.image_mode {
-            pos = point!(pos.x() - img.width() / 2, pos.y() - img.height() / 2);
+            pos = point!(
+                pos.x() - img.width() as i32 / 2,
+                pos.y() - img.height() as i32 / 2
+            );
         };
         Ok(self.renderer.image(&pos, img, s.image_tint)?)
     }
@@ -244,10 +258,10 @@ impl PixState {
     /// Draw a resized [Image] to the current canvas.
     pub fn image_resized<R>(&mut self, rect: R, img: &Image) -> PixResult<()>
     where
-        R: Into<Rect<Primitive>>,
+        R: Into<Rect>,
     {
         let s = &self.settings;
-        let mut rect = rect.into();
+        let mut rect = rect.into().round().as_();
         if let DrawMode::Center = s.image_mode {
             rect.center_on(rect.center());
         }
@@ -259,6 +273,8 @@ impl PixState {
 #[non_exhaustive]
 #[derive(Debug)]
 pub enum Error {
+    /// Invalid image.
+    InvalidImage((u32, u32), usize, PixelFormat),
     /// Invalid file type.
     InvalidFileType(Option<OsString>),
     /// Invalid color type.
@@ -279,6 +295,11 @@ impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use Error::*;
         match self {
+            InvalidImage(dimensions, len, format) => write!(
+                f,
+                "invalid image. dimensions: {:?}, bytes: {}, format: {:?}",
+                dimensions, len, format
+            ),
             InvalidFileType(ext) => write!(f, "invalid file type: {:?}", ext),
             UnsupportedColorType(color_type) => write!(f, "invalid color type: {:?}", color_type),
             UnsupportedBitDepth(depth) => write!(f, "invalid bit depth: {:?}", depth),

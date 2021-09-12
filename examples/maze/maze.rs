@@ -4,14 +4,14 @@ use crate::cell::{Cell, Direction};
 
 #[derive(Debug, Clone)]
 pub struct Maze {
-    cols: Primitive,
-    rows: Primitive,
-    size: Primitive,
+    cols: u32,
+    rows: u32,
+    size: u32,
     cells: Vec<Cell>,
 }
 
 impl Maze {
-    pub fn new(cols: Primitive, rows: Primitive, size: Primitive) -> Self {
+    pub fn new(cols: u32, rows: u32, size: u32) -> Self {
         let mut cells = Vec::with_capacity((cols * rows) as usize);
         for row in 0..rows {
             // Ensure cols are added contiguously before rows
@@ -27,7 +27,7 @@ impl Maze {
         }
     }
 
-    pub fn idx(&self, col: Primitive, row: Primitive) -> Option<usize> {
+    pub fn idx(&self, col: u32, row: u32) -> Option<usize> {
         if (0..self.cols).contains(&col) && (0..self.rows).contains(&row) {
             Some((col + row * self.cols) as usize)
         } else {
@@ -46,10 +46,10 @@ impl Maze {
     pub fn get_neighbor(&self, cell: &Cell, index: usize) -> Option<(Direction, Cell)> {
         use Direction::*;
         match index {
-            0 => self.get(cell.col(), cell.row() - 1).map(|n| (North, n)),
+            0 if cell.row() > 0 => self.get(cell.col(), cell.row() - 1).map(|n| (North, n)),
             1 => self.get(cell.col() + 1, cell.row()).map(|n| (East, n)),
             2 => self.get(cell.col(), cell.row() + 1).map(|n| (South, n)),
-            3 => self.get(cell.col() - 1, cell.row()).map(|n| (West, n)),
+            3 if cell.col() > 0 => self.get(cell.col() - 1, cell.row()).map(|n| (West, n)),
             _ => None,
         }
     }
@@ -73,7 +73,7 @@ impl Maze {
         Ok(())
     }
 
-    fn get(&self, col: Primitive, row: Primitive) -> Option<Cell> {
+    fn get(&self, col: u32, row: u32) -> Option<Cell> {
         self.idx(col, row).map(|idx| self.cells[idx])
     }
 

@@ -13,7 +13,7 @@ pub type Result<T> = result::Result<T, Error>;
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Position {
     /// A positioned `(x, y)` coordinate.
-    Positioned(Primitive),
+    Positioned(i32),
     /// A coordinate placed in the center of the display.
     Centered,
 }
@@ -103,16 +103,22 @@ pub(crate) trait Window {
     fn set_title(&mut self, title: &str) -> Result<()>;
 
     /// Dimensions of the primary window as `(width, height)`.
-    fn dimensions(&self, id: WindowId) -> Result<(Primitive, Primitive)>;
+    fn dimensions(&self, id: WindowId) -> Result<(u32, u32)>;
 
     /// Set dimensions of the primary window as `(width, height)`.
-    fn set_dimensions(&mut self, id: WindowId, dimensions: (Primitive, Primitive)) -> Result<()>;
+    fn set_dimensions(&mut self, id: WindowId, dimensions: (u32, u32)) -> Result<()>;
 
     /// Returns whether the application is fullscreen or not.
     fn fullscreen(&self) -> bool;
 
     /// Set the application to fullscreen or not.
     fn set_fullscreen(&mut self, val: bool);
+
+    /// Returns whether the window synchronizes frame rate to the screens refresh rate.
+    fn vsync(&self) -> bool;
+
+    /// Set the window to synchronize frame rate to the screens refresh rate.
+    fn set_vsync(&mut self, val: bool) -> Result<()>;
 }
 
 /// WindowBuilder
@@ -126,11 +132,11 @@ pub struct WindowBuilder {
 
 impl WindowBuilder {
     /// Creates a new WindowBuilder instance.
-    pub fn new(width: Primitive, height: Primitive) -> Self {
+    pub fn new(width: u32, height: u32) -> Self {
         Self {
             title: String::new(),
-            width: width as u32,
-            height: height as u32,
+            width,
+            height,
         }
     }
 
@@ -166,6 +172,8 @@ pub enum Error {
     InvalidPosition(Position, Position),
     /// An overflow occurred.
     Overflow(Cow<'static, str>, u32),
+    /// Invalid text.
+    InvalidText(&'static str, NulError),
     /// Any other unknown error as a string.
     Other(Cow<'static, str>),
 }
@@ -177,6 +185,7 @@ impl fmt::Display for Error {
             InvalidTitle(msg, err) => write!(f, "invalid title: {}, {}", msg, err),
             InvalidWindow(window_id) => write!(f, "invalid window id: {}", window_id),
             InvalidPosition(x, y) => write!(f, "invalid window position: {:?}", (x, y)),
+            InvalidText(msg, err) => write!(f, "invalid text: {}, {}", msg, err),
             Overflow(err, val) => write!(f, "overflow {}: {}", err, val),
             Other(err) => write!(f, "unknown window error: {}", err),
         }

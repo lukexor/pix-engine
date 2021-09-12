@@ -10,13 +10,13 @@ mod maze;
 mod maze_creator;
 mod timer;
 
-const WIDTH: Primitive = 801;
-const HEIGHT: Primitive = 601;
-const SIZE: Primitive = 20;
+const WIDTH: u32 = 801;
+const HEIGHT: u32 = 601;
+const SIZE: u32 = 20;
 const SCALE: f32 = 1.0;
-const FOOTER: Primitive = 50;
-const COLS: Primitive = WIDTH / SIZE;
-const ROWS: Primitive = (HEIGHT - FOOTER) / SIZE;
+const FOOTER: u32 = 50;
+const COLS: u32 = WIDTH / SIZE;
+const ROWS: u32 = (HEIGHT - FOOTER) / SIZE;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 enum Algorithm {
@@ -35,9 +35,9 @@ enum MazeMode {
 #[derive(Debug, Clone)]
 struct MazeApp {
     mode: MazeMode,
-    cols: Primitive,
-    rows: Primitive,
-    size: Primitive,
+    cols: u32,
+    rows: u32,
+    size: u32,
     maze: Maze,
     creator: MazeCreator,
     solver: AStarSolver,
@@ -45,7 +45,7 @@ struct MazeApp {
 }
 
 impl MazeApp {
-    fn new(cols: Primitive, rows: Primitive, size: Primitive) -> Self {
+    fn new(cols: u32, rows: u32, size: u32) -> Self {
         let maze = Maze::new(cols, rows, size);
         let creator = MazeCreator::new(&maze);
         let solver = AStarSolver::new(&maze);
@@ -169,6 +169,10 @@ impl AppState for MazeApp {
     fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<()> {
         let frame_rate = s.target_frame_rate().unwrap_or(60);
         match event.key {
+            Key::Return => {
+                let v = s.vsync();
+                s.set_vsync(!v)?;
+            }
             Key::Up if frame_rate >= 60 => {
                 s.clear_frame_rate();
             }
@@ -191,6 +195,7 @@ pub fn main() -> PixResult<()> {
         .with_frame_rate()
         .scale(SCALE, SCALE)
         .position_centered()
+        .resizable()
         .vsync_enabled()
         .build();
     let mut app = MazeApp::new(COLS, ROWS, SIZE);

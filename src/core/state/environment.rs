@@ -52,7 +52,7 @@ impl PixState {
     }
 
     /// Create a new [WindowBuilder].
-    pub fn create_window(&mut self, width: Primitive, height: Primitive) -> WindowBuilder {
+    pub fn create_window(&mut self, width: u32, height: u32) -> WindowBuilder {
         WindowBuilder::new(width, height)
     }
 
@@ -99,21 +99,21 @@ impl PixState {
     }
 
     /// The dimensions of the primary window as `(width, height)`.
-    pub fn dimensions(&self) -> (Primitive, Primitive) {
+    pub fn dimensions(&self) -> (u32, u32) {
         // SAFETY: Primary window_id should always exist
         let window_id = self.window_id();
         self.renderer.dimensions(window_id).unwrap()
     }
 
     /// Set the dimensions of the primary window from `(width, height)`.
-    pub fn set_dimensions(&mut self, dimensions: (Primitive, Primitive)) {
+    pub fn set_dimensions(&mut self, dimensions: (u32, u32)) {
         // SAFETY: Primary window_id should always exist
         let window_id = self.window_id();
         self.renderer.set_dimensions(window_id, dimensions).unwrap()
     }
 
     /// The width of the primary window.
-    pub fn width(&self) -> Primitive {
+    pub fn width(&self) -> u32 {
         // SAFETY: Primary window_id should always exist
         let window_id = self.window_id();
         let (width, _) = self.renderer.dimensions(window_id).unwrap();
@@ -121,7 +121,7 @@ impl PixState {
     }
 
     /// Set the width of the primary window.
-    pub fn set_width(&mut self, width: Primitive) {
+    pub fn set_width(&mut self, width: u32) {
         let window_id = self.window_id();
         // SAFETY: Primary window_id should always exist
         let (_, height) = self.renderer.dimensions(window_id).unwrap();
@@ -131,14 +131,14 @@ impl PixState {
     }
 
     /// The height of the primary window.
-    pub fn height(&self) -> Primitive {
+    pub fn height(&self) -> u32 {
         // SAFETY: Primary window_id should always exist
         let (_, height) = self.renderer.dimensions(self.window_id()).unwrap();
         height
     }
 
     /// Set the height of the primary window.
-    pub fn set_height(&mut self, height: Primitive) {
+    pub fn set_height(&mut self, height: u32) {
         let window_id = self.window_id();
         // SAFETY: Primary window_id should always exist
         let (width, _) = self.renderer.dimensions(window_id).unwrap();

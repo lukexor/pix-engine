@@ -75,7 +75,7 @@ impl Window for Renderer {
 
 impl Rendering for Renderer {
     /// Creates a new Renderer instance.
-    fn new(s: &RendererSettings) -> Result<Self> {
+    fn new(s: RendererSettings) -> Result<Self> {
         let _ = s;
         Ok(Self {})
     }

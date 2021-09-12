@@ -1,9 +1,9 @@
 use pix_engine::prelude::*;
 
-const WIDTH: Primitive = 300;
-const HEIGHT: Primitive = 300;
+const WIDTH: u32 = 300;
+const HEIGHT: u32 = 300;
+const SCALE: u32 = 1;
 
-const SCALE: Primitive = 1;
 const N: usize = (WIDTH / SCALE) as usize;
 const NLEN: usize = N - 1;
 const N_SCALAR: Scalar = N as Scalar;
@@ -196,10 +196,11 @@ impl Fluid {
     #[allow(clippy::many_single_char_names)]
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         self.step();
+        let scale = SCALE as i32;
         for i in 1..NLEN {
             for j in 1..NLEN {
-                let x = i as i32 * SCALE;
-                let y = j as i32 * SCALE;
+                let x = i as i32 * scale;
+                let y = j as i32 * scale;
                 let idx = get_idx(i, j);
 
                 // Draw density
@@ -212,7 +213,7 @@ impl Fluid {
                         (f / 6.0).floor() as u8,
                         (f / 16.0).floor() as u8,
                     ));
-                    s.square([x, y, SCALE])?;
+                    s.square([x, y, scale])?;
                 }
             }
         }
@@ -266,11 +267,12 @@ impl App {
     fn drag(&mut self, s: &mut PixState) -> PixResult<()> {
         let m = s.mouse_pos();
         let r = 4.0;
+        let scale = SCALE as i32;
         for i in 0..628 {
             let (sin, cos) = (i as Scalar * 0.01).sin_cos();
             let idx = get_idx(
-                ((m.x() / SCALE) as Scalar + r * cos).floor() as usize,
-                ((m.y() / SCALE) as Scalar + r * sin).floor() as usize,
+                ((m.x() / scale) as Scalar + r * cos).floor() as usize,
+                ((m.y() / scale) as Scalar + r * sin).floor() as usize,
             );
             self.fluid.add_density(idx, random!(500.0));
         }

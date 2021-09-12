@@ -2,8 +2,8 @@ use lazy_static::lazy_static;
 use pix_engine::prelude::*;
 
 const SHIP_SCALE: Scalar = 4.0;
-const ASTEROID_SIZE: Primitive = 64;
-const MIN_ASTEROID_SIZE: Primitive = 16;
+const ASTEROID_SIZE: u32 = 64;
+const MIN_ASTEROID_SIZE: u32 = 16;
 const SHIP_THRUST: Scalar = 150.0;
 const MAX_THRUST: Scalar = 600.0;
 const MAX_ASTEROID_SPEED: Scalar = 50.0;
@@ -31,7 +31,7 @@ lazy_static! {
 }
 
 struct SpaceObj {
-    size: Primitive,
+    size: u32,
     pos: Point,
     start_pos: Point,
     vel: Vector,
@@ -40,7 +40,7 @@ struct SpaceObj {
 }
 
 impl SpaceObj {
-    fn new(pos: Point, vel: Vector, size: Primitive, angle: Scalar) -> Self {
+    fn new(pos: Point, vel: Vector, size: u32, angle: Scalar) -> Self {
         Self {
             pos,
             start_pos: pos,
@@ -83,16 +83,16 @@ struct Asteroids {
     bullets: Vec<SpaceObj>,
     ship: SpaceObj,
     level: usize,
-    lives: Primitive,
-    score: Primitive,
+    lives: i32,
+    score: i32,
     paused: bool,
     gameover: bool,
-    width: Primitive,
-    height: Primitive,
+    width: u32,
+    height: u32,
 }
 
 impl Asteroids {
-    fn new(width: Primitive, height: Primitive) -> Self {
+    fn new(width: u32, height: u32) -> Self {
         Self {
             asteroids: Vec::new(),
             broken_asteroids: Vec::new(),
@@ -253,8 +253,8 @@ impl Asteroids {
     }
 
     fn draw_gameover(&mut self, s: &mut PixState) -> PixResult<()> {
-        let x = self.width / 2 - 150;
-        let y = self.height / 2 - 100;
+        let x = self.width as i32 / 2 - 150;
+        let y = self.height as i32 / 2 - 100;
         s.fill(WHITE);
         s.font_size(32)?;
         s.text([x, y], "GAME OVER")?;

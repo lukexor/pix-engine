@@ -9,9 +9,6 @@ use vector::Vector;
 #[macro_use]
 pub mod vector;
 
-/// Default primitive type used for objects and shapes.
-pub type Primitive = i32;
-
 /// Default scalar type used for math operations.
 pub type Scalar = f64;
 

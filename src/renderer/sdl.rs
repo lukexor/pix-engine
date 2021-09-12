@@ -20,7 +20,7 @@ use sdl2::{
     video::{Window as SdlWindow, WindowBuildError, WindowContext},
     EventPump, IntegerOrSdlError, Sdl,
 };
-use std::{borrow::Cow, collections::HashMap, path::PathBuf};
+use std::{borrow::Cow, collections::HashMap, convert::TryInto, path::PathBuf};
 
 mod audio;
 mod event;
@@ -34,6 +34,7 @@ lazy_static! {
 
 /// An SDL [Renderer] implementation.
 pub(crate) struct Renderer {
+    pub(crate) settings: RendererSettings,
     context: Sdl,
     font: (PathBuf, u16),
     font_cache: HashMap<(PathBuf, u16), Font<'static, 'static>>,
@@ -50,53 +51,20 @@ pub(crate) struct Renderer {
 
 impl Rendering for Renderer {
     /// Initializes the Sdl2Renderer using the given settings and opens a new window.
-    fn new(s: &RendererSettings) -> Result<Self> {
+    fn new(s: RendererSettings) -> Result<Self> {
         let context = sdl2::init()?;
-        let video_subsys = context.video()?;
         let event_pump = context.event_pump()?;
 
-        // Set up window with options
-        let win_width = (s.scale_x * s.width as f32).floor() as u32;
-        let win_height = (s.scale_y * s.height as f32).floor() as u32;
-        let mut window_builder = video_subsys.window(&s.title, win_width, win_height);
-        match (s.x, s.y) {
-            (Position::Centered, Position::Centered) => {
-                window_builder.position_centered();
-            }
-            (Position::Positioned(x), Position::Positioned(y)) => {
-                window_builder.position(x, y);
-            }
-            _ => return Err(WindowError::InvalidPosition(s.x, s.y).into()),
-        };
-        if s.fullscreen {
-            window_builder.fullscreen();
-        }
-        if s.resizable {
-            window_builder.resizable();
-        }
-        if s.borderless {
-            window_builder.borderless();
-        }
-
-        let window = window_builder.build()?;
-        let window_id = window.id() as usize;
-        let mut canvas_builder = window.into_canvas().target_texture();
-        if s.vsync {
-            canvas_builder = canvas_builder.present_vsync();
-        }
-        let mut canvas = canvas_builder.build()?;
-        canvas.set_logical_size(win_width, win_height)?;
-        canvas.set_scale(s.scale_x, s.scale_y)?;
-
-        let cursor = Cursor::from_system(SystemCursor::Arrow)?;
-        cursor.set();
-
+        let (window_id, mut canvas) = Self::create_window_canvas(&context, &s)?;
         if let Some(icon) = &s.icon {
             let surface = Surface::from_file(icon)?;
             canvas.window_mut().set_icon(surface);
         }
 
-        let texture_creator: TextureCreator<WindowContext> = canvas.texture_creator();
+        let cursor = Cursor::from_system(SystemCursor::Arrow)?;
+        cursor.set();
+
+        let texture_creator = canvas.texture_creator();
 
         // Set up Audio
         let audio_sub = context.audio()?;
@@ -109,10 +77,11 @@ impl Rendering for Renderer {
         audio_device.resume();
 
         let mut font_cache = HashMap::new();
-        let font = (s.font.clone(), s.font_size);
-        font_cache.insert(font.clone(), TTF.load_font(&s.font, s.font_size)?);
+        let font = (s.font.clone(), s.font_size as u16);
+        font_cache.insert(font.clone(), TTF.load_font(&s.font, s.font_size as u16)?);
 
         Ok(Self {
+            settings: s,
             context,
             font,
             font_cache,
@@ -139,7 +108,7 @@ impl Rendering for Renderer {
     }
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    fn clip(&mut self, rect: Option<Rect<Primitive>>) {
+    fn clip(&mut self, rect: Option<Rect<i32>>) {
         let rect = rect.map(|rect| rect.into());
         self.canvas.set_clip_rect(rect);
     }
@@ -162,16 +131,16 @@ impl Rendering for Renderer {
     /// Create a texture to render to.
     fn create_texture(
         &mut self,
-        width: Primitive,
-        height: Primitive,
+        width: u32,
+        height: u32,
         format: Option<PixelFormat>,
     ) -> Result<TextureId> {
         let texture_id = self.textures.len();
         self.textures
             .push(self.texture_creator.create_texture_target(
                 format.map(|f| f.into()),
-                width as u32,
-                height as u32,
+                width,
+                height,
             )?);
         Ok(texture_id)
     }
@@ -192,7 +161,7 @@ impl Rendering for Renderer {
     fn update_texture(
         &mut self,
         texture_id: TextureId,
-        rect: Option<Rect<Primitive>>,
+        rect: Option<Rect<i32>>,
         pixels: &[u8],
         pitch: usize,
     ) -> Result<()> {
@@ -208,8 +177,8 @@ impl Rendering for Renderer {
     fn texture(
         &mut self,
         texture_id: usize,
-        src: Option<Rect<Primitive>>,
-        dst: Option<Rect<Primitive>>,
+        src: Option<Rect<i32>>,
+        dst: Option<Rect<i32>>,
     ) -> Result<()> {
         if let Some(texture) = self.textures.get(texture_id) {
             let src = src.map(|r| r.into());
@@ -221,8 +190,8 @@ impl Rendering for Renderer {
     }
 
     /// Set the font size for drawing to the current canvas.
-    fn font_size(&mut self, size: Primitive) -> Result<()> {
-        self.font.1 = size as u16;
+    fn font_size(&mut self, size: u32) -> Result<()> {
+        self.font.1 = size.try_into()?;
         if self.font_cache.get(&self.font).is_none() {
             self.font_cache
                 .insert(self.font.clone(), TTF.load_font(&self.font.0, self.font.1)?);
@@ -252,7 +221,7 @@ impl Rendering for Renderer {
     /// Draw text to the current canvas.
     fn text(
         &mut self,
-        pos: &Point<Primitive>,
+        pos: &Point<i32>,
         text: &str,
         fill: Option<Color>,
         _stroke: Option<Color>,
@@ -276,25 +245,26 @@ impl Rendering for Renderer {
 
     /// Returns the rendered dimensions of the given text using the current font
     /// as `(width, height)`.
-    fn size_of(&self, text: &str) -> Result<(Primitive, Primitive)> {
+    fn size_of(&self, text: &str) -> Result<(u32, u32)> {
         let font = self.font_cache.get(&self.font);
         match font {
             Some(font) => {
                 let (w, h) = font.size_of(text)?;
-                Ok((w as i32, h as i32))
+                Ok((w, h))
             }
             None => Err(Error::InvalidFont(self.font.0.to_owned())),
         }
     }
 
     /// Draw a pixel to the current canvas.
-    fn point(&mut self, p: &Point<DrawPrimitive>, color: Color) -> Result<()> {
-        Ok(self.canvas.pixel(p.x(), p.y(), color)?)
+    fn point(&mut self, p: &Point<i32>, color: Color) -> Result<()> {
+        let [x, y, _] = p.try_into_values()?;
+        Ok(self.canvas.pixel(x, y, color)?)
     }
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, line: &Line<DrawPrimitive>, color: Color) -> Result<()> {
-        let [x1, y1, _, x2, y2, _] = line.values();
+    fn line(&mut self, line: &Line<i32>, color: Color) -> Result<()> {
+        let [x1, y1, _, x2, y2, _] = line.try_into_values()?;
         if y1 == y2 {
             self.canvas.hline(x1, x2, y1, color)?;
         } else if x1 == x2 {
@@ -308,28 +278,25 @@ impl Rendering for Renderer {
     /// Draw a triangle to the current canvas.
     fn triangle(
         &mut self,
-        tri: &Triangle<DrawPrimitive>,
+        tri: &Triangle<i32>,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
-        let [x1, y1, _, x2, y2, _, x3, y3, _] = tri.values();
+        let [p1, p2, p3] = tri.try_into_values()?;
         if let Some(fill) = fill {
-            self.canvas.filled_trigon(x1, y1, x2, y2, x3, y3, fill)?;
+            self.canvas
+                .filled_trigon(p1.x(), p1.y(), p2.x(), p2.y(), p3.x(), p3.y(), fill)?;
         }
         if let Some(stroke) = stroke {
-            self.canvas.trigon(x1, y1, x2, y2, x3, y3, stroke)?;
+            self.canvas
+                .trigon(p1.x(), p1.y(), p2.x(), p2.y(), p3.x(), p3.y(), stroke)?;
         }
         Ok(())
     }
 
     /// Draw a rectangle to the current canvas.
-    fn rect(
-        &mut self,
-        rect: &Rect<DrawPrimitive>,
-        fill: Option<Color>,
-        stroke: Option<Color>,
-    ) -> Result<()> {
-        let [x, y, width, height] = rect.values();
+    fn rect(&mut self, rect: &Rect<i32>, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
+        let [x, y, width, height] = rect.try_into_values()?;
         if let Some(fill) = fill {
             self.canvas.box_(x, y, x + width, y + height, fill)?;
         }
@@ -342,12 +309,13 @@ impl Rendering for Renderer {
     /// Draw a rounded rectangle to the current canvas.
     fn rounded_rect(
         &mut self,
-        rect: &Rect<DrawPrimitive>,
-        radius: DrawPrimitive,
+        rect: &Rect<i32>,
+        radius: i32,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
-        let [x, y, width, height] = rect.values();
+        let [x, y, width, height] = rect.try_into_values()?;
+        let radius = radius.try_into()?;
         if let Some(fill) = fill {
             self.canvas
                 .rounded_box(x, y, x + width, y + height, radius, fill)?;
@@ -360,15 +328,10 @@ impl Rendering for Renderer {
     }
 
     /// Draw a quadrilateral to the current canvas.
-    fn quad(
-        &mut self,
-        quad: &Quad<DrawPrimitive>,
-        fill: Option<Color>,
-        stroke: Option<Color>,
-    ) -> Result<()> {
-        let [x1, y1, _, x2, y2, _, x3, y3, _, x4, y4, _] = quad.values();
-        let vx = [x1, x2, x3, x4];
-        let vy = [y1, y2, y3, y4];
+    fn quad(&mut self, quad: &Quad<i32>, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
+        let [p1, p2, p3, p4] = quad.try_into_values()?;
+        let vx = [p1.x(), p2.x(), p3.x(), p4.x()];
+        let vy = [p1.y(), p2.y(), p3.y(), p4.y()];
         if let Some(fill) = fill {
             self.canvas.filled_polygon(&vx, &vy, fill)?;
         }
@@ -379,18 +342,16 @@ impl Rendering for Renderer {
     }
 
     /// Draw a polygon to the current canvas.
-    fn polygon(
-        &mut self,
-        vx: &[DrawPrimitive],
-        vy: &[DrawPrimitive],
-        fill: Option<Color>,
-        stroke: Option<Color>,
-    ) -> Result<()> {
+    fn polygon<P>(&mut self, ps: P, fill: Option<Color>, stroke: Option<Color>) -> Result<()>
+    where
+        P: IntoIterator<Item = Point<i32>>,
+    {
+        let (vx, vy): (Vec<i16>, Vec<i16>) = Self::try_convert_points(ps)?.into_iter().unzip();
         if let Some(fill) = fill {
-            self.canvas.filled_polygon(vx, vy, fill)?;
+            self.canvas.filled_polygon(&vx, &vy, fill)?;
         }
         if let Some(stroke) = stroke {
-            self.canvas.polygon(vx, vy, stroke)?;
+            self.canvas.polygon(&vx, &vy, stroke)?;
         }
         Ok(())
     }
@@ -398,11 +359,11 @@ impl Rendering for Renderer {
     /// Draw a ellipse to the current canvas.
     fn ellipse(
         &mut self,
-        ellipse: &Ellipse<DrawPrimitive>,
+        ellipse: &Ellipse<i32>,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
-        let [x, y, width, height] = ellipse.values();
+        let [x, y, width, height] = ellipse.try_into_values()?;
         if let Some(fill) = fill {
             self.canvas.filled_ellipse(x, y, width, height, fill)?;
         }
@@ -415,16 +376,19 @@ impl Rendering for Renderer {
     /// Draw an arc to the current canvas.
     fn arc(
         &mut self,
-        p: &Point<DrawPrimitive>,
-        radius: DrawPrimitive,
-        start: DrawPrimitive,
-        end: DrawPrimitive,
+        p: &Point<i32>,
+        radius: i32,
+        start: i32,
+        end: i32,
         mode: ArcMode,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
         use ArcMode::*;
-        let [x, y, _] = p.values();
+        let [x, y, _] = p.try_into_values()?;
+        let radius = radius.try_into()?;
+        let start = start.try_into()?;
+        let end = end.try_into()?;
         match mode {
             Default => {
                 if let Some(stroke) = stroke {
@@ -444,15 +408,15 @@ impl Rendering for Renderer {
     }
 
     /// Draw an image to the current canvas.
-    fn image(&mut self, pos: &Point<Primitive>, img: &Image, tint: Option<Color>) -> Result<()> {
-        let dst = SdlRect::new(pos.x(), pos.y(), img.width() as u32, img.height() as u32);
+    fn image(&mut self, pos: &Point<i32>, img: &Image, tint: Option<Color>) -> Result<()> {
+        let dst = SdlRect::new(pos.x(), pos.y(), img.width(), img.height());
         self.image_texture(img, tint, dst)
     }
 
     /// Draw an image to the current canvas.
     fn image_resized(
         &mut self,
-        dst_rect: &Rect<Primitive>,
+        dst_rect: &Rect<i32>,
         img: &Image,
         tint: Option<Color>,
     ) -> Result<()> {
@@ -461,6 +425,18 @@ impl Rendering for Renderer {
 }
 
 impl Renderer {
+    fn try_convert_points<P>(ps: P) -> Result<Vec<(i16, i16)>>
+    where
+        P: IntoIterator<Item = Point<i32>>,
+    {
+        ps.into_iter()
+            .map(|p| -> Result<(i16, i16)> {
+                let [x, y, _]: [i16; 3] = p.try_into_values()?;
+                Ok((x, y))
+            })
+            .collect::<Result<Vec<(i16, i16)>>>()
+    }
+
     fn get_texture_id(&mut self, img: &Image) -> Result<TextureId> {
         match img.texture_id() {
             Some(texture_id) => Ok(texture_id),
@@ -550,8 +526,8 @@ impl From<FontStyle> for SdlFontStyle {
     }
 }
 
-impl From<Rect<Primitive>> for SdlRect {
-    fn from(rect: Rect<Primitive>) -> Self {
+impl From<Rect<i32>> for SdlRect {
+    fn from(rect: Rect<i32>) -> Self {
         Self::new(
             rect.x(),
             rect.y(),
@@ -561,8 +537,8 @@ impl From<Rect<Primitive>> for SdlRect {
     }
 }
 
-impl From<&Rect<Primitive>> for SdlRect {
-    fn from(rect: &Rect<Primitive>) -> Self {
+impl From<&Rect<i32>> for SdlRect {
+    fn from(rect: &Rect<i32>) -> Self {
         Self::new(
             rect.x(),
             rect.y(),

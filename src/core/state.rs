@@ -24,7 +24,6 @@ pub type Result<T> = result::Result<T, Error>;
 #[non_exhaustive]
 #[derive(Debug)]
 pub struct PixState {
-    pub(crate) title: String,
     pub(crate) renderer: Renderer,
     pub(crate) env: Environment,
     pub(crate) settings: Settings,
@@ -37,23 +36,13 @@ pub struct PixState {
 impl PixState {
     /// Get the current window title.
     pub fn title(&self) -> &str {
-        &self.title
+        &self.renderer.title()
     }
 
     /// Set the current window title.
     #[inline]
-    pub fn set_title<S>(&mut self, title: S) -> PixResult<()>
-    where
-        S: Into<String>,
-    {
-        self.title = title.into();
-        if self.settings.show_frame_rate {
-            self.renderer
-                .set_title(&format!("{} - FPS: {}", self.title, self.env.frame_rate))?;
-        } else {
-            self.renderer.set_title(&self.title)?;
-        }
-        Ok(())
+    pub fn set_title(&mut self, title: &str) -> PixResult<()> {
+        Ok(self.renderer.set_title(title)?)
     }
 
     /// Returns the current mouse position coordinates as `(x, y)`.
@@ -99,12 +88,8 @@ impl PixState {
 
 impl PixState {
     /// Constructs `PixState` with a given `Renderer`.
-    pub(crate) fn new<S>(title: S, renderer: Renderer) -> Self
-    where
-        S: Into<String>,
-    {
+    pub(crate) fn new(renderer: Renderer) -> Self {
         Self {
-            title: title.into(),
             renderer,
             env: Environment::default(),
             settings: Settings::default(),

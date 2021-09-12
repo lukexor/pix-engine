@@ -30,6 +30,10 @@ use crate::prelude::*;
 use num_traits::{AsPrimitive, Float};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+use std::{
+    convert::TryInto,
+    ops::{Deref, DerefMut},
+};
 
 /// A `Quad` or quadrilateral, a four-sided polygon.
 ///
@@ -141,38 +145,70 @@ impl<T: Number> Quad<T> {
         )
     }
 
-    /// Returns `Quad` coordinates as `[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]`.
+    /// Returns `Quad` points as `[Point<T>; 4]`.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
     /// let quad: Quad<i32> = Quad::with_points([10, 20], [30, 10], [20, 25], [15, 15]);
-    /// assert_eq!(quad.values(), [10, 20, 0, 30, 10, 0, 20, 25, 0, 15, 15, 0]);
+    /// assert_eq!(quad.values(), [
+    ///     point!(10, 20, 0),
+    ///     point!(30, 10, 0),
+    ///     point!(20, 25, 0),
+    ///     point!(15, 15, 0)
+    /// ]);
     /// ```
-    pub fn values(&self) -> [T; 12] {
-        let [x1, y1, z1] = self.p1().values();
-        let [x2, y2, z2] = self.p2().values();
-        let [x3, y3, z3] = self.p3().values();
-        let [x4, y4, z4] = self.p4().values();
-        [x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]
+    pub fn values(&self) -> [Point<T>; 4] {
+        [self.p1(), self.p2(), self.p3(), self.p4()]
     }
 
-    /// Returns `Quad` as a [Vec].
+    /// Tries to convert `Quad` coordinates as `[Point<T>; 4]` from `T` to `U` of `T` implements
+    /// `TryInto<U>`.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
     /// let quad: Quad<i32> = Quad::with_points([10, 20], [30, 10], [20, 25], [15, 15]);
-    /// assert_eq!(quad.to_vec(), vec![10, 20, 0, 30, 10, 0, 20, 25, 0, 15, 15, 0]);
+    /// assert_eq!(quad.try_into_values()?, [
+    ///     point!(10i16, 20, 0),
+    ///     point!(30i16, 10, 0),
+    ///     point!(20i16, 25, 0),
+    ///     point!(15i16, 15, 0)
+    /// ]);
+    /// # Ok::<(), PixError>(())
     /// ```
-    pub fn to_vec(self) -> Vec<T> {
-        let [x1, y1, z1] = self.p1().values();
-        let [x2, y2, z2] = self.p2().values();
-        let [x3, y3, z3] = self.p3().values();
-        let [x4, y4, z4] = self.p4().values();
-        vec![x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]
+    pub fn try_into_values<U>(&self) -> PixResult<[Point<U>; 4]>
+    where
+        T: TryInto<U>,
+        U: Number,
+        PixError: From<<T as TryInto<U>>::Error>,
+    {
+        Ok([
+            self.p1().try_into_values()?.into(),
+            self.p2().try_into_values()?.into(),
+            self.p3().try_into_values()?.into(),
+            self.p4().try_into_values()?.into(),
+        ])
+    }
+
+    /// Returns `Quad` points as a [Vec].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let quad: Quad<i32> = Quad::with_points([10, 20], [30, 10], [20, 25], [15, 15]);
+    /// assert_eq!(quad.to_vec(), vec![
+    ///     point!(10, 20, 0),
+    ///     point!(30, 10, 0),
+    ///     point!(20, 25, 0),
+    ///     point!(15, 15, 0)
+    /// ]);
+    /// ```
+    pub fn to_vec(self) -> Vec<Point<T>> {
+        self.0.to_vec()
     }
 }
 
@@ -197,6 +233,19 @@ where
     /// Draw `Quad` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.quad(*self)
+    }
+}
+
+impl<T> Deref for Quad<T> {
+    type Target = [Point<T>; 4];
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T> DerefMut for Quad<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
@@ -269,14 +318,22 @@ impl<T: Number, U: Copy + Into<T>> From<&[U; 8]> for Quad<T> {
 /// Convert [Quad] to `[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]`.
 impl<T: Number> From<Quad<T>> for [T; 12] {
     fn from(quad: Quad<T>) -> Self {
-        quad.values()
+        let [x1, y1, z1] = quad.p1().values();
+        let [x2, y2, z2] = quad.p2().values();
+        let [x3, y3, z3] = quad.p3().values();
+        let [x4, y4, z4] = quad.p4().values();
+        [x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]
     }
 }
 
 /// Convert &[Quad] to `[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]`.
 impl<T: Number> From<&Quad<T>> for [T; 12] {
     fn from(quad: &Quad<T>) -> Self {
-        quad.values()
+        let [x1, y1, z1] = quad.p1().values();
+        let [x2, y2, z2] = quad.p2().values();
+        let [x3, y3, z3] = quad.p3().values();
+        let [x4, y4, z4] = quad.p4().values();
+        [x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]
     }
 }
 

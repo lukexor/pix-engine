@@ -1,6 +1,29 @@
+//! Immediate-GUI functions related to rendering and interacting with buttons.
+//!
+//! # Examples
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! # struct App;
+//! # impl App {
+//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+//!     if s.button([0, 0, 100, 50], "Hover Me")?.hovered() {
+//!       println!("I was hovered over!");
+//!     }
+//!     if s.button([0, 0, 100, 50], "Click Me")?.clicked() {
+//!       println!("I was clicked!");
+//!     }
+//!     Ok(())
+//! }
+//! #}
+//! ```
+
 use crate::{core::state::MouseState, prelude::*};
 
 #[derive(Debug)]
+/// An immediate-gui button positioned at `(x, y`) with `width`, `height` and a label. Contains
+/// hovered and clicked state which can be checked with [Button::hovered] and [Button::clicked]
+/// respectively.
 pub struct Button<'a> {
     rect: Rect<i32>,
     label: &'a str,

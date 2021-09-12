@@ -6,7 +6,6 @@ use super::{
 };
 use crate::prelude::Scalar;
 use std::{
-    array::IntoIter,
     fmt::{self, LowerHex, UpperHex},
     iter::FromIterator,
     ops::*,
@@ -86,97 +85,31 @@ impl SubAssign for Color {
     }
 }
 
-impl ExactSizeIterator for Iter {}
-
-impl<T: Into<Scalar>> FromIterator<T> for Color {
+impl FromIterator<u8> for Color {
     fn from_iter<I>(iter: I) -> Self
     where
-        I: IntoIterator<Item = T>,
+        I: IntoIterator<Item = u8>,
     {
-        let mut rgba = [0.0, 0.0, 0.0, 255.0];
-        for (i, v) in iter.into_iter().enumerate() {
-            rgba[i] = v.into();
-        }
-        let [r, g, b, a] = rgba;
-        Self::rgba(r, g, b, a)
+        let mut iter = iter.into_iter();
+        Self::rgba(
+            iter.next().unwrap_or(0),
+            iter.next().unwrap_or(0),
+            iter.next().unwrap_or(0),
+            iter.next().unwrap_or(0),
+        )
     }
 }
 
-impl IntoIterator for Color {
-    type Item = u8;
-    type IntoIter = IntoIter<Self::Item, 4>;
-
-    /// Owned `Color` iterator over `[r, g, b, a]`.
-    ///
-    /// This struct is created by the [into_iter](Color::into_iter) method on [Color]s.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = color!(100, 200, 50);
-    /// let mut iterator = c.into_iter();
-    ///
-    /// assert_eq!(iterator.next(), Some(100));
-    /// assert_eq!(iterator.next(), Some(200));
-    /// assert_eq!(iterator.next(), Some(50));
-    /// assert_eq!(iterator.next(), Some(255));
-    /// assert_eq!(iterator.next(), None);
-    /// ```
-    fn into_iter(self) -> Self::IntoIter {
-        IntoIter::new(self.channels())
+impl Deref for Color {
+    type Target = [u8; 4];
+    fn deref(&self) -> &Self::Target {
+        &self.channels
     }
 }
 
-/// Immutable `Color` iterator over `[r, g, b, a]`.
-///
-/// This struct is created by the [iter](Color::iter) method on [Color]s.
-///
-/// # Example
-///
-/// ```
-/// # use pix_engine::prelude::*;
-/// let c: Color = color!(100, 200, 50);
-/// let mut iterator = c.iter();
-///
-/// assert_eq!(iterator.next(), Some(100));
-/// assert_eq!(iterator.next(), Some(200));
-/// assert_eq!(iterator.next(), Some(50));
-/// assert_eq!(iterator.next(), Some(255));
-/// assert_eq!(iterator.next(), None);
-/// ```
-#[derive(Debug, Clone)]
-pub struct Iter {
-    inner: [u8; 4],
-    current: usize,
-}
-
-impl Iter {
-    pub(crate) fn new(color: &Color) -> Self {
-        Self {
-            inner: color.channels(),
-            current: 0,
-        }
-    }
-}
-
-impl Iterator for Iter {
-    type Item = u8;
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.current > 3 {
-            return None;
-        }
-        let next = self.inner[self.current];
-        self.current += 1;
-        Some(next)
-    }
-}
-
-impl IntoIterator for &Color {
-    type Item = u8;
-    type IntoIter = Iter;
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
+impl DerefMut for Color {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.channels
     }
 }
 

@@ -1,8 +1,8 @@
 use pix_engine::{math::map, prelude::*};
 
-const WIDTH: Primitive = 800;
-const HEIGHT: Primitive = 600;
-const SIZE: Primitive = 4;
+const WIDTH: u32 = 800;
+const HEIGHT: u32 = 600;
+const SIZE: u32 = 4;
 
 struct Colors {
     h: f64,

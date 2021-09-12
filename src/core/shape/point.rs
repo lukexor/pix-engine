@@ -161,6 +161,30 @@ impl<T: Number> Point<T> {
         [self.x(), self.y(), self.z()]
     }
 
+    /// Tries to convert `Point` coordinates as `[x, y, z]` from `T` to `U` of `T` implements
+    /// `TryInto<U>`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p: Point<i32> = point!(2, 1, 3);
+    /// let values: [i16; 3] = p.try_into_values()?;
+    /// assert_eq!(values, [2i16, 1, 3]);
+    /// # Ok::<(), PixError>(())
+    /// ```
+    pub fn try_into_values<U>(&self) -> PixResult<[U; 3]>
+    where
+        T: TryInto<U>,
+        PixError: From<<T as TryInto<U>>::Error>,
+    {
+        Ok([
+            self.x().try_into()?,
+            self.y().try_into()?,
+            self.z().try_into()?,
+        ])
+    }
+
     /// Returns `Point` as a [Vec].
     ///
     /// # Example

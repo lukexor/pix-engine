@@ -2,63 +2,67 @@
 
 ## Summary
 
-A simple, cross-platform graphics/UI engine framework with a minimal interface.
+`pix_engine` is a cross-platform graphics & UI library for simple games,
+visualizations, digital art, and graphics applications written in [Rust][],
+supporting [SDL2][] and [Web-Assembly][WASM] renderers.
 
-## Dependencies
+The primary goal of this library is to be simple to setup and use for graphics
+or algorithm exploration and is not meant to be as fully-featured as other,
+larger graphics libraries.
 
-* [Rust][rust]
-* [SDL2][sdl2]
+It is intended to be more than just a toy library, however, and can be used to
+drive real applications. The [`Tetanes`][] [NES][] emulator, for example uses
+`pix_engine` for rendering, window and event handling.
 
-## Usage
+Creating an application is as simple as implementing the only required trait of
+`AppState` for your application: `AppState::on_update` which gets executed as
+often as possible. Within that function you'll have access to a mutable
+`PixState` object which provides several methods for changing settings,
+responding to events, and drawing to the screen.
 
-In order to use the `PixEngine`, you need to implement the `AppState` interface
-on your application struct. There are several methods, only one of which is
-required:
-
-* on_start - Setup functionality when the application begins.
-* on_stop - Teardown functionality for when the application is closed.
-* on_update - Update functionality. This is your draw loop. It's run roughly 60 times/second.
-
-Here's an example app skeleton:
+Here's an example application:
 
 ```rust
 use pix_engine::prelude::*;
 
-struct App;
+struct MyApp;
 
-impl App {
-    fn new() -> Self {
-        Self
-    }
-}
-
-impl AppState for App {
+impl AppState for MyApp {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        // Setup App state. State contains engine specific state and
-        // functions like mouse coordinates, draw functions, etc.
+        // Setup App state. PixState contains engine specific state and
+        // utility functions for things like getting mouse coordinates,
+        // drawing shapes, etc.
+        s.background(220);
+        s.circle([10, 10, 100])?;
         Ok(())
     }
+
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        // Update App state roughly every 16ms.
+        // Main render loop. Called as often as possible, or based on `target frame rate`.
+        if s.mouse_pressed() {
+            s.fill(0);
+        } else {
+            s.fill(255);
+        }
+        let m = s.mouse_pos();
+        s.circle([m.x(), m.y(), 80])?;
         Ok(())
     }
+
     fn on_stop(&mut self, s: &mut PixState) -> PixResult<()> {
-        // Teardown any state or resources.
+        // Teardown any state or resources before exiting.
         Ok(())
     }
 }
 
-pub fn main() {
-    let width = 800;
-    let height = 600;
-    let mut engine = PixEngine::create(width, height)
-      .with_title("App Title")
+fn main() -> PixResult<()> {
+    let mut engine = PixEngine::builder()
+      .with_dimensions(800, 600)
+      .with_title("MyApp")
       .position_centered()
-      .vsync_enabled()
-      .build()
-      .expect("valid engine");
-    let mut app = App::new();
-    engine.run(&mut app).expect("engine run");
+      .build();
+    let mut app = MyApp;
+    engine.run(&mut app)
 }
 ```
 
@@ -68,8 +72,7 @@ See the github issue tracker.
 
 ## License
 
-`PixEngine` is licensed under the GPLv3 license. See the `LICENSE.md` file in
-the root for a copy.
+See the `LICENSE.md` file in the root.
 
 ## Contact
 
@@ -85,5 +88,8 @@ project.
 
 Also heavily influenced by [p5js](https://p5js.org/).
 
-[rust]: https://www.rust-lang.org/tools/install
-[sdl2]: https://www.libsdl.org/
+[Rust]: https://www.rust-lang.org/
+[SDL2]: https://crates.io/crates/sdl2/
+[WASM]: https://www.rust-lang.org/what/wasm
+[`Tetanes`]: https://crates.io/crates/tetanes
+[NES]: https://en.wikipedia.org/wiki/Nintendo_Entertainment_System

@@ -1,11 +1,11 @@
 use pix_engine::prelude::*;
 use std::{borrow::Cow, cmp::Ordering::Less};
 
-const WIDTH: Primitive = 1000;
-const HEIGHT: Primitive = 800;
-const SCALE: Primitive = 1;
+const WIDTH: u32 = 1000;
+const HEIGHT: u32 = 800;
+const SCALE: u32 = 1;
 
-const BLOCK_SIZE: Primitive = 40;
+const BLOCK_SIZE: u32 = 40;
 const NORTH: usize = 0;
 const SOUTH: usize = 1;
 const EAST: usize = 2;
@@ -39,8 +39,8 @@ struct RayScene {
     edges: Vec<Line>,
     points: Vec<Point>,
     polygons: Vec<(Scalar, Point)>,
-    xcells: Primitive,
-    ycells: Primitive,
+    xcells: u32,
+    ycells: u32,
     drawing: bool,
     light: Image,
 }
@@ -67,7 +67,7 @@ impl RayScene {
         }
     }
 
-    fn get_cell_index(&self, x: i32, y: i32) -> usize {
+    fn get_cell_index(&self, x: u32, y: u32) -> usize {
         ((y / BLOCK_SIZE) * self.xcells + (x / BLOCK_SIZE)) as usize
     }
 
@@ -242,7 +242,7 @@ impl RayScene {
 
     fn draw_visibility_polygons(&mut self, s: &mut PixState) -> PixResult<()> {
         let mouse = s.mouse_pos();
-        if !rect![0, 0, s.width(), s.height()].contains_point(mouse) {
+        if !rect![0, 0, s.width() as i32, s.height() as i32].contains_point(mouse) {
             return Ok(());
         }
 
@@ -344,8 +344,10 @@ impl AppState for RayScene {
     }
 
     fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse, pos: Point<i32>) -> PixResult<()> {
-        if btn == Mouse::Left && rect![0, 0, s.width(), s.height()].contains_point(pos) {
-            let i = self.get_cell_index(pos.x(), pos.y());
+        if btn == Mouse::Left
+            && rect![0, 0, s.width() as i32, s.height() as i32].contains_point(pos)
+        {
+            let i = self.get_cell_index(pos.x() as u32, pos.y() as u32);
             self.cells[i].exists = !self.cells[i].exists;
             self.drawing = self.cells[i].exists;
             self.convert_edges_to_poly_map()?;
@@ -357,9 +359,9 @@ impl AppState for RayScene {
         if s.mouse_buttons().contains(&Mouse::Left) {
             let m = s.mouse_pos();
             let pm = s.pmouse_pos();
-            if rect![0, 0, s.width(), s.height()].contains_point(m) {
+            if rect![0, 0, s.width() as i32, s.height() as i32].contains_point(m) {
                 if m != pm {
-                    let i = self.get_cell_index(m.x(), m.y());
+                    let i = self.get_cell_index(m.x() as u32, m.y() as u32);
                     self.cells[i].exists = self.drawing;
                 }
                 self.convert_edges_to_poly_map()?;

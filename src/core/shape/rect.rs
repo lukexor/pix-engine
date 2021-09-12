@@ -28,7 +28,10 @@ use crate::prelude::*;
 use num_traits::{AsPrimitive, Float};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::ops::{Deref, DerefMut};
+use std::{
+    convert::TryInto,
+    ops::{Deref, DerefMut},
+};
 
 /// Constructs a `Rect<T>` at position `(x, y)` with `width` and `height`.
 ///
@@ -245,7 +248,32 @@ impl<T: Number> Rect<T> {
     /// assert_eq!(r.values(), [5, 10, 100, 100]);
     /// ```
     pub fn values(&self) -> [T; 4] {
-        [self.x(), self.y(), self.width(), self.height()]
+        self.0
+    }
+
+    /// Tries to convert `Rect` values as `[x, y, width, height]` from `T` to `U` of `T` implements
+    /// `TryInto<U>`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let r: Rect<i32> = rect!(5, 10, 100, 100);
+    /// let values: [i16; 4] = r.try_into_values()?;
+    /// assert_eq!(values, [5i16, 10, 100, 100]);
+    /// # Ok::<(), PixError>(())
+    /// ```
+    pub fn try_into_values<U>(&self) -> PixResult<[U; 4]>
+    where
+        T: TryInto<U>,
+        PixError: From<<T as TryInto<U>>::Error>,
+    {
+        Ok([
+            self.x().try_into()?,
+            self.y().try_into()?,
+            self.width().try_into()?,
+            self.height().try_into()?,
+        ])
     }
 
     /// Returns `Rect` as a [Vec].
@@ -258,7 +286,7 @@ impl<T: Number> Rect<T> {
     /// assert_eq!(r.to_vec(), vec![5, 10, 100, 100]);
     /// ```
     pub fn to_vec(self) -> Vec<T> {
-        vec![self.x(), self.y(), self.width(), self.height()]
+        self.0.to_vec()
     }
 
     /// Returns the horizontal position of the left edge.
@@ -266,24 +294,14 @@ impl<T: Number> Rect<T> {
         self.x()
     }
 
-    /// Returns the horizontal position of the right edge.
-    pub fn right(&self) -> T {
-        self.x() + self.width()
-    }
-
-    /// Returns the horizontal position of the top edge.
-    pub fn top(&self) -> T {
-        self.y()
-    }
-
-    /// Returns the vertical position of the bottom edge.
-    pub fn bottom(&self) -> T {
-        self.y() + self.height()
-    }
-
     /// Set the horizontal position of the left edge.
     pub fn set_left(&mut self, left: T) {
         self.set_x(left);
+    }
+
+    /// Returns the horizontal position of the right edge.
+    pub fn right(&self) -> T {
+        self.x() + self.width()
     }
 
     /// Set the horizontal position of the right edge.
@@ -291,9 +309,19 @@ impl<T: Number> Rect<T> {
         self.set_x(right - self.width());
     }
 
+    /// Returns the horizontal position of the top edge.
+    pub fn top(&self) -> T {
+        self.y()
+    }
+
     /// Set the vertical position of the top edge.
     pub fn set_top(&mut self, top: T) {
         self.set_y(top);
+    }
+
+    /// Returns the vertical position of the bottom edge.
+    pub fn bottom(&self) -> T {
+        self.y() + self.height()
     }
 
     /// Set the vertical position of the bottom edge.

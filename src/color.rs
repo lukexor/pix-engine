@@ -101,12 +101,11 @@
 
 use crate::{prelude::Scalar, random};
 use conversion::{calculate_channels, clamp_levels, convert_levels, maxes};
-use ops::Iter;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, fmt};
 
-pub use conversion::ColorError;
+pub use conversion::{Error, Result};
 
 pub mod constants;
 pub mod conversion;
@@ -366,7 +365,7 @@ impl Color {
     /// assert_eq!(c.channels(), [128, 64, 0, 128]);
     /// # Ok::<(), ColorError<Scalar>>(())
     /// ```
-    pub fn from_slice<T>(mode: ColorMode, slice: &[T]) -> Result<Self, ColorError<'static, T>>
+    pub fn from_slice<T>(mode: ColorMode, slice: &[T]) -> Result<'static, Self, T>
     where
         T: Copy + Into<Scalar>,
         [T]: ToOwned<Owned = Vec<T>>,
@@ -376,7 +375,7 @@ impl Color {
             [gray, a] => Self::with_mode_alpha(mode, gray, gray, gray, a),
             [v1, v2, v3] => Self::with_mode(mode, v1, v2, v3),
             [v1, v2, v3, a] => Self::with_mode_alpha(mode, v1, v2, v3, a),
-            _ => return Err(ColorError::InvalidSlice(Cow::from(slice.to_owned()))),
+            _ => return Err(Error::InvalidSlice(Cow::from(slice.to_owned()))),
         };
         Ok(result)
     }
@@ -790,26 +789,7 @@ impl Color {
     /// assert_eq!(c.to_vec(), vec![100, 200, 50, 255]);
     /// ```
     pub fn to_vec(self) -> Vec<u8> {
-        Vec::from(self.channels)
-    }
-
-    /// Returns an iterator over the `Color` RGBA channels `[red, green, blue, alpha]`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = color!(100, 200, 50);
-    /// let mut iterator = c.iter();
-    ///
-    /// assert_eq!(iterator.next(), Some(100));
-    /// assert_eq!(iterator.next(), Some(200));
-    /// assert_eq!(iterator.next(), Some(50));
-    /// assert_eq!(iterator.next(), Some(255));
-    /// assert_eq!(iterator.next(), None);
-    /// ```
-    pub fn iter(&self) -> Iter {
-        Iter::new(self)
+        self.channels.to_vec()
     }
 }
 

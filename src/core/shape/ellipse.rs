@@ -28,7 +28,10 @@ use crate::prelude::*;
 use num_traits::{AsPrimitive, Float};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::ops::{Deref, DerefMut};
+use std::{
+    convert::TryInto,
+    ops::{Deref, DerefMut},
+};
 
 /// Constructs an `Ellipse<T>` at position `(x, y)` with `width` and `height`.
 ///
@@ -182,6 +185,8 @@ impl<T: Number> Ellipse<T> {
         )
     }
 
+    /// Returns `Ellipse` values as `[x, y, width, height]`.
+    ///
     ///
     /// # Example
     ///
@@ -192,6 +197,31 @@ impl<T: Number> Ellipse<T> {
     /// ```
     pub fn values(&self) -> [T; 4] {
         self.0
+    }
+
+    /// Tries to convert `Ellipse` values as `[x, y, width, height]` from `T` to `U` of `T` implements
+    /// `TryInto<U>`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let e: Ellipse<i32> = ellipse!(5, 10, 100, 100);
+    /// let values: [i16; 4] = e.try_into_values()?;
+    /// assert_eq!(values, [5i16, 10, 100, 100]);
+    /// # Ok::<(), PixError>(())
+    /// ```
+    pub fn try_into_values<U>(&self) -> PixResult<[U; 4]>
+    where
+        T: TryInto<U>,
+        PixError: From<<T as TryInto<U>>::Error>,
+    {
+        Ok([
+            self.x().try_into()?,
+            self.y().try_into()?,
+            self.width().try_into()?,
+            self.height().try_into()?,
+        ])
     }
 
     /// Returns `Ellipse` as a [Vec].
@@ -479,6 +509,30 @@ impl<T: Number> Circle<T> {
     /// ```
     pub fn values(&self) -> [T; 3] {
         self.0
+    }
+
+    /// Tries to convert `Circle` values as `[x, y, radius]` from `T` to `U` of `T` implements
+    /// `TryInto<U>`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = circle!(5, 10, 100);
+    /// let values: [i16; 3] = c.try_into_values()?;
+    /// assert_eq!(values, [5i16, 10, 100]);
+    /// # Ok::<(), PixError>(())
+    /// ```
+    pub fn try_into_values<U>(&self) -> PixResult<[U; 3]>
+    where
+        T: TryInto<U>,
+        PixError: From<<T as TryInto<U>>::Error>,
+    {
+        Ok([
+            self.x().try_into()?,
+            self.y().try_into()?,
+            self.radius().try_into()?,
+        ])
     }
 
     /// Returns `Circle` as a [Vec].

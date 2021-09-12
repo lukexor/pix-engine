@@ -152,7 +152,7 @@ impl PixState {
     /// Sets the clip [Rect] used by the renderer to draw to the current canvas.
     pub fn clip<R>(&mut self, rect: R)
     where
-        R: Into<Rect<Primitive>>,
+        R: Into<Rect<i32>>,
     {
         self.renderer.clip(Some(rect.into()));
     }
@@ -170,6 +170,16 @@ impl PixState {
     /// Set the application to fullscreen or not.
     pub fn set_fullscreen(&mut self, val: bool) {
         self.renderer.set_fullscreen(val)
+    }
+
+    /// Returns whether the window synchronizes frame rate to the screens refresh rate.
+    pub fn vsync(&mut self) -> bool {
+        self.renderer.vsync()
+    }
+
+    /// Set the window to synchronize frame rate to the screens refresh rate.
+    pub fn set_vsync(&mut self, val: bool) -> PixResult<()> {
+        Ok(self.renderer.set_vsync(val)?)
     }
 
     /// Set the mouse cursor to a predefined symbol or image.
@@ -244,7 +254,7 @@ impl PixState {
     }
 
     /// Set the font size for drawing to the current canvas.
-    pub fn font_size(&mut self, size: Primitive) -> PixResult<()> {
+    pub fn font_size(&mut self, size: u32) -> PixResult<()> {
         Ok(self.renderer.font_size(size)?)
     }
 

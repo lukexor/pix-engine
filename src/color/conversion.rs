@@ -5,12 +5,15 @@ use super::{
     ColorMode::{self, *},
 };
 use crate::prelude::Scalar;
-use std::{borrow::Cow, convert::TryFrom, error, fmt, str::FromStr};
+use std::{borrow::Cow, convert::TryFrom, error, fmt, result, str::FromStr};
+
+/// The result type for [Color] conversions.
+pub type Result<'a, T, U> = result::Result<T, Error<'a, U>>;
 
 /// The error type for [Color] operations.
 #[non_exhaustive]
 #[derive(Debug, Clone)]
-pub enum ColorError<'a, T>
+pub enum Error<'a, T>
 where
     [T]: ToOwned<Owned = Vec<T>>,
 {
@@ -20,13 +23,13 @@ where
     InvalidString(Cow<'a, str>),
 }
 
-impl<'a, T> fmt::Display for ColorError<'a, T>
+impl<'a, T> fmt::Display for Error<'a, T>
 where
     T: fmt::Debug,
     [T]: ToOwned<Owned = Vec<T>>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use ColorError::*;
+        use Error::*;
         match self {
             InvalidSlice(slice) => write!(f, "invalid color slice: {:?}", slice),
             InvalidString(s) => write!(f, "invalid color string format: {}", s),
@@ -34,7 +37,7 @@ where
     }
 }
 
-impl<'a, T> error::Error for ColorError<'a, T> where T: fmt::Debug + Clone {}
+impl<'a, T> error::Error for Error<'a, T> where T: fmt::Debug + Clone {}
 
 /// Return the max value for each [ColorMode].
 pub(crate) const fn maxes(mode: ColorMode) -> [Scalar; 4] {
@@ -281,7 +284,7 @@ impl Color {
 }
 
 impl FromStr for Color {
-    type Err = ColorError<'static, Scalar>;
+    type Err = Error<'static, Scalar>;
 
     /// Converts to [Color] from a hexadecimal string.
     ///
@@ -304,9 +307,9 @@ impl FromStr for Color {
     /// assert_eq!(c.channels(), [240, 245, 191, 95]);
     /// # Ok::<(), ColorError<Scalar>>(())
     /// ```
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> result::Result<Self, Self::Err> {
         if !s.starts_with('#') {
-            return Err(ColorError::InvalidString(Cow::from(s.to_owned())));
+            return Err(Error::InvalidString(Cow::from(s.to_owned())));
         }
 
         let mut channels: [u8; 4] = [0, 0, 0, 255];
@@ -314,7 +317,7 @@ impl FromStr for Color {
             if let Ok(value) = u8::from_str_radix(hex, 16) {
                 Ok(value)
             } else {
-                Err(ColorError::InvalidString(Cow::from(hex.to_owned())))
+                Err(Error::InvalidString(Cow::from(hex.to_owned())))
             }
         };
 
@@ -331,7 +334,7 @@ impl FromStr for Color {
                     channels[i / 2] = parse_hex(&s[i + 1..i + 3])?;
                 }
             }
-            _ => return Err(ColorError::InvalidString(Cow::from(s))),
+            _ => return Err(Error::InvalidString(Cow::from(s))),
         }
 
         Ok(Self::rgba(
@@ -344,9 +347,9 @@ impl FromStr for Color {
 }
 
 impl TryFrom<&str> for Color {
-    type Error = ColorError<'static, Scalar>;
+    type Error = Error<'static, Scalar>;
     /// Try to create a `Color` from a hexadecimal string.
-    fn try_from(s: &str) -> Result<Self, Self::Error> {
+    fn try_from(s: &str) -> result::Result<Self, Self::Error> {
         Self::from_str(s)
     }
 }

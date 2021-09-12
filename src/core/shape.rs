@@ -129,11 +129,10 @@ impl PixState {
     }
 
     /// Draw a polygon to the current canvas.
-    pub fn polygon(&mut self, vx: &[Scalar], vy: &[Scalar]) -> PixResult<()> {
+    pub fn polygon<P: AsRef<[Point<Scalar>]>>(&mut self, ps: P) -> PixResult<()> {
         let s = &self.settings;
-        let vx: Vec<DrawPrimitive> = vx.iter().map(|x| x.round().as_()).collect();
-        let vy: Vec<DrawPrimitive> = vy.iter().map(|y| y.round().as_()).collect();
-        Ok(self.renderer.polygon(&vx, &vy, s.fill, s.stroke)?)
+        let ps = ps.as_ref().iter().map(|p| p.as_());
+        Ok(self.renderer.polygon(ps, s.fill, s.stroke)?)
     }
 
     /// Draw a [Circle] to the current canvas.

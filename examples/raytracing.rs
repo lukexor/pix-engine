@@ -3,7 +3,7 @@ use pix_engine::prelude::*;
 struct SphereObj {
     sphere: Sphere,
     color: Color,
-    specular: Option<Primitive>,
+    specular: Option<i32>,
     reflective: Scalar,
 }
 
