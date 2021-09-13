@@ -14,13 +14,14 @@ impl ImageDemo {
 
 impl AppState for ImageDemo {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.background(127);
+        s.background(DARK_BLUE);
         s.no_cursor();
+        s.blend_mode(BlendMode::Blend);
         Ok(())
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.image_resized([0, 0, WIDTH as i32, HEIGHT as i32], &self.0)?;
+        s.image_resized(&self.0, [0, 0, WIDTH as i32, HEIGHT as i32])?;
         Ok(())
     }
 

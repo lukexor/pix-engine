@@ -38,18 +38,18 @@ pub trait AppState {
 
     /// Called each time a [Key] is pressed with the [KeyEvent] indicating which key and modifiers
     /// are pressed as well as whether this is a repeat event where the key is being held down.
-    fn on_key_pressed(&mut self, s: &mut PixState, _event: KeyEvent) -> PixResult<()> {
+    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<()> {
         Ok(())
     }
 
     /// Called each time a [Key] is pressed with the [KeyEvent] indicating which key and modifiers
     /// are released.
-    fn on_key_released(&mut self, s: &mut PixState, _event: KeyEvent) -> PixResult<()> {
+    fn on_key_released(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<()> {
         Ok(())
     }
 
     /// Called each time a [Key] is typed with the text that was typed. Ignores special keys like [Key::Backspace].
-    fn on_key_typed(&mut self, s: &mut PixState, _text: &str) -> PixResult<()> {
+    fn on_key_typed(&mut self, s: &mut PixState, text: &str) -> PixResult<()> {
         Ok(())
     }
 
@@ -62,12 +62,7 @@ pub trait AppState {
     }
 
     /// Called each time a [Mouse] button is pressed.
-    fn on_mouse_pressed(
-        &mut self,
-        s: &mut PixState,
-        _btn: Mouse,
-        _pos: Point<i32>,
-    ) -> PixResult<()> {
+    fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse, pos: Point<i32>) -> PixResult<()> {
         Ok(())
     }
 
@@ -75,19 +70,14 @@ pub trait AppState {
     fn on_mouse_released(
         &mut self,
         s: &mut PixState,
-        _btn: Mouse,
-        _pos: Point<i32>,
+        btn: Mouse,
+        pos: Point<i32>,
     ) -> PixResult<()> {
         Ok(())
     }
 
     /// Called each time a [Mouse] button is clicked (a press followed by a release).
-    fn on_mouse_clicked(
-        &mut self,
-        s: &mut PixState,
-        _btn: Mouse,
-        _pos: Point<i32>,
-    ) -> PixResult<()> {
+    fn on_mouse_clicked(&mut self, s: &mut PixState, btn: Mouse, pos: Point<i32>) -> PixResult<()> {
         Ok(())
     }
 
@@ -95,8 +85,8 @@ pub trait AppState {
     fn on_mouse_dbl_clicked(
         &mut self,
         s: &mut PixState,
-        _btn: Mouse,
-        _pos: Point<i32>,
+        btn: Mouse,
+        pos: Point<i32>,
     ) -> PixResult<()> {
         Ok(())
     }
@@ -106,20 +96,20 @@ pub trait AppState {
     fn on_mouse_motion(
         &mut self,
         s: &mut PixState,
-        _pos: Point<i32>,
-        _xrel: i32,
-        _yrel: i32,
+        pos: Point<i32>,
+        xrel: i32,
+        yrel: i32,
     ) -> PixResult<()> {
         Ok(())
     }
 
     /// Called each time the [Mouse] wheel is scrolled with the `(x, y)` delta since last frame.
-    fn on_mouse_wheel(&mut self, s: &mut PixState, _pos: Point<i32>) -> PixResult<()> {
+    fn on_mouse_wheel(&mut self, s: &mut PixState, pos: Point<i32>) -> PixResult<()> {
         Ok(())
     }
 
     /// Called each time the window is resized with the new `(width, height)`.
-    fn on_window_resized(&mut self, s: &mut PixState, _width: i32, height: i32) -> PixResult<()> {
+    fn on_window_resized(&mut self, s: &mut PixState, width: i32, height: i32) -> PixResult<()> {
         Ok(())
     }
 

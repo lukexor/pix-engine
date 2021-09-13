@@ -4,12 +4,9 @@ use crate::{
     core::{state::Error as StateError, window},
     prelude::*,
 };
-#[cfg(not(target_arch = "wasm32"))]
 use lazy_static::lazy_static;
-use std::{borrow::Cow, error, ffi::NulError, fmt, result};
+use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
 
-#[cfg(not(target_arch = "wasm32"))]
-use std::{io, path::PathBuf};
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) mod sdl;
 #[cfg(not(target_arch = "wasm32"))]
@@ -20,7 +17,6 @@ pub(crate) mod wasm;
 #[cfg(target_arch = "wasm32")]
 pub(crate) use wasm::Renderer;
 
-#[cfg(not(target_arch = "wasm32"))]
 lazy_static! {
     /// Default directory to extract static library assets into.
     pub static ref DEFAULT_ASSET_DIR: PathBuf = PathBuf::from("/tmp/pix-engine");
@@ -41,9 +37,7 @@ pub(crate) struct RendererSettings {
     #[cfg(target_arch = "wasm32")]
     pub(crate) font: String,
     pub(crate) font_size: u32,
-    #[cfg(not(target_arch = "wasm32"))]
     pub(crate) icon: Option<PathBuf>,
-    #[cfg(not(target_arch = "wasm32"))]
     pub(crate) asset_dir: PathBuf,
     pub(crate) x: Position,
     pub(crate) y: Position,
@@ -69,9 +63,7 @@ impl Default for RendererSettings {
             #[cfg(target_arch = "wasm32")]
             font: "Courier New".to_string(),
             font_size: 16,
-            #[cfg(not(target_arch = "wasm32"))]
             icon: None,
-            #[cfg(not(target_arch = "wasm32"))]
             asset_dir: DEFAULT_ASSET_DIR.clone(),
             x: Position::default(),
             y: Position::default(),
@@ -219,13 +211,17 @@ pub(crate) trait Rendering: Sized {
     ) -> Result<()>;
 
     /// Draw an image to the current canvas.
-    fn image(&mut self, position: &Point<i32>, img: &Image, tint: Option<Color>) -> Result<()>;
+    fn image(&mut self, pos: &Point<i32>, img: &Image, tint: Option<Color>) -> Result<()>;
 
     /// Draw a resized image to the current canvas.
-    fn image_resized(
+    fn image_resized(&mut self, img: &Image, dst: &Rect<i32>, tint: Option<Color>) -> Result<()>;
+
+    /// Draw a rotated image to the current canvas.
+    fn image_rotated(
         &mut self,
-        dst_rect: &Rect<i32>,
+        pos: &Point<i32>,
         img: &Image,
+        angle: Scalar,
         tint: Option<Color>,
     ) -> Result<()>;
 }
@@ -237,7 +233,6 @@ pub enum Error {
     /// Renderer initialization errors.
     InitError,
     /// Renderer I/O errors.
-    #[cfg(not(target_arch = "wasm32"))]
     IoError(io::Error),
     /// Window errors.
     WindowError(window::Error),
@@ -274,7 +269,6 @@ impl fmt::Display for Error {
 impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
-            #[cfg(not(target_arch = "wasm32"))]
             Error::IoError(err) => err.source(),
             _ => None,
         }

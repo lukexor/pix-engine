@@ -66,8 +66,8 @@ pub struct Image {
     data: Vec<u8>,
     /// Pixel Format.
     format: PixelFormat,
-    /// Texture Identifier.
-    texture_id: Cell<Option<usize>>,
+    /// Texture Identifier and whether texture requires updating.
+    texture_cache: Cell<Option<(TextureId, bool)>>,
 }
 
 impl std::fmt::Debug for Image {
@@ -76,7 +76,7 @@ impl std::fmt::Debug for Image {
             .field("width", &self.width)
             .field("height", &self.height)
             .field("format", &self.format)
-            .field("texture_id", &self.texture_id)
+            .field("texture_cache", &self.texture_cache)
             .field("size", &self.data.len())
             .finish()
     }
@@ -119,7 +119,7 @@ impl Image {
             height,
             data,
             format,
-            texture_id: Cell::new(None),
+            texture_cache: Cell::new(None),
         }
     }
 
@@ -174,6 +174,7 @@ impl Image {
     /// Returns the `Image` pixel data as a mutable [u8] [slice].
     #[inline]
     pub fn bytes_mut(&mut self) -> &mut [u8] {
+        self.set_updated(true);
         &mut self.data
     }
 
@@ -192,11 +193,15 @@ impl Image {
         let idx = self.idx(x, y);
         let channels = self.format.channels();
         self.data[idx..(idx + channels)].clone_from_slice(&color.channels()[..channels]);
+        if let Some((_, ref mut needs_update)) = self.texture_cache.get() {
+            *needs_update = true;
+        }
     }
 
     /// Update the `Image` with a  [u8] [slice] representing RGB/A values.
     #[inline]
     pub fn update_bytes(&mut self, bytes: &[u8]) {
+        self.set_updated(true);
         self.data.clone_from_slice(bytes);
     }
 
@@ -221,14 +226,22 @@ impl Image {
 
     /// Returns the `Image` [TextureId].
     #[inline]
-    pub(crate) fn texture_id(&self) -> Option<TextureId> {
-        self.texture_id.get()
+    pub(crate) fn texture_cache(&self) -> Option<(TextureId, bool)> {
+        self.texture_cache.get()
     }
 
     /// Set the `Image` [TextureId].
     #[inline]
     pub(crate) fn set_texture_id(&self, texture_id: TextureId) {
-        self.texture_id.set(Some(texture_id));
+        self.texture_cache.set(Some((texture_id, false)));
+    }
+
+    /// Set the updated texture cache.
+    #[inline]
+    pub(crate) fn set_updated(&self, val: bool) {
+        if let Some((texture_id, _)) = self.texture_cache.get() {
+            self.texture_cache.set(Some((texture_id, val)));
+        }
     }
 }
 
@@ -256,7 +269,7 @@ impl PixState {
     }
 
     /// Draw a resized [Image] to the current canvas.
-    pub fn image_resized<R>(&mut self, rect: R, img: &Image) -> PixResult<()>
+    pub fn image_resized<R>(&mut self, img: &Image, rect: R) -> PixResult<()>
     where
         R: Into<Rect>,
     {
@@ -265,7 +278,25 @@ impl PixState {
         if let DrawMode::Center = s.image_mode {
             rect.center_on(rect.center());
         }
-        Ok(self.renderer.image_resized(&rect, img, s.image_tint)?)
+        Ok(self.renderer.image_resized(img, &rect, s.image_tint)?)
+    }
+
+    /// Draw a rotated [Image] to the current canvas.
+    pub fn image_rotated<P>(&mut self, position: P, img: &Image, angle: Scalar) -> PixResult<()>
+    where
+        P: Into<Point>,
+    {
+        let s = &self.settings;
+        let mut pos = position.into().round().as_();
+        if let DrawMode::Center = s.image_mode {
+            pos = point!(
+                pos.x() - img.width() as i32 / 2,
+                pos.y() - img.height() as i32 / 2
+            );
+        };
+        Ok(self
+            .renderer
+            .image_rotated(&pos, img, angle, s.image_tint)?)
     }
 }
 

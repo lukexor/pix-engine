@@ -410,17 +410,24 @@ impl Rendering for Renderer {
     /// Draw an image to the current canvas.
     fn image(&mut self, pos: &Point<i32>, img: &Image, tint: Option<Color>) -> Result<()> {
         let dst = SdlRect::new(pos.x(), pos.y(), img.width(), img.height());
-        self.image_texture(img, tint, dst)
+        self.image_texture(img, tint, dst, None)
     }
 
     /// Draw an image to the current canvas.
-    fn image_resized(
+    fn image_resized(&mut self, img: &Image, dst: &Rect<i32>, tint: Option<Color>) -> Result<()> {
+        self.image_texture(img, tint, dst.into(), None)
+    }
+
+    /// Draw a rotated image to the current canvas.
+    fn image_rotated(
         &mut self,
-        dst_rect: &Rect<i32>,
+        pos: &Point<i32>,
         img: &Image,
+        angle: Scalar,
         tint: Option<Color>,
     ) -> Result<()> {
-        self.image_texture(img, tint, dst_rect.into())
+        let dst = SdlRect::new(pos.x(), pos.y(), img.width(), img.height());
+        self.image_texture(img, tint, dst, Some(angle))
     }
 }
 
@@ -437,40 +444,48 @@ impl Renderer {
             .collect::<Result<Vec<(i16, i16)>>>()
     }
 
-    fn get_texture_id(&mut self, img: &Image) -> Result<TextureId> {
-        match img.texture_id() {
-            Some(texture_id) => Ok(texture_id),
+    fn get_texture_cache(&mut self, img: &Image) -> Result<(TextureId, bool)> {
+        match img.texture_cache() {
+            Some(texture_cache) => Ok(texture_cache),
             None => {
                 let texture_id =
                     self.create_texture(img.width(), img.height(), img.format().into())?;
                 img.set_texture_id(texture_id);
-                Ok(texture_id)
+                Ok((texture_id, false))
             }
         }
     }
 
-    fn image_texture(&mut self, img: &Image, tint: Option<Color>, dst: SdlRect) -> Result<()> {
-        let texture_id = self.get_texture_id(img)?;
+    fn image_texture(
+        &mut self,
+        img: &Image,
+        tint: Option<Color>,
+        dst: SdlRect,
+        angle: Option<Scalar>,
+    ) -> Result<()> {
+        let (texture_id, updated) = self.get_texture_cache(img)?;
         match self.textures.get_mut(texture_id) {
             Some(texture) => {
-                texture.update(
-                    None,
-                    img.bytes(),
-                    img.format().channels() * img.width() as usize,
-                )?;
+                if !updated {
+                    texture.update(
+                        None,
+                        img.bytes(),
+                        img.format().channels() * img.width() as usize,
+                    )?;
+                    img.set_updated(true);
+                }
                 if let Some(tint) = tint {
-                    let blend_mode = match self.blend_mode {
-                        SdlBlendMode::None => SdlBlendMode::Blend,
-                        mode => mode,
-                    };
-                    self.canvas.with_texture_canvas(texture, |canvas| {
-                        canvas.set_blend_mode(blend_mode);
-                        canvas.set_draw_color(tint);
-                        let _ = canvas.fill_rect(None);
-                    })?;
+                    let [r, g, b, a] = tint.channels();
+                    texture.set_color_mod(r, g, b);
+                    texture.set_alpha_mod(a);
                 }
                 texture.set_blend_mode(self.blend_mode);
-                Ok(self.canvas.copy(&texture, None, dst)?)
+                match angle {
+                    Some(angle) => Ok(self
+                        .canvas
+                        .copy_ex(&texture, None, dst, angle, None, false, false)?),
+                    None => Ok(self.canvas.copy(&texture, None, dst)?),
+                }
             }
             None => Err(Error::InvalidTexture(texture_id)),
         }

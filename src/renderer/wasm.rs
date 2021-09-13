@@ -44,18 +44,21 @@ impl Window for Renderer {
         todo!("set_title")
     }
 
+    /// Set the current window title with FPS appended.
+    #[inline(always)]
+    fn set_fps_title(&mut self, fps: usize) -> WindowResult<()> {
+        let _ = fps;
+        todo!("set_fps_title")
+    }
+
     /// Dimensions of the primary window as `(width, height)`.
-    fn dimensions(&self, id: WindowId) -> WindowResult<(Primitive, Primitive)> {
+    fn dimensions(&self, id: WindowId) -> WindowResult<(u32, u32)> {
         let _ = id;
         todo!("dimensions")
     }
 
     /// Set dimensions of the primary window as `(width, height)`.
-    fn set_dimensions(
-        &mut self,
-        id: WindowId,
-        dimensions: (Primitive, Primitive),
-    ) -> WindowResult<()> {
+    fn set_dimensions(&mut self, id: WindowId, dimensions: (u32, u32)) -> WindowResult<()> {
         let _ = id;
         let _ = dimensions;
         todo!("set_dimensions")
@@ -70,6 +73,17 @@ impl Window for Renderer {
     fn set_fullscreen(&mut self, val: bool) {
         let _ = val;
         todo!("set_fullscreen")
+    }
+
+    /// Returns whether the window synchronizes frame rate to the screens refresh rate.
+    fn vsync(&self) -> bool {
+        todo!("vsync")
+    }
+
+    /// Set the window to synchronize frame rate to the screens refresh rate.
+    fn set_vsync(&mut self, val: bool) -> WindowResult<()> {
+        let _ = val;
+        todo!("set_vsync")
     }
 }
 
@@ -92,7 +106,7 @@ impl Rendering for Renderer {
     }
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    fn clip(&mut self, rect: Option<Rect<Primitive>>) {
+    fn clip(&mut self, rect: Option<Rect<i32>>) {
         let _ = rect;
         todo!("set_clip_rect")
     }
@@ -118,8 +132,8 @@ impl Rendering for Renderer {
     /// Create a texture to draw to.
     fn create_texture(
         &mut self,
-        width: Primitive,
-        height: Primitive,
+        width: u32,
+        height: u32,
         format: Option<PixelFormat>,
     ) -> Result<TextureId> {
         let _ = width;
@@ -138,7 +152,7 @@ impl Rendering for Renderer {
     fn update_texture(
         &mut self,
         texture_id: TextureId,
-        rect: Option<Rect<Primitive>>,
+        rect: Option<Rect<i32>>,
         pixels: &[u8],
         pitch: usize,
     ) -> Result<()> {
@@ -153,8 +167,8 @@ impl Rendering for Renderer {
     fn texture(
         &mut self,
         texture_id: usize,
-        src: Option<Rect<Primitive>>,
-        dst: Option<Rect<Primitive>>,
+        src: Option<Rect<i32>>,
+        dst: Option<Rect<i32>>,
     ) -> Result<()> {
         let _ = texture_id;
         let _ = src;
@@ -163,7 +177,7 @@ impl Rendering for Renderer {
     }
 
     /// Set the font size for drawing to the current canvas.
-    fn font_size(&mut self, size: Primitive) -> Result<()> {
+    fn font_size(&mut self, size: u32) -> Result<()> {
         let _ = size;
         todo!("font_size")
     }
@@ -183,7 +197,7 @@ impl Rendering for Renderer {
     /// Draw text to the current canvas.
     fn text(
         &mut self,
-        position: &Point<Primitive>,
+        position: &Point<i32>,
         text: &str,
         fill: Option<Color>,
         stroke: Option<Color>,
@@ -197,20 +211,20 @@ impl Rendering for Renderer {
 
     /// Returns the rendered dimensions of the given text using the current font
     /// as `(width, height)`.
-    fn size_of(&self, text: &str) -> Result<(Primitive, Primitive)> {
+    fn size_of(&self, text: &str) -> Result<(u32, u32)> {
         let _ = text;
         todo!("size_of")
     }
 
     /// Draw a pixel to the current canvas.
-    fn point(&mut self, p: &Point<DrawPrimitive>, color: Color) -> Result<()> {
+    fn point(&mut self, p: &Point<i32>, color: Color) -> Result<()> {
         let _ = p;
         let _ = color;
         todo!("pixels")
     }
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, line: &Line<DrawPrimitive>, color: Color) -> Result<()> {
+    fn line(&mut self, line: &Line<i32>, color: Color) -> Result<()> {
         let _ = line;
         let _ = color;
         todo!("line")
@@ -219,7 +233,7 @@ impl Rendering for Renderer {
     /// Draw a triangle to the current canvas.
     fn triangle(
         &mut self,
-        tri: &Triangle<DrawPrimitive>,
+        tri: &Triangle<i32>,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
@@ -230,12 +244,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw a rectangle to the current canvas.
-    fn rect(
-        &mut self,
-        rect: &Rect<DrawPrimitive>,
-        fill: Option<Color>,
-        stroke: Option<Color>,
-    ) -> Result<()> {
+    fn rect(&mut self, rect: &Rect<i32>, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
         let _ = rect;
         if let Some(_) = fill {}
         if let Some(_) = stroke {}
@@ -245,8 +254,8 @@ impl Rendering for Renderer {
     /// Draw a rounded rectangle to the current canvas.
     fn rounded_rect(
         &mut self,
-        rect: &Rect<DrawPrimitive>,
-        radius: DrawPrimitive,
+        rect: &Rect<i32>,
+        radius: i32,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
@@ -258,12 +267,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw a quadrilateral to the current canvas.
-    fn quad(
-        &mut self,
-        quad: &Quad<DrawPrimitive>,
-        fill: Option<Color>,
-        stroke: Option<Color>,
-    ) -> Result<()> {
+    fn quad(&mut self, quad: &Quad<i32>, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
         let _ = quad;
         if let Some(_) = fill {}
         if let Some(_) = stroke {}
@@ -271,15 +275,11 @@ impl Rendering for Renderer {
     }
 
     /// Draw a polygon to the current canvas.
-    fn polygon(
-        &mut self,
-        vx: &[DrawPrimitive],
-        vy: &[DrawPrimitive],
-        fill: Option<Color>,
-        stroke: Option<Color>,
-    ) -> Result<()> {
-        let _ = vx;
-        let _ = vy;
+    fn polygon<P>(&mut self, ps: P, fill: Option<Color>, stroke: Option<Color>) -> Result<()>
+    where
+        P: IntoIterator<Item = Point<i32>>,
+    {
+        let _ = ps;
         if let Some(_) = fill {}
         if let Some(_) = stroke {}
         todo!("polygon")
@@ -288,7 +288,7 @@ impl Rendering for Renderer {
     /// Draw a ellipse to the current canvas.
     fn ellipse(
         &mut self,
-        ellipse: &Ellipse<DrawPrimitive>,
+        ellipse: &Ellipse<i32>,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
@@ -302,10 +302,10 @@ impl Rendering for Renderer {
     #[allow(clippy::too_many_arguments)]
     fn arc(
         &mut self,
-        p: &Point<DrawPrimitive>,
-        radius: DrawPrimitive,
-        start: DrawPrimitive,
-        end: DrawPrimitive,
+        p: &Point<i32>,
+        radius: i32,
+        start: i32,
+        end: i32,
         mode: ArcMode,
         fill: Option<Color>,
         stroke: Option<Color>,
@@ -321,30 +321,35 @@ impl Rendering for Renderer {
     }
 
     /// Draw an image to the current canvas.
-    fn image(
-        &mut self,
-        position: &Point<Primitive>,
-        img: &Image,
-        tint: Option<Color>,
-    ) -> Result<()> {
+    fn image(&mut self, position: &Point<i32>, img: &Image, tint: Option<Color>) -> Result<()> {
         let _ = position;
-        let _ = img.texture_id();
+        let _ = img.texture_cache();
         img.set_texture_id(0);
         let _ = tint;
         todo!("image")
     }
 
     /// Draw a resized image to the current canvas.
-    fn image_resized(
-        &mut self,
-        dst_rect: &Rect<Primitive>,
-        img: &Image,
-        tint: Option<Color>,
-    ) -> Result<()> {
-        let _ = dst_rect;
-        let _ = img.texture_id();
+    fn image_resized(&mut self, img: &Image, dst: &Rect<i32>, tint: Option<Color>) -> Result<()> {
+        let _ = dst;
+        let _ = img.texture_cache();
         let _ = tint;
         todo!("image_resized")
+    }
+
+    /// Draw a rotated image to the current canvas.
+    fn image_rotated(
+        &mut self,
+        pos: &Point<i32>,
+        img: &Image,
+        angle: Scalar,
+        tint: Option<Color>,
+    ) -> Result<()> {
+        let _ = pos;
+        let _ = img.texture_cache();
+        let _ = angle;
+        let _ = tint;
+        todo!("image_rotated")
     }
 }
 

@@ -92,16 +92,16 @@ impl RayScene {
 
     #[allow(clippy::many_single_char_names)]
     fn convert_edges_to_poly_map(&mut self) -> PixResult<()> {
-        let rect = Rect::new(0, 0, self.xcells, self.ycells);
-        let pitch = self.xcells;
+        let rect = Rect::new(0, 0, self.xcells as i32, self.ycells as i32);
+        let pitch = self.xcells as i32;
         let block_size = BLOCK_SIZE;
         // Reset edges state, keeping only the window boundaries
         self.edges.truncate(4);
         for c in self.cells.iter_mut() {
             c.reset();
         }
-        for x in 0..rect.width() {
-            for y in 0..rect.height() {
+        for x in 0..rect.width() as i32 {
+            for y in 0..rect.height() as i32 {
                 let x_off = x + rect.x();
                 let y_off = y + rect.y();
                 let i = (y_off * pitch + x_off) as usize; // This
