@@ -6,9 +6,9 @@ use std::collections::{BinaryHeap, HashSet};
 pub struct AStarCell {
     cell: Cell,
     previous: Option<usize>,
-    g: Scalar,
-    h: Scalar,
-    f: Scalar,
+    g: f64,
+    h: f64,
+    f: f64,
 }
 
 impl AStarCell {
@@ -16,9 +16,9 @@ impl AStarCell {
         Self {
             cell,
             previous: None,
-            g: Scalar::MAX,
-            h: Scalar::MAX,
-            f: Scalar::MAX,
+            g: f64::MAX,
+            h: f64::MAX,
+            f: f64::MAX,
         }
     }
 
@@ -26,10 +26,10 @@ impl AStarCell {
         self.cell.id()
     }
 
-    fn heuristic(&self, cell: &Cell) -> Scalar {
+    fn heuristic(&self, cell: &Cell) -> f64 {
         let a = self.cell.col() as i32 - cell.col() as i32;
         let b = self.cell.row() as i32 - cell.row() as i32;
-        ((a.pow(2) + b.pow(2)) as Scalar).sqrt()
+        ((a.pow(2) + b.pow(2)) as f64).sqrt()
     }
 }
 

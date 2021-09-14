@@ -18,16 +18,15 @@ All notable changes to this project will be documented in this file.
 
 #### State
 
-- `PixState::pmouse_pos()`.
 - Several environment methods for interacting with the window and `PixEngine`
   state.
-- Several `PixState` methods for controlling drawing, and `PixEngine` loop.
+- Several `PixState` methods for controlling drawing and `PixEngine` loop.
 
 #### Window
 
 - `PixState::set_fullscreen()`.
 - `PixState::set_vsync()`.
-- New window cursor setting methods.
+- New window cursor methods.
 - `window::Result` and `window::Error` for window related failures.
 
 #### Drawing
@@ -53,7 +52,8 @@ All notable changes to this project will be documented in this file.
 - Made shape structs generic.
 - Conversion implementations.
 - `Deref` and `DerefMut` into an array of values representing a shape.
-- `Shape` trait for defining common shape methods.
+- `Contains` and `Intersects` traits and implementations for defining collision
+  detection.
 - `Draw` implementations.
 - `Rect` struct extended with several constructor and utility methods.
 - Several new shape structs: `Circle`, `Ellipse`, `Line`, `Point`, `Quad`,

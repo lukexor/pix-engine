@@ -4,18 +4,18 @@ struct SphereObj {
     sphere: Sphere,
     color: Color,
     specular: Option<i32>,
-    reflective: Scalar,
+    reflective: f64,
 }
 
 struct App {
-    view_width: Scalar,
-    view_height: Scalar,
-    proj_plane_dist: Scalar,
+    view_width: f64,
+    view_height: f64,
+    proj_plane_dist: f64,
     spheres: [SphereObj; 4],
     lights: [Light; 3],
 }
 
-fn intersect_ray_sphere(origin: Point, direction: Vector, obj: &SphereObj) -> (Scalar, Scalar) {
+fn intersect_ray_sphere(origin: Point, direction: Vector, obj: &SphereObj) -> (f64, f64) {
     let r = obj.sphere.radius();
     let center_origin = origin - obj.sphere.center();
 
@@ -25,7 +25,7 @@ fn intersect_ray_sphere(origin: Point, direction: Vector, obj: &SphereObj) -> (S
 
     let discriminant = b * b - 4.0 * a * c;
     if discriminant < 0.0 {
-        return (Scalar::INFINITY, Scalar::INFINITY);
+        return (f64::INFINITY, f64::INFINITY);
     }
 
     let sqrt = discriminant.sqrt();
@@ -78,21 +78,21 @@ impl App {
     }
 
     fn canvas_to_viewport(&self, x: i32, y: i32, s: &PixState) -> Point {
-        let width = s.width() as Scalar;
-        let height = s.height() as Scalar;
+        let width = s.width() as f64;
+        let height = s.height() as f64;
         point!(
-            x as Scalar * self.view_width / width,
-            y as Scalar * self.view_height / height,
+            x as f64 * self.view_width / width,
+            y as f64 * self.view_height / height,
             self.proj_plane_dist
         )
     }
 
     fn canvas_to_screen(&self, x: i32, y: i32, s: &PixState) -> Point {
-        let width = s.width() as Scalar;
-        let height = s.height() as Scalar;
+        let width = s.width() as f64;
+        let height = s.height() as f64;
         point!(
-            (width / 2.0 + x as Scalar).round(),
-            (height / 2.0 - y as Scalar).round(),
+            (width / 2.0 + x as f64).round(),
+            (height / 2.0 - y as f64).round(),
             self.proj_plane_dist.round()
         )
     }
@@ -103,7 +103,7 @@ impl App {
         normal: Vector,
         camera: Vector,
         specular: Option<i32>,
-    ) -> Scalar {
+    ) -> f64 {
         let mut intensity = 0.0;
         for light in &self.lights {
             match light.source {
@@ -111,7 +111,7 @@ impl App {
                 _ => {
                     let (light_dir, t_max) = match light.source {
                         LightSource::Point(p) => (p - position, 1.0),
-                        LightSource::Direction(d) => (d, Scalar::INFINITY),
+                        LightSource::Direction(d) => (d, f64::INFINITY),
                         _ => unreachable!("unreachable arm"),
                     };
 
@@ -131,7 +131,7 @@ impl App {
 
                     // Specular
                     if let Some(s) = specular {
-                        let r = Vector::reflection(light_dir, normal);
+                        let r: Vector<f64> = Vector::reflection(light_dir, normal);
                         let r_dot_camera = r.dot(camera);
                         if r_dot_camera > 0.0 {
                             intensity +=
@@ -148,8 +148,8 @@ impl App {
         &self,
         origin: Point,
         direction: Vector,
-        t_min: Scalar,
-        t_max: Scalar,
+        t_min: f64,
+        t_max: f64,
         recurse_depth: isize,
     ) -> Color {
         let (closest_t, closest_sphere) =
@@ -169,13 +169,8 @@ impl App {
 
             // Compute reflection
             let r_dir = Vector::reflection(-direction, normal);
-            let reflected_color = self.trace_ray(
-                intersection,
-                r_dir,
-                0.001,
-                Scalar::INFINITY,
-                recurse_depth - 1,
-            );
+            let reflected_color =
+                self.trace_ray(intersection, r_dir, 0.001, f64::INFINITY, recurse_depth - 1);
 
             local_color * (1.0 - r) + reflected_color * r
         } else {
@@ -187,10 +182,10 @@ impl App {
         &self,
         origin: Point,
         direction: Vector,
-        t_min: Scalar,
-        t_max: Scalar,
-    ) -> (Scalar, Option<&SphereObj>) {
-        let mut closest_t = Scalar::INFINITY;
+        t_min: f64,
+        t_max: f64,
+    ) -> (f64, Option<&SphereObj>) {
+        let mut closest_t = f64::INFINITY;
         let mut closest_sphere = None;
         for sphere in &self.spheres {
             let (t1, t2) = intersect_ray_sphere(origin, direction, sphere);
@@ -216,7 +211,7 @@ impl AppState for App {
         for x in -half_w..=half_w {
             for y in -half_h..=half_h {
                 let direction = self.canvas_to_viewport(x, y, s).into();
-                let color = self.trace_ray(origin, direction, 1.0, Scalar::INFINITY, 3);
+                let color = self.trace_ray(origin, direction, 1.0, f64::INFINITY, 3);
                 s.stroke(color);
                 s.point(self.canvas_to_screen(x, y, s))?;
             }

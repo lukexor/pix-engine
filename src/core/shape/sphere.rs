@@ -27,7 +27,7 @@ use serde::{Deserialize, Serialize};
 /// A `Sphere` positioned at `(x, y, z)` with `radius`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Sphere<T = Scalar>([T; 4]);
+pub struct Sphere<T = f64>([T; 4]);
 
 /// # Constructs a `Sphere<T>` at position `(x, y, z)` with `radius`.
 ///
@@ -124,26 +124,54 @@ impl<T: Number> Sphere<T> {
     }
 }
 
-impl<T: Number> Shape<T> for Sphere<T> {
-    type Item = Sphere<T>;
+impl<T: Number> Contains for Sphere<T> {
+    type Type = T;
+    type Shape = Sphere<Self::Type>;
 
     /// Returns whether this sphere contains a given [Point].
-    fn contains<O>(&self, other: O) -> bool
+    fn contains_point<P>(&self, p: P) -> bool
     where
-        O: Into<Self::Item>,
+        P: Into<Point<Self::Type>>,
+    {
+        let p = p.into();
+        let px = p.x() - self.x();
+        let py = p.y() - self.y();
+        let pz = p.z() - self.z();
+        let r = self.radius() * self.radius();
+        (px * px + py * py + pz * pz) < r
+    }
+
+    /// Returns whether this sphere completely contains another sphere.
+    fn contains_shape<O>(&self, other: O) -> bool
+    where
+        O: Into<Self::Shape>,
     {
         let other = other.into();
         let px = other.x() - self.x();
         let py = other.y() - self.y();
         let pz = other.z() - self.z();
-        let r = self.radius();
-        (px * px + py * py + pz * pz) < r * r
+        let r = self.radius() * self.radius();
+        (px * px + py * py + pz * pz) < r
+    }
+}
+
+impl<T: Number> Intersects for Sphere<T> {
+    type Type = T;
+    type Shape = Sphere<Self::Type>;
+
+    /// Returns the closest intersection point with a given line and distance along the line or
+    /// `None` if there is no intersection.
+    fn intersects_line<L>(&self, _line: L) -> Option<(Point<f64>, f64)>
+    where
+        L: Into<Line<Self::Type>>,
+    {
+        todo!("sphere intersects_line")
     }
 
     /// Returns whether this sphere intersects another sphere.
-    fn intersects<O>(&self, other: O) -> bool
+    fn intersects_shape<O>(&self, other: O) -> bool
     where
-        O: Into<Self::Item>,
+        O: Into<Self::Shape>,
     {
         let other = other.into();
         let px = other.x() - self.x();

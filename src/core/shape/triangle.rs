@@ -9,25 +9,22 @@
 //! // 2D
 //! let tri = Triangle::new(10, 20, 30, 10, 20, 25);
 //!
-//! let p1 = point![10, 20];
-//! let p2 = point![30, 10];
-//! let p3 = point![20, 25];
+//! let p1 = point!(10, 20);
+//! let p2 = point!(30, 10);
+//! let p3 = point!(20, 25);
 //! let tri: Triangle<i32> = Triangle::with_points(p1, p2, p3);
 //! ```
 
 use crate::prelude::*;
-use num_traits::{AsPrimitive, Float};
+use num_traits::AsPrimitive;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::{
-    convert::TryInto,
-    ops::{Deref, DerefMut},
-};
+use std::ops::{Deref, DerefMut};
 
 /// A `Triangle` with three [Point]s.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Triangle<T = Scalar>([Point<T>; 3]);
+pub struct Triangle<T = f64>([Point<T>; 3]);
 
 impl<T> Triangle<T> {
     /// Constructs a `Triangle<T>` with the given [Point]s.
@@ -123,34 +120,6 @@ impl<T: Number> Triangle<T> {
         [self.p1(), self.p2(), self.p3()]
     }
 
-    /// Tries to convert `Triangle` coordinates as `[Point<T>; 3]` from `T` to `U` of `T`
-    /// implements `TryInto<U>`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let tri: Triangle<i32> = Triangle::new(10, 20, 30, 10, 20, 25);
-    /// assert_eq!(tri.try_into_values()?, [
-    ///     point!(10i16, 20, 0),
-    ///     point!(30i16, 10, 0),
-    ///     point!(20i16, 25, 0),
-    /// ]);
-    /// # Ok::<(), PixError>(())
-    /// ```
-    pub fn try_into_values<U>(&self) -> PixResult<[Point<U>; 3]>
-    where
-        T: TryInto<U>,
-        U: Number,
-        PixError: From<<T as TryInto<U>>::Error>,
-    {
-        Ok([
-            self.p1().try_into_values()?.into(),
-            self.p2().try_into_values()?.into(),
-            self.p3().try_into_values()?.into(),
-        ])
-    }
-
     /// Returns `Triangle` as a [Vec].
     ///
     /// # Example
@@ -172,18 +141,10 @@ impl<T: Number> Triangle<T> {
     }
 }
 
-impl<T: Float> Triangle<T> {
-    /// Returns `Triangle` with values rounded to the nearest integer number. Round half-way cases
-    /// away from `0.0`.
-    pub fn round(&self) -> Self {
-        Self::with_points(self.p1().round(), self.p2().round(), self.p3().round())
-    }
-}
-
 impl<T> Draw for Triangle<T>
 where
+    Self: Into<Triangle<i32>>,
     T: Number,
-    Self: Into<Triangle>,
 {
     /// Draw `Triangle` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {

@@ -1,6 +1,7 @@
 //! [Image] and [PixelFormat] functions.
 
 use crate::{color::Result as ColorResult, prelude::*, renderer::Rendering};
+use png::{BitDepth, ColorType, Decoder};
 use std::{
     borrow::Cow,
     cell::Cell,
@@ -132,12 +133,18 @@ impl Image {
         }
 
         let png_file = BufReader::new(File::open(&path)?);
-        let png = png::Decoder::new(png_file);
-        let (info, mut reader) = png.read_info()?;
+        let png = Decoder::new(png_file);
 
-        if info.bit_depth != png::BitDepth::Eight {
+        // TODO: Make this machine-dependent to best match display capabilities for texture
+        // performance
+        // EXPL: Switch RGBA32 (RGBA8888) format to ARGB8888 by swapping alpha
+        // EXPL: Expand paletted to RGB and non-8-bit grayscale to 8-bits
+        // png.set_transformations(Transformations::SWAP_ALPHA | Transformations::EXPAND);
+
+        let (info, mut reader) = png.read_info()?;
+        if info.bit_depth != BitDepth::Eight {
             return Err(Error::UnsupportedBitDepth(info.bit_depth));
-        } else if !matches!(info.color_type, png::ColorType::RGB | png::ColorType::RGBA) {
+        } else if !matches!(info.color_type, ColorType::RGB | ColorType::RGBA) {
             return Err(Error::UnsupportedColorType(info.color_type));
         }
 
@@ -163,6 +170,11 @@ impl Image {
     #[inline]
     pub fn dimensions(&self) -> (u32, u32) {
         (self.width, self.height)
+    }
+
+    /// Returns the center position as [Point].
+    pub fn center(&self) -> Point<i32> {
+        point!(self.width() as i32 / 2, self.height() as i32 / 2)
     }
 
     /// Returns the `Image` pixel data as a [u8] [slice].
@@ -255,15 +267,12 @@ impl PixState {
     /// Draw an [Image] to the current canvas.
     pub fn image<P>(&mut self, position: P, img: &Image) -> PixResult<()>
     where
-        P: Into<Point>,
+        P: Into<Point<i32>>,
     {
         let s = &self.settings;
-        let mut pos = position.into().round().as_();
+        let mut pos = position.into();
         if let DrawMode::Center = s.image_mode {
-            pos = point!(
-                pos.x() - img.width() as i32 / 2,
-                pos.y() - img.height() as i32 / 2
-            );
+            pos -= img.center();
         };
         Ok(self.renderer.image(&pos, img, s.image_tint)?)
     }
@@ -271,10 +280,10 @@ impl PixState {
     /// Draw a resized [Image] to the current canvas.
     pub fn image_resized<R>(&mut self, img: &Image, rect: R) -> PixResult<()>
     where
-        R: Into<Rect>,
+        R: Into<Rect<i32>>,
     {
         let s = &self.settings;
-        let mut rect = rect.into().round().as_();
+        let mut rect = rect.into();
         if let DrawMode::Center = s.image_mode {
             rect.center_on(rect.center());
         }
@@ -282,21 +291,19 @@ impl PixState {
     }
 
     /// Draw a rotated [Image] to the current canvas.
-    pub fn image_rotated<P>(&mut self, position: P, img: &Image, angle: Scalar) -> PixResult<()>
+    pub fn image_rotated<P, T>(&mut self, position: P, img: &Image, angle: T) -> PixResult<()>
     where
-        P: Into<Point>,
+        P: Into<Point<i32>>,
+        T: Into<f64>,
     {
         let s = &self.settings;
-        let mut pos = position.into().round().as_();
+        let mut pos = position.into();
         if let DrawMode::Center = s.image_mode {
-            pos = point!(
-                pos.x() - img.width() as i32 / 2,
-                pos.y() - img.height() as i32 / 2
-            );
+            pos -= img.center();
         };
         Ok(self
             .renderer
-            .image_rotated(&pos, img, angle, s.image_tint)?)
+            .image_rotated(&pos, img, angle.into(), s.image_tint)?)
     }
 }
 

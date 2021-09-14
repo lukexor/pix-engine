@@ -7,15 +7,11 @@ pub type TextureId = usize;
 
 impl PixState {
     /// Draw the `Texture` to the current canvas.
-    pub fn texture(
-        &mut self,
-        texture_id: TextureId,
-        src: Option<Rect>,
-        dst: Option<Rect>,
-    ) -> PixResult<()> {
-        let src = src.map(|src| src.round().as_());
-        let dst = dst.map(|dst| dst.round().as_());
-        Ok(self.renderer.texture(texture_id, src, dst)?)
+    pub fn texture<R>(&mut self, texture_id: TextureId, src: R, dst: R) -> PixResult<()>
+    where
+        R: Into<Option<Rect<i32>>>,
+    {
+        Ok(self.renderer.texture(texture_id, src.into(), dst.into())?)
     }
 
     /// Constructs a `Texture` to render to.
@@ -40,12 +36,13 @@ impl PixState {
         pitch: usize,
     ) -> PixResult<()>
     where
-        R: Into<Option<Rect>>,
+        R: Into<Option<Rect<i32>>>,
         P: AsRef<[u8]>,
     {
-        let rect = rect.into().map(|rect| rect.round().as_());
+        let rect = rect.into();
+        let pixels = pixels.as_ref();
         Ok(self
             .renderer
-            .update_texture(texture_id, rect, pixels.as_ref(), pitch)?)
+            .update_texture(texture_id, rect, pixels, pitch)?)
     }
 }

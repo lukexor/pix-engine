@@ -185,9 +185,9 @@ pub(crate) trait Rendering: Sized {
     fn quad(&mut self, quad: &Quad<i32>, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
 
     /// Draw a polygon to the current canvas.
-    fn polygon<P>(&mut self, ps: P, fill: Option<Color>, stroke: Option<Color>) -> Result<()>
+    fn polygon<'a, P>(&mut self, ps: P, fill: Option<Color>, stroke: Option<Color>) -> Result<()>
     where
-        P: IntoIterator<Item = Point<i32>>;
+        P: IntoIterator<Item = &'a Point<i32>>;
 
     /// Draw a ellipse to the current canvas.
     fn ellipse(
@@ -221,7 +221,7 @@ pub(crate) trait Rendering: Sized {
         &mut self,
         pos: &Point<i32>,
         img: &Image,
-        angle: Scalar,
+        angle: f64,
         tint: Option<Color>,
     ) -> Result<()>;
 }

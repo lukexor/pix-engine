@@ -249,13 +249,13 @@ impl PixState {
     }
 
     /// Set the rendering scale of the current canvas.
-    pub fn scale<T: AsPrimitive<Scalar>>(&mut self, x: T, y: T) -> PixResult<()> {
-        Ok(self.renderer.scale(x.as_() as f32, y.as_() as f32)?)
+    pub fn scale<T: AsPrimitive<f32>>(&mut self, x: T, y: T) -> PixResult<()> {
+        Ok(self.renderer.scale(x.as_(), y.as_())?)
     }
 
     /// Set the font size for drawing to the current canvas.
-    pub fn font_size(&mut self, size: u32) -> PixResult<()> {
-        Ok(self.renderer.font_size(size)?)
+    pub fn font_size<S: AsPrimitive<u32>>(&mut self, size: S) -> PixResult<()> {
+        Ok(self.renderer.font_size(size.as_())?)
     }
 
     /// Set the font style for drawing to the current canvas.
@@ -264,8 +264,8 @@ impl PixState {
     }
 
     /// Set the font family for drawing to the current canvas.
-    pub fn font_family<S>(&mut self, family: &str) -> PixResult<()> {
-        Ok(self.renderer.font_family(family)?)
+    pub fn font_family<S: AsRef<str>>(&mut self, family: S) -> PixResult<()> {
+        Ok(self.renderer.font_family(family.as_ref())?)
     }
 
     /// Change the way parameters are interpreted for drawing [Square](Rect)s and

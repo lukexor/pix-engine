@@ -67,7 +67,7 @@ impl PixState {
     }
 
     /// The time elapsed since last frame in seconds.
-    pub fn delta_time(&self) -> Scalar {
+    pub fn delta_time(&self) -> f64 {
         self.env.delta_time
     }
 
@@ -89,7 +89,7 @@ impl PixState {
     /// Set a target frame rate to render at, controls how often
     /// [on_update](crate::prelude::AppState::on_update) is called.
     pub fn set_frame_rate(&mut self, rate: usize) {
-        self.env.target_frame_rate = Some(rate as Scalar);
+        self.env.target_frame_rate = Some(rate as f64);
     }
 
     /// Remove target frame rate and call [on_update](crate::prelude::AppState::on_update) as often

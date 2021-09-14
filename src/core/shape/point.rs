@@ -22,11 +22,10 @@
 //! ```
 
 use crate::prelude::*;
-use num_traits::{AsPrimitive, Float, Signed};
+use num_traits::{AsPrimitive, Signed};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::{
-    convert::{TryFrom, TryInto},
     fmt,
     iter::{FromIterator, Sum},
     ops::*,
@@ -35,7 +34,7 @@ use std::{
 /// A `Point` in 2D or 3D space.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Point<T = Scalar>([T; 3]);
+pub struct Point<T = f64>([T; 3]);
 
 /// # Constructs a `Point<T>` with `(x, y, z)`.
 ///
@@ -79,6 +78,7 @@ impl<T> Point<T> {
     /// let p = Point::new(2, 3, 1);
     /// assert_eq!(p.values(), [2, 3, 1]);
     /// ```
+    #[inline(always)]
     pub const fn new(x: T, y: T, z: T) -> Self {
         Self([x, y, z])
     }
@@ -161,30 +161,6 @@ impl<T: Number> Point<T> {
         [self.x(), self.y(), self.z()]
     }
 
-    /// Tries to convert `Point` coordinates as `[x, y, z]` from `T` to `U` of `T` implements
-    /// `TryInto<U>`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let p: Point<i32> = point!(2, 1, 3);
-    /// let values: [i16; 3] = p.try_into_values()?;
-    /// assert_eq!(values, [2i16, 1, 3]);
-    /// # Ok::<(), PixError>(())
-    /// ```
-    pub fn try_into_values<U>(&self) -> PixResult<[U; 3]>
-    where
-        T: TryInto<U>,
-        PixError: From<<T as TryInto<U>>::Error>,
-    {
-        Ok([
-            self.x().try_into()?,
-            self.y().try_into()?,
-            self.z().try_into()?,
-        ])
-    }
-
     /// Returns `Point` as a [Vec].
     ///
     /// # Example
@@ -207,6 +183,7 @@ impl<T: Number> Point<T> {
     /// let p = Point::with_x(2);
     /// assert_eq!(p.values(), [2, 0, 0]);
     /// ```
+    #[inline(always)]
     pub fn with_x(x: T) -> Self {
         Self::new(x, T::zero(), T::zero())
     }
@@ -220,12 +197,13 @@ impl<T: Number> Point<T> {
     /// let p = Point::with_xy(2, 3);
     /// assert_eq!(p.values(), [2, 3, 0]);
     /// ```
+    #[inline(always)]
     pub fn with_xy(x: T, y: T) -> Self {
         Self::new(x, y, T::zero())
     }
 
     /// Convert `Point<T>` to another primitive type using the `as` operator.
-    #[inline]
+    #[inline(always)]
     pub fn as_<U>(self) -> Point<U>
     where
         T: AsPrimitive<U>,
@@ -317,26 +295,10 @@ impl<T: Number> Point<T> {
     }
 }
 
-impl<T: Float> Point<T> {
-    /// Returns `Point` with values rounded to the nearest integer number. Round half-way cases
-    /// away from `0.0`.
-    pub fn round(&self) -> Self {
-        Self::new(self.x().round(), self.y().round(), self.z().round())
-    }
-
-    /// Returns whether two `Point`s are approximately equal.
-    pub fn approx_eq(&self, other: Point<T>, epsilon: T) -> bool {
-        let xd = (self.x() - other.x()).abs();
-        let yd = (self.y() - other.y()).abs();
-        let zd = (self.z() - other.z()).abs();
-        xd < epsilon && yd < epsilon && zd < epsilon
-    }
-}
-
 impl<T> Draw for Point<T>
 where
+    Self: Into<Point<i32>>,
     T: Number,
-    Self: Into<Point>,
 {
     /// Draw point to the current [p.x()State] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
@@ -637,49 +599,107 @@ where
     }
 }
 
-macro_rules! impl_from {
-    ($from:ty => $($to:ty),*) => {
+macro_rules! impl_from_as {
+    ($($from:ty),* => $to:ty, $zero:expr) => {
         $(
             impl From<Point<$from>> for Point<$to> {
                 fn from(p: Point<$from>) -> Self {
-                    Self::new(p.x().into(), p.y().into(), p.z().into())
+                    Self::new(p.x() as $to, p.y() as $to, p.z() as $to)
+                }
+            }
+
+            /// Convert `[x]` to [Point].
+            impl From<[$from; 1]> for Point<$to> {
+                fn from([x]: [$from; 1]) -> Self {
+                    Self::new(x as $to, $zero, $zero)
+                }
+            }
+            /// Convert `&[x]` to [Point].
+            impl From<&[$from; 1]> for Point<$to> {
+                fn from(&[x]: &[$from; 1]) -> Self {
+                    Self::new(x as $to, $zero, $zero)
+                }
+            }
+
+            /// Convert `[x, y]` to [Point].
+            impl From<[$from; 2]> for Point<$to> {
+                fn from([x, y]: [$from; 2]) -> Self {
+                    Self::new(x as $to, y as $to, $zero)
+                }
+            }
+            /// Convert `&[x, y]` to [Point].
+            impl From<&[$from; 2]> for Point<$to> {
+                fn from(&[x, y]: &[$from; 2]) -> Self {
+                    Self::new(x as $to, y as $to, $zero)
+                }
+            }
+
+            /// Convert `[x, y, z]` to [Point].
+            impl From<[$from; 3]> for Point<$to> {
+                fn from([x, y, z]: [$from; 3]) -> Self {
+                    Self::new(x as $to, y as $to, z as $to)
+                }
+            }
+            /// Convert `&[x, y, z]` to [Point].
+            impl From<&[$from; 3]> for Point<$to> {
+                fn from(&[x, y, z]: &[$from; 3]) -> Self {
+                    Self::new(x as $to, y as $to, z as $to)
                 }
             }
         )*
     };
 }
 
-impl_from!(i8 => i16, i32, i64, isize, f32, f64);
-impl_from!(u8 => i16, u16, i32, u32, i64, u64, isize, usize, f32, f64);
-impl_from!(i16 => i32, i64, isize, f32, f64);
-impl_from!(u16 => i32, u32, i64, u64, usize, f32, f64);
-impl_from!(i32 => i64, f64);
-impl_from!(u32 => i64, u64, f64);
-impl_from!(f32 => f64);
+impl_from_as!(i8, u8, i16, u16, u32, i64, u64, isize, usize, f32, f64 => i32, 0);
+impl_from_as!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize, f32 => f64, 0.0);
 
-macro_rules! impl_try_from {
-    ($from:ty => $($to:ty),*) => {
+macro_rules! impl_from_arr {
+    ($($from:ty),* => $zero:expr) => {
         $(
-            impl TryFrom<Point<$from>> for Point<$to> {
-                type Error = std::num::TryFromIntError;
-                fn try_from(p: Point<$from>) -> Result<Self, Self::Error> {
-                    Ok(Self::new(p.x().try_into()?, p.y().try_into()?, p.z().try_into()?))
+            /// Convert `[x]` to [Point].
+            impl From<[$from; 1]> for Point<$from> {
+                fn from([x]: [$from; 1]) -> Self {
+                    Self::new(x, $zero, $zero)
+                }
+            }
+            /// Convert `&[x]` to [Point].
+            impl From<&[$from; 1]> for Point<$from> {
+                fn from(&[x]: &[$from; 1]) -> Self {
+                    Self::new(x, $zero, $zero)
+                }
+            }
+
+            /// Convert `[x, y]` to [Point].
+            impl From<[$from; 2]> for Point<$from> {
+                fn from([x, y]: [$from; 2]) -> Self {
+                    Self::new(x, y, $zero)
+                }
+            }
+            /// Convert `&[x, y]` to [Point].
+            impl From<&[$from; 2]> for Point<$from> {
+                fn from(&[x, y]: &[$from; 2]) -> Self {
+                    Self::new(x, y, $zero)
+                }
+            }
+
+            /// Convert `[x, y, z]` to [Point].
+            impl From<[$from; 3]> for Point<$from> {
+                fn from([x, y, z]: [$from; 3]) -> Self {
+                    Self::new(x, y, z)
+                }
+            }
+            /// Convert `&[x, y, z]` to [Point].
+            impl From<&[$from; 3]> for Point<$from> {
+                fn from(&[x, y, z]: &[$from; 3]) -> Self {
+                    Self::new(x, y, z)
                 }
             }
         )*
     };
 }
 
-impl_try_from!(i8 => u8, u16, u32, u64, usize);
-impl_try_from!(u8 => i8);
-impl_try_from!(i16 => i8, u8, u16, u32, u64, usize);
-impl_try_from!(u16 => i8, u8, i16, isize);
-impl_try_from!(i32 => i8, u8, i16, u32, u64, isize, usize);
-impl_try_from!(u32 => i8, u8, i16, i32, isize, usize);
-impl_try_from!(i64 => i8, u8, i16, i32, u32, u64, isize, usize);
-impl_try_from!(u64 => i8, u8, i16, i32, u32, i64, isize, usize);
-impl_try_from!(isize => i8, u8, i16, u16, i32, u32, i64, u64, usize);
-impl_try_from!(usize => i8, u8, i16, u16, i32, u32, i64, u64, isize);
+impl_from_arr!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize => 0);
+impl_from_arr!(f32, f64 => 0.0);
 
 /// Convert [Point] to `[x]`.
 impl<T: Number> From<Point<T>> for [T; 1] {
@@ -717,45 +737,6 @@ impl<T: Number> From<Point<T>> for [T; 3] {
 impl<T: Number> From<&Point<T>> for [T; 3] {
     fn from(p: &Point<T>) -> Self {
         [p.x(), p.y(), p.z()]
-    }
-}
-
-/// Convert `[U; 1]` to [Point].
-impl<T: Number, U: Into<T>> From<[U; 1]> for Point<T> {
-    fn from([x]: [U; 1]) -> Self {
-        Self::new(x.into(), T::zero(), T::zero())
-    }
-}
-/// Convert `&[U; 1]` to [Point].
-impl<T: Number, U: Copy + Into<T>> From<&[U; 1]> for Point<T> {
-    fn from(&[x]: &[U; 1]) -> Self {
-        Self::new(x.into(), T::zero(), T::zero())
-    }
-}
-
-/// Convert `[U; 2]` to [Point].
-impl<T: Number, U: Into<T>> From<[U; 2]> for Point<T> {
-    fn from([x, y]: [U; 2]) -> Self {
-        Self::new(x.into(), y.into(), T::zero())
-    }
-}
-/// Convert `&[U; 2]` to [Point].
-impl<T: Number, U: Copy + Into<T>> From<&[U; 2]> for Point<T> {
-    fn from(&[x, y]: &[U; 2]) -> Self {
-        Self::new(x.into(), y.into(), T::zero())
-    }
-}
-
-/// Convert `[U; 3]` to [Point].
-impl<T: Number, U: Into<T>> From<[U; 3]> for Point<T> {
-    fn from([x, y, z]: [U; 3]) -> Self {
-        Self::new(x.into(), y.into(), z.into())
-    }
-}
-/// Convert `&[U; 3]` to [Point].
-impl<T: Number, U: Copy + Into<T>> From<&[U; 3]> for Point<T> {
-    fn from(&[x, y, z]: &[U; 3]) -> Self {
-        Self::new(x.into(), y.into(), z.into())
     }
 }
 

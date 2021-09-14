@@ -128,7 +128,7 @@ pub mod prelude {
         common::{Error as PixError, Result as PixResult},
         draw::Draw,
         engine::PixEngine,
-        shape::{Circle, Ellipse, Line, Point, Quad, Rect, Shape, Sphere, Triangle},
+        shape::{Circle, Contains, Ellipse, Intersects, Line, Point, Quad, Rect, Sphere, Triangle},
         state::{
             settings::{AngleMode, ArcMode, BlendMode, DrawMode, FontStyle},
             PixState,
@@ -140,7 +140,7 @@ pub mod prelude {
     pub use event::{Axis, ControllerButton, Event, Key, KeyEvent, KeyMod, Mouse, WindowEvent};
     pub use graphics::lighting::{Light, LightSource};
     pub use image::{Image, PixelFormat};
-    pub use math::{constants::*, map, random_rng, vector::Vector, Number, Scalar};
+    pub use math::{constants::*, map, random_rng, vector::Vector, Number};
     #[cfg(not(target_arch = "wasm32"))]
     pub use renderer::DEFAULT_ASSET_DIR;
     pub use sphere;

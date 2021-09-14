@@ -342,7 +342,7 @@ impl Rendering for Renderer {
         &mut self,
         pos: &Point<i32>,
         img: &Image,
-        angle: Scalar,
+        angle: f64,
         tint: Option<Color>,
     ) -> Result<()> {
         let _ = pos;

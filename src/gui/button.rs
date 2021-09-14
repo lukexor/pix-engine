@@ -78,7 +78,7 @@ impl Draw for Button<'_> {
             s.fill(GRAY);
         }
         s.stroke(WHITE);
-        s.rect(self.rect.as_())?;
+        s.rect(self.rect)?;
 
         s.rect_mode(DrawMode::Center);
         s.fill(WHITE);
@@ -93,9 +93,9 @@ impl PixState {
     /// Draw a [Button] to the current canvas.
     pub fn button<'a, R>(&mut self, rect: R, label: &'a str) -> PixResult<Button<'a>>
     where
-        R: Into<Rect>,
+        R: Into<Rect<i32>>,
     {
-        let button = Button::new(rect.into().as_::<i32>(), label, &self.mouse);
+        let button = Button::new(rect.into(), label, &self.mouse);
         button.draw(self)?;
         Ok(button)
     }

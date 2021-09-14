@@ -18,18 +18,15 @@
 //! ```
 
 use crate::prelude::*;
-use num_traits::{AsPrimitive, Float};
+use num_traits::AsPrimitive;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::{
-    convert::TryInto,
-    ops::{Deref, DerefMut},
-};
+use std::ops::{Deref, DerefMut};
 
 /// A `Line` with a starting [Point] and ending [Point<T>].
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Line<T = Scalar>([Point<T>; 2]);
+pub struct Line<T = f64>([Point<T>; 2]);
 
 impl<T> Line<T> {
     /// Constructs a `Line` from `start` to `end` [Point]s.
@@ -93,30 +90,6 @@ impl<T: Number> Line<T> {
         [x1, y1, z1, x2, y2, z2]
     }
 
-    /// Tries to convert `Line` coordinates as `[x1, y1, z1, x2, y2, z2]` from `T` to `U` of `T`
-    /// implements `TryInto<U>`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let p1 = point!(5, 10);
-    /// let p2 = point!(100, 100);
-    /// let l: Line<i32> = Line::new(p1, p2);
-    /// let values: [i16; 6] = l.try_into_values()?;
-    /// assert_eq!(values, [5i16, 10, 0, 100, 100, 0]);
-    /// # Ok::<(), PixError>(())
-    /// ```
-    pub fn try_into_values<U>(&self) -> PixResult<[U; 6]>
-    where
-        T: TryInto<U>,
-        PixError: From<<T as TryInto<U>>::Error>,
-    {
-        let [x1, y1, z1] = self.start().try_into_values()?;
-        let [x2, y2, z2] = self.end().try_into_values()?;
-        Ok([x1, y1, z1, x2, y2, z2])
-    }
-
     /// Returns `Line` as a [Vec].
     ///
     /// # Example
@@ -135,22 +108,15 @@ impl<T: Number> Line<T> {
     }
 }
 
-impl<T: Float> Line<T> {
-    /// Returns `Line` with values rounded to the nearest integer number. Round half-way cases
-    /// away from `0.0`.
-    pub fn round(&self) -> Self {
-        Self::new(self.start().round(), self.end().round())
-    }
-}
+impl<T: Number + AsPrimitive<f64>> Intersects for Line<T> {
+    type Type = T;
+    type Shape = Line<Self::Type>;
 
-impl<T: Number> Shape<T> for Line<T> {
-    type Item = Line<T>;
-
-    /// Returns whether this line intersects with another line.
+    /// Returns the closest intersection point with a given line and distance along the line or
+    /// `None` if there is no intersection.
     #[allow(clippy::many_single_char_names)]
-    fn intersects_line<L>(&self, other: L) -> Option<(Point<T>, T)>
+    fn intersects_line<L>(&self, other: L) -> Option<(Point<f64>, f64)>
     where
-        T: Float,
         L: Into<Line<T>>,
     {
         let other = other.into();
@@ -165,23 +131,90 @@ impl<T: Number> Shape<T> for Line<T> {
         if (T::zero()..).contains(&t) && (T::zero()..=T::one()).contains(&u) {
             let x = x1 + t * (x2 - x1);
             let y = y1 + t * (y2 - y1);
-            Some((point!(x, y), t))
+            Some((point!(x, y).as_(), t.as_()))
         } else {
             None
         }
+    }
+
+    /// Returns whether this line intersections with another line
+    fn intersects_shape<O>(&self, other: O) -> bool
+    where
+        O: Into<Self::Shape>,
+    {
+        self.intersects_line(other).is_some()
     }
 }
 
 impl<T> Draw for Line<T>
 where
+    Self: Into<Line<i32>>,
     T: Number,
-    Self: Into<Line>,
 {
-    /// Draw line to the current [PixState] canvas.
+    /// Draw `Line` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.line(*self)
     }
 }
+
+impl<T> Deref for Line<T> {
+    type Target = [Point<T>; 2];
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T> DerefMut for Line<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+macro_rules! impl_from_as {
+    ($($from:ty),* => $to:ty) => {
+        $(
+            impl From<Line<$from>> for Line<$to> {
+                fn from(line: Line<$from>) -> Self {
+                    let p1: Point<$to> = line.start().into();
+                    let p2: Point<$to> = line.end().into();
+                    Self::new(p1, p2)
+                }
+            }
+
+            /// Convert `[x1, y1, x2, y2]` to [Line].
+            impl From<[$from; 4]> for Line<$to> {
+                fn from([x1, y1, x2, y2]: [$from; 4]) -> Self {
+                    Self::new([x1 , y1], [x2, y2])
+                }
+            }
+
+            /// Convert `&[x1, y1, x2, y2]` to [Line].
+            impl From<&[$from; 4]> for Line<$to> {
+                fn from(&[x1, y1, x2, y2]: &[$from; 4]) -> Self {
+                    Self::new([x1, y1], [x2, y2])
+                }
+            }
+
+            /// Convert `[x1, y1, z1, x2, y2, z2]` to [Line].
+            impl From<[$from; 6]> for Line<$to> {
+                fn from([x1, y1, z1, x2, y2, z2]: [$from; 6]) -> Self {
+                    Self::new([x1, y1, z1], [x2, y2, z2])
+                }
+            }
+
+            /// Convert `&[x1, y1, z1, x2, y2, z2]` to [Line].
+            impl From<&[$from; 6]> for Line<$to> {
+                fn from(&[x1, y1, z1, x2, y2, z2]: &[$from; 6]) -> Self {
+                    Self::new([x1, y1, z1], [x2, y2, z2])
+                }
+            }
+
+        )*
+    };
+}
+
+impl_from_as!(i8, u8, i16, u16, u32, i64, u64, isize, usize, f32, f64 => i32);
+impl_from_as!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize, f32 => f64);
 
 impl<T: Number> From<&mut Line<T>> for Line<T> {
     fn from(line: &mut Line<T>) -> Self {
@@ -213,20 +246,6 @@ impl<T: Number> From<&Line<T>> for [T; 4] {
     }
 }
 
-/// Convert `[x1, y1, x2, y2]` to [Line].
-impl<T: Number, U: Number + Into<T>> From<[U; 4]> for Line<T> {
-    fn from([x1, y1, x2, y2]: [U; 4]) -> Self {
-        Self::new([x1, y1], [x2, y2])
-    }
-}
-
-/// Convert `&[x1, y1, x2, y2]` to [Line].
-impl<T: Number, U: Number + Into<T>> From<&[U; 4]> for Line<T> {
-    fn from(&[x1, y1, x2, y2]: &[U; 4]) -> Self {
-        Self::new([x1, y1], [x2, y2])
-    }
-}
-
 /// Convert [Line] to `[x1, y1, z1, x2, y2, z2]`.
 impl<T: Number> From<Line<T>> for [T; 6] {
     fn from(line: Line<T>) -> Self {
@@ -238,20 +257,6 @@ impl<T: Number> From<Line<T>> for [T; 6] {
 impl<T: Number> From<&Line<T>> for [T; 6] {
     fn from(line: &Line<T>) -> Self {
         line.values()
-    }
-}
-
-/// Convert `[x1, y1, z1, x2, y2, z2]` to [Line].
-impl<T: Number, U: Number + Into<T>> From<[U; 6]> for Line<T> {
-    fn from([x1, y1, z1, x2, y2, z2]: [U; 6]) -> Self {
-        Self::new([x1, y1, z1], [x2, y2, z2])
-    }
-}
-
-/// Convert `&[x1, y1, z1, x2, y2, z2]` to [Line].
-impl<T: Number, U: Number + Into<T>> From<&[U; 6]> for Line<T> {
-    fn from(&[x1, y1, z1, x2, y2, z2]: &[U; 6]) -> Self {
-        Self::new([x1, y1, z1], [x2, y2, z2])
     }
 }
 
@@ -276,19 +281,6 @@ where
 {
     fn from(&[p1, p2]: &[Point<U>; 2]) -> Self {
         Self::new(p1, p2)
-    }
-}
-
-impl<T> Deref for Line<T> {
-    type Target = [Point<T>; 2];
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<T> DerefMut for Line<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
     }
 }
 

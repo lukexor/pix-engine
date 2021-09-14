@@ -151,6 +151,16 @@ impl Renderer {
     ) -> Result<(WindowId, Canvas<SdlWindow>)> {
         let video_subsys = context.video()?;
 
+        // TODO: more testing - macOS performance seems low with default "metal" renderer
+        // However: https://github.com/libsdl-org/SDL/issues/4001
+        if cfg!(feature = "opengl") {
+            sdl2::hint::set_with_priority(
+                "SDL_RENDER_DRIVER",
+                "opengl",
+                &sdl2::hint::Hint::Override,
+            );
+        }
+
         // Set up window with options
         let win_width = (s.scale_x * s.width as f32).floor() as u32;
         let win_height = (s.scale_y * s.height as f32).floor() as u32;

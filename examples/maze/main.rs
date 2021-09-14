@@ -13,7 +13,6 @@ mod timer;
 const WIDTH: u32 = 801;
 const HEIGHT: u32 = 601;
 const SIZE: u32 = 20;
-const SCALE: f32 = 1.0;
 const FOOTER: u32 = 50;
 const COLS: u32 = WIDTH / SIZE;
 const ROWS: u32 = (HEIGHT - FOOTER) / SIZE;
@@ -193,9 +192,7 @@ pub fn main() -> PixResult<()> {
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("Maze Generation")
         .with_frame_rate()
-        .scale(SCALE, SCALE)
         .position_centered()
-        .resizable()
         .vsync_enabled()
         .build();
     let mut app = MazeApp::new(COLS, ROWS, SIZE);

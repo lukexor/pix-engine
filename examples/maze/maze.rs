@@ -69,7 +69,7 @@ impl Maze {
     pub fn draw_border(&self, s: &mut PixState) -> PixResult<()> {
         s.no_fill();
         s.stroke(WHITE);
-        s.rect([0, 0, self.cols * self.size + 1, self.rows * self.size + 1])?;
+        s.rect([0, 1, self.cols * self.size + 1, self.rows * self.size + 1])?;
         Ok(())
     }
 

@@ -25,13 +25,10 @@
 //! ```
 
 use crate::prelude::*;
-use num_traits::{AsPrimitive, Float};
+use num_traits::AsPrimitive;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::{
-    convert::TryInto,
-    ops::{Deref, DerefMut},
-};
+use std::ops::{Deref, DerefMut};
 
 /// Constructs a `Rect<T>` at position `(x, y)` with `width` and `height`.
 ///
@@ -93,7 +90,7 @@ macro_rules! square {
 /// A `Rectangle` positioned at `(x, y)` with `width` and `height`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Rect<T = Scalar>([T; 4]);
+pub struct Rect<T = f64>([T; 4]);
 
 impl<T> Rect<T> {
     /// Constructs a `Rect<T>` at position `(x, y)` with `width` and `height`.
@@ -251,31 +248,6 @@ impl<T: Number> Rect<T> {
         self.0
     }
 
-    /// Tries to convert `Rect` values as `[x, y, width, height]` from `T` to `U` of `T` implements
-    /// `TryInto<U>`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let r: Rect<i32> = rect!(5, 10, 100, 100);
-    /// let values: [i16; 4] = r.try_into_values()?;
-    /// assert_eq!(values, [5i16, 10, 100, 100]);
-    /// # Ok::<(), PixError>(())
-    /// ```
-    pub fn try_into_values<U>(&self) -> PixResult<[U; 4]>
-    where
-        T: TryInto<U>,
-        PixError: From<<T as TryInto<U>>::Error>,
-    {
-        Ok([
-            self.x().try_into()?,
-            self.y().try_into()?,
-            self.width().try_into()?,
-            self.height().try_into()?,
-        ])
-    }
-
     /// Returns `Rect` as a [Vec].
     ///
     /// # Example
@@ -367,43 +339,41 @@ impl<T: Number> Rect<T> {
     }
 }
 
-impl<T: Float> Rect<T> {
-    /// Returns `Rect` with values rounded to the nearest integer number. Round half-way cases
-    /// away from `0.0`.
-    pub fn round(&self) -> Self {
-        Self::new(
-            self.x().round(),
-            self.y().round(),
-            self.width().round(),
-            self.height().round(),
-        )
-    }
-}
-
-impl<T: Number> Shape<T> for Rect<T> {
-    type Item = Rect<T>;
+impl<T: Number> Contains for Rect<T> {
+    type Type = T;
+    type Shape = Rect<Self::Type>;
 
     /// Returns whether this rectangle contains a given [Point].
-    fn contains_point<P: Into<Point<T>>>(&self, p: P) -> bool {
+    fn contains_point<P>(&self, p: P) -> bool
+    where
+        P: Into<Point<Self::Type>>,
+    {
         let p = p.into();
         p.x() >= self.left() && p.x() < self.right() && p.y() >= self.top() && p.y() < self.bottom()
     }
 
     /// Returns whether this rectangle completely contains another rectangle.
-    fn contains<O: Into<Self::Item>>(&self, other: O) -> bool {
+    fn contains_shape<O>(&self, other: O) -> bool
+    where
+        O: Into<Self::Shape>,
+    {
         let other = other.into();
         other.left() >= self.left()
             && other.right() < self.right()
             && other.top() >= self.top()
             && other.bottom() < self.bottom()
     }
+}
+
+impl<T: Number + AsPrimitive<f64>> Intersects for Rect<T> {
+    type Type = T;
+    type Shape = Rect<Self::Type>;
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
-    fn intersects_line<L>(&self, line: L) -> Option<(Point<T>, T)>
+    fn intersects_line<L>(&self, line: L) -> Option<(Point<f64>, f64)>
     where
-        T: Float,
-        L: Into<Line<T>>,
+        L: Into<Line<Self::Type>>,
     {
         let line = line.into();
         let left = line.intersects_line([self.top_left(), self.bottom_left()]);
@@ -414,7 +384,7 @@ impl<T: Number> Shape<T> for Rect<T> {
             .iter()
             .filter_map(|&p| p)
             .fold(None, |closest, intersection| {
-                let closest_t = closest.map(|c| c.1).unwrap_or_else(Float::infinity);
+                let closest_t = closest.map(|c| c.1).unwrap_or(f64::INFINITY);
                 let t = intersection.1;
                 if t < closest_t {
                     Some(intersection)
@@ -425,7 +395,10 @@ impl<T: Number> Shape<T> for Rect<T> {
     }
 
     /// Returns whether this rectangle intersects with another rectangle.
-    fn intersects<O: Into<Self::Item>>(&self, other: O) -> bool {
+    fn intersects_shape<O>(&self, other: O) -> bool
+    where
+        O: Into<Self::Shape>,
+    {
         let other = other.into();
         let tl = self.top_left();
         let br = self.bottom_right();
@@ -438,8 +411,8 @@ impl<T: Number> Shape<T> for Rect<T> {
 
 impl<T> Draw for Rect<T>
 where
+    Self: Into<Rect<i32>>,
     T: Number,
-    Self: Into<Rect>,
 {
     /// Draw `Rect` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
@@ -460,6 +433,86 @@ impl<T> DerefMut for Rect<T> {
     }
 }
 
+macro_rules! impl_from_as {
+    ($($from:ty),* => $to:ty) => {
+        $(
+            impl From<Rect<$from>> for Rect<$to> {
+                fn from(rect: Rect<$from>) -> Self {
+                    Self::new(rect.x() as $to, rect.y() as $to, rect.width() as $to, rect.height() as $to)
+                }
+            }
+
+            /// Convert `[x, y, size]` to [Rect].
+            impl From<[$from; 3]> for Rect<$to> {
+                fn from([x, y, size]: [$from; 3]) -> Self {
+                    Self::square(x as $to, y as $to, size as $to)
+                }
+            }
+
+            /// Convert `&[x, y, size]` to [Rect].
+            impl From<&[$from; 3]> for Rect<$to> {
+                fn from(&[x, y, size]: &[$from; 3]) -> Self {
+                    Self::square(x as $to, y as $to, size as $to)
+                }
+            }
+
+            /// Convert `[x, y, width, height]` to [Rect].
+            impl From<[$from; 4]> for Rect<$to> {
+                fn from([x, y, width, height]: [$from; 4]) -> Self {
+                    Self::new(x as $to, y as $to, width as $to, height as $to)
+                }
+            }
+
+            /// Convert `&[x, y, width, height]` to [Rect].
+            impl From<&[$from; 4]> for Rect<$to> {
+                fn from(&[x, y, width, height]: &[$from; 4]) -> Self {
+                    Self::new(x as $to, y as $to, width as $to, height as $to)
+                }
+            }
+        )*
+    };
+}
+
+impl_from_as!(i8, u8, i16, u16, u32, i64, u64, isize, usize, f32, f64 => i32);
+impl_from_as!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize, f32 => f64);
+
+macro_rules! impl_from_arr {
+    ($($from:ty),* => $zero:expr) => {
+        $(
+            /// Convert `[x, y, size]` to [Rect].
+            impl From<[$from; 3]> for Rect<$from> {
+                fn from([x, y, size]: [$from; 3]) -> Self {
+                    Self::square(x, y, size)
+                }
+            }
+
+            /// Convert `&[x, y, size]` to [Rect].
+            impl From<&[$from; 3]> for Rect<$from> {
+                fn from(&[x, y, size]: &[$from; 3]) -> Self {
+                    Self::square(x, y, size)
+                }
+            }
+
+            /// Convert `[x, y, width, height]` to [Rect].
+            impl From<[$from; 4]> for Rect<$from> {
+                fn from([x, y, width, height]: [$from; 4]) -> Self {
+                    Self::new(x, y, width, height)
+                }
+            }
+
+            /// Convert `&[x, y, width, height]` to [Rect].
+            impl From<&[$from; 4]> for Rect<$from> {
+                fn from(&[x, y, width, height]: &[$from; 4]) -> Self {
+                    Self::new(x, y, width, height)
+                }
+            }
+        )*
+    };
+}
+
+impl_from_arr!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize => 0);
+impl_from_arr!(f32, f64 => 0.0);
+
 impl<T: Number> From<&mut Rect<T>> for Rect<T> {
     /// Convert `&mut Rect<T>` to [Rect].
     fn from(rect: &mut Rect<T>) -> Self {
@@ -471,35 +524,5 @@ impl<T: Number> From<&Rect<T>> for Rect<T> {
     /// Convert `&Rect<T>` to [Rect].
     fn from(rect: &Rect<T>) -> Self {
         *rect
-    }
-}
-
-impl<T: Number, U: Number + Into<T>> From<[U; 3]> for Rect<T> {
-    /// Convert `[x, y, size]` to [Rect].
-    fn from([x, y, size]: [U; 3]) -> Self {
-        let size = size.into();
-        Self::new(x.into(), y.into(), size, size)
-    }
-}
-
-impl<T: Number, U: Number + Into<T>> From<&[U; 3]> for Rect<T> {
-    /// Convert `&[x, y, size]` to [Rect].
-    fn from(&[x, y, size]: &[U; 3]) -> Self {
-        let size = size.into();
-        Self::new(x.into(), y.into(), size, size)
-    }
-}
-
-/// Convert `[x, y, width, height]` to [Rect].
-impl<T: Number, U: Number + Into<T>> From<[U; 4]> for Rect<T> {
-    fn from([x, y, width, height]: [U; 4]) -> Self {
-        Self::new(x.into(), y.into(), width.into(), height.into())
-    }
-}
-
-/// Convert `&[x, y, width, height]` to [Rect].
-impl<T: Number, U: Number + Into<T>> From<&[U; 4]> for Rect<T> {
-    fn from(&[x, y, width, height]: &[U; 4]) -> Self {
-        Self::new(x.into(), y.into(), width.into(), height.into())
     }
 }

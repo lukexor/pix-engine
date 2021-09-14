@@ -27,20 +27,17 @@
 //! ```
 
 use crate::prelude::*;
-use num_traits::{AsPrimitive, Float};
+use num_traits::AsPrimitive;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::{
-    convert::TryInto,
-    ops::{Deref, DerefMut},
-};
+use std::ops::{Deref, DerefMut};
 
 /// A `Quad` or quadrilateral, a four-sided polygon.
 ///
 /// `Quad` is similar to [Rect] but the angles between edges are not constrained to 90 degrees.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Quad<T = Scalar>([Point<T>; 4]);
+pub struct Quad<T = f64>([Point<T>; 4]);
 
 impl<T> Quad<T> {
     /// Constructs a `Quad<T>` with the given [Point]s.
@@ -163,36 +160,6 @@ impl<T: Number> Quad<T> {
         [self.p1(), self.p2(), self.p3(), self.p4()]
     }
 
-    /// Tries to convert `Quad` coordinates as `[Point<T>; 4]` from `T` to `U` of `T` implements
-    /// `TryInto<U>`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let quad: Quad<i32> = Quad::with_points([10, 20], [30, 10], [20, 25], [15, 15]);
-    /// assert_eq!(quad.try_into_values()?, [
-    ///     point!(10i16, 20, 0),
-    ///     point!(30i16, 10, 0),
-    ///     point!(20i16, 25, 0),
-    ///     point!(15i16, 15, 0)
-    /// ]);
-    /// # Ok::<(), PixError>(())
-    /// ```
-    pub fn try_into_values<U>(&self) -> PixResult<[Point<U>; 4]>
-    where
-        T: TryInto<U>,
-        U: Number,
-        PixError: From<<T as TryInto<U>>::Error>,
-    {
-        Ok([
-            self.p1().try_into_values()?.into(),
-            self.p2().try_into_values()?.into(),
-            self.p3().try_into_values()?.into(),
-            self.p4().try_into_values()?.into(),
-        ])
-    }
-
     /// Returns `Quad` points as a [Vec].
     ///
     /// # Example
@@ -212,23 +179,10 @@ impl<T: Number> Quad<T> {
     }
 }
 
-impl<T: Float> Quad<T> {
-    /// Returns `Quad` with values rounded to the nearest integer number. Round half-way cases
-    /// away from `0.0`.
-    pub fn round(&self) -> Self {
-        Self::with_points(
-            self.p1().round(),
-            self.p2().round(),
-            self.p3().round(),
-            self.p4().round(),
-        )
-    }
-}
-
 impl<T> Draw for Quad<T>
 where
+    Self: Into<Quad<i32>>,
     T: Number,
-    Self: Into<Quad>,
 {
     /// Draw `Quad` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
@@ -248,6 +202,61 @@ impl<T> DerefMut for Quad<T> {
         &mut self.0
     }
 }
+
+macro_rules! impl_from_as {
+    ($($from:ty),* => $to:ty) => {
+        $(
+            /// Convert `[x1, y1, x2, y2, x3, y3]` to [Quad].
+            impl From<[$from; 8]> for Quad<$to> {
+                fn from([x1, y1, x2, y2, x3, y3, x4, y4]: [$from; 8]) -> Self {
+                    Self::new(
+                        x1 as $to,
+                        y1 as $to,
+                        x2 as $to,
+                        y2 as $to,
+                        x3 as $to,
+                        y3 as $to,
+                        x4 as $to,
+                        y4 as $to,
+                    )
+                }
+            }
+
+            /// Convert `&[x1, y1, x2, y2, x3, y3]` to [Quad].
+            impl From<&[$from; 8]> for Quad<$to> {
+                fn from(&[x1, y1, x2, y2, x3, y3, x4, y4]: &[$from; 8]) -> Self {
+                    Self::new(
+                        x1 as $to,
+                        y1 as $to,
+                        x2 as $to,
+                        y2 as $to,
+                        x3 as $to,
+                        y3 as $to,
+                        x4 as $to,
+                        y4 as $to,
+                    )
+                }
+            }
+
+            /// Convert `[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]` to [Quad].
+            impl From<[$from; 12]> for Quad<$to> {
+                fn from([x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]: [$from; 12]) -> Self {
+                    Self::with_points([x1, y1, z1], [x2, y2, z2], [x3, y3, z3], [x4, y4, z4])
+                }
+            }
+
+            /// Convert `&[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]` to [Quad].
+            impl From<&[$from; 12]> for Quad<$to> {
+                fn from(&[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]: &[$from; 12]) -> Self {
+                    Self::with_points([x1, y1, z1], [x2, y2, z2], [x3, y3, z3], [x4, y4, z4])
+                }
+            }
+        )*
+    };
+}
+
+impl_from_as!(i8, u8, i16, u16, u32, i64, u64, isize, usize, f32, f64 => i32);
+impl_from_as!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize, f32 => f64);
 
 impl<T: Number> From<&mut Quad<T>> for Quad<T> {
     fn from(quad: &mut Quad<T>) -> Self {
@@ -283,38 +292,6 @@ impl<T: Number> From<&Quad<T>> for [T; 8] {
     }
 }
 
-/// Convert `[x1, y1, x2, y2, x3, y3]` to [Quad].
-impl<T: Number, U: Into<T>> From<[U; 8]> for Quad<T> {
-    fn from([x1, y1, x2, y2, x3, y3, x4, y4]: [U; 8]) -> Self {
-        Self::new(
-            x1.into(),
-            y1.into(),
-            x2.into(),
-            y2.into(),
-            x3.into(),
-            y3.into(),
-            x4.into(),
-            y4.into(),
-        )
-    }
-}
-
-/// Convert `&[x1, y1, x2, y2, x3, y3]` to [Quad].
-impl<T: Number, U: Copy + Into<T>> From<&[U; 8]> for Quad<T> {
-    fn from(&[x1, y1, x2, y2, x3, y3, x4, y4]: &[U; 8]) -> Self {
-        Self::new(
-            x1.into(),
-            y1.into(),
-            x2.into(),
-            y2.into(),
-            x3.into(),
-            y3.into(),
-            x4.into(),
-            y4.into(),
-        )
-    }
-}
-
 /// Convert [Quad] to `[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]`.
 impl<T: Number> From<Quad<T>> for [T; 12] {
     fn from(quad: Quad<T>) -> Self {
@@ -334,20 +311,6 @@ impl<T: Number> From<&Quad<T>> for [T; 12] {
         let [x3, y3, z3] = quad.p3().values();
         let [x4, y4, z4] = quad.p4().values();
         [x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]
-    }
-}
-
-/// Convert `[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]` to [Quad].
-impl<T: Number, U: Into<T>> From<[U; 12]> for Quad<T> {
-    fn from([x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]: [U; 12]) -> Self {
-        Self::with_points([x1, y1, z1], [x2, y2, z2], [x3, y3, z3], [x4, y4, z4])
-    }
-}
-
-/// Convert `&[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]` to [Quad].
-impl<T: Number, U: Copy + Into<T>> From<&[U; 12]> for Quad<T> {
-    fn from(&[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]: &[U; 12]) -> Self {
-        Self::with_points([x1, y1, z1], [x2, y2, z2], [x3, y3, z3], [x4, y4, z4])
     }
 }
 
@@ -463,13 +426,13 @@ mod tests {
 
     macro_rules! assert_approx_eq {
         ($i1:expr, $i2:expr) => {
-            assert_approx_eq!($i1, $i2, Scalar::EPSILON);
+            assert_approx_eq!($i1, $i2, f64::EPSILON);
         };
         ($i1:expr, $i2:expr, $e:expr) => {{
             match ($i1, $i2) {
                 (Some((p1, t1)), Some((p2, t2))) => {
-                    let [x1, y1, z1]: [Scalar; 3] = p1.into();
-                    let [x2, y2, z2]: [Scalar; 3] = p2.into();
+                    let [x1, y1, z1]: [f64; 3] = p1.values();
+                    let [x2, y2, z2]: [f64; 3] = p2.values();
                     let xd = (x1 - x2).abs();
                     let yd = (y1 - y2).abs();
                     let zd = (z1 - z2).abs();
@@ -486,7 +449,7 @@ mod tests {
 
     #[test]
     fn test_intersects_line() {
-        let rect: Rect = rect!(10.0, 10.0, 100.0, 100.0);
+        let rect = rect!(10.0, 10.0, 100.0, 100.0);
 
         // Left
         let line = Line::new([3.0, 7.0], [20.0, 30.0]);

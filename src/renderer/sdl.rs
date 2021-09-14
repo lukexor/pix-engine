@@ -20,7 +20,7 @@ use sdl2::{
     video::{Window as SdlWindow, WindowBuildError, WindowContext},
     EventPump, IntegerOrSdlError, Sdl,
 };
-use std::{borrow::Cow, collections::HashMap, convert::TryInto, path::PathBuf};
+use std::{borrow::Cow, collections::HashMap, path::PathBuf};
 
 mod audio;
 mod event;
@@ -191,7 +191,7 @@ impl Rendering for Renderer {
 
     /// Set the font size for drawing to the current canvas.
     fn font_size(&mut self, size: u32) -> Result<()> {
-        self.font.1 = size.try_into()?;
+        self.font.1 = size as u16;
         if self.font_cache.get(&self.font).is_none() {
             self.font_cache
                 .insert(self.font.clone(), TTF.load_font(&self.font.0, self.font.1)?);
@@ -258,13 +258,13 @@ impl Rendering for Renderer {
 
     /// Draw a pixel to the current canvas.
     fn point(&mut self, p: &Point<i32>, color: Color) -> Result<()> {
-        let [x, y, _] = p.try_into_values()?;
+        let [x, y, _] = p.as_().values();
         Ok(self.canvas.pixel(x, y, color)?)
     }
 
     /// Draw a line to the current canvas.
     fn line(&mut self, line: &Line<i32>, color: Color) -> Result<()> {
-        let [x1, y1, _, x2, y2, _] = line.try_into_values()?;
+        let [x1, y1, _, x2, y2, _] = line.as_().values();
         if y1 == y2 {
             self.canvas.hline(x1, x2, y1, color)?;
         } else if x1 == x2 {
@@ -282,7 +282,7 @@ impl Rendering for Renderer {
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
-        let [p1, p2, p3] = tri.try_into_values()?;
+        let [p1, p2, p3] = tri.as_().values();
         if let Some(fill) = fill {
             self.canvas
                 .filled_trigon(p1.x(), p1.y(), p2.x(), p2.y(), p3.x(), p3.y(), fill)?;
@@ -296,9 +296,10 @@ impl Rendering for Renderer {
 
     /// Draw a rectangle to the current canvas.
     fn rect(&mut self, rect: &Rect<i32>, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
-        let [x, y, width, height] = rect.try_into_values()?;
+        let [x, y, width, height] = rect.as_().values();
         if let Some(fill) = fill {
-            self.canvas.box_(x, y, x + width, y + height, fill)?;
+            self.canvas
+                .box_(x, y, x + width - 1, y + height - 1, fill)?;
         }
         if let Some(stroke) = stroke {
             self.canvas.rectangle(x, y, x + width, y + height, stroke)?;
@@ -314,11 +315,11 @@ impl Rendering for Renderer {
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
-        let [x, y, width, height] = rect.try_into_values()?;
-        let radius = radius.try_into()?;
+        let [x, y, width, height] = rect.as_().values();
+        let radius = radius as i16;
         if let Some(fill) = fill {
             self.canvas
-                .rounded_box(x, y, x + width, y + height, radius, fill)?;
+                .rounded_box(x, y, x + width - 1, y + height - 1, radius, fill)?;
         }
         if let Some(stroke) = stroke {
             self.canvas
@@ -329,7 +330,7 @@ impl Rendering for Renderer {
 
     /// Draw a quadrilateral to the current canvas.
     fn quad(&mut self, quad: &Quad<i32>, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
-        let [p1, p2, p3, p4] = quad.try_into_values()?;
+        let [p1, p2, p3, p4] = quad.as_().values();
         let vx = [p1.x(), p2.x(), p3.x(), p4.x()];
         let vy = [p1.y(), p2.y(), p3.y(), p4.y()];
         if let Some(fill) = fill {
@@ -342,11 +343,17 @@ impl Rendering for Renderer {
     }
 
     /// Draw a polygon to the current canvas.
-    fn polygon<P>(&mut self, ps: P, fill: Option<Color>, stroke: Option<Color>) -> Result<()>
+    fn polygon<'a, P>(&mut self, ps: P, fill: Option<Color>, stroke: Option<Color>) -> Result<()>
     where
-        P: IntoIterator<Item = Point<i32>>,
+        P: IntoIterator<Item = &'a Point<i32>>,
     {
-        let (vx, vy): (Vec<i16>, Vec<i16>) = Self::try_convert_points(ps)?.into_iter().unzip();
+        let (vx, vy): (Vec<i16>, Vec<i16>) = ps
+            .into_iter()
+            .map(|p| -> (i16, i16) {
+                let [x, y, _] = p.as_().values();
+                (x, y)
+            })
+            .unzip();
         if let Some(fill) = fill {
             self.canvas.filled_polygon(&vx, &vy, fill)?;
         }
@@ -363,7 +370,7 @@ impl Rendering for Renderer {
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
-        let [x, y, width, height] = ellipse.try_into_values()?;
+        let [x, y, width, height] = ellipse.as_().values();
         if let Some(fill) = fill {
             self.canvas.filled_ellipse(x, y, width, height, fill)?;
         }
@@ -385,10 +392,10 @@ impl Rendering for Renderer {
         stroke: Option<Color>,
     ) -> Result<()> {
         use ArcMode::*;
-        let [x, y, _] = p.try_into_values()?;
-        let radius = radius.try_into()?;
-        let start = start.try_into()?;
-        let end = end.try_into()?;
+        let [x, y, _] = p.as_().values();
+        let radius = radius as i16;
+        let start = start as i16;
+        let end = end as i16;
         match mode {
             Default => {
                 if let Some(stroke) = stroke {
@@ -423,7 +430,7 @@ impl Rendering for Renderer {
         &mut self,
         pos: &Point<i32>,
         img: &Image,
-        angle: Scalar,
+        angle: f64,
         tint: Option<Color>,
     ) -> Result<()> {
         let dst = SdlRect::new(pos.x(), pos.y(), img.width(), img.height());
@@ -432,18 +439,6 @@ impl Rendering for Renderer {
 }
 
 impl Renderer {
-    fn try_convert_points<P>(ps: P) -> Result<Vec<(i16, i16)>>
-    where
-        P: IntoIterator<Item = Point<i32>>,
-    {
-        ps.into_iter()
-            .map(|p| -> Result<(i16, i16)> {
-                let [x, y, _]: [i16; 3] = p.try_into_values()?;
-                Ok((x, y))
-            })
-            .collect::<Result<Vec<(i16, i16)>>>()
-    }
-
     fn get_texture_cache(&mut self, img: &Image) -> Result<(TextureId, bool)> {
         match img.texture_cache() {
             Some(texture_cache) => Ok(texture_cache),
@@ -461,7 +456,7 @@ impl Renderer {
         img: &Image,
         tint: Option<Color>,
         dst: SdlRect,
-        angle: Option<Scalar>,
+        angle: Option<f64>,
     ) -> Result<()> {
         let (texture_id, updated) = self.get_texture_cache(img)?;
         match self.textures.get_mut(texture_id) {
@@ -474,10 +469,16 @@ impl Renderer {
                     )?;
                     img.set_updated(true);
                 }
-                if let Some(tint) = tint {
-                    let [r, g, b, a] = tint.channels();
-                    texture.set_color_mod(r, g, b);
-                    texture.set_alpha_mod(a);
+                match tint {
+                    Some(tint) => {
+                        let [r, g, b, a] = tint.channels();
+                        texture.set_color_mod(r, g, b);
+                        texture.set_alpha_mod(a);
+                    }
+                    None => {
+                        texture.set_color_mod(255, 255, 255);
+                        texture.set_alpha_mod(255);
+                    }
                 }
                 texture.set_blend_mode(self.blend_mode);
                 match angle {

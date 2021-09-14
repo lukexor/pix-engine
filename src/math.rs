@@ -9,9 +9,6 @@ use vector::Vector;
 #[macro_use]
 pub mod vector;
 
-/// Default scalar type used for math operations.
-pub type Scalar = f64;
-
 /// Default math constants.
 pub mod constants {
     pub use std::f64::consts::*;
@@ -29,7 +26,7 @@ const PERLIN_ZWRAP: usize = 1 << PERLIN_ZWRAPB;
 const PERLIN_SIZE: usize = 4095;
 
 lazy_static! {
-    static ref PERLIN: Vec<Scalar> = {
+    static ref PERLIN: Vec<f64> = {
         let mut perlin = Vec::with_capacity(PERLIN_SIZE + 1);
         for _ in 0..PERLIN_SIZE + 1 {
             perlin.push(random(1.0));
@@ -99,9 +96,9 @@ where
 /// assert!(n >= 0.0 && n < 1.0);
 /// ```
 #[allow(clippy::many_single_char_names)]
-pub fn noise<V>(v: V) -> Scalar
+pub fn noise<V>(v: V) -> f64
 where
-    V: Into<Vector<Scalar>>,
+    V: Into<Vector<f64>>,
 {
     let v = v.into();
 
@@ -123,7 +120,7 @@ where
 
     let (mut n1, mut n2, mut n3);
 
-    let scaled_cosine = |i: Scalar| 0.5 * (1.0 - (i - constants::PI).cos());
+    let scaled_cosine = |i: f64| 0.5 * (1.0 - (i - constants::PI).cos());
 
     let perlin_octaves = 4; // default to medium smooth
     let perlin_amp_falloff = 0.5; // 50% reduction/octave
@@ -236,7 +233,7 @@ macro_rules! noise {
 
 /// Remaps a number from one range to another.
 ///
-/// Map range defaults to `0.0..=Scalar::MAX` in the event casting to [Scalar] fails.
+/// Map range defaults to `0.0..=f64::MAX` in the event casting to [f64] fails.
 /// NaN will result in the max mapped value.
 ///
 /// # Example
@@ -265,7 +262,7 @@ macro_rules! noise {
 /// ```
 pub fn map<T>(value: T, start1: T, end1: T, start2: T, end2: T) -> T
 where
-    T: NumCast + Into<Scalar> + PartialOrd + Copy,
+    T: NumCast + Into<f64> + PartialOrd + Copy,
 {
     let default = end2;
     let start1 = start1.into();

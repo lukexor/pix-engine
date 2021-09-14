@@ -93,7 +93,6 @@ use rand::distributions::uniform::SampleUniform;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::{
-    convert::{TryFrom, TryInto},
     fmt,
     iter::{FromIterator, Sum},
     ops::*,
@@ -119,7 +118,7 @@ use std::{
 /// [vecmath]: https://en.wikipedia.org/wiki/Vector_(mathematics_and_p.y()sics)
 #[derive(Default, Debug, Copy, Clone, PartialEq, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Vector<T = Scalar>([T; 3]);
+pub struct Vector<T = f64>([T; 3]);
 
 /// # Constructs a [Vector].
 ///
@@ -249,30 +248,6 @@ impl<T: Number> Vector<T> {
         [self.x(), self.y(), self.z()]
     }
 
-    /// Tries to convert `Vector` coordinates as `[x, y, z]` from `T` to `U` of `T` implements
-    /// `TryInto<U>`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v: Vector<i32> = vector!(2, 1, 3);
-    /// let values: [i16; 3] = v.try_into_values()?;
-    /// assert_eq!(values, [2i16, 1, 3]);
-    /// # Ok::<(), PixError>(())
-    /// ```
-    pub fn try_into_values<U>(&self) -> PixResult<[U; 3]>
-    where
-        T: TryInto<U>,
-        PixError: From<<T as TryInto<U>>::Error>,
-    {
-        Ok([
-            self.x().try_into()?,
-            self.y().try_into()?,
-            self.z().try_into()?,
-        ])
-    }
-
     /// Constructs a `Vector<T>` with only an `x` magnitude.
     ///
     /// # Example
@@ -384,13 +359,7 @@ impl<T: Number> Vector<T> {
     }
 }
 
-impl<T: Float> Vector<T> {
-    /// Returns `Vector` with values rounded to the nearest integer number. Round half-way cases
-    /// away from `0.0`.
-    pub fn round(&self) -> Self {
-        Self::new(self.x().round(), self.y().round(), self.z().round())
-    }
-
+impl<T: Number + Float> Vector<T> {
     /// Constructs a `Vector<T>` from a reflection about a normal to a line in 2D space or a plane in 3D
     /// space.
     ///
@@ -400,7 +369,7 @@ impl<T: Float> Vector<T> {
     /// # use pix_engine::prelude::*;
     /// let v1 = Vector::new(1.0, 1.0, 0.0);
     /// let normal = Vector::new(0.0, 1.0, 0.0);
-    /// let v2 = Vector::reflection(v1, normal);
+    /// let v2: Vector<f64> = Vector::reflection(v1, normal);
     /// assert_eq!(v2.values(), [-1.0, 1.0, 0.0]);
     /// ```
     pub fn reflection<V>(v: V, normal: V) -> Self
@@ -420,7 +389,7 @@ impl<T: Float> Vector<T> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let v1 = Vector::new(0.0, 5.0, 0.0);
-    /// let v2 = Vector::normalized(v1);
+    /// let v2: Vector<f64> = Vector::normalized(v1);
     /// assert_eq!(v2.values(), [0.0, 1.0, 0.0]);
     /// ```
     pub fn normalized<V>(v: V) -> Self
@@ -1061,51 +1030,163 @@ where
     }
 }
 
-macro_rules! impl_from {
-    ($from:ty => $($to:ty),*) => {
+macro_rules! impl_from_as {
+    ($($from:ty),* => $to:ty, $zero:expr) => {
         $(
             impl From<Vector<$from>> for Vector<$to> {
                 fn from(v: Vector<$from>) -> Self {
-                    Self::new(v.x().into(), v.y().into(), v.z().into())
+                    Self::new(v.x() as $to, v.y() as $to, v.z() as $to)
+                }
+            }
+
+            /// Convert `[x]` to [Vector].
+            impl From<[$from; 1]> for Vector<$to> {
+                fn from([x]: [$from; 1]) -> Self {
+                    Self::new(x as $to, $zero, $zero)
+                }
+            }
+            /// Convert `&[x]` to [Vector].
+            impl From<&[$from; 1]> for Vector<$to> {
+                fn from(&[x]: &[$from; 1]) -> Self {
+                    Self::new(x as $to, $zero, $zero)
+                }
+            }
+
+            /// Convert `[x, y]` to [Vector].
+            impl From<[$from; 2]> for Vector<$to> {
+                fn from([x, y]: [$from; 2]) -> Self {
+                    Self::new(x as $to, y as $to, $zero)
+                }
+            }
+            /// Convert `&[x, y]` to [Vector].
+            impl From<&[$from; 2]> for Vector<$to> {
+                fn from(&[x, y]: &[$from; 2]) -> Self {
+                    Self::new(x as $to, y as $to, $zero)
+                }
+            }
+
+            /// Convert `[x, y, z]` to [Vector].
+            impl From<[$from; 3]> for Vector<$to> {
+                fn from([x, y, z]: [$from; 3]) -> Self {
+                    Self::new(x as $to, y as $to, z as $to)
+                }
+            }
+            /// Convert `&[x, y, z]` to [Vector].
+            impl From<&[$from; 3]> for Vector<$to> {
+                fn from(&[x, y, z]: &[$from; 3]) -> Self {
+                    Self::new(x as $to, y as $to, z as $to)
+                }
+            }
+
+            /// Converts [Point] to [Vector].
+            impl From<Point<$from>> for Vector<$to> {
+                fn from(v: Point<$from>) -> Self {
+                    Self::new(v.x() as $to, v.y() as $to, v.z() as $to)
+                }
+            }
+
+            /// Converts &[Point] to [Vector].
+            impl From<&Point<$from>> for Vector<$to> {
+                fn from(v: &Point<$from>) -> Self {
+                    Self::new(v.x() as $to, v.y() as $to, v.z() as $to)
+                }
+            }
+
+            /// Converts [Vector] to [Point].
+            impl From<Vector<$from>> for Point<$to> {
+                fn from(v: Vector<$from>) -> Self {
+                    Self::new(v.x() as $to, v.y() as $to, v.z() as $to)
+                }
+            }
+
+            /// Converts &[Vector] to [Point].
+            impl From<&Vector<$from>> for Point<$to> {
+                fn from(v: &Vector<$from>) -> Self {
+                    Self::new(v.x() as $to, v.y() as $to, v.z() as $to)
                 }
             }
         )*
     };
 }
 
-impl_from!(i8 => i16, i32, i64, isize, f32, f64);
-impl_from!(u8 => i16, u16, i32, u32, i64, u64, isize, usize, f32, f64);
-impl_from!(i16 => i32, i64, isize, f32, f64);
-impl_from!(u16 => i32, u32, i64, u64, usize, f32, f64);
-impl_from!(i32 => i64, f64);
-impl_from!(u32 => i64, u64, f64);
-impl_from!(f32 => f64);
+impl_from_as!(i8, u8, i16, u16, u32, i64, u64, isize, usize, f32, f64 => i32, 0);
+impl_from_as!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize, f32 => f64, 0.0);
 
-macro_rules! impl_try_from {
-    ($from:ty => $($to:ty),*) => {
+macro_rules! impl_from_arr {
+    ($($from:ty),* => $zero:expr) => {
         $(
-            impl TryFrom<Vector<$from>> for Vector<$to> {
-                type Error = std::num::TryFromIntError;
-                fn try_from(v: Vector<$from>) -> Result<Self, Self::Error> {
-                    Ok(Self::new(v.x().try_into()?, v.y().try_into()?, v.z().try_into()?))
+            /// Converts [Point] to [Vector].
+            impl From<Point<$from>> for Vector<$from> {
+                fn from(v: Point<$from>) -> Self {
+                    Self::new(v.x(), v.y(), v.z())
+                }
+            }
+
+            /// Converts &[Point] to [Vector].
+            impl From<&Point<$from>> for Vector<$from> {
+                fn from(v: &Point<$from>) -> Self {
+                    Self::new(v.x(), v.y(), v.z())
+                }
+            }
+
+            /// Converts [Vector] to [Point].
+            impl From<Vector<$from>> for Point<$from> {
+                fn from(v: Vector<$from>) -> Self {
+                    Self::new(v.x(), v.y(), v.z())
+                }
+            }
+
+            /// Converts &[Vector] to [Point].
+            impl From<&Vector<$from>> for Point<$from> {
+                fn from(v: &Vector<$from>) -> Self {
+                    Self::new(v.x(), v.y(), v.z())
+                }
+            }
+            /// Convert `[x]` to [Vector].
+            impl From<[$from; 1]> for Vector<$from> {
+                fn from([x]: [$from; 1]) -> Self {
+                    Self::new(x, $zero, $zero)
+                }
+            }
+            /// Convert `&[x]` to [Vector].
+            impl From<&[$from; 1]> for Vector<$from> {
+                fn from(&[x]: &[$from; 1]) -> Self {
+                    Self::new(x, $zero, $zero)
+                }
+            }
+
+            /// Convert `[x, y]` to [Vector].
+            impl From<[$from; 2]> for Vector<$from> {
+                fn from([x, y]: [$from; 2]) -> Self {
+                    Self::new(x, y, $zero)
+                }
+            }
+            /// Convert `&[x, y]` to [Vector].
+            impl From<&[$from; 2]> for Vector<$from> {
+                fn from(&[x, y]: &[$from; 2]) -> Self {
+                    Self::new(x, y, $zero)
+                }
+            }
+
+            /// Convert `[x, y, z]` to [Vector].
+            impl From<[$from; 3]> for Vector<$from> {
+                fn from([x, y, z]: [$from; 3]) -> Self {
+                    Self::new(x, y, z)
+                }
+            }
+            /// Convert `&[x, y, z]` to [Vector].
+            impl From<&[$from; 3]> for Vector<$from> {
+                fn from(&[x, y, z]: &[$from; 3]) -> Self {
+                    Self::new(x, y, z)
                 }
             }
         )*
     };
 }
 
-impl_try_from!(i8 => u8, u16, u32, u64, usize);
-impl_try_from!(u8 => i8);
-impl_try_from!(i16 => i8, u8, u16, u32, u64, usize);
-impl_try_from!(u16 => i8, u8, i16, isize);
-impl_try_from!(i32 => i8, u8, i16, u32, u64, isize, usize);
-impl_try_from!(u32 => i8, u8, i16, i32, isize, usize);
-impl_try_from!(i64 => i8, u8, i16, i32, u32, u64, isize, usize);
-impl_try_from!(u64 => i8, u8, i16, i32, u32, i64, isize, usize);
-impl_try_from!(isize => i8, u8, i16, u16, i32, u32, i64, u64, usize);
-impl_try_from!(usize => i8, u8, i16, u16, i32, u32, i64, u64, isize);
+impl_from_arr!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize => 0);
+impl_from_arr!(f32, f64 => 0.0);
 
-/// Convert [Vector] to `[x]`.
 impl<T: Number> From<Vector<T>> for [T; 1] {
     fn from(v: Vector<T>) -> Self {
         [v.x()]
@@ -1141,73 +1222,6 @@ impl<T: Number> From<Vector<T>> for [T; 3] {
 impl<T: Number> From<&Vector<T>> for [T; 3] {
     fn from(v: &Vector<T>) -> Self {
         [v.x(), v.y(), v.z()]
-    }
-}
-
-/// Convert `[U; 1]` to [Vector].
-impl<T: Number, U: Into<T>> From<[U; 1]> for Vector<T> {
-    fn from([x]: [U; 1]) -> Self {
-        Self::new(x.into(), T::zero(), T::zero())
-    }
-}
-/// Convert `&[U; 1]` to [Vector].
-impl<T: Number, U: Copy + Into<T>> From<&[U; 1]> for Vector<T> {
-    fn from(&[x]: &[U; 1]) -> Self {
-        Self::new(x.into(), T::zero(), T::zero())
-    }
-}
-
-/// Convert `[U; 2]` to [Vector].
-impl<T: Number, U: Into<T>> From<[U; 2]> for Vector<T> {
-    fn from([x, y]: [U; 2]) -> Self {
-        Self::new(x.into(), y.into(), T::zero())
-    }
-}
-/// Convert `&[U; 2]` to [Vector].
-impl<T: Number, U: Copy + Into<T>> From<&[U; 2]> for Vector<T> {
-    fn from(&[x, y]: &[U; 2]) -> Self {
-        Self::new(x.into(), y.into(), T::zero())
-    }
-}
-
-/// Convert `[U; 3]` to [Vector].
-impl<T: Number, U: Into<T>> From<[U; 3]> for Vector<T> {
-    fn from([x, y, z]: [U; 3]) -> Self {
-        Self::new(x.into(), y.into(), z.into())
-    }
-}
-/// Convert `&[U; 3]` to [Vector].
-impl<T: Number, U: Copy + Into<T>> From<&[U; 3]> for Vector<T> {
-    fn from(&[x, y, z]: &[U; 3]) -> Self {
-        Self::new(x.into(), y.into(), z.into())
-    }
-}
-
-/// Converts [Point] to [Vector].
-impl<T: Number, U: Number + Into<T>> From<Point<U>> for Vector<T> {
-    fn from(p: Point<U>) -> Self {
-        Self::new(p.x().into(), p.y().into(), p.z().into())
-    }
-}
-
-/// Converts &[Point] to [Vector].
-impl<T: Number, U: Number + Into<T>> From<&Point<U>> for Vector<T> {
-    fn from(p: &Point<U>) -> Self {
-        Self::new(p.x().into(), p.y().into(), p.z().into())
-    }
-}
-
-/// Converts [Vector] to [Point].
-impl<T: Number, U: Number + Into<T>> From<Vector<U>> for Point<T> {
-    fn from(v: Vector<U>) -> Self {
-        Self::new(v.x().into(), v.y().into(), v.z().into())
-    }
-}
-
-/// Converts &[Vector] to [Point].
-impl<T: Number, U: Number + Into<T>> From<&Vector<U>> for Point<T> {
-    fn from(v: &Vector<U>) -> Self {
-        Self::new(v.x().into(), v.y().into(), v.z().into())
     }
 }
 

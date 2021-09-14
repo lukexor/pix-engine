@@ -1,6 +1,6 @@
 //! [Light] source functions.
 
-use crate::prelude::{Point, Scalar, Vector};
+use crate::prelude::{Point, Vector};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -19,7 +19,7 @@ pub enum LightSource<T> {
 /// `Light` representation including `source` and `intensity`.
 #[derive(Debug, Copy, Clone, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Light<T = Scalar> {
+pub struct Light<T = f64> {
     /// Source of light.
     pub source: LightSource<T>,
     /// Light intensity.
