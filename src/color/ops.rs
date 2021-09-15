@@ -6,6 +6,7 @@ use super::{
 };
 use std::{
     fmt::{self, LowerHex, UpperHex},
+    hash::{Hash, Hasher},
     iter::FromIterator,
     ops::*,
 };
@@ -33,6 +34,20 @@ impl Index<usize> for Color {
             i if i < 4 => &self.channels[i],
             _ => panic!("index out of bounds: the len is 4 but the index is {}", idx),
         }
+    }
+}
+
+impl PartialEq for Color {
+    fn eq(&self, other: &Self) -> bool {
+        self.channels.eq(&other.channels)
+    }
+}
+
+impl Eq for Color {}
+
+impl Hash for Color {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.channels.hash(state)
     }
 }
 

@@ -39,6 +39,7 @@ pub(crate) struct Renderer {
     font: (PathBuf, u16),
     font_cache: HashMap<(PathBuf, u16), Font<'static, 'static>>,
     font_style: SdlFontStyle,
+    text_cache: HashMap<(String, Color), SdlTexture>,
     event_pump: EventPump,
     window_id: WindowId,
     cursor: Cursor,
@@ -86,6 +87,7 @@ impl Rendering for Renderer {
             font,
             font_cache,
             font_style: SdlFontStyle::NORMAL,
+            text_cache: HashMap::new(),
             event_pump,
             window_id,
             cursor,
@@ -229,14 +231,30 @@ impl Rendering for Renderer {
         let font = self.font_cache.get(&self.font);
         match (fill, font) {
             (Some(fill), Some(font)) => {
-                let surface = font.render(text).blended(fill)?;
-                let texture = self.texture_creator.create_texture_from_surface(&surface)?;
-                let TextureQuery { width, height, .. } = texture.query();
-                Ok(self.canvas.copy(
-                    &texture,
-                    None,
-                    Some(SdlRect::new(pos.x(), pos.y(), width, height)),
-                )?)
+                // TODO: Clean up these allocations - how to manage destroying text cache textures
+                // with `unsafe_textures`?
+                match self.text_cache.get(&(text.to_string(), fill)) {
+                    Some(texture) => {
+                        let TextureQuery { width, height, .. } = texture.query();
+                        self.canvas.copy(
+                            &texture,
+                            None,
+                            Some(SdlRect::new(pos.x(), pos.y(), width, height)),
+                        )?;
+                    }
+                    None => {
+                        let surface = font.render(&text).blended(fill)?;
+                        let texture = self.texture_creator.create_texture_from_surface(&surface)?;
+                        let TextureQuery { width, height, .. } = texture.query();
+                        self.canvas.copy(
+                            &texture,
+                            None,
+                            Some(SdlRect::new(pos.x(), pos.y(), width, height)),
+                        )?;
+                        self.text_cache.insert((text.to_string(), fill), texture);
+                    }
+                }
+                Ok(())
             }
             (Some(_), None) => Err(Error::InvalidFont(self.font.0.to_owned())),
             (None, _) => Ok(()),

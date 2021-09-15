@@ -258,6 +258,11 @@ impl PixState {
         Ok(self.renderer.font_size(size.as_())?)
     }
 
+    /// Return the dimensions of given text for drawing to the current canvas.
+    pub fn size_of<S: AsRef<str>>(&self, text: S) -> PixResult<(u32, u32)> {
+        Ok(self.renderer.size_of(text.as_ref())?)
+    }
+
     /// Set the font style for drawing to the current canvas.
     pub fn font_style(&mut self, style: FontStyle) {
         self.renderer.font_style(style);

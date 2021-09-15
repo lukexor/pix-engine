@@ -126,7 +126,7 @@ pub enum ColorMode {
 use ColorMode::*;
 
 /// A color represented with a [ColorMode].
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Color {
     /// `Color` mode.

@@ -245,6 +245,7 @@ impl PixEngine {
                         if state.settings.run_count > 0 {
                             state.settings.run_count -= 1;
                         }
+                        state.env.frame_count += 1;
                     }
 
                     if state.settings.running && state.settings.show_frame_rate {
