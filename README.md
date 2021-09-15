@@ -11,14 +11,19 @@ or algorithm exploration and is not meant to be as fully-featured as other,
 larger graphics libraries.
 
 It is intended to be more than just a toy library, however, and can be used to
-drive real applications. The [`Tetanes`][] [NES][] emulator, for example uses
+drive real applications. The [Tetanes][] [NES][] emulator, for example uses
 `pix_engine` for rendering, window and event handling.
 
-Creating an application is as simple as implementing the only required trait of
-`AppState` for your application: `AppState::on_update` which gets executed as
-often as possible. Within that function you'll have access to a mutable
-`PixState` object which provides several methods for changing settings,
-responding to events, and drawing to the screen.
+## Getting Started
+
+Creating an application is as simple as implementing the only required method of
+the [AppState] trait for your application: [AppState::on_update] which gets
+executed as often as possible by default. Within that function you'll have
+access to a mutable [PixState] object which provides several methods for
+modifying settings and drawing to the screen.
+
+[AppState] has several additional methods that can be implemented to respond to
+user and system events.
 
 Here's an example application:
 
@@ -68,7 +73,7 @@ fn main() -> PixResult<()> {
 
 ## Known Issues
 
-See the github issue tracker.
+See the [github issue tracker][].
 
 ## License
 
@@ -76,7 +81,7 @@ See the `LICENSE.md` file in the root.
 
 ## Contact
 
-For issue reporting, please use the github issue tracker. You can contact me directly
+For issue reporting, please use the [github issue tracker][]. You can contact me directly
 [here](https://lukeworks.tech/contact/).
 
 ## Credits
@@ -91,5 +96,9 @@ Also heavily influenced by [p5js](https://p5js.org/).
 [Rust]: https://www.rust-lang.org/
 [SDL2]: https://crates.io/crates/sdl2/
 [WASM]: https://www.rust-lang.org/what/wasm
-[`Tetanes`]: https://crates.io/crates/tetanes
+[Tetanes]: https://crates.io/crates/tetanes
 [NES]: https://en.wikipedia.org/wiki/Nintendo_Entertainment_System
+[AppState]: crate::prelude::AppState
+[AppState::on_update]: crate::prelude::AppState::on_update
+[PixState]: crate::prelude::PixState
+[github issue tracker]: https://github.com/lukexor/pix-engine/issues
