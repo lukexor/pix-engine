@@ -75,7 +75,7 @@ impl MazeCreator {
             .iter()
             .enumerate()
             .filter(|(_, n)| **n)
-            .filter_map(|(i, _)| maze.get_neighbor(&cell, i))
+            .filter_map(|(i, _)| maze.get_neighbor(cell, i))
             .filter(|(_, neighbor)| !self.visited.contains(&neighbor.id()))
             .choose(&mut rng)
     }

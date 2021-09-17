@@ -1,11 +1,12 @@
-//! A 2D shape type representing squares and rectangles used for drawing.
+//! A shape type representing squares and rectangles used for drawing.
 //!
 //! # Examples
 //!
 //! You can create a [Rect] or square using [Rect::new] or [Rect::square]:
 //!
 //! ```
-//! # use pix_engine::prelude::*;
+//! use pix_engine::prelude::*;
+//!
 //! let r = Rect::new(10, 20, 100, 200);
 //! let s = Rect::square(10, 20, 100);
 //! ```
@@ -13,7 +14,8 @@
 //! ...or by using the [rect!] or [square!] macros:
 //!
 //! ```
-//! # use pix_engine::prelude::*;
+//! use pix_engine::prelude::*;
+//!
 //! let r = rect!(10, 20, 100, 200);
 //! let s = square!(10, 20, 100);
 //!
@@ -90,7 +92,7 @@ macro_rules! square {
 /// A `Rectangle` positioned at `(x, y)` with `width` and `height`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Rect<T = f64>([T; 4]);
+pub struct Rect<T = i32>([T; 4]);
 
 impl<T> Rect<T> {
     /// Constructs a `Rect<T>` at position `(x, y)` with `width` and `height`.
@@ -107,15 +109,15 @@ impl<T> Rect<T> {
     }
 }
 
-impl<T: Number> Rect<T> {
+impl<T: Num> Rect<T> {
     /// Constructs a `Rect<T>` at position [Point] with `width` and `height`.
-    pub fn with_position<P: Into<Point<T>>>(p: P, width: T, height: T) -> Self {
+    pub fn with_position<P: Into<Point<T, 2>>>(p: P, width: T, height: T) -> Self {
         let p = p.into();
         Self::new(p.x(), p.y(), width, height)
     }
 
     /// Constructs a square `Rect<T>` at position [Point] with `size`.
-    pub fn square_with_position<P: Into<Point<T>>>(p: P, size: T) -> Self {
+    pub fn square_with_position<P: Into<Point<T, 2>>>(p: P, size: T) -> Self {
         Self::with_position(p, size, size)
     }
 
@@ -132,7 +134,7 @@ impl<T: Number> Rect<T> {
     /// let r: Rect<i32> = Rect::with_points([50, 50], [150, 150]);
     /// assert_eq!(r.values(), [50, 50, 100, 100]);
     /// ```
-    pub fn with_points<P: Into<Point<T>>>(p1: P, p2: P) -> Self {
+    pub fn with_points<P: Into<Point<T, 2>>>(p1: P, p2: P) -> Self {
         let p1 = p1.into();
         let p2 = p2.into();
         assert!(p2 > p1, "bottom-right point must be greater than top-right",);
@@ -150,7 +152,7 @@ impl<T: Number> Rect<T> {
     /// let r = Rect::from_center([50, 50], 100, 100);
     /// assert_eq!(r.values(), [0, 0, 100, 100]);
     /// ```
-    pub fn from_center<P: Into<Point<T>>>(p: P, width: T, height: T) -> Self {
+    pub fn from_center<P: Into<Point<T, 2>>>(p: P, width: T, height: T) -> Self {
         let p = p.into();
         let two = T::one() + T::one();
         Self::new(p.x() - width / two, p.y() - height / two, width, height)
@@ -166,7 +168,7 @@ impl<T: Number> Rect<T> {
     /// let s = Rect::square_from_center([50, 50], 100);
     /// assert_eq!(s.values(), [0, 0, 100, 100]);
     /// ```
-    pub fn square_from_center<P: Into<Point<T>>>(p: P, size: T) -> Self {
+    pub fn square_from_center<P: Into<Point<T, 2>>>(p: P, size: T) -> Self {
         let p = p.into();
         let two = T::one() + T::one();
         Self::new(p.x() - size / two, p.y() - size / two, size, size)
@@ -302,7 +304,7 @@ impl<T: Number> Rect<T> {
     }
 
     /// Returns the center position as [Point].
-    pub fn center(&self) -> Point<T> {
+    pub fn center(&self) -> Point<T, 2> {
         let two = T::one() + T::one();
         point!(
             self.x() + self.width() / two,
@@ -311,27 +313,27 @@ impl<T: Number> Rect<T> {
     }
 
     /// Returns the top-left position as [Point].
-    pub fn top_left(&self) -> Point<T> {
+    pub fn top_left(&self) -> Point<T, 2> {
         point!(self.left(), self.top())
     }
 
     /// Returns the top-right position as [Point].
-    pub fn top_right(&self) -> Point<T> {
+    pub fn top_right(&self) -> Point<T, 2> {
         point!(self.right(), self.top())
     }
 
     /// Returns the bottom-left position as [Point].
-    pub fn bottom_left(&self) -> Point<T> {
+    pub fn bottom_left(&self) -> Point<T, 2> {
         point!(self.left(), self.bottom())
     }
 
     /// Returns the bottom-right position as [Point].
-    pub fn bottom_right(&self) -> Point<T> {
+    pub fn bottom_right(&self) -> Point<T, 2> {
         point!(self.right(), self.bottom())
     }
 
     /// Set position centered on a [Point].
-    pub fn center_on<P: Into<Point<T>>>(&mut self, p: P) {
+    pub fn center_on<P: Into<Point<T, 2>>>(&mut self, p: P) {
         let p = p.into();
         let two = T::one() + T::one();
         self.set_x(p.x() - self.width() / two);
@@ -339,14 +341,14 @@ impl<T: Number> Rect<T> {
     }
 }
 
-impl<T: Number> Contains for Rect<T> {
+impl<T: Num> Contains for Rect<T> {
     type Type = T;
     type Shape = Rect<Self::Type>;
 
     /// Returns whether this rectangle contains a given [Point].
     fn contains_point<P>(&self, p: P) -> bool
     where
-        P: Into<Point<Self::Type>>,
+        P: Into<Point<Self::Type, 2>>,
     {
         let p = p.into();
         p.x() >= self.left() && p.x() < self.right() && p.y() >= self.top() && p.y() < self.bottom()
@@ -365,15 +367,15 @@ impl<T: Number> Contains for Rect<T> {
     }
 }
 
-impl<T: Number + AsPrimitive<f64>> Intersects for Rect<T> {
+impl<T: Num + AsPrimitive<Scalar>> Intersects for Rect<T> {
     type Type = T;
     type Shape = Rect<Self::Type>;
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
-    fn intersects_line<L>(&self, line: L) -> Option<(Point<f64>, f64)>
+    fn intersects_line<L>(&self, line: L) -> Option<(Point<Scalar, 2>, Scalar)>
     where
-        L: Into<Line<Self::Type>>,
+        L: Into<Line<Self::Type, 2>>,
     {
         let line = line.into();
         let left = line.intersects_line([self.top_left(), self.bottom_left()]);
@@ -384,7 +386,7 @@ impl<T: Number + AsPrimitive<f64>> Intersects for Rect<T> {
             .iter()
             .filter_map(|&p| p)
             .fold(None, |closest, intersection| {
-                let closest_t = closest.map(|c| c.1).unwrap_or(f64::INFINITY);
+                let closest_t = closest.map(|c| c.1).unwrap_or(Scalar::INFINITY);
                 let t = intersection.1;
                 if t < closest_t {
                     Some(intersection)
@@ -412,7 +414,7 @@ impl<T: Number + AsPrimitive<f64>> Intersects for Rect<T> {
 impl<T> Draw for Rect<T>
 where
     Self: Into<Rect<i32>>,
-    T: Number,
+    T: Num,
 {
     /// Draw `Rect` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
@@ -513,14 +515,14 @@ macro_rules! impl_from_arr {
 impl_from_arr!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize => 0);
 impl_from_arr!(f32, f64 => 0.0);
 
-impl<T: Number> From<&mut Rect<T>> for Rect<T> {
+impl<T: Num> From<&mut Rect<T>> for Rect<T> {
     /// Convert `&mut Rect<T>` to [Rect].
     fn from(rect: &mut Rect<T>) -> Self {
         *rect
     }
 }
 
-impl<T: Number> From<&Rect<T>> for Rect<T> {
+impl<T: Num> From<&Rect<T>> for Rect<T> {
     /// Convert `&Rect<T>` to [Rect].
     fn from(rect: &Rect<T>) -> Self {
         *rect

@@ -1,18 +1,18 @@
-//! 3D shape type representing a sphere used for drawing.
+//! A shape type representing spheres used for drawing.
 //!
 //! # Examples
 //!
 //! You can create a [Sphere] using [Sphere::new]:
 //!
 //! ```
-//! # use pix_engine::prelude::*;
+//! # use pix_engine::prelude_3d::*;
 //! let s = Sphere::new(10, 20, 100, 200);
 //! ```
 //!
 //! ...or by using the [sphere!] macro:
 //!
 //! ```
-//! # use pix_engine::prelude::*;
+//! # use pix_engine::prelude_3d::*;
 //! let s = sphere!(10, 20, 15, 200);
 //!
 //! // using a point
@@ -27,12 +27,12 @@ use serde::{Deserialize, Serialize};
 /// A `Sphere` positioned at `(x, y, z)` with `radius`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Sphere<T = f64>([T; 4]);
+pub struct Sphere<T = i32>([T; 4]);
 
 /// # Constructs a `Sphere<T>` at position `(x, y, z)` with `radius`.
 ///
 /// ```
-/// # use pix_engine::prelude::*;
+/// # use pix_engine::prelude_3d::*;
 /// let p = point!(10, 20, 10);
 /// let s = sphere!(p, 100);
 /// assert_eq!(s.x(), 10);
@@ -49,10 +49,10 @@ pub struct Sphere<T = f64>([T; 4]);
 #[macro_export]
 macro_rules! sphere {
     ($p:expr, $r:expr$(,)?) => {
-        $crate::prelude::Sphere::with_position($p, $r)
+        $crate::prelude_3d::Sphere::with_position($p, $r)
     };
     ($x:expr, $y:expr, $z:expr, $r:expr$(,)?) => {
-        $crate::prelude::Sphere::new($x, $y, $z, $r)
+        $crate::prelude_3d::Sphere::new($x, $y, $z, $r)
     };
 }
 
@@ -63,9 +63,9 @@ impl<T> Sphere<T> {
     }
 }
 
-impl<T: Number> Sphere<T> {
+impl<T: Num> Sphere<T> {
     /// Constructs a `Sphere<T>` at position [Point] with `radius`.
-    pub fn with_position<P: Into<Point<T>>>(p: P, radius: T) -> Self {
+    pub fn with_position<P: Into<Point<T, 3>>>(p: P, radius: T) -> Self {
         let p = p.into();
         Self::new(p.x(), p.y(), p.z(), radius)
     }
@@ -119,26 +119,27 @@ impl<T: Number> Sphere<T> {
     }
 
     /// Returns the center [Point].
-    pub fn center(&self) -> Point<T> {
+    pub fn center(&self) -> Point<T, 3> {
         point!(self.x(), self.y(), self.z())
     }
 }
 
-impl<T: Number> Contains for Sphere<T> {
+impl<T: Num> Contains for Sphere<T> {
     type Type = T;
     type Shape = Sphere<Self::Type>;
 
     /// Returns whether this sphere contains a given [Point].
-    fn contains_point<P>(&self, p: P) -> bool
+    fn contains_point<P>(&self, _p: P) -> bool
     where
-        P: Into<Point<Self::Type>>,
+        P: Into<Point<Self::Type, 2>>,
     {
-        let p = p.into();
-        let px = p.x() - self.x();
-        let py = p.y() - self.y();
-        let pz = p.z() - self.z();
-        let r = self.radius() * self.radius();
-        (px * px + py * py + pz * pz) < r
+        todo!();
+        // let p = p.into();
+        // let px = p.x() - self.x();
+        // let py = p.y() - self.y();
+        // let pz = p.z() - self.z();
+        // let r = self.radius() * self.radius();
+        // (px * px + py * py + pz * pz) < r
     }
 
     /// Returns whether this sphere completely contains another sphere.
@@ -155,15 +156,15 @@ impl<T: Number> Contains for Sphere<T> {
     }
 }
 
-impl<T: Number> Intersects for Sphere<T> {
+impl<T: Num> Intersects for Sphere<T> {
     type Type = T;
     type Shape = Sphere<Self::Type>;
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
-    fn intersects_line<L>(&self, _line: L) -> Option<(Point<f64>, f64)>
+    fn intersects_line<L>(&self, _line: L) -> Option<(Point<Scalar, 2>, Scalar)>
     where
-        L: Into<Line<Self::Type>>,
+        L: Into<Line<Self::Type, 2>>,
     {
         todo!("sphere intersects_line")
     }

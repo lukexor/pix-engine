@@ -28,7 +28,7 @@ struct Glyph {
 
 impl Glyph {
     const FONT: &'static str = "assets/UnPilgiBold.ttf";
-    const SIZE: u32 = 18;
+    const SIZE: u32 = 16;
     const COLOR: [u8; 3] = [0, 255, 70];
     const COLOR_DARK: [u8; 3] = [0, 155, 00];
     const HIGHLIGHT: [u8; 3] = [200, 255, 200];
@@ -52,7 +52,7 @@ impl Glyph {
             self.value = Self::random_glyph();
         }
         let ch = &self.value.encode_utf8(&mut self.buf);
-        s.text([x, y], &ch)?;
+        s.text([x, y], ch)?;
         Ok(())
     }
 }

@@ -130,7 +130,7 @@ impl AStarSolver {
                     .enumerate()
                     .filter(|(_, wall)| !*wall) // Filter only valid paths without a wall
                     .for_each(|(i, _)| {
-                        if let Some(neighbor) = self.get_neighbor(&maze, &current.cell, i) {
+                        if let Some(neighbor) = self.get_neighbor(maze, &current.cell, i) {
                             if !self.closed_set.contains(&neighbor.id()) {
                                 let tmp_g = current.g + 1.0;
                                 if tmp_g < neighbor.g {

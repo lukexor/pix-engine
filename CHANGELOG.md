@@ -77,7 +77,7 @@ All notable changes to this project will be documented in this file.
 #### Misc
 
 - `math` module for noise and randomization utilities.
-- `Number` trait for generic number handling.
+- `Num` trait for generic number handling.
 - `Vector` type for doing 2D/3D vector math.
 - Attribution for `Emulogic` font.
 - Several new examples:

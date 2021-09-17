@@ -1,18 +1,20 @@
-//! 2D shape type representing circles used for drawing.
+//! A shape type representing circles used for drawing.
 //!
 //! # Examples
 //!
 //! You can create a [Circle] using [Circle::new]:
 //!
 //! ```
-//! # use pix_engine::prelude::*;
+//! use pix_engine::prelude::*;
+//!
 //! let c = Circle::new(10, 20, 100);
 //! ```
 //!
 //! ...or by using the [circle!] macro:
 //!
 //! ```
-//! # use pix_engine::prelude::*;
+//! use pix_engine::prelude::*;
+//!
 //! let c = circle!(10, 20, 100);
 //!
 //! // using a point
@@ -63,9 +65,9 @@ impl<T> Circle<T> {
     }
 }
 
-impl<T: Number> Circle<T> {
+impl<T: Num> Circle<T> {
     /// Constructs a `Circle<T>` at position [Point] with `radius`.
-    pub fn with_position<P: Into<Point<T>>>(p: P, radius: T) -> Self {
+    pub fn with_position<P: Into<Point<T, 2>>>(p: P, radius: T) -> Self {
         let p = p.into();
         Self::new(p.x(), p.y(), radius)
     }
@@ -79,7 +81,7 @@ impl<T: Number> Circle<T> {
     /// let c = Circle::from_center([50, 50], 100);
     /// assert_eq!(c.values(), [0, 0, 100]);
     /// ```
-    pub fn from_center<P: Into<Point<T>>>(p: P, radius: T) -> Self {
+    pub fn from_center<P: Into<Point<T, 2>>>(p: P, radius: T) -> Self {
         let p = p.into();
         let two = T::one() + T::one();
         Self::new(p.x() - radius / two, p.y() - radius / two, radius)
@@ -198,46 +200,46 @@ impl<T: Number> Circle<T> {
     }
 
     /// Returns the center position as [Point].
-    pub fn center(&self) -> Point<T> {
+    pub fn center(&self) -> Point<T, 2> {
         point!(self.x() + self.radius(), self.y() + self.radius())
     }
 
     /// Returns the top-left position as [Point].
-    pub fn top_left(&self) -> Point<T> {
+    pub fn top_left(&self) -> Point<T, 2> {
         point!(self.left(), self.top())
     }
 
     /// Returns the top-right position as [Point].
-    pub fn top_right(&self) -> Point<T> {
+    pub fn top_right(&self) -> Point<T, 2> {
         point!(self.right(), self.top())
     }
 
     /// Returns the bottom-left position as [Point].
-    pub fn bottom_left(&self) -> Point<T> {
+    pub fn bottom_left(&self) -> Point<T, 2> {
         point!(self.left(), self.bottom())
     }
 
     /// Returns the bottom-right position as [Point].
-    pub fn bottom_right(&self) -> Point<T> {
+    pub fn bottom_right(&self) -> Point<T, 2> {
         point!(self.right(), self.bottom())
     }
 
     /// Set position centered on a [Point].
-    pub fn center_on<P: Into<Point<T>>>(&mut self, p: P) {
+    pub fn center_on<P: Into<Point<T, 2>>>(&mut self, p: P) {
         let p = p.into();
         self.set_x(p.x() - self.radius());
         self.set_y(p.y() - self.radius());
     }
 }
 
-impl<T: Number> Contains for Circle<T> {
+impl<T: Num> Contains for Circle<T> {
     type Type = T;
     type Shape = Circle<Self::Type>;
 
     /// Returns whether this circle contains a given [Point].
     fn contains_point<P>(&self, p: P) -> bool
     where
-        P: Into<Point<T>>,
+        P: Into<Point<Self::Type, 2>>,
     {
         let p = p.into();
         let px = p.x() - self.x();
@@ -259,15 +261,15 @@ impl<T: Number> Contains for Circle<T> {
     }
 }
 
-impl<T: Number> Intersects for Circle<T> {
+impl<T: Num> Intersects for Circle<T> {
     type Type = T;
     type Shape = Circle<Self::Type>;
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
-    fn intersects_line<L>(&self, _line: L) -> Option<(Point<f64>, f64)>
+    fn intersects_line<L>(&self, _line: L) -> Option<(Point<Scalar, 2>, Scalar)>
     where
-        L: Into<Line<Self::Type>>,
+        L: Into<Line<Self::Type, 2>>,
     {
         todo!("circle intersects_line")
     }
@@ -288,7 +290,7 @@ impl<T: Number> Intersects for Circle<T> {
 impl<T> Draw for Circle<T>
 where
     Self: Into<Circle<i32>>,
-    T: Number,
+    T: Num,
 {
     /// Draw circle to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
@@ -309,27 +311,27 @@ impl<T> DerefMut for Circle<T> {
     }
 }
 
-impl<T: Number> From<&mut Circle<T>> for Circle<T> {
+impl<T: Num> From<&mut Circle<T>> for Circle<T> {
     fn from(circle: &mut Circle<T>) -> Self {
         *circle
     }
 }
 
-impl<T: Number> From<&Circle<T>> for Circle<T> {
+impl<T: Num> From<&Circle<T>> for Circle<T> {
     fn from(circle: &Circle<T>) -> Self {
         *circle
     }
 }
 
 /// Convert `[x, y, radius]` to [Circle].
-impl<T: Number, U: Number + Into<T>> From<[U; 3]> for Circle<T> {
+impl<T: Num, U: Num + Into<T>> From<[U; 3]> for Circle<T> {
     fn from([x, y, radius]: [U; 3]) -> Self {
         Self::new(x.into(), y.into(), radius.into())
     }
 }
 
 /// Convert `&[x, y, radius]` to [Circle].
-impl<T: Number, U: Number + Into<T>> From<&[U; 3]> for Circle<T> {
+impl<T: Num, U: Num + Into<T>> From<&[U; 3]> for Circle<T> {
     fn from(&[x, y, radius]: &[U; 3]) -> Self {
         Self::new(x.into(), y.into(), radius.into())
     }

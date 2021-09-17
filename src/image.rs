@@ -173,7 +173,7 @@ impl Image {
     }
 
     /// Returns the center position as [Point].
-    pub fn center(&self) -> Point<i32> {
+    pub fn center(&self) -> Point<i32, 2> {
         point!(self.width() as i32 / 2, self.height() as i32 / 2)
     }
 
@@ -267,7 +267,7 @@ impl PixState {
     /// Draw an [Image] to the current canvas.
     pub fn image<P>(&mut self, position: P, img: &Image) -> PixResult<()>
     where
-        P: Into<Point<i32>>,
+        P: Into<Point<i32, 2>>,
     {
         let s = &self.settings;
         let mut pos = position.into();
@@ -293,7 +293,7 @@ impl PixState {
     /// Draw a rotated [Image] to the current canvas.
     pub fn image_rotated<P, T>(&mut self, position: P, img: &Image, angle: T) -> PixResult<()>
     where
-        P: Into<Point<i32>>,
+        P: Into<Point<i32, 2>>,
         T: Into<f64>,
     {
         let s = &self.settings;

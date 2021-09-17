@@ -13,7 +13,7 @@ const WEST: usize = 3;
 
 #[derive(Debug)]
 struct Cell {
-    pos: Point<i32>,
+    pos: PointI2,
     edges: [(bool, usize); 4],
     exists: bool,
 }
@@ -21,7 +21,7 @@ struct Cell {
 // 0,0 -> 0,0,16,16
 // 1,0 -> 16,0,32,16
 impl Cell {
-    pub fn new<P: Into<Point<i32>>>(pos: P) -> Self {
+    pub fn new<P: Into<PointI2>>(pos: P) -> Self {
         Self {
             pos: pos.into() * BLOCK_SIZE as i32,
             edges: [(false, 0); 4],
@@ -36,9 +36,9 @@ impl Cell {
 
 struct RayScene {
     cells: Vec<Cell>,
-    edges: Vec<Line<i32>>,
-    points: Vec<Point<i32>>,
-    polygons: Vec<(f64, Point<i32>)>,
+    edges: Vec<Line<i32, 2>>,
+    points: Vec<PointI2>,
+    polygons: Vec<(Scalar, PointI2)>,
     xcells: u32,
     ycells: u32,
     drawing: bool,
@@ -52,7 +52,7 @@ impl RayScene {
         let mut cells = Vec::with_capacity((xcells * ycells) as usize);
         for y in 0..ycells {
             for x in 0..xcells {
-                cells.push(Cell::new([x as f64, y as f64]));
+                cells.push(Cell::new([x as Scalar, y as Scalar]));
             }
         }
         Self {
@@ -84,7 +84,7 @@ impl RayScene {
             .map(|c| c.edges[dir].1)
             .ok_or_else(|| PixError::Other(Cow::from("invalid cell index")))
     }
-    fn get_edge_mut(&mut self, i: usize) -> PixResult<&mut Line<i32>> {
+    fn get_edge_mut(&mut self, i: usize) -> PixResult<&mut Line<i32, 2>> {
         self.edges
             .get_mut(i)
             .ok_or_else(|| PixError::Other(Cow::from("invalid edge index")))
@@ -122,8 +122,8 @@ impl RayScene {
                             self.cells[i].edges[WEST] = (true, edge_id);
                         } else {
                             // Create WEST edge extending downward
-                            let start = vector!(x_off * block_size, y_off * block_size);
-                            let end = vector!(start.x(), start.y() + block_size);
+                            let start = point!(x_off * block_size, y_off * block_size);
+                            let end = point!(start.x(), start.y() + block_size);
                             let edge = Line::new(start, end);
                             let edge_id = self.edges.len();
                             self.edges.push(edge);
@@ -140,9 +140,8 @@ impl RayScene {
                             self.cells[i].edges[EAST] = (true, edge_id);
                         } else {
                             // Create EAST edge extending downward
-                            let start =
-                                vector!(x_off * block_size + block_size, y_off * block_size);
-                            let end = vector!(start.x(), start.y() + block_size);
+                            let start = point!(x_off * block_size + block_size, y_off * block_size);
+                            let end = point!(start.x(), start.y() + block_size);
                             let edge = Line::new(start, end);
                             let edge_id = self.edges.len();
                             self.edges.push(edge);
@@ -159,8 +158,8 @@ impl RayScene {
                             self.cells[i].edges[NORTH] = (true, edge_id);
                         } else {
                             // Create NORTH edge extending right
-                            let start = vector!(x_off * block_size, y_off * block_size);
-                            let end = vector!(start.x() + block_size, start.y());
+                            let start = point!(x_off * block_size, y_off * block_size);
+                            let end = point!(start.x() + block_size, start.y());
                             let edge = Line::new(start, end);
                             let edge_id = self.edges.len();
                             self.edges.push(edge);
@@ -177,9 +176,8 @@ impl RayScene {
                             self.cells[i].edges[SOUTH] = (true, edge_id);
                         } else {
                             // Create SOUTH edge extending right
-                            let start =
-                                vector!(x_off * block_size, y_off * block_size + block_size);
-                            let end = vector!(start.x() + block_size, start.y());
+                            let start = point!(x_off * block_size, y_off * block_size + block_size);
+                            let end = point!(start.x() + block_size, start.y());
                             let edge = Line::new(start, end);
                             let edge_id = self.edges.len();
                             self.edges.push(edge);
@@ -200,15 +198,15 @@ impl RayScene {
         Ok(())
     }
 
-    fn calc_visibility_polygons(&mut self, o: Point<i32>) {
+    fn calc_visibility_polygons(&mut self, o: PointI2) {
         self.polygons.clear();
         for &p in self.points.iter() {
             // Cast three rays - one at and one off to each side
             for offset in -1..=1 {
-                let angle = offset as f64 / 10_000.0;
+                let angle = offset as Scalar / 10_000.0;
                 let r = Vector::rotated(p - o, angle);
                 if let Some(intersect) = self.cast_ray(o, r) {
-                    let [x, y, _] = intersect.values();
+                    let [x, y] = intersect.values();
                     let intersect = point!(x.round() as i32, y.round() as i32);
                     self.polygons.push((r.heading(), intersect));
                     continue;
@@ -222,11 +220,11 @@ impl RayScene {
             .dedup_by(|a, b| (a.1.x() - b.1.x()).abs() < 1 && (a.1.y() - b.1.y()).abs() < 1);
     }
 
-    fn cast_ray(&self, o: Point<i32>, r: Vector) -> Option<Point> {
+    fn cast_ray(&self, o: PointI2, r: VectorF2) -> Option<PointF2> {
         let mut intersect = None;
-        let mut closest_param = f64::INFINITY;
-        let o: Point<f64> = o.into();
-        let ray: Line = Line::new(o, o + r);
+        let mut closest_param = Scalar::INFINITY;
+        let o: Point<Scalar, 2> = o.into();
+        let ray: Line<Scalar, 2> = Line::new(o, o + r);
         for &e in self.edges.iter() {
             if let Some((point, param)) = ray.intersects_line(e) {
                 if intersect.is_none() || param < closest_param {
@@ -283,8 +281,8 @@ impl AppState for RayScene {
         }
 
         // Screen Edges
-        let w = w as f64;
-        let h = h as f64;
+        let w = w as Scalar;
+        let h = h as Scalar;
         self.edges.push(Line::new([0.0, 0.0], [w, 0.0])); // Top
         self.edges.push(Line::new([w, 0.0], [w, h])); // Right
         self.edges.push(Line::new([0.0, h], [w, h])); // Bottom
@@ -340,7 +338,7 @@ impl AppState for RayScene {
         Ok(())
     }
 
-    fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse, pos: Point<i32>) -> PixResult<()> {
+    fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse, pos: PointI2) -> PixResult<()> {
         if btn == Mouse::Left
             && rect![0, 0, s.width() as i32, s.height() as i32].contains_point(pos)
         {

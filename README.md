@@ -27,7 +27,7 @@ user and system events.
 
 Here's an example application:
 
-```rust
+```rust no_run
 use pix_engine::prelude::*;
 
 struct MyApp;

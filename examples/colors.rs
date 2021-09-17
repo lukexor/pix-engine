@@ -5,7 +5,7 @@ const HEIGHT: u32 = 600;
 const SIZE: u32 = 4;
 
 struct Colors {
-    h: f64,
+    h: Scalar,
     auto: bool,
 }
 
@@ -16,13 +16,13 @@ impl Colors {
 
     #[allow(clippy::many_single_char_names)]
     fn draw_gradient(&mut self, state: &mut PixState) -> PixResult<()> {
-        let w = WIDTH as f64;
-        let h = HEIGHT as f64;
-        let size = SIZE as f64;
+        let w = WIDTH as Scalar;
+        let h = HEIGHT as Scalar;
+        let size = SIZE as Scalar;
         for x in 0..WIDTH / SIZE {
             for y in 0..HEIGHT / SIZE {
-                let x = (SIZE * x) as f64;
-                let y = (SIZE * y) as f64;
+                let x = (SIZE * x) as Scalar;
+                let y = (SIZE * y) as Scalar;
                 let s = map(x, 0.0, w, 0.0, 100.0);
                 let v = map(y, 0.0, h, 0.0, 100.0);
                 state.fill(hsb!(self.h, s, v));
@@ -32,7 +32,7 @@ impl Colors {
         Ok(())
     }
 
-    fn modify_hue(&mut self, change: f64, auto: bool) {
+    fn modify_hue(&mut self, change: Scalar, auto: bool) {
         self.auto = auto;
         self.h = (self.h + change) % 360.0;
         if self.h < 0.0 {
@@ -49,11 +49,10 @@ impl AppState for Colors {
         self.draw_gradient(s)?;
         s.no_stroke();
         s.fill(WHITE);
-        s.text(
-            [20, 100],
-            &format!("Press arrow keys to change Hue: {}", self.h),
-        )?;
-        s.text([20, 132], "Press Escape to return to demo mode.")?;
+        s.text([10, 10], "Hue: ")?;
+        s.text([80, 10], &self.h.to_string())?;
+        s.text([10, 35], "Left/Right/Up/Down: Change Hue")?;
+        s.text([10, 60], "<Escape>: Return to demo.")?;
         Ok(())
     }
 
@@ -76,7 +75,6 @@ pub fn main() -> PixResult<()> {
         .with_title("Colors")
         .with_frame_rate()
         .position_centered()
-        .vsync_enabled()
         .build();
     let mut app = Colors::new();
     engine.run(&mut app)

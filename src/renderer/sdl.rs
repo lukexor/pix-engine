@@ -223,7 +223,7 @@ impl Rendering for Renderer {
     /// Draw text to the current canvas.
     fn text(
         &mut self,
-        pos: &Point<i32>,
+        pos: &PointI2,
         text: &str,
         fill: Option<Color>,
         _stroke: Option<Color>,
@@ -237,13 +237,13 @@ impl Rendering for Renderer {
                     Some(texture) => {
                         let TextureQuery { width, height, .. } = texture.query();
                         self.canvas.copy(
-                            &texture,
+                            texture,
                             None,
                             Some(SdlRect::new(pos.x(), pos.y(), width, height)),
                         )?;
                     }
                     None => {
-                        let surface = font.render(&text).blended(fill)?;
+                        let surface = font.render(text).blended(fill)?;
                         let texture = self.texture_creator.create_texture_from_surface(&surface)?;
                         let TextureQuery { width, height, .. } = texture.query();
                         self.canvas.copy(
@@ -275,14 +275,14 @@ impl Rendering for Renderer {
     }
 
     /// Draw a pixel to the current canvas.
-    fn point(&mut self, p: &Point<i32>, color: Color) -> Result<()> {
-        let [x, y, _] = p.as_().values();
+    fn point(&mut self, p: &PointI2, color: Color) -> Result<()> {
+        let [x, y] = p.as_().values();
         Ok(self.canvas.pixel(x, y, color)?)
     }
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, line: &Line<i32>, color: Color) -> Result<()> {
-        let [x1, y1, _, x2, y2, _] = line.as_().values();
+    fn line(&mut self, line: &LineI2, color: Color) -> Result<()> {
+        let [[x1, y1], [x2, y2]] = line.as_().values();
         if y1 == y2 {
             self.canvas.hline(x1, x2, y1, color)?;
         } else if x1 == x2 {
@@ -294,12 +294,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw a triangle to the current canvas.
-    fn triangle(
-        &mut self,
-        tri: &Triangle<i32>,
-        fill: Option<Color>,
-        stroke: Option<Color>,
-    ) -> Result<()> {
+    fn triangle(&mut self, tri: &TriI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
         let [p1, p2, p3] = tri.as_().values();
         if let Some(fill) = fill {
             self.canvas
@@ -347,7 +342,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw a quadrilateral to the current canvas.
-    fn quad(&mut self, quad: &Quad<i32>, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
+    fn quad(&mut self, quad: &QuadI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
         let [p1, p2, p3, p4] = quad.as_().values();
         let vx = [p1.x(), p2.x(), p3.x(), p4.x()];
         let vy = [p1.y(), p2.y(), p3.y(), p4.y()];
@@ -363,12 +358,12 @@ impl Rendering for Renderer {
     /// Draw a polygon to the current canvas.
     fn polygon<'a, P>(&mut self, ps: P, fill: Option<Color>, stroke: Option<Color>) -> Result<()>
     where
-        P: IntoIterator<Item = &'a Point<i32>>,
+        P: IntoIterator<Item = &'a PointI2>,
     {
         let (vx, vy): (Vec<i16>, Vec<i16>) = ps
             .into_iter()
             .map(|p| -> (i16, i16) {
-                let [x, y, _] = p.as_().values();
+                let [x, y] = p.as_().values();
                 (x, y)
             })
             .unzip();
@@ -401,7 +396,7 @@ impl Rendering for Renderer {
     /// Draw an arc to the current canvas.
     fn arc(
         &mut self,
-        p: &Point<i32>,
+        p: &PointI2,
         radius: i32,
         start: i32,
         end: i32,
@@ -410,7 +405,7 @@ impl Rendering for Renderer {
         stroke: Option<Color>,
     ) -> Result<()> {
         use ArcMode::*;
-        let [x, y, _] = p.as_().values();
+        let [x, y] = p.as_().values();
         let radius = radius as i16;
         let start = start as i16;
         let end = end as i16;
@@ -433,7 +428,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw an image to the current canvas.
-    fn image(&mut self, pos: &Point<i32>, img: &Image, tint: Option<Color>) -> Result<()> {
+    fn image(&mut self, pos: &PointI2, img: &Image, tint: Option<Color>) -> Result<()> {
         let dst = SdlRect::new(pos.x(), pos.y(), img.width(), img.height());
         self.image_texture(img, tint, dst, None)
     }
@@ -446,7 +441,7 @@ impl Rendering for Renderer {
     /// Draw a rotated image to the current canvas.
     fn image_rotated(
         &mut self,
-        pos: &Point<i32>,
+        pos: &PointI2,
         img: &Image,
         angle: f64,
         tint: Option<Color>,
@@ -502,8 +497,8 @@ impl Renderer {
                 match angle {
                     Some(angle) => Ok(self
                         .canvas
-                        .copy_ex(&texture, None, dst, angle, None, false, false)?),
-                    None => Ok(self.canvas.copy(&texture, None, dst)?),
+                        .copy_ex(texture, None, dst, angle, None, false, false)?),
+                    None => Ok(self.canvas.copy(texture, None, dst)?),
                 }
             }
             None => Err(Error::InvalidTexture(texture_id)),

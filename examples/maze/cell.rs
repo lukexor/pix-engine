@@ -27,7 +27,7 @@ pub struct Cell {
     id: usize,
     col: u32,
     row: u32,
-    rect: Rect,
+    rect: Rect<f64>,
     walls: [bool; 4],
 }
 
@@ -69,16 +69,16 @@ impl Cell {
         s.rect(self.rect)?;
         s.no_fill();
         s.stroke(WHITE);
-        let top = self.rect.top();
-        let right = self.rect.right();
-        let bottom = self.rect.bottom();
-        let left = self.rect.left();
+        let top_left = self.rect.top_left();
+        let top_right = self.rect.top_right();
+        let bottom_left = self.rect.bottom_left();
+        let bottom_right = self.rect.bottom_right();
         for (i, _) in self.walls.iter().enumerate().filter(|(_, n)| **n) {
             match i {
-                0 => s.line([left, top, right, top])?,
-                1 => s.line([right, top, right, bottom])?,
-                2 => s.line([left, bottom, right, bottom])?,
-                3 => s.line([left, top, left, bottom])?,
+                0 => s.line([top_left, top_right])?,
+                1 => s.line([top_right, bottom_right])?,
+                2 => s.line([bottom_left, bottom_right])?,
+                3 => s.line([top_left, bottom_left])?,
                 _ => (),
             }
         }

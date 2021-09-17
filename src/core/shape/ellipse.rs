@@ -1,18 +1,20 @@
-//! 2D shape types representing ellipses used for drawing.
+//! A shape type representing ellipses used for drawing.
 //!
 //! # Examples
 //!
 //! You can create an [Ellipse] using [Ellipse::new]::new]:
 //!
 //! ```
-//! # use pix_engine::prelude::*;
+//! use pix_engine::prelude::*;
+//!
 //! let e = Ellipse::new(10, 20, 100, 200);
 //! ```
 //!
 //! ...or by using the [ellipse!] macro:
 //!
 //! ```
-//! # use pix_engine::prelude::*;
+//! use pix_engine::prelude::*;
+//!
 //! let e = ellipse!(10, 20, 100, 200);
 //!
 //! // using a point
@@ -59,7 +61,7 @@ macro_rules! ellipse {
 /// An `Ellipse` positioned at `(x, y)`, with `width` and `height`.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Ellipse<T = f64>([T; 4]);
+pub struct Ellipse<T = i32>([T; 4]);
 
 impl<T> Ellipse<T> {
     /// Constructs an `Ellipse<T>` at position `(x, y)` with `width` and `height`.
@@ -68,9 +70,9 @@ impl<T> Ellipse<T> {
     }
 }
 
-impl<T: Number> Ellipse<T> {
+impl<T: Num> Ellipse<T> {
     /// Constructs an `Ellipse<T>` at position [Point] with `width` and `height`.
-    pub fn with_position<P: Into<Point<T>>>(p: P, width: T, height: T) -> Self {
+    pub fn with_position<P: Into<Point<T, 2>>>(p: P, width: T, height: T) -> Self {
         let p = p.into();
         Self::new(p.x(), p.y(), width, height)
     }
@@ -84,7 +86,7 @@ impl<T: Number> Ellipse<T> {
     /// let e = Ellipse::from_center([50, 50], 100, 100);
     /// assert_eq!(e.values(), [0, 0, 100, 100]);
     /// ```
-    pub fn from_center<P: Into<Point<T>>>(p: P, width: T, height: T) -> Self {
+    pub fn from_center<P: Into<Point<T, 2>>>(p: P, width: T, height: T) -> Self {
         let p = p.into();
         let two = T::one() + T::one();
         Self::new(p.x() - width / two, p.y() - height / two, width, height)
@@ -221,7 +223,7 @@ impl<T: Number> Ellipse<T> {
     }
 
     /// Returns the center position as [Point].
-    pub fn center(&self) -> Point<T> {
+    pub fn center(&self) -> Point<T, 2> {
         let two = T::one() + T::one();
         point!(
             self.x() + self.width() / two,
@@ -230,27 +232,27 @@ impl<T: Number> Ellipse<T> {
     }
 
     /// Returns the top-left position as [Point].
-    pub fn top_left(&self) -> Point<T> {
+    pub fn top_left(&self) -> Point<T, 2> {
         point!(self.left(), self.top())
     }
 
     /// Returns the top-right position as [Point].
-    pub fn top_right(&self) -> Point<T> {
+    pub fn top_right(&self) -> Point<T, 2> {
         point!(self.right(), self.top())
     }
 
     /// Returns the bottom-left position as [Point].
-    pub fn bottom_left(&self) -> Point<T> {
+    pub fn bottom_left(&self) -> Point<T, 2> {
         point!(self.left(), self.bottom())
     }
 
     /// Returns the bottom-right position as [Point].
-    pub fn bottom_right(&self) -> Point<T> {
+    pub fn bottom_right(&self) -> Point<T, 2> {
         point!(self.right(), self.bottom())
     }
 
     /// Set position centered on a [Point].
-    pub fn center_on<P: Into<Point<T>>>(&mut self, p: P) {
+    pub fn center_on<P: Into<Point<T, 2>>>(&mut self, p: P) {
         let p = p.into();
         let two = T::one() + T::one();
         self.set_x(p.x() - self.width() / two);
@@ -258,14 +260,14 @@ impl<T: Number> Ellipse<T> {
     }
 }
 
-impl<T: Number> Contains for Ellipse<T> {
+impl<T: Num> Contains for Ellipse<T> {
     type Type = T;
     type Shape = Ellipse<Self::Type>;
 
     /// Returns whether this ellipse contains a given [Point].
     fn contains_point<P>(&self, p: P) -> bool
     where
-        P: Into<Point<Self::Type>>,
+        P: Into<Point<Self::Type, 2>>,
     {
         let p = p.into();
         let px = p.x() - self.x();
@@ -292,7 +294,7 @@ impl<T: Number> Contains for Ellipse<T> {
 impl<T> Draw for Ellipse<T>
 where
     Self: Into<Ellipse<i32>>,
-    T: Number,
+    T: Num,
 {
     /// Draw `Ellipse` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
@@ -313,35 +315,35 @@ impl<T> DerefMut for Ellipse<T> {
     }
 }
 
-impl<T: Number> From<&mut Ellipse<T>> for Ellipse<T> {
+impl<T: Num> From<&mut Ellipse<T>> for Ellipse<T> {
     /// Convert `&mut Ellipse<T>` to [Ellipse].
     fn from(ellipse: &mut Ellipse<T>) -> Self {
         *ellipse
     }
 }
 
-impl<T: Number> From<&Ellipse<T>> for Ellipse<T> {
+impl<T: Num> From<&Ellipse<T>> for Ellipse<T> {
     /// Convert `&Ellipse<T>` to [Ellipse].
     fn from(ellipse: &Ellipse<T>) -> Self {
         *ellipse
     }
 }
 
-impl<T: Number, U: Number + Into<T>> From<[U; 4]> for Ellipse<T> {
+impl<T: Num, U: Num + Into<T>> From<[U; 4]> for Ellipse<T> {
     /// Convert `[x, y, width, height]` to [Ellipse].
     fn from([x, y, width, height]: [U; 4]) -> Self {
         Self::new(x.into(), y.into(), width.into(), height.into())
     }
 }
 
-impl<T: Number, U: Number + Into<T>> From<&[U; 4]> for Ellipse<T> {
+impl<T: Num, U: Num + Into<T>> From<&[U; 4]> for Ellipse<T> {
     /// Convert `&[x, y, width, height]` to [Ellipse].
     fn from(&[x, y, width, height]: &[U; 4]) -> Self {
         Self::new(x.into(), y.into(), width.into(), height.into())
     }
 }
 
-impl<T: Number> From<Circle<T>> for Ellipse<T> {
+impl<T: Num> From<Circle<T>> for Ellipse<T> {
     /// Convert [Circle] to [Ellipse].
     fn from(c: Circle<T>) -> Self {
         Self::new(c.x(), c.y(), c.radius(), c.radius())
@@ -349,7 +351,7 @@ impl<T: Number> From<Circle<T>> for Ellipse<T> {
 }
 
 /// Convert &[Circle] to [Ellipse].
-impl<T: Number> From<&Circle<T>> for Ellipse<T> {
+impl<T: Num> From<&Circle<T>> for Ellipse<T> {
     fn from(c: &Circle<T>) -> Self {
         Self::new(c.x(), c.y(), c.radius(), c.radius())
     }

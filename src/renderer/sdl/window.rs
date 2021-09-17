@@ -138,6 +138,7 @@ impl Window for Renderer {
                     .create_texture_target(format, width, height)?,
             );
         }
+        self.text_cache.clear();
         self.textures = textures;
         self.canvas = canvas;
         Ok(())

@@ -1,7 +1,7 @@
 //! Math functions and constants.
 
 use lazy_static::lazy_static;
-use num_traits::{Num, NumCast};
+use num_traits::{Num as NumTrait, NumAssignOps, NumCast, NumOps};
 use rand::{self, distributions::uniform::SampleUniform, Rng};
 use std::ops::{AddAssign, Range};
 use vector::Vector;
@@ -14,10 +14,18 @@ pub mod constants {
     pub use std::f64::consts::*;
 }
 
-/// Default number trait used for objects and shapes.
-pub trait Number: Num + Copy + PartialOrd {}
+/// Default Scalar for floating point math.
+#[cfg(target_pointer_width = "64")]
+pub type Scalar = f64;
 
-impl<T> Number for T where T: Num + Copy + PartialOrd {}
+/// Default Scalar for floating point math.
+#[cfg(target_pointer_width = "32")]
+pub type Scalar = f32;
+
+/// Default number trait used for objects and shapes.
+pub trait Num: NumTrait + NumOps + NumAssignOps + Copy + Default + PartialOrd {}
+
+impl<T> Num for T where T: NumTrait + NumOps + NumAssignOps + Copy + Default + PartialOrd {}
 
 const PERLIN_YWRAPB: usize = 4;
 const PERLIN_YWRAP: usize = 1 << PERLIN_YWRAPB;
@@ -96,9 +104,9 @@ where
 /// assert!(n >= 0.0 && n < 1.0);
 /// ```
 #[allow(clippy::many_single_char_names)]
-pub fn noise<V>(v: V) -> f64
+pub fn noise<V, const N: usize>(v: V) -> f64
 where
-    V: Into<Vector<f64>>,
+    V: Into<Vector<f64, N>>,
 {
     let v = v.into();
 

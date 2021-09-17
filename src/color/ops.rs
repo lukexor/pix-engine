@@ -4,6 +4,7 @@ use super::{
     conversion::{calculate_channels, clamp_levels, convert_levels},
     Color,
 };
+use crate::prelude::Scalar;
 use std::{
     fmt::{self, LowerHex, UpperHex},
     hash::{Hash, Hasher},
@@ -130,11 +131,11 @@ impl DerefMut for Color {
 macro_rules! impl_ops {
     ($($target:ty),*) => {
         $(
-            impl Mul<$target> for Color where $target: Into<f64> {
+            impl Mul<$target> for Color where $target: Into<Scalar> {
                 type Output = Self;
                 fn mul(self, s: $target) -> Self::Output {
                     let [v1, v2, v3, a] = self.levels;
-                    let s = f64::from(s);
+                    let s = Scalar::from(s);
                     let levels = clamp_levels([v1 * s, v2 * s, v3 * s, a]);
                     let channels = calculate_channels(levels);
                     Self {
@@ -145,11 +146,11 @@ macro_rules! impl_ops {
                 }
             }
 
-            impl Mul<Color> for $target where $target: Into<f64> {
+            impl Mul<Color> for $target where $target: Into<Scalar> {
                 type Output = Color;
                 fn mul(self, c: Color) -> Self::Output {
                     let [v1, v2, v3, a] = c.levels();
-                    let s = f64::from(self);
+                    let s = Scalar::from(self);
                     let levels = clamp_levels([v1 * s, v2 * s, v3 * s, a]);
                     let channels = calculate_channels(levels);
                     Color {
@@ -160,20 +161,20 @@ macro_rules! impl_ops {
                 }
             }
 
-            impl MulAssign<$target> for Color where $target: Into<f64> {
+            impl MulAssign<$target> for Color where $target: Into<Scalar> {
                 fn mul_assign(&mut self, s: $target) {
                     let [v1, v2, v3, a] = self.levels;
-                    let s = f64::from(s);
+                    let s = Scalar::from(s);
                     self.levels = clamp_levels([v1 * s, v2 * s, v3 * s, a]);
                     self.calculate_channels();
                 }
             }
 
-            impl Div<$target> for Color where $target: Into<f64> {
+            impl Div<$target> for Color where $target: Into<Scalar> {
                 type Output = Self;
                 fn div(self, s: $target) -> Self::Output {
                     let [v1, v2, v3, a] = self.levels;
-                    let s = f64::from(s);
+                    let s = Scalar::from(s);
                     let levels = clamp_levels([v1 / s, v2 / s, v3 / s, a]);
                     let channels = calculate_channels(levels);
                     Self {
@@ -184,10 +185,10 @@ macro_rules! impl_ops {
                 }
             }
 
-            impl DivAssign<$target> for Color where $target: Into<f64> {
+            impl DivAssign<$target> for Color where $target: Into<Scalar> {
                 fn div_assign(&mut self, s: $target) {
                     let [v1, v2, v3, a] = self.levels;
-                    let s = f64::from(s);
+                    let s = Scalar::from(s);
                     self.levels = clamp_levels([v1 / s, v2 / s, v3 / s, a]);
                     self.calculate_channels();
                 }
@@ -203,7 +204,7 @@ macro_rules! impl_as_ops {
                 type Output = Self;
                 fn mul(self, s: $target) -> Self::Output {
                     let [v1, v2, v3, a] = self.levels;
-                    let s = s as f64;
+                    let s = s as Scalar;
                     let levels = clamp_levels([v1 * s, v2 * s, v3 * s, a]);
                     let channels = calculate_channels(levels);
                     Self {
@@ -218,7 +219,7 @@ macro_rules! impl_as_ops {
                 type Output = Color;
                 fn mul(self, c: Color) -> Self::Output {
                     let [v1, v2, v3, a] = c.levels();
-                    let s = self as f64;
+                    let s = self as Scalar;
                     let levels = clamp_levels([v1 * s, v2 * s, v3 * s, a]);
                     let channels = calculate_channels(levels);
                     Color {
@@ -232,7 +233,7 @@ macro_rules! impl_as_ops {
             impl MulAssign<$target> for Color {
                 fn mul_assign(&mut self, s: $target) {
                     let [v1, v2, v3, a] = self.levels;
-                    let s = s as f64;
+                    let s = s as Scalar;
                     self.levels = clamp_levels([v1 * s, v2 * s, v3 * s, a]);
                     self.calculate_channels();
                 }
@@ -242,7 +243,7 @@ macro_rules! impl_as_ops {
                 type Output = Self;
                 fn div(self, s: $target) -> Self::Output {
                     let [v1, v2, v3, a] = self.levels;
-                    let s = s as f64;
+                    let s = s as Scalar;
                     let levels = clamp_levels([v1 / s, v2 / s, v3 / s, a]);
                     let channels = calculate_channels(levels);
                     Self {
@@ -256,7 +257,7 @@ macro_rules! impl_as_ops {
             impl DivAssign<$target> for Color {
                 fn div_assign(&mut self, s: $target) {
                     let [v1, v2, v3, a] = self.levels;
-                    let s = s as f64;
+                    let s = s as Scalar;
                     self.levels = clamp_levels([v1 / s, v2 / s, v3 / s, a]);
                     self.calculate_channels();
                 }

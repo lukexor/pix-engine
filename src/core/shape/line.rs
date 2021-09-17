@@ -1,74 +1,112 @@
-//! A 2D/3D shape type representing a line used for drawing.
+//! A shape type representing lines used for drawing.
 //!
 //! # Examples
 //!
 //! You can create a [Line] using [Line::new]:
 //!
 //! ```
-//! # use pix_engine::prelude::*;
+//! use pix_engine::prelude_3d::*;
+//!
 //! // 2D
-//! let line: Line<i32> = Line::new([10, 20], [30, 10]);
+//! let line: LineI2 = Line::new([10, 20], [30, 10]);
 //!
 //! let p1 = point![10, 20];
 //! let p2 = point![30, 10];
-//! let line: Line<i32> = Line::new(p1, p2);
+//! let line: LineI2 = Line::new(p1, p2);
 //!
 //! // 3D
-//! let line: Line<i32> = Line::new([10, 20, 5], [30, 10, 5]);
+//! let line: LineI3 = Line::new([10, 20, 5], [30, 10, 5]);
 //! ```
 
 use crate::prelude::*;
 use num_traits::AsPrimitive;
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
-use std::ops::{Deref, DerefMut};
+// #[cfg(feature = "serde")]
+// use serde::{Deserialize, Serialize};
+use std::ops::{Deref, DerefMut, Index, IndexMut};
 
-/// A `Line` with a starting [Point] and ending [Point<T>].
-#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Line<T = f64>([Point<T>; 2]);
+/// A `Line` with start and end [Point]s.
+///
+/// Please see the [module-level documentation] for examples.
+///
+/// [module-level documentation]: crate::shape::line
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+// #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Line<T, const N: usize>([Point<T, N>; 2]);
 
-impl<T> Line<T> {
+/// A 2D `Line` represented by integers.
+pub type LineI2 = Line<i32, 2>;
+
+/// A 3D `Line` represented by integers.
+pub type LineI3 = Line<i32, 3>;
+
+/// A 2D `Line` represented by floating point numbers.
+pub type LineF2 = Line<Scalar, 2>;
+
+/// A 3D `Line` represented by floating point numbers.
+pub type LineF3 = Line<Scalar, 3>;
+
+impl<T, const N: usize> Line<T, N> {
     /// Constructs a `Line` from `start` to `end` [Point]s.
+    ///
+    /// # Example
+    /// ```
+    /// # use pix_engine::prelude_3d::*;
+    /// // 2D
+    /// let line: LineI2 = Line::new([10, 20], [30, 10]);
+    ///
+    /// let p1 = point![10, 20];
+    /// let p2 = point![30, 10];
+    /// let line: LineI2 = Line::new(p1, p2);
+    ///
+    /// // 3D
+    /// let line: LineI3 = Line::new([10, 20, 5], [30, 10, 5]);
+    /// ```
     pub fn new<P>(start: P, end: P) -> Self
     where
-        P: Into<Point<T>>,
+        P: Into<Point<T, N>>,
     {
         Self([start.into(), end.into()])
     }
 }
 
-impl<T: Number> Line<T> {
+impl<T, const N: usize> Line<T, N>
+where
+    T: Copy,
+{
     /// Returns the starting point of the line.
-    #[inline(always)]
-    pub fn start(&self) -> Point<T> {
+    #[inline]
+    pub fn start(&self) -> Point<T, N> {
         self.0[0]
     }
 
     /// Sets the starting point of the line.
-    #[inline(always)]
-    pub fn set_start<P: Into<Point<T>>>(&mut self, start: P) {
+    #[inline]
+    pub fn set_start<P: Into<Point<T, N>>>(&mut self, start: P) {
         self.0[0] = start.into();
     }
 
     /// Returns the ending point of the line.
-    #[inline(always)]
-    pub fn end(&self) -> Point<T> {
+    #[inline]
+    pub fn end(&self) -> Point<T, N> {
         self.0[1]
     }
 
     /// Sets the ending point of the line.
-    #[inline(always)]
-    pub fn set_end<P: Into<Point<T>>>(&mut self, end: P) {
+    #[inline]
+    pub fn set_end<P: Into<Point<T, N>>>(&mut self, end: P) {
         self.0[1] = end.into();
     }
 
-    /// Convert `Line` to another primitive type using the `as` operator.
+    /// Convert `Line<T, N>` to `Line<U, N>` using the `as` operator.
+    ///
+    /// # Example
+    ///
+    /// TODO
     #[inline]
-    pub fn as_<U>(self) -> Line<U>
+    pub fn as_<U>(self) -> Line<U, N>
     where
         T: AsPrimitive<U>,
-        U: 'static + Copy,
+        U: 'static + Copy + Default,
     {
         Line::new(self.start().as_(), self.end().as_())
     }
@@ -81,13 +119,13 @@ impl<T: Number> Line<T> {
     /// # use pix_engine::prelude::*;
     /// let p1 = point!(5, 10);
     /// let p2 = point!(100, 100);
-    /// let l: Line<i32> = Line::new(p1, p2);
-    /// assert_eq!(l.values(), [5, 10, 0, 100, 100, 0]);
+    /// let l: LineI2 = Line::new(p1, p2);
+    /// assert_eq!(l.values(), [[5, 10], [100, 100]]);
     /// ```
-    pub fn values(&self) -> [T; 6] {
-        let [x1, y1, z1] = self.start().values();
-        let [x2, y2, z2] = self.end().values();
-        [x1, y1, z1, x2, y2, z2]
+    pub fn values(&self) -> [[T; N]; 2] {
+        let start = self.start().values();
+        let end = self.end().values();
+        [start, end]
     }
 
     /// Returns `Line` as a [Vec].
@@ -98,30 +136,37 @@ impl<T: Number> Line<T> {
     /// # use pix_engine::prelude::*;
     /// let p1 = point!(5, 10);
     /// let p2 = point!(100, 100);
-    /// let l: Line<i32> = Line::new(p1, p2);
-    /// assert_eq!(l.to_vec(), vec![5, 10, 0, 100, 100, 0]);
+    /// let l: LineI2 = Line::new(p1, p2);
+    /// assert_eq!(l.to_vec(), vec![[5, 10], [100, 100]]);
     /// ```
-    pub fn to_vec(self) -> Vec<T> {
-        let [x1, y1, z1] = self.start().values();
-        let [x2, y2, z2] = self.end().values();
-        vec![x1, y1, z1, x2, y2, z2]
+    pub fn to_vec(self) -> Vec<Vec<T>> {
+        let start = self.start().to_vec();
+        let end = self.end().to_vec();
+        vec![start, end]
     }
 }
 
-impl<T: Number + AsPrimitive<f64>> Intersects for Line<T> {
+impl<T> Intersects for Line<T, 2>
+where
+    T: Num + AsPrimitive<Scalar>,
+{
     type Type = T;
-    type Shape = Line<Self::Type>;
+    type Shape = Line<Self::Type, 2>;
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
+    ///
+    /// # Example
+    ///
+    /// TODO
     #[allow(clippy::many_single_char_names)]
-    fn intersects_line<L>(&self, other: L) -> Option<(Point<f64>, f64)>
+    fn intersects_line<L>(&self, other: L) -> Option<(Point<Scalar, 2>, Scalar)>
     where
-        L: Into<Line<T>>,
+        L: Into<Line<T, 2>>,
     {
         let other = other.into();
-        let [x1, y1, _, x2, y2, _] = self.values();
-        let [x3, y3, _, x4, y4, _] = other.values();
+        let [[x1, y1], [x2, y2]] = self.values();
+        let [[x3, y3], [x4, y4]] = other.values();
         let d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
         if d == T::zero() {
             return None;
@@ -138,6 +183,10 @@ impl<T: Number + AsPrimitive<f64>> Intersects for Line<T> {
     }
 
     /// Returns whether this line intersections with another line
+    ///
+    /// # Example
+    ///
+    /// TODO
     fn intersects_shape<O>(&self, other: O) -> bool
     where
         O: Into<Self::Shape>,
@@ -146,188 +195,168 @@ impl<T: Number + AsPrimitive<f64>> Intersects for Line<T> {
     }
 }
 
-impl<T> Draw for Line<T>
+impl<T, const N: usize> Draw for Line<T, N>
 where
-    Self: Into<Line<i32>>,
-    T: Number,
+    Self: Into<LineI2>,
+    T: Copy,
 {
     /// Draw `Line` to the current [PixState] canvas.
+    ///
+    /// # Example
+    ///
+    /// TODO
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.line(*self)
     }
 }
 
-impl<T> Deref for Line<T> {
-    type Target = [Point<T>; 2];
+impl<T, const N: usize> Deref for Line<T, N> {
+    type Target = [Point<T, N>; 2];
+    /// Deref `Line` to `&[[Point<T>; N]; 2]`.
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl<T> DerefMut for Line<T> {
+impl<T, const N: usize> DerefMut for Line<T, N> {
+    /// Deref `Line` to `&mut [[Point<T>; N]; 2]`.
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
 }
 
-macro_rules! impl_from_as {
+impl<T, const N: usize> Index<usize> for Line<T, N>
+where
+    T: Copy,
+{
+    type Output = Point<T, N>;
+    /// Return `&Point<T>` by indexing `Line` with `usize`.
+    fn index(&self, idx: usize) -> &Self::Output {
+        &self.0[idx]
+    }
+}
+
+impl<T, const N: usize> IndexMut<usize> for Line<T, N>
+where
+    T: Copy,
+{
+    /// Return `&mut Point<T>` by indexing `Line` with `usize`.
+    fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
+        &mut self.0[idx]
+    }
+}
+
+impl<T, const N: usize> From<&Line<T, N>> for Line<T, N>
+where
+    T: Copy,
+{
+    /// Convert `&Line` to `Line`.
+    fn from(line: &Line<T, N>) -> Self {
+        *line
+    }
+}
+
+impl<T, const N: usize> From<&mut Line<T, N>> for Line<T, N>
+where
+    T: Copy,
+{
+    /// Convert `&mut Line` to `Line`.
+    fn from(line: &mut Line<T, N>) -> Self {
+        *line
+    }
+}
+
+macro_rules! impl_from {
     ($($from:ty),* => $to:ty) => {
         $(
-            impl From<Line<$from>> for Line<$to> {
-                fn from(line: Line<$from>) -> Self {
-                    let p1: Point<$to> = line.start().into();
-                    let p2: Point<$to> = line.end().into();
-                    Self::new(p1, p2)
+            /// Convert `Line<T, N>` to `Line<U, N>`.
+            impl<const N: usize> From<Line<$from, N>> for Line<$to, N> {
+                fn from(line: Line<$from, N>) -> Self {
+                    let start: Point<$to, N> = line.start().into();
+                    let end: Point<$to, N> = line.end().into();
+                    Self::new(start, end)
                 }
             }
 
-            /// Convert `[x1, y1, x2, y2]` to [Line].
-            impl From<[$from; 4]> for Line<$to> {
-                fn from([x1, y1, x2, y2]: [$from; 4]) -> Self {
-                    Self::new([x1 , y1], [x2, y2])
+            /// Convert `[[T; N]; 2]` to [`Line<T, N>`].
+            impl<const N: usize> From<[[$from; N]; 2]> for Line<$to, N> {
+                fn from([start, end]: [[$from; N]; 2]) -> Self {
+                    Self::new(start, end)
                 }
             }
 
-            /// Convert `&[x1, y1, x2, y2]` to [Line].
-            impl From<&[$from; 4]> for Line<$to> {
-                fn from(&[x1, y1, x2, y2]: &[$from; 4]) -> Self {
-                    Self::new([x1, y1], [x2, y2])
+            /// Convert `&[[T; N]; 2]` to [`Line<T, N>`].
+            impl<const N: usize> From<&[[$from; N]; 2]> for Line<$to, N> {
+                fn from([start, end]: &[[$from; N]; 2]) -> Self {
+                    Self::new(start, end)
                 }
             }
-
-            /// Convert `[x1, y1, z1, x2, y2, z2]` to [Line].
-            impl From<[$from; 6]> for Line<$to> {
-                fn from([x1, y1, z1, x2, y2, z2]: [$from; 6]) -> Self {
-                    Self::new([x1, y1, z1], [x2, y2, z2])
-                }
-            }
-
-            /// Convert `&[x1, y1, z1, x2, y2, z2]` to [Line].
-            impl From<&[$from; 6]> for Line<$to> {
-                fn from(&[x1, y1, z1, x2, y2, z2]: &[$from; 6]) -> Self {
-                    Self::new([x1, y1, z1], [x2, y2, z2])
-                }
-            }
-
         )*
     };
 }
 
-impl_from_as!(i8, u8, i16, u16, u32, i64, u64, isize, usize, f32, f64 => i32);
-impl_from_as!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize, f32 => f64);
+impl_from!(i8, u8, i16, u16, u32, i64, u64, isize, usize, f32, f64 => i32);
+impl_from!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize, f32 => f64);
 
-impl<T: Number> From<&mut Line<T>> for Line<T> {
-    fn from(line: &mut Line<T>) -> Self {
-        *line
-    }
-}
-
-impl<T: Number> From<&Line<T>> for Line<T> {
-    fn from(line: &Line<T>) -> Self {
-        *line
-    }
-}
-
-/// Convert [Line] to `[x1, y1, x2, y2]`.
-impl<T: Number> From<Line<T>> for [T; 4] {
-    fn from(line: Line<T>) -> Self {
-        let [x1, y1, _] = line.start().values();
-        let [x2, y2, _] = line.end().values();
-        [x1, y1, x2, y2]
-    }
-}
-
-/// Convert &[Line] to `[x1, y1, x2, y2]`.
-impl<T: Number> From<&Line<T>> for [T; 4] {
-    fn from(line: &Line<T>) -> Self {
-        let [x1, y1, _] = line.start().values();
-        let [x2, y2, _] = line.end().values();
-        [x1, y1, x2, y2]
-    }
-}
-
-/// Convert [Line] to `[x1, y1, z1, x2, y2, z2]`.
-impl<T: Number> From<Line<T>> for [T; 6] {
-    fn from(line: Line<T>) -> Self {
+impl<T, const N: usize> From<Line<T, N>> for [[T; N]; 2]
+where
+    T: Copy,
+{
+    /// Convert [`Line<T, N>`] to `[[T; N]; 2]`.
+    fn from(line: Line<T, N>) -> Self {
         line.values()
     }
 }
 
-/// Convert &[Line] to `[x1, y1, z1, x2, y2, z2]`.
-impl<T: Number> From<&Line<T>> for [T; 6] {
-    fn from(line: &Line<T>) -> Self {
+impl<T, const N: usize> From<&Line<T, N>> for [[T; N]; 2]
+where
+    T: Copy,
+{
+    /// Convert &[`Line<T, N>`] to `[[T; N]; 2]`.
+    fn from(line: &Line<T, N>) -> Self {
         line.values()
     }
 }
 
-/// Convert `[Point<U>; 2]` to [Line].
-impl<T, U> From<[Point<U>; 2]> for Line<T>
+impl<T, U, const N: usize> From<[Point<U, N>; 2]> for Line<T, N>
 where
-    T: Number,
-    U: Number,
-    Point<U>: Into<Point<T>>,
+    Point<U, N>: Into<Point<T, N>>,
 {
-    fn from([p1, p2]: [Point<U>; 2]) -> Self {
-        Self::new(p1, p2)
+    /// Convert `[Point<U, N>; 2]` to [`Line<T, N>`].
+    fn from([start, end]: [Point<U, N>; 2]) -> Self {
+        Self::new(start, end)
     }
 }
 
-/// Convert `&[Point<U>; 2]` to [Line].
-impl<T, U> From<&[Point<U>; 2]> for Line<T>
+impl<T, U, const N: usize> From<&[Point<U, N>; 2]> for Line<T, N>
 where
-    T: Number,
-    U: Number,
-    Point<U>: Into<Point<T>>,
+    U: Copy,
+    Point<U, N>: Into<Point<T, N>>,
 {
-    fn from(&[p1, p2]: &[Point<U>; 2]) -> Self {
-        Self::new(p1, p2)
+    /// Convert `&[Point<U, N>; 2]` to [`Line<T, N>`].
+    fn from(&[start, end]: &[Point<U, N>; 2]) -> Self {
+        Self::new(start, end)
     }
 }
 
-/// Convert `[Vector<U>; 2]` to [Line].
-impl<T, U> From<[Vector<U>; 2]> for Line<T>
+impl<T, U, const N: usize> From<Line<U, N>> for [Point<T, N>; 2]
 where
-    T: Number,
-    U: Number,
-    Vector<U>: Into<Point<T>>,
+    U: Copy,
+    Point<U, N>: Into<Point<T, N>>,
 {
-    fn from([v1, v2]: [Vector<U>; 2]) -> Self {
-        Self::new(v1, v2)
-    }
-}
-
-/// Convert `&[Vector<U>; 2]` to [Line].
-impl<T, U> From<&[Vector<U>; 2]> for Line<T>
-where
-    T: Number,
-    U: Number,
-    Vector<U>: Into<Point<T>>,
-{
-    fn from(&[v1, v2]: &[Vector<U>; 2]) -> Self {
-        Self::new(v1, v2)
-    }
-}
-
-/// Convert [Line] to `[Vector<T>; 2]`.
-impl<T, U> From<Line<U>> for [Vector<T>; 2]
-where
-    T: Number,
-    U: Number,
-    Point<U>: Into<Vector<T>>,
-{
-    fn from(line: Line<U>) -> Self {
+    /// Convert [`Line<U, N>`] to `[Point<T, N>; 2]`.
+    fn from(line: Line<U, N>) -> Self {
         [line.start().into(), line.end().into()]
     }
 }
 
-/// Convert &[Line] to `[Vector<T>; 2]`.
-impl<T, U> From<&Line<U>> for [Vector<T>; 2]
+impl<T, U, const N: usize> From<&Line<U, N>> for [Point<T, N>; 2]
 where
-    T: Number,
-    U: Number,
-    Point<U>: Into<Vector<T>>,
+    U: Copy,
+    Point<U, N>: Into<Point<T, N>>,
 {
-    fn from(line: &Line<U>) -> Self {
+    /// Convert &[`Line<U, N>`] to `[Point<T, N>; 2]`.
+    fn from(line: &Line<U, N>) -> Self {
         [line.start().into(), line.end().into()]
     }
 }

@@ -33,7 +33,7 @@ pub struct PixState {
 impl PixState {
     /// Get the current window title.
     pub fn title(&self) -> &str {
-        &self.renderer.title()
+        self.renderer.title()
     }
 
     /// Set the current window title.
@@ -43,12 +43,12 @@ impl PixState {
     }
 
     /// Returns the current mouse position coordinates as `(x, y)`.
-    pub fn mouse_pos(&self) -> Point<i32> {
+    pub fn mouse_pos(&self) -> Point<i32, 2> {
         self.mouse.pos
     }
 
     /// Returns the previous mouse position coordinates last frame as `(x, y)`.
-    pub fn pmouse_pos(&self) -> Point<i32> {
+    pub fn pmouse_pos(&self) -> Point<i32, 2> {
         self.pmouse.pos
     }
 
@@ -112,7 +112,7 @@ impl PixState {
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub(crate) struct MouseState {
-    pub(crate) pos: Point<i32>,
+    pub(crate) pos: Point<i32, 2>,
     pub(crate) pressed: HashSet<Mouse>,
     pub(crate) clicked: HashSet<Mouse>,
     pub(crate) last_clicked: HashMap<Mouse, Instant>,
@@ -152,12 +152,12 @@ impl MouseState {
 
     /// Returns if [Mouse] button was clicked last frame.
     pub(crate) fn was_clicked(&self, btn: &Mouse) -> bool {
-        self.clicked.contains(&btn)
+        self.clicked.contains(btn)
     }
 
     /// Returns last time a [Mouse] button was clicked.
     pub(crate) fn last_clicked(&self, btn: &Mouse) -> Option<&Instant> {
-        self.last_clicked.get(&btn)
+        self.last_clicked.get(btn)
     }
 }
 

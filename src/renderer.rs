@@ -145,7 +145,7 @@ pub(crate) trait Rendering: Sized {
     /// Draw text to the current canvas.
     fn text(
         &mut self,
-        position: &Point<i32>,
+        position: &PointI2,
         text: &str,
         fill: Option<Color>,
         stroke: Option<Color>,
@@ -156,18 +156,13 @@ pub(crate) trait Rendering: Sized {
     fn size_of(&self, text: &str) -> Result<(u32, u32)>;
 
     /// Draw a pixel to the current canvas.
-    fn point(&mut self, p: &Point<i32>, color: Color) -> Result<()>;
+    fn point(&mut self, p: &PointI2, color: Color) -> Result<()>;
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, line: &Line<i32>, color: Color) -> Result<()>;
+    fn line(&mut self, line: &LineI2, color: Color) -> Result<()>;
 
     /// Draw a triangle to the current canvas.
-    fn triangle(
-        &mut self,
-        tri: &Triangle<i32>,
-        fill: Option<Color>,
-        stroke: Option<Color>,
-    ) -> Result<()>;
+    fn triangle(&mut self, tri: &TriI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
 
     /// Draw a rectangle to the current canvas.
     fn rect(&mut self, rect: &Rect<i32>, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
@@ -182,12 +177,12 @@ pub(crate) trait Rendering: Sized {
     ) -> Result<()>;
 
     /// Draw a quadrilateral to the current canvas.
-    fn quad(&mut self, quad: &Quad<i32>, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
+    fn quad(&mut self, quad: &QuadI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
 
     /// Draw a polygon to the current canvas.
     fn polygon<'a, P>(&mut self, ps: P, fill: Option<Color>, stroke: Option<Color>) -> Result<()>
     where
-        P: IntoIterator<Item = &'a Point<i32>>;
+        P: IntoIterator<Item = &'a PointI2>;
 
     /// Draw a ellipse to the current canvas.
     fn ellipse(
@@ -201,7 +196,7 @@ pub(crate) trait Rendering: Sized {
     #[allow(clippy::too_many_arguments)]
     fn arc(
         &mut self,
-        p: &Point<i32>,
+        p: &PointI2,
         radius: i32,
         start: i32,
         end: i32,
@@ -211,7 +206,7 @@ pub(crate) trait Rendering: Sized {
     ) -> Result<()>;
 
     /// Draw an image to the current canvas.
-    fn image(&mut self, pos: &Point<i32>, img: &Image, tint: Option<Color>) -> Result<()>;
+    fn image(&mut self, pos: &PointI2, img: &Image, tint: Option<Color>) -> Result<()>;
 
     /// Draw a resized image to the current canvas.
     fn image_resized(&mut self, img: &Image, dst: &Rect<i32>, tint: Option<Color>) -> Result<()>;
@@ -219,7 +214,7 @@ pub(crate) trait Rendering: Sized {
     /// Draw a rotated image to the current canvas.
     fn image_rotated(
         &mut self,
-        pos: &Point<i32>,
+        pos: &PointI2,
         img: &Image,
         angle: f64,
         tint: Option<Color>,

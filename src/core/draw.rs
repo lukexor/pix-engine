@@ -27,16 +27,16 @@ impl PixState {
         scale: T,
     ) -> PixResult<()>
     where
-        V: IntoIterator<Item = &'a Vector<f64>>,
-        P: Into<Point<f64>>,
+        V: IntoIterator<Item = &'a VectorF2>,
+        P: Into<PointF2>,
         T: Into<f64>,
     {
         let s = &self.settings;
-        let pos: Point<f64> = pos.into().as_();
+        let pos: PointF2 = pos.into().as_();
         let scale: f64 = scale.into();
         let angle: f64 = angle.into();
         let (sin, cos) = angle.sin_cos();
-        let vs: Vec<Point<i32>> = vertexes
+        let vs: Vec<PointI2> = vertexes
             .into_iter()
             .map(|v| {
                 point!(

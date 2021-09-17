@@ -47,7 +47,7 @@ pub mod renderer;
 
 mod utils;
 
-/// Exports most commonly used types, traits, and functions.
+/// Exports most commonly used 2D types, traits, and functions.
 pub mod prelude {
     use super::*;
 
@@ -56,7 +56,10 @@ pub mod prelude {
         common::{Error as PixError, Result as PixResult},
         draw::Draw,
         engine::PixEngine,
-        shape::{Circle, Contains, Ellipse, Intersects, Line, Point, Quad, Rect, Sphere, Triangle},
+        shape::{
+            Circle, Contains, Ellipse, Intersects, Line, LineF2, LineI2, Point, PointF2, PointI2,
+            Quad, QuadF2, QuadI2, Rect, Tri, TriF2, TriI2,
+        },
         state::{
             settings::{AngleMode, ArcMode, BlendMode, DrawMode, FontStyle},
             PixState,
@@ -66,11 +69,33 @@ pub mod prelude {
     };
     pub use color::{constants::*, Color, ColorMode, Error as ColorError};
     pub use event::{Axis, ControllerButton, Event, Key, KeyEvent, KeyMod, Mouse, WindowEvent};
-    pub use graphics::lighting::{Light, LightSource};
     pub use image::{Image, PixelFormat};
-    pub use math::{constants::*, map, random_rng, vector::Vector, Number};
+    pub use math::{
+        constants::*,
+        map, random_rng,
+        vector::{Vector, VectorF2, VectorI2},
+        Num, Scalar,
+    };
     #[cfg(not(target_arch = "wasm32"))]
     pub use renderer::DEFAULT_ASSET_DIR;
+    // Shape macros
+    pub use {circle, ellipse, point, rect, square};
+    // Math macros
+    pub use {noise, random, vector};
+    // Color macros
+    pub use {color, hsb, hsl, rgb};
+}
+
+/// Exports most commonly used 3D types, traits, and functions.
+pub mod prelude_3d {
+    use super::*;
+
+    pub use self::core::shape::{
+        LineF3, LineI3, PointF3, PointI3, QuadF3, QuadI3, Sphere, TriF3, TriI3,
+    };
+    pub use graphics::lighting::{Light, LightF3, LightSource};
+    pub use math::vector::{VectorF3, VectorI3};
+    pub use prelude::*;
     pub use sphere;
     // Shape macros
     pub use {circle, ellipse, point, rect, square};

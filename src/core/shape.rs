@@ -17,14 +17,14 @@ pub mod quad;
 pub mod sphere;
 pub mod triangle;
 
-pub use circle::Circle;
-pub use ellipse::Ellipse;
-pub use line::Line;
-pub use point::Point;
-pub use quad::Quad;
-pub use rect::Rect;
-pub use sphere::Sphere;
-pub use triangle::Triangle;
+pub use circle::*;
+pub use ellipse::*;
+pub use line::*;
+pub use point::*;
+pub use quad::*;
+pub use rect::*;
+pub use sphere::*;
+pub use triangle::*;
 
 /// Trait for shape containing operations.
 pub trait Contains {
@@ -36,7 +36,7 @@ pub trait Contains {
     /// Returns whether this shape contains a given [Point].
     fn contains_point<P>(&self, _p: P) -> bool
     where
-        P: Into<Point<Self::Type>>,
+        P: Into<Point<Self::Type, 2>>,
     {
         unimplemented!("contains_point is not implemented")
     }
@@ -59,9 +59,9 @@ pub trait Intersects {
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
-    fn intersects_line<L>(&self, _line: L) -> Option<(Point<f64>, f64)>
+    fn intersects_line<L>(&self, _line: L) -> Option<(PointF2, Scalar)>
     where
-        L: Into<Line<Self::Type>>,
+        L: Into<Line<Self::Type, 2>>,
     {
         unimplemented!("intersects_line is not implemented")
     }
@@ -79,7 +79,7 @@ impl PixState {
     /// Draw a [Point] to the current canvas.
     pub fn point<P>(&mut self, p: P) -> PixResult<()>
     where
-        P: Into<Point<i32>>,
+        P: Into<PointI2>,
     {
         if let Some(stroke) = self.settings.stroke {
             self.renderer.point(&p.into(), stroke)?;
@@ -90,7 +90,7 @@ impl PixState {
     /// Draw a [Line] to the current canvas.
     pub fn line<L>(&mut self, line: L) -> PixResult<()>
     where
-        L: Into<Line<i32>>,
+        L: Into<LineI2>,
     {
         if let Some(stroke) = self.settings.stroke {
             self.renderer.line(&line.into(), stroke)?;
@@ -98,10 +98,10 @@ impl PixState {
         Ok(())
     }
 
-    /// Draw a [Triangle] to the current canvas.
+    /// Draw a [Triangle][Tri] to the current canvas.
     pub fn triangle<T>(&mut self, tri: T) -> PixResult<()>
     where
-        T: Into<Triangle<i32>>,
+        T: Into<TriI2>,
     {
         let s = &self.settings;
         Ok(self.renderer.triangle(&tri.into(), s.fill, s.stroke)?)
@@ -156,7 +156,7 @@ impl PixState {
     /// Draw a [Quadrilateral](Quad) to the current canvas.
     pub fn quad<Q>(&mut self, quad: Q) -> PixResult<()>
     where
-        Q: Into<Quad<i32>>,
+        Q: Into<QuadI2>,
     {
         let s = &self.settings;
         Ok(self.renderer.quad(&quad.into(), s.fill, s.stroke)?)
@@ -165,7 +165,7 @@ impl PixState {
     /// Draw a polygon to the current canvas.
     pub fn polygon<'a, P>(&mut self, points: P) -> PixResult<()>
     where
-        P: IntoIterator<Item = &'a Point<i32>>,
+        P: IntoIterator<Item = &'a PointI2>,
     {
         let s = &self.settings;
         Ok(self.renderer.polygon(points, s.fill, s.stroke)?)
@@ -195,7 +195,7 @@ impl PixState {
     /// Draw an arc to the current canvas.
     pub fn arc<P, T>(&mut self, p: P, radius: T, start: T, end: T) -> PixResult<()>
     where
-        P: Into<Point<i32>>,
+        P: Into<PointI2>,
         T: Into<i32>,
     {
         let s = &self.settings;

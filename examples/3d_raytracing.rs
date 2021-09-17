@@ -1,21 +1,23 @@
-use pix_engine::prelude::*;
+use pix_engine::prelude_3d::*;
 
 struct SphereObj {
-    sphere: Sphere,
+    sphere: Sphere<Scalar>,
     color: Color,
     specular: Option<i32>,
-    reflective: f64,
+    reflective: Scalar,
 }
 
 struct App {
-    view_width: f64,
-    view_height: f64,
-    proj_plane_dist: f64,
+    origin: PointF3,
+    looking: PointF3,
+    view_width: Scalar,
+    view_height: Scalar,
+    proj_plane_dist: Scalar,
     spheres: [SphereObj; 4],
-    lights: [Light; 3],
+    lights: [LightF3; 3],
 }
 
-fn intersect_ray_sphere(origin: Point, direction: Vector, obj: &SphereObj) -> (f64, f64) {
+fn intersect_ray_sphere(origin: PointF3, direction: VectorF3, obj: &SphereObj) -> (Scalar, Scalar) {
     let r = obj.sphere.radius();
     let center_origin = origin - obj.sphere.center();
 
@@ -25,7 +27,7 @@ fn intersect_ray_sphere(origin: Point, direction: Vector, obj: &SphereObj) -> (f
 
     let discriminant = b * b - 4.0 * a * c;
     if discriminant < 0.0 {
-        return (f64::INFINITY, f64::INFINITY);
+        return (Scalar::INFINITY, Scalar::INFINITY);
     }
 
     let sqrt = discriminant.sqrt();
@@ -69,6 +71,8 @@ impl App {
             Light::direction(0.2, [1.0, 4.0, 4.0]),
         ];
         Self {
+            origin: point!(0.0, 0.0, -6.0),
+            looking: point!(0.0, 0.0, 0.0),
             view_width: 1.0,
             view_height: 1.0,
             proj_plane_dist: 1.0,
@@ -77,33 +81,32 @@ impl App {
         }
     }
 
-    fn canvas_to_viewport(&self, x: i32, y: i32, s: &PixState) -> Point {
-        let width = s.width() as f64;
-        let height = s.height() as f64;
+    fn canvas_to_viewport(&self, x: i32, y: i32, s: &PixState) -> PointF3 {
+        let width = s.width() as Scalar;
+        let height = s.height() as Scalar;
         point!(
-            x as f64 * self.view_width / width,
-            y as f64 * self.view_height / height,
+            x as Scalar * self.view_width / width,
+            y as Scalar * self.view_height / height,
             self.proj_plane_dist
         )
     }
 
-    fn canvas_to_screen(&self, x: i32, y: i32, s: &PixState) -> Point {
-        let width = s.width() as f64;
-        let height = s.height() as f64;
+    fn canvas_to_screen(&self, x: i32, y: i32, s: &PixState) -> PointF2 {
+        let width = s.width() as Scalar;
+        let height = s.height() as Scalar;
         point!(
-            (width / 2.0 + x as f64).round(),
-            (height / 2.0 - y as f64).round(),
-            self.proj_plane_dist.round()
+            (width / 2.0 + x as Scalar).round(),
+            (height / 2.0 - y as Scalar).round(),
         )
     }
 
     fn compute_lighting(
         &self,
-        position: Point,
-        normal: Vector,
-        camera: Vector,
+        position: PointF3,
+        normal: VectorF3,
+        camera: VectorF3,
         specular: Option<i32>,
-    ) -> f64 {
+    ) -> Scalar {
         let mut intensity = 0.0;
         for light in &self.lights {
             match light.source {
@@ -111,7 +114,7 @@ impl App {
                 _ => {
                     let (light_dir, t_max) = match light.source {
                         LightSource::Point(p) => (p - position, 1.0),
-                        LightSource::Direction(d) => (d, f64::INFINITY),
+                        LightSource::Direction(d) => (d, Scalar::INFINITY),
                         _ => unreachable!("unreachable arm"),
                     };
 
@@ -131,7 +134,7 @@ impl App {
 
                     // Specular
                     if let Some(s) = specular {
-                        let r: Vector<f64> = Vector::reflection(light_dir, normal);
+                        let r: VectorF3 = Vector::reflection(light_dir, normal);
                         let r_dot_camera = r.dot(camera);
                         if r_dot_camera > 0.0 {
                             intensity +=
@@ -146,10 +149,10 @@ impl App {
 
     fn trace_ray(
         &self,
-        origin: Point,
-        direction: Vector,
-        t_min: f64,
-        t_max: f64,
+        origin: PointF3,
+        direction: VectorF3,
+        t_min: Scalar,
+        t_max: Scalar,
         recurse_depth: isize,
     ) -> Color {
         let (closest_t, closest_sphere) =
@@ -169,8 +172,13 @@ impl App {
 
             // Compute reflection
             let r_dir = Vector::reflection(-direction, normal);
-            let reflected_color =
-                self.trace_ray(intersection, r_dir, 0.001, f64::INFINITY, recurse_depth - 1);
+            let reflected_color = self.trace_ray(
+                intersection,
+                r_dir,
+                0.001,
+                Scalar::INFINITY,
+                recurse_depth - 1,
+            );
 
             local_color * (1.0 - r) + reflected_color * r
         } else {
@@ -180,12 +188,12 @@ impl App {
 
     fn closest_intersection(
         &self,
-        origin: Point,
-        direction: Vector,
-        t_min: f64,
-        t_max: f64,
-    ) -> (f64, Option<&SphereObj>) {
-        let mut closest_t = f64::INFINITY;
+        origin: PointF3,
+        direction: VectorF3,
+        t_min: Scalar,
+        t_max: Scalar,
+    ) -> (Scalar, Option<&SphereObj>) {
+        let mut closest_t = Scalar::INFINITY;
         let mut closest_sphere = None;
         for sphere in &self.spheres {
             let (t1, t2) = intersect_ray_sphere(origin, direction, sphere);
@@ -205,27 +213,47 @@ impl App {
 impl AppState for App {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         s.fill(BLACK);
-        let origin = point!(0.0, 0.0, -2.0);
         let half_w = s.width() as i32 / 2;
         let half_h = s.height() as i32 / 2;
         for x in -half_w..=half_w {
             for y in -half_h..=half_h {
-                let direction = self.canvas_to_viewport(x, y, s).into();
-                let color = self.trace_ray(origin, direction, 1.0, f64::INFINITY, 3);
+                let direction: PointF3 = self.canvas_to_viewport(x, y, s).into();
+                let color = self.trace_ray(
+                    self.origin,
+                    direction - self.looking,
+                    1.0,
+                    Scalar::INFINITY,
+                    3,
+                );
                 s.stroke(color);
                 s.point(self.canvas_to_screen(x, y, s))?;
             }
         }
-        s.no_run();
+        Ok(())
+    }
+
+    fn on_key_pressed(&mut self, _s: &mut PixState, event: KeyEvent) -> PixResult<()> {
+        match (event.key, event.keymod) {
+            (Key::Left, KeyMod::NONE) => self.origin -= point!(1.0, 0.0, 0.0),
+            (Key::Right, KeyMod::NONE) => self.origin += point!(1.0, 0.0, 0.0),
+            (Key::Up, KeyMod::NONE) => self.origin += point!(0.0, 0.0, 1.0),
+            (Key::Down, KeyMod::NONE) => self.origin -= point!(0.0, 0.0, 1.0),
+            (Key::Up, KeyMod::SHIFT) => self.origin += point!(0.0, 1.0, 0.0),
+            (Key::Down, KeyMod::SHIFT) => self.origin -= point!(0.0, 1.0, 0.0),
+            (Key::Left, KeyMod::GUI) => self.looking += point!(0.1, 0.0, 0.0),
+            (Key::Right, KeyMod::GUI) => self.looking -= point!(0.1, 0.0, 0.0),
+            (Key::Up, KeyMod::GUI) => self.looking += point!(0.0, 0.1, 0.0),
+            (Key::Down, KeyMod::GUI) => self.looking -= point!(0.0, 0.1, 0.0),
+            _ => (),
+        }
         Ok(())
     }
 }
 
 pub fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
-        .with_dimensions(800, 800)
         .with_title("3D Raytracing")
-        .with_frame_rate()
+        .with_dimensions(800, 800)
         .position_centered()
         .build();
     let mut app = App::new();
