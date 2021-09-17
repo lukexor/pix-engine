@@ -266,7 +266,9 @@ macro_rules! impl_as_ops {
     }
 }
 
-impl_ops!(i8, u8, i16, u16, i32, u32, f32, f64);
+impl_ops!(i8, u8, i16, u16, f32);
+#[cfg(target_pointer_width = "64")]
+impl_ops!(i32, u32, f64);
 impl_as_ops!(isize, usize, i64, u64, i128, u128);
 
 #[cfg(test)]

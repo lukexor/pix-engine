@@ -180,9 +180,8 @@ pub(crate) trait Rendering: Sized {
     fn quad(&mut self, quad: &QuadI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
 
     /// Draw a polygon to the current canvas.
-    fn polygon<'a, P>(&mut self, ps: P, fill: Option<Color>, stroke: Option<Color>) -> Result<()>
-    where
-        P: IntoIterator<Item = &'a PointI2>;
+    fn polygon(&mut self, ps: &[PointI2], fill: Option<Color>, stroke: Option<Color>)
+        -> Result<()>;
 
     /// Draw a ellipse to the current canvas.
     fn ellipse(

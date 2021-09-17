@@ -356,12 +356,14 @@ impl Rendering for Renderer {
     }
 
     /// Draw a polygon to the current canvas.
-    fn polygon<'a, P>(&mut self, ps: P, fill: Option<Color>, stroke: Option<Color>) -> Result<()>
-    where
-        P: IntoIterator<Item = &'a PointI2>,
-    {
+    fn polygon(
+        &mut self,
+        ps: &[PointI2],
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()> {
         let (vx, vy): (Vec<i16>, Vec<i16>) = ps
-            .into_iter()
+            .iter()
             .map(|p| -> (i16, i16) {
                 let [x, y] = p.as_().values();
                 (x, y)

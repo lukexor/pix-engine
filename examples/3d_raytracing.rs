@@ -217,7 +217,7 @@ impl AppState for App {
         let half_h = s.height() as i32 / 2;
         for x in -half_w..=half_w {
             for y in -half_h..=half_h {
-                let direction: PointF3 = self.canvas_to_viewport(x, y, s).into();
+                let direction: PointF3 = self.canvas_to_viewport(x, y, s);
                 let color = self.trace_ray(
                     self.origin,
                     direction - self.looking,

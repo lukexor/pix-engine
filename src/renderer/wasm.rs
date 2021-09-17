@@ -197,7 +197,7 @@ impl Rendering for Renderer {
     /// Draw text to the current canvas.
     fn text(
         &mut self,
-        position: &Point<i32>,
+        position: &PointI2,
         text: &str,
         fill: Option<Color>,
         stroke: Option<Color>,
@@ -217,26 +217,21 @@ impl Rendering for Renderer {
     }
 
     /// Draw a pixel to the current canvas.
-    fn point(&mut self, p: &Point<i32>, color: Color) -> Result<()> {
+    fn point(&mut self, p: &PointI2, color: Color) -> Result<()> {
         let _ = p;
         let _ = color;
         todo!("pixels")
     }
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, line: &Line<i32>, color: Color) -> Result<()> {
+    fn line(&mut self, line: &LineI2, color: Color) -> Result<()> {
         let _ = line;
         let _ = color;
         todo!("line")
     }
 
     /// Draw a triangle to the current canvas.
-    fn triangle(
-        &mut self,
-        tri: &Triangle<i32>,
-        fill: Option<Color>,
-        stroke: Option<Color>,
-    ) -> Result<()> {
+    fn triangle(&mut self, tri: &TriI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
         let _ = tri;
         if let Some(_) = fill {}
         if let Some(_) = stroke {}
@@ -267,7 +262,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw a quadrilateral to the current canvas.
-    fn quad(&mut self, quad: &Quad<i32>, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
+    fn quad(&mut self, quad: &QuadI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
         let _ = quad;
         if let Some(_) = fill {}
         if let Some(_) = stroke {}
@@ -275,10 +270,12 @@ impl Rendering for Renderer {
     }
 
     /// Draw a polygon to the current canvas.
-    fn polygon<P>(&mut self, ps: P, fill: Option<Color>, stroke: Option<Color>) -> Result<()>
-    where
-        P: IntoIterator<Item = Point<i32>>,
-    {
+    fn polygon(
+        &mut self,
+        ps: &[PointI2],
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> Result<()> {
         let _ = ps;
         if let Some(_) = fill {}
         if let Some(_) = stroke {}
@@ -302,7 +299,7 @@ impl Rendering for Renderer {
     #[allow(clippy::too_many_arguments)]
     fn arc(
         &mut self,
-        p: &Point<i32>,
+        p: &PointI2,
         radius: i32,
         start: i32,
         end: i32,
@@ -321,7 +318,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw an image to the current canvas.
-    fn image(&mut self, position: &Point<i32>, img: &Image, tint: Option<Color>) -> Result<()> {
+    fn image(&mut self, position: &PointI2, img: &Image, tint: Option<Color>) -> Result<()> {
         let _ = position;
         let _ = img.texture_cache();
         img.set_texture_id(0);
@@ -340,7 +337,7 @@ impl Rendering for Renderer {
     /// Draw a rotated image to the current canvas.
     fn image_rotated(
         &mut self,
-        pos: &Point<i32>,
+        pos: &PointI2,
         img: &Image,
         angle: f64,
         tint: Option<Color>,

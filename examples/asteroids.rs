@@ -1,4 +1,3 @@
-use lazy_static::lazy_static;
 use pix_engine::prelude::*;
 
 const SHIP_SCALE: Scalar = 4.0;
@@ -13,18 +12,6 @@ const ASTEROID_SAFE_RADIUS: Scalar = 80.0; // So asteroids don't spawn near play
 
 const ORIGIN: PointF2 = point!(0.0, 0.0);
 const SHIP_MODEL: [VectorF2; 3] = [vector!(5.0, 0.0), vector!(-2.5, -2.5), vector!(-2.5, 2.5)];
-
-lazy_static! {
-    static ref ASTEROID_MODEL: Vec<VectorF2> = {
-        let mut model = Vec::with_capacity(20);
-        for i in 0..20 {
-            let noise = random!(0.8, 1.2);
-            let a = (i as Scalar / 20.0) * 2.0 * PI;
-            model.push(vector!(noise * a.sin(), noise * a.cos()));
-        }
-        model
-    };
-}
 
 struct SpaceObj {
     size: u32,
@@ -75,6 +62,7 @@ impl From<&SpaceObj> for Circle {
 }
 
 struct Asteroids {
+    asteroid_model: Vec<VectorF2>,
     asteroids: Vec<SpaceObj>,
     broken_asteroids: Vec<SpaceObj>,
     bullets: Vec<SpaceObj>,
@@ -90,7 +78,14 @@ struct Asteroids {
 
 impl Asteroids {
     fn new(width: u32, height: u32) -> Self {
+        let mut asteroid_model = Vec::with_capacity(20);
+        for i in 0..20 {
+            let noise = random!(0.8, 1.2);
+            let a = (i as Scalar / 20.0) * 2.0 * PI;
+            asteroid_model.push(vector!(noise * a.sin(), noise * a.cos()));
+        }
         Self {
+            asteroid_model,
             asteroids: Vec::new(),
             broken_asteroids: Vec::new(),
             bullets: Vec::new(),
@@ -183,7 +178,7 @@ impl Asteroids {
             a.angle += 0.5 * elapsed; // Give some twirl
             s.fill(BLACK);
             s.stroke(YELLOW);
-            s.wireframe(ASTEROID_MODEL.iter(), a.pos, a.angle, a.size as Scalar)?;
+            s.wireframe(&self.asteroid_model, a.pos, a.angle, a.size as Scalar)?;
         }
         Ok(())
     }

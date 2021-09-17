@@ -19,25 +19,24 @@ impl PixState {
     }
 
     /// Draw a wireframe to the current canvas.
-    pub fn wireframe<'a, V, P, T>(
+    pub fn wireframe<P, T>(
         &mut self,
-        vertexes: V,
+        vertexes: &[VectorF2],
         pos: P,
         angle: T,
         scale: T,
     ) -> PixResult<()>
     where
-        V: IntoIterator<Item = &'a VectorF2>,
         P: Into<PointF2>,
-        T: Into<f64>,
+        T: Into<Scalar>,
     {
         let s = &self.settings;
         let pos: PointF2 = pos.into().as_();
-        let scale: f64 = scale.into();
-        let angle: f64 = angle.into();
+        let scale: Scalar = scale.into();
+        let angle: Scalar = angle.into();
         let (sin, cos) = angle.sin_cos();
         let vs: Vec<PointI2> = vertexes
-            .into_iter()
+            .iter()
             .map(|v| {
                 point!(
                     ((v.x() * cos - v.y() * sin) * scale + pos.x()).round(),

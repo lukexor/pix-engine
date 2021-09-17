@@ -399,7 +399,9 @@ macro_rules! impl_from {
     };
 }
 
-impl_from!(u8, i8, u16, i16, u32, i32, f32, f64);
+impl_from!(i8, u8, i16, u16, f32);
+#[cfg(target_pointer_width = "64")]
+impl_from!(i32, u32, f64);
 
 #[cfg(test)]
 mod tests {

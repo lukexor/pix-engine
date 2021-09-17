@@ -163,10 +163,7 @@ impl PixState {
     }
 
     /// Draw a polygon to the current canvas.
-    pub fn polygon<'a, P>(&mut self, points: P) -> PixResult<()>
-    where
-        P: IntoIterator<Item = &'a PointI2>,
-    {
+    pub fn polygon(&mut self, points: &[PointI2]) -> PixResult<()> {
         let s = &self.settings;
         Ok(self.renderer.polygon(points, s.fill, s.stroke)?)
     }

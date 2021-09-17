@@ -391,7 +391,7 @@ impl Color {
     /// // [207, 12, 217, 255]
     /// ```
     pub fn random() -> Self {
-        Self::new(random!(255), random!(255), random!(255))
+        Self::new(random!(255u8), random!(255), random!(255))
     }
 
     /// Constructs a random `Color` with `red`, `green`, `blue` and alpha.
@@ -406,7 +406,7 @@ impl Color {
     /// // [132, 159, 233, 76]
     /// ```
     pub fn random_alpha() -> Self {
-        Self::new_alpha(random!(255), random!(255), random!(255), random!(255))
+        Self::new_alpha(random!(255u8), random!(255), random!(255), random!(255))
     }
 
     /// Constructs a `Color` from a [u32] RGBA hexadecimal value.
@@ -933,7 +933,7 @@ macro_rules! hsl {
 
 impl Default for Color {
     fn default() -> Self {
-        Self::rgb(0, 0, 0)
+        Self::rgb(0.0, 0.0, 0.0)
     }
 }
 

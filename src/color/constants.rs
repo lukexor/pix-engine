@@ -3,9 +3,10 @@
 #![allow(missing_docs)]
 
 use super::{Color, ColorMode::*};
+use crate::prelude::Scalar;
 
 /// Const constructor helper.
-const fn rgb_const(lr: f64, lg: f64, lb: f64, r: u8, g: u8, b: u8) -> Color {
+const fn rgb_const(lr: Scalar, lg: Scalar, lb: Scalar, r: u8, g: u8, b: u8) -> Color {
     Color {
         mode: Rgb,
         levels: [lr, lg, lb, 1.0],
