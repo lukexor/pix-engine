@@ -11,11 +11,12 @@ pub trait Draw {
 
 impl PixState {
     /// Clears the render target to the current background [Color] set by [PixState::background].
-    pub fn clear(&mut self) {
+    pub fn clear(&mut self) -> PixResult<()> {
         let color = self.settings.background;
-        self.renderer.set_draw_color(self.settings.background);
-        self.renderer.clear();
-        self.renderer.set_draw_color(color);
+        self.renderer.set_draw_color(self.settings.background)?;
+        self.renderer.clear()?;
+        self.renderer.set_draw_color(color)?;
+        Ok(())
     }
 
     /// Draw a wireframe to the current canvas.

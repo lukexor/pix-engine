@@ -28,7 +28,7 @@ use std::ops::{Deref, DerefMut, Index, IndexMut};
 ///
 /// Please see the [module-level documentation] for examples.
 ///
-/// [module-level documentation]: crate::shape::line
+/// [module-level documentation]: crate::core::shape::line
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 // #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Line<T, const N: usize>([Point<T, N>; 2]);

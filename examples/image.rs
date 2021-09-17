@@ -14,13 +14,14 @@ impl ImageDemo {
 
 impl AppState for ImageDemo {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.background(DARK_BLUE);
+        s.background(CADET_BLUE)?;
         s.blend_mode(BlendMode::Blend);
+        s.image_mode(DrawMode::Center);
         Ok(())
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.image_resized(&self.0, [0, 0, WIDTH as i32, HEIGHT as i32])?;
+        s.image([WIDTH as i32 / 2, HEIGHT as i32 / 2], &self.0)?;
         s.text([10, 10], "<Esc>: Disable Tint")?;
         s.text([10, 35], "<Return>: Random Tint")?;
         s.text([10, 60], "<Left>: Disable Blend Mode")?;

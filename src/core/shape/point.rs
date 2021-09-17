@@ -33,7 +33,7 @@ use std::{fmt, iter::Sum, ops::*};
 ///
 /// Please see the [module-level documentation] for examples.
 ///
-/// [module-level documentation]: crate::shape::point
+/// [module-level documentation]: crate::core::shape::point
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 // #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Point<T, const N: usize>([T; N]);

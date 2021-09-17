@@ -32,6 +32,15 @@ use num_traits::AsPrimitive;
 use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut};
 
+/// A `Rectangle` positioned at `(x, y)` with `width` and `height`.
+///
+/// Please see the [module-level documentation] for examples.
+///
+/// [module-level documentation]: crate::core::shape::rect
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Rect<T = i32>([T; 4]);
+
 /// Constructs a `Rect<T>` at position `(x, y)` with `width` and `height`.
 ///
 /// ```
@@ -88,11 +97,6 @@ macro_rules! square {
         $crate::prelude::Rect::square($x, $y, $size)
     };
 }
-
-/// A `Rectangle` positioned at `(x, y)` with `width` and `height`.
-#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Rect<T = i32>([T; 4]);
 
 impl<T> Rect<T> {
     /// Constructs a `Rect<T>` at position `(x, y)` with `width` and `height`.

@@ -28,6 +28,15 @@ use num_traits::AsPrimitive;
 use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut};
 
+/// An `Ellipse` positioned at `(x, y)`, with `width` and `height`.
+///
+/// Please see the [module-level documentation] for examples.
+///
+/// [module-level documentation]: crate::core::shape::ellipse
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Ellipse<T = i32>([T; 4]);
+
 /// Constructs an `Ellipse<T>` at position `(x, y)` with `width` and `height`.
 ///
 /// ```
@@ -57,11 +66,6 @@ macro_rules! ellipse {
         $crate::prelude::Ellipse::new($x, $y, $width, $height)
     };
 }
-
-/// An `Ellipse` positioned at `(x, y)`, with `width` and `height`.
-#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Ellipse<T = i32>([T; 4]);
 
 impl<T> Ellipse<T> {
     /// Constructs an `Ellipse<T>` at position `(x, y)` with `width` and `height`.

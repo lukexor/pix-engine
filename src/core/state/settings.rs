@@ -115,12 +115,12 @@ impl Default for Settings {
 
 impl PixState {
     /// Sets the [Color] value used to clear the canvas.
-    pub fn background<C>(&mut self, color: C)
+    pub fn background<C>(&mut self, color: C) -> PixResult<()>
     where
         C: Into<Color>,
     {
         self.settings.background = color.into();
-        self.clear();
+        self.clear()
     }
 
     /// Sets the [Color] value used to fill shapes drawn on the canvas.
@@ -150,16 +150,16 @@ impl PixState {
     }
 
     /// Sets the clip [Rect] used by the renderer to draw to the current canvas.
-    pub fn clip<R>(&mut self, rect: R)
+    pub fn clip<R>(&mut self, rect: R) -> PixResult<()>
     where
         R: Into<Rect<i32>>,
     {
-        self.renderer.clip(Some(rect.into()));
+        Ok(self.renderer.clip(Some(rect.into()))?)
     }
 
     /// Clears the clip [Rect] used by the renderer to draw to the current canvas.
-    pub fn no_clip(&mut self) {
-        self.renderer.clip(None);
+    pub fn no_clip(&mut self) -> PixResult<()> {
+        Ok(self.renderer.clip(None)?)
     }
 
     /// Returns whether the application is fullscreen or not.

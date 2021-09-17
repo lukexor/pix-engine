@@ -267,7 +267,7 @@ impl RayScene {
 
 impl AppState for RayScene {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.background(BLACK);
+        s.background(BLACK)?;
         s.scale(SCALE, SCALE)?;
         s.no_cursor();
 
@@ -309,7 +309,7 @@ impl AppState for RayScene {
         } else {
             (mouse.y() - 254, 511)
         };
-        s.clip([cx, cy, cw, ch]);
+        s.clip([cx, cy, cw, ch])?;
 
         self.draw_visibility_polygons(s)?;
 
@@ -329,7 +329,7 @@ impl AppState for RayScene {
         s.blend_mode(BlendMode::None);
 
         if let Some(cell) = in_cell {
-            s.clear();
+            s.clear()?;
             s.square([cell.pos.x(), cell.pos.y(), BLOCK_SIZE as i32])?;
             s.fill(YELLOW);
             s.circle([mouse.x(), mouse.y(), 2])?;

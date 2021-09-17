@@ -34,6 +34,10 @@ use std::ops::{Deref, DerefMut, Index, IndexMut};
 /// A `Quad` or quadrilateral, a four-sided polygon.
 ///
 /// `Quad` is similar to [Rect] but the angles between edges are not constrained to 90 degrees.
+///
+/// Please see the [module-level documentation] for examples.
+///
+/// [module-level documentation]: crate::core::shape::quad
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 // #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Quad<T, const N: usize>([Point<T, N>; 4]);

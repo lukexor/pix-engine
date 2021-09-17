@@ -25,6 +25,10 @@ use crate::prelude::*;
 use serde::{Deserialize, Serialize};
 
 /// A `Sphere` positioned at `(x, y, z)` with `radius`.
+///
+/// Please see the [module-level documentation] for examples.
+///
+/// [module-level documentation]: crate::core::shape::sphere
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Sphere<T = i32>([T; 4]);

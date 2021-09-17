@@ -168,7 +168,7 @@ impl Matrix {
 
 impl AppState for Matrix {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.background(BG_COLOR);
+        s.background(BG_COLOR)?;
         s.font_style(FontStyle::BOLD);
         s.font_size(Glyph::SIZE)?;
         s.font_family(Glyph::FONT)?;

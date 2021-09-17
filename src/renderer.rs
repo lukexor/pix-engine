@@ -10,12 +10,12 @@ use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) mod sdl;
 #[cfg(not(target_arch = "wasm32"))]
-pub(crate) use sdl::Renderer;
+pub(crate) use sdl::{Renderer, RendererTexture};
 
 #[cfg(target_arch = "wasm32")]
 pub(crate) mod wasm;
 #[cfg(target_arch = "wasm32")]
-pub(crate) use wasm::Renderer;
+pub(crate) use wasm::{Renderer, RendererTexture};
 
 lazy_static! {
     /// Default directory to extract static library assets into.
@@ -88,15 +88,15 @@ pub(crate) trait Rendering: Sized {
     fn new(settings: RendererSettings) -> Result<Self>;
 
     /// Clears the current canvas to the given clear color
-    fn clear(&mut self);
+    fn clear(&mut self) -> Result<()>;
 
     /// Sets the color used by the renderer to draw the current canvas.
-    fn set_draw_color(&mut self, color: Color);
+    fn set_draw_color(&mut self, color: Color) -> Result<()>;
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    fn clip(&mut self, rect: Option<Rect<i32>>);
+    fn clip(&mut self, rect: Option<Rect<i32>>) -> Result<()>;
 
-    /// Sets the blend mode used by the renderer to draw textures.
+    /// Sets the blend mode used by the renderer to drawing.
     fn blend_mode(&mut self, mode: BlendMode);
 
     /// Updates the canvas from the current back buffer.
@@ -104,34 +104,6 @@ pub(crate) trait Rendering: Sized {
 
     /// Scale the current canvas.
     fn scale(&mut self, x: f32, y: f32) -> Result<()>;
-
-    /// Create a texture to draw to.
-    fn create_texture(
-        &mut self,
-        width: u32,
-        height: u32,
-        format: Option<PixelFormat>,
-    ) -> Result<TextureId>;
-
-    /// Delete a texture.
-    fn delete_texture(&mut self, texture_id: TextureId) -> Result<()>;
-
-    /// Update texture with pixel data.
-    fn update_texture(
-        &mut self,
-        texture_id: TextureId,
-        rect: Option<Rect<i32>>,
-        pixels: &[u8],
-        pitch: usize,
-    ) -> Result<()>;
-
-    /// Draw texture canvas.
-    fn texture(
-        &mut self,
-        texture_id: TextureId,
-        src: Option<Rect<i32>>,
-        dst: Option<Rect<i32>>,
-    ) -> Result<()>;
 
     /// Set the font size for drawing to the current canvas.
     fn font_size(&mut self, size: u32) -> Result<()>;

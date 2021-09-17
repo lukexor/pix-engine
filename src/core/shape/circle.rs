@@ -28,6 +28,15 @@ use num_traits::AsPrimitive;
 use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut};
 
+/// A `Circle` positioned at `(x, y)` with `radius`.
+///
+/// Please see the [module-level documentation] for examples.
+///
+/// [module-level documentation]: crate::core::shape::circle
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Circle<T = i32>([T; 3]);
+
 /// # Constructs a `Circle<T>` at position `(x, y`) with `radius`.
 ///
 /// ```
@@ -52,11 +61,6 @@ macro_rules! circle {
         $crate::prelude::Circle::new($x, $y, $r)
     };
 }
-
-/// A `Circle` positioned at `(x, y)` with `radius`.
-#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Circle<T = i32>([T; 3]);
 
 impl<T> Circle<T> {
     /// Constructs a `Circle<T>` at position `(x, y)` with `radius`.

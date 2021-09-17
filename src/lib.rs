@@ -64,7 +64,7 @@ pub mod prelude {
             settings::{AngleMode, ArcMode, BlendMode, DrawMode, FontStyle},
             PixState,
         },
-        texture::TextureId,
+        texture::{Texture, TextureId},
         window::{Cursor, Position, SystemCursor, WindowBuilder, WindowId},
     };
     pub use color::{constants::*, Color, ColorMode, Error as ColorError};

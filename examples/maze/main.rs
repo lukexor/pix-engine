@@ -151,7 +151,7 @@ impl MazeApp {
 
 impl AppState for MazeApp {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.background(51);
+        s.background(51)?;
         Ok(())
     }
 

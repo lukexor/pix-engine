@@ -24,7 +24,10 @@ use std::{borrow::Cow, collections::HashMap, path::PathBuf};
 
 mod audio;
 mod event;
+mod textures;
 mod window;
+
+pub(crate) use textures::RendererTexture;
 
 lazy_static! {
     static ref TTF: Sdl2TtfContext = sdl2::ttf::init().expect("sdl2_ttf initialized");
@@ -34,7 +37,7 @@ lazy_static! {
 
 /// An SDL [Renderer] implementation.
 pub(crate) struct Renderer {
-    pub(crate) settings: RendererSettings,
+    settings: RendererSettings,
     context: Sdl,
     font: (PathBuf, u16),
     font_cache: HashMap<(PathBuf, u16), Font<'static, 'static>>,
@@ -47,6 +50,7 @@ pub(crate) struct Renderer {
     audio_device: AudioQueue<f32>,
     texture_creator: TextureCreator<WindowContext>,
     textures: Vec<SdlTexture>,
+    texture_target: Option<*mut Texture>,
     blend_mode: SdlBlendMode,
 }
 
@@ -95,27 +99,37 @@ impl Rendering for Renderer {
             audio_device,
             texture_creator,
             textures: Vec::new(),
+            texture_target: None,
             blend_mode: SdlBlendMode::None,
         })
     }
 
     /// Clears the canvas to the current clear color.
-    fn clear(&mut self) {
-        self.canvas.clear();
+    fn clear(&mut self) -> Result<()> {
+        self.update(|canvas| {
+            canvas.clear();
+            Ok(())
+        })
     }
 
     /// Sets the color used by the renderer to draw to the current canvas.
-    fn set_draw_color(&mut self, color: Color) {
-        self.canvas.set_draw_color(color);
+    fn set_draw_color(&mut self, color: Color) -> Result<()> {
+        self.update(|canvas| {
+            canvas.set_draw_color(color);
+            Ok(())
+        })
     }
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    fn clip(&mut self, rect: Option<Rect<i32>>) {
+    fn clip(&mut self, rect: Option<Rect<i32>>) -> Result<()> {
         let rect = rect.map(|rect| rect.into());
-        self.canvas.set_clip_rect(rect);
+        self.update(|canvas| {
+            canvas.set_clip_rect(rect);
+            Ok(())
+        })
     }
 
-    /// Sets the blend mode used by the renderer to draw textures.
+    /// Sets the blend mode used by the renderer to drawing.
     fn blend_mode(&mut self, mode: BlendMode) {
         self.blend_mode = mode.into();
     }
@@ -127,68 +141,7 @@ impl Rendering for Renderer {
 
     /// Scale the current canvas.
     fn scale(&mut self, x: f32, y: f32) -> Result<()> {
-        Ok(self.canvas.set_scale(x, y)?)
-    }
-
-    /// Create a texture to render to.
-    fn create_texture(
-        &mut self,
-        width: u32,
-        height: u32,
-        format: Option<PixelFormat>,
-    ) -> Result<TextureId> {
-        let texture_id = self.textures.len();
-        self.textures
-            .push(self.texture_creator.create_texture_target(
-                format.map(|f| f.into()),
-                width,
-                height,
-            )?);
-        Ok(texture_id)
-    }
-
-    /// Delete a texture.
-    fn delete_texture(&mut self, texture_id: TextureId) -> Result<()> {
-        if texture_id < self.textures.len() {
-            let texture = self.textures.remove(texture_id);
-            // SAFETY: self.texture_creator can not be destroyed while PixEngine is running
-            unsafe { texture.destroy() };
-            Ok(())
-        } else {
-            Err(Error::InvalidTexture(texture_id))
-        }
-    }
-
-    /// Update texture with pixel data.
-    fn update_texture(
-        &mut self,
-        texture_id: TextureId,
-        rect: Option<Rect<i32>>,
-        pixels: &[u8],
-        pitch: usize,
-    ) -> Result<()> {
-        if let Some(texture) = self.textures.get_mut(texture_id) {
-            let rect: Option<SdlRect> = rect.map(|r| r.into());
-            Ok(texture.update(rect, pixels, pitch)?)
-        } else {
-            Err(Error::InvalidTexture(texture_id))
-        }
-    }
-
-    /// Draw texture canvas.
-    fn texture(
-        &mut self,
-        texture_id: usize,
-        src: Option<Rect<i32>>,
-        dst: Option<Rect<i32>>,
-    ) -> Result<()> {
-        if let Some(texture) = self.textures.get(texture_id) {
-            let src = src.map(|r| r.into());
-            let dst = dst.map(|r| r.into());
-            Ok(self.canvas.copy(texture, src, dst)?)
-        } else {
-            Err(Error::InvalidTexture(texture_id))
-        }
+        self.update(|canvas| Ok(canvas.set_scale(x, y)?))
     }
 
     /// Set the font size for drawing to the current canvas.
@@ -236,21 +189,34 @@ impl Rendering for Renderer {
                 match self.text_cache.get(&(text.to_string(), fill)) {
                     Some(texture) => {
                         let TextureQuery { width, height, .. } = texture.query();
-                        self.canvas.copy(
-                            texture,
-                            None,
-                            Some(SdlRect::new(pos.x(), pos.y(), width, height)),
-                        )?;
+                        let f = |canvas: &mut Canvas<SdlWindow>| -> Result<()> {
+                            Ok(canvas.copy(
+                                texture,
+                                None,
+                                Some(SdlRect::new(pos.x(), pos.y(), width, height)),
+                            )?)
+                        };
+                        match self.texture_target {
+                            Some(ptr) => {
+                                let mut texture = unsafe { &mut (*ptr).inner };
+                                self.canvas.with_texture_canvas(&mut texture, |canvas| {
+                                    let _ = f(canvas);
+                                })?;
+                            }
+                            None => f(&mut self.canvas)?,
+                        }
                     }
                     None => {
                         let surface = font.render(text).blended(fill)?;
                         let texture = self.texture_creator.create_texture_from_surface(&surface)?;
                         let TextureQuery { width, height, .. } = texture.query();
-                        self.canvas.copy(
-                            &texture,
-                            None,
-                            Some(SdlRect::new(pos.x(), pos.y(), width, height)),
-                        )?;
+                        self.update(|canvas| {
+                            Ok(canvas.copy(
+                                &texture,
+                                None,
+                                Some(SdlRect::new(pos.x(), pos.y(), width, height)),
+                            )?)
+                        })?;
                         self.text_cache.insert((text.to_string(), fill), texture);
                     }
                 }
@@ -277,32 +243,33 @@ impl Rendering for Renderer {
     /// Draw a pixel to the current canvas.
     fn point(&mut self, p: &PointI2, color: Color) -> Result<()> {
         let [x, y] = p.as_().values();
-        Ok(self.canvas.pixel(x, y, color)?)
+        self.update(|canvas| Ok(canvas.pixel(x, y, color)?))
     }
 
     /// Draw a line to the current canvas.
     fn line(&mut self, line: &LineI2, color: Color) -> Result<()> {
         let [[x1, y1], [x2, y2]] = line.as_().values();
         if y1 == y2 {
-            self.canvas.hline(x1, x2, y1, color)?;
+            self.update(|canvas| Ok(canvas.hline(x1, x2, y1, color)?))
         } else if x1 == x2 {
-            self.canvas.vline(x1, y1, y2, color)?;
+            self.update(|canvas| Ok(canvas.vline(x1, y1, y2, color)?))
         } else {
-            self.canvas.line(x1, y1, x2, y2, color)?;
+            self.update(|canvas| Ok(canvas.line(x1, y1, x2, y2, color)?))
         }
-        Ok(())
     }
 
     /// Draw a triangle to the current canvas.
     fn triangle(&mut self, tri: &TriI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
         let [p1, p2, p3] = tri.as_().values();
         if let Some(fill) = fill {
-            self.canvas
-                .filled_trigon(p1.x(), p1.y(), p2.x(), p2.y(), p3.x(), p3.y(), fill)?;
+            self.update(|canvas| {
+                Ok(canvas.filled_trigon(p1.x(), p1.y(), p2.x(), p2.y(), p3.x(), p3.y(), fill)?)
+            })?;
         }
         if let Some(stroke) = stroke {
-            self.canvas
-                .trigon(p1.x(), p1.y(), p2.x(), p2.y(), p3.x(), p3.y(), stroke)?;
+            self.update(|canvas| {
+                Ok(canvas.trigon(p1.x(), p1.y(), p2.x(), p2.y(), p3.x(), p3.y(), stroke)?)
+            })?;
         }
         Ok(())
     }
@@ -311,11 +278,10 @@ impl Rendering for Renderer {
     fn rect(&mut self, rect: &Rect<i32>, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
         let [x, y, width, height] = rect.as_().values();
         if let Some(fill) = fill {
-            self.canvas
-                .box_(x, y, x + width - 1, y + height - 1, fill)?;
+            self.update(|canvas| Ok(canvas.box_(x, y, x + width - 1, y + height - 1, fill)?))?;
         }
         if let Some(stroke) = stroke {
-            self.canvas.rectangle(x, y, x + width, y + height, stroke)?;
+            self.update(|canvas| Ok(canvas.rectangle(x, y, x + width, y + height, stroke)?))?;
         }
         Ok(())
     }
@@ -331,12 +297,14 @@ impl Rendering for Renderer {
         let [x, y, width, height] = rect.as_().values();
         let radius = radius as i16;
         if let Some(fill) = fill {
-            self.canvas
-                .rounded_box(x, y, x + width - 1, y + height - 1, radius, fill)?;
+            self.update(|canvas| {
+                Ok(canvas.rounded_box(x, y, x + width - 1, y + height - 1, radius, fill)?)
+            })?;
         }
         if let Some(stroke) = stroke {
-            self.canvas
-                .rounded_rectangle(x, y, x + width, y + height, radius, stroke)?;
+            self.update(|canvas| {
+                Ok(canvas.rounded_rectangle(x, y, x + width, y + height, radius, stroke)?)
+            })?;
         }
         Ok(())
     }
@@ -347,10 +315,10 @@ impl Rendering for Renderer {
         let vx = [p1.x(), p2.x(), p3.x(), p4.x()];
         let vy = [p1.y(), p2.y(), p3.y(), p4.y()];
         if let Some(fill) = fill {
-            self.canvas.filled_polygon(&vx, &vy, fill)?;
+            self.update(|canvas| Ok(canvas.filled_polygon(&vx, &vy, fill)?))?;
         }
         if let Some(stroke) = stroke {
-            self.canvas.polygon(&vx, &vy, stroke)?;
+            self.update(|canvas| Ok(canvas.polygon(&vx, &vy, stroke)?))?;
         }
         Ok(())
     }
@@ -370,10 +338,10 @@ impl Rendering for Renderer {
             })
             .unzip();
         if let Some(fill) = fill {
-            self.canvas.filled_polygon(&vx, &vy, fill)?;
+            self.update(|canvas| Ok(canvas.filled_polygon(&vx, &vy, fill)?))?;
         }
         if let Some(stroke) = stroke {
-            self.canvas.polygon(&vx, &vy, stroke)?;
+            self.update(|canvas| Ok(canvas.polygon(&vx, &vy, stroke)?))?;
         }
         Ok(())
     }
@@ -387,10 +355,10 @@ impl Rendering for Renderer {
     ) -> Result<()> {
         let [x, y, width, height] = ellipse.as_().values();
         if let Some(fill) = fill {
-            self.canvas.filled_ellipse(x, y, width, height, fill)?;
+            self.update(|canvas| Ok(canvas.filled_ellipse(x, y, width, height, fill)?))?;
         }
         if let Some(stroke) = stroke {
-            self.canvas.ellipse(x, y, width, height, stroke)?;
+            self.update(|canvas| Ok(canvas.ellipse(x, y, width, height, stroke)?))?;
         }
         Ok(())
     }
@@ -414,15 +382,15 @@ impl Rendering for Renderer {
         match mode {
             Default => {
                 if let Some(stroke) = stroke {
-                    self.canvas.arc(x, y, radius, start, end, stroke)?;
+                    self.update(|canvas| Ok(canvas.arc(x, y, radius, start, end, stroke)?))?;
                 }
             }
             Pie => {
                 if let Some(stroke) = stroke {
-                    self.canvas.pie(x, y, radius, start, end, stroke)?;
+                    self.update(|canvas| Ok(canvas.pie(x, y, radius, start, end, stroke)?))?;
                 }
                 if let Some(fill) = fill {
-                    self.canvas.filled_pie(x, y, radius, start, end, fill)?;
+                    self.update(|canvas| Ok(canvas.filled_pie(x, y, radius, start, end, fill)?))?;
                 }
             }
         }
@@ -458,8 +426,13 @@ impl Renderer {
         match img.texture_cache() {
             Some(texture_cache) => Ok(texture_cache),
             None => {
-                let texture_id =
-                    self.create_texture(img.width(), img.height(), img.format().into())?;
+                let texture_id = self.textures.len();
+                self.textures
+                    .push(self.texture_creator.create_texture_static(
+                        Some(img.format().into()),
+                        img.width(),
+                        img.height(),
+                    )?);
                 img.set_texture_id(texture_id);
                 Ok((texture_id, false))
             }
@@ -496,11 +469,22 @@ impl Renderer {
                     }
                 }
                 texture.set_blend_mode(self.blend_mode);
-                match angle {
-                    Some(angle) => Ok(self
-                        .canvas
-                        .copy_ex(texture, None, dst, angle, None, false, false)?),
-                    None => Ok(self.canvas.copy(texture, None, dst)?),
+                let f = |canvas: &mut Canvas<SdlWindow>| -> Result<()> {
+                    match angle {
+                        Some(angle) => {
+                            Ok(canvas.copy_ex(texture, None, dst, angle, None, false, false)?)
+                        }
+                        None => Ok(canvas.copy(texture, None, dst)?),
+                    }
+                };
+                match self.texture_target {
+                    Some(ptr) => {
+                        let mut texture = unsafe { &mut (*ptr).inner };
+                        Ok(self.canvas.with_texture_canvas(&mut texture, |canvas| {
+                            let _ = f(canvas);
+                        })?)
+                    }
+                    None => f(&mut self.canvas),
                 }
             }
             None => Err(Error::InvalidTexture(texture_id)),

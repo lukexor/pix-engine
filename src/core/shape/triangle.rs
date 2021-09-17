@@ -23,6 +23,10 @@ use num_traits::AsPrimitive;
 use std::ops::{Deref, DerefMut, Index, IndexMut};
 
 /// A `Triangle` with three [Point]s.
+///
+/// Please see the [module-level documentation] for examples.
+///
+/// [module-level documentation]: crate::core::shape::triangle
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 // #[cfg_ater(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Tri<T, const N: usize>([Point<T, N>; 3]);

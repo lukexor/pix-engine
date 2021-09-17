@@ -200,7 +200,7 @@ impl PixEngine {
 
         // Clear and present once on start for both front and back buffers
         for _ in 0..1 {
-            state.clear();
+            state.clear()?;
             state.renderer.present();
         }
 
@@ -237,7 +237,7 @@ impl PixEngine {
                     self.last_frame_time = now;
 
                     if state.settings.running || state.settings.run_count > 0 {
-                        state.clear();
+                        state.clear()?;
                         state.pre_update();
                         app.on_update(&mut state)?;
                         state.post_update();
