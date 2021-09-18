@@ -133,17 +133,16 @@ impl<T: Num> Contains for Sphere<T> {
     type Shape = Sphere<Self::Type>;
 
     /// Returns whether this sphere contains a given [Point].
-    fn contains_point<P>(&self, _p: P) -> bool
+    fn contains_point<P>(&self, p: P) -> bool
     where
         P: Into<Point<Self::Type, 2>>,
     {
-        todo!();
-        // let p = p.into();
-        // let px = p.x() - self.x();
-        // let py = p.y() - self.y();
-        // let pz = p.z() - self.z();
-        // let r = self.radius() * self.radius();
-        // (px * px + py * py + pz * pz) < r
+        let p = p.into();
+        let px = p.x() - self.x();
+        let py = p.y() - self.y();
+        let pz = p.z() - self.z();
+        let r = self.radius() * self.radius();
+        (px * px + py * py + pz * pz) < r
     }
 
     /// Returns whether this sphere completely contains another sphere.

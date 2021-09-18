@@ -419,7 +419,7 @@ impl<T: Num + AsPrimitive<Scalar>> Intersects for Rect<T> {
 impl<T> Draw for Rect<T>
 where
     Self: Into<Rect<i32>>,
-    T: Num,
+    T: Copy,
 {
     /// Draw `Rect` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {

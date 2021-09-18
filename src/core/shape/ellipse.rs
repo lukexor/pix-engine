@@ -401,7 +401,7 @@ impl<T: Num> Intersects for Ellipse<T> {
 impl<T> Draw for Ellipse<T>
 where
     Self: Into<Ellipse<i32>>,
-    T: Num,
+    T: Copy,
 {
     /// Draw `Ellipse` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
