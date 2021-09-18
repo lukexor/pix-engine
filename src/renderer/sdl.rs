@@ -12,8 +12,8 @@ use sdl2::{
     pixels::{Color as SdlColor, PixelFormatEnum as SdlPixelFormat},
     rect::Rect as SdlRect,
     render::{
-        BlendMode as SdlBlendMode, Canvas, SdlError, TargetRenderError, Texture as SdlTexture,
-        TextureCreator, TextureQuery, TextureValueError, UpdateTextureError,
+        BlendMode as SdlBlendMode, Canvas, SdlError, TargetRenderError, TextureCreator,
+        TextureQuery, TextureValueError, UpdateTextureError,
     },
     surface::Surface,
     ttf::{Font, FontError, FontStyle as SdlFontStyle, InitError, Sdl2TtfContext},
@@ -42,14 +42,14 @@ pub(crate) struct Renderer {
     font: (PathBuf, u16),
     font_cache: HashMap<(PathBuf, u16), Font<'static, 'static>>,
     font_style: SdlFontStyle,
-    text_cache: HashMap<(String, Color), SdlTexture>,
+    text_cache: HashMap<(String, Color), RendererTexture>,
     event_pump: EventPump,
     window_id: WindowId,
     cursor: Cursor,
     canvas: Canvas<SdlWindow>,
     audio_device: AudioQueue<f32>,
     texture_creator: TextureCreator<WindowContext>,
-    textures: Vec<SdlTexture>,
+    textures: Vec<RendererTexture>,
     texture_target: Option<*mut Texture>,
     blend_mode: SdlBlendMode,
 }
@@ -413,7 +413,7 @@ impl Rendering for Renderer {
         &mut self,
         pos: &PointI2,
         img: &Image,
-        angle: f64,
+        angle: Scalar,
         tint: Option<Color>,
     ) -> Result<()> {
         let dst = SdlRect::new(pos.x(), pos.y(), img.width(), img.height());

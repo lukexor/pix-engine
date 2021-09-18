@@ -8,7 +8,7 @@ impl PixState {
     /// Draw text to the current canvas.
     pub fn text<P>(&mut self, p: P, text: &str) -> PixResult<()>
     where
-        P: Into<Point<i32, 2>>,
+        P: Into<PointI2>,
     {
         let s = &self.settings;
         let mut p = p.into();

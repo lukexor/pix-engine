@@ -51,7 +51,7 @@ pub(crate) struct RendererSettings {
     pub(crate) resizable: bool,
     pub(crate) borderless: bool,
     pub(crate) show_frame_rate: bool,
-    pub(crate) target_frame_rate: Option<f64>,
+    pub(crate) target_frame_rate: Option<Scalar>,
 }
 
 impl Default for RendererSettings {
@@ -187,7 +187,7 @@ pub(crate) trait Rendering: Sized {
         &mut self,
         pos: &PointI2,
         img: &Image,
-        angle: f64,
+        angle: Scalar,
         tint: Option<Color>,
     ) -> Result<()>;
 }

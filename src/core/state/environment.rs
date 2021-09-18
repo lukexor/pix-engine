@@ -11,9 +11,9 @@ use serde::{Deserialize, Serialize};
 pub(crate) struct Environment {
     pub(crate) focused: bool,
     pub(crate) focused_window: Option<WindowId>,
-    pub(crate) delta_time: f64,
+    pub(crate) delta_time: Scalar,
     pub(crate) frame_rate: usize,
-    pub(crate) target_frame_rate: Option<f64>,
+    pub(crate) target_frame_rate: Option<Scalar>,
     pub(crate) frame_count: usize,
     pub(crate) quit: bool,
 }
@@ -67,7 +67,7 @@ impl PixState {
     }
 
     /// The time elapsed since last frame in seconds.
-    pub fn delta_time(&self) -> f64 {
+    pub fn delta_time(&self) -> Scalar {
         self.env.delta_time
     }
 
@@ -89,7 +89,7 @@ impl PixState {
     /// Set a target frame rate to render at, controls how often
     /// [on_update](crate::prelude::AppState::on_update) is called.
     pub fn set_frame_rate(&mut self, rate: usize) {
-        self.env.target_frame_rate = Some(rate as f64);
+        self.env.target_frame_rate = Some(rate as Scalar);
     }
 
     /// Remove target frame rate and call [on_update](crate::prelude::AppState::on_update) as often

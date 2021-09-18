@@ -129,7 +129,7 @@ impl PixEngineBuilder {
     /// Set a target frame rate to render at, controls how often
     /// [on_update](crate::prelude::AppState::on_update) is called.
     pub fn target_frame_rate(&mut self, rate: usize) -> &mut Self {
-        self.settings.target_frame_rate = Some(rate as f64);
+        self.settings.target_frame_rate = Some(rate as Scalar);
         self
     }
 
@@ -232,8 +232,15 @@ impl PixEngine {
                     .map(|rate| 1000.0 / rate)
                     .unwrap_or(0.0);
 
-                if time_since_last.as_millis() as f64 >= target_delta_time {
-                    state.env.delta_time = time_since_last.as_secs_f64();
+                if time_since_last.as_millis() as Scalar >= target_delta_time {
+                    #[cfg(target_pointer_width = "32")]
+                    {
+                        state.env.delta_time = time_since_last.as_secs_f32();
+                    }
+                    #[cfg(target_pointer_width = "64")]
+                    {
+                        state.env.delta_time = time_since_last.as_secs_f64();
+                    }
                     self.last_frame_time = now;
 
                     if state.settings.running || state.settings.run_count > 0 {
