@@ -3,8 +3,6 @@
 use crate::{prelude::*, renderer::Rendering};
 
 #[macro_use]
-pub mod circle;
-#[macro_use]
 pub mod ellipse;
 #[macro_use]
 pub mod line;
@@ -17,7 +15,6 @@ pub mod quad;
 pub mod sphere;
 pub mod triangle;
 
-pub use circle::*;
 pub use ellipse::*;
 pub use line::*;
 pub use point::*;
@@ -107,7 +104,7 @@ impl PixState {
         Ok(self.renderer.triangle(&tri.into(), s.fill, s.stroke)?)
     }
 
-    /// Draw a [Square](Rect) to the current canvas.
+    /// Draw a square [Rect] to the current canvas.
     pub fn square<R>(&mut self, square: R) -> PixResult<()>
     where
         R: Into<Rect<i32>>,
@@ -168,12 +165,12 @@ impl PixState {
         Ok(self.renderer.polygon(points, s.fill, s.stroke)?)
     }
 
-    /// Draw a [Circle] to the current canvas.
+    /// Draw a circle [Ellipse] to the current canvas.
     pub fn circle<C>(&mut self, circle: C) -> PixResult<()>
     where
-        C: Into<Circle<i32>>,
+        C: Into<Ellipse<i32>>,
     {
-        self.ellipse(circle.into())
+        self.ellipse(circle)
     }
 
     /// Draw a [Ellipse] to the current canvas.

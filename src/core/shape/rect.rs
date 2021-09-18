@@ -32,7 +32,8 @@ use num_traits::AsPrimitive;
 use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut};
 
-/// A `Rectangle` positioned at `(x, y)` with `width` and `height`.
+/// A `Rectangle` positioned at `(x, y)` with `width` and `height`. A square is a `Rectangle` where
+/// `width` and `height` are equal.
 ///
 /// Please see the [module-level documentation] for examples.
 ///
@@ -41,7 +42,7 @@ use std::ops::{Deref, DerefMut};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Rect<T = i32>([T; 4]);
 
-/// Constructs a `Rect<T>` at position `(x, y)` with `width` and `height`.
+/// Constructs a `Rect` at position `(x, y)` with `width` and `height`.
 ///
 /// ```
 /// # use pix_engine::prelude::*;
@@ -71,7 +72,7 @@ macro_rules! rect {
     };
 }
 
-/// Constructs a square `Rect<T>` at position `(x, y)` with the same `width` and `height`.
+/// Constructs a square `Rect` at position `(x, y)` with the same `width` and `height`.
 ///
 /// ```
 /// # use pix_engine::prelude::*;
@@ -99,12 +100,12 @@ macro_rules! square {
 }
 
 impl<T> Rect<T> {
-    /// Constructs a `Rect<T>` at position `(x, y)` with `width` and `height`.
+    /// Constructs a `Rect` at position `(x, y)` with `width` and `height`.
     pub const fn new(x: T, y: T, width: T, height: T) -> Self {
         Self([x, y, width, height])
     }
 
-    /// Constructs a square `Rect<T>` at position `(x, y)` with `size`.
+    /// Constructs a square `Rect` at position `(x, y)` with `size`.
     pub fn square(x: T, y: T, size: T) -> Self
     where
         T: Copy,
@@ -114,18 +115,18 @@ impl<T> Rect<T> {
 }
 
 impl<T: Num> Rect<T> {
-    /// Constructs a `Rect<T>` at position [Point] with `width` and `height`.
+    /// Constructs a `Rect` at position [Point] with `width` and `height`.
     pub fn with_position<P: Into<Point<T, 2>>>(p: P, width: T, height: T) -> Self {
         let p = p.into();
         Self::new(p.x(), p.y(), width, height)
     }
 
-    /// Constructs a square `Rect<T>` at position [Point] with `size`.
+    /// Constructs a square `Rect` at position [Point] with `size`.
     pub fn square_with_position<P: Into<Point<T, 2>>>(p: P, size: T) -> Self {
         Self::with_position(p, size, size)
     }
 
-    /// Constructs a `Rect<T>` by providing top-left and bottom-right [Point]s.
+    /// Constructs a `Rect` by providing top-left and bottom-right [Point]s.
     ///
     /// # Panics
     ///
@@ -147,7 +148,7 @@ impl<T: Num> Rect<T> {
         Self::new(p1.x(), p1.y(), width, height)
     }
 
-    /// Constructs a `Rect<T>` centered at position `(x, y)` with `width` and `height`.
+    /// Constructs a `Rect` centered at position `(x, y)` with `width` and `height`.
     ///
     /// # Example
     ///
@@ -162,8 +163,7 @@ impl<T: Num> Rect<T> {
         Self::new(p.x() - width / two, p.y() - height / two, width, height)
     }
 
-    /// Constructs a square `Rect<T>` centered at position `(x, y)` with the same `width` and
-    /// `height`.
+    /// Constructs a square `Rect` centered at position `(x, y)` with `size`.
     ///
     /// # Example
     ///
@@ -175,58 +175,59 @@ impl<T: Num> Rect<T> {
     pub fn square_from_center<P: Into<Point<T, 2>>>(p: P, size: T) -> Self {
         let p = p.into();
         let two = T::one() + T::one();
-        Self::new(p.x() - size / two, p.y() - size / two, size, size)
+        let offset = size / two;
+        Self::new(p.x() - offset, p.y() - offset, size, size)
     }
 
     /// Returns the `x-coordinate` of the rectangle.
-    #[inline(always)]
+    #[inline]
     pub fn x(&self) -> T {
         self.0[0]
     }
 
     /// Sets the `x-coordinate` of the rectangle.
-    #[inline(always)]
+    #[inline]
     pub fn set_x(&mut self, x: T) {
         self.0[0] = x;
     }
 
     /// Returns the `y-coordinate` of the rectangle.
-    #[inline(always)]
+    #[inline]
     pub fn y(&self) -> T {
         self.0[1]
     }
 
     /// Sets the `y-coordinate` of the rectangle.
-    #[inline(always)]
+    #[inline]
     pub fn set_y(&mut self, y: T) {
         self.0[1] = y;
     }
 
     /// Returns the `width` of the rectangle.
-    #[inline(always)]
+    #[inline]
     pub fn width(&self) -> T {
         self.0[2]
     }
 
     /// Sets the `width` of the rectangle.
-    #[inline(always)]
+    #[inline]
     pub fn set_width(&mut self, width: T) {
         self.0[2] = width;
     }
 
     /// Returns the `height` of the rectangle.
-    #[inline(always)]
+    #[inline]
     pub fn height(&self) -> T {
         self.0[3]
     }
 
     /// Sets the `height` of the rectangle.
-    #[inline(always)]
+    #[inline]
     pub fn set_height(&mut self, height: T) {
         self.0[3] = height;
     }
 
-    /// Convert `Rect<T>` to another primitive type using the `as` operator.
+    /// Convert `Rect<T>` to `Rect<U>` using the `as` operator.
     #[inline]
     pub fn as_<U>(self) -> Rect<U>
     where
@@ -428,12 +429,14 @@ where
 
 impl<T> Deref for Rect<T> {
     type Target = [T; 4];
+    /// Deref `Rect` to `&[T; 4]`.
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
 impl<T> DerefMut for Rect<T> {
+    /// Deref `Rect` to `&mut [T; 4]`.
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
@@ -443,34 +446,35 @@ macro_rules! impl_from_as {
     ($($from:ty),* => $to:ty) => {
         $(
             impl From<Rect<$from>> for Rect<$to> {
+                /// Convert [`Rect<U>`] to [`Rect<T>`].
                 fn from(rect: Rect<$from>) -> Self {
                     Self::new(rect.x() as $to, rect.y() as $to, rect.width() as $to, rect.height() as $to)
                 }
             }
 
-            /// Convert `[x, y, size]` to [Rect].
             impl From<[$from; 3]> for Rect<$to> {
+                /// Convert `[T; 3]` to [Rect].
                 fn from([x, y, size]: [$from; 3]) -> Self {
                     Self::square(x as $to, y as $to, size as $to)
                 }
             }
 
-            /// Convert `&[x, y, size]` to [Rect].
             impl From<&[$from; 3]> for Rect<$to> {
+                /// Convert `&[T; 3]` to [Rect].
                 fn from(&[x, y, size]: &[$from; 3]) -> Self {
                     Self::square(x as $to, y as $to, size as $to)
                 }
             }
 
-            /// Convert `[x, y, width, height]` to [Rect].
             impl From<[$from; 4]> for Rect<$to> {
+                /// Convert `[T; 4]` to [Rect].
                 fn from([x, y, width, height]: [$from; 4]) -> Self {
                     Self::new(x as $to, y as $to, width as $to, height as $to)
                 }
             }
 
-            /// Convert `&[x, y, width, height]` to [Rect].
             impl From<&[$from; 4]> for Rect<$to> {
+                /// Convert `&[T; 4]` to [Rect].
                 fn from(&[x, y, width, height]: &[$from; 4]) -> Self {
                     Self::new(x as $to, y as $to, width as $to, height as $to)
                 }
@@ -485,29 +489,29 @@ impl_from_as!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize, f32 => f64);
 macro_rules! impl_from_arr {
     ($($from:ty),* => $zero:expr) => {
         $(
-            /// Convert `[x, y, size]` to [Rect].
             impl From<[$from; 3]> for Rect<$from> {
+                /// Convert `[T; 3]` to [Rect].
                 fn from([x, y, size]: [$from; 3]) -> Self {
                     Self::square(x, y, size)
                 }
             }
 
-            /// Convert `&[x, y, size]` to [Rect].
             impl From<&[$from; 3]> for Rect<$from> {
+                /// Convert `&[T; 3]` to [Rect].
                 fn from(&[x, y, size]: &[$from; 3]) -> Self {
                     Self::square(x, y, size)
                 }
             }
 
-            /// Convert `[x, y, width, height]` to [Rect].
             impl From<[$from; 4]> for Rect<$from> {
+                /// Convert `[T; 4]` to [Rect].
                 fn from([x, y, width, height]: [$from; 4]) -> Self {
                     Self::new(x, y, width, height)
                 }
             }
 
-            /// Convert `&[x, y, width, height]` to [Rect].
             impl From<&[$from; 4]> for Rect<$from> {
+                /// Convert `&[T; 4]` to [Rect].
                 fn from(&[x, y, width, height]: &[$from; 4]) -> Self {
                     Self::new(x, y, width, height)
                 }
@@ -520,14 +524,14 @@ impl_from_arr!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize => 0);
 impl_from_arr!(f32, f64 => 0.0);
 
 impl<T: Num> From<&mut Rect<T>> for Rect<T> {
-    /// Convert `&mut Rect<T>` to [Rect].
+    /// Convert `&mut Rect` to [Rect].
     fn from(rect: &mut Rect<T>) -> Self {
         *rect
     }
 }
 
 impl<T: Num> From<&Rect<T>> for Rect<T> {
-    /// Convert `&Rect<T>` to [Rect].
+    /// Convert `&Rect` to [Rect].
     fn from(rect: &Rect<T>) -> Self {
         *rect
     }

@@ -75,49 +75,49 @@ impl<T: Num> Sphere<T> {
     }
 
     /// Returns the `x-coordinate` of the sphere.
-    #[inline(always)]
+    #[inline]
     pub fn x(&self) -> T {
         self.0[0]
     }
 
     /// Sets the `x-coordinate` of the sphere.
-    #[inline(always)]
+    #[inline]
     pub fn set_x(&mut self, x: T) {
         self.0[0] = x;
     }
 
     /// Returns the `y-coordinate` of the sphere.
-    #[inline(always)]
+    #[inline]
     pub fn y(&self) -> T {
         self.0[1]
     }
 
     /// Sets the `y-coordinate` of the sphere.
-    #[inline(always)]
+    #[inline]
     pub fn set_y(&mut self, y: T) {
         self.0[1] = y;
     }
 
     /// Returns the `z-coordinate` of the sphere.
-    #[inline(always)]
+    #[inline]
     pub fn z(&self) -> T {
         self.0[2]
     }
 
     /// Sets the `z-coordinate` of the sphere.
-    #[inline(always)]
+    #[inline]
     pub fn set_z(&mut self, z: T) {
         self.0[2] = z;
     }
 
     /// Returns the `radius` of the sphere.
-    #[inline(always)]
+    #[inline]
     pub fn radius(&self) -> T {
         self.0[3]
     }
 
     /// Sets the `radius` of the sphere.
-    #[inline(always)]
+    #[inline]
     pub fn set_radius(&mut self, radius: T) {
         self.0[3] = radius;
     }

@@ -1,25 +1,29 @@
-//! A shape type representing ellipses used for drawing.
+//! A shape type representing circles and ellipses used for drawing.
 //!
 //! # Examples
 //!
-//! You can create an [Ellipse] using [Ellipse::new]::new]:
+//! You can create an [Ellipse] or circle using [Ellipse::new]::new] or [Ellipse::circle]:
 //!
 //! ```
 //! use pix_engine::prelude::*;
 //!
 //! let e = Ellipse::new(10, 20, 100, 200);
+//! let c = Ellipse::circle(10, 20, 100);
 //! ```
 //!
-//! ...or by using the [ellipse!] macro:
+//! ...or by using the [ellipse!] [circle!] macros:
 //!
 //! ```
 //! use pix_engine::prelude::*;
 //!
 //! let e = ellipse!(10, 20, 100, 200);
+//! let c = circle!(10, 20, 100);
 //!
 //! // using a point
 //! let e = ellipse!([10, 20], 100, 200);
 //! let e = ellipse!(point![10, 20], 100, 200);
+//! let c = circle!([10, 20], 100);
+//! let c = circle!(point![10, 20], 100);
 //! ```
 
 use crate::prelude::*;
@@ -28,7 +32,8 @@ use num_traits::AsPrimitive;
 use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut};
 
-/// An `Ellipse` positioned at `(x, y)`, with `width` and `height`.
+/// An `Ellipse` positioned at `(x, y)`, with `width` and `height`. A circle is an `Ellipse` where
+/// `width` and `height` are equal.
 ///
 /// Please see the [module-level documentation] for examples.
 ///
@@ -37,7 +42,7 @@ use std::ops::{Deref, DerefMut};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Ellipse<T = i32>([T; 4]);
 
-/// Constructs an `Ellipse<T>` at position `(x, y)` with `width` and `height`.
+/// Constructs an `Ellipse` at position `(x, y)` with `width` and `height`.
 ///
 /// ```
 /// # use pix_engine::prelude::*;
@@ -67,21 +72,60 @@ macro_rules! ellipse {
     };
 }
 
+/// # Constructs a circle `Ellipse` at position `(x, y`) with `radius`.
+///
+/// ```
+/// # use pix_engine::prelude::*;
+/// let p = point!(10, 20);
+/// let c = circle!(p, 100);
+/// assert_eq!(c.x(), 10);
+/// assert_eq!(c.y(), 20);
+/// assert_eq!(c.radius(), 100);
+///
+/// let c = circle!(10, 20, 100);
+/// assert_eq!(c.x(), 10);
+/// assert_eq!(c.y(), 20);
+/// assert_eq!(c.radius(), 100);
+/// ```
+#[macro_export]
+macro_rules! circle {
+    ($p:expr, $r:expr$(,)?) => {
+        $crate::prelude::Ellipse::circle_with_position($p, $r)
+    };
+    ($x:expr, $y:expr, $r:expr$(,)?) => {
+        $crate::prelude::Ellipse::circle($x, $y, $r)
+    };
+}
+
 impl<T> Ellipse<T> {
-    /// Constructs an `Ellipse<T>` at position `(x, y)` with `width` and `height`.
+    /// Constructs an `Ellipse` at position `(x, y)` with `width` and `height`.
     pub const fn new(x: T, y: T, width: T, height: T) -> Self {
         Self([x, y, width, height])
+    }
+
+    /// Constructs a circle `Ellipse` at position `(x, y)` with `radius`.
+    pub fn circle(x: T, y: T, radius: T) -> Self
+    where
+        T: Copy,
+    {
+        Self::new(x, y, radius, radius)
     }
 }
 
 impl<T: Num> Ellipse<T> {
-    /// Constructs an `Ellipse<T>` at position [Point] with `width` and `height`.
+    /// Constructs an `Ellipse` at position [Point] with `width` and `height`.
     pub fn with_position<P: Into<Point<T, 2>>>(p: P, width: T, height: T) -> Self {
         let p = p.into();
         Self::new(p.x(), p.y(), width, height)
     }
 
-    /// Constructs a `Ellipse<T>` centered at position `(x, y)` with `width` and `height`.
+    /// Constructs a circle `Ellipse` at position [Point] with `radius`.
+    pub fn circle_with_position<P: Into<Point<T, 2>>>(p: P, radius: T) -> Self {
+        let p = p.into();
+        Self::new(p.x(), p.y(), radius, radius)
+    }
+
+    /// Constructs an `Ellipse` centered at position `(x, y)` with `width` and `height`.
     ///
     /// # Example
     ///
@@ -96,55 +140,84 @@ impl<T: Num> Ellipse<T> {
         Self::new(p.x() - width / two, p.y() - height / two, width, height)
     }
 
+    /// Constructs a circle `Ellipse` centered at position `(x, y)` with `radius`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Ellipse::circle_from_center([50, 50], 100);
+    /// assert_eq!(c.values(), [0, 0, 100, 100]);
+    /// ```
+    pub fn circle_from_center<P: Into<Point<T, 2>>>(p: P, radius: T) -> Self {
+        let p = p.into();
+        let two = T::one() + T::one();
+        let offset = radius / two;
+        Self::new(p.x() - offset, p.y() - offset, radius, radius)
+    }
+
     /// Returns the `x-coordinate` of the ellipse.
-    #[inline(always)]
+    #[inline]
     pub fn x(&self) -> T {
         self.0[0]
     }
 
     /// Sets the `x-coordinate` of the ellipse.
-    #[inline(always)]
+    #[inline]
     pub fn set_x(&mut self, x: T) {
         self.0[0] = x;
     }
 
     /// Returns the `y-coordinate` of the ellipse.
-    #[inline(always)]
+    #[inline]
     pub fn y(&self) -> T {
         self.0[1]
     }
 
     /// Sets the `y-coordinate` of the ellipse.
-    #[inline(always)]
+    #[inline]
     pub fn set_y(&mut self, y: T) {
         self.0[1] = y;
     }
 
     /// Returns the `width` of the ellipse.
-    #[inline(always)]
+    #[inline]
     pub fn width(&self) -> T {
         self.0[2]
     }
 
     /// Sets the `width` of the ellipse.
-    #[inline(always)]
+    #[inline]
     pub fn set_width(&mut self, width: T) {
         self.0[2] = width;
     }
 
     /// Returns the `height` of the ellipse.
-    #[inline(always)]
+    #[inline]
     pub fn height(&self) -> T {
         self.0[3]
     }
 
     /// Sets the `height` of the ellipse.
-    #[inline(always)]
+    #[inline]
     pub fn set_height(&mut self, height: T) {
         self.0[3] = height;
     }
 
-    /// Convert `Ellipse<T>` to another primitive type using the `as` operator.
+    /// Returns the `radius` of the circle.
+    #[inline]
+    pub fn radius(&self) -> T {
+        self.0[2]
+    }
+
+    /// Sets the `width` of the circle.
+    #[inline]
+    pub fn set_radius(&mut self, radius: T) {
+        self.0[2] = radius;
+        self.0[3] = radius;
+    }
+
+    /// Convert `Ellipse` to another primitive type using the `as` operator.
     #[inline]
     pub fn as_<U>(self) -> Ellipse<U>
     where
@@ -281,7 +354,7 @@ impl<T: Num> Contains for Ellipse<T> {
         (px * px) / (rx * rx) + (py * py) / (ry * ry) <= T::one()
     }
 
-    /// Returns whether this ellipse intersects with another ellipse.
+    /// Returns whether this ellipse completely contains another ellipse.
     fn contains_shape<O>(&self, other: O) -> bool
     where
         O: Into<Self::Shape>,
@@ -292,6 +365,36 @@ impl<T: Num> Contains for Ellipse<T> {
         let rx = self.width() + other.width();
         let ry = self.height() + other.height();
         (px * px) / (rx * rx) + (py * py) / (ry * ry) <= T::one()
+    }
+}
+
+impl<T: Num> Intersects for Ellipse<T> {
+    type Type = T;
+    type Shape = Ellipse<Self::Type>;
+
+    /// Returns the closest intersection point with a given line and distance along the line or
+    /// `None` if there is no intersection.
+    fn intersects_line<L>(&self, _line: L) -> Option<(Point<Scalar, 2>, Scalar)>
+    where
+        L: Into<Line<Self::Type, 2>>,
+    {
+        todo!("ellipse intersects_line")
+    }
+
+    /// Returns whether this circle intersects with another circle.
+    fn intersects_shape<O>(&self, other: O) -> bool
+    where
+        O: Into<Self::Shape>,
+    {
+        let other = other.into();
+        let px = self.x() - other.x();
+        let py = self.y() - other.y();
+        if self.width() == self.height() {
+            let r = self.width() + other.width();
+            (px * px + py * py) <= r * r
+        } else {
+            todo!("ellipse intersects_shape")
+        }
     }
 }
 
@@ -308,55 +411,110 @@ where
 
 impl<T> Deref for Ellipse<T> {
     type Target = [T; 4];
+    /// Deref `Ellipse` to `&[T; 4]`.
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
 impl<T> DerefMut for Ellipse<T> {
+    /// Deref `Ellipse` to `&mut [T; 4]`.
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
 }
 
 impl<T: Num> From<&mut Ellipse<T>> for Ellipse<T> {
-    /// Convert `&mut Ellipse<T>` to [Ellipse].
+    /// Convert `&mut Ellipse` to [Ellipse].
     fn from(ellipse: &mut Ellipse<T>) -> Self {
         *ellipse
     }
 }
 
 impl<T: Num> From<&Ellipse<T>> for Ellipse<T> {
-    /// Convert `&Ellipse<T>` to [Ellipse].
+    /// Convert `&Ellipse` to [Ellipse].
     fn from(ellipse: &Ellipse<T>) -> Self {
         *ellipse
     }
 }
 
-impl<T: Num, U: Num + Into<T>> From<[U; 4]> for Ellipse<T> {
-    /// Convert `[x, y, width, height]` to [Ellipse].
-    fn from([x, y, width, height]: [U; 4]) -> Self {
-        Self::new(x.into(), y.into(), width.into(), height.into())
-    }
+macro_rules! impl_from_as {
+    ($($from:ty),* => $to:ty) => {
+        $(
+            impl From<Ellipse<$from>> for Ellipse<$to> {
+                /// Convert [`Ellipse<U>`] to [`Ellipse<T>`].
+                fn from(rect: Ellipse<$from>) -> Self {
+                    Self::new(rect.x() as $to, rect.y() as $to, rect.width() as $to, rect.height() as $to)
+                }
+            }
+
+            impl From<[$from; 3]> for Ellipse<$to> {
+                /// Convert `[T; 3]` to [Ellipse].
+                fn from([x, y, size]: [$from; 3]) -> Self {
+                    Self::circle(x as $to, y as $to, size as $to)
+                }
+            }
+
+            impl From<&[$from; 3]> for Ellipse<$to> {
+                /// Convert `&[T; 3]` to [Ellipse].
+                fn from(&[x, y, size]: &[$from; 3]) -> Self {
+                    Self::circle(x as $to, y as $to, size as $to)
+                }
+            }
+
+            impl From<[$from; 4]> for Ellipse<$to> {
+                /// Convert `[T; 4]` to [Ellipse].
+                fn from([x, y, width, height]: [$from; 4]) -> Self {
+                    Self::new(x as $to, y as $to, width as $to, height as $to)
+                }
+            }
+
+            impl From<&[$from; 4]> for Ellipse<$to> {
+                /// Convert `&[T; 4]` to [Ellipse].
+                fn from(&[x, y, width, height]: &[$from; 4]) -> Self {
+                    Self::new(x as $to, y as $to, width as $to, height as $to)
+                }
+            }
+        )*
+    };
 }
 
-impl<T: Num, U: Num + Into<T>> From<&[U; 4]> for Ellipse<T> {
-    /// Convert `&[x, y, width, height]` to [Ellipse].
-    fn from(&[x, y, width, height]: &[U; 4]) -> Self {
-        Self::new(x.into(), y.into(), width.into(), height.into())
-    }
+impl_from_as!(i8, u8, i16, u16, u32, i64, u64, isize, usize, f32, f64 => i32);
+impl_from_as!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize, f32 => f64);
+
+macro_rules! impl_from_arr {
+    ($($from:ty),* => $zero:expr) => {
+        $(
+            impl From<[$from; 3]> for Ellipse<$from> {
+                /// Convert `[T; 3]` to [Ellipse].
+                fn from([x, y, size]: [$from; 3]) -> Self {
+                    Self::circle(x, y, size)
+                }
+            }
+
+            impl From<&[$from; 3]> for Ellipse<$from> {
+                /// Convert `&[T; 3]` to [Ellipse].
+                fn from(&[x, y, size]: &[$from; 3]) -> Self {
+                    Self::circle(x, y, size)
+                }
+            }
+
+            impl From<[$from; 4]> for Ellipse<$from> {
+                /// Convert `[T; 4]` to [Ellipse].
+                fn from([x, y, width, height]: [$from; 4]) -> Self {
+                    Self::new(x, y, width, height)
+                }
+            }
+
+            impl From<&[$from; 4]> for Ellipse<$from> {
+                /// Convert `&[T; 4]` to [Ellipse].
+                fn from(&[x, y, width, height]: &[$from; 4]) -> Self {
+                    Self::new(x, y, width, height)
+                }
+            }
+        )*
+    };
 }
 
-impl<T: Num> From<Circle<T>> for Ellipse<T> {
-    /// Convert [Circle] to [Ellipse].
-    fn from(c: Circle<T>) -> Self {
-        Self::new(c.x(), c.y(), c.radius(), c.radius())
-    }
-}
-
-/// Convert &[Circle] to [Ellipse].
-impl<T: Num> From<&Circle<T>> for Ellipse<T> {
-    fn from(c: &Circle<T>) -> Self {
-        Self::new(c.x(), c.y(), c.radius(), c.radius())
-    }
-}
+impl_from_arr!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize => 0);
+impl_from_arr!(f32, f64 => 0.0);
