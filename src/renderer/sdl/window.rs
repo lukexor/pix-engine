@@ -57,7 +57,7 @@ impl Window for Renderer {
         Ok(self.canvas.window_mut().set_title(title)?)
     }
 
-    #[inline(always)]
+    #[inline]
     fn set_fps_title(&mut self, fps: usize) -> Result<()> {
         Ok(self
             .canvas

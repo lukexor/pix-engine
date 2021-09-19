@@ -355,10 +355,6 @@ where
     T: Copy,
 {
     /// Draw point to the current [p.x()State] canvas.
-    ///
-    /// # Example
-    ///
-    /// TODO
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.point(*self)
     }

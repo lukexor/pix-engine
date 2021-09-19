@@ -57,8 +57,8 @@ pub mod prelude {
         draw::Draw,
         engine::PixEngine,
         shape::{
-            Circle, Contains, Ellipse, Intersects, Line, LineF2, LineI2, Point, PointF2, PointI2,
-            Quad, QuadF2, QuadI2, Rect, Tri, TriF2, TriI2,
+            Contains, Ellipse, Intersects, Line, LineF2, LineI2, Point, PointF2, PointI2, Quad,
+            QuadF2, QuadI2, Rect, Tri, TriF2, TriI2,
         },
         state::{
             settings::{AngleMode, ArcMode, BlendMode, DrawMode, FontStyle},

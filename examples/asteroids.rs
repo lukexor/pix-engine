@@ -35,7 +35,7 @@ impl SpaceObj {
     }
 
     fn new_asteroid(ship: &SpaceObj, mut pos: PointF2) -> Self {
-        if Circle::with_position(ship.pos, ASTEROID_SAFE_RADIUS).contains_point(pos) {
+        if Ellipse::circle_with_position(ship.pos, ASTEROID_SAFE_RADIUS).contains_point(pos) {
             pos -= ship.pos
         }
         let mut vel = Vector::random();
@@ -45,19 +45,19 @@ impl SpaceObj {
     }
 
     fn contains_point(&self, p: PointF2) -> bool {
-        Circle::from(self).contains_point(p)
+        Ellipse::from(self).contains_point(p)
     }
 }
 
-impl From<SpaceObj> for Circle {
+impl From<SpaceObj> for Ellipse {
     fn from(obj: SpaceObj) -> Self {
-        Self::with_position(obj.pos, obj.size as i32)
+        Self::circle_with_position(obj.pos, obj.size as i32)
     }
 }
 
-impl From<&SpaceObj> for Circle {
+impl From<&SpaceObj> for Ellipse {
     fn from(obj: &SpaceObj) -> Self {
-        Self::with_position(obj.pos, obj.size as i32)
+        Self::circle_with_position(obj.pos, obj.size as i32)
     }
 }
 

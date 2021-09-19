@@ -78,13 +78,13 @@ where
     T: Copy,
 {
     /// Returns the first point of the quad.
-    #[inline(always)]
+    #[inline]
     pub fn p1(&self) -> Point<T, N> {
         self.0[0]
     }
 
     /// Sets the first point of the quad.
-    #[inline(always)]
+    #[inline]
     pub fn set_p1<P>(&mut self, p: P)
     where
         P: Into<Point<T, N>>,
@@ -93,13 +93,13 @@ where
     }
 
     /// Returns the second point of the quad.
-    #[inline(always)]
+    #[inline]
     pub fn p2(&self) -> Point<T, N> {
         self.0[1]
     }
 
     /// Sets the second point of the quad.
-    #[inline(always)]
+    #[inline]
     pub fn set_p2<P>(&mut self, p: P)
     where
         P: Into<Point<T, N>>,
@@ -108,13 +108,13 @@ where
     }
 
     /// Returns the third point of the quad.
-    #[inline(always)]
+    #[inline]
     pub fn p3(&self) -> Point<T, N> {
         self.0[2]
     }
 
     /// Sets the third point of the quad.
-    #[inline(always)]
+    #[inline]
     pub fn set_p3<P>(&mut self, p: P)
     where
         P: Into<Point<T, N>>,
@@ -123,13 +123,13 @@ where
     }
 
     /// Returns the fourth point of the quad.
-    #[inline(always)]
+    #[inline]
     pub fn p4(&self) -> Point<T, N> {
         self.0[3]
     }
 
     /// Sets the fourth point of the quad.
-    #[inline(always)]
+    #[inline]
     pub fn set_p4<P>(&mut self, p: P)
     where
         P: Into<Point<T, N>>,

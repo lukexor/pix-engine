@@ -100,22 +100,22 @@ impl PixState {
 
     /// The dimensions of the primary window as `(width, height)`.
     pub fn dimensions(&self) -> (u32, u32) {
-        // SAFETY: Primary window_id should always exist
         let window_id = self.window_id();
+        // SAFETY: Primary window_id should always exist
         self.renderer.dimensions(window_id).unwrap()
     }
 
     /// Set the dimensions of the primary window from `(width, height)`.
     pub fn set_dimensions(&mut self, dimensions: (u32, u32)) {
-        // SAFETY: Primary window_id should always exist
         let window_id = self.window_id();
+        // SAFETY: Primary window_id should always exist
         self.renderer.set_dimensions(window_id, dimensions).unwrap()
     }
 
     /// The width of the primary window.
     pub fn width(&self) -> u32 {
-        // SAFETY: Primary window_id should always exist
         let window_id = self.window_id();
+        // SAFETY: Primary window_id should always exist
         let (width, _) = self.renderer.dimensions(window_id).unwrap();
         width
     }

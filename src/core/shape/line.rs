@@ -98,10 +98,6 @@ where
     }
 
     /// Convert `Line<T, N>` to `Line<U, N>` using the `as` operator.
-    ///
-    /// # Example
-    ///
-    /// TODO
     #[inline]
     pub fn as_<U>(self) -> Line<U, N>
     where
@@ -155,10 +151,6 @@ where
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
-    ///
-    /// # Example
-    ///
-    /// TODO
     #[allow(clippy::many_single_char_names)]
     fn intersects_line<L>(&self, other: L) -> Option<(Point<Scalar, 2>, Scalar)>
     where
@@ -183,10 +175,6 @@ where
     }
 
     /// Returns whether this line intersections with another line
-    ///
-    /// # Example
-    ///
-    /// TODO
     fn intersects_shape<O>(&self, other: O) -> bool
     where
         O: Into<Self::Shape>,
@@ -201,10 +189,6 @@ where
     T: Copy,
 {
     /// Draw `Line` to the current [PixState] canvas.
-    ///
-    /// # Example
-    ///
-    /// TODO
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.line(*self)
     }
