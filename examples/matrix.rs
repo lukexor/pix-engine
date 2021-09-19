@@ -28,12 +28,12 @@ struct Glyph {
 
 impl Glyph {
     const FONT: &'static str = "assets/UnPilgiBold.ttf";
-    const SIZE: u32 = 16;
+    const SIZE: u32 = 14;
     const COLOR: [u8; 3] = [0, 255, 70];
     const COLOR_DARK: [u8; 3] = [0, 155, 00];
     const HIGHLIGHT: [u8; 3] = [200, 255, 200];
     const MORPH_PROB: usize = 10;
-    const MORPH_RANGE: (usize, usize) = (2, 20);
+    const MORPH_RANGE: (usize, usize) = (2, 40);
 
     fn new() -> Self {
         Self {
@@ -70,11 +70,11 @@ struct Stream {
 }
 
 impl Stream {
-    const SPEED_RANGE: (i32, i32) = (6, 10);
-    const EMPTY_PROB: usize = 5;
-    const HEIGHT_RANGE: (usize, usize) = (3, 25);
-    const START_RANGE: (i32, i32) = (-2000, -200);
-    const SPAWN_RANGE: (i32, i32) = (-500, -200);
+    const SPEED_RANGE: (i32, i32) = (3, 10);
+    const EMPTY_PROB: usize = 3;
+    const HEIGHT_RANGE: (usize, usize) = (5, 25);
+    const START_RANGE: (i32, i32) = (-1000, -100);
+    const SPAWN_RANGE: (i32, i32) = (-100, 0);
     const HIGHLIGHT_PROB: usize = 25;
 
     fn new(x: i32) -> Self {
@@ -101,8 +101,8 @@ impl Stream {
     }
 
     fn should_spawn(&self) -> bool {
-        let height_threshold = HEIGHT as i32 - 300;
-        !self.spawned && self.y > height_threshold
+        let height_threshold = HEIGHT as i32 / 4;
+        !self.spawned && (self.y - self.height as i32) > height_threshold
     }
 
     fn randomize(&mut self) {
