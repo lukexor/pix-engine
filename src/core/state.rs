@@ -43,12 +43,12 @@ impl PixState {
     }
 
     /// Returns the current mouse position coordinates as `(x, y)`.
-    pub fn mouse_pos(&self) -> Point<i32, 2> {
+    pub fn mouse_pos(&self) -> PointI2 {
         self.mouse.pos
     }
 
     /// Returns the previous mouse position coordinates last frame as `(x, y)`.
-    pub fn pmouse_pos(&self) -> Point<i32, 2> {
+    pub fn pmouse_pos(&self) -> PointI2 {
         self.pmouse.pos
     }
 
@@ -112,7 +112,7 @@ impl PixState {
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub(crate) struct MouseState {
-    pub(crate) pos: Point<i32, 2>,
+    pub(crate) pos: PointI2,
     pub(crate) pressed: HashSet<Mouse>,
     pub(crate) clicked: HashSet<Mouse>,
     pub(crate) last_clicked: HashMap<Mouse, Instant>,

@@ -19,7 +19,7 @@ impl TextureRenderer for Renderer {
         let texture =
             self.texture_creator
                 .create_texture_target(format.map(|f| f.into()), width, height)?;
-        Ok(Texture::new(texture))
+        Ok(Texture::new(texture, width, height, format))
     }
 
     /// Update texture with pixel data.

@@ -11,11 +11,56 @@ pub type TextureId = usize;
 /// `Texture`.
 pub struct Texture {
     pub(crate) inner: RendererTexture,
+    width: u32,
+    height: u32,
+    format: Option<PixelFormat>,
 }
 
 impl Texture {
-    pub(crate) fn new(texture: RendererTexture) -> Self {
-        Self { inner: texture }
+    /// Returns the `Texture` width.
+    #[inline]
+    pub fn width(&self) -> u32 {
+        self.width
+    }
+
+    /// Returns the `Texture` height.
+    #[inline]
+    pub fn height(&self) -> u32 {
+        self.height
+    }
+
+    /// Returns the `Texture` dimensions as `(width, height)`.
+    #[inline]
+    pub fn dimensions(&self) -> (u32, u32) {
+        (self.width, self.height)
+    }
+
+    /// Returns the center position as [Point].
+    #[inline]
+    pub fn center(&self) -> PointI2 {
+        point!(self.width() as i32 / 2, self.height() as i32 / 2)
+    }
+
+    /// Returns the `Texture` format.
+    #[inline]
+    pub fn format(&self) -> Option<PixelFormat> {
+        self.format
+    }
+}
+
+impl Texture {
+    pub(crate) fn new(
+        texture: RendererTexture,
+        width: u32,
+        height: u32,
+        format: Option<PixelFormat>,
+    ) -> Self {
+        Self {
+            inner: texture,
+            width,
+            height,
+            format,
+        }
     }
 
     pub(crate) fn inner(&self) -> &RendererTexture {
@@ -29,7 +74,7 @@ impl Texture {
 
 /// Trait for texture operations on the underlying `Renderer`.
 pub(crate) trait TextureRenderer {
-    /// Create a texture to draw to.
+    /// Create a `Texture` to draw to.
     fn create_texture(
         &mut self,
         width: u32,

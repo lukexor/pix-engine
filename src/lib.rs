@@ -44,6 +44,7 @@ pub mod image;
 pub mod math;
 pub mod gui;
 pub mod renderer;
+pub mod transform;
 
 mod utils;
 
@@ -78,6 +79,7 @@ pub mod prelude {
     };
     #[cfg(not(target_arch = "wasm32"))]
     pub use renderer::DEFAULT_ASSET_DIR;
+    pub use transform::Flipped;
     // Shape macros
     pub use {circle, ellipse, point, rect, square};
     // Math macros

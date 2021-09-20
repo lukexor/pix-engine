@@ -16,37 +16,46 @@ impl Textures {
 impl AppState for Textures {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         s.background(BLACK)?;
-        self.textures
-            .push(s.create_texture(WIDTH / 2, HEIGHT, None)?);
-        self.textures
-            .push(s.create_texture(WIDTH / 2, HEIGHT, None)?);
-        s.with_texture(&mut self.textures[0], |s: &mut PixState| -> PixResult<()> {
-            s.background(GRAY)?;
-            s.fill(GREEN);
-            s.no_stroke();
-            s.rect([10, 10, 100, 100])?;
-            Ok(())
-        })?;
-        s.with_texture(&mut self.textures[1], |s: &mut PixState| -> PixResult<()> {
-            s.background(YELLOW)?;
-            s.fill(BLUE);
-            s.text([20, 100], "Hello")?;
-            Ok(())
-        })?;
+
+        // One texture for each quadrant of the screen
+        for i in 0..4 {
+            let mut texture = s.create_texture(WIDTH / 2, HEIGHT / 2, None)?;
+
+            // Draw to each texture separately
+            let (w, h) = texture.dimensions();
+            let center = texture.center();
+            s.with_texture(&mut texture, |s: &mut PixState| -> PixResult<()> {
+                s.background(Color::random())?;
+
+                s.fill(Color::random());
+                s.no_stroke();
+                s.rect([10, 10, w as i32 - 20, h as i32 - 20])?;
+
+                s.fill(Color::random());
+                s.rect_mode(DrawMode::Center);
+                s.text(center, &format!("Quadrant {}", i))?;
+                Ok(())
+            })?;
+
+            self.textures.push(texture);
+        }
+
         Ok(())
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.texture(
-            &self.textures[0],
-            None,
-            rect!(0, 0, WIDTH as i32 / 2, HEIGHT as i32),
-        )?;
-        s.texture(
-            &self.textures[1],
-            None,
-            rect!(WIDTH as i32 / 2, 0, WIDTH as i32 / 2, HEIGHT as i32),
-        )?;
+        for (i, texture) in self.textures.iter().enumerate() {
+            let w = texture.width() as i32;
+            let h = texture.height() as i32;
+            let pos = match i {
+                0 => point!(0, 0),
+                1 => point!(w, 0),
+                2 => point!(0, h),
+                3 => point!(w, h),
+                _ => unreachable!(),
+            };
+            s.texture(texture, None, rect!(pos.x(), pos.y(), w, h))?;
+        }
         Ok(())
     }
 }

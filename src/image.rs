@@ -154,13 +154,13 @@ impl Image {
         Self::from_bytes(info.width, info.height, &data, format)
     }
 
-    /// `Image` width.
+    /// Returns the `Image` width.
     #[inline]
     pub fn width(&self) -> u32 {
         self.width
     }
 
-    /// `Image` height.
+    /// Returns the `Image` height.
     #[inline]
     pub fn height(&self) -> u32 {
         self.height
@@ -173,7 +173,7 @@ impl Image {
     }
 
     /// Returns the center position as [Point].
-    pub fn center(&self) -> Point<i32, 2> {
+    pub fn center(&self) -> PointI2 {
         point!(self.width() as i32 / 2, self.height() as i32 / 2)
     }
 
@@ -274,36 +274,43 @@ impl PixState {
         if let DrawMode::Center = s.image_mode {
             pos -= img.center();
         };
-        Ok(self.renderer.image(&pos, img, s.image_tint)?)
+        self.image_transformed(
+            rect![pos.x(), pos.y(), img.width() as i32, img.height() as i32],
+            img,
+            0.0,
+            None,
+            None,
+        )
     }
 
-    /// Draw a resized [Image] to the current canvas.
-    pub fn image_resized<R>(&mut self, img: &Image, rect: R) -> PixResult<()>
+    /// Draw a rotated [Image] to the current canvas.
+    pub fn image_transformed<R, T, C, F>(
+        &mut self,
+        rect: R,
+        img: &Image,
+        angle: T,
+        center: C,
+        flipped: F,
+    ) -> PixResult<()>
     where
         R: Into<Rect<i32>>,
+        T: Into<Scalar>,
+        C: Into<Option<PointI2>>,
+        F: Into<Option<Flipped>>,
     {
         let s = &self.settings;
         let mut rect = rect.into();
         if let DrawMode::Center = s.image_mode {
             rect.center_on(rect.center());
-        }
-        Ok(self.renderer.image_resized(img, &rect, s.image_tint)?)
-    }
-
-    /// Draw a rotated [Image] to the current canvas.
-    pub fn image_rotated<P, T>(&mut self, position: P, img: &Image, angle: T) -> PixResult<()>
-    where
-        P: Into<PointI2>,
-        T: Into<Scalar>,
-    {
-        let s = &self.settings;
-        let mut pos = position.into();
-        if let DrawMode::Center = s.image_mode {
-            pos -= img.center();
         };
-        Ok(self
-            .renderer
-            .image_rotated(&pos, img, angle.into(), s.image_tint)?)
+        Ok(self.renderer.image(
+            rect,
+            img,
+            angle.into(),
+            center.into(),
+            flipped.into(),
+            s.image_tint,
+        )?)
     }
 }
 

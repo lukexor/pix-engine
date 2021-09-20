@@ -79,7 +79,7 @@ impl PixState {
         P: Into<PointI2>,
     {
         if let Some(stroke) = self.settings.stroke {
-            self.renderer.point(&p.into(), stroke)?;
+            self.renderer.point(p.into(), stroke)?;
         }
         Ok(())
     }
@@ -90,7 +90,7 @@ impl PixState {
         L: Into<LineI2>,
     {
         if let Some(stroke) = self.settings.stroke {
-            self.renderer.line(&line.into(), stroke)?;
+            self.renderer.line(line.into(), stroke)?;
         }
         Ok(())
     }
@@ -101,7 +101,7 @@ impl PixState {
         T: Into<TriI2>,
     {
         let s = &self.settings;
-        Ok(self.renderer.triangle(&tri.into(), s.fill, s.stroke)?)
+        Ok(self.renderer.triangle(tri.into(), s.fill, s.stroke)?)
     }
 
     /// Draw a square [Rect] to the current canvas.
@@ -131,7 +131,7 @@ impl PixState {
         if let DrawMode::Center = s.rect_mode {
             rect.center_on(rect.center());
         };
-        Ok(self.renderer.rect(&rect, s.fill, s.stroke)?)
+        Ok(self.renderer.rect(rect, s.fill, s.stroke)?)
     }
 
     /// Draw a rounded [Rectangle](Rect) to the current canvas.
@@ -147,7 +147,7 @@ impl PixState {
         };
         Ok(self
             .renderer
-            .rounded_rect(&rect, radius.into(), s.fill, s.stroke)?)
+            .rounded_rect(rect, radius.into(), s.fill, s.stroke)?)
     }
 
     /// Draw a [Quadrilateral](Quad) to the current canvas.
@@ -156,7 +156,7 @@ impl PixState {
         Q: Into<QuadI2>,
     {
         let s = &self.settings;
-        Ok(self.renderer.quad(&quad.into(), s.fill, s.stroke)?)
+        Ok(self.renderer.quad(quad.into(), s.fill, s.stroke)?)
     }
 
     /// Draw a polygon to the current canvas.
@@ -183,7 +183,7 @@ impl PixState {
         if let DrawMode::Center = s.ellipse_mode {
             ellipse.center_on(ellipse.center());
         };
-        Ok(self.renderer.ellipse(&ellipse, s.fill, s.stroke)?)
+        Ok(self.renderer.ellipse(ellipse, s.fill, s.stroke)?)
     }
 
     /// Draw an arc to the current canvas.
@@ -195,7 +195,7 @@ impl PixState {
         let s = &self.settings;
         let p = p.into();
         Ok(self.renderer.arc(
-            &p,
+            p,
             radius.into(),
             start.into(),
             end.into(),

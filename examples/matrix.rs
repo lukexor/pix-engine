@@ -7,11 +7,8 @@ const BG_COLOR: [u8; 4] = [0, 5, 0, 150];
 
 lazy_static! {
     static ref GLYPHS: Vec<char> = {
-        let mut glyphs = vec![' ', '$', '@', ':', '-', '+', '*', ';', '.', '<', '>'];
-        for i in 0..10 {
-            // SAFETY: We know 0..10 can be represented as chars
-            glyphs.push(char::from_digit(i, 10).unwrap());
-        }
+        let mut glyphs = vec!['0', '1', '2', '3', '4', '5', '7', '8', '9', 'Z', ' ', ':', '.', '"', '-', '+', '*', ';', '|', '_', '╌', '*',
+    '=', 'ç', '<', '>', '¦'];
         for i in 0..96 {
             // SAFETY: We know 0x30A0..0x3100 can be represented as chars
             glyphs.push(char::from_u32(0x30A0 + i).unwrap())
@@ -23,23 +20,20 @@ lazy_static! {
 struct Glyph {
     value: char,
     buf: [u8; 4],
-    morph_interval: usize,
 }
 
 impl Glyph {
-    const FONT: &'static str = "assets/UnPilgiBold.ttf";
-    const SIZE: u32 = 14;
-    const COLOR: [u8; 3] = [0, 255, 70];
-    const COLOR_DARK: [u8; 3] = [0, 155, 00];
-    const HIGHLIGHT: [u8; 3] = [200, 255, 200];
-    const MORPH_PROB: usize = 10;
-    const MORPH_RANGE: (usize, usize) = (2, 40);
+    const FONT: &'static str = "assets/GN-Koharuiro_Sunray.ttf";
+    const SIZE: u32 = 24;
+    const WIDTH: u32 = 16;
+    const COLOR: [u8; 3] = [94, 201, 102];
+    const HIGHLIGHT: [u8; 3] = [221, 235, 225];
+    const MORPH_PROB: usize = 1;
 
     fn new() -> Self {
         Self {
             value: Self::random_glyph(),
             buf: [0; 4],
-            morph_interval: random!(Self::MORPH_RANGE.0, Self::MORPH_RANGE.1),
         }
     }
 
@@ -48,11 +42,11 @@ impl Glyph {
     }
 
     fn draw(&mut self, s: &mut PixState, x: i32, y: i32) -> PixResult<()> {
-        if s.frame_count() % self.morph_interval == 0 && random!(0, 100) <= Self::MORPH_PROB {
+        if random!(0, 1000) <= Self::MORPH_PROB {
             self.value = Self::random_glyph();
         }
         let ch = &self.value.encode_utf8(&mut self.buf);
-        s.text([x, y], ch)?;
+        s.text_transformed([x, y], ch, 0.0, None, Flipped::Horizontal)?;
         Ok(())
     }
 }
@@ -70,12 +64,11 @@ struct Stream {
 }
 
 impl Stream {
-    const SPEED_RANGE: (i32, i32) = (3, 10);
-    const EMPTY_PROB: usize = 3;
-    const HEIGHT_RANGE: (usize, usize) = (5, 25);
-    const START_RANGE: (i32, i32) = (-1000, -100);
-    const SPAWN_RANGE: (i32, i32) = (-100, 0);
-    const HIGHLIGHT_PROB: usize = 25;
+    const SPEED_RANGE: (i32, i32) = (2, 6);
+    const HEIGHT_RANGE: (usize, usize) = (1, 25);
+    const START_RANGE: (i32, i32) = (-500, -50);
+    const SPAWN_RANGE: (i32, i32) = (-50, 0);
+    const HIGHLIGHT_PROB: usize = 30;
 
     fn new(x: i32) -> Self {
         let mut stream = Self {
@@ -96,42 +89,35 @@ impl Stream {
     fn spawn(&mut self) -> Self {
         self.spawned = true;
         let mut stream = Stream::new(self.x);
+        stream.speed = self.speed;
         stream.y = random!(Self::SPAWN_RANGE.0, Self::SPAWN_RANGE.1);
         stream
     }
 
     fn should_spawn(&self) -> bool {
-        let height_threshold = HEIGHT as i32 / 4;
-        !self.spawned && (self.y - self.height as i32) > height_threshold
+        let height_threshold = 10 * random!(Self::HEIGHT_RANGE.0, Self::HEIGHT_RANGE.1);
+        !self.spawned && (self.y - self.height as i32) > height_threshold as i32
     }
 
     fn randomize(&mut self) {
         self.speed = random!(Self::SPEED_RANGE.0, Self::SPEED_RANGE.1);
-        if self.speed == Self::SPEED_RANGE.0 {
-            self.color = Glyph::COLOR_DARK.into();
-        }
 
         if random!(0, 100) <= Self::HIGHLIGHT_PROB {
             self.highlight = true;
         }
 
-        let is_empty = random!(0, 100) <= Self::EMPTY_PROB;
-        if is_empty {
-            self.glyphs = vec![];
-        } else {
-            let count = random!(Self::HEIGHT_RANGE.0, Self::HEIGHT_RANGE.1);
-            self.height = count as u32 * Glyph::SIZE;
-            self.glyphs = Vec::with_capacity(count);
-            for _ in 0..count {
-                self.glyphs.push(Glyph::new());
-            }
+        let count = random!(Self::HEIGHT_RANGE.0, Self::HEIGHT_RANGE.1);
+        self.height = count as u32 * Glyph::SIZE;
+        self.glyphs = Vec::with_capacity(count);
+        for _ in 0..count {
+            self.glyphs.push(Glyph::new());
         }
     }
 
     fn draw(&mut self, s: &mut PixState) -> PixResult<()> {
         self.y += self.speed;
         for (i, glyph) in self.glyphs.iter_mut().enumerate() {
-            let y = self.y - (i as i32 * self.size as i32);
+            let y = self.y - (i as i32 * (self.size as i32 - 8));
             let color = if i == 0 && self.highlight {
                 Glyph::HIGHLIGHT.into()
             } else {
@@ -152,12 +138,12 @@ struct Matrix {
 
 impl Matrix {
     fn new() -> Self {
-        let count = (WIDTH / Glyph::SIZE) as usize - 1;
+        let count = (WIDTH / Glyph::WIDTH) as usize - 1;
         let mut streams = Vec::with_capacity(count);
         let mut x = 0;
         for _ in 0..count {
             streams.push(Stream::new(x));
-            x += Glyph::SIZE as i32;
+            x += Glyph::WIDTH as i32;
         }
         Self {
             streams,
@@ -190,12 +176,19 @@ impl AppState for Matrix {
     }
 
     fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<()> {
-        if let Key::Escape = event.key {
-            if s.running() {
-                s.no_run();
-            } else {
-                s.run();
+        match event.key {
+            Key::Escape => {
+                if s.running() {
+                    s.no_run();
+                } else {
+                    s.run();
+                }
             }
+            Key::Return => {
+                let fs = !s.fullscreen();
+                s.set_fullscreen(fs);
+            }
+            _ => (),
         }
         Ok(())
     }

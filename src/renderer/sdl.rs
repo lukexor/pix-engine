@@ -10,7 +10,7 @@ use sdl2::{
     image::{InitFlag, LoadSurface, Sdl2ImageContext},
     mouse::{Cursor, SystemCursor},
     pixels::{Color as SdlColor, PixelFormatEnum as SdlPixelFormat},
-    rect::Rect as SdlRect,
+    rect::{Point as SdlPoint, Rect as SdlRect},
     render::{
         BlendMode as SdlBlendMode, Canvas, SdlError, TargetRenderError, TextureCreator,
         TextureQuery, TextureValueError, UpdateTextureError,
@@ -176,49 +176,61 @@ impl Rendering for Renderer {
     /// Draw text to the current canvas.
     fn text(
         &mut self,
-        pos: &PointI2,
+        pos: PointI2,
         text: &str,
+        angle: Scalar,
+        center: Option<PointI2>,
+        flipped: Option<Flipped>,
         fill: Option<Color>,
-        _stroke: Option<Color>,
     ) -> Result<()> {
         let font = self.font_cache.get(&self.font);
         match (fill, font) {
             (Some(fill), Some(font)) => {
                 // TODO: Clean up these allocations - how to manage destroying text cache textures
                 // with `unsafe_textures`?
-                match self.text_cache.get(&(text.to_string(), fill)) {
-                    Some(texture) => {
-                        let TextureQuery { width, height, .. } = texture.query();
-                        let f = |canvas: &mut Canvas<SdlWindow>| -> Result<()> {
-                            Ok(canvas.copy(
-                                texture,
-                                None,
-                                Some(SdlRect::new(pos.x(), pos.y(), width, height)),
-                            )?)
-                        };
-                        match self.texture_target {
-                            Some(ptr) => {
-                                let mut texture = unsafe { &mut (*ptr).inner };
-                                self.canvas.with_texture_canvas(&mut texture, |canvas| {
-                                    let _ = f(canvas);
-                                })?;
-                            }
-                            None => f(&mut self.canvas)?,
-                        }
+                let key = (text.to_string(), fill);
+                if !self.text_cache.contains_key(&key) {
+                    let surface = font.render(text).blended(fill).unwrap();
+                    let texture = self
+                        .texture_creator
+                        .create_texture_from_surface(&surface)
+                        .unwrap();
+                    self.text_cache.insert(key.clone(), texture);
+                }
+
+                let texture = self.text_cache.get(&key).unwrap();
+                let TextureQuery { width, height, .. } = texture.query();
+                let f = |canvas: &mut Canvas<SdlWindow>| -> Result<()> {
+                    if angle > 0.0 || center.is_some() || flipped.is_some() {
+                        let horizontal =
+                            matches!(flipped, Some(Flipped::Horizontal | Flipped::Both));
+                        let vertical = matches!(flipped, Some(Flipped::Vertical | Flipped::Both));
+                        Ok(canvas.copy_ex(
+                            texture,
+                            None,
+                            Some(SdlRect::new(pos.x(), pos.y(), width, height)),
+                            angle,
+                            center.map(|c| c.into()),
+                            horizontal,
+                            vertical,
+                        )?)
+                    } else {
+                        Ok(canvas.copy(
+                            texture,
+                            None,
+                            Some(SdlRect::new(pos.x(), pos.y(), width, height)),
+                        )?)
                     }
-                    None => {
-                        let surface = font.render(text).blended(fill)?;
-                        let texture = self.texture_creator.create_texture_from_surface(&surface)?;
-                        let TextureQuery { width, height, .. } = texture.query();
-                        self.update(|canvas| {
-                            Ok(canvas.copy(
-                                &texture,
-                                None,
-                                Some(SdlRect::new(pos.x(), pos.y(), width, height)),
-                            )?)
+                };
+                // TODO: Find a way to not have this duplicated inline
+                match self.texture_target {
+                    Some(ptr) => {
+                        let mut texture = unsafe { &mut (*ptr).inner };
+                        self.canvas.with_texture_canvas(&mut texture, |canvas| {
+                            let _ = f(canvas);
                         })?;
-                        self.text_cache.insert((text.to_string(), fill), texture);
                     }
+                    None => f(&mut self.canvas)?,
                 }
                 Ok(())
             }
@@ -241,13 +253,13 @@ impl Rendering for Renderer {
     }
 
     /// Draw a pixel to the current canvas.
-    fn point(&mut self, p: &PointI2, color: Color) -> Result<()> {
+    fn point(&mut self, p: PointI2, color: Color) -> Result<()> {
         let [x, y] = p.as_().values();
         self.update(|canvas| Ok(canvas.pixel(x, y, color)?))
     }
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, line: &LineI2, color: Color) -> Result<()> {
+    fn line(&mut self, line: LineI2, color: Color) -> Result<()> {
         let [[x1, y1], [x2, y2]] = line.as_().values();
         if y1 == y2 {
             self.update(|canvas| Ok(canvas.hline(x1, x2, y1, color)?))
@@ -259,7 +271,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw a triangle to the current canvas.
-    fn triangle(&mut self, tri: &TriI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
+    fn triangle(&mut self, tri: TriI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
         let [p1, p2, p3] = tri.as_().values();
         if let Some(fill) = fill {
             self.update(|canvas| {
@@ -275,7 +287,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw a rectangle to the current canvas.
-    fn rect(&mut self, rect: &Rect<i32>, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
+    fn rect(&mut self, rect: Rect<i32>, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
         let [x, y, width, height] = rect.as_().values();
         if let Some(fill) = fill {
             self.update(|canvas| Ok(canvas.box_(x, y, x + width - 1, y + height - 1, fill)?))?;
@@ -289,7 +301,7 @@ impl Rendering for Renderer {
     /// Draw a rounded rectangle to the current canvas.
     fn rounded_rect(
         &mut self,
-        rect: &Rect<i32>,
+        rect: Rect<i32>,
         radius: i32,
         fill: Option<Color>,
         stroke: Option<Color>,
@@ -310,7 +322,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw a quadrilateral to the current canvas.
-    fn quad(&mut self, quad: &QuadI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
+    fn quad(&mut self, quad: QuadI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
         let [p1, p2, p3, p4] = quad.as_().values();
         let vx = [p1.x(), p2.x(), p3.x(), p4.x()];
         let vy = [p1.y(), p2.y(), p3.y(), p4.y()];
@@ -349,7 +361,7 @@ impl Rendering for Renderer {
     /// Draw a ellipse to the current canvas.
     fn ellipse(
         &mut self,
-        ellipse: &Ellipse<i32>,
+        ellipse: Ellipse<i32>,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
@@ -366,7 +378,7 @@ impl Rendering for Renderer {
     /// Draw an arc to the current canvas.
     fn arc(
         &mut self,
-        p: &PointI2,
+        p: PointI2,
         radius: i32,
         start: i32,
         end: i32,
@@ -397,54 +409,15 @@ impl Rendering for Renderer {
         Ok(())
     }
 
-    /// Draw an image to the current canvas.
-    fn image(&mut self, pos: &PointI2, img: &Image, tint: Option<Color>) -> Result<()> {
-        let dst = SdlRect::new(pos.x(), pos.y(), img.width(), img.height());
-        self.image_texture(img, tint, dst, None)
-    }
-
-    /// Draw an image to the current canvas.
-    fn image_resized(&mut self, img: &Image, dst: &Rect<i32>, tint: Option<Color>) -> Result<()> {
-        self.image_texture(img, tint, dst.into(), None)
-    }
-
-    /// Draw a rotated image to the current canvas.
-    fn image_rotated(
+    /// Draw an image to the current canvas, optionally rotated about a `center`, flipped or tinted
+    fn image(
         &mut self,
-        pos: &PointI2,
+        rect: Rect<i32>,
         img: &Image,
         angle: Scalar,
+        center: Option<PointI2>,
+        flipped: Option<Flipped>,
         tint: Option<Color>,
-    ) -> Result<()> {
-        let dst = SdlRect::new(pos.x(), pos.y(), img.width(), img.height());
-        self.image_texture(img, tint, dst, Some(angle))
-    }
-}
-
-impl Renderer {
-    fn get_texture_cache(&mut self, img: &Image) -> Result<(TextureId, bool)> {
-        match img.texture_cache() {
-            Some(texture_cache) => Ok(texture_cache),
-            None => {
-                let texture_id = self.textures.len();
-                self.textures
-                    .push(self.texture_creator.create_texture_static(
-                        Some(img.format().into()),
-                        img.width(),
-                        img.height(),
-                    )?);
-                img.set_texture_id(texture_id);
-                Ok((texture_id, false))
-            }
-        }
-    }
-
-    fn image_texture(
-        &mut self,
-        img: &Image,
-        tint: Option<Color>,
-        dst: SdlRect,
-        angle: Option<f64>,
     ) -> Result<()> {
         let (texture_id, updated) = self.get_texture_cache(img)?;
         match self.textures.get_mut(texture_id) {
@@ -470,13 +443,14 @@ impl Renderer {
                 }
                 texture.set_blend_mode(self.blend_mode);
                 let f = |canvas: &mut Canvas<SdlWindow>| -> Result<()> {
-                    match angle {
-                        Some(angle) => {
-                            Ok(canvas.copy_ex(texture, None, dst, angle, None, false, false)?)
-                        }
-                        None => Ok(canvas.copy(texture, None, dst)?),
+                    let rect: SdlRect = rect.into();
+                    if angle > 0.0 || center.is_some() || flipped.is_some() {
+                        Ok(canvas.copy_ex(texture, None, rect, angle, None, false, false)?)
+                    } else {
+                        Ok(canvas.copy(texture, None, rect)?)
                     }
                 };
+                // TODO: Find a way to not have this duplicated inline
                 match self.texture_target {
                     Some(ptr) => {
                         let mut texture = unsafe { &mut (*ptr).inner };
@@ -488,6 +462,25 @@ impl Renderer {
                 }
             }
             None => Err(Error::InvalidTexture(texture_id)),
+        }
+    }
+}
+
+impl Renderer {
+    fn get_texture_cache(&mut self, img: &Image) -> Result<(TextureId, bool)> {
+        match img.texture_cache() {
+            Some(texture_cache) => Ok(texture_cache),
+            None => {
+                let texture_id = self.textures.len();
+                self.textures
+                    .push(self.texture_creator.create_texture_static(
+                        Some(img.format().into()),
+                        img.width(),
+                        img.height(),
+                    )?);
+                img.set_texture_id(texture_id);
+                Ok((texture_id, false))
+            }
         }
     }
 }
@@ -560,6 +553,18 @@ impl From<&Rect<i32>> for SdlRect {
             rect.width() as u32,
             rect.height() as u32,
         )
+    }
+}
+
+impl From<PointI2> for SdlPoint {
+    fn from(p: PointI2) -> Self {
+        Self::new(p.x(), p.y())
+    }
+}
+
+impl From<&PointI2> for SdlPoint {
+    fn from(p: &PointI2) -> Self {
+        Self::new(p.x(), p.y())
     }
 }
 

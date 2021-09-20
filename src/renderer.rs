@@ -117,10 +117,12 @@ pub(crate) trait Rendering: Sized {
     /// Draw text to the current canvas.
     fn text(
         &mut self,
-        position: &PointI2,
+        position: PointI2,
         text: &str,
+        angle: Scalar,
+        center: Option<PointI2>,
+        flipped: Option<Flipped>,
         fill: Option<Color>,
-        stroke: Option<Color>,
     ) -> Result<()>;
 
     /// Returns the rendered dimensions of the given text using the current font
@@ -128,28 +130,28 @@ pub(crate) trait Rendering: Sized {
     fn size_of(&self, text: &str) -> Result<(u32, u32)>;
 
     /// Draw a pixel to the current canvas.
-    fn point(&mut self, p: &PointI2, color: Color) -> Result<()>;
+    fn point(&mut self, p: PointI2, color: Color) -> Result<()>;
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, line: &LineI2, color: Color) -> Result<()>;
+    fn line(&mut self, line: LineI2, color: Color) -> Result<()>;
 
     /// Draw a triangle to the current canvas.
-    fn triangle(&mut self, tri: &TriI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
+    fn triangle(&mut self, tri: TriI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
 
     /// Draw a rectangle to the current canvas.
-    fn rect(&mut self, rect: &Rect<i32>, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
+    fn rect(&mut self, rect: Rect<i32>, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
 
     /// Draw a rounded rectangle to the current canvas.
     fn rounded_rect(
         &mut self,
-        rect: &Rect<i32>,
+        rect: Rect<i32>,
         radius: i32,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()>;
 
     /// Draw a quadrilateral to the current canvas.
-    fn quad(&mut self, quad: &QuadI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
+    fn quad(&mut self, quad: QuadI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
 
     /// Draw a polygon to the current canvas.
     fn polygon(&mut self, ps: &[PointI2], fill: Option<Color>, stroke: Option<Color>)
@@ -158,7 +160,7 @@ pub(crate) trait Rendering: Sized {
     /// Draw a ellipse to the current canvas.
     fn ellipse(
         &mut self,
-        ellipse: &Ellipse<i32>,
+        ellipse: Ellipse<i32>,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()>;
@@ -167,7 +169,7 @@ pub(crate) trait Rendering: Sized {
     #[allow(clippy::too_many_arguments)]
     fn arc(
         &mut self,
-        p: &PointI2,
+        p: PointI2,
         radius: i32,
         start: i32,
         end: i32,
@@ -176,18 +178,14 @@ pub(crate) trait Rendering: Sized {
         stroke: Option<Color>,
     ) -> Result<()>;
 
-    /// Draw an image to the current canvas.
-    fn image(&mut self, pos: &PointI2, img: &Image, tint: Option<Color>) -> Result<()>;
-
-    /// Draw a resized image to the current canvas.
-    fn image_resized(&mut self, img: &Image, dst: &Rect<i32>, tint: Option<Color>) -> Result<()>;
-
-    /// Draw a rotated image to the current canvas.
-    fn image_rotated(
+    /// Draw an image to the current canvas, optionally rotated about a `center`, flipped or tinted
+    fn image(
         &mut self,
-        pos: &PointI2,
+        rect: Rect<i32>,
         img: &Image,
         angle: Scalar,
+        center: Option<PointI2>,
+        flipped: Option<Flipped>,
         tint: Option<Color>,
     ) -> Result<()>;
 }
