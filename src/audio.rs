@@ -24,7 +24,7 @@
 use crate::prelude::PixState;
 
 /// Trait representing audio support.
-pub(crate) trait Audio {
+pub(crate) trait AudioRenderer {
     /// Add audio samples to the audio buffer queue.
     fn enqueue_audio(&mut self, samples: &[f32]);
 }

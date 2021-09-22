@@ -131,7 +131,7 @@ impl PixState {
         if let DrawMode::Center = s.rect_mode {
             rect.center_on(rect.center());
         };
-        Ok(self.renderer.rect(rect, s.fill, s.stroke)?)
+        Ok(self.renderer.rect(rect, None, s.fill, s.stroke)?)
     }
 
     /// Draw a rounded [Rectangle](Rect) to the current canvas.
@@ -147,7 +147,7 @@ impl PixState {
         };
         Ok(self
             .renderer
-            .rounded_rect(rect, radius.into(), s.fill, s.stroke)?)
+            .rect(rect, Some(radius.into()), s.fill, s.stroke)?)
     }
 
     /// Draw a [Quadrilateral](Quad) to the current canvas.

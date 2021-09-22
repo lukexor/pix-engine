@@ -1,5 +1,5 @@
 use super::Renderer;
-use crate::{core::texture::TextureRenderer, prelude::*, renderer::Result};
+use crate::renderer::*;
 use sdl2::{
     rect::Rect as SdlRect,
     render::{Canvas, Texture as SdlTexture},

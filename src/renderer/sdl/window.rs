@@ -1,8 +1,8 @@
 use super::Renderer;
 use crate::{
-    core::window::{Error, Position, Result, Window, WindowId},
+    core::window::{Error, Position, Result, WindowId},
     prelude::{Cursor, Event, SystemCursor},
-    renderer::RendererSettings,
+    renderer::*,
 };
 use sdl2::{
     image::LoadSurface,
@@ -14,7 +14,7 @@ use sdl2::{
 };
 use std::borrow::Cow;
 
-impl Window for Renderer {
+impl WindowRenderer for Renderer {
     /// Get the primary window id.
     fn window_id(&self) -> WindowId {
         self.window_id

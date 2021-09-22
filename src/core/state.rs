@@ -1,9 +1,8 @@
 //! [PixState] functions for the [PixEngine] and [AppState].
 
 use crate::{
-    core::window::Window,
     prelude::*,
-    renderer::{Error as RendererError, Renderer},
+    renderer::{Error as RendererError, Renderer, WindowRenderer},
 };
 use environment::Environment;
 use settings::Settings;

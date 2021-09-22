@@ -1,7 +1,7 @@
 use super::Renderer;
-use crate::audio::Audio;
+use crate::audio::AudioRenderer;
 
-impl Audio for Renderer {
+impl AudioRenderer for Renderer {
     /// Add audio samples to the audio buffer queue.
     #[inline]
     fn enqueue_audio(&mut self, samples: &[f32]) {

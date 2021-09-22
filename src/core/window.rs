@@ -86,7 +86,7 @@ pub enum SystemCursor {
 }
 
 /// Trait representing window operations.
-pub(crate) trait Window {
+pub(crate) trait WindowRenderer {
     /// Get the primary window id.
     fn window_id(&self) -> WindowId;
 

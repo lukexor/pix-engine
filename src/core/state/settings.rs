@@ -2,7 +2,7 @@
 //!
 //! [PixEngine]: crate::prelude::PixEngine
 
-use crate::{core::window::Window, prelude::*, renderer::Rendering};
+use crate::{prelude::*, renderer::*};
 use bitflags::bitflags;
 use num_traits::AsPrimitive;
 #[cfg(feature = "serde")]
@@ -279,10 +279,8 @@ impl PixState {
         self.settings.rect_mode = mode;
     }
 
-    /// Change the way parameters are interpreted for drawing [Circle]s and
-    /// [Ellipse]s.
+    /// Change the way parameters are interpreted for drawing [Ellipse]s.
     ///
-    /// [Circle]: crate::prelude::Circle
     /// [Ellipse]: crate::prelude::Ellipse
     pub fn ellipse_mode(&mut self, mode: DrawMode) {
         self.settings.ellipse_mode = mode;

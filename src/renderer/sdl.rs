@@ -287,36 +287,35 @@ impl Rendering for Renderer {
     }
 
     /// Draw a rectangle to the current canvas.
-    fn rect(&mut self, rect: Rect<i32>, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
-        let [x, y, width, height] = rect.as_().values();
-        if let Some(fill) = fill {
-            self.update(|canvas| Ok(canvas.box_(x, y, x + width - 1, y + height - 1, fill)?))?;
-        }
-        if let Some(stroke) = stroke {
-            self.update(|canvas| Ok(canvas.rectangle(x, y, x + width, y + height, stroke)?))?;
-        }
-        Ok(())
-    }
-
-    /// Draw a rounded rectangle to the current canvas.
-    fn rounded_rect(
+    fn rect(
         &mut self,
         rect: Rect<i32>,
-        radius: i32,
+        radius: Option<i32>,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
         let [x, y, width, height] = rect.as_().values();
-        let radius = radius as i16;
-        if let Some(fill) = fill {
-            self.update(|canvas| {
-                Ok(canvas.rounded_box(x, y, x + width - 1, y + height - 1, radius, fill)?)
-            })?;
-        }
-        if let Some(stroke) = stroke {
-            self.update(|canvas| {
-                Ok(canvas.rounded_rectangle(x, y, x + width, y + height, radius, stroke)?)
-            })?;
+        if let Some(radius) = radius {
+            let radius = radius as i16;
+            if let Some(fill) = fill {
+                self.update(|canvas| {
+                    Ok(canvas.rounded_box(x, y, x + width - 1, y + height - 1, radius, fill)?)
+                })?;
+            }
+            if let Some(stroke) = stroke {
+                self.update(|canvas| {
+                    Ok(canvas.rounded_rectangle(x, y, x + width, y + height, radius, stroke)?)
+                })?;
+            }
+        } else {
+            if let Some(fill) = fill {
+                self.update(|canvas| {
+                    Ok(canvas.box_(x, y, x + width - 1, y + height - 1, fill)?)
+                })?;
+            }
+            if let Some(stroke) = stroke {
+                self.update(|canvas| Ok(canvas.rectangle(x, y, x + width, y + height, stroke)?))?;
+            }
         }
         Ok(())
     }

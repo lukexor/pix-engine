@@ -1,11 +1,13 @@
 //! Graphics renderer functions.
 
-use crate::{
-    core::{state::Error as StateError, window},
-    prelude::*,
-};
+use crate::{core::state::Error as StateError, prelude::*};
 use lazy_static::lazy_static;
 use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
+
+pub(crate) use crate::{
+    audio::AudioRenderer,
+    core::{texture::TextureRenderer, window::Error as WindowError, window::WindowRenderer},
+};
 
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) mod sdl;
@@ -83,7 +85,9 @@ impl Default for RendererSettings {
 }
 
 /// Trait for operations on the underlying `Renderer`.
-pub(crate) trait Rendering: Sized {
+pub(crate) trait Rendering:
+    Sized + AudioRenderer + WindowRenderer + TextureRenderer
+{
     /// Creates a new Renderer instance.
     fn new(settings: RendererSettings) -> Result<Self>;
 
@@ -139,13 +143,10 @@ pub(crate) trait Rendering: Sized {
     fn triangle(&mut self, tri: TriI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
 
     /// Draw a rectangle to the current canvas.
-    fn rect(&mut self, rect: Rect<i32>, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
-
-    /// Draw a rounded rectangle to the current canvas.
-    fn rounded_rect(
+    fn rect(
         &mut self,
         rect: Rect<i32>,
-        radius: i32,
+        radius: Option<i32>,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()>;
@@ -199,7 +200,7 @@ pub enum Error {
     /// Renderer I/O errors.
     IoError(io::Error),
     /// Window errors.
-    WindowError(window::Error),
+    WindowError(WindowError),
     /// Invalid text.
     InvalidText(&'static str, NulError),
     /// Invalid font.

@@ -1,8 +1,9 @@
 //! Common crate functions and error types.
 
 use crate::{
-    core::{state, window},
-    image, renderer,
+    core::state,
+    image,
+    renderer::{Error as RendererError, WindowError},
 };
 use std::{borrow::Cow, error, fmt, io, result};
 
@@ -18,9 +19,9 @@ pub type Result<T> = result::Result<T, Error>;
 #[derive(Debug)]
 pub enum Error {
     /// An error from the underlying Renderer.
-    RendererError(renderer::Error),
+    RendererError(RendererError),
     /// An error from window operations.
-    WindowError(window::Error),
+    WindowError(WindowError),
     /// An error from [PixState](crate::prelude::PixState).
     StateError(state::Error),
     /// An error from [Image](crate::prelude::Image)

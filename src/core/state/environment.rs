@@ -1,7 +1,7 @@
 //! Environment information for the [PixEngine].
 //!
 //! [PixEngine]: crate::prelude::PixEngine
-use crate::{core::window::Window, prelude::*};
+use crate::{prelude::*, renderer::*};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 

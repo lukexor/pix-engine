@@ -1,10 +1,6 @@
 //! [PixEngine] functions.
 
-use crate::{
-    core::window::Window,
-    prelude::*,
-    renderer::{Renderer, RendererSettings, Rendering},
-};
+use crate::{prelude::*, renderer::*};
 use std::{
     collections::VecDeque,
     time::{Duration, Instant},
