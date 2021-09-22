@@ -30,7 +30,10 @@ use crate::prelude::*;
 use num_traits::AsPrimitive;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::ops::{Deref, DerefMut};
+use std::{
+    array::IntoIter,
+    ops::{Deref, DerefMut},
+};
 
 /// An `Ellipse` positioned at `(x, y)`, with `width` and `height`. A circle is an `Ellipse` where
 /// `width` and `height` are equal.
@@ -435,6 +438,14 @@ impl<T: Num> From<&Ellipse<T>> for Ellipse<T> {
     /// Convert `&Ellipse` to [Ellipse].
     fn from(ellipse: &Ellipse<T>) -> Self {
         *ellipse
+    }
+}
+
+impl<T> IntoIterator for Ellipse<T> {
+    type Item = T;
+    type IntoIter = IntoIter<Self::Item, 4>;
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter::new(self.0)
     }
 }
 

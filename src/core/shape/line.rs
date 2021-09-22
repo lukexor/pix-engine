@@ -22,7 +22,10 @@ use crate::prelude::*;
 use num_traits::AsPrimitive;
 // #[cfg(feature = "serde")]
 // use serde::{Deserialize, Serialize};
-use std::ops::{Deref, DerefMut, Index, IndexMut};
+use std::{
+    array::IntoIter,
+    ops::{Deref, DerefMut, Index, IndexMut},
+};
 
 /// A `Line` with start and end [Point]s.
 ///
@@ -71,7 +74,7 @@ impl<T, const N: usize> Line<T, N> {
 
 impl<T, const N: usize> Line<T, N>
 where
-    T: Copy,
+    T: Copy + Default,
 {
     /// Returns the starting point of the line.
     #[inline]
@@ -250,6 +253,14 @@ where
     }
 }
 
+impl<T, const N: usize> IntoIterator for Line<T, N> {
+    type Item = Point<T, N>;
+    type IntoIter = IntoIter<Self::Item, 2>;
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter::new(self.0)
+    }
+}
+
 macro_rules! impl_from {
     ($($from:ty),* => $to:ty) => {
         $(
@@ -282,26 +293,6 @@ macro_rules! impl_from {
 impl_from!(i8, u8, i16, u16, u32, i64, u64, isize, usize, f32, f64 => i32);
 impl_from!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize, f32 => f64);
 
-impl<T, const N: usize> From<Line<T, N>> for [[T; N]; 2]
-where
-    T: Copy,
-{
-    /// Convert [`Line<T, N>`] to `[[T; N]; 2]`.
-    fn from(line: Line<T, N>) -> Self {
-        line.values()
-    }
-}
-
-impl<T, const N: usize> From<&Line<T, N>> for [[T; N]; 2]
-where
-    T: Copy,
-{
-    /// Convert &[`Line<T, N>`] to `[[T; N]; 2]`.
-    fn from(line: &Line<T, N>) -> Self {
-        line.values()
-    }
-}
-
 impl<T, U, const N: usize> From<[Point<U, N>; 2]> for Line<T, N>
 where
     Point<U, N>: Into<Point<T, N>>,
@@ -325,7 +316,7 @@ where
 
 impl<T, U, const N: usize> From<Line<U, N>> for [Point<T, N>; 2]
 where
-    U: Copy,
+    U: Copy + Default,
     Point<U, N>: Into<Point<T, N>>,
 {
     /// Convert [`Line<U, N>`] to `[Point<T, N>; 2]`.
@@ -336,11 +327,10 @@ where
 
 impl<T, U, const N: usize> From<&Line<U, N>> for [Point<T, N>; 2]
 where
-    U: Copy,
     Point<U, N>: Into<Point<T, N>>,
 {
     /// Convert &[`Line<U, N>`] to `[Point<T, N>; 2]`.
     fn from(line: &Line<U, N>) -> Self {
-        [line.start().into(), line.end().into()]
+        line.into()
     }
 }

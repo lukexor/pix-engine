@@ -27,7 +27,12 @@ use crate::prelude::*;
 use num_traits::{AsPrimitive, Float, Signed};
 // #[cfg(feature = "serde")]
 // use serde::{Deserialize, Serialize};
-use std::{fmt, iter::Sum, ops::*};
+use std::{
+    array::IntoIter,
+    fmt,
+    iter::{Product, Sum},
+    ops::*,
+};
 
 /// A `Point` in N-dimensional space.
 ///
@@ -129,7 +134,7 @@ impl<T, const N: usize> Point<T, N> {
 
 impl<T, const N: usize> Point<T, N>
 where
-    T: Copy,
+    T: Copy + Default,
 {
     /// Constructs a `Point` from a [Vector].
     ///
@@ -175,7 +180,32 @@ where
         self.0 = coords;
     }
 
+    /// Returns the `x-coordinate`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p = point!(1, 2);
+    /// assert_eq!(p.x(), 1);
+    /// ```
+    #[inline]
+    pub fn x(&self) -> T {
+        match self.0.get(0) {
+            Some(z) => *z,
+            None => T::default(),
+        }
+    }
+
     /// Sets the `x-coordinate`.
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut p = point!(1, 2);
+    /// p.set_x(3);
+    /// assert_eq!(p.values(), [3, 2]);
+    /// ```
     #[inline]
     pub fn set_x(&mut self, x: T) {
         if !self.0.is_empty() {
@@ -183,7 +213,33 @@ where
         }
     }
 
+    /// Returns the `y-coordinate`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p = point!(1, 2);
+    /// assert_eq!(p.y(), 2);
+    /// ```
+    #[inline]
+    pub fn y(&self) -> T {
+        match self.0.get(1) {
+            Some(z) => *z,
+            None => T::default(),
+        }
+    }
+
     /// Sets the `y-coordinate`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut p = point!(1, 2);
+    /// p.set_y(3);
+    /// assert_eq!(p.values(), [1, 3]);
+    /// ```
     #[inline]
     pub fn set_y(&mut self, y: T) {
         if self.0.len() > 1 {
@@ -191,7 +247,33 @@ where
         }
     }
 
+    /// Returns the `z-coordinate`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude_3d::*;
+    /// let p = point!(1, 2, 2);
+    /// assert_eq!(p.z(), 2);
+    /// ```
+    #[inline]
+    pub fn z(&self) -> T {
+        match self.0.get(2) {
+            Some(z) => *z,
+            None => T::default(),
+        }
+    }
+
     /// Sets the `z-magnitude`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude_3d::*;
+    /// let mut p = point!(1, 2, 1);
+    /// p.set_z(3);
+    /// assert_eq!(p.values(), [1, 2, 3]);
+    /// ```
     #[inline]
     pub fn set_z(&mut self, z: T) {
         if self.0.len() > 2 {
@@ -214,6 +296,15 @@ where
     }
 
     /// Convert `Point<T, N>` to `Point<U, N>` using the `as` operator.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p1: PointF2 = point!(1.5, 2.0);
+    /// let p2: PointI2 = p1.as_();
+    /// assert_eq!(p2.values(), [1, 2]);
+    /// ```
     #[inline]
     pub fn as_<U>(self) -> Point<U, N>
     where
@@ -230,59 +321,45 @@ where
 
 impl<T, const N: usize> Point<T, N>
 where
-    T: Copy + Default,
-{
-    /// Returns the `x-coordinate`.
-    #[inline]
-    pub fn x(&self) -> T {
-        match self.0.get(0) {
-            Some(z) => *z,
-            None => T::default(),
-        }
-    }
-
-    /// Returns the `y-coordinate`.
-    #[inline]
-    pub fn y(&self) -> T {
-        match self.0.get(1) {
-            Some(z) => *z,
-            None => T::default(),
-        }
-    }
-
-    /// Returns the `z-coordinate`.
-    #[inline]
-    pub fn z(&self) -> T {
-        match self.0.get(0) {
-            Some(z) => *z,
-            None => T::default(),
-        }
-    }
-}
-
-impl<T, const N: usize> Point<T, N>
-where
     T: Num,
 {
     /// Constructs a `Point` by shifting coordinates by given amount.
-    pub fn offset<U>(mut self, offsets: [U; N]) -> Self
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude_3d::*;
+    /// let mut p: PointI3 = point!(2, 3, 1);
+    /// p.offset([2, -4]);
+    /// assert_eq!(p.values(), [4, -1, 1]);
+    /// ```
+    pub fn offset<U, const M: usize>(&mut self, offsets: [U; M])
     where
-        T: Add<U, Output = T>,
+        T: AddAssign<U>,
         U: Copy,
     {
-        for i in 0..N {
-            self[i] = self[i] + offsets[i]
+        assert!(N >= M);
+        for i in 0..M {
+            self[i] += offsets[i]
         }
-        self
     }
 
     /// Constructs a `Point` by multiplying it by the given scale factor.
-    pub fn scale<U>(self, s: U) -> Self
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude_3d::*;
+    /// let mut p: PointI2 = point!(2, 3);
+    /// p.scale(2);
+    /// assert_eq!(p.values(), [4, 6]);
+    /// ```
+    pub fn scale<U>(&mut self, s: U)
     where
-        T: Mul<U, Output = T>,
+        T: MulAssign<U>,
         U: Num,
     {
-        self * s
+        *self *= s;
     }
 
     ///
@@ -340,6 +417,15 @@ where
     }
 
     /// Returns whether two `Point`s are approximately equal.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p1: PointF2 = point!(10.0, 20.0);
+    /// let p2: PointF2 = point!(10.0001, 20.0);
+    /// assert!(p1.approx_eq(p2, 1e-3));
+    /// ```
     pub fn approx_eq(&self, other: Point<T, N>, epsilon: T) -> bool {
         let mut approx_eq = true;
         for i in 0..N {
@@ -427,6 +513,74 @@ where
 }
 
 // Operations
+
+impl<T, const N: usize> IntoIterator for Point<T, N> {
+    type Item = T;
+    type IntoIter = IntoIter<Self::Item, N>;
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter::new(self.0)
+    }
+}
+
+impl<T, const N: usize> Sum for Point<T, N>
+where
+    T: Default + Copy + Add,
+    Self: Add<Output = Self>,
+{
+    /// Sum a list of `Point`s.
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = Self>,
+    {
+        let p = Point::origin();
+        iter.fold(p, |a, b| a + b)
+    }
+}
+
+impl<'a, T, const N: usize> Sum<&'a Point<T, N>> for Point<T, N>
+where
+    T: Default + Copy + Add,
+    Self: Add<Output = Self>,
+{
+    /// Sum a list of `&Point`s.
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = &'a Self>,
+    {
+        let p = Point::origin();
+        iter.fold(p, |a, b| a + *b)
+    }
+}
+
+impl<T, const N: usize> Product for Point<T, N>
+where
+    T: Default + Copy + Mul,
+    Self: Mul<Output = Self>,
+{
+    /// Multiply a list of `Point`s.
+    fn product<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = Self>,
+    {
+        let v = Point::origin();
+        iter.fold(v, |a, b| a * b)
+    }
+}
+
+impl<'a, T, const N: usize> Product<&'a Point<T, N>> for Point<T, N>
+where
+    T: Default + Copy + Mul,
+    Self: Mul<Output = Self>,
+{
+    /// Multiply a list of `&Point`s.
+    fn product<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = &'a Self>,
+    {
+        let v = Point::origin();
+        iter.fold(v, |a, b| a * *b)
+    }
+}
 
 impl<T, U, const N: usize> Add<U> for Point<T, N>
 where
@@ -575,36 +729,6 @@ where
         for i in 0..N {
             self[i] /= s;
         }
-    }
-}
-
-impl<T, const N: usize> Sum for Point<T, N>
-where
-    T: Default + Copy + Add,
-    Self: Add<Output = Self>,
-{
-    /// Sum a list of `Point`s.
-    fn sum<I>(iter: I) -> Self
-    where
-        I: Iterator<Item = Self>,
-    {
-        let p = Point::origin();
-        iter.fold(p, |a, b| a + b)
-    }
-}
-
-impl<'a, T, const N: usize> Sum<&'a Point<T, N>> for Point<T, N>
-where
-    T: Default + Copy + Add,
-    Self: Add<Output = Self>,
-{
-    /// Sum a list of `&Point`s.
-    fn sum<I>(iter: I) -> Self
-    where
-        I: Iterator<Item = &'a Self>,
-    {
-        let p = Point::origin();
-        iter.fold(p, |a, b| a + *b)
     }
 }
 

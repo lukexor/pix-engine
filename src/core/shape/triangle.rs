@@ -20,7 +20,10 @@ use crate::prelude::*;
 use num_traits::AsPrimitive;
 // #[cfg(feature = "serde")]
 // use serde::{Deserialize, Serialize};
-use std::ops::{Deref, DerefMut, Index, IndexMut};
+use std::{
+    array::IntoIter,
+    ops::{Deref, DerefMut, Index, IndexMut},
+};
 
 /// A `Triangle` with three [Point]s.
 ///
@@ -65,7 +68,7 @@ pub type TriF3 = Tri<Scalar, 3>;
 
 impl<T, const N: usize> Tri<T, N>
 where
-    T: Copy,
+    T: Copy + Default,
 {
     /// Returns the first point of the triangle.
     #[inline]
@@ -227,26 +230,6 @@ where
     }
 }
 
-impl<T, const N: usize> From<Tri<T, N>> for [Point<T, N>; 3]
-where
-    T: Copy,
-{
-    /// Convert [Tri] to `[Point; 3]`.
-    fn from(tri: Tri<T, N>) -> Self {
-        tri.values()
-    }
-}
-
-impl<T, const N: usize> From<&Tri<T, N>> for [Point<T, N>; 3]
-where
-    T: Copy,
-{
-    /// Convert &[Tri] to `[Point; 3]`.
-    fn from(tri: &Tri<T, N>) -> Self {
-        tri.values()
-    }
-}
-
 impl<T, U, const N: usize> From<[Point<U, N>; 3]> for Tri<T, N>
 where
     Point<U, N>: Into<Point<T, N>>,
@@ -265,5 +248,34 @@ where
     /// Convert `&[<Point<U, N>; 3]` to [`Tri<T, N>`].
     fn from(&[p1, p2, p3]: &[Point<U, N>; 3]) -> Self {
         Self::new(p1, p2, p3)
+    }
+}
+
+impl<T, U, const N: usize> From<Tri<U, N>> for [Point<T, N>; 3]
+where
+    U: Copy + Default,
+    Point<U, N>: Into<Point<T, N>>,
+{
+    /// Convert [`Tri<U>`] to `[Point<T, N>; 3]`.
+    fn from(tri: Tri<U, N>) -> Self {
+        [tri.p1().into(), tri.p2().into(), tri.p3().into()]
+    }
+}
+
+impl<T, U, const N: usize> From<&Tri<U, N>> for [Point<T, N>; 3]
+where
+    Point<U, N>: Into<Point<T, N>>,
+{
+    /// Convert &[`Tri<U>`] to `[Point<T, N>; 3]`.
+    fn from(tri: &Tri<U, N>) -> Self {
+        tri.into()
+    }
+}
+
+impl<T, const N: usize> IntoIterator for Tri<T, N> {
+    type Item = Point<T, N>;
+    type IntoIter = IntoIter<Self::Item, 3>;
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter::new(self.0)
     }
 }

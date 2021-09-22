@@ -8,7 +8,6 @@ use crate::prelude::Scalar;
 use std::{
     fmt::{self, LowerHex, UpperHex},
     hash::{Hash, Hasher},
-    iter::FromIterator,
     ops::*,
 };
 
@@ -97,21 +96,6 @@ impl SubAssign for Color {
         let [ov1, ov2, ov3, _] = convert_levels(other.levels, other.mode, self.mode);
         self.levels = clamp_levels([v1 - ov1, v2 - ov2, v3 - ov3, a]);
         self.calculate_channels();
-    }
-}
-
-impl FromIterator<u8> for Color {
-    fn from_iter<I>(iter: I) -> Self
-    where
-        I: IntoIterator<Item = u8>,
-    {
-        let mut iter = iter.into_iter();
-        Self::rgba(
-            iter.next().unwrap_or(0),
-            iter.next().unwrap_or(0),
-            iter.next().unwrap_or(0),
-            iter.next().unwrap_or(0),
-        )
     }
 }
 

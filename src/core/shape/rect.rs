@@ -30,7 +30,10 @@ use crate::prelude::*;
 use num_traits::AsPrimitive;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::ops::{Deref, DerefMut};
+use std::{
+    array::IntoIter,
+    ops::{Deref, DerefMut, Index, IndexMut},
+};
 
 /// A `Rectangle` positioned at `(x, y)` with `width` and `height`. A square is a `Rectangle` where
 /// `width` and `height` are equal.
@@ -442,6 +445,55 @@ impl<T> DerefMut for Rect<T> {
     }
 }
 
+impl<T> Index<usize> for Rect<T>
+where
+    T: Copy,
+{
+    type Output = T;
+    /// Return `&T` by indexing `Rect` with `usize`.
+    fn index(&self, idx: usize) -> &Self::Output {
+        &self.0[idx]
+    }
+}
+
+impl<T> IndexMut<usize> for Rect<T>
+where
+    T: Copy,
+{
+    /// Return `&mut T` by indexing `Rect` with `usize`.
+    fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
+        &mut self.0[idx]
+    }
+}
+
+impl<T> From<&Rect<T>> for Rect<T>
+where
+    T: Copy,
+{
+    /// Convert `&Rect` to [Rect].
+    fn from(rect: &Rect<T>) -> Self {
+        *rect
+    }
+}
+
+impl<T> From<&mut Rect<T>> for Rect<T>
+where
+    T: Copy,
+{
+    /// Convert `&mut Rect` to [Rect].
+    fn from(rect: &mut Rect<T>) -> Self {
+        *rect
+    }
+}
+
+impl<T> IntoIterator for Rect<T> {
+    type Item = T;
+    type IntoIter = IntoIter<Self::Item, 4>;
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter::new(self.0)
+    }
+}
+
 macro_rules! impl_from_as {
     ($($from:ty),* => $to:ty) => {
         $(
@@ -522,17 +574,3 @@ macro_rules! impl_from_arr {
 
 impl_from_arr!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize => 0);
 impl_from_arr!(f32, f64 => 0.0);
-
-impl<T: Num> From<&mut Rect<T>> for Rect<T> {
-    /// Convert `&mut Rect` to [Rect].
-    fn from(rect: &mut Rect<T>) -> Self {
-        *rect
-    }
-}
-
-impl<T: Num> From<&Rect<T>> for Rect<T> {
-    /// Convert `&Rect` to [Rect].
-    fn from(rect: &Rect<T>) -> Self {
-        *rect
-    }
-}

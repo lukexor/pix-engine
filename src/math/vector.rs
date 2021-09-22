@@ -66,7 +66,12 @@ use num_traits::{AsPrimitive, Float, Signed};
 use rand::distributions::uniform::SampleUniform;
 // #[cfg(feature = "serde")]
 // use serde::{Deserialize, Serialize};
-use std::{fmt, iter::Sum, ops::*};
+use std::{
+    array::IntoIter,
+    fmt,
+    iter::{Product, Sum},
+    ops::*,
+};
 
 /// A [Euclidean] `Vector` in N-dimensional space.
 ///
@@ -306,7 +311,7 @@ where
 
 impl<T, const N: usize> Vector<T, N>
 where
-    T: Copy,
+    T: Copy + Default,
 {
     /// Constructs a `Vector` from a [Point].
     ///
@@ -323,7 +328,33 @@ where
         Self::new(p.values())
     }
 
+    /// Returns the `x-coordinate`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v = vector!(1.0, 2.0);
+    /// assert_eq!(v.x(), 1.0);
+    /// ```
+    #[inline]
+    pub fn x(&self) -> T {
+        match self.0.get(0) {
+            Some(z) => *z,
+            None => T::default(),
+        }
+    }
+
     /// Sets the `x-magnitude`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut v = vector!(1.0, 2.0);
+    /// v.set_x(3.0);
+    /// assert_eq!(v.values(), [3.0, 2.0]);
+    /// ```
     #[inline]
     pub fn set_x(&mut self, x: T) {
         if !self.0.is_empty() {
@@ -331,7 +362,33 @@ where
         }
     }
 
+    /// Returns the `y-magnitude`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v = vector!(1.0, 2.0);
+    /// assert_eq!(v.y(), 2.0);
+    /// ```
+    #[inline]
+    pub fn y(&self) -> T {
+        match self.0.get(1) {
+            Some(z) => *z,
+            None => T::default(),
+        }
+    }
+
     /// Sets the `y-magnitude`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut v = vector!(1.0, 2.0);
+    /// v.set_y(3.0);
+    /// assert_eq!(v.values(), [1.0, 3.0]);
+    /// ```
     #[inline]
     pub fn set_y(&mut self, y: T) {
         if self.0.len() > 1 {
@@ -339,7 +396,33 @@ where
         }
     }
 
+    /// Returns the `z-magnitude`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude_3d::*;
+    /// let v = vector!(1.0, 2.0, 2.5);
+    /// assert_eq!(v.z(), 2.5);
+    /// ```
+    #[inline]
+    pub fn z(&self) -> T {
+        match self.0.get(2) {
+            Some(z) => *z,
+            None => T::default(),
+        }
+    }
+
     /// Sets the `z-magnitude`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude_3d::*;
+    /// let mut v = vector!(1.0, 2.0, 1.0);
+    /// v.set_z(3.0);
+    /// assert_eq!(v.values(), [1.0, 2.0, 3.0]);
+    /// ```
     #[inline]
     pub fn set_z(&mut self, z: T) {
         if self.0.len() > 2 {
@@ -392,6 +475,15 @@ where
     }
 
     /// Convert `Vector<T, N>` to `Vector<U, N>` using the `as` operator.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v1: VectorF2 = vector!(1.5, 2.0);
+    /// let v2: VectorI2 = v1.as_();
+    /// assert_eq!(v2.values(), [1, 2]);
+    /// ```
     #[inline]
     pub fn as_<U>(self) -> Vector<U, N>
     where
@@ -408,58 +500,45 @@ where
 
 impl<T, const N: usize> Vector<T, N>
 where
-    T: Copy + Default,
-{
-    /// Returns the `x-coordinate`.
-    #[inline]
-    pub fn x(&self) -> T {
-        match self.0.get(0) {
-            Some(z) => *z,
-            None => T::default(),
-        }
-    }
-    /// Returns the `y-magnitude`.
-    #[inline]
-    pub fn y(&self) -> T {
-        match self.0.get(1) {
-            Some(z) => *z,
-            None => T::default(),
-        }
-    }
-
-    /// Returns the `z-magnitude`.
-    #[inline]
-    pub fn z(&self) -> T {
-        match self.0.get(2) {
-            Some(z) => *z,
-            None => T::default(),
-        }
-    }
-}
-
-impl<T, const N: usize> Vector<T, N>
-where
     T: Num,
 {
     /// Constructs a `Vector` by shifting coordinates by given amount.
-    pub fn offset<U>(mut self, offsets: [U; N]) -> Self
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude_3d::*;
+    /// let mut v: VectorF3 = vector!(2.0, 3.0, 1.5);
+    /// v.offset([2.0, -4.0]);
+    /// assert_eq!(v.values(), [4.0, -1.0, 1.5]);
+    /// ```
+    pub fn offset<U, const M: usize>(&mut self, offsets: [U; M])
     where
-        T: Add<U, Output = T>,
+        T: AddAssign<U>,
         U: Copy,
     {
-        for i in 0..N {
-            self[i] = self[i] + offsets[i]
+        assert!(N >= M);
+        for i in 0..M {
+            self[i] += offsets[i]
         }
-        self
     }
 
     /// Constructs a `Vector` by multiplying it by the given scale factor.
-    pub fn scale<U>(self, s: U) -> Self
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude_3d::*;
+    /// let mut v: VectorF3 = vector!(2.0, 3.0, 1.5);
+    /// v.scale(2.0);
+    /// assert_eq!(v.values(), [4.0, 6.0, 3.0]);
+    /// ```
+    pub fn scale<U>(&mut self, s: U)
     where
-        T: Mul<U, Output = T>,
+        T: MulAssign<U>,
         U: Num,
     {
-        self * s
+        *self *= s;
     }
 
     /// Wraps `Vector` around the given `[T; N]`, and size (radius).
@@ -728,7 +807,17 @@ where
     }
 
     /// Returns whether two `Vector`s are approximately equal.
-    pub fn approx_eq(&self, other: Vector<T, N>, epsilon: T) -> bool {
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude_3d::*;
+    /// let v1: VectorF3 = vector!(10.0, 20.0, 2.0);
+    /// let v2: VectorF3 = vector!(10.0001, 20.0, 2.0);
+    /// assert!(v1.approx_eq(v2, 1e-3));
+    /// ```
+    pub fn approx_eq<V: Into<Vector<T, N>>>(&self, other: V, epsilon: T) -> bool {
+        let other = other.into();
         let mut approx_eq = true;
         for i in 0..N {
             approx_eq &= (self[i] - other[i]).abs() < epsilon;
@@ -1115,6 +1204,14 @@ macro_rules! impl_primitive_mul {
 
 impl_primitive_mul!(i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize, f32, f64);
 
+impl<T, const N: usize> IntoIterator for Vector<T, N> {
+    type Item = T;
+    type IntoIter = IntoIter<Self::Item, N>;
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter::new(self.0)
+    }
+}
+
 impl<T, const N: usize> Sum for Vector<T, N>
 where
     T: Default + Copy + Add,
@@ -1142,6 +1239,36 @@ where
     {
         let v = Vector::origin();
         iter.fold(v, |a, b| a + *b)
+    }
+}
+
+impl<T, const N: usize> Product for Vector<T, N>
+where
+    T: Default + Copy + Mul,
+    Self: Mul<Output = Self>,
+{
+    /// Multiply a list of `Vector`s.
+    fn product<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = Self>,
+    {
+        let v = Vector::origin();
+        iter.fold(v, |a, b| a * b)
+    }
+}
+
+impl<'a, T, const N: usize> Product<&'a Vector<T, N>> for Vector<T, N>
+where
+    T: Default + Copy + Mul,
+    Self: Mul<Output = Self>,
+{
+    /// Multiply a list of `&Vector`s.
+    fn product<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = &'a Self>,
+    {
+        let v = Vector::origin();
+        iter.fold(v, |a, b| a * *b)
     }
 }
 
@@ -1302,45 +1429,29 @@ where
 mod tests {
     use super::*;
 
-    macro_rules! assert_approx_eq {
-        ($v1:expr, $v2:expr) => {
-            assert_approx_eq!($v1, $v2, Scalar::EPSILON);
-        };
-        ($v1:expr, $v2:expr, $e:expr) => {
-            let [v1, v2, v3] = $v1;
-            let [ov1, ov2, ov3] = $v2;
-            let v1d = (v1 - ov1).abs();
-            let v2d = (v2 - ov2).abs();
-            let v3d = (v3 - ov3).abs();
-            assert!(v1d < $e, "v1: ({} - {}) < {}", v1, ov1, $e);
-            assert!(v2d < $e, "v2: ({} - {}) < {}", v2, ov2, $e);
-            assert!(v3d < $e, "v3: ({} - {}) < {}", v3, ov3, $e);
-        };
-    }
-
     macro_rules! test_ops {
         ($val:expr, $e:expr) => {
             // Mul<T> for Vector
             let v = vector!(2.0, -5.0, 0.0) * $val;
-            assert_approx_eq!(v.values(), [4.0, -10.0, 0.0], $e);
+            assert!(v.approx_eq([4.0, -10.0, 0.0], $e));
 
             // Mul<Vector> for T
             let v = $val * vector!(2.0, -5.0, 0.0);
-            assert_approx_eq!(v.values(), [4.0, -10.0, 0.0], $e);
+            assert!(v.approx_eq([4.0, -10.0, 0.0], $e));
 
             // MulAssign<T> for Vector
             let mut v = vector!(2.0, -5.0, 0.0);
             v *= $val;
-            assert_approx_eq!(v.values(), [4.0, -10.0, 0.0], $e);
+            assert!(v.approx_eq([4.0, -10.0, 0.0], $e));
 
             // Div<T> for Vector
             let v = vector!(1.0, -5.0, 0.0) / $val;
-            assert_approx_eq!(v.values(), [0.5, -2.5, 0.0], $e);
+            assert!(v.approx_eq([0.5, -2.5, 0.0], $e));
 
             // DivAssign<T> for Vector
             let mut v = vector!(2.0, -5.0, 0.0);
             v /= $val;
-            assert_approx_eq!(v.values(), [1.0, -2.5, 0.0], $e);
+            assert!(v.approx_eq([1.0, -2.5, 0.0], $e));
         };
     }
 
@@ -1350,25 +1461,25 @@ mod tests {
         let v1 = vector!(2.0, 5.0, 1.0);
         let v2 = vector!(1.0, 5.0, -1.0);
         let v3 = v1 + v2;
-        assert_approx_eq!(v3.values(), [3.0, 10.0, 0.0]);
+        assert!(v3.approx_eq([3.0, 10.0, 0.0], 1e-4));
 
         // AddAssign
         let mut v1 = vector!(2.0, 5.0, 1.0);
         let v2 = vector!(1.0, 5.0, -1.0);
         v1 += v2;
-        assert_approx_eq!(v1.values(), [3.0, 10.0, 0.0]);
+        assert!(v1.approx_eq([3.0, 10.0, 0.0], 1e-4));
 
         // Sub
         let v1 = vector!(2.0, 1.0, 2.0);
         let v2 = vector!(1.0, 5.0, 3.0);
         let v3 = v1 - v2;
-        assert_approx_eq!(v3.values(), [1.0, -4.0, -1.0]);
+        assert!(v3.approx_eq([1.0, -4.0, -1.0], 1e-4));
 
         // SubAssign
         let mut v1 = vector!(2.0, 1.0, 2.0);
         let v2 = vector!(1.0, 5.0, 3.0);
         v1 -= v2;
-        assert_approx_eq!(v1.values(), [1.0, -4.0, -1.0]);
+        assert!(v1.approx_eq([1.0, -4.0, -1.0], 1e-4));
 
         test_ops!(2.0f32, f32::EPSILON);
         test_ops!(2.0f64, f64::EPSILON);
@@ -1402,5 +1513,64 @@ mod tests {
         let _: Vector<i32, 3> = [50i32, 100, 55].into();
         let _: Vector<f32, 3> = [50.0f32, 100.0, 55.0].into();
         let _: Vector<f64, 3> = [50.0f64, 100.0, 55.0].into();
+    }
+
+    #[test]
+    fn test_member_methods() {
+        let epsilon = f64::EPSILON;
+        let arr: [f64; 0] = [];
+        let mut v: Vector<f64, 0> = arr.into();
+        assert!(v.x() < epsilon);
+        assert!(v.y() < epsilon);
+        assert!(v.z() < epsilon);
+        v.set_x(1.0);
+        v.set_y(1.0);
+        v.set_z(1.0);
+        assert!(v.x() < epsilon);
+        assert!(v.y() < epsilon);
+        assert!(v.z() < epsilon);
+
+        let mut v: Vector<f64, 1> = [1.0].into();
+        assert!((v.x() - 1.0).abs() < epsilon);
+        assert!(v.y() < epsilon);
+        assert!(v.z() < epsilon);
+        v.set_x(2.0);
+        v.set_y(1.0);
+        v.set_z(1.0);
+        assert!((v.x() - 2.0).abs() < epsilon);
+        assert!(v.y() < epsilon);
+        assert!(v.z() < epsilon);
+
+        let mut v: Vector<f64, 2> = [1.0, 2.0].into();
+        assert!((v.x() - 1.0).abs() < epsilon);
+        assert!((v.y() - 2.0).abs() < epsilon);
+        assert!(v.z() < epsilon);
+        v.set_x(2.0);
+        v.set_y(4.0);
+        v.set_z(1.0);
+        assert!((v.x() - 2.0).abs() < epsilon);
+        assert!((v.y() - 4.0).abs() < epsilon);
+        assert!(v.z() < epsilon);
+
+        let mut v: Vector<f64, 3> = [1.0, 2.0, 3.0].into();
+        assert!((v.x() - 1.0).abs() < epsilon);
+        assert!((v.y() - 2.0).abs() < epsilon);
+        assert!((v.z() - 3.0).abs() < epsilon);
+        v.set_x(2.0);
+        v.set_y(4.0);
+        v.set_z(6.0);
+        assert!((v.x() - 2.0).abs() < epsilon);
+        assert!((v.y() - 4.0).abs() < epsilon);
+        assert!((v.z() - 6.0).abs() < epsilon);
+    }
+
+    #[test]
+    fn test_deref() {
+        let v = vector!(1.0, 2.0, 3.0);
+        let mut iter = v.into_iter();
+        assert_eq!(iter.next(), Some(1.0));
+        assert_eq!(iter.next(), Some(2.0));
+        assert_eq!(iter.next(), Some(3.0));
+        assert_eq!(iter.next(), None);
     }
 }

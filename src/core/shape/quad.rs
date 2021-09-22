@@ -29,7 +29,10 @@ use crate::prelude::*;
 use num_traits::AsPrimitive;
 // #[cfg(feature = "serde")]
 // use serde::{Deserialize, Serialize};
-use std::ops::{Deref, DerefMut, Index, IndexMut};
+use std::{
+    array::IntoIter,
+    ops::{Deref, DerefMut, Index, IndexMut},
+};
 
 /// A `Quad` or quadrilateral, a four-sided polygon.
 ///
@@ -75,7 +78,7 @@ impl<T, const N: usize> Quad<T, N> {
 
 impl<T, const N: usize> Quad<T, N>
 where
-    T: Copy,
+    T: Copy + Default,
 {
     /// Returns the first point of the quad.
     #[inline]
@@ -279,7 +282,7 @@ where
 
 impl<T, U, const N: usize> From<Quad<U, N>> for [Point<T, N>; 4]
 where
-    U: Copy,
+    U: Copy + Default,
     Point<U, N>: Into<Point<T, N>>,
 {
     /// Convert [`Quad<U, N>`] to `[Point<T, N>; 4]`.
@@ -300,6 +303,14 @@ where
     /// Convert &[`Quad<U>`] to `[Point<T, N>; 4]`.
     fn from(quad: &Quad<U, N>) -> Self {
         quad.into()
+    }
+}
+
+impl<T, const N: usize> IntoIterator for Quad<T, N> {
+    type Item = Point<T, N>;
+    type IntoIter = IntoIter<Self::Item, 4>;
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter::new(self.0)
     }
 }
 

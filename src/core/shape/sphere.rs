@@ -20,6 +20,8 @@
 //! let s = sphere!(point![10, 20, 15], 200);
 //! ```
 
+use std::array::IntoIter;
+
 use crate::prelude::*;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -183,5 +185,13 @@ impl<T: Num> Intersects for Sphere<T> {
         let pz = other.z() - self.z();
         let r = other.radius() + self.radius();
         (px * px + py * py + pz * pz) < r * r
+    }
+}
+
+impl<T> IntoIterator for Sphere<T> {
+    type Item = T;
+    type IntoIter = IntoIter<Self::Item, 4>;
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter::new(self.0)
     }
 }
