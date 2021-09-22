@@ -365,11 +365,12 @@ impl Color {
     /// assert_eq!(c.channels(), [128, 64, 0, 128]);
     /// # Ok::<(), ColorError<f64>>(())
     /// ```
-    pub fn from_slice<T>(mode: ColorMode, slice: &[T]) -> Result<'static, Self, T>
+    pub fn from_slice<T, S: AsRef<[T]>>(mode: ColorMode, slice: S) -> Result<'static, Self, T>
     where
         T: Copy + Into<Scalar>,
         [T]: ToOwned<Owned = Vec<T>>,
     {
+        let slice = slice.as_ref();
         let result = match *slice {
             [gray] => Self::with_mode(mode, gray, gray, gray),
             [gray, a] => Self::with_mode_alpha(mode, gray, gray, gray, a),

@@ -83,11 +83,11 @@ pub(crate) trait TextureRenderer {
     ) -> RendererResult<Texture>;
 
     /// Update texture with pixel data.
-    fn update_texture(
+    fn update_texture<P: AsRef<[u8]>>(
         &mut self,
         texture: &mut Texture,
         rect: Option<Rect<i32>>,
-        pixels: &[u8],
+        pixels: P,
         pitch: usize,
     ) -> RendererResult<()>;
 

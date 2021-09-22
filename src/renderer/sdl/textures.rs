@@ -23,15 +23,15 @@ impl TextureRenderer for Renderer {
     }
 
     /// Update texture with pixel data.
-    fn update_texture(
+    fn update_texture<P: AsRef<[u8]>>(
         &mut self,
         texture: &mut Texture,
         rect: Option<Rect<i32>>,
-        pixels: &[u8],
+        pixels: P,
         pitch: usize,
     ) -> Result<()> {
         let rect: Option<SdlRect> = rect.map(|r| r.into());
-        Ok(texture.inner_mut().update(rect, pixels, pitch)?)
+        Ok(texture.inner_mut().update(rect, pixels.as_ref(), pitch)?)
     }
 
     /// Draw texture canvas.

@@ -160,9 +160,9 @@ impl PixState {
     }
 
     /// Draw a polygon to the current canvas.
-    pub fn polygon(&mut self, points: &[PointI2]) -> PixResult<()> {
+    pub fn polygon<P: AsRef<[PointI2]>>(&mut self, points: P) -> PixResult<()> {
         let s = &self.settings;
-        Ok(self.renderer.polygon(points, s.fill, s.stroke)?)
+        Ok(self.renderer.polygon(points.as_ref(), s.fill, s.stroke)?)
     }
 
     /// Draw a circle [Ellipse] to the current canvas.

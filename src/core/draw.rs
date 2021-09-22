@@ -20,14 +20,9 @@ impl PixState {
     }
 
     /// Draw a wireframe to the current canvas.
-    pub fn wireframe<P, T>(
-        &mut self,
-        vertexes: &[VectorF2],
-        pos: P,
-        angle: T,
-        scale: T,
-    ) -> PixResult<()>
+    pub fn wireframe<V, P, T>(&mut self, vertexes: V, pos: P, angle: T, scale: T) -> PixResult<()>
     where
+        V: AsRef<[VectorF2]>,
         P: Into<PointF2>,
         T: Into<Scalar>,
     {
@@ -37,6 +32,7 @@ impl PixState {
         let angle: Scalar = angle.into();
         let (sin, cos) = angle.sin_cos();
         let vs: Vec<PointI2> = vertexes
+            .as_ref()
             .iter()
             .map(|v| {
                 point!(

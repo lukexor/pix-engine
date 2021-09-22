@@ -42,7 +42,7 @@ impl PixState {
     /// # }
     /// # }
     /// ```
-    pub fn enqueue_audio(&mut self, samples: &[f32]) {
-        self.renderer.enqueue_audio(samples);
+    pub fn enqueue_audio<S: AsRef<[f32]>>(&mut self, samples: S) {
+        self.renderer.enqueue_audio(samples.as_ref());
     }
 }

@@ -38,8 +38,8 @@ impl PixState {
 
     /// Set the current window title.
     #[inline]
-    pub fn set_title(&mut self, title: &str) -> PixResult<()> {
-        Ok(self.renderer.set_title(title)?)
+    pub fn set_title<S: AsRef<str>>(&mut self, title: S) -> PixResult<()> {
+        Ok(self.renderer.set_title(title.as_ref())?)
     }
 
     /// Returns the current mouse position coordinates as `(x, y)`.

@@ -106,7 +106,13 @@ impl Image {
     }
 
     /// Constructs an `Image` from a [u8] [slice] representing RGB/A values.
-    pub fn from_bytes(width: u32, height: u32, bytes: &[u8], format: PixelFormat) -> Result<Self> {
+    pub fn from_bytes<B: AsRef<[u8]>>(
+        width: u32,
+        height: u32,
+        bytes: B,
+        format: PixelFormat,
+    ) -> Result<Self> {
+        let bytes = bytes.as_ref();
         if bytes.len() != (format.channels() * width as usize * height as usize) {
             return Err(Error::InvalidImage((width, height), bytes.len(), format));
         }
@@ -212,9 +218,9 @@ impl Image {
 
     /// Update the `Image` with a  [u8] [slice] representing RGB/A values.
     #[inline]
-    pub fn update_bytes(&mut self, bytes: &[u8]) {
+    pub fn update_bytes<B: AsRef<[u8]>>(&mut self, bytes: B) {
         self.set_updated(true);
-        self.data.clone_from_slice(bytes);
+        self.data.clone_from_slice(bytes.as_ref());
     }
 
     /// Returns the `Image` pixel format.
