@@ -3,7 +3,7 @@ use pix_engine::prelude::*;
 
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;
-const BG_COLOR: [u8; 4] = [0, 5, 0, 150];
+const BG_COLOR: [u8; 4] = [0, 0, 0, 255];
 
 lazy_static! {
     static ref GLYPHS: Vec<char> = {
@@ -24,10 +24,11 @@ struct Glyph {
 
 impl Glyph {
     const FONT: &'static str = "assets/GN-Koharuiro_Sunray.ttf";
-    const SIZE: u32 = 24;
-    const WIDTH: u32 = 16;
-    const COLOR: [u8; 3] = [94, 201, 102];
-    const HIGHLIGHT: [u8; 3] = [221, 235, 225];
+    const SIZE: u32 = 28;
+    const HEIGHT: u32 = 18;
+    const WIDTH: u32 = 18;
+    const COLOR: [u8; 3] = [122, 235, 133];
+    const HIGHLIGHT: [u8; 3] = [191, 250, 213];
     const MORPH_PROB: usize = 1;
 
     fn new() -> Self {
@@ -67,7 +68,7 @@ impl Stream {
     const SPEED_RANGE: (i32, i32) = (2, 6);
     const HEIGHT_RANGE: (usize, usize) = (1, 25);
     const START_RANGE: (i32, i32) = (-500, -50);
-    const SPAWN_RANGE: (i32, i32) = (-50, 0);
+    const SPAWN_RANGE: (i32, i32) = (-200, -50);
     const HIGHLIGHT_PROB: usize = 30;
 
     fn new(x: i32) -> Self {
@@ -107,7 +108,7 @@ impl Stream {
         }
 
         let count = random!(Self::HEIGHT_RANGE.0, Self::HEIGHT_RANGE.1);
-        self.height = count as u32 * Glyph::SIZE;
+        self.height = count as u32 * Glyph::HEIGHT;
         self.glyphs = Vec::with_capacity(count);
         for _ in 0..count {
             self.glyphs.push(Glyph::new());
@@ -117,7 +118,7 @@ impl Stream {
     fn draw(&mut self, s: &mut PixState) -> PixResult<()> {
         self.y += self.speed;
         for (i, glyph) in self.glyphs.iter_mut().enumerate() {
-            let y = self.y - (i as i32 * (self.size as i32 - 8));
+            let y = self.y - (i as i32 * (Glyph::HEIGHT as i32));
             let color = if i == 0 && self.highlight {
                 Glyph::HIGHLIGHT.into()
             } else {
