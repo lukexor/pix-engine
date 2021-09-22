@@ -81,7 +81,7 @@ pub mod prelude {
     pub use renderer::DEFAULT_ASSET_DIR;
     pub use transform::Flipped;
     // Shape macros
-    pub use {circle, ellipse, point, rect, square};
+    pub use {circle, ellipse, line_, point, quad, rect, square, tri};
     // Math macros
     pub use {noise, random, vector};
     // Color macros
@@ -100,7 +100,7 @@ pub mod prelude_3d {
     pub use prelude::*;
     pub use sphere;
     // Shape macros
-    pub use {circle, ellipse, point, rect, square};
+    pub use {circle, ellipse, line_, point, quad, rect, square, tri};
     // Math macros
     pub use {noise, random, vector};
     // Color macros

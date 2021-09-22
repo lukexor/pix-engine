@@ -260,7 +260,7 @@ impl Rendering for Renderer {
 
     /// Draw a line to the current canvas.
     fn line(&mut self, line: LineI2, color: Color) -> Result<()> {
-        let [[x1, y1], [x2, y2]] = line.as_().values();
+        let [x1, y1, x2, y2]: [i16; 4] = line.as_().into();
         if y1 == y2 {
             self.update(|canvas| Ok(canvas.hline(x1, x2, y1, color)?))
         } else if x1 == x2 {

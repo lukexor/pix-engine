@@ -34,6 +34,50 @@ use std::{
 // #[cfg_ater(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Tri<T, const N: usize>([Point<T, N>; 3]);
 
+/// A 2D `Triangle` represented by integers.
+pub type TriI2 = Tri<i32, 2>;
+
+/// A 3D `Tri` represented by integers.
+pub type TriI3 = Tri<i32, 3>;
+
+/// A 2D `Tri` represented by floating point numbers.
+pub type TriF2 = Tri<Scalar, 2>;
+
+/// A 3D `Tri` represented by floating point numbers.
+pub type TriF3 = Tri<Scalar, 3>;
+
+/// # Constructs a `Line` with two points.
+///
+/// ```
+/// # use pix_engine::prelude::*;
+///
+/// let t = tri!([10, 20], [30, 10], [20, 25]);
+/// assert_eq!(t.values(), [
+///   point!(10, 20),
+///   point!(30, 10),
+///   point!(20, 25),
+/// ]);
+///
+/// let t = tri!([10, 20, 10], [30, 10, 40], [20, 25, 20]);
+/// assert_eq!(t.values(), [
+///   point!(10, 20, 10),
+///   point!(30, 10, 40),
+///   point!(20, 25, 20),
+/// ]);
+/// ```
+#[macro_export]
+macro_rules! tri {
+    ($p1:expr, $p2:expr, $p3:expr$(,)?) => {
+        $crate::prelude::Tri::new($p1, $p2, $p3)
+    };
+    ($x1:expr, $y1:expr, $x2:expr, $y2:expr, $x3:expr, $y3:expr$(,)?) => {
+        $crate::prelude::Line::new([$x1, $y1], [$x2, $y2], [$x3, $y3])
+    };
+    ($x1:expr, $y1:expr, $z1:expr, $x2:expr, $y2:expr, $z2:expr, $x3:expr, $y3:expr, $z3:expr$(,)?) => {
+        $crate::prelude::Line::new([$x1, $y1, $z2], [$x2, $y2, $z2], [$x3, $y3, $z3])
+    };
+}
+
 impl<T, const N: usize> Tri<T, N> {
     /// Constructs a `Triangle` with the given [Point]s.
     ///
@@ -53,18 +97,6 @@ impl<T, const N: usize> Tri<T, N> {
         Self([p1.into(), p2.into(), p3.into()])
     }
 }
-
-/// A 2D `Triangle` represented by integers.
-pub type TriI2 = Tri<i32, 2>;
-
-/// A 3D `Triangle` represented by integers.
-pub type TriI3 = Tri<i32, 3>;
-
-/// A 2D `Triangle` represented by floating point numbers.
-pub type TriF2 = Tri<Scalar, 2>;
-
-/// A 3D `Triangle` represented by floating point numbers.
-pub type TriF3 = Tri<Scalar, 3>;
 
 impl<T, const N: usize> Tri<T, N>
 where

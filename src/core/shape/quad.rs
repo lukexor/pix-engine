@@ -57,6 +57,25 @@ pub type QuadF2 = Quad<Scalar, 2>;
 /// A 3D `Quad` represented by floating point numbers.
 pub type QuadF3 = Quad<Scalar, 3>;
 
+/// # Constructs a `Quad` with four points.
+///
+/// ```
+/// # use pix_engine::prelude::*;
+/// let q = quad!([10, 20], [30, 10], [20, 25], [15, 15]);
+/// assert_eq!(q.values(), [
+///   point!(10, 20),
+///   point!(30, 10),
+///   point!(20, 25),
+///   point!(15, 15),
+/// ]);
+/// ```
+#[macro_export]
+macro_rules! quad {
+    ($p1:expr, $p2:expr, $p3:expr, $p4: expr$(,)?) => {
+        $crate::prelude::Quad::new($p1, $p2, $p3, $p4)
+    };
+}
+
 impl<T, const N: usize> Quad<T, N> {
     /// Constructs a `Quad` with the given [Point]s.
     ///
@@ -170,7 +189,7 @@ where
     /// ]);
     /// ```
     pub fn values(&self) -> [Point<T, N>; 4] {
-        [self.p1(), self.p2(), self.p3(), self.p4()]
+        self.0
     }
 
     /// Returns `Quad` points as a [Vec].

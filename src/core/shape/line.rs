@@ -48,6 +48,36 @@ pub type LineF2 = Line<Scalar, 2>;
 /// A 3D `Line` represented by floating point numbers.
 pub type LineF3 = Line<Scalar, 3>;
 
+/// # Constructs a `Line` with two points.
+///
+/// ```
+/// # use pix_engine::prelude_3d::*;
+///
+/// let l: LineI2 = line_!([10, 20], [30, 10]);
+/// assert_eq!(l.values(), [
+///   point!(10, 20),
+///   point!(30, 10),
+/// ]);
+///
+/// let l: LineI3 = line_!([10, 20, 10], [30, 10, 40]);
+/// assert_eq!(l.values(), [
+///   point!(10, 20, 10),
+///   point!(30, 10, 40),
+/// ]);
+/// ```
+#[macro_export]
+macro_rules! line_ {
+    ($p1:expr, $p2:expr$(,)?) => {
+        $crate::prelude::Line::new($p1, $p2)
+    };
+    ($x1:expr, $y1:expr, $x2:expr, $y2:expr$(,)?) => {
+        $crate::prelude::Line::new([$x1, $y1], [$x2, $y2])
+    };
+    ($x1:expr, $y1:expr, $z1:expr, $x2:expr, $y2:expr, $z2:expr$(,)?) => {
+        $crate::prelude::Line::new([$x1, $y1, $z2], [$x2, $y2, $z2])
+    };
+}
+
 impl<T, const N: usize> Line<T, N> {
     /// Constructs a `Line` from `start` to `end` [Point]s.
     ///
@@ -119,12 +149,10 @@ where
     /// let p1 = point!(5, 10);
     /// let p2 = point!(100, 100);
     /// let l: LineI2 = Line::new(p1, p2);
-    /// assert_eq!(l.values(), [[5, 10], [100, 100]]);
+    /// assert_eq!(l.values(), [point!(5, 10), point!(100, 100)]);
     /// ```
-    pub fn values(&self) -> [[T; N]; 2] {
-        let start = self.start().values();
-        let end = self.end().values();
-        [start, end]
+    pub fn values(&self) -> [Point<T, N>; 2] {
+        self.0
     }
 
     /// Returns `Line` as a [Vec].
@@ -160,8 +188,8 @@ where
         L: Into<Line<T, 2>>,
     {
         let other = other.into();
-        let [[x1, y1], [x2, y2]] = self.values();
-        let [[x3, y3], [x4, y4]] = other.values();
+        let [x1, y1, x2, y2]: [T; 4] = self.into();
+        let [x3, y3, x4, y4]: [T; 4] = other.into();
         let d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
         if d == T::zero() {
             return None;
@@ -332,5 +360,61 @@ where
     /// Convert &[`Line<U, N>`] to `[Point<T, N>; 2]`.
     fn from(line: &Line<U, N>) -> Self {
         line.into()
+    }
+}
+
+impl<T, U, const N: usize> From<Line<U, N>> for [T; 4]
+where
+    T: Copy + Default,
+    U: Copy + Default,
+    Point<U, N>: Into<Point<T, N>>,
+{
+    /// Convert [`Line<U, N>`] to `[T; 4]`.
+    fn from(line: Line<U, N>) -> Self {
+        let start = line.start().into();
+        let end = line.end().into();
+        [start.x(), start.y(), end.x(), end.y()]
+    }
+}
+
+impl<T, U, const N: usize> From<&Line<U, N>> for [T; 4]
+where
+    T: Copy + Default,
+    U: Copy + Default,
+    Point<U, N>: Into<Point<T, N>>,
+{
+    /// Convert &[`Line<U, N>`] to `[T; 4]`.
+    fn from(line: &Line<U, N>) -> Self {
+        let start = line.start().into();
+        let end = line.end().into();
+        [start.x(), start.y(), end.x(), end.y()]
+    }
+}
+
+impl<T, U, const N: usize> From<Line<U, N>> for [T; 6]
+where
+    T: Copy + Default,
+    U: Copy + Default,
+    Point<U, N>: Into<Point<T, N>>,
+{
+    /// Convert [`Line<U, N>`] to `[T; 4]`.
+    fn from(line: Line<U, N>) -> Self {
+        let start = line.start().into();
+        let end = line.end().into();
+        [start.x(), start.y(), start.z(), end.x(), end.y(), end.z()]
+    }
+}
+
+impl<T, U, const N: usize> From<&Line<U, N>> for [T; 6]
+where
+    T: Copy + Default,
+    U: Copy + Default,
+    Point<U, N>: Into<Point<T, N>>,
+{
+    /// Convert &[`Line<U, N>`] to `[T; 4]`.
+    fn from(line: &Line<U, N>) -> Self {
+        let start = line.start().into();
+        let end = line.end().into();
+        [start.x(), start.y(), start.z(), end.x(), end.y(), end.z()]
     }
 }

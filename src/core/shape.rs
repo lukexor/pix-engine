@@ -10,9 +10,11 @@ pub mod line;
 pub mod point;
 #[macro_use]
 pub mod rect;
+#[macro_use]
 pub mod quad;
 #[macro_use]
 pub mod sphere;
+#[macro_use]
 pub mod triangle;
 
 pub use ellipse::*;
