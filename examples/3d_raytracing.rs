@@ -59,7 +59,7 @@ impl App {
                 reflective: 0.4,
             },
             SphereObj {
-                sphere: sphere!([0.0, -5001.0, 0.0], 5000.0),
+                sphere: sphere!([0.0, -1001.0, 0.0], 1000.0),
                 color: YELLOW,
                 specular: Some(1000),
                 reflective: 0.5,
@@ -234,16 +234,21 @@ impl AppState for App {
 
     fn on_key_pressed(&mut self, _s: &mut PixState, event: KeyEvent) -> PixResult<()> {
         match (event.key, event.keymod) {
-            (Key::Left, KeyMod::NONE) => self.origin -= point!(1.0, 0.0, 0.0),
-            (Key::Right, KeyMod::NONE) => self.origin += point!(1.0, 0.0, 0.0),
-            (Key::Up, KeyMod::NONE) => self.origin += point!(0.0, 0.0, 1.0),
-            (Key::Down, KeyMod::NONE) => self.origin -= point!(0.0, 0.0, 1.0),
-            (Key::Up, KeyMod::SHIFT) => self.origin += point!(0.0, 1.0, 0.0),
-            (Key::Down, KeyMod::SHIFT) => self.origin -= point!(0.0, 1.0, 0.0),
-            (Key::Left, KeyMod::GUI) => self.looking += point!(0.1, 0.0, 0.0),
-            (Key::Right, KeyMod::GUI) => self.looking -= point!(0.1, 0.0, 0.0),
-            (Key::Up, KeyMod::GUI) => self.looking += point!(0.0, 0.1, 0.0),
-            (Key::Down, KeyMod::GUI) => self.looking -= point!(0.0, 0.1, 0.0),
+            // Move left/right
+            (Key::Left, KeyMod::NONE) => self.origin -= point!(1.0, 0.0, 0.0) - self.looking,
+            (Key::Right, KeyMod::NONE) => self.origin += point!(1.0, 0.0, 0.0) - self.looking,
+            // Move forward/back
+            (Key::Up, KeyMod::NONE) => self.origin += point!(0.0, 0.0, 1.0) - self.looking,
+            (Key::Down, KeyMod::NONE) => self.origin -= point!(0.0, 0.0, 1.0) - self.looking,
+            // Move up/down
+            (Key::Up, KeyMod::SHIFT) => self.origin += point!(0.0, 1.0, 0.0) - self.looking,
+            (Key::Down, KeyMod::SHIFT) => self.origin -= point!(0.0, 1.0, 0.0) - self.looking,
+            // Look left/right
+            (Key::Left, KeyMod::GUI) => self.looking += point!(0.05, 0.0, 0.0),
+            (Key::Right, KeyMod::GUI) => self.looking -= point!(0.05, 0.0, 0.0),
+            // Look up/down
+            (Key::Up, KeyMod::GUI) => self.looking -= point!(0.0, 0.05, 0.0),
+            (Key::Down, KeyMod::GUI) => self.looking += point!(0.0, 0.05, 0.0),
             _ => (),
         }
         Ok(())
