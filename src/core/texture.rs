@@ -137,6 +137,27 @@ impl PixState {
         Ok(self.renderer.create_texture(width, height, format.into())?)
     }
 
+    /// Delete a `Texture`.
+    ///
+    /// # Safety
+    ///
+    /// It is up to the caller to ensure that the texture to be destroyed was created with the
+    /// current canvas. Currently, the only way to violate this is by creating a texture and then
+    /// toggling vsync after `PixEngine` initialization. Toggling vsync requires re-creating any
+    /// textures in order to safely destroy them.
+    ///
+    /// Destroying textures created from a dropped canvas is undefined behavior.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub unsafe fn delete_texture(&mut self, texture: Texture) -> PixResult<()> {
+        Ok(self.renderer.delete_texture(texture)?)
+    }
+
+    /// Delete a `Texture`.
+    #[cfg(target_arch = "wasm32")]
+    pub fn delete_texture(&mut self, texture: Texture) -> PixResult<()> {
+        Ok(self.renderer.delete_texture(texture)?)
+    }
+
     /// Update the `Texture` with a [u8] [slice] of pixel data.
     pub fn update_texture<R, P>(
         &mut self,

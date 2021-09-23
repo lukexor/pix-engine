@@ -45,6 +45,12 @@ lazy_static! {
 macro_rules! update_canvas {
     ($self:expr, $func:expr) => {
         if let Some(ptr) = $self.texture_target {
+            // SAFETY: We know this is safe because core::texture::with_texture controls setting and clearing
+            // texture_target and has exclusive access to Texture the entire time texture_target is
+            // set.
+            //
+            // One other case that can invalidate this is toggling vsync - which checks for
+            // texture_target being set.
             let mut texture = unsafe { &mut (*ptr).inner };
             Ok($self.canvas.with_texture_canvas(&mut texture, |canvas| {
                 let _ = $func(canvas);
@@ -449,7 +455,7 @@ impl Rendering for Renderer {
         update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
             if angle > 0.0 || center.is_some() || flipped.is_some() {
                 Ok(canvas.copy_ex(
-                    &texture,
+                    texture,
                     None,
                     rect,
                     angle,
@@ -458,12 +464,9 @@ impl Rendering for Renderer {
                     matches!(flipped, Some(Flipped::Vertical | Flipped::Both)),
                 )?)
             } else {
-                Ok(canvas.copy(&texture, None, rect)?)
+                Ok(canvas.copy(texture, None, rect)?)
             }
         })
-        // }
-        // None => Err(Error::InvalidTexture(texture_id)),
-        // }
     }
 }
 
@@ -480,7 +483,10 @@ impl std::fmt::Debug for Renderer {
             .field("font_path", &self.font.0)
             .field("font_size", &self.font.1)
             .field("font_style", &self.font_style)
+            .field("text_cache_size", &self.text_cache.len())
+            .field("image_cache_size", &self.image_cache.len())
             .field("texture_count", &self.textures.len())
+            .field("texture_target", &self.texture_target)
             .finish()
     }
 }

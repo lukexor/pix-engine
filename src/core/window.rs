@@ -5,7 +5,7 @@ use crate::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, error, ffi::NulError, fmt, path::PathBuf, result};
 
-/// The result type for `Renderer` operations.
+/// The result type for `WindowRenderer` operations.
 pub type Result<T> = result::Result<T, Error>;
 
 /// Represents a possible screen position.

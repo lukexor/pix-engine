@@ -109,6 +109,12 @@ impl WindowRenderer for Renderer {
 
     /// Set the window to synchronize frame rate to the screens refresh rate.
     fn set_vsync(&mut self, val: bool) -> Result<()> {
+        if self.texture_target.is_some() {
+            return Err(Error::Other(
+                "changing vsync is invalid when using `PixState::with_texture()`".into(),
+            ));
+        }
+
         self.settings.vsync = val;
         let window = self.canvas.window();
         let (x, y) = window.position();
@@ -124,6 +130,7 @@ impl WindowRenderer for Renderer {
 
         let (window_id, canvas) = Self::create_window_canvas(&self.context, &self.settings)?;
         self.window_id = window_id;
+
         self.texture_creator = canvas.texture_creator();
         let mut textures = Vec::with_capacity(self.textures.len());
         for texture in &self.textures {
@@ -138,7 +145,10 @@ impl WindowRenderer for Renderer {
                     .create_texture_target(format, width, height)?,
             );
         }
+
         self.text_cache.clear();
+        self.image_cache.clear();
+
         self.textures = textures;
         self.canvas = canvas;
         Ok(())
