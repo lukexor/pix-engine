@@ -4,7 +4,6 @@ use crate::{color::Result as ColorResult, prelude::*, renderer::Rendering};
 use png::{BitDepth, ColorType, Decoder};
 use std::{
     borrow::Cow,
-    cell::Cell,
     error,
     ffi::{OsStr, OsString},
     fmt,
@@ -67,8 +66,6 @@ pub struct Image {
     data: Vec<u8>,
     /// Pixel Format.
     format: PixelFormat,
-    /// Texture Identifier and whether texture requires updating.
-    texture_cache: Cell<Option<(TextureId, bool)>>,
 }
 
 impl std::fmt::Debug for Image {
@@ -77,7 +74,6 @@ impl std::fmt::Debug for Image {
             .field("width", &self.width)
             .field("height", &self.height)
             .field("format", &self.format)
-            .field("texture_cache", &self.texture_cache)
             .field("size", &self.data.len())
             .finish()
     }
@@ -126,7 +122,6 @@ impl Image {
             height,
             data,
             format,
-            texture_cache: Cell::new(None),
         }
     }
 
@@ -192,7 +187,6 @@ impl Image {
     /// Returns the `Image` pixel data as a mutable [u8] [slice].
     #[inline]
     pub fn bytes_mut(&mut self) -> &mut [u8] {
-        self.set_updated(true);
         &mut self.data
     }
 
@@ -211,15 +205,11 @@ impl Image {
         let idx = self.idx(x, y);
         let channels = self.format.channels();
         self.data[idx..(idx + channels)].clone_from_slice(&color.channels()[..channels]);
-        if let Some((_, ref mut needs_update)) = self.texture_cache.get() {
-            *needs_update = true;
-        }
     }
 
     /// Update the `Image` with a  [u8] [slice] representing RGB/A values.
     #[inline]
     pub fn update_bytes<B: AsRef<[u8]>>(&mut self, bytes: B) {
-        self.set_updated(true);
         self.data.clone_from_slice(bytes.as_ref());
     }
 
@@ -240,26 +230,6 @@ impl Image {
         png.set_color(png::ColorType::RGBA);
         let mut writer = png.write_header()?;
         Ok(writer.write_image_data(self.bytes())?)
-    }
-
-    /// Returns the `Image` [TextureId].
-    #[inline]
-    pub(crate) fn texture_cache(&self) -> Option<(TextureId, bool)> {
-        self.texture_cache.get()
-    }
-
-    /// Set the `Image` [TextureId].
-    #[inline]
-    pub(crate) fn set_texture_id(&self, texture_id: TextureId) {
-        self.texture_cache.set(Some((texture_id, false)));
-    }
-
-    /// Set the updated texture cache.
-    #[inline]
-    pub(crate) fn set_updated(&self, val: bool) {
-        if let Some((texture_id, _)) = self.texture_cache.get() {
-            self.texture_cache.set(Some((texture_id, val)));
-        }
     }
 }
 

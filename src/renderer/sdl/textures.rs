@@ -1,10 +1,6 @@
-use super::Renderer;
+use super::{Renderer, TTF};
 use crate::renderer::*;
-use sdl2::{
-    rect::Rect as SdlRect,
-    render::{Canvas, Texture as SdlTexture},
-    video::Window as SdlWindow,
-};
+use sdl2::{rect::Rect as SdlRect, render::Texture as SdlTexture};
 
 pub(crate) type RendererTexture = SdlTexture;
 
@@ -20,6 +16,21 @@ impl TextureRenderer for Renderer {
             self.texture_creator
                 .create_texture_target(format.map(|f| f.into()), width, height)?;
         Ok(Texture::new(texture, width, height, format))
+    }
+
+    /// Delete texture.
+    ///
+    /// # Safety
+    ///
+    /// It is up to the caller to ensure that the texture to be destroyed was created with the
+    /// current canvas. Currently, the only way to violate this is by creating a texture and then
+    /// toggling vsync after `PixEngine` initialization. Toggling vsync requires re-creating any
+    /// textures in order to safely destroy them.
+    ///
+    /// Destroying textures created from a dropped canvas is undefined behavior.
+    unsafe fn delete_texture(&mut self, texture: Texture) -> Result<()> {
+        texture.inner.destroy();
+        Ok(())
     }
 
     /// Update texture with pixel data.
@@ -58,18 +69,11 @@ impl TextureRenderer for Renderer {
 }
 
 impl Renderer {
-    pub(crate) fn update<F>(&mut self, f: F) -> Result<()>
-    where
-        for<'r> F: FnOnce(&'r mut Canvas<SdlWindow>) -> Result<()>,
-    {
-        match self.texture_target {
-            Some(ptr) => {
-                let mut texture = unsafe { &mut (*ptr).inner };
-                Ok(self.canvas.with_texture_canvas(&mut texture, |canvas| {
-                    let _ = f(canvas);
-                })?)
-            }
-            None => f(&mut self.canvas),
+    pub(crate) fn update_font_cache(&mut self) -> Result<()> {
+        if self.font_cache.get(&self.font).is_none() {
+            self.font_cache
+                .insert(self.font.clone(), TTF.load_font(&self.font.0, self.font.1)?);
         }
+        Ok(())
     }
 }

@@ -82,6 +82,13 @@ pub(crate) trait TextureRenderer {
         format: Option<PixelFormat>,
     ) -> RendererResult<Texture>;
 
+    /// Delete a `Texture`.
+    #[cfg(not(target_arch = "wasm32"))]
+    unsafe fn delete_texture(&mut self, texture: Texture) -> RendererResult<()>;
+    /// Delete a `Texture`.
+    #[cfg(target_arch = "wasm32")]
+    fn delete_texture(&mut self, texture: Texture) -> RendererResult<()>;
+
     /// Update texture with pixel data.
     fn update_texture<P: AsRef<[u8]>>(
         &mut self,

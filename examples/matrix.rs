@@ -24,9 +24,9 @@ struct Glyph {
 
 impl Glyph {
     const FONT: &'static str = "assets/GN-Koharuiro_Sunray.ttf";
-    const SIZE: u32 = 28;
-    const HEIGHT: u32 = 18;
-    const WIDTH: u32 = 18;
+    const SIZE: u32 = 24;
+    const HEIGHT: u32 = 15;
+    const WIDTH: u32 = 15;
     const COLOR: [u8; 3] = [122, 235, 133];
     const HIGHLIGHT: [u8; 3] = [191, 250, 213];
     const MORPH_PROB: usize = 1;

@@ -20,7 +20,6 @@ pub mod constants {
 /// Default Scalar for floating point math.
 #[cfg(target_pointer_width = "32")]
 pub type Scalar = f32;
-
 /// Default Scalar for floating point math.
 #[cfg(target_pointer_width = "64")]
 pub type Scalar = f64;
