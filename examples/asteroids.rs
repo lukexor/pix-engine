@@ -6,7 +6,7 @@ const MIN_ASTEROID_SIZE: u32 = 16;
 const SHIP_THRUST: Scalar = 150.0;
 const MAX_THRUST: Scalar = 600.0;
 const MAX_ASTEROID_SPEED: Scalar = 50.0;
-const SHATTERED_ASTEROID_SPEED: Scalar = 80.0;
+const SHATTERED_ASTEROID_SPEED: Scalar = 100.0;
 const BULLET_SPEED: Scalar = 200.0;
 const ASTEROID_SAFE_RADIUS: Scalar = 80.0; // So asteroids don't spawn near player
 

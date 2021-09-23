@@ -370,10 +370,8 @@ fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("2D Raycasting")
-        .with_frame_rate()
         .position_centered()
-        .vsync_enabled()
-        .resizable()
+        .with_frame_rate()
         .icon(DEFAULT_ASSET_DIR.join("light.png"))
         .build();
     let mut app = RayScene::new();

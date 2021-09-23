@@ -27,8 +27,10 @@ impl Glyph {
     const SIZE: u32 = 24;
     const HEIGHT: u32 = 15;
     const WIDTH: u32 = 15;
-    const COLOR: [u8; 3] = [122, 235, 133];
-    const HIGHLIGHT: [u8; 3] = [191, 250, 213];
+    // const COLOR: [u8; 3] = [122, 235, 133];
+    // const COLOR: [u8; 3] = [94, 201, 102];
+    const COLOR: [u8; 3] = [60, 255, 70];
+    const HIGHLIGHT: [u8; 3] = [190, 255, 200];
     const MORPH_PROB: usize = 1;
 
     fn new() -> Self {
@@ -200,8 +202,8 @@ fn main() -> PixResult<()> {
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("The Matrix")
         .position_centered()
-        .vsync_enabled()
         .with_frame_rate()
+        .vsync_enabled()
         .build();
     let mut app = Matrix::new();
     engine.run(&mut app)

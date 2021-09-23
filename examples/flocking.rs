@@ -181,10 +181,6 @@ impl AppState for App {
         Ok(())
     }
 
-    fn on_stop(&mut self, _s: &mut PixState) -> PixResult<()> {
-        Ok(())
-    }
-
     fn on_key_pressed(&mut self, _s: &mut PixState, event: KeyEvent) -> PixResult<()> {
         if event.key == Key::R {
             self.reset();
@@ -197,8 +193,8 @@ pub fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("Flocking")
-        .with_frame_rate()
         .position_centered()
+        .with_frame_rate()
         .vsync_enabled()
         .build();
     let mut app = App::new();

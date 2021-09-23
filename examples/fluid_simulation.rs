@@ -312,11 +312,10 @@ impl AppState for App {
 pub fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
-        .with_title("Fluid Simulation")
-        .with_frame_rate()
         .scale(2.0, 2.0)
+        .with_title("Fluid Simulation")
         .position_centered()
-        .vsync_enabled()
+        .with_frame_rate()
         .build();
     let mut app = App::new();
     engine.run(&mut app)

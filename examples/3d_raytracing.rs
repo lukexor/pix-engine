@@ -252,9 +252,10 @@ impl AppState for App {
 
 pub fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
-        .with_title("3D Raytracing")
         .with_dimensions(800, 800)
+        .with_title("3D Raytracing")
         .position_centered()
+        .with_frame_rate()
         .build();
     let mut app = App::new();
     engine.run(&mut app)
