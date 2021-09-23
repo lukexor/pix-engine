@@ -11,6 +11,7 @@ use std::{
     io::{self, BufReader, BufWriter},
     path::Path,
     result,
+    vec::IntoIter,
 };
 
 /// The result type for [Image] operations.
@@ -88,6 +89,7 @@ impl Image {
     }
 
     /// Constructs an empty RGBA `Image` with given `width` and `height`.
+    #[inline]
     pub fn with_rgba(width: u32, height: u32) -> Self {
         let format = PixelFormat::Rgba;
         let data = vec![0x00; format.channels() * (width * height) as usize];
@@ -95,6 +97,7 @@ impl Image {
     }
 
     /// Constructs an empty RGB `Image` with given `width` and `height`.
+    #[inline]
     pub fn with_rgb(width: u32, height: u32) -> Self {
         let format = PixelFormat::Rgb;
         let data = vec![0x00; format.channels() * (width * height) as usize];
@@ -102,6 +105,7 @@ impl Image {
     }
 
     /// Constructs an `Image` from a [u8] [slice] representing RGB/A values.
+    #[inline]
     pub fn from_bytes<B: AsRef<[u8]>>(
         width: u32,
         height: u32,
@@ -115,7 +119,27 @@ impl Image {
         Ok(Self::from_vec(width, height, bytes.to_vec(), format))
     }
 
+    /// Constructs an `Image` from a [Color] [slice] representing RGBA values.
+    #[inline]
+    pub fn from_pixels<P: AsRef<[Color]>>(
+        width: u32,
+        height: u32,
+        pixels: P,
+        format: PixelFormat,
+    ) -> Result<Self> {
+        let pixels = pixels.as_ref();
+        if pixels.len() != (width as usize * height as usize) {
+            return Err(Error::InvalidImage((width, height), pixels.len(), format));
+        }
+        let bytes: Vec<u8> = match format {
+            PixelFormat::Rgb => pixels.iter().map(|c| c.rgb_channels()).flatten().collect(),
+            PixelFormat::Rgba => pixels.iter().map(|c| c.rgba_channels()).flatten().collect(),
+        };
+        Ok(Self::from_vec(width, height, bytes, format))
+    }
+
     /// Constructs an `Image` from a [Vec<u8>] representing RGB/A values.
+    #[inline]
     pub fn from_vec(width: u32, height: u32, data: Vec<u8>, format: PixelFormat) -> Self {
         Self {
             width,
@@ -174,6 +198,7 @@ impl Image {
     }
 
     /// Returns the center position as [Point].
+    #[inline]
     pub fn center(&self) -> PointI2 {
         point!(self.width() as i32 / 2, self.height() as i32 / 2)
     }
@@ -188,6 +213,17 @@ impl Image {
     #[inline]
     pub fn bytes_mut(&mut self) -> &mut [u8] {
         &mut self.data
+    }
+
+    /// Returns the `Image` pixel data as a [Vec<Color>].
+    #[inline]
+    pub fn pixels(&self) -> Vec<Color> {
+        // SAFETY: Converting to colors from data should be valid since the image could not have
+        // been constructed with an invalid set of bytes due to bounds checks in constructors.
+        self.data
+            .chunks(self.format.channels())
+            .map(|slice| Color::from_slice(ColorMode::Rgb, slice).expect("valid image"))
+            .collect()
     }
 
     /// Returns the color value at the given `(x, y)` position.
@@ -234,6 +270,7 @@ impl Image {
 }
 
 impl Image {
+    #[inline]
     fn idx(&self, x: u32, y: u32) -> usize {
         self.format.channels() * (y * self.width + x) as usize
     }
@@ -287,6 +324,14 @@ impl PixState {
             flipped.into(),
             s.image_tint,
         )?)
+    }
+}
+
+impl IntoIterator for Image {
+    type Item = Color;
+    type IntoIter = IntoIter<Color>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.pixels().into_iter()
     }
 }
 

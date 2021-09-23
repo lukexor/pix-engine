@@ -133,6 +133,7 @@ impl Rendering for Renderer {
     }
 
     /// Clears the canvas to the current clear color.
+    #[inline]
     fn clear(&mut self) -> Result<()> {
         update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
             canvas.clear();
@@ -141,6 +142,7 @@ impl Rendering for Renderer {
     }
 
     /// Sets the color used by the renderer to draw to the current canvas.
+    #[inline]
     fn set_draw_color(&mut self, color: Color) -> Result<()> {
         update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
             canvas.set_draw_color(color);
@@ -149,6 +151,7 @@ impl Rendering for Renderer {
     }
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
+    #[inline]
     fn clip(&mut self, rect: Option<Rect<i32>>) -> Result<()> {
         let rect = rect.map(|rect| rect.into());
         update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
@@ -158,16 +161,19 @@ impl Rendering for Renderer {
     }
 
     /// Sets the blend mode used by the renderer to drawing.
+    #[inline]
     fn blend_mode(&mut self, mode: BlendMode) {
         self.blend_mode = mode.into();
     }
 
     /// Updates the canvas from the current back buffer.
+    #[inline]
     fn present(&mut self) {
         self.canvas.present();
     }
 
     /// Scale the current canvas.
+    #[inline]
     fn scale(&mut self, x: f32, y: f32) -> Result<()> {
         update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
             Ok(canvas.set_scale(x, y)?)
@@ -175,6 +181,7 @@ impl Rendering for Renderer {
     }
 
     /// Set the font size for drawing to the current canvas.
+    #[inline]
     fn font_size(&mut self, size: u32) -> Result<()> {
         self.font.1 = size as u16;
         self.update_font_cache()?;
@@ -182,6 +189,7 @@ impl Rendering for Renderer {
     }
 
     /// Set the font style for drawing to the current canvas.
+    #[inline]
     fn font_style(&mut self, style: FontStyle) {
         if let Some(font) = self.font_cache.get_mut(&self.font) {
             let style = style.into();
@@ -191,6 +199,7 @@ impl Rendering for Renderer {
     }
 
     /// Set the font family for drawing to the current canvas.
+    #[inline]
     fn font_family(&mut self, family: &str) -> Result<()> {
         self.font.0 = PathBuf::from(&family);
         self.update_font_cache()?;
@@ -246,6 +255,7 @@ impl Rendering for Renderer {
 
     /// Returns the rendered dimensions of the given text using the current font
     /// as `(width, height)`.
+    #[inline]
     fn size_of(&self, text: &str) -> Result<(u32, u32)> {
         let cache = self.font_cache.get(&self.font);
         match cache {
@@ -255,6 +265,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw a pixel to the current canvas.
+    #[inline]
     fn point(&mut self, p: PointI2, color: Color) -> Result<()> {
         let [x, y] = p.as_().values();
         update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {

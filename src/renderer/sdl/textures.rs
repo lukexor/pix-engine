@@ -6,6 +6,7 @@ pub(crate) type RendererTexture = SdlTexture;
 
 impl TextureRenderer for Renderer {
     /// Create a texture to render to.
+    #[inline]
     fn create_texture(
         &mut self,
         width: u32,
@@ -28,12 +29,14 @@ impl TextureRenderer for Renderer {
     /// textures in order to safely destroy them.
     ///
     /// Destroying textures created from a dropped canvas is undefined behavior.
+    #[inline]
     unsafe fn delete_texture(&mut self, texture: Texture) -> Result<()> {
         texture.inner.destroy();
         Ok(())
     }
 
     /// Update texture with pixel data.
+    #[inline]
     fn update_texture<P: AsRef<[u8]>>(
         &mut self,
         texture: &mut Texture,
@@ -46,6 +49,7 @@ impl TextureRenderer for Renderer {
     }
 
     /// Draw texture canvas.
+    #[inline]
     fn texture(
         &mut self,
         texture: &Texture,
@@ -58,11 +62,13 @@ impl TextureRenderer for Renderer {
     }
 
     /// Set texture as the target for drawing operations.
+    #[inline]
     fn set_texture_target(&mut self, texture: &mut Texture) {
         self.texture_target = Some(texture);
     }
 
     /// Set texture as the target for drawing operations.
+    #[inline]
     fn clear_texture_target(&mut self) {
         self.texture_target = None;
     }

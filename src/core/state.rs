@@ -97,6 +97,7 @@ impl PixState {
     }
 
     /// Handle state changes this frame prior to calling [AppState::on_update].
+    #[inline]
     pub(crate) fn pre_update(&mut self) {
         self.renderer
             .cursor(self.settings.cursor.as_ref())
@@ -104,6 +105,7 @@ impl PixState {
     }
 
     /// Handle state changes this frame after calling [AppState::on_update].
+    #[inline]
     pub(crate) fn post_update(&mut self) {
         self.mouse.clear();
     }

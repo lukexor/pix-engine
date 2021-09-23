@@ -16,6 +16,7 @@ use std::borrow::Cow;
 
 impl WindowRenderer for Renderer {
     /// Get the primary window id.
+    #[inline]
     fn window_id(&self) -> WindowId {
         self.window_id
     }
@@ -42,16 +43,19 @@ impl WindowRenderer for Renderer {
     }
 
     /// Returns a single event or None if the event pump is empty.
+    #[inline]
     fn poll_event(&mut self) -> Option<Event> {
         self.event_pump.poll_event().map(|evt| evt.into())
     }
 
     /// Get the current window title.
+    #[inline]
     fn title(&self) -> &str {
         &self.settings.title
     }
 
     /// Set the current window title.
+    #[inline]
     fn set_title(&mut self, title: &str) -> Result<()> {
         self.settings.title = title.to_owned();
         Ok(self.canvas.window_mut().set_title(title)?)
@@ -66,6 +70,7 @@ impl WindowRenderer for Renderer {
     }
 
     /// Set dimensions of the primary window as `(width, height)`.
+    #[inline]
     fn set_dimensions(&mut self, id: WindowId, (width, height): (u32, u32)) -> Result<()> {
         if id == self.window_id {
             self.canvas.window_mut().set_size(width, height)?
@@ -76,6 +81,7 @@ impl WindowRenderer for Renderer {
     }
 
     /// Dimensions of the primary window as `(width, height)`.
+    #[inline]
     fn dimensions(&self, id: WindowId) -> Result<(u32, u32)> {
         let (width, height) = if id == self.window_id {
             self.canvas.window().size()
@@ -86,12 +92,14 @@ impl WindowRenderer for Renderer {
     }
 
     /// Returns whether the application is fullscreen or not.
+    #[inline]
     fn fullscreen(&self) -> bool {
         use FullscreenType::*;
         matches!(self.canvas.window().fullscreen_state(), True | Desktop)
     }
 
     /// Set the application to fullscreen or not.
+    #[inline]
     fn set_fullscreen(&mut self, val: bool) {
         let fullscreen_type = if val {
             FullscreenType::True
@@ -103,6 +111,7 @@ impl WindowRenderer for Renderer {
     }
 
     /// Returns whether the window synchronizes frame rate to the screens refresh rate.
+    #[inline]
     fn vsync(&self) -> bool {
         self.settings.vsync
     }

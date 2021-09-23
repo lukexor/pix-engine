@@ -137,663 +137,6 @@ pub struct Color {
     channels: [u8; 4],
 }
 
-impl Color {
-    /// Constructs a `Color` with `red`, `green`, `blue` and max `alpha`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::new(0, 0, 128);
-    /// assert_eq!(c.channels(), [0, 0, 128, 255]);
-    /// ```
-    pub fn new<T: Into<Scalar>>(r: T, g: T, b: T) -> Self {
-        Self::rgb(r, g, b)
-    }
-
-    /// Constructs a `Color` with `red`, `green`, `blue` and `alpha`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::new_alpha(0, 0, 128, 50);
-    /// assert_eq!(c.channels(), [0, 0, 128, 50]);
-    /// ```
-    pub fn new_alpha<T: Into<Scalar>>(r: T, g: T, b: T, a: T) -> Self {
-        Self::rgba(r, g, b, a)
-    }
-
-    /// Constructs a `Color` with the given [ColorMode] and max alpha.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::with_mode(ColorMode::Rgb, 0.0, 0.0, 128.0);
-    /// assert_eq!(c.channels(), [0, 0, 128, 255]);
-    ///
-    /// let c = Color::with_mode(ColorMode::Hsb, 126.0, 50.0, 100.0);
-    /// assert_eq!(c.channels(), [128, 255, 140, 255]);
-    /// ```
-    pub fn with_mode<T: Into<Scalar>>(mode: ColorMode, v1: T, v2: T, v3: T) -> Self {
-        // Normalize channels
-        let [v1_max, v2_max, v3_max, _] = maxes(mode);
-        let levels = clamp_levels([
-            v1.into() / v1_max,
-            v2.into() / v2_max,
-            v3.into() / v3_max,
-            1.0,
-        ]);
-
-        // Convert to Rgb
-        let levels = convert_levels(levels, mode, Rgb);
-        let channels = calculate_channels(levels);
-
-        Self {
-            mode,
-            levels,
-            channels,
-        }
-    }
-
-    /// Constructs a `Color` with the given [ColorMode] and alpha.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::with_mode_alpha(ColorMode::Rgb, 0.0, 0.0, 128.0, 50.0);
-    /// assert_eq!(c.channels(), [0, 0, 128, 50]);
-    ///
-    /// let c = Color::with_mode_alpha(ColorMode::Hsb, 126.0, 50.0, 100.0, 0.8);
-    /// assert_eq!(c.channels(), [128, 255, 140, 204]);
-    /// ```
-    pub fn with_mode_alpha<T: Into<Scalar>>(
-        mode: ColorMode,
-        v1: T,
-        v2: T,
-        v3: T,
-        alpha: T,
-    ) -> Self {
-        // Normalize channels
-        let [v1_max, v2_max, v3_max, alpha_max] = maxes(mode);
-        let levels = clamp_levels([
-            v1.into() / v1_max,
-            v2.into() / v2_max,
-            v3.into() / v3_max,
-            alpha.into() / alpha_max,
-        ]);
-
-        // Convert to Rgb
-        let levels = convert_levels(levels, mode, Rgb);
-        let channels = calculate_channels(levels);
-
-        Self {
-            mode,
-            levels,
-            channels,
-        }
-    }
-
-    /// Constructs a `Color` with `red`, `green`, `blue` and max `alpha`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::rgb(128, 64, 0);
-    /// assert_eq!(c.channels(), [128, 64, 0, 255]);
-    /// ```
-    pub fn rgb<T: Into<Scalar>>(r: T, g: T, b: T) -> Self {
-        Self::with_mode(Rgb, r, g, b)
-    }
-
-    /// Constructs a `Color` with `red`, `green`, `blue` and `alpha`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::rgba(128, 64, 128, 128);
-    /// assert_eq!(c.channels(), [128, 64, 128, 128]);
-    /// ```
-    pub fn rgba<T: Into<Scalar>>(r: T, g: T, b: T, a: T) -> Self {
-        Self::with_mode_alpha(Rgb, r, g, b, a)
-    }
-
-    /// Constructs a `Color` with `hue`, `saturation`, `brightness` and max `alpha`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::hsb(126.0, 80.0, 50.0);
-    /// assert_eq!(c.channels(), [25, 128, 36, 255]);
-    /// ```
-    pub fn hsb<T: Into<Scalar>>(h: T, s: T, b: T) -> Self {
-        Self::with_mode(Hsb, h, s, b)
-    }
-
-    /// Constructs a `Color` with `hue`, `saturation`, `brightness` and `alpha`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::hsba(126.0, 80.0, 50.0, 0.5);
-    /// assert_eq!(c.channels(), [25, 128, 36, 128]);
-    /// ```
-    pub fn hsba<T: Into<Scalar>>(h: T, s: T, b: T, a: T) -> Self {
-        Self::with_mode_alpha(Hsb, h, s, b, a)
-    }
-
-    /// Constructs a `Color` with `hue`, `saturation`, `lightness` and max `alpha`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::hsl(126.0, 80.0, 50.0);
-    /// assert_eq!(c.channels(), [25, 230, 46, 255]);
-    /// ```
-    pub fn hsl<T: Into<Scalar>>(h: T, s: T, l: T) -> Self {
-        Self::with_mode(Hsl, h, s, l)
-    }
-
-    /// Constructs a `Color` with `hue`, `saturation`, `lightness` and `alpha`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::hsla(126.0, 80.0, 50.0, 0.5);
-    /// assert_eq!(c.channels(), [25, 230, 46, 128]);
-    /// ```
-    pub fn hsla<T: Into<Scalar>>(h: T, s: T, l: T, a: T) -> Self {
-        Self::with_mode_alpha(Hsl, h, s, l, a)
-    }
-
-    /// Constructs a `Color` with the given [ColorMode] and alpha using the raw levels passed in
-    /// as-is without normalizing them.
-    ///
-    /// # Safety
-    ///
-    /// This may result in unexpected behavior if values are outside the range `0.0..=1.0`. It is
-    /// the responsibility of the caller to hold this invariant.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = unsafe { Color::from_raw(ColorMode::Rgb, 0.4, 0.5, 1.0, 0.8) };
-    /// assert_eq!(c.channels(), [102, 128, 255, 204]);
-    /// ```
-    pub unsafe fn from_raw<T: Into<Scalar>>(
-        mode: ColorMode,
-        v1: T,
-        v2: T,
-        v3: T,
-        alpha: T,
-    ) -> Self {
-        let levels = [v1.into(), v2.into(), v3.into(), alpha.into()];
-        Self {
-            mode,
-            levels,
-            channels: calculate_channels(levels),
-        }
-    }
-
-    /// Constructs a `Color` from a [slice] of 1-4 values. The number of values
-    /// provided alter how they are interpreted similar to the [color!], [rgb!], [hsb!], and
-    /// [hsl!] macros.
-    ///
-    /// # Errors
-    ///
-    /// If the [slice] is empty or has more than 4 values, an error is returned.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let vals: Vec<f64> = vec![128.0, 64.0, 0.0];
-    /// let c = Color::from_slice(ColorMode::Rgb, &vals)?; // RGB Vec
-    /// assert_eq!(c.channels(), [128, 64, 0, 255]);
-    ///
-    /// let vals: [f64; 4] = [128.0, 64.0, 0.0, 128.0];
-    /// let c = Color::from_slice(ColorMode::Rgb, &vals[..])?; // RGBA slice
-    /// assert_eq!(c.channels(), [128, 64, 0, 128]);
-    /// # Ok::<(), ColorError<f64>>(())
-    /// ```
-    pub fn from_slice<T, S: AsRef<[T]>>(mode: ColorMode, slice: S) -> Result<'static, Self, T>
-    where
-        T: Copy + Into<Scalar>,
-        [T]: ToOwned<Owned = Vec<T>>,
-    {
-        let slice = slice.as_ref();
-        let result = match *slice {
-            [gray] => Self::with_mode(mode, gray, gray, gray),
-            [gray, a] => Self::with_mode_alpha(mode, gray, gray, gray, a),
-            [v1, v2, v3] => Self::with_mode(mode, v1, v2, v3),
-            [v1, v2, v3, a] => Self::with_mode_alpha(mode, v1, v2, v3, a),
-            _ => return Err(Error::InvalidSlice(Cow::from(slice.to_owned()))),
-        };
-        Ok(result)
-    }
-    /// Constructs a random `Color` with `red`, `green`, `blue` and max alpha.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # #[allow(unused_variables)]
-    /// let c = Color::random();
-    /// // `c.channels()` will return something like:
-    /// // [207, 12, 217, 255]
-    /// ```
-    pub fn random() -> Self {
-        Self::new(random!(255u8), random!(255), random!(255))
-    }
-
-    /// Constructs a random `Color` with `red`, `green`, `blue` and alpha.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # #[allow(unused_variables)]
-    /// let c = Color::random_alpha();
-    /// // `c.channels()` will return something like:
-    /// // [132, 159, 233, 76]
-    /// ```
-    pub fn random_alpha() -> Self {
-        Self::new_alpha(random!(255u8), random!(255), random!(255), random!(255))
-    }
-
-    /// Constructs a `Color` from a [u32] RGBA hexadecimal value.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::from_hex(0xF0FF00FF);
-    /// assert_eq!(c.channels(), [240, 255, 0, 255]);
-    ///
-    /// let c = Color::from_hex(0xF0FF0080);
-    /// assert_eq!(c.channels(), [240, 255, 0, 128]);
-    /// ```
-    pub fn from_hex(hex: u32) -> Self {
-        let [r, g, b, a] = hex.to_be_bytes();
-        Self::rgba(r, g, b, a)
-    }
-
-    /// Returns a list of max values for each color channel based on [ColorMode].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::rgb(0, 0, 0);
-    /// assert_eq!(c.maxes(), [255.0, 255.0, 255.0, 255.0]);
-    ///
-    /// let c = Color::hsb(0.0, 0.0, 0.0);
-    /// assert_eq!(c.maxes(), [360.0, 100.0, 100.0, 1.0]);
-    ///
-    /// let c = Color::hsl(0.0, 0.0, 0.0);
-    /// assert_eq!(c.maxes(), [360.0, 100.0, 100.0, 1.0]);
-    /// ```
-    pub const fn maxes(&self) -> [Scalar; 4] {
-        maxes(self.mode)
-    }
-
-    /// Returns the `Color` levels which range from `0.0..=1.0`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::rgba(128, 64, 128, 128);
-    /// assert_eq!(c.channels(), [128, 64, 128, 128]);
-    /// ```
-    pub const fn levels(&self) -> [Scalar; 4] {
-        self.levels
-    }
-
-    /// Returns the `Color` channels as `[red, green, blue, alpha]` which range from `0..=255`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::rgba(128, 64, 128, 128);
-    /// assert_eq!(c.channels(), [128, 64, 128, 128]);
-    /// ```
-    pub const fn channels(&self) -> [u8; 4] {
-        self.channels
-    }
-
-    /// Returns the current [ColorMode].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::rgb(100, 0, 0);
-    /// assert_eq!(c.mode(), ColorMode::Rgb);
-    ///
-    /// let c = Color::hsb(100.0, 0.0, 0.0);
-    /// assert_eq!(c.mode(), ColorMode::Hsb);
-    /// ```
-    pub const fn mode(&self) -> ColorMode {
-        self.mode
-    }
-
-    /// Set the [ColorMode].
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let mut c = Color::rgb(100, 0, 0);
-    /// c.set_mode(ColorMode::Hsb);
-    /// assert_eq!(c.mode(), ColorMode::Hsb);
-    /// ```
-    pub fn set_mode(&mut self, mode: ColorMode) {
-        self.mode = mode;
-    }
-
-    /// Returns the red `Color` channel ranging from `0..=255`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::rgb(100, 0, 0);
-    /// assert_eq!(c.red(), 100);
-    /// ```
-    pub const fn red(&self) -> u8 {
-        self.channels[0]
-    }
-
-    /// Set the red `Color` channel ranging from `0..=255`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let mut c = Color::default();
-    /// assert_eq!(c.channels(), [0, 0, 0, 255]);
-    /// c.set_red(100);
-    /// assert_eq!(c.channels(), [100, 0, 0, 255]);
-    /// ```
-    pub fn set_red<R: Into<Scalar>>(&mut self, r: R) {
-        let maxes = maxes(Rgb);
-        self.levels[0] = r.into() / maxes[0];
-        self.calculate_channels();
-    }
-
-    /// Returns the green `Color` channel ranging from `0..=255`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::rgb(0, 100, 0);
-    /// assert_eq!(c.green(), 100);
-    /// ```
-    pub const fn green(&self) -> u8 {
-        self.channels[1]
-    }
-
-    /// Set the green `Color` channel ranging from `0..=255`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let mut c = Color::default();
-    /// assert_eq!(c.channels(), [0, 0, 0, 255]);
-    /// c.set_green(100);
-    /// assert_eq!(c.channels(), [0, 100, 0, 255]);
-    /// ```
-    pub fn set_green<G: Into<Scalar>>(&mut self, g: G) {
-        let maxes = maxes(Rgb);
-        self.levels[1] = g.into() / maxes[1];
-        self.calculate_channels();
-    }
-
-    /// Returns the blue `Color` channel ranging from `0..=255`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::rgb(0, 0, 100);
-    /// assert_eq!(c.blue(), 100);
-    /// ```
-    pub const fn blue(&self) -> u8 {
-        self.channels[2]
-    }
-
-    /// Set the blue `Color` channel ranging from `0..=255`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let mut c = Color::default();
-    /// assert_eq!(c.channels(), [0, 0, 0, 255]);
-    /// c.set_blue(100);
-    /// assert_eq!(c.channels(), [0, 0, 100, 255]);
-    /// ```
-    pub fn set_blue<B: Into<Scalar>>(&mut self, b: B) {
-        let maxes = maxes(Rgb);
-        self.levels[2] = b.into() / maxes[2];
-        self.calculate_channels();
-    }
-
-    /// Returns the alpha `Color` channel ranging from `0.0..=255.0` or `0.0..=1.0` depending on
-    /// current [ColorMode].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::rgba(0, 0, 0, 100);
-    /// assert_eq!(c.alpha(), 100.0);
-    ///
-    /// let c = Color::hsba(0.0, 0.0, 0.0, 0.8);
-    /// assert_eq!(c.alpha(), 0.8);
-    /// ```
-    pub fn alpha(&self) -> Scalar {
-        let maxes = self.maxes();
-        self.levels[3] * maxes[3]
-    }
-
-    /// Set the alpha `Color` channel ranging from `0..=255` or `0.0..=1.0` depending on current
-    /// [ColorMode].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let mut c = Color::default();
-    /// assert_eq!(c.channels(), [0, 0, 0, 255]);
-    /// c.set_alpha(100);
-    /// assert_eq!(c.channels(), [0, 0, 0, 100]);
-    ///
-    /// let mut c = Color::hsb(0.0, 0.0, 0.0);
-    /// assert_eq!(c.channels(), [0, 0, 0, 255]);
-    /// c.set_alpha(0.8);
-    /// assert_eq!(c.channels(), [0, 0, 0, 204]);
-    /// ```
-    pub fn set_alpha<A: Into<Scalar>>(&mut self, a: A) {
-        let maxes = self.maxes();
-        self.levels[3] = a.into() / maxes[3];
-        self.calculate_channels();
-    }
-
-    /// Returns the hue ranging from `0.0..=360.0`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::rgb(0, 100, 0);
-    /// assert_eq!(c.hue(), 120.0);
-    /// ```
-    pub fn hue(&self) -> Scalar {
-        let maxes = maxes(Hsb);
-        let levels = convert_levels(self.levels, Rgb, Hsb);
-        levels[0] * maxes[0]
-    }
-
-    /// Set the hue ranging from `0.0..=360.0`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let mut c = Color::rgb(128, 0, 0);
-    /// assert_eq!(c.channels(), [128, 0, 0, 255]);
-    /// c.set_hue(100.0);
-    /// assert_eq!(c.channels(), [43, 128, 0, 255]);
-    /// ```
-    pub fn set_hue<H: Into<Scalar>>(&mut self, h: H) {
-        let maxes = maxes(Hsb);
-        let mut levels = convert_levels(self.levels, Rgb, Hsb);
-        levels[0] = h.into() / maxes[0];
-        self.levels = convert_levels(levels, Hsb, Rgb);
-        self.calculate_channels();
-    }
-
-    /// Returns the saturation ranging from `0.0..=100.0`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::rgb(0, 100, 0);
-    /// assert_eq!(c.saturation(), 100.0);
-    /// ```
-    pub fn saturation(&self) -> Scalar {
-        let maxes = maxes(Hsb);
-        let levels = convert_levels(self.levels, Rgb, Hsb);
-        levels[1] * maxes[1]
-    }
-
-    /// Set the saturation ranging from `0.0..=100.0`. Defaults to [Hsb] if the
-    /// current mode is not [Hsb] or [Hsl] already.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let mut c = Color::rgb(128, 0, 0);
-    /// assert_eq!(c.channels(), [128, 0, 0, 255]);
-    /// c.set_saturation(50.0);
-    /// assert_eq!(c.channels(), [128, 64, 64, 255]);
-    ///
-    /// let mut c = Color::rgb(128, 0, 0);
-    /// c.set_mode(ColorMode::Hsl);
-    /// assert_eq!(c.channels(), [128, 0, 0, 255]);
-    /// c.set_saturation(50.0);
-    /// assert_eq!(c.channels(), [96, 32, 32, 255]);
-    /// ```
-    pub fn set_saturation<S: Into<Scalar>>(&mut self, s: S) {
-        let mode = match self.mode {
-            Hsb | Hsl => self.mode,
-            _ => Hsb,
-        };
-        let maxes = maxes(mode);
-        let mut levels = convert_levels(self.levels, Rgb, mode);
-        levels[1] = s.into() / maxes[1];
-        self.levels = convert_levels(levels, mode, Rgb);
-        self.calculate_channels();
-    }
-
-    /// Returns the brightness ranging from `0.0..=100.0`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::rgb(0, 102, 0);
-    /// assert_eq!(c.brightness(), 40.0);
-    /// ```
-    pub fn brightness(&self) -> Scalar {
-        let maxes = maxes(Hsb);
-        let levels = convert_levels(self.levels, Rgb, Hsb);
-        levels[2] * maxes[2]
-    }
-
-    /// Set the brightness ranging from `0.0..=100.0`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let mut c = Color::rgb(128, 0, 0);
-    /// assert_eq!(c.channels(), [128, 0, 0, 255]);
-    /// c.set_brightness(90.0);
-    /// assert_eq!(c.channels(), [230, 0, 0, 255]);
-    /// ```
-    pub fn set_brightness<B: Into<Scalar>>(&mut self, b: B) {
-        let maxes = maxes(Hsb);
-        let mut levels = convert_levels(self.levels, Rgb, Hsb);
-        levels[2] = b.into() / maxes[2];
-        self.levels = convert_levels(levels, Hsb, Rgb);
-        self.calculate_channels();
-    }
-
-    /// Returns the lightness ranging from `0.0..=100.0`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::rgb(0, 102, 0);
-    /// assert_eq!(c.lightness(), 20.0);
-    /// ```
-    pub fn lightness(&self) -> Scalar {
-        let maxes = maxes(Hsl);
-        let levels = convert_levels(self.levels, Rgb, Hsl);
-        levels[2] * maxes[2]
-    }
-
-    /// Set the lightness ranging from `0.0..=100.0`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let mut c = Color::rgb(128, 0, 0);
-    /// assert_eq!(c.channels(), [128, 0, 0, 255]);
-    /// c.set_lightness(90.0);
-    /// assert_eq!(c.channels(), [255, 204, 204, 255]);
-    /// ```
-    pub fn set_lightness<L: Into<Scalar>>(&mut self, l: L) {
-        let maxes = maxes(Hsl);
-        let mut levels = convert_levels(self.levels, Rgb, Hsl);
-        levels[2] = l.into() / maxes[2];
-        self.levels = convert_levels(levels, Hsl, Rgb);
-        self.calculate_channels();
-    }
-
-    /// Returns `Color` as a [Vec] of `[red, green, blue, alpha]`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = color!(100, 200, 50);
-    /// assert_eq!(c.to_vec(), vec![100, 200, 50, 255]);
-    /// ```
-    pub fn to_vec(self) -> Vec<u8> {
-        self.channels.to_vec()
-    }
-}
-
 /// Constructs a `Color` with `red`, `green`, `blue` and optional `alpha`.
 ///
 /// Alias for [rgb!].
@@ -930,6 +273,725 @@ macro_rules! hsl {
     ($h:expr, $s:expr, $l:expr, $a:expr$(,)?) => {
         $crate::color::Color::hsla($h, $s, $l, $a)
     };
+}
+
+impl Color {
+    /// Constructs a `Color` with `red`, `green`, `blue` and max `alpha`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::new(0, 0, 128);
+    /// assert_eq!(c.channels(), [0, 0, 128, 255]);
+    /// ```
+    #[inline]
+    pub fn new<T: Into<Scalar>>(r: T, g: T, b: T) -> Self {
+        Self::rgb(r, g, b)
+    }
+
+    /// Constructs a `Color` with `red`, `green`, `blue` and `alpha`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::new_alpha(0, 0, 128, 50);
+    /// assert_eq!(c.channels(), [0, 0, 128, 50]);
+    /// ```
+    #[inline]
+    pub fn new_alpha<T: Into<Scalar>>(r: T, g: T, b: T, a: T) -> Self {
+        Self::rgba(r, g, b, a)
+    }
+
+    /// Constructs a `Color` with the given [ColorMode] and max alpha.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::with_mode(ColorMode::Rgb, 0.0, 0.0, 128.0);
+    /// assert_eq!(c.channels(), [0, 0, 128, 255]);
+    ///
+    /// let c = Color::with_mode(ColorMode::Hsb, 126.0, 50.0, 100.0);
+    /// assert_eq!(c.channels(), [128, 255, 140, 255]);
+    /// ```
+    pub fn with_mode<T: Into<Scalar>>(mode: ColorMode, v1: T, v2: T, v3: T) -> Self {
+        // Normalize channels
+        let [v1_max, v2_max, v3_max, _] = maxes(mode);
+        let levels = clamp_levels([
+            v1.into() / v1_max,
+            v2.into() / v2_max,
+            v3.into() / v3_max,
+            1.0,
+        ]);
+
+        // Convert to Rgb
+        let levels = convert_levels(levels, mode, Rgb);
+        let channels = calculate_channels(levels);
+
+        Self {
+            mode,
+            levels,
+            channels,
+        }
+    }
+
+    /// Constructs a `Color` with the given [ColorMode] and alpha.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::with_mode_alpha(ColorMode::Rgb, 0.0, 0.0, 128.0, 50.0);
+    /// assert_eq!(c.channels(), [0, 0, 128, 50]);
+    ///
+    /// let c = Color::with_mode_alpha(ColorMode::Hsb, 126.0, 50.0, 100.0, 0.8);
+    /// assert_eq!(c.channels(), [128, 255, 140, 204]);
+    /// ```
+    pub fn with_mode_alpha<T: Into<Scalar>>(
+        mode: ColorMode,
+        v1: T,
+        v2: T,
+        v3: T,
+        alpha: T,
+    ) -> Self {
+        // Normalize channels
+        let [v1_max, v2_max, v3_max, alpha_max] = maxes(mode);
+        let levels = clamp_levels([
+            v1.into() / v1_max,
+            v2.into() / v2_max,
+            v3.into() / v3_max,
+            alpha.into() / alpha_max,
+        ]);
+
+        // Convert to Rgb
+        let levels = convert_levels(levels, mode, Rgb);
+        let channels = calculate_channels(levels);
+
+        Self {
+            mode,
+            levels,
+            channels,
+        }
+    }
+
+    /// Constructs a `Color` with `red`, `green`, `blue` and max `alpha`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::rgb(128, 64, 0);
+    /// assert_eq!(c.channels(), [128, 64, 0, 255]);
+    /// ```
+    #[inline]
+    pub fn rgb<T: Into<Scalar>>(r: T, g: T, b: T) -> Self {
+        Self::with_mode(Rgb, r, g, b)
+    }
+
+    /// Constructs a `Color` with `red`, `green`, `blue` and `alpha`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::rgba(128, 64, 128, 128);
+    /// assert_eq!(c.channels(), [128, 64, 128, 128]);
+    /// ```
+    #[inline]
+    pub fn rgba<T: Into<Scalar>>(r: T, g: T, b: T, a: T) -> Self {
+        Self::with_mode_alpha(Rgb, r, g, b, a)
+    }
+
+    /// Constructs a `Color` with `hue`, `saturation`, `brightness` and max `alpha`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::hsb(126.0, 80.0, 50.0);
+    /// assert_eq!(c.channels(), [25, 128, 36, 255]);
+    /// ```
+    #[inline]
+    pub fn hsb<T: Into<Scalar>>(h: T, s: T, b: T) -> Self {
+        Self::with_mode(Hsb, h, s, b)
+    }
+
+    /// Constructs a `Color` with `hue`, `saturation`, `brightness` and `alpha`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::hsba(126.0, 80.0, 50.0, 0.5);
+    /// assert_eq!(c.channels(), [25, 128, 36, 128]);
+    /// ```
+    #[inline]
+    pub fn hsba<T: Into<Scalar>>(h: T, s: T, b: T, a: T) -> Self {
+        Self::with_mode_alpha(Hsb, h, s, b, a)
+    }
+
+    /// Constructs a `Color` with `hue`, `saturation`, `lightness` and max `alpha`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::hsl(126.0, 80.0, 50.0);
+    /// assert_eq!(c.channels(), [25, 230, 46, 255]);
+    /// ```
+    #[inline]
+    pub fn hsl<T: Into<Scalar>>(h: T, s: T, l: T) -> Self {
+        Self::with_mode(Hsl, h, s, l)
+    }
+
+    /// Constructs a `Color` with `hue`, `saturation`, `lightness` and `alpha`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::hsla(126.0, 80.0, 50.0, 0.5);
+    /// assert_eq!(c.channels(), [25, 230, 46, 128]);
+    /// ```
+    #[inline]
+    pub fn hsla<T: Into<Scalar>>(h: T, s: T, l: T, a: T) -> Self {
+        Self::with_mode_alpha(Hsl, h, s, l, a)
+    }
+
+    /// Constructs a `Color` with the given [ColorMode] and alpha using the raw levels passed in
+    /// as-is without normalizing them.
+    ///
+    /// # Safety
+    ///
+    /// This may result in unexpected behavior if values are outside the range `0.0..=1.0`. It is
+    /// the responsibility of the caller to hold this invariant.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = unsafe { Color::from_raw(ColorMode::Rgb, 0.4, 0.5, 1.0, 0.8) };
+    /// assert_eq!(c.channels(), [102, 128, 255, 204]);
+    /// ```
+    pub unsafe fn from_raw<T: Into<Scalar>>(
+        mode: ColorMode,
+        v1: T,
+        v2: T,
+        v3: T,
+        alpha: T,
+    ) -> Self {
+        let levels = [v1.into(), v2.into(), v3.into(), alpha.into()];
+        Self {
+            mode,
+            levels,
+            channels: calculate_channels(levels),
+        }
+    }
+
+    /// Constructs a `Color` from a [slice] of 1-4 values. The number of values
+    /// provided alter how they are interpreted similar to the [color!], [rgb!], [hsb!], and
+    /// [hsl!] macros.
+    ///
+    /// # Errors
+    ///
+    /// If the [slice] is empty or has more than 4 values, an error is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let vals: Vec<f64> = vec![128.0, 64.0, 0.0];
+    /// let c = Color::from_slice(ColorMode::Rgb, &vals)?; // RGB Vec
+    /// assert_eq!(c.channels(), [128, 64, 0, 255]);
+    ///
+    /// let vals: [f64; 4] = [128.0, 64.0, 0.0, 128.0];
+    /// let c = Color::from_slice(ColorMode::Rgb, &vals[..])?; // RGBA slice
+    /// assert_eq!(c.channels(), [128, 64, 0, 128]);
+    /// # Ok::<(), ColorError<f64>>(())
+    /// ```
+    pub fn from_slice<T, S: AsRef<[T]>>(mode: ColorMode, slice: S) -> Result<'static, Self, T>
+    where
+        T: Copy + Into<Scalar>,
+        [T]: ToOwned<Owned = Vec<T>>,
+    {
+        let slice = slice.as_ref();
+        let result = match *slice {
+            [gray] => Self::with_mode(mode, gray, gray, gray),
+            [gray, a] => Self::with_mode_alpha(mode, gray, gray, gray, a),
+            [v1, v2, v3] => Self::with_mode(mode, v1, v2, v3),
+            [v1, v2, v3, a] => Self::with_mode_alpha(mode, v1, v2, v3, a),
+            _ => return Err(Error::InvalidSlice(Cow::from(slice.to_owned()))),
+        };
+        Ok(result)
+    }
+    /// Constructs a random `Color` with `red`, `green`, `blue` and max alpha.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # #[allow(unused_variables)]
+    /// let c = Color::random();
+    /// // `c.channels()` will return something like:
+    /// // [207, 12, 217, 255]
+    /// ```
+    #[inline]
+    pub fn random() -> Self {
+        Self::new(random!(255u8), random!(255), random!(255))
+    }
+
+    /// Constructs a random `Color` with `red`, `green`, `blue` and alpha.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # #[allow(unused_variables)]
+    /// let c = Color::random_alpha();
+    /// // `c.channels()` will return something like:
+    /// // [132, 159, 233, 76]
+    /// ```
+    #[inline]
+    pub fn random_alpha() -> Self {
+        Self::new_alpha(random!(255u8), random!(255), random!(255), random!(255))
+    }
+
+    /// Constructs a `Color` from a [u32] RGBA hexadecimal value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::from_hex(0xF0FF00FF);
+    /// assert_eq!(c.channels(), [240, 255, 0, 255]);
+    ///
+    /// let c = Color::from_hex(0xF0FF0080);
+    /// assert_eq!(c.channels(), [240, 255, 0, 128]);
+    /// ```
+    #[inline]
+    pub fn from_hex(hex: u32) -> Self {
+        let [r, g, b, a] = hex.to_be_bytes();
+        Self::rgba(r, g, b, a)
+    }
+
+    /// Returns a list of max values for each color channel based on [ColorMode].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::rgb(0, 0, 0);
+    /// assert_eq!(c.maxes(), [255.0, 255.0, 255.0, 255.0]);
+    ///
+    /// let c = Color::hsb(0.0, 0.0, 0.0);
+    /// assert_eq!(c.maxes(), [360.0, 100.0, 100.0, 1.0]);
+    ///
+    /// let c = Color::hsl(0.0, 0.0, 0.0);
+    /// assert_eq!(c.maxes(), [360.0, 100.0, 100.0, 1.0]);
+    /// ```
+    #[inline]
+    pub const fn maxes(&self) -> [Scalar; 4] {
+        maxes(self.mode)
+    }
+
+    /// Returns the `Color` levels which range from `0.0..=1.0`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::rgba(128, 64, 128, 128);
+    /// assert_eq!(c.channels(), [128, 64, 128, 128]);
+    /// ```
+    #[inline]
+    pub const fn levels(&self) -> [Scalar; 4] {
+        self.levels
+    }
+
+    /// Returns the `Color` channels as `[red, green, blue, alpha]` which range from `0..=255`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::rgba(128, 64, 128, 128);
+    /// assert_eq!(c.channels(), [128, 64, 128, 128]);
+    /// ```
+    #[inline]
+    pub const fn channels(&self) -> [u8; 4] {
+        self.channels
+    }
+
+    /// Returns the `Color` channels as `[red, green, blue, alpha]` which range from `0..=255`.
+    ///
+    /// Alias for `Color::channels`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::rgba(128, 64, 128, 128);
+    /// assert_eq!(c.rgba_channels(), [128, 64, 128, 128]);
+    /// ```
+    #[inline]
+    pub const fn rgba_channels(&self) -> [u8; 4] {
+        self.channels()
+    }
+
+    /// Returns the `Color` channels as `[red, green, blue]` which range from `0..=255`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::rgba(128, 64, 128, 128);
+    /// assert_eq!(c.rgb_channels(), [128, 64, 128]);
+    /// ```
+    #[inline]
+    pub const fn rgb_channels(&self) -> [u8; 3] {
+        [self.red(), self.green(), self.blue()]
+    }
+
+    /// Returns the current [ColorMode].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::rgb(100, 0, 0);
+    /// assert_eq!(c.mode(), ColorMode::Rgb);
+    ///
+    /// let c = Color::hsb(100.0, 0.0, 0.0);
+    /// assert_eq!(c.mode(), ColorMode::Hsb);
+    /// ```
+    #[inline]
+    pub const fn mode(&self) -> ColorMode {
+        self.mode
+    }
+
+    /// Set the [ColorMode].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut c = Color::rgb(100, 0, 0);
+    /// c.set_mode(ColorMode::Hsb);
+    /// assert_eq!(c.mode(), ColorMode::Hsb);
+    /// ```
+    #[inline]
+    pub fn set_mode(&mut self, mode: ColorMode) {
+        self.mode = mode;
+    }
+
+    /// Returns the red `Color` channel ranging from `0..=255`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::rgb(100, 0, 0);
+    /// assert_eq!(c.red(), 100);
+    /// ```
+    pub const fn red(&self) -> u8 {
+        self.channels[0]
+    }
+
+    /// Set the red `Color` channel ranging from `0..=255`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut c = Color::default();
+    /// assert_eq!(c.channels(), [0, 0, 0, 255]);
+    /// c.set_red(100);
+    /// assert_eq!(c.channels(), [100, 0, 0, 255]);
+    /// ```
+    #[inline]
+    pub fn set_red<R: Into<Scalar>>(&mut self, r: R) {
+        let maxes = maxes(Rgb);
+        self.levels[0] = r.into() / maxes[0];
+        self.calculate_channels();
+    }
+
+    /// Returns the green `Color` channel ranging from `0..=255`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::rgb(0, 100, 0);
+    /// assert_eq!(c.green(), 100);
+    /// ```
+    #[inline]
+    pub const fn green(&self) -> u8 {
+        self.channels[1]
+    }
+
+    /// Set the green `Color` channel ranging from `0..=255`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut c = Color::default();
+    /// assert_eq!(c.channels(), [0, 0, 0, 255]);
+    /// c.set_green(100);
+    /// assert_eq!(c.channels(), [0, 100, 0, 255]);
+    /// ```
+    #[inline]
+    pub fn set_green<G: Into<Scalar>>(&mut self, g: G) {
+        let maxes = maxes(Rgb);
+        self.levels[1] = g.into() / maxes[1];
+        self.calculate_channels();
+    }
+
+    /// Returns the blue `Color` channel ranging from `0..=255`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::rgb(0, 0, 100);
+    /// assert_eq!(c.blue(), 100);
+    /// ```
+    #[inline]
+    pub const fn blue(&self) -> u8 {
+        self.channels[2]
+    }
+
+    /// Set the blue `Color` channel ranging from `0..=255`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut c = Color::default();
+    /// assert_eq!(c.channels(), [0, 0, 0, 255]);
+    /// c.set_blue(100);
+    /// assert_eq!(c.channels(), [0, 0, 100, 255]);
+    /// ```
+    #[inline]
+    pub fn set_blue<B: Into<Scalar>>(&mut self, b: B) {
+        let maxes = maxes(Rgb);
+        self.levels[2] = b.into() / maxes[2];
+        self.calculate_channels();
+    }
+
+    /// Returns the alpha `Color` channel ranging from `0.0..=255.0` or `0.0..=1.0` depending on
+    /// current [ColorMode].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::rgba(0, 0, 0, 100);
+    /// assert_eq!(c.alpha(), 100.0);
+    ///
+    /// let c = Color::hsba(0.0, 0.0, 0.0, 0.8);
+    /// assert_eq!(c.alpha(), 0.8);
+    /// ```
+    #[inline]
+    pub fn alpha(&self) -> Scalar {
+        let maxes = self.maxes();
+        self.levels[3] * maxes[3]
+    }
+
+    /// Set the alpha `Color` channel ranging from `0..=255` or `0.0..=1.0` depending on current
+    /// [ColorMode].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut c = Color::default();
+    /// assert_eq!(c.channels(), [0, 0, 0, 255]);
+    /// c.set_alpha(100);
+    /// assert_eq!(c.channels(), [0, 0, 0, 100]);
+    ///
+    /// let mut c = Color::hsb(0.0, 0.0, 0.0);
+    /// assert_eq!(c.channels(), [0, 0, 0, 255]);
+    /// c.set_alpha(0.8);
+    /// assert_eq!(c.channels(), [0, 0, 0, 204]);
+    /// ```
+    #[inline]
+    pub fn set_alpha<A: Into<Scalar>>(&mut self, a: A) {
+        let maxes = self.maxes();
+        self.levels[3] = a.into() / maxes[3];
+        self.calculate_channels();
+    }
+
+    /// Returns the hue ranging from `0.0..=360.0`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::rgb(0, 100, 0);
+    /// assert_eq!(c.hue(), 120.0);
+    /// ```
+    #[inline]
+    pub fn hue(&self) -> Scalar {
+        let maxes = maxes(Hsb);
+        let levels = convert_levels(self.levels, Rgb, Hsb);
+        levels[0] * maxes[0]
+    }
+
+    /// Set the hue ranging from `0.0..=360.0`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut c = Color::rgb(128, 0, 0);
+    /// assert_eq!(c.channels(), [128, 0, 0, 255]);
+    /// c.set_hue(100.0);
+    /// assert_eq!(c.channels(), [43, 128, 0, 255]);
+    /// ```
+    #[inline]
+    pub fn set_hue<H: Into<Scalar>>(&mut self, h: H) {
+        let maxes = maxes(Hsb);
+        let mut levels = convert_levels(self.levels, Rgb, Hsb);
+        levels[0] = h.into() / maxes[0];
+        self.levels = convert_levels(levels, Hsb, Rgb);
+        self.calculate_channels();
+    }
+
+    /// Returns the saturation ranging from `0.0..=100.0`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::rgb(0, 100, 0);
+    /// assert_eq!(c.saturation(), 100.0);
+    /// ```
+    #[inline]
+    pub fn saturation(&self) -> Scalar {
+        let maxes = maxes(Hsb);
+        let levels = convert_levels(self.levels, Rgb, Hsb);
+        levels[1] * maxes[1]
+    }
+
+    /// Set the saturation ranging from `0.0..=100.0`. Defaults to [Hsb] if the
+    /// current mode is not [Hsb] or [Hsl] already.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut c = Color::rgb(128, 0, 0);
+    /// assert_eq!(c.channels(), [128, 0, 0, 255]);
+    /// c.set_saturation(50.0);
+    /// assert_eq!(c.channels(), [128, 64, 64, 255]);
+    ///
+    /// let mut c = Color::rgb(128, 0, 0);
+    /// c.set_mode(ColorMode::Hsl);
+    /// assert_eq!(c.channels(), [128, 0, 0, 255]);
+    /// c.set_saturation(50.0);
+    /// assert_eq!(c.channels(), [96, 32, 32, 255]);
+    /// ```
+    #[inline]
+    pub fn set_saturation<S: Into<Scalar>>(&mut self, s: S) {
+        let mode = match self.mode {
+            Hsb | Hsl => self.mode,
+            _ => Hsb,
+        };
+        let maxes = maxes(mode);
+        let mut levels = convert_levels(self.levels, Rgb, mode);
+        levels[1] = s.into() / maxes[1];
+        self.levels = convert_levels(levels, mode, Rgb);
+        self.calculate_channels();
+    }
+
+    /// Returns the brightness ranging from `0.0..=100.0`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::rgb(0, 102, 0);
+    /// assert_eq!(c.brightness(), 40.0);
+    /// ```
+    #[inline]
+    pub fn brightness(&self) -> Scalar {
+        let maxes = maxes(Hsb);
+        let levels = convert_levels(self.levels, Rgb, Hsb);
+        levels[2] * maxes[2]
+    }
+
+    /// Set the brightness ranging from `0.0..=100.0`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut c = Color::rgb(128, 0, 0);
+    /// assert_eq!(c.channels(), [128, 0, 0, 255]);
+    /// c.set_brightness(90.0);
+    /// assert_eq!(c.channels(), [230, 0, 0, 255]);
+    /// ```
+    #[inline]
+    pub fn set_brightness<B: Into<Scalar>>(&mut self, b: B) {
+        let maxes = maxes(Hsb);
+        let mut levels = convert_levels(self.levels, Rgb, Hsb);
+        levels[2] = b.into() / maxes[2];
+        self.levels = convert_levels(levels, Hsb, Rgb);
+        self.calculate_channels();
+    }
+
+    /// Returns the lightness ranging from `0.0..=100.0`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::rgb(0, 102, 0);
+    /// assert_eq!(c.lightness(), 20.0);
+    /// ```
+    #[inline]
+    pub fn lightness(&self) -> Scalar {
+        let maxes = maxes(Hsl);
+        let levels = convert_levels(self.levels, Rgb, Hsl);
+        levels[2] * maxes[2]
+    }
+
+    /// Set the lightness ranging from `0.0..=100.0`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut c = Color::rgb(128, 0, 0);
+    /// assert_eq!(c.channels(), [128, 0, 0, 255]);
+    /// c.set_lightness(90.0);
+    /// assert_eq!(c.channels(), [255, 204, 204, 255]);
+    /// ```
+    #[inline]
+    pub fn set_lightness<L: Into<Scalar>>(&mut self, l: L) {
+        let maxes = maxes(Hsl);
+        let mut levels = convert_levels(self.levels, Rgb, Hsl);
+        levels[2] = l.into() / maxes[2];
+        self.levels = convert_levels(levels, Hsl, Rgb);
+        self.calculate_channels();
+    }
+
+    /// Returns `Color` as a [Vec] of `[red, green, blue, alpha]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = color!(100, 200, 50);
+    /// assert_eq!(c.to_vec(), vec![100, 200, 50, 255]);
+    /// ```
+    #[inline]
+    pub fn to_vec(self) -> Vec<u8> {
+        self.channels.to_vec()
+    }
 }
 
 impl Default for Color {
