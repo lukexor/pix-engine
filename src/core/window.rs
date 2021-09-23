@@ -27,13 +27,15 @@ impl Default for Position {
 /// Window Identifier.
 pub type WindowId = usize;
 
-#[allow(missing_docs)]
+/// A window cursor indicating the position of the mouse.
 #[non_exhaustive]
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[allow(variant_size_differences)]
 pub enum Cursor {
+    /// A system supported cursor. e.g. Arrow, Hand, etc.
     System(SystemCursor),
+    /// A custom cursor from a image path.
     Image(PathBuf),
 }
 
@@ -66,22 +68,33 @@ impl Cursor {
 }
 
 /// System Cursor Icon.
-#[allow(missing_docs)]
 #[non_exhaustive]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum SystemCursor {
+    /// Default arrow cursor.
     Arrow,
+    /// Vertical I-Beam icon, typically used for text input position.
     IBeam,
+    /// Wait hour-glass icon, typically used as a loading indicator.
     Wait,
+    /// Cross-hair icon.
     Crosshair,
+    /// Wait hour-glass + Arrow combined.
     WaitArrow,
+    /// Resize icon with arrows oriented North-West to South-East.
     SizeNWSE,
+    /// Resize icon with arrows oriented North-East to South-West.
     SizeNESW,
+    /// Resize icon with arrows oriented West to East.
     SizeWE,
+    /// Resize icon with arrows oriented North to South.
     SizeNS,
+    /// Resize icon with arrows in all cardinal directions.
     SizeAll,
+    /// Circle with a line through it.
     No,
+    /// Hand icon, typically used as a clickable indicator.
     Hand,
 }
 
@@ -125,7 +138,6 @@ pub(crate) trait WindowRenderer {
 }
 
 /// WindowBuilder
-#[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct WindowBuilder {
     title: String,
@@ -165,7 +177,7 @@ impl Default for WindowBuilder {
 
 /// The error type for `Renderer` operations.
 #[non_exhaustive]
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Error {
     /// Invalid window title.
     InvalidTitle(&'static str, NulError),

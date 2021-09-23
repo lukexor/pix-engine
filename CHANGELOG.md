@@ -8,19 +8,21 @@ All notable changes to this project will be documented in this file.
 
 #### Core
 
-- `crate::prelude` for common imports.
-- `Clone`, `Debug`, `Default` implementations for most structs.
-- Several structs now implement `Serialize` and `Deserialize` with the `serde`
+- `crate::prelude` and `crate::prelude_3d` for common imports.
+- `Copy`, `Clone`, `Debug`, `Default`, `PartialEq`, `Eq`, and `Hash`
+  implementations for many/most structs where appropriate.
+- `Serialize` and `Deserialize` implemented for most structs with with the `serde`
   feature enabled.
 - Several new optional `AppState` event methods.
 - `PixEngineBuilder` struct added with several settings for configuring the
-  `PixEngine`.
+  `PixEngine` initialization.
 
 #### State
 
 - Several environment methods for interacting with the window and `PixEngine`
   state.
-- Several `PixState` methods for controlling drawing and `PixEngine` loop.
+- Several `PixState` methods for controlling drawing and the `PixEngine` render
+  loop.
 
 #### Window
 
@@ -40,55 +42,57 @@ All notable changes to this project will be documented in this file.
 - `color::Result` and `color::Error` types for conversion failures.
 - `Draw` trait for types that can be drawn using `PixState`.
 - Several new shape drawing methods on `PixState`.
-- New Texture methods and `TextureId` type.
+- New `Texture` struct and methods for hardware-accelerated rendering.
 - `Light` and `LightSource` structs for doing basic 3D light rendering.
 
 #### UI
 
-- New Immediate-mode UI drawing methods for buttons.
+- New Immediate-mode UI drawing methods for buttons. More to come in future
+  versions.
 
 #### Shapes
 
-- Made shape structs generic.
-- Conversion implementations.
+- Made shape structs generic over their type and number of dimensions using new
+  const generics.
+- Conversion implementations to convert shapes between units for better
+  ergonomics.
 - `Deref` and `DerefMut` into an array of values representing a shape.
+- `IntoIterator` for structs where applicable.
 - `Contains` and `Intersects` traits and implementations for defining collision
   detection.
 - `Draw` implementations.
 - `Rect` struct extended with several constructor and utility methods.
-- Several new shape structs: `Circle`, `Ellipse`, `Line`, `Point`, `Quad`,
-  `Sphere`, and `Triangle`.
+- Several new shape structs: `Ellipse`, `Line`, `Point`, `Quad`, `Sphere`, and
+  `Tri` with convenience macros.
 
 #### Image
 
 - New `Image` methods for converting and manipulating images.
-- `Debug` and `Default` trait implementations.
 - `image::Result` and `image::Error` for image failures.
 
 #### Events
 
 - `WindowEvent` struct.
-- `KeyMod` struct for capturing key modifiers.
-
-#### Wasm
-
-- `build_wasm.sh` script for building Web-Assembly version.
+- `KeyMod` struct for detecting key modifiers on key press and release events.
 
 #### Misc
 
 - `math` module for noise and randomization utilities.
 - `Num` trait for generic number handling.
-- `Vector` type for doing 2D/3D vector math.
+- `Vector` type for doing N-dimensional vector math.
 - Attribution for `Emulogic` font.
+- New `katakana` provided font along with default unicode fonts for fallbacks.
 - Several new examples:
+  - `2d_raycasting`
+  - `3d_raytracing`
   - `colors`
   - `flocking`
   - `fluid_simulation`
   - `image`
+  - `matrix`
   - `maze`
-  - `raycasting`
-  - `raytracing`.
-- Extensive documentation additions.
+  - `textures`
+- Extensive documentation additions and README improvements.
 
 ### Changed
 
@@ -125,19 +129,19 @@ All notable changes to this project will be documented in this file.
   trait which was renamed to `PixState`.
 - `AppState::on_start`, `AppState::on_update`, and `AppState::on_stop` changed
   to return `PixResult<()>`. Use `PixState::quit()` instead of returning `false`
-  in order to
-  terminate the application.
+  in order to terminate the application.
 - `AppState::on_update` no longer takes `elapsed`. Use `PixState::delta_time()`
   instead.
-- `StateData::enable_coord_wrapping()` removed.
-- `StateData::wrap_coords()` removed in favor of `Point::wrap_*` and
-  `Vector::wrap_*` methods.
+- `StateData::enable_coord_wrapping()` removed. Use `Point::wrap()` and
+  `Vector::wrap()` methods instead.
+- `StateData::wrap_coords()` removed in favor of `Point::wrap()` and
+  `Vector::wrap()` methods.
 - `StateData::create_texture()` changed to take `width`, `height` and optional `PixelFormat`.
 - `StateData::copy_draw_target()` removed.
 - `StateData::copy_texture()` renamed to `PixState::update_texture()` and
-  parameters changed to `texture_id`, `Into<Option<Rect<i32>>>` and
-  `AsRef<[u8]>`.
-- `StateData::is_inside_circle()` removed. Use `Circle::contains_point()` instead.
+  parameters changed to take `&mut Texture`, `Into<Option<Rect<i32>>>`,
+  `AsRef<[u8]>`, and `pitch`.
+- `StateData::is_inside_circle()` removed. Use `Ellipse::contains_point()` instead.
 
 #### Window
 
@@ -166,9 +170,10 @@ All notable changes to this project will be documented in this file.
   removed. `Add` and `Mod` added.
 - `StateData::construct_font()` removed in favor of `sdl2::ttf`.
 - `StateData::get_draw_target()` removed.
-- `StateData::set_draw_target()` removed.
-- `StateData::get_draw_target_dims()` removed.
-- `StateData::clear_draw_target()` removed.
+- `StateData::set_draw_target()` removed. Use `PixState::with_texture()` instead.
+- `StateData::get_draw_target_dims()` removed. Use `Texture::dimensions()` instead.
+- `StateData::clear_draw_target()` removed. Draw target is only set within
+  `PixState::with_texture()` callback.
 - `StateData::get_alpha_mode()` removed.
 - `StateData::set_alpha_mode()` renamed to `PixState::blend_mode()`.
 - `StateData::set_alpha_blend()` removed.
@@ -176,7 +181,8 @@ All notable changes to this project will be documented in this file.
 - `StateData::set_draw_color()` replaced with `PixState::background()`,
   `PixState::fill()` and `PixState::stroke()`.
 - `StateData::reset_draw_color()` removed.
-- `StateData::set_draw_scale()` removed.
+- `StateData::set_draw_scale()` removed. Use `PixEngineBuilder::scale()` or
+  `PixState::scale()` methods instead.
 - `StateData::fill()` renamed to `PixState::background()`.
 - `StateData::clear()` renamed to `PixState::clear()` and updated to fill screen
   with current `background` color.
@@ -187,12 +193,12 @@ All notable changes to this project will be documented in this file.
 - `StateData::draw_line_i32()` removed.
 - `StateData::draw_line_pattern()` removed.
 - `StateData::draw_circle()` renamed to `PixState::circle()` which now takes an
-  `Into<Circle>` to draw with the current `stroke` color.
+  `Into<Ellipse>` to draw with the current `stroke` color.
 - `StateData::draw_partial_circle()` renamed to `PixState::arc()` which now takes an
   `Into<Point>`, radius, start, and end to draw with the current `fill` and
   `stroke` colors.
 - `StateData::fill_circle()` renamed to `PixState::circle()` which now takes an
-  `Into<Circle>` to draw with the current `fill` color.
+  `Into<Ellipse>` to draw with the current `fill` color.
 - `StateData::draw_elipse()` renamed to `PixState::ellipse()` which now takes an
   `Into<Ellipse>` to draw with the current `stroke` color.
 - `StateData::fill_elipse()` renamed to `PixState::ellipse()` which now takes an
@@ -230,7 +236,6 @@ All notable changes to this project will be documented in this file.
   `image::Result`.
 - `put_pixel()` renamed to `set_pixel()`.
 - `get_pixel()` and `put_pixel()` updated to return and accept `Color`.
-- `get_pixel()` now returns a `color::Result`.
 - `ColorType` renamed to `PixelFormat`.
 - `color_type()` renamed to `format()` and returns `PixelFormat`.
 - `bytes()` changed to return `&[u8]` instead of `Vec<u8>`.
@@ -244,19 +249,20 @@ All notable changes to this project will be documented in this file.
 
 - `Input` renamed to `KeyEvent`. `released` removed. `held` changed to
   `repeat`. `key` and `keymod` added.
-- `Axis::Unknown` added and made `[non_exhaustive]`.
-- `Button` renamed to `ControllerButton`. `Button::Unknown` added and made
-  `[non_exhaustive]`.
+- `Axis::Unknown` added and `Axis` made `[non_exhaustive]`.
+- `Button` renamed to `ControllerButton`. `ControllerButton::Unknown` added and
+  `ControllerButton` made `[non_exhaustive]`.
 - `Key` made `[non_exhaustive]`.
-- `Mouse::X1` and `Mouse::X2` removed and made `[non_exhaustive]`.
+- `Mouse::X1` and `Mouse::X2` removed and `Mouse` made `[non_exhaustive]`.
 - `PixEvent` renamed to `Event` and made `[non_exhaustive]`. Several new events
   added or changed.
-- `State::get_key()` replaced with `PixState::keys()`,
-  `PixState::key_pressed()`, and `PixState::key_down()`.
-- `State::get_mouse()` replaced with `PixState::mouse_pos()`,
-  `PixState::mouse_pressed()`, `PixState::mouse_down()` and
-  `PixState::mouse_buttons()`.
+- `State::get_key()` removed in favor of `PixState::keys()`,
+  `PixState::key_pressed()`, `PixState::key_down()` and `AppState::on_key_*`
+  methods.
+- `State::get_mouse()` removed in favor of `PixState::mouse_pos()`,
+  `PixState::mouse_pressed()`, `PixState::mouse_down()`,
+  `PixState::mouse_buttons()` and `AppState::on_mouse_*` methods.
 - `State::get_mouse_x()` removed.
 - `State::get_mouse_y()` removed.
-- `State::get_mouse_wheel()` removed.
-- `State::poll()` removed. Use the `AppState` methods to listen to events.
+- `State::get_mouse_wheel()` removed in favor of `AppState::on_mouse_wheel()`.
+- `State::poll()` removed. Use the `AppState::on_*` methods to respond to events.

@@ -20,6 +20,7 @@ pub enum DrawMode {
 }
 
 /// Drawing mode which changes how arcs are drawn.
+#[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum ArcMode {

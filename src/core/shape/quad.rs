@@ -42,6 +42,7 @@ use std::{
 ///
 /// [module-level documentation]: crate::core::shape::quad
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+// TODO: serde is not ready for const generics yet
 // #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Quad<T, const N: usize>([Point<T, N>; 4]);
 

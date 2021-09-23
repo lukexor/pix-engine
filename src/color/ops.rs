@@ -101,12 +101,14 @@ impl SubAssign for Color {
 
 impl Deref for Color {
     type Target = [u8; 4];
+    /// Deref `Color` to `&[u8; 4]`.
     fn deref(&self) -> &Self::Target {
         &self.channels
     }
 }
 
 impl DerefMut for Color {
+    /// Deref `Color` to `&mut [u8; 4]`.
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.channels
     }

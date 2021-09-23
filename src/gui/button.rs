@@ -20,10 +20,10 @@
 
 use crate::{core::state::MouseState, prelude::*};
 
-#[derive(Debug)]
 /// An immediate-gui button positioned at `(x, y`) with `width`, `height` and a label. Contains
 /// hovered and clicked state which can be checked with [Button::hovered] and [Button::clicked]
 /// respectively.
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub struct Button<'a> {
     rect: Rect<i32>,
     label: &'a str,
@@ -56,7 +56,7 @@ impl Button<'_> {
 impl<'a> Button<'a> {
     #[inline]
     fn new(rect: Rect<i32>, label: &'a str, mouse: &MouseState) -> Self {
-        let hovered = rect.contains_point(mouse.pos);
+        let hovered = rect.contains_point(mouse.pos());
         let clicked = hovered && mouse.was_clicked(&Mouse::Left);
         Self {
             rect,

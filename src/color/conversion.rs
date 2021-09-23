@@ -12,7 +12,7 @@ pub type Result<'a, T, U> = result::Result<T, Error<'a, U>>;
 
 /// The error type for [Color] operations.
 #[non_exhaustive]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Error<'a, T>
 where
     [T]: ToOwned<Owned = Vec<T>>,
@@ -358,7 +358,7 @@ macro_rules! impl_from {
     ($($source: ty),*) => {
         $(
             impl From<$source> for Color {
-                /// Convert from `value` to grayscale `Color`.
+                #[doc = concat!("Convert [", stringify!($source), "] to grayscale `Color`")]
                 fn from(gray: $source) -> Self {
                     let gray = Scalar::from(gray);
                     Self::with_mode(Rgb, gray, gray, gray)
@@ -366,7 +366,7 @@ macro_rules! impl_from {
             }
 
             impl From<[$source; 1]> for Color {
-                /// Convert from `[value]` to grayscale `Color`.
+                #[doc = concat!("Convert [", stringify!($source), "] to grayscale `Color`")]
                 fn from([gray]: [$source; 1]) -> Self {
                     let gray = Scalar::from(gray);
                     Self::with_mode(Rgb, gray, gray, gray)
@@ -374,7 +374,7 @@ macro_rules! impl_from {
             }
 
             impl From<[$source; 2]> for Color {
-                /// Convert from `[value, alpha]` to grayscale `Color` with alpha.
+                #[doc = concat!("Convert `[", stringify!($source), "; 2]` to grayscale `Color` with alpha")]
                 fn from([gray, alpha]: [$source; 2]) -> Self {
                     let gray = Scalar::from(gray);
                     let alpha = Scalar::from(alpha);
@@ -383,14 +383,14 @@ macro_rules! impl_from {
             }
 
             impl From<[$source; 3]> for Color {
-                /// Convert from `[r, g, b]` to `Color` with max alpha.
+                #[doc = concat!("Convert `[", stringify!($source), "; 3]` to `Color` with max alpha")]
                 fn from([r, g, b]: [$source; 3]) -> Self {
                     Self::with_mode(Rgb, Scalar::from(r), Scalar::from(g), Scalar::from(b))
                 }
             }
 
             impl From<[$source; 4]> for Color {
-                /// Convert from `[r, g, b, a]` to `Color`.
+                #[doc = concat!("Convert `[", stringify!($source), "; 4]` to `Color`")]
                 fn from([r, g, b, a]: [$source; 4]) -> Self {
                     Self::with_mode_alpha(Rgb, Scalar::from(r), Scalar::from(g), Scalar::from(b), Scalar::from(a))
                 }

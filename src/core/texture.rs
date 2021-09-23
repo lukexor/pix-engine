@@ -10,7 +10,7 @@ pub type TextureId = usize;
 
 /// `Texture`.
 pub struct Texture {
-    pub(crate) inner: RendererTexture,
+    inner: RendererTexture,
     width: u32,
     height: u32,
     format: Option<PixelFormat>,
@@ -65,6 +65,10 @@ impl Texture {
 
     pub(crate) fn inner(&self) -> &RendererTexture {
         &self.inner
+    }
+
+    pub(crate) unsafe fn destroy(self) {
+        self.inner.destroy();
     }
 
     pub(crate) fn inner_mut(&mut self) -> &mut RendererTexture {

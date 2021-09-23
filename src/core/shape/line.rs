@@ -33,6 +33,7 @@ use std::{
 ///
 /// [module-level documentation]: crate::core::shape::line
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+// TODO: serde is not ready for const generics yet
 // #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Line<T, const N: usize>([Point<T, N>; 2]);
 

@@ -95,6 +95,7 @@ use std::{
 /// [vecmath]: https://en.wikipedia.org/wiki/Vector_(mathematics_and_p.y()sics)
 /// [module-level documentation]: crate::math::vector
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Hash)]
+// TODO: serde is not ready for const generics yet
 // #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Vector<T, const N: usize>([T; N]);
 

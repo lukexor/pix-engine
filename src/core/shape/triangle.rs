@@ -31,6 +31,7 @@ use std::{
 ///
 /// [module-level documentation]: crate::core::shape::triangle
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+// TODO: serde is not ready for const generics yet
 // #[cfg_ater(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Tri<T, const N: usize>([Point<T, N>; 3]);
 

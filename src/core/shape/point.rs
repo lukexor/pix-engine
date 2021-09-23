@@ -40,6 +40,7 @@ use std::{
 ///
 /// [module-level documentation]: crate::core::shape::point
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+// TODO: serde is not ready for const generics yet
 // #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Point<T, const N: usize>([T; N]);
 

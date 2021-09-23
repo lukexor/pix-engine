@@ -31,7 +31,7 @@ use serde::{Deserialize, Serialize};
 /// Please see the [module-level documentation] for examples.
 ///
 /// [module-level documentation]: crate::core::shape::sphere
-#[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Sphere<T = i32>([T; 4]);
 

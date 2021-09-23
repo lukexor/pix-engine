@@ -339,12 +339,12 @@ impl PixEngine {
                     app.on_key_typed(state, text)?;
                 }
                 Event::MouseMotion { x, y, xrel, yrel } => {
-                    state.pmouse.pos = state.mouse.pos;
-                    state.mouse.pos = point!(x, y);
+                    state.pmouse.set_pos(state.mouse.pos());
+                    state.mouse.set_pos(point!(x, y));
                     if state.mouse.is_pressed() {
                         app.on_mouse_dragged(state)?;
                     }
-                    app.on_mouse_motion(state, state.mouse.pos, xrel, yrel)?;
+                    app.on_mouse_motion(state, state.mouse.pos(), xrel, yrel)?;
                 }
                 Event::MouseDown { button, x, y } => {
                     state.mouse.press(button);

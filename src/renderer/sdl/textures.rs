@@ -31,7 +31,7 @@ impl TextureRenderer for Renderer {
     /// Destroying textures created from a dropped canvas is undefined behavior.
     #[inline]
     unsafe fn delete_texture(&mut self, texture: Texture) -> Result<()> {
-        texture.inner.destroy();
+        texture.destroy();
         Ok(())
     }
 

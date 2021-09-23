@@ -1,6 +1,6 @@
 //! [Image] and [PixelFormat] functions.
 
-use crate::{color::Result as ColorResult, prelude::*, renderer::Rendering};
+use crate::{prelude::*, renderer::Rendering};
 use png::{BitDepth, ColorType, Decoder};
 use std::{
     borrow::Cow,
@@ -18,6 +18,7 @@ use std::{
 pub type Result<T> = result::Result<T, Error>;
 
 /// Format for interpreting bytes when using textures.
+#[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum PixelFormat {
     /// 8-bit Red, Green, and Blue
@@ -56,7 +57,6 @@ impl Default for PixelFormat {
 }
 
 /// An `Image` representing a buffer of pixel color values.
-#[non_exhaustive]
 #[derive(Default, Clone)]
 pub struct Image {
     /// `Image` width.
@@ -218,7 +218,7 @@ impl Image {
     /// Returns the `Image` pixel data as a [Vec<Color>].
     #[inline]
     pub fn pixels(&self) -> Vec<Color> {
-        // SAFETY: Converting to colors from data should be valid since the image could not have
+        // SAFETY: Converting to Vec<Color> from data should be valid since the image could not have
         // been constructed with an invalid set of bytes due to bounds checks in constructors.
         self.data
             .chunks(self.format.channels())
@@ -228,10 +228,12 @@ impl Image {
 
     /// Returns the color value at the given `(x, y)` position.
     #[inline]
-    pub fn get_pixel(&self, x: u32, y: u32) -> ColorResult<'_, Color, u8> {
+    pub fn get_pixel(&self, x: u32, y: u32) -> Color {
         let idx = self.idx(x, y);
         let channels = self.format.channels();
-        Color::from_slice(ColorMode::Rgb, &self.data[idx..idx + channels])
+        // SAFETY: Converting to Color from data should be valid since the image could not have
+        // been constructed with an invalid set of bytes due to bounds checks in constructors.
+        Color::from_slice(ColorMode::Rgb, &self.data[idx..idx + channels]).expect("valid image")
     }
 
     /// Sets the color value at the given `(x, y)` position.
