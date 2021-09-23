@@ -102,21 +102,28 @@ impl PixState {
     pub fn dimensions(&self) -> (u32, u32) {
         let window_id = self.window_id();
         // SAFETY: Primary window_id should always exist
-        self.renderer.dimensions(window_id).unwrap()
+        self.renderer
+            .dimensions(window_id)
+            .expect("primary window should exist")
     }
 
     /// Set the dimensions of the primary window from `(width, height)`.
     pub fn set_dimensions(&mut self, dimensions: (u32, u32)) {
         let window_id = self.window_id();
         // SAFETY: Primary window_id should always exist
-        self.renderer.set_dimensions(window_id, dimensions).unwrap()
+        self.renderer
+            .set_dimensions(window_id, dimensions)
+            .expect("primary window should exist")
     }
 
     /// The width of the primary window.
     pub fn width(&self) -> u32 {
         let window_id = self.window_id();
         // SAFETY: Primary window_id should always exist
-        let (width, _) = self.renderer.dimensions(window_id).unwrap();
+        let (width, _) = self
+            .renderer
+            .dimensions(window_id)
+            .expect("primary window should exist");
         width
     }
 
@@ -124,16 +131,22 @@ impl PixState {
     pub fn set_width(&mut self, width: u32) {
         let window_id = self.window_id();
         // SAFETY: Primary window_id should always exist
-        let (_, height) = self.renderer.dimensions(window_id).unwrap();
+        let (_, height) = self
+            .renderer
+            .dimensions(window_id)
+            .expect("primary window should exist");
         self.renderer
             .set_dimensions(window_id, (width, height))
-            .unwrap();
+            .expect("primary window should exist");
     }
 
     /// The height of the primary window.
     pub fn height(&self) -> u32 {
         // SAFETY: Primary window_id should always exist
-        let (_, height) = self.renderer.dimensions(self.window_id()).unwrap();
+        let (_, height) = self
+            .renderer
+            .dimensions(self.window_id())
+            .expect("primary window should exist");
         height
     }
 
@@ -141,10 +154,13 @@ impl PixState {
     pub fn set_height(&mut self, height: u32) {
         let window_id = self.window_id();
         // SAFETY: Primary window_id should always exist
-        let (width, _) = self.renderer.dimensions(window_id).unwrap();
+        let (width, _) = self
+            .renderer
+            .dimensions(window_id)
+            .expect("primary window should exist");
         self.renderer
             .set_dimensions(window_id, (width, height))
-            .unwrap();
+            .expect("primary window should exist");
     }
 
     /// Trigger exiting of the game loop.

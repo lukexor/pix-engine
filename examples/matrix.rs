@@ -11,7 +11,7 @@ lazy_static! {
     '=', 'ç', '<', '>', '¦'];
         for i in 0..96 {
             // SAFETY: We know 0x30A0..0x3100 can be represented as chars
-            glyphs.push(char::from_u32(0x30A0 + i).unwrap())
+            glyphs.push(char::from_u32(0x30A0 + i).expect("valid unicode"))
         }
         glyphs
     };
