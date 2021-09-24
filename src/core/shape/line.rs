@@ -174,17 +174,13 @@ where
     }
 }
 
-impl<T> Intersects for Line<T, 2>
-where
-    T: Num + AsPrimitive<Scalar>,
-{
-    type Type = T;
-    type Shape = Line<Self::Type, 2>;
+impl<T: Float> Intersects<T, 2> for Line<T, 2> {
+    type Shape = Line<T, 2>;
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
     #[allow(clippy::many_single_char_names)]
-    fn intersects_line<L>(&self, other: L) -> Option<(Point<Scalar, 2>, Scalar)>
+    fn intersects_line<L>(&self, other: L) -> Option<(Point<T, 2>, T)>
     where
         L: Into<Line<T, 2>>,
     {
@@ -200,7 +196,7 @@ where
         if (T::zero()..).contains(&t) && (T::zero()..=T::one()).contains(&u) {
             let x = x1 + t * (x2 - x1);
             let y = y1 + t * (y2 - y1);
-            Some((point!(x, y).as_(), t.as_()))
+            Some((point!(x, y), t))
         } else {
             None
         }

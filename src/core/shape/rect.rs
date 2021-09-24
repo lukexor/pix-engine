@@ -349,14 +349,13 @@ impl<T: Num> Rect<T> {
     }
 }
 
-impl<T: Num> Contains for Rect<T> {
-    type Type = T;
-    type Shape = Rect<Self::Type>;
+impl<T: Num, const N: usize> Contains<T, N> for Rect<T> {
+    type Shape = Rect<T>;
 
     /// Returns whether this rectangle contains a given [Point].
     fn contains_point<P>(&self, p: P) -> bool
     where
-        P: Into<Point<Self::Type, 2>>,
+        P: Into<Point<T, N>>,
     {
         let p = p.into();
         p.x() >= self.left() && p.x() < self.right() && p.y() >= self.top() && p.y() < self.bottom()
@@ -375,15 +374,14 @@ impl<T: Num> Contains for Rect<T> {
     }
 }
 
-impl<T: Num + AsPrimitive<Scalar>> Intersects for Rect<T> {
-    type Type = T;
-    type Shape = Rect<Self::Type>;
+impl<T: Float> Intersects<T, 2> for Rect<T> {
+    type Shape = Rect<T>;
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
-    fn intersects_line<L>(&self, line: L) -> Option<(Point<Scalar, 2>, Scalar)>
+    fn intersects_line<L>(&self, line: L) -> Option<(Point<T, 2>, T)>
     where
-        L: Into<Line<Self::Type, 2>>,
+        L: Into<Line<T, 2>>,
     {
         let line = line.into();
         let left = line.intersects_line([self.top_left(), self.bottom_left()]);
@@ -394,7 +392,7 @@ impl<T: Num + AsPrimitive<Scalar>> Intersects for Rect<T> {
             .iter()
             .filter_map(|&p| p)
             .fold(None, |closest, intersection| {
-                let closest_t = closest.map(|c| c.1).unwrap_or(Scalar::INFINITY);
+                let closest_t = closest.map(|c| c.1).unwrap_or_else(T::infinity);
                 let t = intersection.1;
                 if t < closest_t {
                     Some(intersection)

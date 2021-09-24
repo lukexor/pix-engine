@@ -340,14 +340,13 @@ impl<T: Num> Ellipse<T> {
     }
 }
 
-impl<T: Num> Contains for Ellipse<T> {
-    type Type = T;
-    type Shape = Ellipse<Self::Type>;
+impl<T: Num, const N: usize> Contains<T, N> for Ellipse<T> {
+    type Shape = Ellipse<T>;
 
     /// Returns whether this ellipse contains a given [Point].
     fn contains_point<P>(&self, p: P) -> bool
     where
-        P: Into<Point<Self::Type, 2>>,
+        P: Into<Point<T, N>>,
     {
         let p = p.into();
         let px = p.x() - self.x();
@@ -371,15 +370,14 @@ impl<T: Num> Contains for Ellipse<T> {
     }
 }
 
-impl<T: Num> Intersects for Ellipse<T> {
-    type Type = T;
-    type Shape = Ellipse<Self::Type>;
+impl<T: Num> Intersects<T, 2> for Ellipse<T> {
+    type Shape = Ellipse<T>;
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
-    fn intersects_line<L>(&self, _line: L) -> Option<(Point<Scalar, 2>, Scalar)>
+    fn intersects_line<L>(&self, _line: L) -> Option<(Point<T, 2>, T)>
     where
-        L: Into<Line<Self::Type, 2>>,
+        L: Into<Line<T, 2>>,
     {
         todo!("ellipse intersects_line")
     }

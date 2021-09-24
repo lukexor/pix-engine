@@ -36,8 +36,6 @@ use include_dir::{include_dir, Dir};
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) const ASSETS: Dir<'_> = include_dir!("./assets");
 
-#[macro_use]
-pub mod color;
 pub mod audio;
 #[macro_use]
 pub mod core;
@@ -58,6 +56,7 @@ pub mod prelude {
 
     pub use self::core::{
         appstate::AppState,
+        color::{constants::*, Color, ColorMode, Error as ColorError},
         common::{Error as PixError, Result as PixResult},
         draw::Draw,
         engine::PixEngine,
@@ -72,14 +71,13 @@ pub mod prelude {
         texture::{Texture, TextureId},
         window::{Cursor, Position, SystemCursor, WindowBuilder, WindowId},
     };
-    pub use color::{constants::*, Color, ColorMode, Error as ColorError};
     pub use event::{Axis, ControllerButton, Event, Key, KeyEvent, KeyMod, Mouse, WindowEvent};
     pub use image::{Image, PixelFormat};
     pub use math::{
         constants::*,
         map, random_rng,
         vector::{Vector, VectorF2, VectorI2},
-        Num, Scalar,
+        Float, Num, Scalar,
     };
     #[cfg(not(target_arch = "wasm32"))]
     pub use renderer::DEFAULT_ASSET_DIR;

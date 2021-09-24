@@ -2,6 +2,8 @@
 //!
 //! [PixEngine]: engine::PixEngine
 
+#[macro_use]
+pub mod color;
 pub mod appstate;
 pub mod draw;
 pub mod engine;

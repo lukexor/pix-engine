@@ -270,6 +270,10 @@ impl PixEngine {
 
             app.on_stop(&mut state)?;
             if state.env.quit {
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    fs::remove_dir_all(&self.settings.asset_dir)?;
+                }
                 break 'on_stop;
             }
         }

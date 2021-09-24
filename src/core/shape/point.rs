@@ -24,7 +24,7 @@
 //! ```
 
 use crate::prelude::*;
-use num_traits::{AsPrimitive, Float, Signed};
+use num_traits::{AsPrimitive, Signed};
 // #[cfg(feature = "serde")]
 // use serde::{Deserialize, Serialize};
 use std::{

@@ -1,7 +1,7 @@
 //! Math functions and constants.
 
 use lazy_static::lazy_static;
-use num_traits::{Num as NumTrait, NumAssignOps, NumCast, NumOps};
+use num_traits::{Float as FloatTrait, Num as NumTrait, NumAssignOps, NumCast, NumOps};
 use rand::{self, distributions::uniform::SampleUniform, Rng};
 use std::ops::{AddAssign, Range};
 use vector::Vector;
@@ -27,7 +27,12 @@ pub type Scalar = f64;
 /// Default number trait used for objects and shapes.
 pub trait Num: NumTrait + NumOps + NumAssignOps + Copy + Default + PartialOrd {}
 
+/// Default floating-point number trait used math operations.
+pub trait Float: Num + FloatTrait {}
+
 impl<T> Num for T where T: NumTrait + NumOps + NumAssignOps + Copy + Default + PartialOrd {}
+
+impl<T> Float for T where T: Num + FloatTrait {}
 
 const PERLIN_YWRAPB: usize = 4;
 const PERLIN_YWRAP: usize = 1 << PERLIN_YWRAPB;

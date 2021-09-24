@@ -26,52 +26,36 @@ pub use sphere::*;
 pub use triangle::*;
 
 /// Trait for shape containing operations.
-pub trait Contains {
-    /// The generic type of Self::Shape.
-    type Type;
+pub trait Contains<T, const N: usize> {
     /// The shape type. e.g. [Rect<Self::Type>].
     type Shape;
 
     /// Returns whether this shape contains a given [Point].
     fn contains_point<P>(&self, _p: P) -> bool
     where
-        P: Into<Point<Self::Type, 2>>,
-    {
-        unimplemented!("contains_point is not implemented")
-    }
+        P: Into<Point<T, N>>;
 
     /// Returns whether this shape completely contains another shape of the same type.
     fn contains_shape<O>(&self, _other: O) -> bool
     where
-        O: Into<Self::Shape>,
-    {
-        unimplemented!("contains is not implemented")
-    }
+        O: Into<Self::Shape>;
 }
 
 /// Trait for shape intersection operations.
-pub trait Intersects {
-    /// The generic type of Self::Shape.
-    type Type;
+pub trait Intersects<T, const N: usize> {
     /// The shape type. e.g. [Rect<Self::Type>].
     type Shape;
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
-    fn intersects_line<L>(&self, _line: L) -> Option<(PointF2, Scalar)>
+    fn intersects_line<L>(&self, _line: L) -> Option<(Point<T, N>, T)>
     where
-        L: Into<Line<Self::Type, 2>>,
-    {
-        unimplemented!("intersects_line is not implemented")
-    }
+        L: Into<Line<T, N>>;
 
     /// Returns whether this shape intersects with another shape of the same type.
     fn intersects_shape<O>(&self, _other: O) -> bool
     where
-        O: Into<Self::Shape>,
-    {
-        unimplemented!("intersects is not implemented")
-    }
+        O: Into<Self::Shape>;
 }
 
 impl PixState {

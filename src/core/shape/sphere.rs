@@ -130,14 +130,13 @@ impl<T: Num> Sphere<T> {
     }
 }
 
-impl<T: Num> Contains for Sphere<T> {
-    type Type = T;
-    type Shape = Sphere<Self::Type>;
+impl<T: Num, const N: usize> Contains<T, N> for Sphere<T> {
+    type Shape = Sphere<T>;
 
     /// Returns whether this sphere contains a given [Point].
     fn contains_point<P>(&self, p: P) -> bool
     where
-        P: Into<Point<Self::Type, 2>>,
+        P: Into<Point<T, N>>,
     {
         let p = p.into();
         let px = p.x() - self.x();
@@ -161,15 +160,14 @@ impl<T: Num> Contains for Sphere<T> {
     }
 }
 
-impl<T: Num> Intersects for Sphere<T> {
-    type Type = T;
-    type Shape = Sphere<Self::Type>;
+impl<T: Num> Intersects<T, 3> for Sphere<T> {
+    type Shape = Sphere<T>;
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
-    fn intersects_line<L>(&self, _line: L) -> Option<(Point<Scalar, 2>, Scalar)>
+    fn intersects_line<L>(&self, _line: L) -> Option<(Point<T, 3>, T)>
     where
-        L: Into<Line<Self::Type, 2>>,
+        L: Into<Line<T, 3>>,
     {
         todo!("sphere intersects_line")
     }

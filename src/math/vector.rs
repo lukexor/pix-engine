@@ -62,7 +62,7 @@
 //! [Euclidean]: https://en.wikipedia.org/wiki/Euclidean_vector
 
 use crate::prelude::*;
-use num_traits::{AsPrimitive, Float, Signed};
+use num_traits::{AsPrimitive, Signed};
 use rand::distributions::uniform::SampleUniform;
 // #[cfg(feature = "serde")]
 // use serde::{Deserialize, Serialize};

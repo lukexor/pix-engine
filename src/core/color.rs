@@ -203,7 +203,7 @@ macro_rules! rgb {
         rgb!($r, $g, $b, 255)
     };
     ($r:expr, $g:expr, $b:expr, $a:expr$(,)?) => {
-        $crate::color::Color::rgba($r, $g, $b, $a)
+        $crate::prelude::Color::rgba($r, $g, $b, $a)
     };
 }
 
@@ -237,7 +237,7 @@ macro_rules! hsb {
         hsb!($h, $s, $b, 1.0)
     };
     ($h:expr, $s:expr, $b:expr, $a:expr$(,)?) => {
-        $crate::color::Color::hsba($h, $s, $b, $a)
+        $crate::prelude::Color::hsba($h, $s, $b, $a)
     };
 }
 
@@ -271,7 +271,7 @@ macro_rules! hsl {
         hsl!($h, $s, $l, 1.0)
     };
     ($h:expr, $s:expr, $l:expr, $a:expr$(,)?) => {
-        $crate::color::Color::hsla($h, $s, $l, $a)
+        $crate::prelude::Color::hsla($h, $s, $l, $a)
     };
 }
 
