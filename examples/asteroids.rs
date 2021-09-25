@@ -11,7 +11,7 @@ const BULLET_SPEED: Scalar = 200.0;
 const ASTEROID_SAFE_RADIUS: Scalar = 80.0; // So asteroids don't spawn near player
 
 const ORIGIN: PointF2 = point!(0.0, 0.0);
-const SHIP_MODEL: [VectorF2; 3] = [vector!(5.0, 0.0), vector!(-2.5, -2.5), vector!(-2.5, 2.5)];
+const SHIP_MODEL: [PointF2; 3] = [point!(5.0, 0.0), point!(-2.5, -2.5), point!(-2.5, 2.5)];
 
 struct SpaceObj {
     size: u32,
@@ -62,7 +62,7 @@ impl From<&SpaceObj> for Ellipse {
 }
 
 struct Asteroids {
-    asteroid_model: Vec<VectorF2>,
+    asteroid_model: Vec<PointF2>,
     asteroids: Vec<SpaceObj>,
     broken_asteroids: Vec<SpaceObj>,
     bullets: Vec<SpaceObj>,
@@ -82,7 +82,7 @@ impl Asteroids {
         for i in 0..20 {
             let noise = random!(0.8, 1.2);
             let a = (i as Scalar / 20.0) * 2.0 * PI;
-            asteroid_model.push(vector!(noise * a.sin(), noise * a.cos()));
+            asteroid_model.push(point!(noise * a.sin(), noise * a.cos()));
         }
         Self {
             asteroid_model,
@@ -230,7 +230,7 @@ impl Asteroids {
         s.fill(BLACK);
         s.stroke(WHITE);
         for b in self.bullets.iter() {
-            s.circle(b)?;
+            s.circle(Ellipse::from(b))?;
         }
 
         Ok(())

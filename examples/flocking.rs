@@ -4,20 +4,20 @@ const WIDTH: u32 = 1000;
 const HEIGHT: u32 = 800;
 
 const BOID_COUNT: usize = 500;
-const BOID_MODEL: [VectorF2; 13] = [
-    vector!(1.5, 0.0),
-    vector!(0.75, -0.25),
-    vector!(0.25, -1.5),
-    vector!(-1.0, -2.25),
-    vector!(-0.25, -1.5),
-    vector!(-0.45, -0.35),
-    vector!(-2.0, -0.2),
-    vector!(-2.0, 0.2),
-    vector!(-0.45, 0.35),
-    vector!(-0.25, 1.5),
-    vector!(-1.0, 2.25),
-    vector!(0.25, 1.5),
-    vector!(0.75, 0.25),
+const BOID_MODEL: [PointF2; 13] = [
+    point!(1.5, 0.0),
+    point!(0.75, -0.25),
+    point!(0.25, -1.5),
+    point!(-1.0, -2.25),
+    point!(-0.25, -1.5),
+    point!(-0.45, -0.35),
+    point!(-2.0, -0.2),
+    point!(-2.0, 0.2),
+    point!(-0.45, 0.35),
+    point!(-0.25, 1.5),
+    point!(-1.0, 2.25),
+    point!(0.25, 1.5),
+    point!(0.75, 0.25),
 ];
 const BOID_SIZE: Scalar = 3.0;
 

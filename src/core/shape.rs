@@ -19,6 +19,7 @@ pub mod triangle;
 
 pub use ellipse::*;
 pub use line::*;
+use num_traits::AsPrimitive;
 pub use point::*;
 pub use quad::*;
 pub use rect::*;
@@ -27,7 +28,7 @@ pub use triangle::*;
 
 /// Trait for shape containing operations.
 pub trait Contains<T, const N: usize> {
-    /// The shape type. e.g. [Rect<Self::Type>].
+    /// The shape type. e.g. [Rect<T>].
     type Shape;
 
     /// Returns whether this shape contains a given [Point].
@@ -43,7 +44,7 @@ pub trait Contains<T, const N: usize> {
 
 /// Trait for shape intersection operations.
 pub trait Intersects<T, const N: usize> {
-    /// The shape type. e.g. [Rect<Self::Type>].
+    /// The shape type. e.g. [Rect<T>].
     type Shape;
 
     /// Returns the closest intersection point with a given line and distance along the line or
@@ -102,7 +103,7 @@ impl PixState {
     pub fn rounded_square<R, T>(&mut self, square: R, radius: T) -> PixResult<()>
     where
         R: Into<Rect<i32>>,
-        T: Into<i32>,
+        T: AsPrimitive<i32>,
     {
         self.rounded_rect(square, radius)
     }
@@ -124,7 +125,7 @@ impl PixState {
     pub fn rounded_rect<R, T>(&mut self, rect: R, radius: T) -> PixResult<()>
     where
         R: Into<Rect<i32>>,
-        T: Into<i32>,
+        T: AsPrimitive<i32>,
     {
         let s = &self.settings;
         let mut rect = rect.into();
@@ -133,7 +134,7 @@ impl PixState {
         };
         Ok(self
             .renderer
-            .rect(rect, Some(radius.into()), s.fill, s.stroke)?)
+            .rect(rect, Some(radius.as_()), s.fill, s.stroke)?)
     }
 
     /// Draw a [Quadrilateral](Quad) to the current canvas.
@@ -176,15 +177,15 @@ impl PixState {
     pub fn arc<P, T>(&mut self, p: P, radius: T, start: T, end: T) -> PixResult<()>
     where
         P: Into<PointI2>,
-        T: Into<i32>,
+        T: AsPrimitive<i32>,
     {
         let s = &self.settings;
         let p = p.into();
         Ok(self.renderer.arc(
             p,
-            radius.into(),
-            start.into(),
-            end.into(),
+            radius.as_(),
+            start.as_(),
+            end.as_(),
             s.arc_mode,
             s.fill,
             s.stroke,

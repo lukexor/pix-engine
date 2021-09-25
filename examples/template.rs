@@ -17,7 +17,11 @@ impl AppState for MyApp {
             s.fill(255);
         }
         let m = s.mouse_pos();
-        s.square([m.x(), m.y(), 80])?;
+        s.triangle([
+            point![m.x(), m.y()],
+            point![m.x() + 100, m.y()],
+            point![m.x() + 30, m.y() - 100],
+        ])?;
         Ok(())
     }
 

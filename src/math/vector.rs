@@ -62,12 +62,11 @@
 //! [Euclidean]: https://en.wikipedia.org/wiki/Euclidean_vector
 
 use crate::prelude::*;
-use num_traits::{AsPrimitive, Signed};
+use num_traits::Signed;
 use rand::distributions::uniform::SampleUniform;
 // #[cfg(feature = "serde")]
 // use serde::{Deserialize, Serialize};
 use std::{
-    array::IntoIter,
     fmt,
     iter::{Product, Sum},
     ops::*,
@@ -97,7 +96,7 @@ use std::{
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Hash)]
 // TODO: serde is not ready for const generics yet
 // #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Vector<T, const N: usize>([T; N]);
+pub struct Vector<T, const N: usize>(pub(crate) [T; N]);
 
 /// A 1D `Vector` represented by integers.
 pub type VectorI1 = Vector<i32, 1>;
@@ -117,7 +116,7 @@ pub type VectorF2 = Vector<Scalar, 2>;
 /// A 3D `Vector` represented by floating point numbers.
 pub type VectorF3 = Vector<Scalar, 3>;
 
-/// # Constructs a [Vector].
+/// Constructs a [Vector].
 ///
 /// # Examples
 ///
@@ -170,6 +169,21 @@ impl<T, const N: usize> Vector<T, N> {
     #[inline]
     pub const fn new(coords: [T; N]) -> Self {
         Self(coords)
+    }
+
+    /// Constructs a `Vector` from an array `[T; N]`.
+    ///
+    /// Alias for `Vector::new`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let v = Vector::from_array([2.1, 3.5]);
+    /// assert_eq!(v.values(), [2.1, 3.5]);
+    /// ```
+    pub const fn from_array(arr: [T; N]) -> Self {
+        Self::new(arr)
     }
 
     /// Constructs a `Vector` at the origin.
@@ -473,29 +487,6 @@ where
     #[inline]
     pub fn to_vec(self) -> Vec<T> {
         self.0.to_vec()
-    }
-
-    /// Convert `Vector<T, N>` to `Vector<U, N>` using the `as` operator.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v1: VectorF2 = vector!(1.5, 2.0);
-    /// let v2: VectorI2 = v1.as_();
-    /// assert_eq!(v2.values(), [1, 2]);
-    /// ```
-    #[inline]
-    pub fn as_<U>(self) -> Vector<U, N>
-    where
-        T: AsPrimitive<U>,
-        U: 'static + Copy + Default,
-    {
-        let mut coords = [U::default(); N];
-        for i in 0..N {
-            coords[i] = self[i].as_();
-        }
-        Vector::new(coords)
     }
 }
 
@@ -837,62 +828,6 @@ where
     }
 }
 
-impl<T, const N: usize> Deref for Vector<T, N> {
-    type Target = [T; N];
-    /// Deref `Vector` to `&[T; N]`.
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<T, const N: usize> DerefMut for Vector<T, N> {
-    /// Deref `Vector` to `&mut [T; N]`.
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl<T, const N: usize> Index<usize> for Vector<T, N>
-where
-    T: Copy,
-{
-    type Output = T;
-    /// Return `&T` by indexing `Point` with `usize`.
-    fn index(&self, idx: usize) -> &Self::Output {
-        &self.0[idx]
-    }
-}
-
-impl<T, const N: usize> IndexMut<usize> for Vector<T, N>
-where
-    T: Copy,
-{
-    /// Return `&mut T` by indexing `Point` with `usize`.
-    fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
-        &mut self.0[idx]
-    }
-}
-
-impl<T, const N: usize> From<&Vector<T, N>> for Vector<T, N>
-where
-    T: Copy,
-{
-    /// Convert `&Vector` to `Vector`.
-    fn from(v: &Vector<T, N>) -> Self {
-        *v
-    }
-}
-
-impl<T, const N: usize> From<&mut Vector<T, N>> for Vector<T, N>
-where
-    T: Copy,
-{
-    /// Convert `&mut Vector` to `Vector`.
-    fn from(v: &mut Vector<T, N>) -> Self {
-        *v
-    }
-}
-
 // Operations
 
 impl<T, const N: usize> Add for Point<T, N>
@@ -1205,13 +1140,71 @@ macro_rules! impl_primitive_mul {
 
 impl_primitive_mul!(i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize, f32, f64);
 
-impl<T, const N: usize> IntoIterator for Vector<T, N> {
-    type Item = T;
-    type IntoIter = IntoIter<Self::Item, N>;
-    fn into_iter(self) -> Self::IntoIter {
-        IntoIter::new(self.0)
-    }
-}
+// impl<T, U, const N: usize> crate::prelude::AsType<Vector<U, N>> for Point<T, N>
+// where
+//     U: 'static + std::marker::Copy,
+//     T: std::default::Default + num_traits::AsPrimitive<U>,
+// {
+//     #[inline]
+//     fn as_(self) -> Vector<U, N> {
+//         Vector::from_array(self.values().map(|v| v.as_()))
+//     }
+// }
+
+// impl<T, U, const N: usize> crate::prelude::AsType<Vector<U, N>> for &Point<T, N>
+// where
+//     U: 'static + std::marker::Copy,
+//     T: std::default::Default + num_traits::AsPrimitive<U>,
+// {
+//     #[inline]
+//     fn as_(self) -> Vector<U, N> {
+//         Vector::from_array(self.values().map(|v| v.as_()))
+//     }
+// }
+
+// impl<T, U, const N: usize> crate::prelude::AsType<Vector<U, N>> for &mut Point<T, N>
+// where
+//     U: 'static + std::marker::Copy,
+//     T: std::default::Default + num_traits::AsPrimitive<U>,
+// {
+//     #[inline]
+//     fn as_(self) -> Vector<U, N> {
+//         Vector::from_array(self.values().map(|v| v.as_()))
+//     }
+// }
+
+// impl<T, U, const N: usize> crate::prelude::AsType<Point<U, N>> for Vector<T, N>
+// where
+//     U: 'static + std::marker::Copy,
+//     T: std::default::Default + num_traits::AsPrimitive<U>,
+// {
+//     #[inline]
+//     fn as_(self) -> Point<U, N> {
+//         Point::from_array(self.values().map(|v| v.as_()))
+//     }
+// }
+
+// impl<T, U, const N: usize> crate::prelude::AsType<Point<U, N>> for &Vector<T, N>
+// where
+//     U: 'static + std::marker::Copy,
+//     T: std::default::Default + num_traits::AsPrimitive<U>,
+// {
+//     #[inline]
+//     fn as_(self) -> Point<U, N> {
+//         Point::from_array(self.values().map(|v| v.as_()))
+//     }
+// }
+
+// impl<T, U, const N: usize> crate::prelude::AsType<Point<U, N>> for &mut Vector<T, N>
+// where
+//     U: 'static + std::marker::Copy,
+//     T: std::default::Default + num_traits::AsPrimitive<U>,
+// {
+//     #[inline]
+//     fn as_(self) -> Point<U, N> {
+//         Point::from_array(self.values().map(|v| v.as_()))
+//     }
+// }
 
 impl<T, const N: usize> Sum for Vector<T, N>
 where
@@ -1270,149 +1263,6 @@ where
     {
         let v = Vector::origin();
         iter.fold(v, |a, b| a * *b)
-    }
-}
-
-macro_rules! impl_from_as {
-    ($($from:ty),* => $to:ty, $zero:expr) => {
-        $(
-            impl<const N: usize> From<Vector<$from, N>> for Vector<$to, N> {
-                /// Convert `Vector<U, N>` to `Vector<T, N>`.
-                fn from(v: Vector<$from, N>) -> Self {
-                    let mut coords = [$zero; N];
-                    for i in 0..N {
-                        coords[i] = v[i] as $to;
-                    }
-                    Self::new(coords)
-                }
-            }
-
-            impl<const N: usize> From<[$from; N]> for Vector<$to, N> {
-                /// Convert `[T; N]` to [Vector].
-                fn from(arr: [$from; N]) -> Self {
-                    let mut coords = [$zero; N];
-                    for i in 0..N {
-                        coords[i] = arr[i] as $to;
-                    }
-                    Self::new(coords)
-                }
-            }
-
-            impl<const N: usize> From<&[$from; 3]> for Vector<$to, N> {
-                /// Convert `&[x, y, z]` to [Vector].
-                fn from(&arr: &[$from; 3]) -> Self {
-                    let mut coords = [$zero; N];
-                    for i in 0..N {
-                        coords[i] = arr[i] as $to;
-                    }
-                    Self::new(coords)
-                }
-            }
-
-            impl<const N: usize> From<Point<$from, N>> for Vector<$to, N> {
-                /// Converts [Point] to [Vector].
-                fn from(p: Point<$from, N>) -> Self {
-                    let mut coords = [$zero; N];
-                    for i in 0..N {
-                        coords[i] = p[i] as $to;
-                    }
-                    Self::new(coords)
-                }
-            }
-
-            impl<const N: usize> From<&Point<$from, N>> for Vector<$to, N> {
-                /// Converts &[Point] to [Vector].
-                fn from(p: &Point<$from, N>) -> Self {
-                    let mut coords = [$zero; N];
-                    for i in 0..N {
-                        coords[i] = p[i] as $to;
-                    }
-                    Self::new(coords)
-                }
-            }
-
-            impl<const N: usize> From<Vector<$from, N>> for Point<$to, N> {
-                /// Converts [Vector] to [Point].
-                fn from(v: Vector<$from, N>) -> Self {
-                    let mut coords = [$zero; N];
-                    for i in 0..N {
-                        coords[i] = v[i] as $to;
-                    }
-                    Self::new(coords)
-                }
-            }
-
-            impl<const N: usize> From<&Vector<$from, N>> for Point<$to, N> {
-                /// Converts &[Vector] to [Point].
-                fn from(v: &Vector<$from, N>) -> Self {
-                    let mut coords = [$zero; N];
-                    for i in 0..N {
-                        coords[i] = v[i] as $to;
-                    }
-                    Self::new(coords)
-                }
-            }
-        )*
-    };
-}
-
-impl_from_as!(i8, u8, i16, u16, u32, i64, u64, isize, usize, f32, f64 => i32, 0);
-impl_from_as!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize, f32 => f64, 0.0);
-
-impl<T, const N: usize> From<[T; N]> for Vector<T, N> {
-    /// Convert `[T; N]` to `Vector`.
-    fn from(arr: [T; N]) -> Self {
-        Self::new(arr)
-    }
-}
-
-impl<T, const N: usize> From<&[T; N]> for Vector<T, N>
-where
-    T: Copy,
-{
-    /// Convert `&[T; N]` to `Vector`.
-    fn from(&arr: &[T; N]) -> Self {
-        Self::new(arr)
-    }
-}
-
-impl<T, const N: usize> From<Vector<T, N>> for [T; N]
-where
-    T: Copy + Default,
-{
-    /// Convert [Vector] to `[T; N]`.
-    fn from(v: Vector<T, N>) -> Self {
-        v.values()
-    }
-}
-
-impl<T, const N: usize> From<&Vector<T, N>> for [T; N]
-where
-    T: Copy + Default,
-{
-    /// Convert &[Vector] to `[T; N]`.
-    fn from(v: &Vector<T, N>) -> Self {
-        v.values()
-    }
-}
-
-impl<T, const N: usize> From<Vector<T, N>> for Point<T, N>
-where
-    T: Copy + Default,
-{
-    /// Convert [Vector] to [Point].
-    fn from(v: Vector<T, N>) -> Self {
-        Self::new(v.values())
-    }
-}
-
-impl<T, const N: usize> From<Point<T, N>> for Vector<T, N>
-where
-    T: Copy + Default,
-{
-    /// Convert [Point] to [Vector].
-    fn from(p: Point<T, N>) -> Self {
-        Self::new(p.values())
     }
 }
 

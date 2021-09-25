@@ -126,23 +126,25 @@ impl MazeApp {
                 self.solver.draw(s, &self.maze)?;
             }
         }
-        if s.button([10, HEIGHT - 50, 125, 40], "Create")?.clicked() {
+        let w = WIDTH as i32;
+        let h = HEIGHT as i32;
+        if s.button([10, h - 50, 125, 40], "Create")?.clicked() {
             self.start_create_maze();
         }
-        if s.button([140, HEIGHT - 50, 40, 40], ">>")?.clicked() {
+        if s.button([140, h - 50, 40, 40], ">>")?.clicked() {
             self.create_maze()?;
         }
-        if s.button([200, HEIGHT - 50, 140, 40], "Solve A*")?.clicked() {
+        if s.button([200, h - 50, 140, 40], "Solve A*")?.clicked() {
             self.start_solve_maze(Algorithm::AStar)?;
         }
-        if s.button([345, HEIGHT - 50, 40, 40], ">>")?.clicked() {
+        if s.button([345, h - 50, 40, 40], ">>")?.clicked() {
             self.solve_maze()?;
         }
         s.fill(GREEN);
         let rate = s.target_frame_rate().unwrap_or(60);
-        s.text([WIDTH - 400, HEIGHT - 50], &format!("Target FPS: {}", rate))?;
+        s.text([w - 400, h - 50], &format!("Target FPS: {}", rate))?;
         s.text(
-            [WIDTH - 400, HEIGHT - 25],
+            [w - 400, h - 25],
             &format!("Elapsed: {:.3}", self.timer.elapsed()),
         )?;
         Ok(())

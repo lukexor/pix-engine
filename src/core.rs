@@ -10,6 +10,7 @@ pub mod engine;
 #[macro_use]
 pub mod shape;
 pub mod common;
+pub mod ops;
 pub mod state;
 pub mod texture;
 pub mod window;

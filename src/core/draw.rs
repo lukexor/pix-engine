@@ -1,5 +1,7 @@
 //! Drawing functions.
 
+use num_traits::AsPrimitive;
+
 use crate::{prelude::*, renderer::Rendering};
 use std::iter::Iterator;
 
@@ -23,14 +25,14 @@ impl PixState {
     /// Draw a wireframe to the current canvas.
     pub fn wireframe<V, P, T>(&mut self, vertexes: V, pos: P, angle: T, scale: T) -> PixResult<()>
     where
-        V: AsRef<[VectorF2]>,
+        V: AsRef<[PointF2]>,
         P: Into<PointF2>,
-        T: Into<Scalar>,
+        T: AsPrimitive<Scalar>,
     {
         let s = &self.settings;
-        let pos: PointF2 = pos.into().as_();
-        let scale: Scalar = scale.into();
-        let angle: Scalar = angle.into();
+        let pos: PointF2 = pos.into();
+        let scale: Scalar = scale.as_();
+        let angle: Scalar = angle.as_();
         let (sin, cos) = angle.sin_cos();
         let vs: Vec<PointI2> = vertexes
             .as_ref()

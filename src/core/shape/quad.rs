@@ -29,10 +29,6 @@ use crate::prelude::*;
 use num_traits::AsPrimitive;
 // #[cfg(feature = "serde")]
 // use serde::{Deserialize, Serialize};
-use std::{
-    array::IntoIter,
-    ops::{Deref, DerefMut, Index, IndexMut},
-};
 
 /// A `Quad` or quadrilateral, a four-sided polygon.
 ///
@@ -44,7 +40,7 @@ use std::{
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 // TODO: serde is not ready for const generics yet
 // #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Quad<T, const N: usize>([Point<T, N>; 4]);
+pub struct Quad<T, const N: usize>(pub(crate) [Point<T, N>; 4]);
 
 /// A 2D `Quad` represented by integers.
 pub type QuadI2 = Quad<i32, 2>;
@@ -58,7 +54,7 @@ pub type QuadF2 = Quad<Scalar, 2>;
 /// A 3D `Quad` represented by floating point numbers.
 pub type QuadF3 = Quad<Scalar, 3>;
 
-/// # Constructs a `Quad` with four points.
+/// Constructs a [Quad] with four points.
 ///
 /// ```
 /// # use pix_engine::prelude::*;
@@ -93,6 +89,11 @@ impl<T, const N: usize> Quad<T, N> {
         P: Into<Point<T, N>>,
     {
         Self([p1.into(), p2.into(), p3.into(), p4.into()])
+    }
+
+    /// Constructs a `Quad` with from an array `[Point<T, N>; 4]`.
+    pub const fn from_array(arr: [Point<T, N>; 4]) -> Self {
+        Self(arr)
     }
 }
 
@@ -160,21 +161,6 @@ where
         self.0[3] = p.into();
     }
 
-    /// Convert `Quad<T, N>` to `Quad<U, N>` using the `as` operator.
-    #[inline]
-    pub fn as_<U>(self) -> Quad<U, N>
-    where
-        T: AsPrimitive<U>,
-        U: 'static + Copy + Default,
-    {
-        Quad::new(
-            self.p1().as_(),
-            self.p2().as_(),
-            self.p3().as_(),
-            self.p4().as_(),
-        )
-    }
-
     /// Returns `Quad` points as `[Point<T, N>; 4]`.
     ///
     /// # Example
@@ -215,122 +201,11 @@ where
 impl<T, const N: usize> Draw for Quad<T, N>
 where
     Self: Into<QuadI2>,
-    T: Copy,
+    T: Default + AsPrimitive<i32>,
 {
     /// Draw `Quad` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.quad(*self)
-    }
-}
-
-impl<T, const N: usize> Deref for Quad<T, N> {
-    type Target = [Point<T, N>; 4];
-    /// Deref `Quad` to `&[Point; 4]`.
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<T, const N: usize> DerefMut for Quad<T, N> {
-    /// Deref `Quad` to `&mut [Point; 4]`.
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl<T, const N: usize> Index<usize> for Quad<T, N>
-where
-    T: Copy,
-{
-    type Output = Point<T, N>;
-    /// Return `&T` by indexing `Quad` with `usize`.
-    fn index(&self, idx: usize) -> &Self::Output {
-        &self.0[idx]
-    }
-}
-
-impl<T, const N: usize> IndexMut<usize> for Quad<T, N>
-where
-    T: Copy,
-{
-    /// Return `&mut T` by indexing `Quad` with `usize`.
-    fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
-        &mut self.0[idx]
-    }
-}
-
-impl<T, const N: usize> From<&Quad<T, N>> for Quad<T, N>
-where
-    T: Copy,
-{
-    /// Convert `&Quad` to `Quad`.
-    fn from(quad: &Quad<T, N>) -> Self {
-        *quad
-    }
-}
-
-impl<T, const N: usize> From<&mut Quad<T, N>> for Quad<T, N>
-where
-    T: Copy,
-{
-    /// Convert `&mut Quad` to `Quad`.
-    fn from(quad: &mut Quad<T, N>) -> Self {
-        *quad
-    }
-}
-
-impl<T, U, const N: usize> From<[Point<U, N>; 4]> for Quad<T, N>
-where
-    Point<U, N>: Into<Point<T, N>>,
-{
-    /// Convert `[Point<U, N>; 4]` to [`Quad<T, N>`].
-    fn from([p1, p2, p3, p4]: [Point<U, N>; 4]) -> Self {
-        Self::new(p1, p2, p3, p4)
-    }
-}
-
-impl<T, U, const N: usize> From<&[Point<U, N>; 4]> for Quad<T, N>
-where
-    U: Copy,
-    Point<U, N>: Into<Point<T, N>>,
-{
-    /// Convert `&[Point<U, N>; 4]` to [`Quad<T, N>`].
-    fn from(&[p1, p2, p3, p4]: &[Point<U, N>; 4]) -> Self {
-        Self::new(p1, p2, p3, p4)
-    }
-}
-
-impl<T, U, const N: usize> From<Quad<U, N>> for [Point<T, N>; 4]
-where
-    U: Copy + Default,
-    Point<U, N>: Into<Point<T, N>>,
-{
-    /// Convert [`Quad<U, N>`] to `[Point<T, N>; 4]`.
-    fn from(quad: Quad<U, N>) -> Self {
-        [
-            quad.p1().into(),
-            quad.p2().into(),
-            quad.p3().into(),
-            quad.p4().into(),
-        ]
-    }
-}
-
-impl<T, U, const N: usize> From<&Quad<U, N>> for [Point<T, N>; 4]
-where
-    Point<U, N>: Into<Point<T, N>>,
-{
-    /// Convert &[`Quad<U>`] to `[Point<T, N>; 4]`.
-    fn from(quad: &Quad<U, N>) -> Self {
-        quad.into()
-    }
-}
-
-impl<T, const N: usize> IntoIterator for Quad<T, N> {
-    type Item = Point<T, N>;
-    type IntoIter = IntoIter<Self::Item, 4>;
-    fn into_iter(self) -> Self::IntoIter {
-        IntoIter::new(self.0)
     }
 }
 
@@ -364,33 +239,33 @@ mod tests {
         let rect = rect!(10.0, 10.0, 100.0, 100.0);
 
         // Left
-        let line = Line::new([3.0, 7.0], [20.0, 30.0]);
+        let line: LineF2 = line_!([3.0, 7.0], [20.0, 30.0]);
         assert_approx_eq!(
-            rect.intersects_line(&line),
+            rect.intersects_line(line),
             Some((point!(10.0, 16.471), 0.411)),
             0.001
         );
 
         // Right
-        let line = Line::new([150, 50], [90, 30]);
+        let line: LineF2 = line_!([150.0, 50.0], [90.0, 30.0]);
         assert_approx_eq!(
-            rect.intersects_line(&line),
+            rect.intersects_line(line),
             Some((point!(110.0, 36.667), 0.667)),
             0.001
         );
 
         // Top
-        let line = Line::new([50, 5], [70, 30]);
+        let line: LineF2 = line_!([50.0, 5.0], [70.0, 30.0]);
         assert_approx_eq!(
-            rect.intersects_line(&line),
+            rect.intersects_line(line),
             Some((point!(54.0, 10.0), 0.2)),
             0.001
         );
 
         // Bottom
-        let line = Line::new([50, 150], [30, 30]);
+        let line: LineF2 = line_!([50.0, 150.0], [30.0, 30.0]);
         assert_approx_eq!(
-            rect.intersects_line(&line),
+            rect.intersects_line(line),
             Some((point!(43.3333, 110.0), 0.333)),
             0.001
         );

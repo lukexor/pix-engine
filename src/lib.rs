@@ -36,9 +36,10 @@ use include_dir::{include_dir, Dir};
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) const ASSETS: Dir<'_> = include_dir!("./assets");
 
-pub mod audio;
 #[macro_use]
 pub mod core;
+
+pub mod audio;
 pub mod event;
 pub mod graphics;
 pub mod image;

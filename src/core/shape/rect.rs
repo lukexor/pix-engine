@@ -30,10 +30,6 @@ use crate::prelude::*;
 use num_traits::AsPrimitive;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::{
-    array::IntoIter,
-    ops::{Deref, DerefMut, Index, IndexMut},
-};
 
 /// A `Rectangle` positioned at `(x, y)` with `width` and `height`. A square is a `Rectangle` where
 /// `width` and `height` are equal.
@@ -43,9 +39,9 @@ use std::{
 /// [module-level documentation]: crate::core::shape::rect
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Rect<T = i32>([T; 4]);
+pub struct Rect<T = i32>(pub(crate) [T; 4]);
 
-/// Constructs a `Rect` at position `(x, y)` with `width` and `height`.
+/// Constructs a [Rect] at position `(x, y)` with `width` and `height`.
 ///
 /// ```
 /// # use pix_engine::prelude::*;
@@ -75,7 +71,7 @@ macro_rules! rect {
     };
 }
 
-/// Constructs a square `Rect` at position `(x, y)` with the same `width` and `height`.
+/// Constructs a square [Rect] at position `(x, y)` with the same `width` and `height`.
 ///
 /// ```
 /// # use pix_engine::prelude::*;
@@ -108,12 +104,35 @@ impl<T> Rect<T> {
         Self([x, y, width, height])
     }
 
+    /// Constructs a `Rect` from an array `[T; 4]`.
+    pub const fn from_array(arr: [T; 4]) -> Self {
+        Self(arr)
+    }
+
     /// Constructs a square `Rect` at position `(x, y)` with `size`.
     pub fn square(x: T, y: T, size: T) -> Self
     where
         T: Copy,
     {
         Self::new(x, y, size, size)
+    }
+}
+
+impl<T> Rect<T>
+where
+    T: Copy + Default,
+{
+    /// Returns `Rect` values as `[x, y, width, height]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let r = rect!(5, 10, 100, 100);
+    /// assert_eq!(r.values(), [5, 10, 100, 100]);
+    /// ```
+    pub fn values(&self) -> [T; 4] {
+        self.0
     }
 }
 
@@ -228,34 +247,6 @@ impl<T: Num> Rect<T> {
     #[inline]
     pub fn set_height(&mut self, height: T) {
         self.0[3] = height;
-    }
-
-    /// Convert `Rect<T>` to `Rect<U>` using the `as` operator.
-    #[inline]
-    pub fn as_<U>(self) -> Rect<U>
-    where
-        T: AsPrimitive<U>,
-        U: 'static + Copy,
-    {
-        Rect::new(
-            self.x().as_(),
-            self.y().as_(),
-            self.width().as_(),
-            self.height().as_(),
-        )
-    }
-
-    /// Returns `Rect` values as `[x, y, width, height]`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let r = rect!(5, 10, 100, 100);
-    /// assert_eq!(r.values(), [5, 10, 100, 100]);
-    /// ```
-    pub fn values(&self) -> [T; 4] {
-        self.0
     }
 
     /// Returns `Rect` as a [Vec].
@@ -420,7 +411,7 @@ impl<T: Float> Intersects<T, 2> for Rect<T> {
 impl<T> Draw for Rect<T>
 where
     Self: Into<Rect<i32>>,
-    T: Copy,
+    T: Default + AsPrimitive<i32>,
 {
     /// Draw `Rect` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
@@ -428,147 +419,18 @@ where
     }
 }
 
-impl<T> Deref for Rect<T> {
-    type Target = [T; 4];
-    /// Deref `Rect` to `&[T; 4]`.
-    fn deref(&self) -> &Self::Target {
-        &self.0
+impl<T: Copy> From<[T; 3]> for Rect<T> {
+    /// Converts `[T; 3]` into `Rect<T>`.
+    #[inline]
+    fn from([x, y, s]: [T; 3]) -> Self {
+        Self::from_array([x, y, s, s])
     }
 }
 
-impl<T> DerefMut for Rect<T> {
-    /// Deref `Rect` to `&mut [T; 4]`.
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+impl<T: Copy> From<&[T; 3]> for Rect<T> {
+    /// Converts `&[T; 3]` into `Rect<T>`.
+    #[inline]
+    fn from(&[x, y, s]: &[T; 3]) -> Self {
+        Self::from_array([x, y, s, s])
     }
 }
-
-impl<T> Index<usize> for Rect<T>
-where
-    T: Copy,
-{
-    type Output = T;
-    /// Return `&T` by indexing `Rect` with `usize`.
-    fn index(&self, idx: usize) -> &Self::Output {
-        &self.0[idx]
-    }
-}
-
-impl<T> IndexMut<usize> for Rect<T>
-where
-    T: Copy,
-{
-    /// Return `&mut T` by indexing `Rect` with `usize`.
-    fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
-        &mut self.0[idx]
-    }
-}
-
-impl<T> From<&Rect<T>> for Rect<T>
-where
-    T: Copy,
-{
-    /// Convert `&Rect` to [Rect].
-    fn from(rect: &Rect<T>) -> Self {
-        *rect
-    }
-}
-
-impl<T> From<&mut Rect<T>> for Rect<T>
-where
-    T: Copy,
-{
-    /// Convert `&mut Rect` to [Rect].
-    fn from(rect: &mut Rect<T>) -> Self {
-        *rect
-    }
-}
-
-impl<T> IntoIterator for Rect<T> {
-    type Item = T;
-    type IntoIter = IntoIter<Self::Item, 4>;
-    fn into_iter(self) -> Self::IntoIter {
-        IntoIter::new(self.0)
-    }
-}
-
-macro_rules! impl_from_as {
-    ($($from:ty),* => $to:ty) => {
-        $(
-            impl From<Rect<$from>> for Rect<$to> {
-                /// Convert [`Rect<U>`] to [`Rect<T>`].
-                fn from(rect: Rect<$from>) -> Self {
-                    Self::new(rect.x() as $to, rect.y() as $to, rect.width() as $to, rect.height() as $to)
-                }
-            }
-
-            impl From<[$from; 3]> for Rect<$to> {
-                /// Convert `[T; 3]` to [Rect].
-                fn from([x, y, size]: [$from; 3]) -> Self {
-                    Self::square(x as $to, y as $to, size as $to)
-                }
-            }
-
-            impl From<&[$from; 3]> for Rect<$to> {
-                /// Convert `&[T; 3]` to [Rect].
-                fn from(&[x, y, size]: &[$from; 3]) -> Self {
-                    Self::square(x as $to, y as $to, size as $to)
-                }
-            }
-
-            impl From<[$from; 4]> for Rect<$to> {
-                /// Convert `[T; 4]` to [Rect].
-                fn from([x, y, width, height]: [$from; 4]) -> Self {
-                    Self::new(x as $to, y as $to, width as $to, height as $to)
-                }
-            }
-
-            impl From<&[$from; 4]> for Rect<$to> {
-                /// Convert `&[T; 4]` to [Rect].
-                fn from(&[x, y, width, height]: &[$from; 4]) -> Self {
-                    Self::new(x as $to, y as $to, width as $to, height as $to)
-                }
-            }
-        )*
-    };
-}
-
-impl_from_as!(i8, u8, i16, u16, u32, i64, u64, isize, usize, f32, f64 => i32);
-impl_from_as!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize, f32 => f64);
-
-macro_rules! impl_from_arr {
-    ($($from:ty),* => $zero:expr) => {
-        $(
-            impl From<[$from; 3]> for Rect<$from> {
-                /// Convert `[T; 3]` to [Rect].
-                fn from([x, y, size]: [$from; 3]) -> Self {
-                    Self::square(x, y, size)
-                }
-            }
-
-            impl From<&[$from; 3]> for Rect<$from> {
-                /// Convert `&[T; 3]` to [Rect].
-                fn from(&[x, y, size]: &[$from; 3]) -> Self {
-                    Self::square(x, y, size)
-                }
-            }
-
-            impl From<[$from; 4]> for Rect<$from> {
-                /// Convert `[T; 4]` to [Rect].
-                fn from([x, y, width, height]: [$from; 4]) -> Self {
-                    Self::new(x, y, width, height)
-                }
-            }
-
-            impl From<&[$from; 4]> for Rect<$from> {
-                /// Convert `&[T; 4]` to [Rect].
-                fn from(&[x, y, width, height]: &[$from; 4]) -> Self {
-                    Self::new(x, y, width, height)
-                }
-            }
-        )*
-    };
-}
-
-impl_from_arr!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize => 0);
-impl_from_arr!(f32, f64 => 0.0);

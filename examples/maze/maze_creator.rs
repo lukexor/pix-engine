@@ -65,7 +65,6 @@ impl MazeCreator {
             };
             cell.draw(s, color)?;
         }
-        maze.draw_border(s)?;
         Ok(())
     }
 

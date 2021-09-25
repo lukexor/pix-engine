@@ -62,14 +62,6 @@ impl Maze {
         for cell in &self.cells {
             cell.draw(s, 51)?;
         }
-        self.draw_border(s)?;
-        Ok(())
-    }
-
-    pub fn draw_border(&self, s: &mut PixState) -> PixResult<()> {
-        s.no_fill();
-        s.stroke(WHITE);
-        s.rect([0, 1, self.cols * self.size + 1, self.rows * self.size + 1])?;
         Ok(())
     }
 

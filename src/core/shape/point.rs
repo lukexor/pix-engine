@@ -28,7 +28,6 @@ use num_traits::{AsPrimitive, Signed};
 // #[cfg(feature = "serde")]
 // use serde::{Deserialize, Serialize};
 use std::{
-    array::IntoIter,
     fmt,
     iter::{Product, Sum},
     ops::*,
@@ -42,7 +41,7 @@ use std::{
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 // TODO: serde is not ready for const generics yet
 // #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Point<T, const N: usize>([T; N]);
+pub struct Point<T, const N: usize>(pub(crate) [T; N]);
 
 /// A 1D `Point` represented by integers.
 pub type PointI1 = Point<i32, 1>;
@@ -62,7 +61,7 @@ pub type PointF2 = Point<Scalar, 2>;
 /// A 3D `Point` represented by floating point numbers.
 pub type PointF3 = Point<Scalar, 3>;
 
-/// # Constructs a `Point` with N coordinates.
+/// Constructs a [Point] with N coordinates.
 ///
 /// ```
 /// # use pix_engine::prelude::*;
@@ -113,6 +112,21 @@ impl<T, const N: usize> Point<T, N> {
     #[inline]
     pub const fn new(coords: [T; N]) -> Self {
         Self(coords)
+    }
+
+    /// Constructs a `Point` from an array `[T; N]`.
+    ///
+    /// Alias for `Point::new`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p = Point::from_array([1, -2, 1]);
+    /// assert_eq!(p.values(), [1, -2, 1]);
+    /// ```
+    pub const fn from_array(arr: [T; N]) -> Self {
+        Self::new(arr)
     }
 
     /// Constructs a `Point` at the origin.
@@ -295,29 +309,6 @@ where
     pub fn to_vec(self) -> Vec<T> {
         self.0.to_vec()
     }
-
-    /// Convert `Point<T, N>` to `Point<U, N>` using the `as` operator.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let p1: PointF2 = point!(1.5, 2.0);
-    /// let p2: PointI2 = p1.as_();
-    /// assert_eq!(p2.values(), [1, 2]);
-    /// ```
-    #[inline]
-    pub fn as_<U>(self) -> Point<U, N>
-    where
-        T: AsPrimitive<U>,
-        U: 'static + Copy + Default,
-    {
-        let mut coords = [U::default(); N];
-        for i in 0..N {
-            coords[i] = self[i].as_();
-        }
-        Point::new(coords)
-    }
 }
 
 impl<T, const N: usize> Point<T, N>
@@ -439,7 +430,7 @@ where
 impl<T, const N: usize> Draw for Point<T, N>
 where
     Self: Into<PointI2>,
-    T: Copy,
+    T: Default + AsPrimitive<i32>,
 {
     /// Draw point to the current [p.x()State] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
@@ -457,71 +448,7 @@ where
     }
 }
 
-impl<T, const N: usize> Deref for Point<T, N> {
-    type Target = [T; N];
-    /// Deref `Point` to `&[T; N]`.
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<T, const N: usize> DerefMut for Point<T, N> {
-    /// Deref `Point` to `&mut [T; N]`.
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl<T, const N: usize> Index<usize> for Point<T, N>
-where
-    T: Copy,
-{
-    type Output = T;
-    /// Return `&T` by indexing `Point` with `usize`.
-    fn index(&self, idx: usize) -> &Self::Output {
-        &self.0[idx]
-    }
-}
-
-impl<T, const N: usize> IndexMut<usize> for Point<T, N>
-where
-    T: Copy,
-{
-    /// Return `&mut T` by indexing `Point` with `usize`.
-    fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
-        &mut self.0[idx]
-    }
-}
-
-impl<T, const N: usize> From<&Point<T, N>> for Point<T, N>
-where
-    T: Copy,
-{
-    /// Convert `&Point` to `Point`.
-    fn from(p: &Point<T, N>) -> Self {
-        *p
-    }
-}
-
-impl<T, const N: usize> From<&mut Point<T, N>> for Point<T, N>
-where
-    T: Copy,
-{
-    /// Convert `&mut Point` to `Point`.
-    fn from(p: &mut Point<T, N>) -> Self {
-        *p
-    }
-}
-
 // Operations
-
-impl<T, const N: usize> IntoIterator for Point<T, N> {
-    type Item = T;
-    type IntoIter = IntoIter<Self::Item, N>;
-    fn into_iter(self) -> Self::IntoIter {
-        IntoIter::new(self.0)
-    }
-}
 
 impl<T, const N: usize> Sum for Point<T, N>
 where
@@ -733,7 +660,7 @@ where
     }
 }
 
-// Required because of orphan rules.
+// Required because of orphan rule: Cannot implement foreign traits on foreign types.
 macro_rules! impl_primitive_mul {
     ($($target:ty),*) => {
         $(
@@ -750,87 +677,7 @@ macro_rules! impl_primitive_mul {
         )*
     };
 }
-
 impl_primitive_mul!(i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize, f32, f64);
-
-macro_rules! impl_from_as {
-    ($($from:ty),* => $to:ty, $zero:expr) => {
-        $(
-            impl<const N: usize> From<Point<$from, N>> for Point<$to, N> {
-                /// Convert `Point<U, N>` to `Point<T, N>`.
-                fn from(p: Point<$from, N>) -> Self {
-                    let mut coords = [$zero; N];
-                    for i in 0..N {
-                        coords[i] = p[i] as $to;
-                    }
-                    Self::new(coords)
-                }
-            }
-
-            impl<const N: usize> From<[$from; N]> for Point<$to, N> {
-                /// Convert `[T; N]` to `Point`.
-                fn from(arr: [$from; N]) -> Self {
-                    let mut coords = [$zero; N];
-                    for i in 0..N {
-                        coords[i] = arr[i] as $to;
-                    }
-                    Self::new(coords)
-                }
-            }
-
-            impl<const N: usize> From<&[$from; N]> for Point<$to, N> {
-                /// Convert `&[T; N]` to `Point`.
-                fn from(&arr: &[$from; N]) -> Self {
-                    let mut coords = [$zero; N];
-                    for i in 0..N {
-                        coords[i] = arr[i] as $to;
-                    }
-                    Self::new(coords)
-                }
-            }
-        )*
-    };
-}
-
-impl_from_as!(i8, u8, i16, u16, u32, i64, u64, isize, usize, f32, f64 => i32, 0);
-impl_from_as!(i8, u8, i16, u16, i32, u32, i64, u64, isize, usize, f32 => f64, 0.0);
-
-impl<T, const N: usize> From<[T; N]> for Point<T, N> {
-    /// Convert `[T; N]` to `Point`.
-    fn from(arr: [T; N]) -> Self {
-        Self::new(arr)
-    }
-}
-
-impl<T, const N: usize> From<&[T; N]> for Point<T, N>
-where
-    T: Copy,
-{
-    /// Convert `&[T; N]` to `Point`.
-    fn from(&arr: &[T; N]) -> Self {
-        Self::new(arr)
-    }
-}
-
-impl<T, const N: usize> From<Point<T, N>> for [T; N]
-where
-    T: Copy + Default,
-{
-    /// Convert [Point] to `[T; N]`.
-    fn from(p: Point<T, N>) -> Self {
-        p.values()
-    }
-}
-
-impl<T, const N: usize> From<&Point<T, N>> for [T; N]
-where
-    T: Copy + Default,
-{
-    /// Convert &[Point] to `[T; N]`.
-    fn from(p: &Point<T, N>) -> Self {
-        p.values()
-    }
-}
 
 impl<T, const N: usize> fmt::Display for Point<T, N>
 where
@@ -900,35 +747,5 @@ mod tests {
 
         test_ops!(2i32);
         test_ops!(2i32);
-    }
-
-    #[test]
-    fn test_slice_conversions() {
-        let _: Point<u8, 1> = [50u8].into();
-        let _: Point<i8, 1> = [50i8].into();
-        let _: Point<u16, 1> = [50u16].into();
-        let _: Point<i16, 1> = [50i16].into();
-        let _: Point<u32, 1> = [50u32].into();
-        let _: Point<i32, 1> = [50i32].into();
-        let _: Point<f32, 1> = [50.0f32].into();
-        let _: Point<f64, 1> = [50.0f64].into();
-
-        let _: Point<u8, 2> = [50u8, 100].into();
-        let _: Point<i8, 2> = [50i8, 100].into();
-        let _: Point<u16, 2> = [50u16, 100].into();
-        let _: Point<i16, 2> = [50i16, 100].into();
-        let _: Point<u32, 2> = [50u32, 100].into();
-        let _: Point<i32, 2> = [50i32, 100].into();
-        let _: Point<f32, 2> = [50.0f32, 100.0].into();
-        let _: Point<f64, 2> = [50.0f64, 100.0].into();
-
-        let _: Point<u8, 3> = [50u8, 100, 55].into();
-        let _: Point<i8, 3> = [50i8, 100, 55].into();
-        let _: Point<u16, 3> = [50u16, 100, 55].into();
-        let _: Point<i16, 3> = [50i16, 100, 55].into();
-        let _: Point<u32, 3> = [50u32, 100, 55].into();
-        let _: Point<i32, 3> = [50i32, 100, 55].into();
-        let _: Point<f32, 3> = [50.0f32, 100.0, 55.0].into();
-        let _: Point<f64, 3> = [50.0f64, 100.0, 55.0].into();
     }
 }

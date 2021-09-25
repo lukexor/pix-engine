@@ -20,8 +20,6 @@
 //! let s = sphere!(point![10, 20, 15], 200);
 //! ```
 
-use std::array::IntoIter;
-
 use crate::prelude::*;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -33,9 +31,9 @@ use serde::{Deserialize, Serialize};
 /// [module-level documentation]: crate::core::shape::sphere
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Sphere<T = i32>([T; 4]);
+pub struct Sphere<T = i32>(pub(crate) [T; 4]);
 
-/// # Constructs a `Sphere<T>` at position `(x, y, z)` with `radius`.
+/// Constructs a [Sphere] at position `(x, y, z)` with `radius`.
 ///
 /// ```
 /// # use pix_engine::prelude_3d::*;
@@ -63,14 +61,29 @@ macro_rules! sphere {
 }
 
 impl<T> Sphere<T> {
-    /// Constructs a `Sphere<T>` at position `(x, y, z)` with `radius`.
+    /// Constructs a `Sphere` at position `(x, y, z)` with `radius`.
     pub const fn new(x: T, y: T, z: T, radius: T) -> Self {
         Self([x, y, z, radius])
+    }
+
+    /// Constructs a `Sphere` from an array `[T; 4].
+    pub const fn from_array(arr: [T; 4]) -> Self {
+        Self(arr)
+    }
+}
+
+impl<T> Sphere<T>
+where
+    T: Copy + Default,
+{
+    /// Returns `Sphere` values as `[x, y, z, radius]`.
+    pub fn values(&self) -> [T; 4] {
+        self.0
     }
 }
 
 impl<T: Num> Sphere<T> {
-    /// Constructs a `Sphere<T>` at position [Point] with `radius`.
+    /// Constructs a `Sphere` at position [Point] with `radius`.
     pub fn with_position<P: Into<Point<T, 3>>>(p: P, radius: T) -> Self {
         let p = p.into();
         Self::new(p.x(), p.y(), p.z(), radius)
@@ -183,13 +196,5 @@ impl<T: Num> Intersects<T, 3> for Sphere<T> {
         let pz = other.z() - self.z();
         let r = other.radius() + self.radius();
         (px * px + py * py + pz * pz) < r * r
-    }
-}
-
-impl<T> IntoIterator for Sphere<T> {
-    type Item = T;
-    type IntoIter = IntoIter<Self::Item, 4>;
-    fn into_iter(self) -> Self::IntoIter {
-        IntoIter::new(self.0)
     }
 }

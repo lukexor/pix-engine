@@ -137,7 +137,7 @@ pub struct Color {
     channels: [u8; 4],
 }
 
-/// Constructs a `Color` with `red`, `green`, `blue` and optional `alpha`.
+/// Constructs a [Color] with `red`, `green`, `blue` and optional `alpha`.
 ///
 /// Alias for [rgb!].
 ///
@@ -173,7 +173,7 @@ macro_rules! color {
     };
 }
 
-/// Constructs a `Color` with `red`, `green`, `blue` and optional `alpha`.
+/// Constructs a [Color] with `red`, `green`, `blue` and optional `alpha`.
 ///
 /// # Examples
 ///
@@ -207,7 +207,7 @@ macro_rules! rgb {
     };
 }
 
-/// Constructs a `Color` with `hue`, `saturation`, `brightness` and optional `alpha`.
+/// Constructs a [Color] with `hue`, `saturation`, `brightness` and optional `alpha`.
 ///
 /// # Examples
 ///
@@ -241,7 +241,7 @@ macro_rules! hsb {
     };
 }
 
-/// Constructs a `Color` with `hue`, `saturation`, `lightness` and optional `alpha`.
+/// Constructs a [Color] with `hue`, `saturation`, `lightness` and optional `alpha`.
 ///
 /// # Examples
 ///

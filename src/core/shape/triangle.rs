@@ -20,10 +20,6 @@ use crate::prelude::*;
 use num_traits::AsPrimitive;
 // #[cfg(feature = "serde")]
 // use serde::{Deserialize, Serialize};
-use std::{
-    array::IntoIter,
-    ops::{Deref, DerefMut, Index, IndexMut},
-};
 
 /// A `Triangle` with three [Point]s.
 ///
@@ -33,7 +29,7 @@ use std::{
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 // TODO: serde is not ready for const generics yet
 // #[cfg_ater(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Tri<T, const N: usize>([Point<T, N>; 3]);
+pub struct Tri<T, const N: usize>(pub(crate) [Point<T, N>; 3]);
 
 /// A 2D `Triangle` represented by integers.
 pub type TriI2 = Tri<i32, 2>;
@@ -47,7 +43,7 @@ pub type TriF2 = Tri<Scalar, 2>;
 /// A 3D `Tri` represented by floating point numbers.
 pub type TriF3 = Tri<Scalar, 3>;
 
-/// # Constructs a `Line` with two points.
+/// Constructs a [Triangle][Tri] with three points.
 ///
 /// ```
 /// # use pix_engine::prelude::*;
@@ -96,6 +92,11 @@ impl<T, const N: usize> Tri<T, N> {
         P: Into<Point<T, N>>,
     {
         Self([p1.into(), p2.into(), p3.into()])
+    }
+
+    /// Constructs a `Triangle` from an array `[Point<T, N>; 3]`.
+    pub const fn from_array(arr: [Point<T, N>; 3]) -> Self {
+        Self(arr)
     }
 }
 
@@ -148,16 +149,6 @@ where
         self.0[2] = p.into();
     }
 
-    /// Convert `Tri<T>` to to `Tri<U>` using the `as` operator.
-    #[inline]
-    pub fn as_<U>(self) -> Tri<U, N>
-    where
-        T: AsPrimitive<U>,
-        U: 'static + Copy + Default,
-    {
-        Tri::new(self.p1().as_(), self.p2().as_(), self.p3().as_())
-    }
-
     /// Returns `Triangle` points as `[Point<T, N>; 3]`.
     ///
     /// # Example
@@ -199,116 +190,10 @@ where
 impl<T, const N: usize> Draw for Tri<T, N>
 where
     Self: Into<TriI2>,
-    T: Copy,
+    T: Default + AsPrimitive<i32>,
 {
     /// Draw `Triangle` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.triangle(*self)
-    }
-}
-
-impl<T, const N: usize> Deref for Tri<T, N> {
-    type Target = [Point<T, N>; 3];
-    /// Deref `Tri` to `&[Point; 2]`.
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<T, const N: usize> DerefMut for Tri<T, N> {
-    /// Deref `Tri` to `&mut [Point; 2]`.
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl<T, const N: usize> Index<usize> for Tri<T, N>
-where
-    T: Copy,
-{
-    type Output = Point<T, N>;
-    /// Return `&T` by indexing `Tri` with `usize`.
-    fn index(&self, idx: usize) -> &Self::Output {
-        &self.0[idx]
-    }
-}
-
-impl<T, const N: usize> IndexMut<usize> for Tri<T, N>
-where
-    T: Copy,
-{
-    /// Return `&mut T` by indexing `Tri` with `usize`.
-    fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
-        &mut self.0[idx]
-    }
-}
-
-impl<T, const N: usize> From<&Tri<T, N>> for Tri<T, N>
-where
-    T: Copy,
-{
-    /// Convert &[Tri] to [Tri].
-    fn from(tri: &Tri<T, N>) -> Self {
-        *tri
-    }
-}
-
-impl<T, const N: usize> From<&mut Tri<T, N>> for Tri<T, N>
-where
-    T: Copy,
-{
-    /// Convert &mut [Tri] to [Tri].
-    fn from(tri: &mut Tri<T, N>) -> Self {
-        *tri
-    }
-}
-
-impl<T, U, const N: usize> From<[Point<U, N>; 3]> for Tri<T, N>
-where
-    Point<U, N>: Into<Point<T, N>>,
-{
-    /// Convert `[Point<U, N>; 3]` to [`Tri<T, N>`].
-    fn from([p1, p2, p3]: [Point<U, N>; 3]) -> Self {
-        Self::new(p1, p2, p3)
-    }
-}
-
-impl<T, U, const N: usize> From<&[Point<U, N>; 3]> for Tri<T, N>
-where
-    U: Copy,
-    Point<U, N>: Into<Point<T, N>>,
-{
-    /// Convert `&[<Point<U, N>; 3]` to [`Tri<T, N>`].
-    fn from(&[p1, p2, p3]: &[Point<U, N>; 3]) -> Self {
-        Self::new(p1, p2, p3)
-    }
-}
-
-impl<T, U, const N: usize> From<Tri<U, N>> for [Point<T, N>; 3]
-where
-    U: Copy + Default,
-    Point<U, N>: Into<Point<T, N>>,
-{
-    /// Convert [`Tri<U>`] to `[Point<T, N>; 3]`.
-    fn from(tri: Tri<U, N>) -> Self {
-        [tri.p1().into(), tri.p2().into(), tri.p3().into()]
-    }
-}
-
-impl<T, U, const N: usize> From<&Tri<U, N>> for [Point<T, N>; 3]
-where
-    Point<U, N>: Into<Point<T, N>>,
-{
-    /// Convert &[`Tri<U>`] to `[Point<T, N>; 3]`.
-    fn from(tri: &Tri<U, N>) -> Self {
-        tri.into()
-    }
-}
-
-impl<T, const N: usize> IntoIterator for Tri<T, N> {
-    type Item = Point<T, N>;
-    type IntoIter = IntoIter<Self::Item, 3>;
-    fn into_iter(self) -> Self::IntoIter {
-        IntoIter::new(self.0)
     }
 }

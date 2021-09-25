@@ -12,6 +12,16 @@ use std::{borrow::Cow, error, fmt, io, result};
 /// [PixEngine]: crate::prelude::PixEngine
 pub type Result<T> = result::Result<T, Error>;
 
+/// 1
+#[derive(Debug)]
+pub struct MyType1<T, const N: usize>([T; N]);
+/// 2
+#[derive(Debug)]
+pub struct MyType2<T>([T; 3]);
+/// 3
+#[derive(Debug)]
+pub struct MyType3<T, const N: usize>([MyType1<T, N>; 4]);
+
 /// The error type for [PixEngine] operations.
 ///
 /// [PixEngine]: crate::prelude::PixEngine

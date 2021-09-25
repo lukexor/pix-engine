@@ -267,7 +267,8 @@ impl Rendering for Renderer {
     /// Draw a pixel to the current canvas.
     #[inline]
     fn point(&mut self, p: PointI2, color: Color) -> Result<()> {
-        let [x, y] = p.as_().values();
+        let p: Point<i16, 2> = p.into();
+        let [x, y]: [i16; 2] = p.into();
         update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
             Ok(canvas.pixel(x, y, color)?)
         })
@@ -275,7 +276,9 @@ impl Rendering for Renderer {
 
     /// Draw a line to the current canvas.
     fn line(&mut self, line: LineI2, color: Color) -> Result<()> {
-        let [x1, y1, x2, y2]: [i16; 4] = line.as_().into();
+        let [start, end]: [Point<i16, 2>; 2] = line.into();
+        let [x1, y1] = start.values();
+        let [x2, y2] = end.values();
         update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
             if y1 == y2 {
                 Ok(canvas.hline(x1, x2, y1, color)?)
@@ -289,7 +292,7 @@ impl Rendering for Renderer {
 
     /// Draw a triangle to the current canvas.
     fn triangle(&mut self, tri: TriI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
-        let [p1, p2, p3] = tri.as_().values();
+        let [p1, p2, p3]: [Point<i16, 2>; 3] = tri.into();
         update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
             if let Some(fill) = fill {
                 canvas.filled_trigon(p1.x(), p1.y(), p2.x(), p2.y(), p3.x(), p3.y(), fill)?;
@@ -309,7 +312,8 @@ impl Rendering for Renderer {
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
-        let [x, y, width, height] = rect.as_().values();
+        let rect: Rect<i16> = rect.into();
+        let [x, y, width, height] = rect.values();
         update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
             if let Some(radius) = radius {
                 let radius = radius as i16;
@@ -333,7 +337,7 @@ impl Rendering for Renderer {
 
     /// Draw a quadrilateral to the current canvas.
     fn quad(&mut self, quad: QuadI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
-        let [p1, p2, p3, p4] = quad.as_().values();
+        let [p1, p2, p3, p4]: [Point<i16, 2>; 4] = quad.into();
         let vx = [p1.x(), p2.x(), p3.x(), p4.x()];
         let vy = [p1.y(), p2.y(), p3.y(), p4.y()];
         update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
@@ -356,8 +360,9 @@ impl Rendering for Renderer {
     ) -> Result<()> {
         let (vx, vy): (Vec<i16>, Vec<i16>) = ps
             .iter()
-            .map(|p| -> (i16, i16) {
-                let [x, y] = p.as_().values();
+            .map(|&p| -> (i16, i16) {
+                let p: Point<i16, 2> = p.into();
+                let [x, y] = p.values();
                 (x, y)
             })
             .unzip();
@@ -379,7 +384,8 @@ impl Rendering for Renderer {
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
-        let [x, y, width, height] = ellipse.as_().values();
+        let ellipse: Ellipse<i16> = ellipse.into();
+        let [x, y, width, height] = ellipse.values();
         update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
             if let Some(fill) = fill {
                 canvas.filled_ellipse(x, y, width, height, fill)?;
@@ -402,19 +408,19 @@ impl Rendering for Renderer {
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> Result<()> {
-        use ArcMode::*;
-        let [x, y] = p.as_().values();
+        let p: Point<i16, 2> = p.into();
+        let [x, y] = p.values();
         let radius = radius as i16;
         let start = start as i16;
         let end = end as i16;
         update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
             match mode {
-                Default => {
+                ArcMode::Default => {
                     if let Some(stroke) = stroke {
                         canvas.arc(x, y, radius, start, end, stroke)?;
                     }
                 }
-                Pie => {
+                ArcMode::Pie => {
                     if let Some(fill) = fill {
                         canvas.filled_pie(x, y, radius, start, end, fill)?;
                     }

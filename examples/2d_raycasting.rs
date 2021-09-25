@@ -52,7 +52,7 @@ impl RayScene {
         let mut cells = Vec::with_capacity((xcells * ycells) as usize);
         for y in 0..ycells {
             for x in 0..xcells {
-                cells.push(Cell::new([x as Scalar, y as Scalar]));
+                cells.push(Cell::new([x as i32, y as i32]));
             }
         }
         Self {
@@ -198,13 +198,15 @@ impl RayScene {
         Ok(())
     }
 
+    #[allow(clippy::many_single_char_names)]
     fn calc_visibility_polygons(&mut self, o: PointI2) {
         self.polygons.clear();
         for &p in self.points.iter() {
+            let v: VectorF2 = (p - o).into();
             // Cast three rays - one at and one off to each side
             for offset in -1..=1 {
                 let angle = offset as Scalar / 10_000.0;
-                let r = Vector::rotated(p - o, angle);
+                let r = Vector::rotated(v, angle);
                 if let Some(intersect) = self.cast_ray(o, r) {
                     let [x, y] = intersect.values();
                     let intersect = point!(x.round() as i32, y.round() as i32);
@@ -242,7 +244,7 @@ impl RayScene {
             return Ok(());
         }
 
-        self.calc_visibility_polygons(mouse.as_());
+        self.calc_visibility_polygons(mouse);
 
         s.fill(WHITE);
         s.no_stroke();
@@ -281,12 +283,12 @@ impl AppState for RayScene {
         }
 
         // Screen Edges
-        let w = w as Scalar;
-        let h = h as Scalar;
-        self.edges.push(Line::new([0.0, 0.0], [w, 0.0])); // Top
-        self.edges.push(Line::new([w, 0.0], [w, h])); // Right
-        self.edges.push(Line::new([0.0, h], [w, h])); // Bottom
-        self.edges.push(Line::new([0.0, 0.0], [0.0, h])); // Left
+        let w = w as i32;
+        let h = h as i32;
+        self.edges.push(Line::new([0, 0], [w, 0])); // Top
+        self.edges.push(Line::new([w, 0], [w, h])); // Right
+        self.edges.push(Line::new([0, h], [w, h])); // Bottom
+        self.edges.push(Line::new([0, 0], [0, h])); // Left
 
         self.convert_edges_to_poly_map()?;
 

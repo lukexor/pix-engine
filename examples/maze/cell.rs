@@ -27,7 +27,7 @@ pub struct Cell {
     id: usize,
     col: u32,
     row: u32,
-    rect: Rect<f64>,
+    rect: Rect<i32>,
     walls: [bool; 4],
 }
 
@@ -37,7 +37,7 @@ impl Cell {
             id,
             col,
             row,
-            rect: square!(col * SIZE, row * SIZE, SIZE).as_(),
+            rect: square!(col * SIZE, row * SIZE, SIZE).into(),
             walls: [true; 4],
         }
     }
