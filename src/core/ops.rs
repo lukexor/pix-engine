@@ -4,7 +4,11 @@
 
 use crate::prelude_3d::*;
 use num_traits::AsPrimitive;
-use std::{array::IntoIter, iter::FromIterator, ops::*};
+use std::{
+    array::IntoIter,
+    iter::{FromIterator, Product, Sum},
+    ops::*,
+};
 
 // TODO: These macros all work - but could be condensed and cleaned up
 
@@ -171,7 +175,7 @@ macro_rules! impl_convert {
 }
 
 /// Helper macro to generate standard ops for generic shape types.
-macro_rules! impl_ops {
+macro_rules! impl_core_traits {
     ($($Type:ident<T$(, $N:ident)?>),* => [$T:ty; $M:expr]) => {
         $(
             impl<T$(, const $N: usize)?> Deref for $Type<T$(, $N)?> {
@@ -227,11 +231,11 @@ macro_rules! impl_ops {
     };
 }
 
-impl_ops!(Ellipse<T>, Rect<T>, Sphere<T> => [T; 4]);
-impl_ops!(Point<T, N>, Vector<T, N> => [T; N]);
-impl_ops!(Line<T, N> => [Point<T, N>; 2]);
-impl_ops!(Tri<T, N> => [Point<T, N>; 3]);
-impl_ops!(Quad<T, N> => [Point<T, N>; 4]);
+impl_core_traits!(Ellipse<T>, Rect<T>, Sphere<T> => [T; 4]);
+impl_core_traits!(Point<T, N>, Vector<T, N> => [T; N]);
+impl_core_traits!(Line<T, N> => [Point<T, N>; 2]);
+impl_core_traits!(Tri<T, N> => [Point<T, N>; 3]);
+impl_core_traits!(Quad<T, N> => [Point<T, N>; 4]);
 
 impl_from_num_array!(Ellipse<T>, Rect<T>, Sphere<T> => [T; 4]);
 impl_from_num_array!(Point<T, N>, Vector<T, N> => [T; N]);
@@ -247,12 +251,165 @@ impl_convert!(Line<T, N>: Point);
 impl_convert!(Tri<T, N>: Point);
 impl_convert!(Quad<T, N>: Point);
 
+// Required because of orphan rule: Cannot implement foreign traits on foreign generic types, thus
+// we use concrete primitive types.
+macro_rules! impl_primitive_mul {
+    ($Type:ident => $($target:ty),*) => {
+        $(
+            impl<const N: usize> Mul<$Type<$target, N>> for $target {
+                type Output = $Type<$target, N>;
+                /// T * [Point].
+                fn mul(self, t: $Type<$target, N>) -> Self::Output {
+                    $Type(t.map(|v| self * v))
+                }
+            }
+        )*
+    };
+}
+impl_primitive_mul!(Point => i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize, f32, f64);
+impl_primitive_mul!(Vector => i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize, f32, f64);
+
+macro_rules! impl_num_op {
+    (@ $IterTrait:ident, $func:ident, $Bound:ident, $op:tt, $Type:ty) => {
+        impl<T, const N: usize> $IterTrait for $Type
+        where
+            Self: Default + $Bound<Output = Self>
+        {
+            fn $func<I>(iter: I) -> Self
+            where
+                I: Iterator<Item = Self>,
+            {
+                let t = <$Type>::default();
+                iter.fold(t, |a, b| a $op b)
+            }
+        }
+        impl<'a, T, const N: usize> $IterTrait<&'a $Type> for $Type
+        where
+            Self: Default + $Bound<Output = Self>,
+            T: Copy,
+        {
+            fn $func<I>(iter: I) -> Self
+            where
+                I: Iterator<Item = &'a Self>,
+            {
+                let t = <$Type>::default();
+                iter.fold(t, |a, b| a $op *b)
+            }
+        }
+    };
+    (@ $OpTrait:ident, $func:ident, $op:tt, $Type:ty) => {
+        impl<T, U, const N: usize> $OpTrait<U> for $Type
+        where
+            T: Num + $OpTrait<U, Output = T>,
+            U: Num,
+        {
+            type Output = Self;
+            fn $func(self, val: U) -> Self::Output {
+                let mut t = <$Type>::default();
+                for i in 0..N {
+                    t[i] = self[i] $op val;
+                }
+                t
+            }
+        }
+    };
+    ($($Type:ty),*) => {
+        $(
+            impl_num_op!(@ Sum, sum, Add, +, $Type);
+            impl_num_op!(@ Product, product, Mul, *, $Type);
+            impl_num_op!(@ Add, add, +, $Type);
+            impl_num_op!(@ Sub, sub, -, $Type);
+            impl_num_op!(@ Mul, mul, *, $Type);
+            impl_num_op!(@ Div, div, /, $Type);
+            impl_num_assign_op!(@ AddAssign, add_assign, +=, $Type);
+            impl_num_assign_op!(@ SubAssign, sub_assign, -=, $Type);
+            impl_num_assign_op!(@ MulAssign, mul_assign, *=, $Type);
+            impl_num_assign_op!(@ DivAssign, div_assign, /=, $Type);
+            impl<T, const N: usize> Neg for $Type
+            where
+                T: Num + Neg<Output = T>,
+            {
+                type Output = Self;
+                fn neg(self) -> Self::Output {
+                    let mut t = <$Type>::default();
+                    for i in 0..N {
+                        t[i] = self[i].neg();
+                    }
+                    t
+                }
+            }
+
+        )*
+    };
+    ($OpTrait:ident, $func:ident, $Lhs:ty, $op:tt, $Rhs:ty = $Output:ty) => {
+        impl<T, const N: usize> $OpTrait<$Rhs> for $Lhs
+        where
+            T: Num + $OpTrait,
+        {
+            type Output = $Output;
+            fn $func(self, other: $Rhs) -> Self::Output {
+                let mut t = <$Output>::default();
+                for i in 0..N {
+                    t[i] = self[i] $op other[i];
+                }
+                t
+            }
+        }
+    };
+}
+
+macro_rules! impl_num_assign_op {
+    (@ $OpTrait:ident, $func:ident, $op:tt, $Type:ty) => {
+        impl<T, U, const N: usize> $OpTrait<U> for $Type
+        where
+            T: Num + $OpTrait<U>,
+            U: Num,
+        {
+            fn $func(&mut self, val: U) {
+                for i in 0..N {
+                    self[i] $op val;
+                }
+            }
+        }
+    };
+    ($OpTrait:ident, $func:ident, $Lhs:ty, $op:tt, $Rhs:ty = $Output:ty) => {
+        impl<T, const N: usize> $OpTrait<$Rhs> for $Lhs
+        where
+            T: Num,
+        {
+            fn $func(&mut self, other: $Rhs) {
+                for i in 0..N {
+                    self[i] $op other[i];
+                }
+            }
+        }
+    };
+}
+
+impl_num_op!(Point<T, N>, Vector<T, N>);
+
+impl_num_op!(Add, add, Point<T, N>, +, Point<T, N> = Vector<T, N>);
+impl_num_op!(Sub, sub, Point<T, N>, -, Point<T, N> = Vector<T, N>);
+
+impl_num_op!(Add, add, Vector<T, N>, +, Point<T, N> = Point<T, N>);
+impl_num_op!(Sub, sub, Vector<T, N>, -, Point<T, N> = Point<T, N>);
+
+impl_num_op!(Add, add, Vector<T, N>, +, Vector<T, N> = Vector<T, N>);
+impl_num_op!(Sub, sub, Vector<T, N>, -, Vector<T, N> = Vector<T, N>);
+impl_num_assign_op!(AddAssign, add_assign, Vector<T, N>, +=, Vector<T, N> = Vector<T, N>);
+impl_num_assign_op!(SubAssign, sub_assign, Vector<T, N>, -=, Vector<T, N> = Vector<T, N>);
+
+impl_num_op!(Add, add, Point<T, N>, +, Vector<T, N> = Point<T, N>);
+impl_num_op!(Sub, sub, Point<T, N>, -, Vector<T, N> = Point<T, N>);
+impl_num_assign_op!(AddAssign, add_assign, Point<T, N>, +=, Vector<T, N> = Point<T, N>);
+impl_num_assign_op!(SubAssign, sub_assign, Point<T, N>, -=, Vector<T, N> = Point<T, N>);
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn point_ops() {
+    fn iter_ops() {
         let p = point!(1, 2, 3);
         assert_eq!(p.deref(), &[1, 2, 3]);
         let mut p = point!(1, 2, 3);

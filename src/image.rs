@@ -287,7 +287,7 @@ impl PixState {
         let s = &self.settings;
         let mut pos = position.into();
         if let DrawMode::Center = s.image_mode {
-            pos -= img.center();
+            pos.offset(-img.center());
         };
         self.image_transformed(
             rect![pos.x(), pos.y(), img.width() as i32, img.height() as i32],

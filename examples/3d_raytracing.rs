@@ -244,11 +244,11 @@ impl AppState for App {
             (Key::Up, KeyMod::SHIFT) => self.origin += point!(0.0, 1.0, 0.0) - self.looking,
             (Key::Down, KeyMod::SHIFT) => self.origin -= point!(0.0, 1.0, 0.0) - self.looking,
             // Look left/right
-            (Key::Left, KeyMod::GUI) => self.looking += point!(0.05, 0.0, 0.0),
-            (Key::Right, KeyMod::GUI) => self.looking -= point!(0.05, 0.0, 0.0),
+            (Key::Left, KeyMod::GUI) => self.looking.offset(point!(0.05, 0.0, 0.0)),
+            (Key::Right, KeyMod::GUI) => self.looking.offset(-point!(0.05, 0.0, 0.0)),
             // Look up/down
-            (Key::Up, KeyMod::GUI) => self.looking -= point!(0.0, 0.05, 0.0),
-            (Key::Down, KeyMod::GUI) => self.looking += point!(0.0, 0.05, 0.0),
+            (Key::Up, KeyMod::GUI) => self.looking.offset(-point!(0.0, 0.05, 0.0)),
+            (Key::Down, KeyMod::GUI) => self.looking.offset(point!(0.0, 0.05, 0.0)),
             _ => (),
         }
         Ok(())

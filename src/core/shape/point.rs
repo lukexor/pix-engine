@@ -27,11 +27,7 @@ use crate::prelude::*;
 use num_traits::{AsPrimitive, Signed};
 // #[cfg(feature = "serde")]
 // use serde::{Deserialize, Serialize};
-use std::{
-    fmt,
-    iter::{Product, Sum},
-    ops::*,
-};
+use std::{fmt, ops::*};
 
 /// A `Point` in N-dimensional space.
 ///
@@ -325,14 +321,14 @@ where
     /// p.offset([2, -4]);
     /// assert_eq!(p.values(), [4, -1, 1]);
     /// ```
-    pub fn offset<U, const M: usize>(&mut self, offsets: [U; M])
+    pub fn offset<P, const M: usize>(&mut self, offset: P)
     where
-        T: AddAssign<U>,
-        U: Copy,
+        P: Into<Point<T, M>>,
     {
+        let offset = offset.into();
         assert!(N >= M);
         for i in 0..M {
-            self[i] += offsets[i]
+            self[i] += offset[i]
         }
     }
 
@@ -448,237 +444,6 @@ where
     }
 }
 
-// Operations
-
-impl<T, const N: usize> Sum for Point<T, N>
-where
-    T: Default + Copy + Add,
-    Self: Add<Output = Self>,
-{
-    /// Sum a list of `Point`s.
-    fn sum<I>(iter: I) -> Self
-    where
-        I: Iterator<Item = Self>,
-    {
-        let p = Point::origin();
-        iter.fold(p, |a, b| a + b)
-    }
-}
-
-impl<'a, T, const N: usize> Sum<&'a Point<T, N>> for Point<T, N>
-where
-    T: Default + Copy + Add,
-    Self: Add<Output = Self>,
-{
-    /// Sum a list of `&Point`s.
-    fn sum<I>(iter: I) -> Self
-    where
-        I: Iterator<Item = &'a Self>,
-    {
-        let p = Point::origin();
-        iter.fold(p, |a, b| a + *b)
-    }
-}
-
-impl<T, const N: usize> Product for Point<T, N>
-where
-    T: Default + Copy + Mul,
-    Self: Mul<Output = Self>,
-{
-    /// Multiply a list of `Point`s.
-    fn product<I>(iter: I) -> Self
-    where
-        I: Iterator<Item = Self>,
-    {
-        let v = Point::origin();
-        iter.fold(v, |a, b| a * b)
-    }
-}
-
-impl<'a, T, const N: usize> Product<&'a Point<T, N>> for Point<T, N>
-where
-    T: Default + Copy + Mul,
-    Self: Mul<Output = Self>,
-{
-    /// Multiply a list of `&Point`s.
-    fn product<I>(iter: I) -> Self
-    where
-        I: Iterator<Item = &'a Self>,
-    {
-        let v = Point::origin();
-        iter.fold(v, |a, b| a * *b)
-    }
-}
-
-impl<T, U, const N: usize> Add<U> for Point<T, N>
-where
-    T: Num + Add<U, Output = T>,
-    U: Num,
-{
-    type Output = Self;
-    /// [Point] + U.
-    fn add(mut self, val: U) -> Self::Output {
-        for i in 0..N {
-            self[i] = self[i] + val;
-        }
-        self
-    }
-}
-
-impl<T, const N: usize> AddAssign for Point<T, N>
-where
-    T: Num,
-{
-    /// [Point] += [Point].
-    fn add_assign(&mut self, p: Point<T, N>) {
-        for i in 0..N {
-            self[i] += p[i];
-        }
-    }
-}
-
-impl<T, U, const N: usize> AddAssign<U> for Point<T, N>
-where
-    T: Num + AddAssign<U>,
-    U: Num,
-{
-    /// [Point] += U.
-    fn add_assign(&mut self, val: U) {
-        for i in 0..N {
-            self[i] += val;
-        }
-    }
-}
-
-impl<T, U, const N: usize> Sub<U> for Point<T, N>
-where
-    T: Num + Sub<U, Output = T>,
-    U: Num,
-{
-    type Output = Self;
-    /// [Point] - U.
-    fn sub(mut self, val: U) -> Self::Output {
-        for i in 0..N {
-            self[i] = self[i] - val;
-        }
-        self
-    }
-}
-
-impl<T, const N: usize> SubAssign for Point<T, N>
-where
-    T: Num,
-{
-    /// [Point] -= [Point].
-    fn sub_assign(&mut self, p: Point<T, N>) {
-        for i in 0..N {
-            self[i] -= p[i];
-        }
-    }
-}
-
-impl<T, U, const N: usize> SubAssign<U> for Point<T, N>
-where
-    T: Num + SubAssign<U>,
-    U: Num,
-{
-    /// [Point] -= U.
-    fn sub_assign(&mut self, val: U) {
-        for i in 0..N {
-            self[i] -= val;
-        }
-    }
-}
-
-impl<T, const N: usize> Neg for Point<T, N>
-where
-    T: Num + Neg<Output = T>,
-{
-    type Output = Self;
-    /// ![Point].
-    fn neg(mut self) -> Self::Output {
-        for i in 0..N {
-            self[i] = self[i].neg();
-        }
-        self
-    }
-}
-
-impl<T, U, const N: usize> Mul<U> for Point<T, N>
-where
-    T: Num + Mul<U, Output = T>,
-    U: Num,
-{
-    type Output = Self;
-    /// [Point] * U.
-    fn mul(mut self, s: U) -> Self::Output {
-        for i in 0..N {
-            self[i] = self[i] * s;
-        }
-        self
-    }
-}
-
-impl<T, U, const N: usize> MulAssign<U> for Point<T, N>
-where
-    T: Num + MulAssign<U>,
-    U: Num,
-{
-    /// [Point] *= U.
-    fn mul_assign(&mut self, s: U) {
-        for i in 0..N {
-            self[i] *= s;
-        }
-    }
-}
-
-impl<T, U, const N: usize> Div<U> for Point<T, N>
-where
-    T: Num + Div<U, Output = T>,
-    U: Num,
-{
-    type Output = Self;
-    /// [Point] / U.
-    fn div(mut self, s: U) -> Self::Output {
-        for i in 0..N {
-            self[i] = self[i] / s;
-        }
-        self
-    }
-}
-
-impl<T, U, const N: usize> DivAssign<U> for Point<T, N>
-where
-    T: Num + DivAssign<U>,
-    U: Num,
-{
-    /// [Point] /= U.
-    fn div_assign(&mut self, s: U) {
-        for i in 0..N {
-            self[i] /= s;
-        }
-    }
-}
-
-// Required because of orphan rule: Cannot implement foreign traits on foreign types.
-macro_rules! impl_primitive_mul {
-    ($($target:ty),*) => {
-        $(
-            impl<const N: usize> Mul<Point<$target, N>> for $target {
-                type Output = Point<$target, N>;
-                /// T * [Point].
-                fn mul(self, mut p: Point<$target, N>) -> Self::Output {
-                    for i in 0..N {
-                        p[i] *= self;
-                    }
-                    p
-                }
-            }
-        )*
-    };
-}
-impl_primitive_mul!(i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize, f32, f64);
-
 impl<T, const N: usize> fmt::Display for Point<T, N>
 where
     T: Copy + Default + fmt::Debug,
@@ -686,66 +451,5 @@ where
     /// Display [Point] as a string of coordinates.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.values())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    macro_rules! test_ops {
-        ($val:expr) => {
-            // Mul<T> for Point
-            let p = point!(2, -5, 0) * $val;
-            assert_eq!(p.values(), [4, -10, 0]);
-
-            // Mul<point> for T
-            let p = $val * point!(2, -5, 0);
-            assert_eq!(p.values(), [4, -10, 0]);
-
-            // MulAssign<T> for point
-            let mut p = point!(2, -5, 0);
-            p *= $val;
-            assert_eq!(p.values(), [4, -10, 0]);
-
-            // Div<T> for point
-            let p = point!(2, -6, 0) / $val;
-            assert_eq!(p.values(), [1, -3, 0]);
-
-            // DivAssign<T> for point
-            let mut p = point!(2, -4, 0);
-            p /= $val;
-            assert_eq!(p.values(), [1, -2, 0]);
-        };
-    }
-
-    #[test]
-    fn test_ops() {
-        // Add
-        let p1 = point!(2, 5, 1);
-        let p2 = point!(1, 5, -1);
-        let p3 = p1 + p2;
-        assert_eq!(p3.values(), [3, 10, 0]);
-
-        // AddAssign
-        let mut p1 = point!(2, 5, 1);
-        let p2 = point!(1, 5, -1);
-        p1 += p2;
-        assert_eq!(p1.values(), [3, 10, 0]);
-
-        // Sub
-        let p1 = point!(2, 1, 2);
-        let p2 = point!(1, 5, 3);
-        let p3 = p1 - p2;
-        assert_eq!(p3.values(), [1, -4, -1]);
-
-        // SubAssign
-        let mut p1 = point!(2, 1, 2);
-        let p2 = point!(1, 5, 3);
-        p1 -= p2;
-        assert_eq!(p1.values(), [1, -4, -1]);
-
-        test_ops!(2i32);
-        test_ops!(2i32);
     }
 }

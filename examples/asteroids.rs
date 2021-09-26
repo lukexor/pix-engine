@@ -36,7 +36,7 @@ impl SpaceObj {
 
     fn new_asteroid(ship: &SpaceObj, mut pos: PointF2) -> Self {
         if Ellipse::circle_with_position(ship.pos, ASTEROID_SAFE_RADIUS).contains_point(pos) {
-            pos -= ship.pos
+            pos.offset(-ship.pos)
         }
         let mut vel = Vector::random();
         vel.set_mag(MAX_ASTEROID_SPEED);

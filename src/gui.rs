@@ -34,7 +34,7 @@ impl PixState {
         let text = text.as_ref();
         if let DrawMode::Center = s.rect_mode {
             let (width, height) = self.renderer.size_of(text)?;
-            p -= point!(width as i32 / 2, height as i32 / 2);
+            p.offset(-point!(width as i32 / 2, height as i32 / 2));
         };
         Ok(self
             .renderer
