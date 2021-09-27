@@ -26,6 +26,16 @@ macro_rules! impl_from_array {
                 Self(arr.map(|v| v.as_()))
             }
         }
+        impl<T, U$(, const $N: usize)?> From<&[U; $M]> for $Type<T$(, $N)?>
+        where
+            $T: 'static + Copy,
+            U: AsPrimitive<$T>,
+        {
+            #[inline]
+            fn from(&arr: &[U; $M]) -> Self {
+                Self(arr.map(|v| v.as_()))
+            }
+        }
         impl<T, U$(, const $N: usize)?> From<$Type<T$(, $N)?>> for [U; $M]
         where
             U: 'static + Copy,
@@ -33,6 +43,16 @@ macro_rules! impl_from_array {
         {
             #[inline]
             fn from(t: $Type<T$(, $N)?>) -> Self {
+                t.0.map(|v| v.as_())
+            }
+        }
+        impl<T, U$(, const $N: usize)?> From<&$Type<T$(, $N)?>> for [U; $M]
+        where
+            U: 'static + Copy,
+            $T: AsPrimitive<U>,
+        {
+            #[inline]
+            fn from(t: &$Type<T$(, $N)?>) -> Self {
                 t.0.map(|v| v.as_())
             }
         }
@@ -52,12 +72,30 @@ macro_rules! impl_from_generic_array {
                 Self(arr.map(|v| v.into()))
             }
         }
+        impl<T, U$(, const $N: usize)?> From<&[U; $M]> for $Type<T$(, $N)?>
+        where
+            U: Copy + Into<$T>,
+        {
+            #[inline]
+            fn from(&arr: &[U; $M]) -> Self {
+                Self(arr.map(|v| v.into()))
+            }
+        }
         impl<T, U$(, const $N: usize)?> From<$Type<T$(, $N)?>> for [U; $M]
         where
             $T: Into<U>,
         {
             #[inline]
             fn from(t: $Type<T$(, $N)?>) -> Self {
+                t.0.map(|v| v.into())
+            }
+        }
+        impl<T, U$(, const $N: usize)?> From<&$Type<T$(, $N)?>> for [U; $M]
+        where
+            $T: Copy + Into<U>,
+        {
+            #[inline]
+            fn from(t: &$Type<T$(, $N)?>) -> Self {
                 t.0.map(|v| v.into())
             }
         }
@@ -162,6 +200,20 @@ macro_rules! impl_core_traits {
                 }
             }
 
+            impl<T$(, const $N: usize)?> AsRef<[$T; $M]> for $Type<T$(, $N)?> {
+                #[inline]
+                fn as_ref(&self) -> &[$T; $M] {
+                    &self.0
+                }
+            }
+
+            impl<T$(, const $N: usize)?> AsMut<[$T; $M]> for $Type<T$(, $N)?> {
+                #[inline]
+                fn as_mut(&mut self) -> &mut [$T; $M] {
+                    &mut self.0
+                }
+            }
+
             impl<T: Copy$(, const $N: usize)?> Index<usize> for $Type<T$(, $N)?> {
                 type Output = $T;
                 #[inline]
@@ -201,24 +253,6 @@ macro_rules! impl_core_traits {
     };
 }
 
-impl_core_traits!(Ellipse<T>, Rect<T>, Sphere<T> => [T; 4]);
-impl_core_traits!(Point<T, N>, Vector<T, N> => [T; N]);
-impl_core_traits!(Line<T, N> => [Point<T, N>; 2]);
-impl_core_traits!(Tri<T, N> => [Point<T, N>; 3]);
-impl_core_traits!(Quad<T, N> => [Point<T, N>; 4]);
-
-impl_from_array!(Ellipse<T>, Rect<T>, Sphere<T> => [T; 4]);
-impl_from_array!(Point<T, N>, Vector<T, N> => [T; N]);
-impl_from_generic_array!(Line<T, N> => [Point<T, N>; 2]);
-impl_from_generic_array!(Tri<T, N> => [Point<T, N>; 3]);
-impl_from_generic_array!(Quad<T, N> => [Point<T, N>; 4]);
-
-impl_from!(Point<T, N> into Vector<U, N>);
-impl_from!(Vector<T, N> into Point<U, N>);
-
-impl_from!(Point<T, N>, Vector<T, N>, Ellipse<T>, Rect<T>, Sphere<T>);
-impl_from!(Line<T, N>, Tri<T, N>, Quad<T, N> from Point);
-
 // Required because of orphan rule: Cannot implement foreign traits on foreign generic types, thus
 // we use concrete primitive types.
 macro_rules! impl_primitive_mul {
@@ -234,8 +268,6 @@ macro_rules! impl_primitive_mul {
         )*
     };
 }
-impl_primitive_mul!(Point => i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize, f32, f64);
-impl_primitive_mul!(Vector => i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize, f32, f64);
 
 macro_rules! impl_num_op {
     (@ $IterTrait:ident, $func:ident, $Bound:ident, $op:tt, $Type:ty) => {
@@ -354,23 +386,39 @@ macro_rules! impl_num_assign_op {
     };
 }
 
+impl_core_traits!(Ellipse<T>, Rect<T>, Sphere<T> => [T; 4]);
+impl_core_traits!(Point<T, N>, Vector<T, N> => [T; N]);
+impl_core_traits!(Line<T, N> => [Point<T, N>; 2]);
+impl_core_traits!(Tri<T, N> => [Point<T, N>; 3]);
+impl_core_traits!(Quad<T, N> => [Point<T, N>; 4]);
+
+impl_from_array!(Ellipse<T>, Rect<T>, Sphere<T> => [T; 4]);
+impl_from_array!(Point<T, N>, Vector<T, N> => [T; N]);
+impl_from_generic_array!(Line<T, N> => [Point<T, N>; 2]);
+impl_from_generic_array!(Tri<T, N> => [Point<T, N>; 3]);
+impl_from_generic_array!(Quad<T, N> => [Point<T, N>; 4]);
+
+impl_from!(Point<T, N> into Vector<U, N>);
+impl_from!(Vector<T, N> into Point<U, N>);
+impl_from!(Point<T, N>, Vector<T, N>, Ellipse<T>, Rect<T>, Sphere<T>);
+impl_from!(Line<T, N>, Tri<T, N>, Quad<T, N> from Point);
+
+impl_primitive_mul!(Point => i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize, f32, f64);
+impl_primitive_mul!(Vector => i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize, f32, f64);
+
 impl_num_op!(Point<T, N>, Vector<T, N>);
-
 impl_num_op!(Add, add, Point<T, N>, +, Point<T, N> = Vector<T, N>);
-impl_num_op!(Sub, sub, Point<T, N>, -, Point<T, N> = Vector<T, N>);
-
-impl_num_op!(Add, add, Vector<T, N>, +, Point<T, N> = Point<T, N>);
-impl_num_op!(Sub, sub, Vector<T, N>, -, Point<T, N> = Point<T, N>);
-
-impl_num_op!(Add, add, Vector<T, N>, +, Vector<T, N> = Vector<T, N>);
-impl_num_op!(Sub, sub, Vector<T, N>, -, Vector<T, N> = Vector<T, N>);
-impl_num_assign_op!(AddAssign, add_assign, Vector<T, N>, +=, Vector<T, N> = Vector<T, N>);
-impl_num_assign_op!(SubAssign, sub_assign, Vector<T, N>, -=, Vector<T, N> = Vector<T, N>);
-
 impl_num_op!(Add, add, Point<T, N>, +, Vector<T, N> = Point<T, N>);
+impl_num_op!(Add, add, Vector<T, N>, +, Point<T, N> = Point<T, N>);
+impl_num_op!(Add, add, Vector<T, N>, +, Vector<T, N> = Vector<T, N>);
+impl_num_op!(Sub, sub, Point<T, N>, -, Point<T, N> = Vector<T, N>);
 impl_num_op!(Sub, sub, Point<T, N>, -, Vector<T, N> = Point<T, N>);
+impl_num_op!(Sub, sub, Vector<T, N>, -, Point<T, N> = Point<T, N>);
+impl_num_op!(Sub, sub, Vector<T, N>, -, Vector<T, N> = Vector<T, N>);
 impl_num_assign_op!(AddAssign, add_assign, Point<T, N>, +=, Vector<T, N> = Point<T, N>);
+impl_num_assign_op!(AddAssign, add_assign, Vector<T, N>, +=, Vector<T, N> = Vector<T, N>);
 impl_num_assign_op!(SubAssign, sub_assign, Point<T, N>, -=, Vector<T, N> = Point<T, N>);
+impl_num_assign_op!(SubAssign, sub_assign, Vector<T, N>, -=, Vector<T, N> = Vector<T, N>);
 
 #[cfg(test)]
 mod tests {

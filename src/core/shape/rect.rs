@@ -104,11 +104,6 @@ impl<T> Rect<T> {
         Self([x, y, width, height])
     }
 
-    /// Constructs a `Rect` from an array `[T; 4]`.
-    pub const fn from_array(arr: [T; 4]) -> Self {
-        Self(arr)
-    }
-
     /// Constructs a square `Rect` at position `(x, y)` with `size`.
     pub fn square(x: T, y: T, size: T) -> Self
     where
@@ -419,18 +414,28 @@ where
     }
 }
 
-impl<T: Copy> From<[T; 3]> for Rect<T> {
-    /// Converts `[T; 3]` into `Rect<T>`.
+impl<T, U> From<[U; 3]> for Rect<T>
+where
+    T: 'static + Copy,
+    U: AsPrimitive<T>,
+{
+    /// Converts `[U; 3]` into `Rect<T>`.
     #[inline]
-    fn from([x, y, s]: [T; 3]) -> Self {
-        Self::from_array([x, y, s, s])
+    fn from([x, y, s]: [U; 3]) -> Self {
+        let s = s.as_();
+        Self([x.as_(), y.as_(), s, s])
     }
 }
 
-impl<T: Copy> From<&[T; 3]> for Rect<T> {
-    /// Converts `&[T; 3]` into `Rect<T>`.
+impl<T, U> From<&[U; 3]> for Rect<T>
+where
+    T: 'static + Copy,
+    U: AsPrimitive<T>,
+{
+    /// Converts `&[U; 3]` into `Rect<T>`.
     #[inline]
-    fn from(&[x, y, s]: &[T; 3]) -> Self {
-        Self::from_array([x, y, s, s])
+    fn from(&[x, y, s]: &[U; 3]) -> Self {
+        let s = s.as_();
+        Self([x.as_(), y.as_(), s, s])
     }
 }

@@ -167,21 +167,6 @@ impl<T, const N: usize> Vector<T, N> {
         Self(coords)
     }
 
-    /// Constructs a `Vector` from an array `[T; N]`.
-    ///
-    /// Alias for `Vector::new`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v = Vector::from_array([2.1, 3.5]);
-    /// assert_eq!(v.values(), [2.1, 3.5]);
-    /// ```
-    pub const fn from_array(arr: [T; N]) -> Self {
-        Self::new(arr)
-    }
-
     /// Constructs a `Vector` at the origin.
     ///
     /// # Example

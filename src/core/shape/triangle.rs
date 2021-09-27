@@ -93,11 +93,6 @@ impl<T, const N: usize> Tri<T, N> {
     {
         Self([p1.into(), p2.into(), p3.into()])
     }
-
-    /// Constructs a `Triangle` from an array `[Point<T, N>; 3]`.
-    pub const fn from_array(arr: [Point<T, N>; 3]) -> Self {
-        Self(arr)
-    }
 }
 
 impl<T, const N: usize> Tri<T, N>

@@ -90,11 +90,6 @@ impl<T, const N: usize> Quad<T, N> {
     {
         Self([p1.into(), p2.into(), p3.into(), p4.into()])
     }
-
-    /// Constructs a `Quad` with from an array `[Point<T, N>; 4]`.
-    pub const fn from_array(arr: [Point<T, N>; 4]) -> Self {
-        Self(arr)
-    }
 }
 
 impl<T, const N: usize> Quad<T, N>

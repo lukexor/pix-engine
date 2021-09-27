@@ -65,11 +65,6 @@ impl<T> Sphere<T> {
     pub const fn new(x: T, y: T, z: T, radius: T) -> Self {
         Self([x, y, z, radius])
     }
-
-    /// Constructs a `Sphere` from an array `[T; 4].
-    pub const fn from_array(arr: [T; 4]) -> Self {
-        Self(arr)
-    }
 }
 
 impl<T> Sphere<T>

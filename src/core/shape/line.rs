@@ -97,11 +97,6 @@ impl<T, const N: usize> Line<T, N> {
     {
         Self([start.into(), end.into()])
     }
-
-    /// Constructs a `Line` with from an array `[Point<T, N>; 2]`.
-    pub const fn from_array(arr: [Point<T, N>; 2]) -> Self {
-        Self(arr)
-    }
 }
 
 impl<T, const N: usize> Line<T, N>

@@ -103,11 +103,6 @@ impl<T> Ellipse<T> {
         Self([x, y, width, height])
     }
 
-    /// Constructs a `Ellipse` with from an array `[T; 4]`.
-    pub const fn from_array(arr: [T; 4]) -> Self {
-        Self(arr)
-    }
-
     /// Constructs a circle `Ellipse` at position `(x, y)` with `radius`.
     pub fn circle(x: T, y: T, radius: T) -> Self
     where
@@ -399,18 +394,28 @@ where
     }
 }
 
-impl<T: Copy> From<[T; 3]> for Ellipse<T> {
-    /// Converts `[T; 3]` into `Ellipse<T>`.
+impl<T, U> From<[U; 3]> for Ellipse<T>
+where
+    T: 'static + Copy,
+    U: AsPrimitive<T>,
+{
+    /// Converts `[U; 3]` into `Ellipse<T>`.
     #[inline]
-    fn from([x, y, r]: [T; 3]) -> Self {
-        Self::from_array([x, y, r, r])
+    fn from([x, y, r]: [U; 3]) -> Self {
+        let r = r.as_();
+        Self([x.as_(), y.as_(), r, r])
     }
 }
 
-impl<T: Copy> From<&[T; 3]> for Ellipse<T> {
-    /// Converts `&[T; 3]` into `Ellipse<T>`.
+impl<T, U> From<&[U; 3]> for Ellipse<T>
+where
+    T: 'static + Copy,
+    U: AsPrimitive<T>,
+{
+    /// Converts `&[U; 3]` into `Ellipse<T>`.
     #[inline]
-    fn from(&[x, y, r]: &[T; 3]) -> Self {
-        Self::from_array([x, y, r, r])
+    fn from(&[x, y, r]: &[U; 3]) -> Self {
+        let r = r.as_();
+        Self([x.as_(), y.as_(), r, r])
     }
 }

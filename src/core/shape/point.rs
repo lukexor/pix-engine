@@ -110,21 +110,6 @@ impl<T, const N: usize> Point<T, N> {
         Self(coords)
     }
 
-    /// Constructs a `Point` from an array `[T; N]`.
-    ///
-    /// Alias for `Point::new`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let p = Point::from_array([1, -2, 1]);
-    /// assert_eq!(p.values(), [1, -2, 1]);
-    /// ```
-    pub const fn from_array(arr: [T; N]) -> Self {
-        Self::new(arr)
-    }
-
     /// Constructs a `Point` at the origin.
     ///
     /// # Example
