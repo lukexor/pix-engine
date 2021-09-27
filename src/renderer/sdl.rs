@@ -520,7 +520,7 @@ impl ToColor for Color {
 }
 
 impl From<Color> for SdlColor {
-    /// Convert `Color` to [SdlColor].
+    /// Convert [Color] to [SdlColor].
     fn from(color: Color) -> Self {
         let [r, g, b, a] = color.channels();
         Self::RGBA(r, g, b, a)
@@ -528,7 +528,7 @@ impl From<Color> for SdlColor {
 }
 
 impl From<FontStyle> for SdlFontStyle {
-    /// Convert `FontStyle` to [SdlFontStyle].
+    /// Convert [FontStyle] to [SdlFontStyle].
     fn from(style: FontStyle) -> Self {
         match style {
             FontStyle::NORMAL => SdlFontStyle::NORMAL,
@@ -542,7 +542,7 @@ impl From<FontStyle> for SdlFontStyle {
 }
 
 impl From<Rect<i32>> for SdlRect {
-    /// Convert `Rect<i32>` to [SdlRect].
+    /// Convert [`Rect<i32>`] to [SdlRect].
     fn from(rect: Rect<i32>) -> Self {
         Self::new(
             rect.x(),
@@ -554,7 +554,7 @@ impl From<Rect<i32>> for SdlRect {
 }
 
 impl From<&Rect<i32>> for SdlRect {
-    /// Convert `&Rect<i32>` to [SdlRect].
+    /// Convert &[`Rect<i32>`] to [SdlRect].
     fn from(rect: &Rect<i32>) -> Self {
         Self::new(
             rect.x(),
@@ -566,21 +566,21 @@ impl From<&Rect<i32>> for SdlRect {
 }
 
 impl From<PointI2> for SdlPoint {
-    /// Convert `PointI2` to [SdlPoint].
+    /// Convert [PointI2] to [SdlPoint].
     fn from(p: PointI2) -> Self {
         Self::new(p.x(), p.y())
     }
 }
 
 impl From<&PointI2> for SdlPoint {
-    /// Convert `&PointI2` to [SdlPoint].
+    /// Convert &[PointI2] to [SdlPoint].
     fn from(p: &PointI2) -> Self {
         Self::new(p.x(), p.y())
     }
 }
 
 impl From<BlendMode> for SdlBlendMode {
-    /// Convert `BlendMode` to [SdlBlendMode].
+    /// Convert [BlendMode] to [SdlBlendMode].
     fn from(mode: BlendMode) -> Self {
         use BlendMode::*;
         match mode {
@@ -593,7 +593,7 @@ impl From<BlendMode> for SdlBlendMode {
 }
 
 impl From<PixelFormat> for SdlPixelFormat {
-    /// Convert `PixelFormat` to [SdlPixelFormat].
+    /// Convert [PixelFormat] to [SdlPixelFormat].
     fn from(format: PixelFormat) -> Self {
         use PixelFormat::*;
         match format {
@@ -608,7 +608,7 @@ impl From<PixelFormat> for SdlPixelFormat {
  */
 
 impl From<InitError> for Error {
-    /// Convert `InitError` to [Error].
+    /// Convert [InitError] to [Error].
     fn from(err: InitError) -> Self {
         use InitError::*;
         match err {
@@ -619,7 +619,7 @@ impl From<InitError> for Error {
 }
 
 impl From<FontError> for Error {
-    /// Convert `FontError` to [Error].
+    /// Convert [FontError] to [Error].
     fn from(err: FontError) -> Self {
         use FontError::*;
         match err {
@@ -630,14 +630,14 @@ impl From<FontError> for Error {
 }
 
 impl From<WindowError> for Error {
-    /// Convert `WindowError` to [Error].
+    /// Convert [WindowError] to [Error].
     fn from(err: WindowError) -> Self {
         Error::WindowError(err)
     }
 }
 
 impl From<WindowBuildError> for Error {
-    /// Convert `WindowBuildError` to [Error].
+    /// Convert [WindowBuildError] to [Error].
     fn from(err: WindowBuildError) -> Self {
         use WindowBuildError::*;
         match err {
@@ -650,7 +650,7 @@ impl From<WindowBuildError> for Error {
 }
 
 impl From<IntegerOrSdlError> for Error {
-    /// Convert `IntegerOrSdlError` to [Error].
+    /// Convert [IntegerOrSdlError] to [Error].
     fn from(err: IntegerOrSdlError) -> Self {
         use IntegerOrSdlError::*;
         match err {
@@ -661,7 +661,7 @@ impl From<IntegerOrSdlError> for Error {
 }
 
 impl From<TextureValueError> for Error {
-    /// Convert `TextureValueError` to [Error].
+    /// Convert [TextureValueError] to [Error].
     fn from(err: TextureValueError) -> Self {
         use TextureValueError::*;
         match err {
@@ -676,7 +676,7 @@ impl From<TextureValueError> for Error {
 }
 
 impl From<TargetRenderError> for Error {
-    /// Convert `TargetRenderError` to [Error].
+    /// Convert [TargetRenderError] to [Error].
     fn from(err: TargetRenderError) -> Self {
         use TargetRenderError::*;
         match err {
@@ -687,14 +687,14 @@ impl From<TargetRenderError> for Error {
 }
 
 impl From<SdlError> for Error {
-    /// Convert `SdlError` to [Error].
+    /// Convert [SdlError] to [Error].
     fn from(err: SdlError) -> Self {
         Self::Other(Cow::from(err.to_string()))
     }
 }
 
 impl From<UpdateTextureError> for Error {
-    /// Convert `UpdateTextureError` to [Error].
+    /// Convert [UpdateTextureError] to [Error].
     fn from(err: UpdateTextureError) -> Self {
         use UpdateTextureError::*;
         match err {

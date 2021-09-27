@@ -10,168 +10,138 @@ use std::{
     ops::*,
 };
 
-// TODO: These macros all work - but could be condensed and cleaned up
+// TODO: AsPrimitive is convenient but not semantically accurate
 
-/// Helper macro to create From and TryFrom conversion traits for arrays into generic shape types.
+/// Helper macro to create From conversion traits for arrays into generic shape types.
 macro_rules! impl_from_array {
-    // Convert [U; M] to Type<T, N> and vice versa using U: Into<T> and T: Into<U>.
-    ($($Type:ident<T$(, $N:ident)?>),* => [$T:ty; $M:expr]) => {
-        $(
-            impl<T, U$(, const $N: usize)?> From<[U; $M]> for $Type<T$(, $N)?>
-            where
-                U: Into<$T>,
-            {
-                #[inline]
-                fn from(arr: [U; $M]) -> Self {
-                    Self(arr.map(|v| v.into()))
-                }
+    // Convert array [U; M] to Type<T, N> and vice versa using U: Into<T> and T: Into<U>.
+    ($($Type:ident<T$(, $N:ident)?>),* => [$T:ty; $M:expr]) => {$(
+        impl<T, U$(, const $N: usize)?> From<[U; $M]> for $Type<T$(, $N)?>
+        where
+            $T: 'static + Copy,
+            U: AsPrimitive<$T>,
+        {
+            #[inline]
+            fn from(arr: [U; $M]) -> Self {
+                Self(arr.map(|v| v.as_()))
             }
-            impl<T, U$(, const $N: usize)?> From<$Type<T$(, $N)?>> for [U; $M]
-            where
-                $T: Into<U>,
-            {
-                #[inline]
-                fn from(t: $Type<T$(, $N)?>) -> Self {
-                    t.0.map(|v| v.into())
-                }
+        }
+        impl<T, U$(, const $N: usize)?> From<$Type<T$(, $N)?>> for [U; $M]
+        where
+            U: 'static + Copy,
+            $T: AsPrimitive<U>,
+        {
+            #[inline]
+            fn from(t: $Type<T$(, $N)?>) -> Self {
+                t.0.map(|v| v.as_())
             }
-        )*
-    };
+        }
+    )*};
 }
 
-macro_rules! impl_from_num_array {
-    // Convert [U; M] to Type<T, N> and vice versa using U: Into<T> and T: Into<U>.
-    ($($Type:ident<T$(, $N:ident)?>),* => [$T:ty; $M:expr]) => {
-        $(
-            impl<T, U$(, const $N: usize)?> From<[U; $M]> for $Type<T$(, $N)?>
-            where
-                $T: 'static + Copy,
-                U: AsPrimitive<$T>,
-            {
-                #[inline]
-                fn from(arr: [U; $M]) -> Self {
-                    Self(arr.map(|v| v.as_()))
-                }
+/// Helper macro to create From conversion traits for arrays into generic shape types.
+macro_rules! impl_from_generic_array {
+    // Convert array [U; M] to Type<T, N> and vice versa using U: Into<T> and T: Into<U>.
+    ($($Type:ident<T$(, $N:ident)?>),* => [$T:ty; $M:expr]) => {$(
+        impl<T, U$(, const $N: usize)?> From<[U; $M]> for $Type<T$(, $N)?>
+        where
+            U: Into<$T>,
+        {
+            #[inline]
+            fn from(arr: [U; $M]) -> Self {
+                Self(arr.map(|v| v.into()))
             }
-            impl<T, U$(, const $N: usize)?> From<$Type<T$(, $N)?>> for [U; $M]
-            where
-                U: 'static + Copy,
-                $T: AsPrimitive<U>,
-            {
-                #[inline]
-                fn from(t: $Type<T$(, $N)?>) -> Self {
-                    t.0.map(|v| v.as_())
-                }
+        }
+        impl<T, U$(, const $N: usize)?> From<$Type<T$(, $N)?>> for [U; $M]
+        where
+            $T: Into<U>,
+        {
+            #[inline]
+            fn from(t: $Type<T$(, $N)?>) -> Self {
+                t.0.map(|v| v.into())
             }
-
-            // Tuples?
-        )*
-    };
+        }
+    )*};
 }
 
-/// Helper macro to create From and TryFrom conversion traits between generic shape types.
-macro_rules! impl_convert {
-    // Convert Type<T, N> to Type<U, N> using T: AsPrimitive<U>.
-    (@ const as $Type:ident: $T:ty => { $($U:ty),* } ) => {
-        $(
-            impl<const N: usize> From<$Type<$T, N>> for $Type<$U, N>
-            where
-                $T: AsPrimitive<$U>
-            {
-                #[inline]
-                fn from(t: $Type<$T, N>) -> Self {
-                    Self(t.0.map(|v| v.as_()))
-                }
+/// Helper macro to create From conversion traits between generic shape types.
+macro_rules! impl_from {
+    // Convert Type<U> to Type<T> using U: Into<T>.
+    // e.g. Ellipse<U> into Ellipse<T> where U: Into<T>.
+    (@ into $Type:ident: $U:ty => { $($T:ty),* } ) => {$(
+        impl From<$Type<$U>> for $Type<$T>
+        where
+            $T: 'static + Copy,
+            $U: AsPrimitive<$T>,
+        {
+            #[inline]
+            fn from(t: $Type<$U>) -> Self {
+                Self(t.0.map(|v| v.as_()))
             }
-        )*
-    };
-    // Convert Type<T> to Type<U> using T: AsPrimitive<U>.
-    (@ as $Type:ident: $T:ty => { $($U:ty),* } ) => {
-        $(
-            impl From<$Type<$T>> for $Type<$U>
-            where
-                $T: AsPrimitive<$U>
-            {
-                #[inline]
-                fn from(t: $Type<$T>) -> Self {
-                    Self(t.0.map(|v| v.as_()))
-                }
+        }
+    )*};
+    // Convert Type<U, N> to Type<T, N> using U: Into<T>.
+    // e.g. Point<U, N> to Vector<T, N> where U: Into<T>.
+    (@ $N:ident into $Type:ident: $U:ty => { $($T:ty),* } ) => {$(
+        impl<const N: usize> From<$Type<$U, N>> for $Type<$T, N>
+        where
+            $T: 'static + Copy,
+            $U: AsPrimitive<$T>,
+        {
+            #[inline]
+            fn from(t: $Type<$U, N>) -> Self {
+                Self(t.0.map(|v| v.as_()))
             }
-        )*
-    };
-    // Convert Type<T, N> to Type<U, N> using OtherType<T>: Into<OtherType<<U>>.
-    (@ into $Type:ident: $T:ident<$V:ty> => { $($U:ty),* } ) => {
-        $(
-            impl<const N: usize> From<$Type<$V, N>> for $Type<$U, N>
-            where
-                $T<$V, N>: Into<$T<$U, N>>
-            {
-                #[inline]
-                fn from(t: $Type<$V, N>) -> Self {
-                    Self(t.0.map(|v| v.into()))
-                }
+        }
+    )*};
+    // Convert Type<U, N> to Type<V, N> using T<U, N>: Into<T<V, N>>.
+    // Required to get around the existing blanket impl From<U> where U: Into<T> for complex types
+    // like Point<T, N>.
+    // e.g. Line<U, N> to Line<V, N> where Point<U, N>: Into<Point<V, N>>.
+    (@ $N:ident into $Type:ident: $T:ident, $U:ty => { $($V:ty),* } ) => {$(
+        impl<const N: usize> From<$Type<$U, N>> for $Type<$V, N>
+        where
+            $T<$U, N>: Into<$T<$V, N>>,
+        {
+            #[inline]
+            fn from(t: $Type<$U, N>) -> Self {
+                Self(t.0.map(|v| v.into()))
             }
-        )*
+        }
+    )*};
+    (@ $Type:ident<T$(, $N:ident)?> into $($T:ident)?: primitive) => {
+        impl_from!(@ $($N)? into $Type: $($T,)? u8 => { i8, u16, i16, u32, i32, u64, i64, usize, isize, f32, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? i8 => { u8, u16, i16, u32, i32, u64, i64, usize, isize, f32, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? u16 => { i8, u8, i16, u32, i32, u64, i64, usize, isize, f32, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? i16 => { i8, u8, u16, u32, i32, u64, i64, usize, isize, f32, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? u32 => { i8, u8, i16, u16, i32, u64, i64, usize, isize, f32, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? i32 => { i8, u8, i16, u16, u32, u64, i64, usize, isize, f32, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? u64 => { i8, u8, i16, u16, i32, u32, i64, usize, isize, f32, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? i64 => { i8, u8, i16, u16, i32, u32, u64, usize, isize, f32, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? usize => { i8, u8, i16, u16, i32, u32, u64, isize, f32, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? isize => { i8, u8, i16, u16, i32, u32, u64, usize, f32, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? f32 => { i8, u8, i16, u16, i32, u32, u64, isize, usize, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? f64 => { i8, u8, i16, u16, i32, u32, u64, isize, usize, f32 });
     };
     // Convert Type<T, N> to Other and all Type<T, N> to Type<U, N> for all numeric T.
-    ($Type:ident<$T:ident$(, $N:ident)?> as $Other:ty) => {
-        impl<T, U$(, const $N: usize)?> From<$Other> for $Type<$T$(, $N)?>
+    ($Type:ident<T$(, $N:ident)?> into $Other:ty) => {
+        impl<T, U$(, const $N: usize)?> From<$Other> for $Type<T$(, $N)?>
         where
             T: 'static + Copy,
-            U: AsPrimitive<$T>,
+            U: AsPrimitive<T>,
         {
             #[inline]
             fn from(t: $Other) -> Self {
                 Self(t.0.map(|v| v.as_()))
             }
         }
-        impl_convert!(@ const as $Type: u8 => { i8, u16, i16, u32, i32, u64, i64, usize, isize, f32, f64 });
-        impl_convert!(@ const as $Type: i8 => { u8, u16, i16, u32, i32, u64, i64, usize, isize, f32, f64 });
-        impl_convert!(@ const as $Type: u16 => { i8, u8, i16, u32, i32, u64, i64, usize, isize, f32, f64 });
-        impl_convert!(@ const as $Type: i16 => { i8, u8, u16, u32, i32, u64, i64, usize, isize, f32, f64 });
-        impl_convert!(@ const as $Type: u32 => { i8, u8, i16, u16, i32, u64, i64, usize, isize, f32, f64 });
-        impl_convert!(@ const as $Type: i32 => { i8, u8, i16, u16, u32, u64, i64, usize, isize, f32, f64 });
-        impl_convert!(@ const as $Type: u64 => { i8, u8, i16, u16, i32, u32, i64, usize, isize, f32, f64 });
-        impl_convert!(@ const as $Type: i64 => { i8, u8, i16, u16, i32, u32, u64, usize, isize, f32, f64 });
-        impl_convert!(@ const as $Type: usize => { i8, u8, i16, u16, i32, u32, u64, isize, f32, f64 });
-        impl_convert!(@ const as $Type: isize => { i8, u8, i16, u16, i32, u32, u64, usize, f32, f64 });
-        impl_convert!(@ const as $Type: f32 => { i8, u8, i16, u16, i32, u32, u64, isize, usize, f64 });
-        impl_convert!(@ const as $Type: f64 => { i8, u8, i16, u16, i32, u32, u64, isize, usize, f32 });
     };
-    // Convert Type<T> to Type<U> for all numeric T.
-    ($($Type:ident<T>),*) => {
-        $(
-            impl_convert!(@ as $Type: u8 => { i8, u16, i16, u32, i32, u64, i64, usize, isize, f32, f64 });
-            impl_convert!(@ as $Type: i8 => { u8, u16, i16, u32, i32, u64, i64, usize, isize, f32, f64 });
-            impl_convert!(@ as $Type: u16 => { i8, u8, i16, u32, i32, u64, i64, usize, isize, f32, f64 });
-            impl_convert!(@ as $Type: i16 => { i8, u8, u16, u32, i32, u64, i64, usize, isize, f32, f64 });
-            impl_convert!(@ as $Type: u32 => { i8, u8, i16, u16, i32, u64, i64, usize, isize, f32, f64 });
-            impl_convert!(@ as $Type: i32 => { i8, u8, i16, u16, u32, u64, i64, usize, isize, f32, f64 });
-            impl_convert!(@ as $Type: u64 => { i8, u8, i16, u16, i32, u32, i64, usize, isize, f32, f64 });
-            impl_convert!(@ as $Type: i64 => { i8, u8, i16, u16, i32, u32, u64, usize, isize, f32, f64 });
-            impl_convert!(@ as $Type: usize => { i8, u8, i16, u16, i32, u32, u64, isize, f32, f64 });
-            impl_convert!(@ as $Type: isize => { i8, u8, i16, u16, i32, u32, u64, usize, f32, f64 });
-            impl_convert!(@ as $Type: f32 => { i8, u8, i16, u16, i32, u32, u64, isize, usize, f64 });
-            impl_convert!(@ as $Type: f64 => { i8, u8, i16, u16, i32, u32, u64, isize, usize, f32 });
-        )*
-    };
-    // Convert Type<T, N> to Type<U, N> for all numeric OtherType<T>.
-    ($($Type:ident<T, N>: $T:ident),*) => {
-        $(
-            impl_convert!(@ into $Type: $T<u8> => { i8, u16, i16, u32, i32, u64, i64, usize, isize, f32, f64 });
-            impl_convert!(@ into $Type: $T<i8> => { u8, u16, i16, u32, i32, u64, i64, usize, isize, f32, f64 });
-            impl_convert!(@ into $Type: $T<u16> => { i8, u8, i16, u32, i32, u64, i64, usize, isize, f32, f64 });
-            impl_convert!(@ into $Type: $T<i16> => { i8, u8, u16, u32, i32, u64, i64, usize, isize, f32, f64 });
-            impl_convert!(@ into $Type: $T<u32> => { i8, u8, i16, u16, i32, u64, i64, usize, isize, f32, f64 });
-            impl_convert!(@ into $Type: $T<i32> => { i8, u8, i16, u16, u32, u64, i64, usize, isize, f32, f64 });
-            impl_convert!(@ into $Type: $T<u64> => { i8, u8, i16, u16, i32, u32, i64, usize, isize, f32, f64 });
-            impl_convert!(@ into $Type: $T<i64> => { i8, u8, i16, u16, i32, u32, u64, usize, isize, f32, f64 });
-            impl_convert!(@ into $Type: $T<usize> => { i8, u8, i16, u16, i32, u32, u64, isize, f32, f64 });
-            impl_convert!(@ into $Type: $T<isize> => { i8, u8, i16, u16, i32, u32, u64, usize, f32, f64 });
-            impl_convert!(@ into $Type: $T<f32> => { i8, u8, i16, u16, i32, u32, u64, isize, usize, f64 });
-            impl_convert!(@ into $Type: $T<f64> => { i8, u8, i16, u16, i32, u32, u64, isize, usize, f32 });
-        )*
-    }
+    ($($Type:ident<T$(, $N:ident)?>),*) => {$(
+        impl_from!(@ $Type<T$(, $N)?> into : primitive);
+    )*};
+    ($($Type:ident<T$(, $N:ident)?>),* from $T:ident) => {$(
+        impl_from!(@ $Type<T$(, $N)?> into $T: primitive);
+    )*};
 }
 
 /// Helper macro to generate standard ops for generic shape types.
@@ -237,19 +207,17 @@ impl_core_traits!(Line<T, N> => [Point<T, N>; 2]);
 impl_core_traits!(Tri<T, N> => [Point<T, N>; 3]);
 impl_core_traits!(Quad<T, N> => [Point<T, N>; 4]);
 
-impl_from_num_array!(Ellipse<T>, Rect<T>, Sphere<T> => [T; 4]);
-impl_from_num_array!(Point<T, N>, Vector<T, N> => [T; N]);
-impl_from_array!(Line<T, N> => [Point<T, N>; 2]);
-impl_from_array!(Tri<T, N> => [Point<T, N>; 3]);
-impl_from_array!(Quad<T, N> => [Point<T, N>; 4]);
+impl_from_array!(Ellipse<T>, Rect<T>, Sphere<T> => [T; 4]);
+impl_from_array!(Point<T, N>, Vector<T, N> => [T; N]);
+impl_from_generic_array!(Line<T, N> => [Point<T, N>; 2]);
+impl_from_generic_array!(Tri<T, N> => [Point<T, N>; 3]);
+impl_from_generic_array!(Quad<T, N> => [Point<T, N>; 4]);
 
-impl_convert!(Point<T, N> as Vector<U, N>);
-impl_convert!(Vector<T, N> as Point<U, N>);
+impl_from!(Point<T, N> into Vector<U, N>);
+impl_from!(Vector<T, N> into Point<U, N>);
 
-impl_convert!(Ellipse<T>, Rect<T>, Sphere<T>);
-impl_convert!(Line<T, N>: Point);
-impl_convert!(Tri<T, N>: Point);
-impl_convert!(Quad<T, N>: Point);
+impl_from!(Point<T, N>, Vector<T, N>, Ellipse<T>, Rect<T>, Sphere<T>);
+impl_from!(Line<T, N>, Tri<T, N>, Quad<T, N> from Point);
 
 // Required because of orphan rule: Cannot implement foreign traits on foreign generic types, thus
 // we use concrete primitive types.
@@ -431,7 +399,7 @@ mod tests {
     }
 
     #[test]
-    fn point_from_array() {
+    fn from_array() {
         let p: Point<u8, 1> = [1u8].into();
         assert_eq!(p, Point::new([1u8]));
         let p: Point<i8, 1> = [1i8].into();
@@ -497,14 +465,14 @@ mod tests {
     }
 
     #[test]
-    fn point_to_array() {
+    fn to_array() {
         let v: [i8; 3] = point!(1i8, 2, 3).into();
         assert_eq!(v, [1i8, 2, 3]);
         todo!("Test all types");
     }
 
     #[test]
-    fn point_convert_array() {
+    fn convert_array() {
         // Smaller -> Larger
         let v: [i16; 3] = point!(1i8, 2, 3).into();
         assert_eq!(v, [1i16, 2, 3]);
@@ -517,7 +485,7 @@ mod tests {
     }
 
     #[test]
-    fn point_convert_self() {
+    fn convert_self() {
         // Smaller -> Larger
         let p: Point<i16, 3> = point!(1i8, 2, 3).into();
         assert_eq!(p, Point::new([1i16, 2, 3]));
@@ -530,7 +498,7 @@ mod tests {
     }
 
     #[test]
-    fn point_convert_other() {
+    fn convert_other() {
         // Smaller -> Larger
         let v: Vector<i16, 3> = point!(1i8, 2, 3).into();
         assert_eq!(v, Vector::new([1i16, 2, 3]));
