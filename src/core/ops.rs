@@ -110,18 +110,18 @@ macro_rules! impl_from {
         }
     )*};
     (@ $Type:ident<T$(, $N:ident)?> into $($T:ident)?: primitive) => {
-        impl_from!(@ $($N)? into $Type: $($T,)? u8 => { i8, u16, i16, u32, i32, u64, i64, usize, isize, f32, f64 });
-        impl_from!(@ $($N)? into $Type: $($T,)? i8 => { u8, u16, i16, u32, i32, u64, i64, usize, isize, f32, f64 });
-        impl_from!(@ $($N)? into $Type: $($T,)? u16 => { i8, u8, i16, u32, i32, u64, i64, usize, isize, f32, f64 });
-        impl_from!(@ $($N)? into $Type: $($T,)? i16 => { i8, u8, u16, u32, i32, u64, i64, usize, isize, f32, f64 });
-        impl_from!(@ $($N)? into $Type: $($T,)? u32 => { i8, u8, i16, u16, i32, u64, i64, usize, isize, f32, f64 });
-        impl_from!(@ $($N)? into $Type: $($T,)? i32 => { i8, u8, i16, u16, u32, u64, i64, usize, isize, f32, f64 });
-        impl_from!(@ $($N)? into $Type: $($T,)? u64 => { i8, u8, i16, u16, i32, u32, i64, usize, isize, f32, f64 });
-        impl_from!(@ $($N)? into $Type: $($T,)? i64 => { i8, u8, i16, u16, i32, u32, u64, usize, isize, f32, f64 });
-        impl_from!(@ $($N)? into $Type: $($T,)? usize => { i8, u8, i16, u16, i32, u32, u64, isize, f32, f64 });
-        impl_from!(@ $($N)? into $Type: $($T,)? isize => { i8, u8, i16, u16, i32, u32, u64, usize, f32, f64 });
-        impl_from!(@ $($N)? into $Type: $($T,)? f32 => { i8, u8, i16, u16, i32, u32, u64, isize, usize, f64 });
-        impl_from!(@ $($N)? into $Type: $($T,)? f64 => { i8, u8, i16, u16, i32, u32, u64, isize, usize, f32 });
+        impl_from!(@ $($N)? into $Type: $($T,)? u8 => { i8, u16, i16, u32, i32, u64, i64, i128, u128, f32, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? i8 => { u8, u16, i16, u32, i32, u64, i64, i128, u128, f32, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? u16 => { i8, u8, i16, u32, i32, u64, i64, i128, u128, f32, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? i16 => { i8, u8, u16, u32, i32, u64, i64, i128, u128, f32, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? u32 => { i8, u8, i16, u16, i32, u64, i64, i128, u128, f32, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? i32 => { i8, u8, i16, u16, u32, u64, i64, i128, u128, f32, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? u64 => { i8, u8, i16, u16, i32, u32, i64, i128, u128, f32, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? i64 => { i8, u8, i16, u16, i32, u32, u64, i128, u128, f32, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? i128 => { i8, u8, i16, u16, i32, u32, i64, u64, u128, f32, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? u128 => { i8, u8, i16, u16, i32, u32, i64, u64, i128, f32, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? f32 => { i8, u8, i16, u16, i32, u32, u64, i128, u128, f64 });
+        impl_from!(@ $($N)? into $Type: $($T,)? f64 => { i8, u8, i16, u16, i32, u32, u64, i128, u128, f32 });
     };
     // Convert Type<T, N> to Other and all Type<T, N> to Type<U, N> for all numeric T.
     ($Type:ident<T$(, $N:ident)?> into $Other:ty) => {
@@ -400,75 +400,26 @@ mod tests {
 
     #[test]
     fn from_array() {
-        let p: Point<u8, 1> = [1u8].into();
-        assert_eq!(p, Point::new([1u8]));
-        let p: Point<i8, 1> = [1i8].into();
-        assert_eq!(p, Point::new([1i8]));
-        let p: Point<u16, 1> = [1u16].into();
-        assert_eq!(p, Point::new([1u16]));
-        let p: Point<i16, 1> = [1i16].into();
-        assert_eq!(p, Point::new([1i16]));
-        let p: Point<u32, 1> = [1u32].into();
-        assert_eq!(p, Point::new([1u32]));
-        let p: Point<i32, 1> = [1i32].into();
-        assert_eq!(p, Point::new([1i32]));
-        let p: Point<u64, 1> = [1u64].into();
-        assert_eq!(p, Point::new([1u64]));
-        let p: Point<i64, 1> = [1i64].into();
-        assert_eq!(p, Point::new([1i64]));
-        let p: Point<f32, 1> = [1.0f32].into();
-        assert_eq!(p, Point::new([1f32]));
-        let p: Point<f64, 1> = [1.0f64].into();
-        assert_eq!(p, Point::new([1f64]));
-
-        let p: Point<u8, 2> = [1u8, 2].into();
-        assert_eq!(p, Point::new([1u8, 2]));
-        let p: Point<i8, 2> = [1i8, 2].into();
-        assert_eq!(p, Point::new([1i8, 2]));
-        let p: Point<u16, 2> = [1u16, 2].into();
-        assert_eq!(p, Point::new([1u16, 2]));
-        let p: Point<i16, 2> = [1i16, 2].into();
-        assert_eq!(p, Point::new([1i16, 2]));
-        let p: Point<i32, 2> = [1i32, 2].into();
-        assert_eq!(p, Point::new([1i32, 2]));
-        let p: Point<u32, 2> = [1u32, 2].into();
-        assert_eq!(p, Point::new([1u32, 2]));
-        let p: Point<u64, 2> = [1u64, 2].into();
-        assert_eq!(p, Point::new([1u64, 2]));
-        let p: Point<i64, 2> = [1i64, 2].into();
-        assert_eq!(p, Point::new([1i64, 2]));
-        let p: Point<f32, 2> = [1.0f32, 2.0].into();
-        assert_eq!(p, Point::new([1f32, 2.0]));
-        let p: Point<f64, 2> = [1.0f64, 2.0].into();
-        assert_eq!(p, Point::new([1f64, 2.0]));
-
-        let p: Point<u8, 3> = [1u8, 2, 3].into();
-        assert_eq!(p, Point::new([1u8, 2, 3]));
-        let p: Point<i8, 3> = [1i8, 2, 3].into();
-        assert_eq!(p, Point::new([1i8, 2, 3]));
-        let p: Point<u16, 3> = [1u16, 2, 3].into();
-        assert_eq!(p, Point::new([1u16, 2, 3]));
-        let p: Point<i16, 3> = [1i16, 2, 3].into();
-        assert_eq!(p, Point::new([1i16, 2, 3]));
-        let p: Point<u32, 3> = [1u32, 2, 3].into();
-        assert_eq!(p, Point::new([1u32, 2, 3]));
-        let p: Point<i32, 3> = [1i32, 2, 3].into();
-        assert_eq!(p, Point::new([1i32, 2, 3]));
-        let p: Point<u64, 3> = [1u64, 2, 3].into();
-        assert_eq!(p, Point::new([1u64, 2, 3]));
-        let p: Point<i64, 3> = [1i64, 2, 3].into();
-        assert_eq!(p, Point::new([1i64, 2, 3]));
-        let p: Point<f32, 3> = [1.0f32, 2.0, 3.0].into();
-        assert_eq!(p, Point::new([1f32, 2.0, 3.0]));
-        let p: Point<f64, 3> = [1.0f64, 2.0, 3.0].into();
-        assert_eq!(p, Point::new([1f64, 2.0, 3.0]));
-    }
-
-    #[test]
-    fn to_array() {
-        let v: [i8; 3] = point!(1i8, 2, 3).into();
-        assert_eq!(v, [1i8, 2, 3]);
-        todo!("Test all types");
+        macro_rules! test {
+            ($Type:ident, $N:expr; $($T:ty),* => $arr:expr) => {$(
+                let t: $Type<$T, $N> = $arr.into();
+                assert_eq!(t.deref(), &$arr);
+                let v: [$T; $N] = <$Type<$T, $N>>::new($arr).into();
+                assert_eq!(v, $arr);
+            )*};
+        }
+        test!(Point, 1; i8, u8, i16, u16, i32, u32, i64, u64, i128, u128 => [1]);
+        test!(Point, 1; f32, f64 => [1.0]);
+        test!(Point, 2; i8, u8, i16, u16, i32, u32, i64, u64, i128, u128 => [1, 2]);
+        test!(Point, 2; f32, f64 => [1.0, 2.0]);
+        test!(Point, 3; i8, u8, i16, u16, i32, u32, i64, u64, i128, u128 => [1, 2, 3]);
+        test!(Point, 3; f32, f64 => [1.0, 2.0, 3.0]);
+        test!(Vector, 1; i8, u8, i16, u16, i32, u32, i64, u64, i128, u128 => [1]);
+        test!(Vector, 1; f32, f64 => [1.0]);
+        test!(Vector, 2; i8, u8, i16, u16, i32, u32, i64, u64, i128, u128 => [1, 2]);
+        test!(Vector, 2; f32, f64 => [1.0, 2.0]);
+        test!(Vector, 3; i8, u8, i16, u16, i32, u32, i64, u64, i128, u128 => [1, 2, 3]);
+        test!(Vector, 3; f32, f64 => [1.0, 2.0, 3.0]);
     }
 
     #[test]
@@ -480,8 +431,6 @@ mod tests {
         // Larger -> Smaller
         let v: [i8; 3] = point!(1i16, 2, 3).into();
         assert_eq!(v, [1i8, 2, 3]);
-
-        todo!("Test all types");
     }
 
     #[test]
@@ -493,8 +442,6 @@ mod tests {
         // Larger -> Smaller
         let p: Point<i8, 3> = point!(1i16, 2, 3).into();
         assert_eq!(p, Point::new([1i8, 2, 3]));
-
-        todo!("Test all types");
     }
 
     #[test]
@@ -506,7 +453,5 @@ mod tests {
         // Larger -> Smaller
         let v: Vector<i8, 3> = point!(1i16, 2, 3).into();
         assert_eq!(v, Vector::new([1i8, 2, 3]));
-
-        todo!("Test all types");
     }
 }
