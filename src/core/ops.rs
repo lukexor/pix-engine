@@ -457,17 +457,11 @@ mod tests {
             )*};
         }
         test!(Point, 1; i8, u8, i16, u16, i32, u32, i64, u64, i128, u128 => [1]);
-        test!(Point, 1; f32, f64 => [1.0]);
         test!(Point, 2; i8, u8, i16, u16, i32, u32, i64, u64, i128, u128 => [1, 2]);
-        test!(Point, 2; f32, f64 => [1.0, 2.0]);
         test!(Point, 3; i8, u8, i16, u16, i32, u32, i64, u64, i128, u128 => [1, 2, 3]);
-        test!(Point, 3; f32, f64 => [1.0, 2.0, 3.0]);
         test!(Vector, 1; i8, u8, i16, u16, i32, u32, i64, u64, i128, u128 => [1]);
-        test!(Vector, 1; f32, f64 => [1.0]);
         test!(Vector, 2; i8, u8, i16, u16, i32, u32, i64, u64, i128, u128 => [1, 2]);
-        test!(Vector, 2; f32, f64 => [1.0, 2.0]);
         test!(Vector, 3; i8, u8, i16, u16, i32, u32, i64, u64, i128, u128 => [1, 2, 3]);
-        test!(Vector, 3; f32, f64 => [1.0, 2.0, 3.0]);
     }
 
     #[test]

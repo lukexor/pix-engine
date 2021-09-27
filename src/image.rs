@@ -9,9 +9,9 @@ use std::{
     fmt,
     fs::File,
     io::{self, BufReader, BufWriter},
+    iter::Copied,
     path::Path,
-    result,
-    vec::IntoIter,
+    result, slice,
 };
 
 /// The result type for [Image] operations.
@@ -67,17 +67,6 @@ pub struct Image {
     data: Vec<u8>,
     /// Pixel Format.
     format: PixelFormat,
-}
-
-impl std::fmt::Debug for Image {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Image")
-            .field("width", &self.width)
-            .field("height", &self.height)
-            .field("format", &self.format)
-            .field("size", &self.data.len())
-            .finish()
-    }
 }
 
 impl Image {
@@ -203,21 +192,41 @@ impl Image {
         point!(self.width() as i32 / 2, self.height() as i32 / 2)
     }
 
+    /// Returns the `Image` pixel data as an iterator of [u8].
+    #[inline]
+    pub fn bytes(&self) -> Bytes<'_> {
+        Bytes(self.as_bytes().iter().copied())
+    }
+
     /// Returns the `Image` pixel data as a [u8] [slice].
     #[inline]
-    pub fn bytes(&self) -> &[u8] {
+    pub fn as_bytes(&self) -> &[u8] {
         &self.data
     }
 
     /// Returns the `Image` pixel data as a mutable [u8] [slice].
     #[inline]
-    pub fn bytes_mut(&mut self) -> &mut [u8] {
+    pub fn as_mut_bytes(&mut self) -> &mut [u8] {
         &mut self.data
     }
 
-    /// Returns the `Image` pixel data as a [Vec<Color>].
+    /// Returns the `Image` pixel data as a [`Vec<u8>`].
+    ///
+    /// This consumes the `Image`, so we do not need to copy its contents.
     #[inline]
-    pub fn pixels(&self) -> Vec<Color> {
+    pub fn into_bytes(self) -> Vec<u8> {
+        self.data
+    }
+
+    /// Returns the `Image` pixel data as an iterator of [Color]s.
+    #[inline]
+    pub fn pixels(&self) -> Pixels<'_> {
+        Pixels(self.format.channels(), self.as_bytes().iter().copied())
+    }
+
+    /// Returns the `Image` pixel data as a [`Vec<Color>`].
+    #[inline]
+    pub fn into_pixels(self) -> Vec<Color> {
         // SAFETY: Converting to Vec<Color> from data should be valid since the image could not have
         // been constructed with an invalid set of bytes due to bounds checks in constructors.
         self.data
@@ -267,7 +276,7 @@ impl Image {
         let mut png = png::Encoder::new(png_file, self.width, self.height);
         png.set_color(png::ColorType::RGBA);
         let mut writer = png.write_header()?;
-        Ok(writer.write_image_data(self.bytes())?)
+        Ok(writer.write_image_data(self.as_bytes())?)
     }
 }
 
@@ -329,11 +338,55 @@ impl PixState {
     }
 }
 
-impl IntoIterator for Image {
+impl std::fmt::Debug for Image {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Image")
+            .field("width", &self.width)
+            .field("height", &self.height)
+            .field("format", &self.format)
+            .field("size", &self.data.len())
+            .finish()
+    }
+}
+
+/// An iterator over the bytes of an [Image].
+///
+/// This struct is created by the [bytes] method on [Image].
+/// See its documentation for more.
+#[derive(Debug, Clone)]
+pub struct Bytes<'a>(Copied<slice::Iter<'a, u8>>);
+
+impl Iterator for Bytes<'_> {
+    type Item = u8;
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next()
+    }
+}
+
+/// An iterator over the [Color] pixels of an [Image].
+///
+/// This struct is created by the [pixels] method on [Image].
+/// See its documentation for more.
+#[derive(Debug, Clone)]
+pub struct Pixels<'a>(usize, Copied<slice::Iter<'a, u8>>);
+
+impl Iterator for Pixels<'_> {
     type Item = Color;
-    type IntoIter = IntoIter<Color>;
-    fn into_iter(self) -> Self::IntoIter {
-        self.pixels().into_iter()
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        let r = self.1.next()?;
+        let g = self.1.next()?;
+        let b = self.1.next()?;
+        let channels = self.0;
+        match channels {
+            3 => Some(Color::from_slice(ColorMode::Rgb, [r, g, b]).expect("valid pixel")),
+            4 => {
+                let a = self.1.next()?;
+                Some(Color::from_slice(ColorMode::Rgb, [r, g, b, a]).expect("valid pixel"))
+            }
+            _ => unreachable!("invalid number of color channels"),
+        }
     }
 }
 

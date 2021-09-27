@@ -465,7 +465,7 @@ impl Rendering for Renderer {
         texture.set_blend_mode(self.blend_mode);
         texture.update(
             None,
-            img.bytes(),
+            img.as_bytes(),
             img.format().channels() * img.width() as usize,
         )?;
         let rect: SdlRect = rect.into();
