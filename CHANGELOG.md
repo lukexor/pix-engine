@@ -238,8 +238,9 @@ All notable changes to this project will be documented in this file.
 - `get_pixel()` and `put_pixel()` updated to return and accept `Color`.
 - `ColorType` renamed to `PixelFormat`.
 - `color_type()` renamed to `format()` and returns `PixelFormat`.
-- `bytes()` changed to return `&[u8]` instead of `Vec<u8>`.
-- `bytes_mut()` changed to return `&mut [u8]` instead of `&mut Vec<u8>`.
+- `bytes()` renamed to `as_bytes()`. `bytes()` now returns an `Iterator` of `u8`
+  instead of `Vec<u8>`.
+- `bytes_mut()` renamed to `as_mut_bytes()` and changed to return `&mut [u8]` instead of `&mut Vec<u8>`.
 - `from_file()` updated to take `AsRef<Path>` instead of `&str` and returns
   `image::Result`.
 - `save_to_file()` renamed to `save()`, updated to take `AsRef<Path>` instead of
