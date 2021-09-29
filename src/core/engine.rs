@@ -22,9 +22,7 @@ pub struct PixEngineBuilder {
 impl PixEngineBuilder {
     /// Constructs a `PixEngineBuilder`.
     pub fn new() -> Self {
-        Self {
-            settings: RendererSettings::default(),
-        }
+        Self::default()
     }
 
     /// Set window dimensions.
@@ -294,17 +292,14 @@ impl PixEngine {
                     ref win_event,
                 } => match win_event {
                     WindowEvent::FocusGained => {
-                        state.env.focused = true;
-                        state.env.focused_window = Some(window_id as usize);
+                        state.env.focused_window = Some(window_id as WindowId)
                     }
-                    WindowEvent::FocusLost => {
-                        state.env.focused = false;
-                        state.env.focused_window = None;
-                    }
+                    WindowEvent::FocusLost => state.env.focused_window = None,
                     WindowEvent::Resized(width, height)
                     | WindowEvent::SizeChanged(width, height) => {
-                        app.on_window_resized(state, *width, *height)?
+                        app.on_window_resized(state, window_id as WindowId, *width, *height)?
                     }
+                    WindowEvent::Close => state.close_window(window_id as WindowId)?,
                     _ => (),
                 },
                 Event::KeyDown {

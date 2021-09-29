@@ -1,6 +1,6 @@
 //! `Window` functions.
 
-use crate::prelude::*;
+use crate::{prelude::*, renderer::RendererSettings};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, error, ffi::NulError, fmt, path::PathBuf, result};
@@ -103,6 +103,12 @@ pub(crate) trait WindowRenderer {
     /// Get the primary window id.
     fn window_id(&self) -> WindowId;
 
+    /// Create a new window.
+    fn create_window(&mut self, s: &RendererSettings) -> Result<WindowId>;
+
+    /// Close a window.
+    fn close_window(&mut self, window_id: WindowId) -> Result<()>;
+
     /// Set the mouse cursor to a predefined symbol or image, or hides cursor if `None`.
     fn cursor(&mut self, cursor: Option<&Cursor>) -> Result<()>;
 
@@ -138,40 +144,186 @@ pub(crate) trait WindowRenderer {
 }
 
 /// WindowBuilder
-#[derive(Debug, Clone)]
-pub struct WindowBuilder {
-    title: String,
-    width: u32,
-    height: u32,
+#[derive(Debug)]
+pub struct WindowBuilder<'a> {
+    state: &'a mut PixState,
+    settings: RendererSettings,
 }
 
-impl WindowBuilder {
+impl<'a> WindowBuilder<'a> {
     /// Creates a new WindowBuilder instance.
-    pub fn new(width: u32, height: u32) -> Self {
+    pub fn new(s: &'a mut PixState) -> Self {
+        let vsync = s.vsync();
         Self {
-            title: String::new(),
-            width,
-            height,
+            state: s,
+            settings: RendererSettings {
+                vsync,
+                ..RendererSettings::default()
+            },
         }
     }
 
+    /// Set window dimensions.
+    pub fn with_dimensions(&mut self, width: u32, height: u32) -> &mut Self {
+        self.settings.width = width;
+        self.settings.height = height;
+        self
+    }
+
     /// Set a window title.
-    pub fn with_title(&mut self, title: String) -> &mut Self {
-        self.title = title;
+    pub fn with_title<S: Into<String>>(&mut self, title: S) -> &mut Self {
+        self.settings.title = title.into();
+        self
+    }
+
+    /// Position the window at the given `(x, y)` coordinates of the display.
+    pub fn position(&mut self, x: i32, y: i32) -> &mut Self {
+        self.settings.x = Position::Positioned(x);
+        self.settings.y = Position::Positioned(y);
+        self
+    }
+
+    /// Position the window in the center of the display.
+    pub fn position_centered(&mut self) -> &mut Self {
+        self.settings.x = Position::Centered;
+        self.settings.y = Position::Centered;
+        self
+    }
+
+    /// Start window in fullscreen mode.
+    pub fn fullscreen(&mut self) -> &mut Self {
+        self.settings.fullscreen = true;
+        self
+    }
+
+    /// Allow window resizing.
+    pub fn resizable(&mut self) -> &mut Self {
+        self.settings.resizable = true;
+        self
+    }
+
+    /// Removes the window decoration.
+    pub fn borderless(&mut self) -> &mut Self {
+        self.settings.borderless = true;
+        self
+    }
+
+    /// Scales the window.
+    pub fn scale(&mut self, x: f32, y: f32) -> &mut Self {
+        self.settings.scale_x = x;
+        self.settings.scale_y = y;
+        self
+    }
+
+    /// Set a window icon.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn icon<P>(&mut self, path: P) -> &mut Self
+    where
+        P: Into<PathBuf>,
+    {
+        self.settings.icon = Some(path.into());
         self
     }
 
     /// Create a new window from the WindowBuilder and return its id.
     ///
     /// Returns Err if any options provided are invalid.
-    pub fn build(&self) -> Result<WindowId> {
-        todo!("secondary windows are not yet implemented");
+    pub fn build(&mut self) -> Result<WindowId> {
+        self.state.renderer.create_window(&self.settings)
     }
 }
 
-impl Default for WindowBuilder {
-    fn default() -> Self {
-        Self::new(400, 400)
+impl PixState {
+    /// Whether the application has focus or not.
+    pub fn focused(&self) -> bool {
+        match self.env.focused_window {
+            Some(id) if id == self.window_id() => true,
+            _ => false,
+        }
+    }
+
+    /// Get the primary `Window` id.
+    pub fn window_id(&self) -> WindowId {
+        self.renderer.window_id()
+    }
+
+    /// Create a new [WindowBuilder].
+    pub fn window(&mut self) -> WindowBuilder<'_> {
+        WindowBuilder::new(self)
+    }
+
+    /// Close a window.
+    pub fn close_window(&mut self, window_id: WindowId) -> Result<()> {
+        if window_id == self.window_id() {
+            self.env.quit = true;
+            return Ok(());
+        }
+        Ok(self.renderer.close_window(window_id)?)
+    }
+
+    /// The dimensions of the primary window as `(width, height)`.
+    pub fn dimensions(&self) -> (u32, u32) {
+        let window_id = self.window_id();
+        // SAFETY: Primary window_id should always exist
+        self.renderer
+            .dimensions(window_id)
+            .expect("primary window should exist")
+    }
+
+    /// Set the dimensions of the primary window from `(width, height)`.
+    pub fn set_dimensions(&mut self, dimensions: (u32, u32)) {
+        let window_id = self.window_id();
+        // SAFETY: Primary window_id should always exist
+        self.renderer
+            .set_dimensions(window_id, dimensions)
+            .expect("primary window should exist")
+    }
+
+    /// The width of the primary window.
+    pub fn width(&self) -> u32 {
+        let window_id = self.window_id();
+        // SAFETY: Primary window_id should always exist
+        let (width, _) = self
+            .renderer
+            .dimensions(window_id)
+            .expect("primary window should exist");
+        width
+    }
+
+    /// Set the width of the primary window.
+    pub fn set_width(&mut self, width: u32) {
+        let window_id = self.window_id();
+        // SAFETY: Primary window_id should always exist
+        let (_, height) = self
+            .renderer
+            .dimensions(window_id)
+            .expect("primary window should exist");
+        self.renderer
+            .set_dimensions(window_id, (width, height))
+            .expect("primary window should exist");
+    }
+
+    /// The height of the primary window.
+    pub fn height(&self) -> u32 {
+        // SAFETY: Primary window_id should always exist
+        let (_, height) = self
+            .renderer
+            .dimensions(self.window_id())
+            .expect("primary window should exist");
+        height
+    }
+
+    /// Set the height of the primary window.
+    pub fn set_height(&mut self, height: u32) {
+        let window_id = self.window_id();
+        // SAFETY: Primary window_id should always exist
+        let (width, _) = self
+            .renderer
+            .dimensions(window_id)
+            .expect("primary window should exist");
+        self.renderer
+            .set_dimensions(window_id, (width, height))
+            .expect("primary window should exist");
     }
 }
 

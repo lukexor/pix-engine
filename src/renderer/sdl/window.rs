@@ -21,6 +21,21 @@ impl WindowRenderer for Renderer {
         self.window_id
     }
 
+    /// Create a new window.
+    fn create_window(&mut self, s: &RendererSettings) -> Result<WindowId> {
+        let (window_id, canvas) = Self::create_window_canvas(&self.context, s)?;
+        let texture_creator = canvas.texture_creator();
+        self.canvases.insert(window_id, (canvas, texture_creator));
+        Ok(window_id)
+    }
+
+    /// Close a window.
+    fn close_window(&mut self, id: WindowId) -> Result<()> {
+        self.canvases
+            .remove(&id)
+            .map_or(Err(Error::InvalidWindow(id)), |_| Ok(()))
+    }
+
     /// Set the mouse cursor to a predefined symbol or image, or hides cursor if `None`.
     fn cursor(&mut self, cursor: Option<&Cursor>) -> Result<()> {
         match cursor {
@@ -74,8 +89,10 @@ impl WindowRenderer for Renderer {
     fn set_dimensions(&mut self, id: WindowId, (width, height): (u32, u32)) -> Result<()> {
         if id == self.window_id {
             self.canvas.window_mut().set_size(width, height)?
+        } else if let Some((canvas, _)) = self.canvases.get_mut(&id) {
+            canvas.window_mut().set_size(width, height)?
         } else {
-            todo!("secondary windows are not yet implemented");
+            return Err(Error::InvalidWindow(id));
         };
         Ok(())
     }
@@ -85,8 +102,10 @@ impl WindowRenderer for Renderer {
     fn dimensions(&self, id: WindowId) -> Result<(u32, u32)> {
         let (width, height) = if id == self.window_id {
             self.canvas.window().size()
+        } else if let Some((canvas, _)) = self.canvases.get(&id) {
+            canvas.window().size()
         } else {
-            todo!("secondary windows are not yet implemented");
+            return Err(Error::InvalidWindow(id));
         };
         Ok((width, height))
     }
@@ -101,11 +120,8 @@ impl WindowRenderer for Renderer {
     /// Set the application to fullscreen or not.
     #[inline]
     fn set_fullscreen(&mut self, val: bool) {
-        let fullscreen_type = if val {
-            FullscreenType::True
-        } else {
-            FullscreenType::Off
-        };
+        use FullscreenType::*;
+        let fullscreen_type = if val { True } else { Off };
         // Don't care if this fails or not.
         let _ = self.canvas.window_mut().set_fullscreen(fullscreen_type);
     }
@@ -213,6 +229,11 @@ impl Renderer {
         let mut canvas = canvas_builder.build()?;
         canvas.set_logical_size(win_width, win_height)?;
         canvas.set_scale(s.scale_x, s.scale_y)?;
+
+        if let Some(icon) = &s.icon {
+            let surface = Surface::from_file(icon)?;
+            canvas.window_mut().set_icon(surface);
+        }
 
         Ok((window_id, canvas))
     }

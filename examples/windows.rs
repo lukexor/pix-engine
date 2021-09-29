@@ -13,11 +13,18 @@ impl WindowDemo {
 impl AppState for WindowDemo {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         self.window_ids.push(s.window_id());
-        self.window_ids.push(s.create_window(200, 200).build()?);
+        self.window_ids.push(
+            s.window()
+                .with_dimensions(200, 200)
+                .with_title("Window 2")
+                .position_centered()
+                .build()?,
+        );
         Ok(())
     }
 
-    fn on_update(&mut self, _s: &mut PixState) -> PixResult<()> {
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.background(YELLOW)?;
         Ok(())
     }
 }
@@ -25,7 +32,7 @@ impl AppState for WindowDemo {
 fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(800, 600)
-        .with_title("Windows")
+        .with_title("Window 1")
         .position(10, 10)
         .build();
     let mut app = WindowDemo::new();

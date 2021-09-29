@@ -1,7 +1,7 @@
 //! Environment information for the [PixEngine].
 //!
 //! [PixEngine]: crate::prelude::PixEngine
-use crate::{prelude::*, renderer::*};
+use crate::prelude::*;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -33,39 +33,6 @@ impl Default for Environment {
 }
 
 impl PixState {
-    /// Whether the application has focus or not.
-    pub fn focused(&self) -> bool {
-        self.env.focused
-    }
-
-    /// Whether the given window has focus or not.
-    pub fn focused_window(&self, window_id: WindowId) -> bool {
-        self.env
-            .focused_window
-            .map(|id| id == window_id)
-            .unwrap_or(false)
-    }
-
-    /// Get the primary `Window` id.
-    pub fn window_id(&self) -> WindowId {
-        self.renderer.window_id()
-    }
-
-    /// Create a new [WindowBuilder].
-    pub fn create_window(&mut self, width: u32, height: u32) -> WindowBuilder {
-        WindowBuilder::new(width, height)
-    }
-
-    /// Close an open window.
-    pub fn close_window(&mut self, window_id: WindowId) -> PixResult<()> {
-        if window_id == self.renderer.window_id() {
-            self.env.quit = true;
-        } else {
-            todo!("secondary windows are not yet implemented");
-        }
-        Ok(())
-    }
-
     /// The time elapsed since last frame in seconds.
     pub fn delta_time(&self) -> Scalar {
         self.env.delta_time
@@ -96,71 +63,6 @@ impl PixState {
     /// as possible.
     pub fn clear_frame_rate(&mut self) {
         self.env.target_frame_rate = None;
-    }
-
-    /// The dimensions of the primary window as `(width, height)`.
-    pub fn dimensions(&self) -> (u32, u32) {
-        let window_id = self.window_id();
-        // SAFETY: Primary window_id should always exist
-        self.renderer
-            .dimensions(window_id)
-            .expect("primary window should exist")
-    }
-
-    /// Set the dimensions of the primary window from `(width, height)`.
-    pub fn set_dimensions(&mut self, dimensions: (u32, u32)) {
-        let window_id = self.window_id();
-        // SAFETY: Primary window_id should always exist
-        self.renderer
-            .set_dimensions(window_id, dimensions)
-            .expect("primary window should exist")
-    }
-
-    /// The width of the primary window.
-    pub fn width(&self) -> u32 {
-        let window_id = self.window_id();
-        // SAFETY: Primary window_id should always exist
-        let (width, _) = self
-            .renderer
-            .dimensions(window_id)
-            .expect("primary window should exist");
-        width
-    }
-
-    /// Set the width of the primary window.
-    pub fn set_width(&mut self, width: u32) {
-        let window_id = self.window_id();
-        // SAFETY: Primary window_id should always exist
-        let (_, height) = self
-            .renderer
-            .dimensions(window_id)
-            .expect("primary window should exist");
-        self.renderer
-            .set_dimensions(window_id, (width, height))
-            .expect("primary window should exist");
-    }
-
-    /// The height of the primary window.
-    pub fn height(&self) -> u32 {
-        // SAFETY: Primary window_id should always exist
-        let (_, height) = self
-            .renderer
-            .dimensions(self.window_id())
-            .expect("primary window should exist");
-        height
-    }
-
-    /// Set the height of the primary window.
-    pub fn set_height(&mut self, height: u32) {
-        let window_id = self.window_id();
-        // SAFETY: Primary window_id should always exist
-        let (width, _) = self
-            .renderer
-            .dimensions(window_id)
-            .expect("primary window should exist");
-        self.renderer
-            .set_dimensions(window_id, (width, height))
-            .expect("primary window should exist");
     }
 
     /// Trigger exiting of the game loop.

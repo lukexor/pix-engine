@@ -7,7 +7,7 @@ use lazy_static::lazy_static;
 use sdl2::{
     audio::{AudioQueue, AudioSpecDesired},
     gfx::primitives::{DrawRenderer, ToColor},
-    image::{InitFlag, LoadSurface, Sdl2ImageContext},
+    image::{InitFlag, Sdl2ImageContext},
     mouse::{Cursor, SystemCursor},
     pixels::{Color as SdlColor, PixelFormatEnum as SdlPixelFormat},
     rect::{Point as SdlPoint, Rect as SdlRect},
@@ -15,7 +15,6 @@ use sdl2::{
         BlendMode as SdlBlendMode, Canvas, SdlError, TargetRenderError, TextureCreator,
         TextureQuery, TextureValueError, UpdateTextureError,
     },
-    surface::Surface,
     ttf::{Font, FontError, FontStyle as SdlFontStyle, InitError, Sdl2TtfContext},
     video::{Window as SdlWindow, WindowBuildError, WindowContext},
     EventPump, IntegerOrSdlError, Sdl,
@@ -74,6 +73,7 @@ pub(crate) struct Renderer {
     window_id: WindowId,
     cursor: Cursor,
     canvas: Canvas<SdlWindow>,
+    canvases: HashMap<WindowId, (Canvas<SdlWindow>, TextureCreator<WindowContext>)>,
     audio_device: AudioQueue<f32>,
     texture_creator: TextureCreator<WindowContext>,
     textures: Vec<RendererTexture>,
@@ -87,15 +87,9 @@ impl Rendering for Renderer {
         let context = sdl2::init()?;
         let event_pump = context.event_pump()?;
 
-        let (window_id, mut canvas) = Self::create_window_canvas(&context, &s)?;
-        if let Some(icon) = &s.icon {
-            let surface = Surface::from_file(icon)?;
-            canvas.window_mut().set_icon(surface);
-        }
-
+        let (window_id, canvas) = Self::create_window_canvas(&context, &s)?;
         let cursor = Cursor::from_system(SystemCursor::Arrow)?;
         cursor.set();
-
         let texture_creator = canvas.texture_creator();
 
         // Set up Audio
@@ -124,6 +118,7 @@ impl Rendering for Renderer {
             window_id,
             cursor,
             canvas,
+            canvases: HashMap::new(),
             audio_device,
             texture_creator,
             textures: Vec::new(),

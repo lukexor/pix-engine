@@ -104,7 +104,13 @@ pub trait AppState {
     }
 
     /// Called each time the window is resized with the new `(width, height)`.
-    fn on_window_resized(&mut self, s: &mut PixState, width: i32, height: i32) -> PixResult<()> {
+    fn on_window_resized(
+        &mut self,
+        s: &mut PixState,
+        window_id: WindowId,
+        width: i32,
+        height: i32,
+    ) -> PixResult<()> {
         Ok(())
     }
 
