@@ -145,6 +145,9 @@ pub(crate) trait WindowRenderer {
     /// Set the window to synchronize frame rate to the screens refresh rate.
     fn set_vsync(&mut self, val: bool) -> Result<()>;
 
+    /// Returns the icurrent window target for drawing operations.
+    fn window_target(&self) -> WindowId;
+
     /// Set window as the target for drawing operations.
     fn set_window_target(&mut self, id: WindowId);
 
@@ -245,7 +248,7 @@ impl<'a> WindowBuilder<'a> {
 impl PixState {
     /// Whether the application has focus or not.
     pub fn focused(&self) -> bool {
-        matches!(self.env.focused_window, Some(id) if id == self.window_id())
+        matches!(self.env.focused_window, Some(id) if id == self.renderer.window_target())
     }
 
     /// Get the primary `Window` id.

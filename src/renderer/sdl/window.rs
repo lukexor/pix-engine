@@ -209,6 +209,11 @@ impl WindowRenderer for Renderer {
         Ok(())
     }
 
+    /// Returns the icurrent window target for drawing operations.
+    fn window_target(&self) -> WindowId {
+        self.window_target
+    }
+
     /// Set window as the target for drawing operations.
     fn set_window_target(&mut self, id: WindowId) {
         self.window_target = id;
