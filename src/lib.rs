@@ -27,8 +27,6 @@
     html_logo_url = ""
 )]
 
-#[cfg(target_arch = "wasm32")]
-use getrandom as _; // Used to set "js" feature for rand
 #[cfg(not(target_arch = "wasm32"))]
 use include_dir::{include_dir, Dir};
 

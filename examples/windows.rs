@@ -21,13 +21,11 @@ impl AppState for WindowDemo {
             .clicked()
         {
             let (w, h) = s.display_dimensions();
-            let x = random!(w) as i32;
-            let y = random!(h) as i32;
             let window_id = s
                 .window()
                 .with_dimensions(random!(200, 500), random!(200, 500))
                 .with_title(format!("Window {}", self.windows.len() + 1))
-                .position(x, y)
+                .position(random!(w) as i32, random!(h) as i32)
                 .build()?;
             self.windows.push((window_id, Color::random()));
         }

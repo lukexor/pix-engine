@@ -10,6 +10,10 @@ repository = "https://github.com/lukexor/pix-engine.git"
 resolver = "2"
 version = "0.4.0"
 
+[package.metadata.docs.rs]
+features = ["serde"]
+targets = ["x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
+
 [lib]
 crate-type = ["cdylib", "rlib"]
 
@@ -17,9 +21,9 @@ crate-type = ["cdylib", "rlib"]
 bitflags = "1.2.1"
 lazy_static = "1.4.0"
 num-traits = "0.2.14"
-png = "0.16.8"
-rand = "0.8.4"
+png = "0.17.1"
 serde = { version = "1.0.126", features = ["derive"], optional = true }
+rand = "0.8.4"
 
 [features]
 default = []
@@ -39,9 +43,6 @@ wasm-bindgen-test = "0.3.24"
 [profile.dev]
 opt-level = 2
 
-[profile.dev.package."*"]
-opt-level = 3
-
 [profile.release]
-codegen-units = 1
-lto = true
+codegen-units = 8
+lto = "thin"

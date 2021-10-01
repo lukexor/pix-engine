@@ -78,7 +78,6 @@ pub(crate) struct Renderer {
     window_target: WindowId,
     texture_target: Option<*mut Texture>,
     canvases: HashMap<WindowId, (Canvas<SdlWindow>, TextureCreator<WindowContext>)>,
-    textures: HashMap<WindowId, Vec<RendererTexture>>,
     font_cache: HashMap<(PathBuf, u16), Font<'static, 'static>>,
     text_cache: HashMap<(WindowId, String, Color), RendererTexture>,
     image_cache: HashMap<(WindowId, *const Image), RendererTexture>,
@@ -124,7 +123,6 @@ impl Rendering for Renderer {
             window_target: window_id,
             texture_target: None,
             canvases,
-            textures: HashMap::new(),
             font_cache,
             text_cache: HashMap::new(),
             image_cache: HashMap::new(),
@@ -517,7 +515,6 @@ impl std::fmt::Debug for Renderer {
             .field("primary_draw_color", &canvas.draw_color())
             .field("primary_clip", &canvas.clip_rect())
             .field("window_count", &self.canvases.len())
-            .field("textures_count", &self.textures.len())
             .field("font_cache_count", &self.font_cache.len())
             .field("text_cache_count", &self.text_cache.len())
             .field("image_cache_count", &self.image_cache.len())

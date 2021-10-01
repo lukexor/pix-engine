@@ -93,6 +93,7 @@ impl PixState {
 
 impl PixState {
     /// Constructs `PixState` with a given `Renderer`.
+    #[inline]
     pub(crate) fn new(renderer: Renderer) -> Self {
         Self {
             renderer,

@@ -7,7 +7,7 @@ use crate::{
 use sdl2::{
     image::LoadSurface,
     mouse::{Cursor as SdlCursor, SystemCursor as SdlSystemCursor},
-    render::{Canvas, TextureQuery, TextureValueError},
+    render::{Canvas, TextureValueError},
     surface::Surface,
     video::{FullscreenType, Window as SdlWindow, WindowBuildError},
     IntegerOrSdlError, Sdl,
@@ -178,32 +178,16 @@ impl WindowRenderer for Renderer {
 
         let (window_id, new_canvas) = Self::create_window_canvas(&self.context, &self.settings)?;
         let new_texture_creator = new_canvas.texture_creator();
-        let textures = self
-            .textures
-            .get(&self.window_target)
-            .expect("valid primary window");
-        let mut new_textures = Vec::with_capacity(textures.len());
-        for texture in textures {
-            let TextureQuery {
-                width,
-                height,
-                format,
-                ..
-            } = texture.query();
-            new_textures.push(new_texture_creator.create_texture_target(format, width, height)?);
-        }
 
         self.text_cache.clear();
         self.image_cache.clear();
 
-        self.textures.remove(&self.window_target);
         self.canvases.remove(&self.window_target);
 
         if self.window_id == self.window_target {
             self.window_id = window_id;
         }
         self.window_target = window_id;
-        self.textures.insert(window_id, new_textures);
         self.canvases
             .insert(window_id, (new_canvas, new_texture_creator));
         Ok(())

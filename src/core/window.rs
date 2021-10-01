@@ -240,6 +240,7 @@ impl<'a> WindowBuilder<'a> {
     /// Create a new window from the WindowBuilder and return its id.
     ///
     /// Returns Err if any options provided are invalid.
+    #[must_use]
     pub fn build(&mut self) -> Result<WindowId> {
         self.state.renderer.create_window(&self.settings)
     }

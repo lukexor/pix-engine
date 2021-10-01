@@ -43,8 +43,8 @@ impl From<png::ColorType> for PixelFormat {
     fn from(color_type: png::ColorType) -> Self {
         use png::ColorType::*;
         match color_type {
-            RGB => Self::Rgb,
-            RGBA => Self::Rgba,
+            Rgb => Self::Rgb,
+            Rgba => Self::Rgba,
             _ => unimplemented!("{:?} is not supported.", color_type),
         }
     }
@@ -155,15 +155,16 @@ impl Image {
         // EXPL: Expand paletted to RGB and non-8-bit grayscale to 8-bits
         // png.set_transformations(Transformations::SWAP_ALPHA | Transformations::EXPAND);
 
-        let (info, mut reader) = png.read_info()?;
+        let mut reader = png.read_info()?;
+        let mut buf = vec![0x00; reader.output_buffer_size()];
+        let info = reader.next_frame(&mut buf)?;
         if info.bit_depth != BitDepth::Eight {
             return Err(Error::UnsupportedBitDepth(info.bit_depth));
-        } else if !matches!(info.color_type, ColorType::RGB | ColorType::RGBA) {
+        } else if !matches!(info.color_type, ColorType::Rgb | ColorType::Rgba) {
             return Err(Error::UnsupportedColorType(info.color_type));
         }
 
-        let mut data = vec![0x00; info.buffer_size()];
-        reader.next_frame(&mut data)?;
+        let data = &buf[..info.buffer_size()];
         let format = info.color_type.into();
         Self::from_bytes(info.width, info.height, &data, format)
     }
@@ -272,9 +273,10 @@ impl Image {
         P: AsRef<Path>,
     {
         let path = path.as_ref();
-        let png_file = BufWriter::new(std::fs::File::create(&path)?);
+        let png_file = BufWriter::new(File::create(&path)?);
         let mut png = png::Encoder::new(png_file, self.width, self.height);
-        png.set_color(png::ColorType::RGBA);
+        png.set_color(png::ColorType::Rgba);
+        png.set_depth(png::BitDepth::Eight);
         let mut writer = png.write_header()?;
         Ok(writer.write_image_data(self.as_bytes())?)
     }
@@ -334,8 +336,8 @@ impl PixState {
     }
 }
 
-impl std::fmt::Debug for Image {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Debug for Image {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Image")
             .field("width", &self.width)
             .field("height", &self.height)
@@ -408,7 +410,7 @@ pub enum Error {
     Other(Cow<'static, str>),
 }
 
-impl std::fmt::Display for Error {
+impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use Error::*;
         match self {

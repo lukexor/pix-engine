@@ -14,6 +14,7 @@ use std::{fs, path::PathBuf};
 const ONE_SECOND: Duration = Duration::from_secs(1);
 
 /// Builds a [PixEngine] instance by providing several configration functions.
+#[must_use]
 #[derive(Default, Debug)]
 pub struct PixEngineBuilder {
     settings: RendererSettings,
@@ -154,6 +155,7 @@ impl PixEngineBuilder {
     }
 
     /// Convert [PixEngineBuilder] to a [PixEngine] instance.
+    #[must_use]
     pub fn build(&self) -> PixEngine {
         PixEngine {
             settings: self.settings.clone(),
@@ -165,6 +167,7 @@ impl PixEngineBuilder {
 }
 
 /// The core engine that maintains the render loop, state, drawing functions, event handling, etc.
+#[must_use]
 #[derive(Debug)]
 pub struct PixEngine {
     settings: RendererSettings,
@@ -175,6 +178,7 @@ pub struct PixEngine {
 
 impl PixEngine {
     /// Constructs a default [PixEngineBuilder] which can build a `PixEngine` instance.
+    #[must_use]
     pub fn builder() -> PixEngineBuilder {
         PixEngineBuilder::default()
     }

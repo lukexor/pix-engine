@@ -4,9 +4,8 @@ use crate::{core::state::Error as StateError, prelude::*};
 use lazy_static::lazy_static;
 use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
 
-pub(crate) use crate::{
-    audio::AudioRenderer,
-    core::{texture::TextureRenderer, window::Error as WindowError, window::WindowRenderer},
+pub(crate) use crate::core::{
+    texture::TextureRenderer, window::Error as WindowError, window::WindowRenderer,
 };
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -87,9 +86,7 @@ impl Default for RendererSettings {
 }
 
 /// Trait for operations on the underlying `Renderer`.
-pub(crate) trait Rendering:
-    Sized + AudioRenderer + WindowRenderer + TextureRenderer
-{
+pub(crate) trait Rendering: Sized {
     /// Creates a new Renderer instance.
     fn new(settings: RendererSettings) -> Result<Self>;
 
