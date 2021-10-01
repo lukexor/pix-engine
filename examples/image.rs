@@ -16,12 +16,12 @@ impl AppState for ImageDemo {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         s.background(CADET_BLUE)?;
         s.blend_mode(BlendMode::Blend);
-        s.image_mode(DrawMode::Center);
+        s.image_mode(ImageMode::Center);
         Ok(())
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.image([WIDTH as i32 / 2, HEIGHT as i32 / 2], &self.0)?;
+        s.image([s.width() / 2, s.height() / 2], &self.0)?;
         s.text([10, 10], "<Esc>: Disable Tint")?;
         s.text([10, 35], "<Return>: Random Tint")?;
         s.text([10, 60], "<Left>: Disable Blend Mode")?;

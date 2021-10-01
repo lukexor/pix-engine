@@ -107,7 +107,7 @@ pub(crate) trait WindowRenderer {
     fn create_window(&mut self, s: &RendererSettings) -> Result<WindowId>;
 
     /// Close a window.
-    fn close_window(&mut self, window_id: WindowId) -> Result<()>;
+    fn close_window(&mut self, id: WindowId) -> Result<()>;
 
     /// Set the mouse cursor to a predefined symbol or image, or hides cursor if `None`.
     fn cursor(&mut self, cursor: Option<&Cursor>) -> Result<()>;
@@ -125,22 +125,31 @@ pub(crate) trait WindowRenderer {
     fn set_fps_title(&mut self, fps: usize) -> Result<()>;
 
     /// Dimensions of the primary window as `(width, height)`.
-    fn dimensions(&self, id: WindowId) -> Result<(u32, u32)>;
+    fn dimensions(&self) -> Result<(u32, u32)>;
 
     /// Set dimensions of the primary window as `(width, height)`.
-    fn set_dimensions(&mut self, id: WindowId, dimensions: (u32, u32)) -> Result<()>;
+    fn set_dimensions(&mut self, dimensions: (u32, u32)) -> Result<()>;
+
+    /// Dimensions of the primary display as `(width, height)`.
+    fn display_dimensions(&self) -> Result<(u32, u32)>;
 
     /// Returns whether the application is fullscreen or not.
-    fn fullscreen(&self) -> bool;
+    fn fullscreen(&self) -> Result<bool>;
 
     /// Set the application to fullscreen or not.
-    fn set_fullscreen(&mut self, val: bool);
+    fn set_fullscreen(&mut self, val: bool) -> Result<()>;
 
     /// Returns whether the window synchronizes frame rate to the screens refresh rate.
     fn vsync(&self) -> bool;
 
     /// Set the window to synchronize frame rate to the screens refresh rate.
     fn set_vsync(&mut self, val: bool) -> Result<()>;
+
+    /// Set window as the target for drawing operations.
+    fn set_window_target(&mut self, id: WindowId);
+
+    /// Reset main window as the target for drawing operations.
+    fn reset_window_target(&mut self);
 }
 
 /// WindowBuilder
@@ -236,10 +245,7 @@ impl<'a> WindowBuilder<'a> {
 impl PixState {
     /// Whether the application has focus or not.
     pub fn focused(&self) -> bool {
-        match self.env.focused_window {
-            Some(id) if id == self.window_id() => true,
-            _ => false,
-        }
+        matches!(self.env.focused_window, Some(id) if id == self.window_id())
     }
 
     /// Get the primary `Window` id.
@@ -253,77 +259,104 @@ impl PixState {
     }
 
     /// Close a window.
-    pub fn close_window(&mut self, window_id: WindowId) -> Result<()> {
-        if window_id == self.window_id() {
+    pub fn close_window(&mut self, id: WindowId) -> Result<()> {
+        if id == self.window_id() {
             self.env.quit = true;
             return Ok(());
         }
-        Ok(self.renderer.close_window(window_id)?)
+        self.renderer.close_window(id)
     }
 
     /// The dimensions of the primary window as `(width, height)`.
     pub fn dimensions(&self) -> (u32, u32) {
-        let window_id = self.window_id();
-        // SAFETY: Primary window_id should always exist
         self.renderer
-            .dimensions(window_id)
+            .dimensions()
             .expect("primary window should exist")
     }
 
     /// Set the dimensions of the primary window from `(width, height)`.
     pub fn set_dimensions(&mut self, dimensions: (u32, u32)) {
-        let window_id = self.window_id();
-        // SAFETY: Primary window_id should always exist
         self.renderer
-            .set_dimensions(window_id, dimensions)
+            .set_dimensions(dimensions)
             .expect("primary window should exist")
     }
 
     /// The width of the primary window.
     pub fn width(&self) -> u32 {
-        let window_id = self.window_id();
-        // SAFETY: Primary window_id should always exist
         let (width, _) = self
             .renderer
-            .dimensions(window_id)
+            .dimensions()
             .expect("primary window should exist");
         width
     }
 
     /// Set the width of the primary window.
     pub fn set_width(&mut self, width: u32) {
-        let window_id = self.window_id();
-        // SAFETY: Primary window_id should always exist
         let (_, height) = self
             .renderer
-            .dimensions(window_id)
+            .dimensions()
             .expect("primary window should exist");
         self.renderer
-            .set_dimensions(window_id, (width, height))
+            .set_dimensions((width, height))
             .expect("primary window should exist");
     }
 
     /// The height of the primary window.
     pub fn height(&self) -> u32 {
-        // SAFETY: Primary window_id should always exist
         let (_, height) = self
             .renderer
-            .dimensions(self.window_id())
+            .dimensions()
             .expect("primary window should exist");
         height
     }
 
     /// Set the height of the primary window.
     pub fn set_height(&mut self, height: u32) {
-        let window_id = self.window_id();
-        // SAFETY: Primary window_id should always exist
         let (width, _) = self
             .renderer
-            .dimensions(window_id)
+            .dimensions()
             .expect("primary window should exist");
         self.renderer
-            .set_dimensions(window_id, (width, height))
+            .set_dimensions((width, height))
             .expect("primary window should exist");
+    }
+
+    /// The dimensions of the primary display as `(width, height)`.
+    pub fn display_dimensions(&self) -> (u32, u32) {
+        self.renderer
+            .display_dimensions()
+            .expect("primary window should exist")
+    }
+
+    /// The width of the primary display.
+    pub fn display_width(&self) -> u32 {
+        let (width, _) = self
+            .renderer
+            .display_dimensions()
+            .expect("primary window should exist");
+        width
+    }
+
+    /// The height of the primary display.
+    pub fn display_height(&self) -> u32 {
+        let (_, height) = self
+            .renderer
+            .display_dimensions()
+            .expect("primary window should exist");
+        height
+    }
+
+    /// Target a `Window` for drawing operations.
+    pub fn with_window<F>(&mut self, id: WindowId, f: F) -> PixResult<()>
+    where
+        for<'r> F: FnOnce(&'r mut PixState) -> PixResult<()>,
+    {
+        self.push();
+        self.renderer.set_window_target(id);
+        let result = f(self);
+        self.renderer.reset_window_target();
+        self.pop();
+        result
     }
 }
 

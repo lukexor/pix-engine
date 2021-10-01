@@ -3,16 +3,18 @@
     "launch": {
       "adapter": "CodeLLDB",
       "configuration": {
+        "type": "lldb",
         "request": "launch",
-        "program": "${workspaceRoot}/target/debug/examples/flocking"
-      }
-    },
-    "attach": {
-      "adapter": "CodeLLDB",
-      "configuration": {
-        "request": "attach",
-        "program": "${workspaceRoot}/target/debug/examples/flocking",
-        "MIMode": "lldb"
+        "sourceLanguages": ["rust"],
+        "program": "${workspaceRoot}/target/debug/examples/windows",
+        "MIMode": "gdb",
+        "setupCommands": [
+          {
+            "description": "Enable pretty-printing for gdb",
+            "text": "-enable-pretty-printing",
+            "ignoreFailures": true
+          }
+        ]
       }
     }
   }

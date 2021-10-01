@@ -31,6 +31,9 @@ impl WindowRenderer for Renderer {
 
     /// Close a window.
     fn close_window(&mut self, id: WindowId) -> Result<()> {
+        if id == self.window_target {
+            self.reset_window_target();
+        }
         self.canvases
             .remove(&id)
             .map_or(Err(Error::InvalidWindow(id)), |_| Ok(()))
@@ -73,57 +76,78 @@ impl WindowRenderer for Renderer {
     #[inline]
     fn set_title(&mut self, title: &str) -> Result<()> {
         self.settings.title = title.to_owned();
-        Ok(self.canvas.window_mut().set_title(title)?)
+        let (canvas, _) = self
+            .canvases
+            .get_mut(&self.window_target)
+            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+        Ok(canvas.window_mut().set_title(title)?)
     }
 
     #[inline]
     fn set_fps_title(&mut self, fps: usize) -> Result<()> {
-        Ok(self
-            .canvas
+        let (canvas, _) = self
+            .canvases
+            .get_mut(&self.window_target)
+            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+        Ok(canvas
             .window_mut()
             .set_title(&format!("{} - FPS: {}", self.settings.title, fps))?)
     }
 
-    /// Set dimensions of the primary window as `(width, height)`.
-    #[inline]
-    fn set_dimensions(&mut self, id: WindowId, (width, height): (u32, u32)) -> Result<()> {
-        if id == self.window_id {
-            self.canvas.window_mut().set_size(width, height)?
-        } else if let Some((canvas, _)) = self.canvases.get_mut(&id) {
-            canvas.window_mut().set_size(width, height)?
-        } else {
-            return Err(Error::InvalidWindow(id));
-        };
-        Ok(())
-    }
-
     /// Dimensions of the primary window as `(width, height)`.
     #[inline]
-    fn dimensions(&self, id: WindowId) -> Result<(u32, u32)> {
-        let (width, height) = if id == self.window_id {
-            self.canvas.window().size()
-        } else if let Some((canvas, _)) = self.canvases.get(&id) {
-            canvas.window().size()
-        } else {
-            return Err(Error::InvalidWindow(id));
-        };
-        Ok((width, height))
+    fn dimensions(&self) -> Result<(u32, u32)> {
+        let (canvas, _) = self
+            .canvases
+            .get(&self.window_target)
+            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+        Ok(canvas.window().size())
+    }
+
+    /// Set dimensions of the primary window as `(width, height)`.
+    #[inline]
+    fn set_dimensions(&mut self, (width, height): (u32, u32)) -> Result<()> {
+        let (canvas, _) = self
+            .canvases
+            .get_mut(&self.window_target)
+            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+        Ok(canvas.window_mut().set_size(width, height)?)
+    }
+
+    /// Dimensions of the primary display as `(width, height)`.
+    #[inline]
+    fn display_dimensions(&self) -> Result<(u32, u32)> {
+        let (canvas, _) = self
+            .canvases
+            .get(&self.window_target)
+            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+        let window = canvas.window();
+        let display_index = window.display_index()?;
+        let bounds = window.subsystem().display_usable_bounds(display_index)?;
+        Ok((bounds.width(), bounds.height()))
     }
 
     /// Returns whether the application is fullscreen or not.
     #[inline]
-    fn fullscreen(&self) -> bool {
+    fn fullscreen(&self) -> Result<bool> {
         use FullscreenType::*;
-        matches!(self.canvas.window().fullscreen_state(), True | Desktop)
+        let (canvas, _) = self
+            .canvases
+            .get(&self.window_target)
+            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+        Ok(matches!(canvas.window().fullscreen_state(), True | Desktop))
     }
 
     /// Set the application to fullscreen or not.
     #[inline]
-    fn set_fullscreen(&mut self, val: bool) {
+    fn set_fullscreen(&mut self, val: bool) -> Result<()> {
         use FullscreenType::*;
         let fullscreen_type = if val { True } else { Off };
-        // Don't care if this fails or not.
-        let _ = self.canvas.window_mut().set_fullscreen(fullscreen_type);
+        let (canvas, _) = self
+            .canvases
+            .get_mut(&self.window_target)
+            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+        Ok(canvas.window_mut().set_fullscreen(fullscreen_type)?)
     }
 
     /// Returns whether the window synchronizes frame rate to the screens refresh rate.
@@ -134,14 +158,13 @@ impl WindowRenderer for Renderer {
 
     /// Set the window to synchronize frame rate to the screens refresh rate.
     fn set_vsync(&mut self, val: bool) -> Result<()> {
-        if self.texture_target.is_some() {
-            return Err(Error::Other(
-                "changing vsync is invalid when using `PixState::with_texture()`".into(),
-            ));
-        }
+        let (canvas, _) = self
+            .canvases
+            .get(&self.window_target)
+            .expect("valid primary window");
 
         self.settings.vsync = val;
-        let window = self.canvas.window();
+        let window = canvas.window();
         let (x, y) = window.position();
         let (w, h) = window.size();
         self.settings.width = (w as f32 / self.settings.scale_x).floor() as u32;
@@ -153,30 +176,47 @@ impl WindowRenderer for Renderer {
             FullscreenType::True | FullscreenType::Desktop
         );
 
-        let (window_id, canvas) = Self::create_window_canvas(&self.context, &self.settings)?;
-        self.window_id = window_id;
-
-        self.texture_creator = canvas.texture_creator();
-        let mut textures = Vec::with_capacity(self.textures.len());
-        for texture in &self.textures {
+        let (window_id, new_canvas) = Self::create_window_canvas(&self.context, &self.settings)?;
+        let new_texture_creator = new_canvas.texture_creator();
+        let textures = self
+            .textures
+            .get(&self.window_target)
+            .expect("valid primary window");
+        let mut new_textures = Vec::with_capacity(textures.len());
+        for texture in textures {
             let TextureQuery {
                 width,
                 height,
                 format,
                 ..
             } = texture.query();
-            textures.push(
-                self.texture_creator
-                    .create_texture_target(format, width, height)?,
-            );
+            new_textures.push(new_texture_creator.create_texture_target(format, width, height)?);
         }
 
         self.text_cache.clear();
         self.image_cache.clear();
 
-        self.textures = textures;
-        self.canvas = canvas;
+        self.textures.remove(&self.window_target);
+        self.canvases.remove(&self.window_target);
+
+        if self.window_id == self.window_target {
+            self.window_id = window_id;
+        }
+        self.window_target = window_id;
+        self.textures.insert(window_id, new_textures);
+        self.canvases
+            .insert(window_id, (new_canvas, new_texture_creator));
         Ok(())
+    }
+
+    /// Set window as the target for drawing operations.
+    fn set_window_target(&mut self, id: WindowId) {
+        self.window_target = id;
+    }
+
+    /// Reset main window as the target for drawing operations.
+    fn reset_window_target(&mut self) {
+        self.window_target = self.window_id;
     }
 }
 
@@ -201,6 +241,9 @@ impl Renderer {
         let win_width = (s.scale_x * s.width as f32).floor() as u32;
         let win_height = (s.scale_y * s.height as f32).floor() as u32;
         let mut window_builder = video_subsys.window(&s.title, win_width, win_height);
+        if cfg!(feature = "opengl") {
+            window_builder.opengl();
+        }
         match (s.x, s.y) {
             (Position::Centered, Position::Centered) => {
                 window_builder.position_centered();
@@ -219,8 +262,12 @@ impl Renderer {
         if s.borderless {
             window_builder.borderless();
         }
+        if s.allow_highdpi {
+            window_builder.allow_highdpi();
+        }
 
         let window = window_builder.build()?;
+
         let window_id = window.id() as usize;
         let mut canvas_builder = window.into_canvas().accelerated().target_texture();
         if s.vsync {

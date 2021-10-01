@@ -101,6 +101,12 @@ impl PixEngineBuilder {
         self
     }
 
+    /// Enables high-DPI on displays that support it.
+    pub fn allow_highdpi(&mut self) -> &mut Self {
+        self.settings.allow_highdpi = true;
+        self
+    }
+
     /// Scales the window.
     pub fn scale(&mut self, x: f32, y: f32) -> &mut Self {
         self.settings.scale_x = x;
@@ -290,18 +296,17 @@ impl PixEngine {
                 Event::Window {
                     window_id,
                     ref win_event,
-                } => match win_event {
-                    WindowEvent::FocusGained => {
-                        state.env.focused_window = Some(window_id as WindowId)
+                } => {
+                    match win_event {
+                        WindowEvent::FocusGained => {
+                            state.env.focused_window = Some(window_id as WindowId)
+                        }
+                        WindowEvent::FocusLost => state.env.focused_window = None,
+                        WindowEvent::Close => state.close_window(window_id as WindowId)?,
+                        _ => (),
                     }
-                    WindowEvent::FocusLost => state.env.focused_window = None,
-                    WindowEvent::Resized(width, height)
-                    | WindowEvent::SizeChanged(width, height) => {
-                        app.on_window_resized(state, window_id as WindowId, *width, *height)?
-                    }
-                    WindowEvent::Close => state.close_window(window_id as WindowId)?,
-                    _ => (),
-                },
+                    app.on_window_event(state, window_id as WindowId, *win_event)?;
+                }
                 Event::KeyDown {
                     key: Some(key),
                     keymod,

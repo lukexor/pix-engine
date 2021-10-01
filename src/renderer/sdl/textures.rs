@@ -13,10 +13,19 @@ impl TextureRenderer for Renderer {
         height: u32,
         format: Option<PixelFormat>,
     ) -> Result<Texture> {
+        let (_, texture_creator) = self
+            .canvases
+            .get(&self.window_target)
+            .ok_or(WindowError::InvalidWindow(self.window_target))?;
         let texture =
-            self.texture_creator
-                .create_texture_target(format.map(|f| f.into()), width, height)?;
-        Ok(Texture::new(texture, width, height, format))
+            texture_creator.create_texture_target(format.map(|f| f.into()), width, height)?;
+        Ok(Texture::new(
+            self.window_target,
+            texture,
+            width,
+            height,
+            format,
+        ))
     }
 
     /// Delete texture.
@@ -58,7 +67,11 @@ impl TextureRenderer for Renderer {
     ) -> Result<()> {
         let src = src.map(|r| r.into());
         let dst = dst.map(|r| r.into());
-        Ok(self.canvas.copy(texture.inner(), src, dst)?)
+        let (canvas, _) = self
+            .canvases
+            .get_mut(&self.window_target)
+            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+        Ok(canvas.copy(texture.inner(), src, dst)?)
     }
 
     /// Set texture as the target for drawing operations.

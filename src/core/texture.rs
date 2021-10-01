@@ -10,6 +10,7 @@ pub type TextureId = usize;
 
 /// `Texture`.
 pub struct Texture {
+    window_id: WindowId,
     inner: RendererTexture,
     width: u32,
     height: u32,
@@ -17,6 +18,12 @@ pub struct Texture {
 }
 
 impl Texture {
+    /// Returns the window id this `Texture` belongs to.
+    #[inline]
+    pub fn window_id(&self) -> WindowId {
+        self.window_id
+    }
+
     /// Returns the `Texture` width.
     #[inline]
     pub fn width(&self) -> u32 {
@@ -50,12 +57,14 @@ impl Texture {
 
 impl Texture {
     pub(crate) fn new(
+        window_id: WindowId,
         texture: RendererTexture,
         width: u32,
         height: u32,
         format: Option<PixelFormat>,
     ) -> Self {
         Self {
+            window_id,
             inner: texture,
             width,
             height,
@@ -113,7 +122,7 @@ pub(crate) trait TextureRenderer {
     /// Set texture as the target for drawing operations.
     fn set_texture_target(&mut self, texture: &mut Texture);
 
-    /// Set texture as the target for drawing operations.
+    /// Clear texture as the target for drawing operations.
     fn clear_texture_target(&mut self);
 }
 

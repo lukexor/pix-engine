@@ -141,7 +141,7 @@ struct Matrix {
 
 impl Matrix {
     fn new() -> Self {
-        let count = (WIDTH / Glyph::WIDTH) as usize - 1;
+        let count = (WIDTH / Glyph::WIDTH) as usize;
         let mut streams = Vec::with_capacity(count);
         let mut x = 0;
         for _ in 0..count {
@@ -188,8 +188,8 @@ impl AppState for Matrix {
                 }
             }
             Key::Return => {
-                let fs = !s.fullscreen();
-                s.set_fullscreen(fs);
+                let fs = !s.fullscreen()?;
+                s.set_fullscreen(fs)?;
             }
             _ => (),
         }

@@ -576,6 +576,23 @@ impl Color {
         Self::rgba(r, g, b, a)
     }
 
+    /// Returns the [u32] RGBA hexadecimal value of a `Color`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Color::rgb(240, 255, 0);
+    /// assert_eq!(c.as_hex(), 0xF0FF00FF);
+    ///
+    /// let c = Color::rgba(240, 255, 0, 128);
+    /// assert_eq!(c.as_hex(), 0xF0FF0080);
+    /// ```
+    #[inline]
+    pub fn as_hex(&self) -> u32 {
+        u32::from_be_bytes(self.channels())
+    }
+
     /// Returns a list of max values for each color channel based on [ColorMode].
     ///
     /// # Examples

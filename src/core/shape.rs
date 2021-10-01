@@ -115,8 +115,8 @@ impl PixState {
     {
         let s = &self.settings;
         let mut rect = rect.into();
-        if let DrawMode::Center = s.rect_mode {
-            rect.center_on(rect.center());
+        if let RectMode::Center = s.rect_mode {
+            rect.center_on(rect.top_left());
         };
         Ok(self.renderer.rect(rect, None, s.fill, s.stroke)?)
     }
@@ -129,8 +129,8 @@ impl PixState {
     {
         let s = &self.settings;
         let mut rect = rect.into();
-        if let DrawMode::Center = s.rect_mode {
-            rect.center_on(rect.center());
+        if let RectMode::Center = s.rect_mode {
+            rect.center_on(rect.top_left());
         };
         Ok(self
             .renderer
@@ -167,8 +167,8 @@ impl PixState {
     {
         let s = &self.settings;
         let mut ellipse = ellipse.into();
-        if let DrawMode::Center = s.ellipse_mode {
-            ellipse.center_on(ellipse.center());
+        if let EllipseMode::Center = s.ellipse_mode {
+            ellipse.center_on(ellipse.top_left());
         };
         Ok(self.renderer.ellipse(ellipse, s.fill, s.stroke)?)
     }

@@ -42,7 +42,11 @@ lazy_static! {
 
 /// Allows optionally updating the main window canvas, or targeting a given texture target
 macro_rules! update_canvas {
-    ($self:expr, $func:expr) => {
+    ($self:expr, $func:expr) => {{
+        let (canvas, _) = $self
+            .canvases
+            .get_mut(&$self.window_target)
+            .ok_or(WindowError::InvalidWindow($self.window_target))?;
         if let Some(ptr) = $self.texture_target {
             // SAFETY: We know this is safe because core::texture::with_texture controls setting and clearing
             // texture_target and has exclusive access to Texture the entire time texture_target is
@@ -50,35 +54,34 @@ macro_rules! update_canvas {
             //
             // One other case that can invalidate this is toggling vsync - which checks for
             // texture_target being set.
-            let mut texture = unsafe { &mut (*ptr).inner_mut() };
-            Ok($self.canvas.with_texture_canvas(&mut texture, |canvas| {
+            let texture = unsafe { &mut (*ptr) };
+            Ok(canvas.with_texture_canvas(&mut texture.inner_mut(), |canvas| {
                 let _ = $func(canvas);
             })?)
         } else {
-            $func(&mut $self.canvas)
+            $func(canvas)
         }
-    };
+    }};
 }
 
 /// An SDL [Renderer] implementation.
 pub(crate) struct Renderer {
-    settings: RendererSettings,
     context: Sdl,
-    font: (PathBuf, u16),
-    font_cache: HashMap<(PathBuf, u16), Font<'static, 'static>>,
-    font_style: SdlFontStyle,
-    text_cache: HashMap<(String, Color), RendererTexture>,
-    image_cache: HashMap<*const Image, RendererTexture>,
     event_pump: EventPump,
-    window_id: WindowId,
-    cursor: Cursor,
-    canvas: Canvas<SdlWindow>,
-    canvases: HashMap<WindowId, (Canvas<SdlWindow>, TextureCreator<WindowContext>)>,
     audio_device: AudioQueue<f32>,
-    texture_creator: TextureCreator<WindowContext>,
-    textures: Vec<RendererTexture>,
-    texture_target: Option<*mut Texture>,
+    settings: RendererSettings,
+    cursor: Cursor,
     blend_mode: SdlBlendMode,
+    font: (PathBuf, u16),
+    font_style: SdlFontStyle,
+    window_id: WindowId,
+    window_target: WindowId,
+    texture_target: Option<*mut Texture>,
+    canvases: HashMap<WindowId, (Canvas<SdlWindow>, TextureCreator<WindowContext>)>,
+    textures: HashMap<WindowId, Vec<RendererTexture>>,
+    font_cache: HashMap<(PathBuf, u16), Font<'static, 'static>>,
+    text_cache: HashMap<(WindowId, String, Color), RendererTexture>,
+    image_cache: HashMap<(WindowId, *const Image), RendererTexture>,
 }
 
 impl Rendering for Renderer {
@@ -91,6 +94,8 @@ impl Rendering for Renderer {
         let cursor = Cursor::from_system(SystemCursor::Arrow)?;
         cursor.set();
         let texture_creator = canvas.texture_creator();
+        let mut canvases = HashMap::new();
+        canvases.insert(window_id, (canvas, texture_creator));
 
         // Set up Audio
         let audio_sub = context.audio()?;
@@ -107,23 +112,22 @@ impl Rendering for Renderer {
         font_cache.insert(font.clone(), TTF.load_font(&s.font, s.font_size as u16)?);
 
         Ok(Self {
-            settings: s,
             context,
+            event_pump,
+            audio_device,
+            settings: s,
+            cursor,
+            blend_mode: SdlBlendMode::None,
             font,
-            font_cache,
             font_style: SdlFontStyle::NORMAL,
+            window_id,
+            window_target: window_id,
+            texture_target: None,
+            canvases,
+            textures: HashMap::new(),
+            font_cache,
             text_cache: HashMap::new(),
             image_cache: HashMap::new(),
-            event_pump,
-            window_id,
-            cursor,
-            canvas,
-            canvases: HashMap::new(),
-            audio_device,
-            texture_creator,
-            textures: Vec::new(),
-            texture_target: None,
-            blend_mode: SdlBlendMode::None,
         })
     }
 
@@ -164,7 +168,9 @@ impl Rendering for Renderer {
     /// Updates the canvas from the current back buffer.
     #[inline]
     fn present(&mut self) {
-        self.canvas.present();
+        for (canvas, _) in self.canvases.values_mut() {
+            canvas.present();
+        }
     }
 
     /// Scale the current canvas.
@@ -214,12 +220,16 @@ impl Rendering for Renderer {
         let font = self.font_cache.get(&self.font);
         match (fill, font) {
             (Some(fill), Some(font)) => {
-                let key = (text.to_string(), fill);
+                let key = (self.window_target, text.to_string(), fill);
+                let (_, texture_creator) = self
+                    .canvases
+                    .get(&self.window_target)
+                    .ok_or(WindowError::InvalidWindow(self.window_target))?;
                 let texture = match self.text_cache.entry(key) {
                     Entry::Occupied(o) => o.into_mut(),
                     Entry::Vacant(v) => {
                         let surface = font.render(text).blended(fill)?;
-                        v.insert(self.texture_creator.create_texture_from_surface(&surface)?)
+                        v.insert(texture_creator.create_texture_from_surface(&surface)?)
                     }
                 };
                 let TextureQuery { width, height, .. } = texture.query();
@@ -438,9 +448,13 @@ impl Rendering for Renderer {
         flipped: Option<Flipped>,
         tint: Option<Color>,
     ) -> Result<()> {
-        let texture = match self.image_cache.entry(img) {
+        let (_, texture_creator) = self
+            .canvases
+            .get(&self.window_target)
+            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+        let texture = match self.image_cache.entry((self.window_target, img)) {
             Entry::Occupied(o) => o.into_mut(),
-            Entry::Vacant(v) => v.insert(self.texture_creator.create_texture_static(
+            Entry::Vacant(v) => v.insert(texture_creator.create_texture_static(
                 Some(img.format().into()),
                 img.width(),
                 img.height(),
@@ -484,21 +498,29 @@ impl Rendering for Renderer {
 
 impl std::fmt::Debug for Renderer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let (canvas, _) = self
+            .canvases
+            .get(&self.window_id)
+            .expect("valid main window");
         f.debug_struct("SdlRenderer")
-            .field("title", &self.canvas.window().title())
-            .field("window_id", &self.window_id)
-            .field("dimensions", &self.canvas.output_size().unwrap_or((0, 0)))
-            .field("scale", &self.canvas.scale())
-            .field("draw_color", &self.canvas.draw_color())
+            .field("settings", &self.settings)
             .field("blend_mode", &self.blend_mode)
-            .field("clip", &self.canvas.clip_rect())
             .field("font_path", &self.font.0)
             .field("font_size", &self.font.1)
             .field("font_style", &self.font_style)
-            .field("text_cache_size", &self.text_cache.len())
-            .field("image_cache_size", &self.image_cache.len())
-            .field("texture_count", &self.textures.len())
+            .field("window_id", &self.window_id)
+            .field("window_target", &self.texture_target)
             .field("texture_target", &self.texture_target)
+            .field("primary_title", &canvas.window().title())
+            .field("primary_dimensions", &canvas.output_size())
+            .field("primary_scale", &canvas.scale())
+            .field("primary_draw_color", &canvas.draw_color())
+            .field("primary_clip", &canvas.clip_rect())
+            .field("window_count", &self.canvases.len())
+            .field("textures_count", &self.textures.len())
+            .field("font_cache_count", &self.font_cache.len())
+            .field("text_cache_count", &self.text_cache.len())
+            .field("image_cache_count", &self.image_cache.len())
             .finish()
     }
 }

@@ -66,7 +66,10 @@ pub mod prelude {
             QuadF2, QuadI2, Rect, Tri, TriF2, TriI2,
         },
         state::{
-            settings::{AngleMode, ArcMode, BlendMode, DrawMode, FontStyle},
+            settings::{
+                AngleMode, ArcMode, BlendMode, DrawMode, EllipseMode, FontStyle, ImageMode,
+                RectMode,
+            },
             PixState,
         },
         texture::{Texture, TextureId},

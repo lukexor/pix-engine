@@ -78,10 +78,12 @@ impl Draw for Button<'_> {
             s.fill(GRAY);
         }
         s.stroke(WHITE);
-        s.rect(self.rect)?;
 
-        s.rect_mode(DrawMode::Center);
+        s.rect_mode(RectMode::Corner);
+        s.rounded_rect(self.rect, 6.0)?;
+
         s.fill(WHITE);
+        s.rect_mode(RectMode::Center);
         s.text(self.rect.center(), self.label)?;
 
         s.pop();
@@ -95,7 +97,11 @@ impl PixState {
     where
         R: Into<Rect<i32>>,
     {
-        let button = Button::new(rect.into(), label, &self.mouse);
+        let mut rect = rect.into();
+        if let RectMode::Center = self.settings.rect_mode {
+            rect.center_on(rect.top_left());
+        };
+        let button = Button::new(rect, label, &self.mouse);
         button.draw(self)?;
         Ok(button)
     }

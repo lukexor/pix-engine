@@ -19,6 +19,15 @@ pub enum DrawMode {
     Center,
 }
 
+/// Drawing mode which changes how `(x, y)` coordinates are interpreted when drawing [Rect]s.
+pub type RectMode = DrawMode;
+
+/// Drawing mode which changes how `(x, y)` coordinates are interpreted when drawing [Ellipse]s.
+pub type EllipseMode = DrawMode;
+
+/// Drawing mode which changes how `(x, y)` coordinates are interpreted when drawing [Image]s.
+pub type ImageMode = DrawMode;
+
 /// Drawing mode which changes how arcs are drawn.
 #[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -83,9 +92,9 @@ pub(crate) struct Settings {
     pub(crate) running: bool,
     pub(crate) run_count: usize,
     pub(crate) show_frame_rate: bool,
-    pub(crate) rect_mode: DrawMode,
-    pub(crate) ellipse_mode: DrawMode,
-    pub(crate) image_mode: DrawMode,
+    pub(crate) rect_mode: RectMode,
+    pub(crate) ellipse_mode: EllipseMode,
+    pub(crate) image_mode: ImageMode,
     pub(crate) image_tint: Option<Color>,
     pub(crate) arc_mode: ArcMode,
     pub(crate) angle_mode: AngleMode,
@@ -102,9 +111,9 @@ impl Default for Settings {
             running: true,
             run_count: 0,
             show_frame_rate: false,
-            rect_mode: DrawMode::Corner,
-            ellipse_mode: DrawMode::Corner,
-            image_mode: DrawMode::Corner,
+            rect_mode: RectMode::Corner,
+            ellipse_mode: EllipseMode::Corner,
+            image_mode: ImageMode::Corner,
             image_tint: None,
             arc_mode: ArcMode::Default,
             angle_mode: AngleMode::Radians,
@@ -164,13 +173,13 @@ impl PixState {
     }
 
     /// Returns whether the application is fullscreen or not.
-    pub fn fullscreen(&mut self) -> bool {
-        self.renderer.fullscreen()
+    pub fn fullscreen(&mut self) -> PixResult<bool> {
+        Ok(self.renderer.fullscreen()?)
     }
 
     /// Set the application to fullscreen or not.
-    pub fn set_fullscreen(&mut self, val: bool) {
-        self.renderer.set_fullscreen(val)
+    pub fn set_fullscreen(&mut self, val: bool) -> PixResult<()> {
+        Ok(self.renderer.set_fullscreen(val)?)
     }
 
     /// Returns whether the window synchronizes frame rate to the screens refresh rate.
@@ -276,21 +285,21 @@ impl PixState {
 
     /// Change the way parameters are interpreted for drawing [Square](Rect)s and
     /// [Rectangle](Rect)s.
-    pub fn rect_mode(&mut self, mode: DrawMode) {
+    pub fn rect_mode(&mut self, mode: RectMode) {
         self.settings.rect_mode = mode;
     }
 
     /// Change the way parameters are interpreted for drawing [Ellipse]s.
     ///
     /// [Ellipse]: crate::prelude::Ellipse
-    pub fn ellipse_mode(&mut self, mode: DrawMode) {
+    pub fn ellipse_mode(&mut self, mode: EllipseMode) {
         self.settings.ellipse_mode = mode;
     }
 
     /// Change the way parameters are interpreted for drawing [Image]s.
     ///
     /// [Image]: crate::prelude::Image
-    pub fn image_mode(&mut self, mode: DrawMode) {
+    pub fn image_mode(&mut self, mode: ImageMode) {
         self.settings.image_mode = mode;
     }
 

@@ -293,11 +293,7 @@ impl PixState {
     where
         P: Into<PointI2>,
     {
-        let s = &self.settings;
-        let mut pos = position.into();
-        if let DrawMode::Center = s.image_mode {
-            pos.offset(-img.center());
-        };
+        let pos = position.into();
         self.image_transformed(
             rect![pos.x(), pos.y(), img.width() as i32, img.height() as i32],
             img,
@@ -324,8 +320,8 @@ impl PixState {
     {
         let s = &self.settings;
         let mut rect = rect.into();
-        if let DrawMode::Center = s.image_mode {
-            rect.center_on(rect.center());
+        if let ImageMode::Center = s.image_mode {
+            rect.center_on(rect.top_left());
         };
         Ok(self.renderer.image(
             rect,

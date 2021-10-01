@@ -237,6 +237,12 @@ pub(crate) fn calculate_channels(levels: [Scalar; 4]) -> [u8; 4] {
 }
 
 impl Color {
+    /// Constructs a `Color` by inverting the RGBA values.
+    pub fn inverted(&self) -> Color {
+        let hex = self.as_hex();
+        Color::from_hex(0xFFFFFF00 ^ hex)
+    }
+
     /// Constructs a `Color` by linear interpolating between two `Color`s by a given amount between
     /// `0.0` and `1.0`.
     ///

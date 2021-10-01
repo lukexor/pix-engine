@@ -103,13 +103,12 @@ pub trait AppState {
         Ok(())
     }
 
-    /// Called each time the window is resized with the new `(width, height)`.
-    fn on_window_resized(
+    /// Called each time a window event occurs.
+    fn on_window_event(
         &mut self,
         s: &mut PixState,
         window_id: WindowId,
-        width: i32,
-        height: i32,
+        event: WindowEvent,
     ) -> PixResult<()> {
         Ok(())
     }

@@ -52,6 +52,7 @@ pub(crate) struct RendererSettings {
     pub(crate) vsync: bool,
     pub(crate) resizable: bool,
     pub(crate) borderless: bool,
+    pub(crate) allow_highdpi: bool,
     pub(crate) show_frame_rate: bool,
     pub(crate) target_frame_rate: Option<Scalar>,
 }
@@ -64,7 +65,7 @@ impl Default for RendererSettings {
             font: DEFAULT_ASSET_DIR.join("emulogic.ttf"),
             #[cfg(target_arch = "wasm32")]
             font: "Courier New".to_string(),
-            font_size: 16,
+            font_size: 14,
             icon: None,
             asset_dir: DEFAULT_ASSET_DIR.clone(),
             x: Position::default(),
@@ -78,6 +79,7 @@ impl Default for RendererSettings {
             vsync: false,
             resizable: false,
             borderless: false,
+            allow_highdpi: false,
             show_frame_rate: false,
             target_frame_rate: None,
         }
