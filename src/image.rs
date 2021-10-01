@@ -93,7 +93,7 @@ impl Image {
         Self::from_vec(width, height, data, format)
     }
 
-    /// Constructs an `Image` from a [u8] [slice] representing RGB/A values.
+    /// Constructs an `Image` from a [u8] [prim@slice] representing RGB/A values.
     #[inline]
     pub fn from_bytes<B: AsRef<[u8]>>(
         width: u32,
@@ -108,7 +108,7 @@ impl Image {
         Ok(Self::from_vec(width, height, bytes.to_vec(), format))
     }
 
-    /// Constructs an `Image` from a [Color] [slice] representing RGBA values.
+    /// Constructs an `Image` from a [Color] [prim@slice] representing RGBA values.
     #[inline]
     pub fn from_pixels<P: AsRef<[Color]>>(
         width: u32,
@@ -199,13 +199,13 @@ impl Image {
         Bytes(self.as_bytes().iter().copied())
     }
 
-    /// Returns the `Image` pixel data as a [u8] [slice].
+    /// Returns the `Image` pixel data as a [u8] [prim@slice].
     #[inline]
     pub fn as_bytes(&self) -> &[u8] {
         &self.data
     }
 
-    /// Returns the `Image` pixel data as a mutable [u8] [slice].
+    /// Returns the `Image` pixel data as a mutable [u8] [prim@slice].
     #[inline]
     pub fn as_mut_bytes(&mut self) -> &mut [u8] {
         &mut self.data
@@ -255,7 +255,7 @@ impl Image {
         self.data[idx..(idx + channels)].clone_from_slice(&color.channels()[..channels]);
     }
 
-    /// Update the `Image` with a  [u8] [slice] representing RGB/A values.
+    /// Update the `Image` with a  [u8] [prim@slice] representing RGB/A values.
     #[inline]
     pub fn update_bytes<B: AsRef<[u8]>>(&mut self, bytes: B) {
         self.data.clone_from_slice(bytes.as_ref());
@@ -349,7 +349,7 @@ impl fmt::Debug for Image {
 
 /// An iterator over the bytes of an [Image].
 ///
-/// This struct is created by the [bytes] method on [Image].
+/// This struct is created by the [Image::bytes] method.
 /// See its documentation for more.
 #[derive(Debug, Clone)]
 pub struct Bytes<'a>(Copied<slice::Iter<'a, u8>>);
@@ -364,7 +364,7 @@ impl Iterator for Bytes<'_> {
 
 /// An iterator over the [Color] pixels of an [Image].
 ///
-/// This struct is created by the [pixels] method on [Image].
+/// This struct is created by the [Image::pixels] method.
 /// See its documentation for more.
 #[derive(Debug, Clone)]
 pub struct Pixels<'a>(usize, Copied<slice::Iter<'a, u8>>);

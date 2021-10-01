@@ -1,10 +1,21 @@
 # PixEngine
 
+[![Build Status]][build] [![Latest Version]][crates.io] [![Doc Status]][docs] [![Downloads]][crates.io] ![License]
+
+[Build Status]: https://img.shields.io/travis/com/lukexor/pix-engine?style=plastic
+[build]: https://app.travis-ci.com/github/lukexor/pix-engine
+[Latest Version]: https://img.shields.io/crates/v/pix-engine?style=plastic
+[crates.io]: https://crates.io/crates/pix-engine
+[Doc Status]: https://img.shields.io/docsrs/pix-engine?style=plastic
+[docs]: https://docs.rs/pix-engine/
+[Downloads]: https://img.shields.io/crates/d/pix-engine?style=plastic
+[License]: https://img.shields.io/crates/l/pix-engine?style=plastic
+
 ## Summary
 
 `pix_engine` is a cross-platform graphics & UI library for simple games,
 visualizations, digital art, and graphics applications written in [Rust][],
-supporting [SDL2][] and [Web-Assembly][WASM] renderers.
+supporting [SDL2][] (and soon [Web-Assembly][WASM]!) renderers.
 
 The primary goal of this library is to be simple to setup and use for graphics
 or algorithm exploration and is not meant to be as fully-featured as other,
@@ -71,6 +82,22 @@ fn main() -> PixResult<()> {
 }
 ```
 
+## Crate features
+
+### Utility features
+
+* **serde** -
+  Enables Serialize/Deserialize implementations for most enums/structs. `serde`
+  support for const generics is still pending, so many structs are not
+  serializable just yet.
+
+### Renderer features
+
+* **opengl** -
+  Forces `sdl2` to use `opengl` as its renderer. This feature is disabled by
+  default, allowing `sdl2` to use whichever renderer it defaults to on the
+  target system. For example, macOs defaults to `metal`.
+
 ## Known Issues
 
 See the [github issue tracker][].
@@ -79,10 +106,8 @@ See the [github issue tracker][].
 
 Licensed under either of
 
- * Apache License, Version 2.0
-   ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
- * MIT license
-   ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+ * Apache License, Version 2.0 ([LICENSE-APACHE][])
+ * MIT license ([LICENSE-MIT][])
 
 at your option.
 
@@ -115,3 +140,5 @@ Also heavily influenced by [p5js](https://p5js.org/).
 [AppState::on_update]: crate::prelude::AppState::on_update
 [PixState]: crate::prelude::PixState
 [github issue tracker]: https://github.com/lukexor/pix-engine/issues
+[LICENSE-APACHE]: http://www.apache.org/licenses/LICENSE-2.0
+[LICENSE-MIT]: http://opensource.org/licenses/MIT
