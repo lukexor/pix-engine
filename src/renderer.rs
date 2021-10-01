@@ -235,8 +235,10 @@ impl fmt::Display for Error {
 
 impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        use Error::*;
         match self {
-            Error::IoError(err) => err.source(),
+            IoError(err) => err.source(),
+            WindowError(err) => err.source(),
             _ => None,
         }
     }

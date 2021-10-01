@@ -149,7 +149,7 @@ pub(crate) trait WindowRenderer {
     fn window_target(&self) -> WindowId;
 
     /// Set window as the target for drawing operations.
-    fn set_window_target(&mut self, id: WindowId);
+    fn set_window_target(&mut self, id: WindowId) -> Result<()>;
 
     /// Reset main window as the target for drawing operations.
     fn reset_window_target(&mut self);
@@ -355,7 +355,7 @@ impl PixState {
         for<'r> F: FnOnce(&'r mut PixState) -> PixResult<()>,
     {
         self.push();
-        self.renderer.set_window_target(id);
+        self.renderer.set_window_target(id)?;
         let result = f(self);
         self.renderer.reset_window_target();
         self.pop();
@@ -395,7 +395,15 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {}
+impl error::Error for Error {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        use Error::*;
+        match self {
+            InvalidTitle(_, err) | InvalidText(_, err) => err.source(),
+            _ => None,
+        }
+    }
+}
 
 impl From<Error> for PixError {
     fn from(err: Error) -> Self {

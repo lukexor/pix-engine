@@ -215,8 +215,13 @@ impl WindowRenderer for Renderer {
     }
 
     /// Set window as the target for drawing operations.
-    fn set_window_target(&mut self, id: WindowId) {
-        self.window_target = id;
+    fn set_window_target(&mut self, id: WindowId) -> Result<()> {
+        if !self.canvases.contains_key(&id) {
+            Err(Error::InvalidWindow(id))
+        } else {
+            self.window_target = id;
+            Ok(())
+        }
     }
 
     /// Reset main window as the target for drawing operations.

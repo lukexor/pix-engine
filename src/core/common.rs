@@ -55,7 +55,19 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {}
+impl error::Error for Error {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        use Error::*;
+        match self {
+            RendererError(err) => err.source(),
+            WindowError(err) => err.source(),
+            StateError(err) => err.source(),
+            ImageError(err) => err.source(),
+            IoError(err) => err.source(),
+            _ => None,
+        }
+    }
+}
 
 impl From<io::Error> for Error {
     fn from(err: io::Error) -> Self {
