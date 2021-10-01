@@ -26,13 +26,6 @@ impl PixEngineBuilder {
         Self::default()
     }
 
-    /// Set window dimensions.
-    pub fn with_dimensions(&mut self, width: u32, height: u32) -> &mut Self {
-        self.settings.width = width;
-        self.settings.height = height;
-        self
-    }
-
     /// Set a window title.
     pub fn with_title<S>(&mut self, title: S) -> &mut Self
     where
@@ -64,9 +57,23 @@ impl PixEngineBuilder {
         self
     }
 
-    /// Enable average frame rate (FPS) in title.
-    pub fn with_frame_rate(&mut self) -> &mut Self {
-        self.settings.show_frame_rate = true;
+    /// Set a window icon.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn icon<P>(&mut self, path: P) -> &mut Self
+    where
+        P: Into<PathBuf>,
+    {
+        self.settings.icon = Some(path.into());
+        self
+    }
+
+    /// Set the temporary directory for extraction of static library assets.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn asset_dir<P>(&mut self, path: P) -> &mut Self
+    where
+        P: Into<PathBuf>,
+    {
+        self.settings.asset_dir = path.into();
         self
     }
 
@@ -84,9 +91,35 @@ impl PixEngineBuilder {
         self
     }
 
+    /// Set window dimensions.
+    pub fn with_dimensions(&mut self, width: u32, height: u32) -> &mut Self {
+        self.settings.width = width;
+        self.settings.height = height;
+        self
+    }
+
+    /// Scales the window.
+    pub fn scale(&mut self, x: f32, y: f32) -> &mut Self {
+        self.settings.scale_x = x;
+        self.settings.scale_y = y;
+        self
+    }
+
+    /// Set audio sample rate.
+    pub fn audio_sample_rate(&mut self, sample_rate: i32) -> &mut Self {
+        self.settings.audio_sample_rate = sample_rate;
+        self
+    }
+
     /// Start window in fullscreen mode.
     pub fn fullscreen(&mut self) -> &mut Self {
         self.settings.fullscreen = true;
+        self
+    }
+
+    /// Enable VSync.
+    pub fn vsync_enabled(&mut self) -> &mut Self {
+        self.settings.vsync = true;
         self
     }
 
@@ -108,22 +141,15 @@ impl PixEngineBuilder {
         self
     }
 
-    /// Scales the window.
-    pub fn scale(&mut self, x: f32, y: f32) -> &mut Self {
-        self.settings.scale_x = x;
-        self.settings.scale_y = y;
+    /// Starts engine with window hidden.
+    pub fn hidden(&mut self) -> &mut Self {
+        self.settings.hidden = true;
         self
     }
 
-    /// Enable VSync.
-    pub fn vsync_enabled(&mut self) -> &mut Self {
-        self.settings.vsync = true;
-        self
-    }
-
-    /// Set audio sample rate.
-    pub fn audio_sample_rate(&mut self, sample_rate: i32) -> &mut Self {
-        self.settings.audio_sample_rate = sample_rate;
+    /// Enable average frame rate (FPS) in title.
+    pub fn with_frame_rate(&mut self) -> &mut Self {
+        self.settings.show_frame_rate = true;
         self
     }
 
@@ -134,28 +160,7 @@ impl PixEngineBuilder {
         self
     }
 
-    /// Set a window icon.
-    #[cfg(not(target_arch = "wasm32"))]
-    pub fn icon<P>(&mut self, path: P) -> &mut Self
-    where
-        P: Into<PathBuf>,
-    {
-        self.settings.icon = Some(path.into());
-        self
-    }
-
-    /// Set the temporary directory for extraction of static library assets.
-    #[cfg(not(target_arch = "wasm32"))]
-    pub fn asset_dir<P>(&mut self, path: P) -> &mut Self
-    where
-        P: Into<PathBuf>,
-    {
-        self.settings.asset_dir = path.into();
-        self
-    }
-
     /// Convert [PixEngineBuilder] to a [PixEngine] instance.
-    #[must_use]
     pub fn build(&self) -> PixEngine {
         PixEngine {
             settings: self.settings.clone(),
@@ -178,7 +183,6 @@ pub struct PixEngine {
 
 impl PixEngine {
     /// Constructs a default [PixEngineBuilder] which can build a `PixEngine` instance.
-    #[must_use]
     pub fn builder() -> PixEngineBuilder {
         PixEngineBuilder::default()
     }

@@ -52,6 +52,7 @@ pub(crate) struct RendererSettings {
     pub(crate) resizable: bool,
     pub(crate) borderless: bool,
     pub(crate) allow_highdpi: bool,
+    pub(crate) hidden: bool,
     pub(crate) show_frame_rate: bool,
     pub(crate) target_frame_rate: Option<Scalar>,
 }
@@ -79,6 +80,7 @@ impl Default for RendererSettings {
             resizable: false,
             borderless: false,
             allow_highdpi: false,
+            hidden: false,
             show_frame_rate: false,
             target_frame_rate: None,
         }

@@ -161,7 +161,7 @@ impl WindowRenderer for Renderer {
         let (canvas, _) = self
             .canvases
             .get(&self.window_target)
-            .expect("valid primary window");
+            .ok_or(WindowError::InvalidWindow(self.window_target))?;
 
         self.settings.vsync = val;
         let window = canvas.window();
@@ -194,11 +194,13 @@ impl WindowRenderer for Renderer {
     }
 
     /// Returns the icurrent window target for drawing operations.
+    #[inline]
     fn window_target(&self) -> WindowId {
         self.window_target
     }
 
     /// Set window as the target for drawing operations.
+    #[inline]
     fn set_window_target(&mut self, id: WindowId) -> Result<()> {
         if !self.canvases.contains_key(&id) {
             Err(Error::InvalidWindow(id))
@@ -209,8 +211,31 @@ impl WindowRenderer for Renderer {
     }
 
     /// Reset main window as the target for drawing operations.
+    #[inline]
     fn reset_window_target(&mut self) {
         self.window_target = self.window_id;
+    }
+
+    /// Show the current window target.
+    #[inline]
+    fn show(&mut self) -> Result<()> {
+        let (canvas, _) = self
+            .canvases
+            .get_mut(&self.window_target)
+            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+        canvas.window_mut().show();
+        Ok(())
+    }
+
+    /// Hide the current window target.
+    #[inline]
+    fn hide(&mut self) -> Result<()> {
+        let (canvas, _) = self
+            .canvases
+            .get_mut(&self.window_target)
+            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+        canvas.window_mut().hide();
+        Ok(())
     }
 }
 
@@ -258,6 +283,9 @@ impl Renderer {
         }
         if s.allow_highdpi {
             window_builder.allow_highdpi();
+        }
+        if s.hidden {
+            window_builder.hidden();
         }
 
         let window = window_builder.build()?;

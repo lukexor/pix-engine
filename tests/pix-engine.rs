@@ -52,9 +52,9 @@ impl AppState for App {
 
 fn create_engine() -> PixEngine {
     PixEngine::builder()
-        .with_title("Test App")
+        .with_title("pix-engine integration test")
         .position_centered()
-        .vsync_enabled()
+        .hidden()
         .build()
 }
 

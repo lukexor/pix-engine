@@ -153,6 +153,12 @@ pub(crate) trait WindowRenderer {
 
     /// Reset main window as the target for drawing operations.
     fn reset_window_target(&mut self);
+
+    /// Show the current window target.
+    fn show(&mut self) -> Result<()>;
+
+    /// Hide the current window target.
+    fn hide(&mut self) -> Result<()>;
 }
 
 /// WindowBuilder
@@ -240,7 +246,6 @@ impl<'a> WindowBuilder<'a> {
     /// Create a new window from the WindowBuilder and return its id.
     ///
     /// Returns Err if any options provided are invalid.
-    #[must_use]
     pub fn build(&mut self) -> Result<WindowId> {
         self.state.renderer.create_window(&self.settings)
     }
@@ -348,6 +353,16 @@ impl PixState {
             .display_dimensions()
             .expect("primary window should exist");
         height
+    }
+
+    /// Show the current window target.
+    pub fn show_window(&mut self) -> PixResult<()> {
+        Ok(self.renderer.show()?)
+    }
+
+    /// Hide the current window target.
+    pub fn hide_window(&mut self) -> PixResult<()> {
+        Ok(self.renderer.hide()?)
     }
 
     /// Target a `Window` for drawing operations.
