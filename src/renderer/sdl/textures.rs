@@ -85,6 +85,14 @@ impl TextureRenderer for Renderer {
     fn clear_texture_target(&mut self) {
         self.texture_target = None;
     }
+
+    /// Clear internal texture cache.
+    #[inline]
+    fn clear_texture_cache(&mut self) {
+        self.font_cache.clear();
+        self.text_cache.clear();
+        self.image_cache.clear();
+    }
 }
 
 impl Renderer {
