@@ -2,13 +2,14 @@
 authors = ["Luke Petherbridge <me@lukeworks.tech>"]
 categories = ["game-development", "game-engines", "graphics", "gui", "rendering"]
 description = "A cross-platform graphics/UI engine framework for simple games, visualizations, and graphics demos."
+documentation = "https://docs.rs/pix-engine"
 edition = "2018"
 keywords = ["game-engine", "graphics", "ui", "gui", "rendering"]
 license = "MIT OR Apache-2.0"
 name = "pix-engine"
 repository = "https://github.com/lukexor/pix-engine.git"
 resolver = "2"
-version = "0.4.1"
+version = "0.4.2"
 
 [package.metadata.docs.rs]
 features = ["serde"]
