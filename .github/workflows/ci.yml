@@ -35,6 +35,8 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/debug/
+          target/doc/
+          target/vcpkg/
         key: ${{ runner.os }}-${{ hashFiles('Cargo.toml') }}
 
     - name: Install cargo-vcpkg
