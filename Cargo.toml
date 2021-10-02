@@ -1,9 +1,9 @@
 [package]
 authors = ["Luke Petherbridge <me@lukeworks.tech>"]
-categories = ["game-development", "game-engines", "graphics", "gui", "multimedia", "rendering", "web-assembly"]
+categories = ["game-development", "game-engines", "graphics", "gui", "rendering"]
 description = "A cross-platform graphics/UI engine framework for simple games, visualizations, and graphics demos."
 edition = "2018"
-keywords = ["game-engine", "graphics", "ui", "gui", "rendering", "web-assembly", "sdl"]
+keywords = ["game-engine", "graphics", "ui", "gui", "rendering"]
 license = "MIT OR Apache-2.0"
 name = "pix-engine"
 repository = "https://github.com/lukexor/pix-engine.git"
