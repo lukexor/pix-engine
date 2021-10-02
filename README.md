@@ -2,8 +2,8 @@
 
 [![Build Status]][build] [![Latest Version]][crates.io] [![Doc Status]][docs] [![Downloads]][crates.io] ![License]
 
-[Build Status]: https://img.shields.io/travis/com/lukexor/pix-engine?style=plastic
-[build]: https://app.travis-ci.com/github/lukexor/pix-engine
+[Build Status]: https://github.com/lukexor/pix-engine/actions/workflows/ci.yml/badge.svg
+[build]: https://github.com/lukexor/pix-engine/actions/workflows/ci.yml
 [Latest Version]: https://img.shields.io/crates/v/pix-engine?style=plastic
 [crates.io]: https://crates.io/crates/pix-engine
 [Doc Status]: https://img.shields.io/docsrs/pix-engine?style=plastic
