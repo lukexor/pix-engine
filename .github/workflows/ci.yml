@@ -35,12 +35,11 @@ jobs:
           ~/.cargo/registry/index/
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
-          target/
+          target/debug/
         key: ${{ runner.os }}-${{ hashFiles('Cargo.toml') }}
 
     - name: Install cargo-vcpkg
-      if: steps.cache-deps.outputs.cache-hit != 'true'
-      run: cargo install cargo-vcpkg
+      run: cargo install cargo-vcpkg --force
 
     - name: Install dependencies
       if: steps.cache-deps.outputs.cache-hit != 'true'
