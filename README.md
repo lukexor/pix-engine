@@ -1,97 +1,144 @@
 # PixEngine
 
+[![Build Status]][build] [![Latest Version]][crates.io] [![Doc Status]][docs] [![Downloads]][crates.io] ![License]
+
+[Build Status]: https://img.shields.io/travis/com/lukexor/pix-engine?style=plastic
+[build]: https://app.travis-ci.com/github/lukexor/pix-engine
+[Latest Version]: https://img.shields.io/crates/v/pix-engine?style=plastic
+[crates.io]: https://crates.io/crates/pix-engine
+[Doc Status]: https://img.shields.io/docsrs/pix-engine?style=plastic
+[docs]: https://docs.rs/pix-engine/
+[Downloads]: https://img.shields.io/crates/d/pix-engine?style=plastic
+[License]: https://img.shields.io/crates/l/pix-engine?style=plastic
+
 ## Summary
 
-A simple, cross-platform graphics/UI engine framework with a minimal interface.
+`pix_engine` is a cross-platform graphics & UI library for simple games,
+visualizations, digital art, and graphics applications written in [Rust][],
+supporting [SDL2][] (and soon [Web-Assembly][WASM]!) renderers.
 
-## Dependencies
+The primary goal of this library is to be simple to setup and use for graphics
+or algorithm exploration and is not meant to be as fully-featured as other,
+larger graphics libraries.
 
-* [Rust][rust]
-* [SDL2][sdl2]
+It is intended to be more than just a toy library, however, and can be used to
+drive real applications. The [Tetanes][] [NES][] emulator, for example uses
+`pix_engine` for rendering, window and event handling.
 
-## Usage
+## Getting Started
 
-In order to use the PixEngine, you need to implement the `State` interface on your
-application struct. There are three methods, only one of which is required:
+Creating an application is as simple as implementing the only required method of
+the [AppState] trait for your application: [AppState::on_update] which gets
+executed as often as possible by default. Within that function you'll have
+access to a mutable [PixState] object which provides several methods for
+modifying settings and drawing to the screen.
 
-* on_start - Setup functionality when the application begins.
-* on_stop - Teardown functionality for when the application is closed.
-* on_update - Update functionality. This is your draw loop. It's run roughly 60 times/second.
+[AppState] has several additional methods that can be implemented to respond to
+user and system events.
 
-Here's an example app skeleton:
+Here's an example application:
 
-```
-struct App {
-    // Some data fields
-}
+```rust no_run
+use pix_engine::prelude::*;
 
-impl App {
-    fn new() -> Self {
-        Self {
-          // Data initialization
+struct MyApp;
+
+impl AppState for MyApp {
+    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
+        // Setup App state. PixState contains engine specific state and
+        // utility functions for things like getting mouse coordinates,
+        // drawing shapes, etc.
+        s.background(220)?;
+        s.circle([10, 10, 100])?;
+        Ok(())
+    }
+
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        // Main render loop. Called as often as possible, or based on `target frame rate`.
+        if s.mouse_pressed() {
+            s.fill(0);
+        } else {
+            s.fill(255);
         }
+        let m = s.mouse_pos();
+        s.circle([m.x(), m.y(), 80])?;
+        Ok(())
+    }
+
+    fn on_stop(&mut self, s: &mut PixState) -> PixResult<()> {
+        // Teardown any state or resources before exiting.
+        Ok(())
     }
 }
 
-impl State for App {
-    fn on_start(&mut self, data: &mut StateData) -> PixEngineResult<bool> {
-        // Setup App state. StateData contains engine specific state and functions like mouse
-        // coordinates and draw functions
-        // Return true to continue. False errors the application.
-        Ok(true)
-    }
-    fn on_update(&mut self, _elapsed: f32, _data: &mut StateData) -> PixEngineResult<bool> {
-        // Update App state roughly every 16ms.
-        // Return true to continue, or false to abort the update loop
-        Ok(true)
-    }
-    fn on_stop(&mut self, _data: &mut StateData) -> PixEngineResult<bool> {
-        // Teardown any state or resources
-        // Returning false here prevents the app from closing
-        Ok(true)
-    }
-}
-
-pub fn main() {
-    let app = App::new();
-    let width = 800;
-    let height = 600;
-    let vsync = true;
-    let mut engine = PixEngine::new(
-      "App Title".to_string(),
-      app,
-      800,
-      600,
-      vsync
-    ).expect("valid engine");
-    engine.run().expect("engine run");
+fn main() -> PixResult<()> {
+    let mut engine = PixEngine::builder()
+      .with_dimensions(800, 600)
+      .with_title("MyApp")
+      .position_centered()
+      .build();
+    let mut app = MyApp;
+    engine.run(&mut app)
 }
 ```
+
+## Crate features
+
+### Utility features
+
+* **serde** -
+  Enables Serialize/Deserialize implementations for most enums/structs. `serde`
+  support for const generics is still pending, so many structs are not
+  serializable just yet.
+
+### Renderer features
+
+* **opengl** -
+  Forces `sdl2` to use `opengl` as its renderer. This feature is disabled by
+  default, allowing `sdl2` to use whichever renderer it defaults to on the
+  target system. For example, macOs defaults to `metal`.
 
 ## Known Issues
 
-See the github issue tracker.
+See the [github issue tracker][].
 
 ## License
 
-`PixEngine` is licensed under the GPLv3 license. See the `LICENSE.md` file in the root for a copy.
+Licensed under either of
+
+ * Apache License, Version 2.0 ([LICENSE-APACHE][])
+ * MIT license ([LICENSE-MIT][])
+
+at your option.
+
+## Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
 
 ## Contact
 
-For issue reporting, please use the github issue tracker. You can contact me directly
-[here](https://lukeworks.tech/contact/).
-
-## Contact
-
-For issue reporting, please use the github issue tracker. You can contact me directly
+For issue reporting, please use the [github issue tracker][]. You can contact me directly
 [here](https://lukeworks.tech/contact/).
 
 ## Credits
 
-Implementation heavily inspired by [OneLoneCoder](https://github.com/OneLoneCoder/) and his amazing
-[olcPixelGameEngine](https://github.com/OneLoneCoder/olcPixelGameEngine) project.
+Implementation heavily inspired by
+[OneLoneCoder](https://github.com/OneLoneCoder/) and his amazing
+[olcPixelGameEngine](https://github.com/OneLoneCoder/olcPixelGameEngine)
+project.
 
 Also heavily influenced by [p5js](https://p5js.org/).
 
-[rust]: https://www.rust-lang.org/tools/install
-[sdl2]: https://www.libsdl.org/
+[Rust]: https://www.rust-lang.org/
+[SDL2]: https://crates.io/crates/sdl2/
+[WASM]: https://www.rust-lang.org/what/wasm
+[Tetanes]: https://crates.io/crates/tetanes
+[NES]: https://en.wikipedia.org/wiki/Nintendo_Entertainment_System
+[AppState]: crate::prelude::AppState
+[AppState::on_update]: crate::prelude::AppState::on_update
+[PixState]: crate::prelude::PixState
+[github issue tracker]: https://github.com/lukexor/pix-engine/issues
+[LICENSE-APACHE]: http://www.apache.org/licenses/LICENSE-2.0
+[LICENSE-MIT]: http://opensource.org/licenses/MIT

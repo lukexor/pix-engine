@@ -1,292 +1,217 @@
-use pix_engine::event::*;
-use pix_engine::*;
-use std::f64::consts;
+use pix_engine::prelude::*;
 
-const SHIP_SCALE: f32 = 4.0;
+const SHIP_SCALE: Scalar = 4.0;
 const ASTEROID_SIZE: u32 = 64;
 const MIN_ASTEROID_SIZE: u32 = 16;
-const SHIP_THRUST: f32 = 150.0;
-const MAX_ASTEROID_SPEED: f32 = 50.0;
-const SHATTERED_ASTEROID_SPEED: f32 = 80.0;
-const BULLET_SPEED: f32 = 200.0;
-const ASTEROID_SAFE_RADIUS: f32 = 80.0; // So asteroids don't spawn near player
-const PI: f32 = consts::PI as f32;
+const SHIP_THRUST: Scalar = 150.0;
+const MAX_THRUST: Scalar = 600.0;
+const MAX_ASTEROID_SPEED: Scalar = 50.0;
+const SHATTERED_ASTEROID_SPEED: Scalar = 100.0;
+const BULLET_SPEED: Scalar = 200.0;
+const ASTEROID_SAFE_RADIUS: Scalar = 80.0; // So asteroids don't spawn near player
 
-struct App {
-    asteroids: Vec<SpaceObj>,
-    bullets: Vec<SpaceObj>,
-    ship: SpaceObj,
-    level: u32,
-    lives: u32,
-    score: i32,
-    exploded: bool,
-    ship_model: Vec<(f32, f32)>,
-    asteroid_model: Vec<(f32, f32)>,
-    paused: bool,
-}
+const ORIGIN: PointF2 = point!(0.0, 0.0);
+const SHIP_MODEL: [PointF2; 3] = [point!(5.0, 0.0), point!(-2.5, -2.5), point!(-2.5, 2.5)];
 
-#[derive(Default)]
 struct SpaceObj {
     size: u32,
-    x: f32,
-    y: f32,
-    dx: f32,
-    dy: f32,
-    angle: f32,
+    pos: PointF2,
+    start_pos: PointF2,
+    vel: VectorF2,
+    angle: Scalar,
     destroyed: bool,
 }
 
 impl SpaceObj {
-    fn new(size: u32, x: f32, y: f32, dx: f32, dy: f32, angle: f32) -> Self {
+    fn new(pos: PointF2, vel: VectorF2, size: u32, angle: Scalar) -> Self {
         Self {
+            pos,
+            start_pos: pos,
+            vel,
             size,
-            x,
-            y,
-            dx,
-            dy,
             angle,
             destroyed: false,
         }
     }
-    fn rand_asteroid(ship: &SpaceObj, data: &StateData) -> Self {
-        let mut x = rand::random::<f32>() * data.screen_width() as f32;
-        if x > (ship.x - ASTEROID_SAFE_RADIUS) && x < (ship.x + ASTEROID_SAFE_RADIUS) {
-            let diff = ASTEROID_SAFE_RADIUS - (ship.x - x).abs();
-            if ship.x > x {
-                x -= diff;
-            } else {
-                x += diff;
-            }
-        }
-        let mut y = rand::random::<f32>() * data.screen_height() as f32;
-        if y > (ship.y - ASTEROID_SAFE_RADIUS) && y < (ship.y + ASTEROID_SAFE_RADIUS) {
-            let diff = ASTEROID_SAFE_RADIUS - (ship.y - y).abs();
-            if ship.y > y {
-                y -= diff;
-            } else {
-                y += diff;
-            }
-        }
 
-        Self {
-            size: ASTEROID_SIZE,
-            x,
-            y,
-            dx: (rand::random::<f32>() - 0.5) * 2.0 * MAX_ASTEROID_SPEED,
-            dy: (rand::random::<f32>() - 0.5) * 2.0 * MAX_ASTEROID_SPEED,
-            angle: rand::random::<f32>() * 360.0,
-            destroyed: false,
+    fn new_asteroid(ship: &SpaceObj, mut pos: PointF2) -> Self {
+        if Ellipse::circle_with_position(ship.pos, ASTEROID_SAFE_RADIUS).contains_point(pos) {
+            pos.offset(-ship.pos)
         }
+        let mut vel = Vector::random();
+        vel.set_mag(MAX_ASTEROID_SPEED);
+        let angle = random!(360.0);
+        Self::new(pos, vel, ASTEROID_SIZE, angle)
+    }
+
+    fn contains_point(&self, p: PointF2) -> bool {
+        Ellipse::from(self).contains_point(p)
     }
 }
 
-impl App {
-    fn new() -> Self {
+impl From<SpaceObj> for Ellipse {
+    fn from(obj: SpaceObj) -> Self {
+        Self::circle_with_position(obj.pos, obj.size as i32)
+    }
+}
+
+impl From<&SpaceObj> for Ellipse {
+    fn from(obj: &SpaceObj) -> Self {
+        Self::circle_with_position(obj.pos, obj.size as i32)
+    }
+}
+
+struct Asteroids {
+    asteroid_model: Vec<PointF2>,
+    asteroids: Vec<SpaceObj>,
+    broken_asteroids: Vec<SpaceObj>,
+    bullets: Vec<SpaceObj>,
+    ship: SpaceObj,
+    level: usize,
+    lives: i32,
+    score: i32,
+    paused: bool,
+    gameover: bool,
+    width: u32,
+    height: u32,
+}
+
+impl Asteroids {
+    fn new(width: u32, height: u32) -> Self {
+        let mut asteroid_model = Vec::with_capacity(20);
+        for i in 0..20 {
+            let noise = random!(0.8, 1.2);
+            let a = (i as Scalar / 20.0) * 2.0 * PI;
+            asteroid_model.push(point!(noise * a.sin(), noise * a.cos()));
+        }
         Self {
+            asteroid_model,
             asteroids: Vec::new(),
+            broken_asteroids: Vec::new(),
             bullets: Vec::new(),
-            ship: SpaceObj::default(),
+            ship: SpaceObj::new(
+                point!(width as Scalar / 2.0, height as Scalar / 2.0),
+                vector!(),
+                4,
+                0.0,
+            ),
             level: 1,
             lives: 4,
             score: 0,
-            exploded: false,
-            ship_model: Vec::new(),
-            asteroid_model: Vec::new(),
             paused: false,
+            gameover: false,
+            width,
+            height,
         }
     }
 
-    fn spawn_new_ship(&mut self, data: &StateData) {
-        self.ship.x = data.screen_width() as f32 / 2.0;
-        self.ship.y = data.screen_height() as f32 / 2.0;
-        self.ship.dx = 0.0;
-        self.ship.dy = 0.0;
+    fn spawn_new_ship(&mut self) {
+        self.ship.pos = self.ship.start_pos;
+        self.ship.vel.set_mag(0.0);
         self.ship.angle = 0.0;
+        self.bullets.clear();
+    }
 
+    fn spawn_asteroids(&mut self) {
+        self.asteroids.clear();
         let asteroid_count = if !self.asteroids.is_empty() {
-            std::cmp::min(self.level + 2, self.asteroids.len() as u32)
+            std::cmp::min(self.level + 2, self.asteroids.len())
         } else {
             self.level + 2
         };
-        self.asteroids.clear();
-        self.bullets.clear();
+        let (w, h) = (self.width as Scalar, self.height as Scalar);
         for _ in 0..asteroid_count {
-            self.asteroids
-                .push(SpaceObj::rand_asteroid(&self.ship, data));
+            let pos = point!(random!(w), random!(h));
+            self.asteroids.push(SpaceObj::new_asteroid(&self.ship, pos));
         }
     }
 
-    fn exploded(&mut self, data: &StateData) {
-        self.lives -= 1;
-        self.score -= 500;
-        self.exploded = false;
-        self.spawn_new_ship(data);
+    fn exploded(&mut self) {
+        if self.lives > 0 {
+            self.lives -= 1;
+            self.score -= 500;
+            self.spawn_new_ship();
+            self.spawn_asteroids();
+        } else {
+            self.gameover = true;
+        }
     }
 
-    fn reset(&mut self, data: &StateData) {
+    fn reset(&mut self) {
         self.paused = false;
-        self.spawn_new_ship(data);
         self.level = 1;
         self.lives = 4;
         self.score = 0;
-        self.exploded = false;
-    }
-}
-
-impl State for App {
-    fn on_start(&mut self, data: &mut StateData) -> PixEngineResult<bool> {
-        data.enable_coord_wrapping(true);
-        self.ship_model = vec![(0.0, -5.0), (-2.5, 2.5), (2.5, 2.5)];
-        for i in 0..20 {
-            let noise = rand::random::<f32>() * 0.4 + 0.8;
-            let a = (i as f32 / 20.0) * 2.0 * PI;
-            let x = noise * a.sin();
-            let y = noise * a.cos();
-            self.asteroid_model.push((x, y));
-        }
-        self.spawn_new_ship(data);
-        Ok(true)
+        self.gameover = false;
+        self.spawn_new_ship();
+        self.spawn_asteroids();
     }
 
-    fn on_update(&mut self, elapsed: f32, data: &mut StateData) -> PixEngineResult<bool> {
-        if data.get_key(Key::Escape).pressed {
-            self.paused = !self.paused;
-        }
-        if data.get_key(Key::R).pressed {
-            self.reset(data);
-        }
-
-        if self.paused {
-            return Ok(true);
-        }
-
+    fn handle_controls(&mut self, s: &mut PixState) {
+        let elapsed = s.delta_time();
         // Steer
-        if data.get_key(Key::Left).held {
+        if s.key_down(Key::Left) {
             self.ship.angle -= 5.0 * elapsed;
-        } else if data.get_key(Key::Right).held {
+        } else if s.keys().contains(&Key::Right) {
             self.ship.angle += 5.0 * elapsed;
         }
-
         // Thrust
-        if data.get_key(Key::Up).held {
-            self.ship.dx += self.ship.angle.sin() * SHIP_THRUST * elapsed;
-            self.ship.dy += -self.ship.angle.cos() * SHIP_THRUST * elapsed;
+        if s.key_down(Key::Up) {
+            self.ship.vel += VectorF2::from_angle(self.ship.angle, SHIP_THRUST * elapsed);
+            self.ship.vel.limit(MAX_THRUST);
         }
-        // Shoot a bullet
-        if data.get_key(Key::Space).released {
-            self.bullets.push(SpaceObj::new(
-                0,
-                self.ship.x,
-                self.ship.y,
-                BULLET_SPEED * self.ship.angle.sin(),
-                BULLET_SPEED * -self.ship.angle.cos(),
-                100.0,
-            ));
-        }
+    }
 
-        data.clear();
-
-        if self.exploded {
-            if self.lives > 0 {
-                self.exploded(data);
-            } else {
-                data.set_draw_scale(3);
-                data.draw_string(
-                    data.screen_width() / 2 - 108,
-                    data.screen_height() / 3 - 24,
-                    "GAME OVER",
-                    pixel::WHITE,
-                );
-                data.set_draw_scale(1);
-                data.draw_string(
-                    data.screen_width() / 2 - 88,
-                    data.screen_height() / 3 + 16,
-                    "PRESS SPACE TO RESTART",
-                    pixel::WHITE,
-                );
-                if data.get_key(Key::Space).pressed {
-                    self.reset(data);
-                }
-            }
-            return Ok(true);
-        }
-
-        // Draw Level, Lives, & Score
-        data.draw_string(
-            4,
-            4,
-            &format!("LEVEL: {}  SCORE: {}", self.level, self.score),
-            pixel::WHITE,
-        );
-        for i in 0..self.lives {
-            data.draw_wireframe(
-                &self.ship_model,
-                12.0 + (i as f32 * 14.0),
-                36.0,
-                0.0,
-                2.0,
-                pixel::WHITE,
-            );
-        }
-
-        self.ship.x += self.ship.dx * elapsed;
-        self.ship.y += self.ship.dy * elapsed;
-
-        // Keep ship in game space
-        data.wrap_coords(self.ship.x, self.ship.y, &mut self.ship.x, &mut self.ship.y);
-
+    fn draw_asteroids(&mut self, s: &mut PixState) -> PixResult<()> {
+        let (w, h) = (self.width as Scalar, self.height as Scalar);
+        let elapsed = s.delta_time();
         // Draw asteroids
         for a in self.asteroids.iter_mut() {
             // Ship collision
-            if data.is_inside_circle(a.x, a.y, a.size as f32, self.ship.x, self.ship.y) {
-                self.exploded = true;
+            if a.contains_point(self.ship.pos) {
+                self.exploded();
+                return Ok(());
             }
 
-            a.x += a.dx * elapsed;
-            a.y += a.dy * elapsed;
+            a.pos += a.vel * elapsed;
+            a.pos.wrap([w, h], a.size as Scalar);
             a.angle += 0.5 * elapsed; // Give some twirl
-            data.wrap_coords(a.x, a.y, &mut a.x, &mut a.y);
-            data.draw_wireframe(
-                &self.asteroid_model,
-                a.x,
-                a.y,
-                a.angle,
-                a.size as f32,
-                pixel::YELLOW,
-            );
+            s.fill(BLACK);
+            s.stroke(YELLOW);
+            s.wireframe(&self.asteroid_model, a.pos, a.angle, a.size as Scalar)?;
         }
+        Ok(())
+    }
 
-        let mut new_asteroids = Vec::new();
-        // Draw bullets
+    fn draw_bullets(&mut self, s: &mut PixState) -> PixResult<()> {
+        let (w, h) = (self.width as Scalar, self.height as Scalar);
+        let elapsed = s.delta_time();
+        // Update bullet and check collisions
         for b in self.bullets.iter_mut() {
-            b.x += b.dx * elapsed;
-            b.y += b.dy * elapsed;
+            b.pos += b.vel * elapsed;
             b.angle -= 1.0 * elapsed;
 
             for a in self.asteroids.iter_mut() {
-                if data.is_inside_circle(a.x, a.y, a.size as f32, b.x, b.y) {
+                if a.contains_point(b.pos) {
                     // Asteroid hit
                     b.destroyed = true; // Removes bullet
 
                     if a.size > MIN_ASTEROID_SIZE {
                         // Break into two
-                        let a1 = rand::random::<f32>() * 2.0 * PI;
-                        let a2 = rand::random::<f32>() * 2.0 * PI;
-                        new_asteroids.push(SpaceObj::new(
+                        let a1 = random!(TAU);
+                        let a2 = random!(TAU);
+                        let speed = random!(0.0, SHATTERED_ASTEROID_SPEED);
+                        self.broken_asteroids.push(SpaceObj::new(
+                            a.pos,
+                            VectorF2::from_angle(a1, speed),
                             a.size >> 1,
-                            a.x,
-                            a.y,
-                            SHATTERED_ASTEROID_SPEED * a1.sin(),
-                            SHATTERED_ASTEROID_SPEED * a1.cos(),
-                            0.0,
+                            a1,
                         ));
-                        new_asteroids.push(SpaceObj::new(
+                        self.broken_asteroids.push(SpaceObj::new(
+                            a.pos,
+                            VectorF2::from_angle(a2, speed),
                             a.size >> 1,
-                            a.x,
-                            a.y,
-                            SHATTERED_ASTEROID_SPEED * a2.sin(),
-                            SHATTERED_ASTEROID_SPEED * a2.cos(),
-                            0.0,
+                            a2,
                         ));
                     }
                     a.destroyed = true; // Remove asteroid
@@ -294,53 +219,137 @@ impl State for App {
                 }
             }
         }
-        self.asteroids.append(&mut new_asteroids);
-
+        self.asteroids.append(&mut self.broken_asteroids);
         // Remove offscreen/destroyed bullets
-        self.bullets.retain(|b| {
-            !b.destroyed
-                && b.x >= 1.0
-                && b.x < data.screen_width() as f32
-                && b.y >= 1.0
-                && b.y < data.screen_height() as f32
-        });
+        self.bullets
+            .retain(|b| !b.destroyed && b.pos >= ORIGIN && b.pos < point!(w, h));
         // Remove destroyed asteroids
         self.asteroids.retain(|a| !a.destroyed);
 
         // Draw bullets
+        s.fill(BLACK);
+        s.stroke(WHITE);
         for b in self.bullets.iter() {
-            data.fill_circle(b.x as u32, b.y as u32, 1, pixel::WHITE);
+            s.circle(Ellipse::from(b))?;
         }
 
-        // Draw ship
-        data.draw_wireframe(
-            &self.ship_model,
-            self.ship.x,
-            self.ship.y,
-            self.ship.angle,
-            SHIP_SCALE,
-            pixel::WHITE,
-        );
+        Ok(())
+    }
 
-        // Win level
+    fn draw_ship(&mut self, s: &mut PixState) -> PixResult<()> {
+        let (w, h) = (self.width as Scalar, self.height as Scalar);
+        let elapsed = s.delta_time();
+        self.ship.pos += self.ship.vel * elapsed;
+        self.ship.pos.wrap([w, h], self.ship.size as Scalar);
+        s.wireframe(&SHIP_MODEL, self.ship.pos, self.ship.angle, SHIP_SCALE)
+    }
+
+    fn draw_gameover(&mut self, s: &mut PixState) -> PixResult<()> {
+        let x = self.width as i32 / 2 - 150;
+        let y = self.height as i32 / 2 - 100;
+        s.fill(WHITE);
+        s.font_size(32)?;
+        s.text([x, y], "GAME OVER")?;
+        s.font_size(16)?;
+        s.text([x - 30, y + 50], "PRESS SPACE TO RESTART")?;
+        Ok(())
+    }
+
+    fn draw_score(&mut self, s: &mut PixState) -> PixResult<()> {
+        // Draw Level, Lives, & Score
+        s.font_size(16)?;
+        s.fill(WHITE);
+        s.text(
+            [4, 4],
+            &format!("LEVEL: {}  SCORE: {}", self.level, self.score),
+        )?;
+
+        s.fill(BLACK);
+        s.stroke(WHITE);
+        for i in 0..self.lives {
+            s.wireframe(
+                &SHIP_MODEL,
+                [12.0 + (i as Scalar * 14.0), 36.0],
+                -FRAC_PI_2,
+                2.0,
+            )?;
+        }
+
+        // Check win condition
         if self.asteroids.is_empty() {
+            let (w, h) = (self.width as Scalar, self.height as Scalar);
             self.level += 1;
             self.score += 1000;
             self.bullets.clear();
             for _ in 0..(self.level + 2) {
-                self.asteroids
-                    .push(SpaceObj::rand_asteroid(&self.ship, data));
+                let pos = point!(random!(w), random!(h));
+                self.asteroids.push(SpaceObj::new_asteroid(&self.ship, pos));
             }
         }
-
-        Ok(true)
+        Ok(())
     }
 }
 
-pub fn main() {
-    let app = App::new();
-    let mut engine = PixEngine::new("Asteroids".to_string(), app, 800, 600, false).unwrap();
-    if let Err(e) = engine.run() {
-        eprintln!("Encountered a PixEngineErr: {}", e.to_string());
+impl AppState for Asteroids {
+    fn on_start(&mut self, _s: &mut PixState) -> PixResult<()> {
+        self.spawn_new_ship();
+        self.spawn_asteroids();
+        Ok(())
     }
+
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        if self.gameover {
+            return self.draw_gameover(s);
+        }
+        self.handle_controls(s);
+        self.draw_asteroids(s)?;
+        self.draw_bullets(s)?;
+        self.draw_ship(s)?;
+        self.draw_score(s)?;
+        Ok(())
+    }
+
+    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<()> {
+        match event.key {
+            Key::Escape => {
+                if s.running() {
+                    s.no_run()
+                } else {
+                    s.run()
+                }
+            }
+            Key::R => self.reset(),
+            Key::Space if self.gameover => self.reset(),
+            _ => (),
+        }
+        Ok(())
+    }
+
+    fn on_key_released(&mut self, _s: &mut PixState, event: KeyEvent) -> PixResult<()> {
+        match event.key {
+            Key::Space if !self.gameover => {
+                self.bullets.push(SpaceObj::new(
+                    self.ship.pos,
+                    VectorF2::from_angle(self.ship.angle, self.ship.vel.mag() + BULLET_SPEED),
+                    1,
+                    0.0,
+                ));
+            }
+            _ => (),
+        }
+        Ok(())
+    }
+}
+
+pub fn main() -> PixResult<()> {
+    let width = 800;
+    let height = 600;
+    let mut engine = PixEngine::builder()
+        .with_dimensions(width, height)
+        .with_title("Asteroids")
+        .with_frame_rate()
+        .position_centered()
+        .build();
+    let mut app = Asteroids::new(width, height);
+    engine.run(&mut app)
 }
