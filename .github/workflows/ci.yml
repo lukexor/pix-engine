@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:  [macos-latest, ubuntu-latest, windows-latest]
+        features: ["serde"]
+        include:
+          - os: macos-latest
+            env:
+              LIBRARY_PATH: "$LIBRARY_PATH:/usr/local/lib"
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install cargo-vcpkg
+      run: cargo install cargo-vcpkg
+
+    - name: Install dependencies
+      run: cargo vcpkg -v build
+
+    - name: Build source
+      run: cargo build --all-targets --features "${{matrix.features}}" --verbose
+
+    - name: Build docs
+      run: cargo doc --features "${{matrix.features}}" --verbose
+
+    - name: Run unit tests
+      run: cargo test --features "${{matrix.features}}" --verbose
+
+    - name: Run integration tests
+      run: cargo test pix-engine -- --test-threads=1 --ignored
