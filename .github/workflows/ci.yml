@@ -20,7 +20,7 @@ jobs:
         include:
           - os: macos-latest
             env:
-              LIBRARY_PATH: "$LIBRARY_PATH:/usr/local/lib"
+              LIBRARY_PATH: "/usr/local/lib"
     steps:
     - uses: actions/checkout@v2
 
@@ -29,8 +29,12 @@ jobs:
       uses: actions/cache@v2
       with:
         path: |
-          ~/.cache/
-          !~/cache/exclude
+          ~/.cache/vcpkg/
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
         key: ${{ runner.os }}-${{ hashFiles('Cargo.toml') }}
 
     - name: Install cargo-vcpkg
