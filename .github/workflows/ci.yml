@@ -31,7 +31,7 @@ jobs:
         path: |
           ~/.cache/
           !~/cache/exclude
-        key: ${{ runner.os }}-${{ hashFiles("Cargo.toml") }}
+        key: ${{ runner.os }}-${{ hashFiles('Cargo.toml') }}
 
     - name: Install cargo-vcpkg
       if: steps.cache-deps.outputs.cache-hit != 'true'
