@@ -15,10 +15,16 @@ use sdl2::{
 use std::borrow::Cow;
 
 impl WindowRenderer for Renderer {
-    /// Get the primary window id.
+    /// Get the primary window ID.
+    #[inline]
+    fn primary_window_id(&self) -> WindowId {
+        self.window_id
+    }
+
+    /// Get the current window target ID.
     #[inline]
     fn window_id(&self) -> WindowId {
-        self.window_id
+        self.window_target
     }
 
     /// Create a new window.
@@ -191,12 +197,6 @@ impl WindowRenderer for Renderer {
         self.canvases
             .insert(window_id, (new_canvas, new_texture_creator));
         Ok(())
-    }
-
-    /// Returns the icurrent window target for drawing operations.
-    #[inline]
-    fn window_target(&self) -> WindowId {
-        self.window_target
     }
 
     /// Set window as the target for drawing operations.

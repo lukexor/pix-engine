@@ -100,7 +100,10 @@ pub enum SystemCursor {
 
 /// Trait representing window operations.
 pub(crate) trait WindowRenderer {
-    /// Get the primary window id.
+    /// Get the primary window ID.
+    fn primary_window_id(&self) -> WindowId;
+
+    /// Get the current window target ID.
     fn window_id(&self) -> WindowId;
 
     /// Create a new window.
@@ -144,9 +147,6 @@ pub(crate) trait WindowRenderer {
 
     /// Set the window to synchronize frame rate to the screens refresh rate.
     fn set_vsync(&mut self, val: bool) -> Result<()>;
-
-    /// Returns the icurrent window target for drawing operations.
-    fn window_target(&self) -> WindowId;
 
     /// Set window as the target for drawing operations.
     fn set_window_target(&mut self, id: WindowId) -> Result<()>;
@@ -254,10 +254,15 @@ impl<'a> WindowBuilder<'a> {
 impl PixState {
     /// Whether the application has focus or not.
     pub fn focused(&self) -> bool {
-        matches!(self.env.focused_window, Some(id) if id == self.renderer.window_target())
+        matches!(self.env.focused_window, Some(id) if id == self.renderer.window_id())
     }
 
-    /// Get the primary `Window` id.
+    /// Get the primary window ID.
+    pub fn primary_window_id(&self) -> WindowId {
+        self.renderer.primary_window_id()
+    }
+
+    /// Get the current window target ID.
     pub fn window_id(&self) -> WindowId {
         self.renderer.window_id()
     }
