@@ -17,7 +17,6 @@ jobs:
       fail-fast: false
       matrix:
         os:  [macos-latest, ubuntu-latest, windows-latest]
-        features: ["serde", "use-vcpkg"]
         include:
           - os: macos-latest
             env:
@@ -46,13 +45,13 @@ jobs:
       run: cargo vcpkg -v build
 
     - name: Build source
-      run: cargo build --all-targets --features "${{matrix.features}}" --verbose
+      run: cargo build --all-targets --features "serde use-vcpkg" --verbose
 
     - name: Build docs
-      run: cargo doc --features "${{matrix.features}}" --verbose
+      run: cargo doc --features "serde use-vcpkg" --verbose
 
     - name: Run unit tests
-      run: cargo test --features "${{matrix.features}}" --verbose
+      run: cargo test --features "serde use-vcpkg" --verbose
 
     - name: Run integration tests
       run: |
