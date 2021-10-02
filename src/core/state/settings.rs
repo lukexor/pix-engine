@@ -198,13 +198,6 @@ impl PixState {
         Ok(self.renderer.cursor(Some(cursor))?)
     }
 
-    /// Set the mouse cursor to a predefined symbol or image for a single frame.
-    ///
-    /// Cursor will get reset to the current setting next frame.
-    pub(crate) fn frame_cursor(&mut self, cursor: &Cursor) -> PixResult<()> {
-        Ok(self.renderer.cursor(Some(cursor))?)
-    }
-
     /// Hide the mouse cursor.
     pub fn no_cursor(&mut self) {
         self.settings.cursor = None;
@@ -341,5 +334,14 @@ impl PixState {
         if let Some(settings) = self.setting_stack.pop() {
             self.settings = settings;
         }
+    }
+}
+
+impl PixState {
+    /// Set the mouse cursor to a predefined symbol or image for a single frame.
+    ///
+    /// Cursor will get reset to the current setting next frame.
+    pub(crate) fn frame_cursor(&mut self, cursor: &Cursor) -> PixResult<()> {
+        Ok(self.renderer.cursor(Some(cursor))?)
     }
 }

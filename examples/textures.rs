@@ -44,7 +44,7 @@ impl AppState for Textures {
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        for (i, texture) in self.textures.iter().enumerate() {
+        for (i, texture) in self.textures.iter_mut().enumerate() {
             let w = texture.width() as i32;
             let h = texture.height() as i32;
             let pos = match i {

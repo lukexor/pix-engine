@@ -32,7 +32,7 @@ mod window;
 
 pub(crate) use textures::RendererTexture;
 
-type WindowCanvas = Canvas<SdlWindow>;
+pub(crate) type WindowCanvas = Canvas<SdlWindow>;
 
 lazy_static! {
     static ref TTF: Sdl2TtfContext = sdl2::ttf::init().expect("sdl2_ttf initialized");
@@ -77,7 +77,7 @@ pub(crate) struct Renderer {
     window_id: WindowId,
     window_target: WindowId,
     texture_target: Option<*mut Texture>,
-    canvases: HashMap<WindowId, (Canvas<SdlWindow>, TextureCreator<WindowContext>)>,
+    canvases: HashMap<WindowId, (WindowCanvas, TextureCreator<WindowContext>)>,
     font_cache: HashMap<(PathBuf, u16), Font<'static, 'static>>,
     text_cache: HashMap<(WindowId, String, Color), RendererTexture>,
     image_cache: HashMap<(WindowId, *const Image), RendererTexture>,
@@ -132,7 +132,7 @@ impl Rendering for Renderer {
     /// Clears the canvas to the current clear color.
     #[inline]
     fn clear(&mut self) -> Result<()> {
-        update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
             canvas.clear();
             Ok(())
         })
@@ -141,7 +141,7 @@ impl Rendering for Renderer {
     /// Sets the color used by the renderer to draw to the current canvas.
     #[inline]
     fn set_draw_color(&mut self, color: Color) -> Result<()> {
-        update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
             canvas.set_draw_color(color);
             Ok(())
         })
@@ -151,7 +151,7 @@ impl Rendering for Renderer {
     #[inline]
     fn clip(&mut self, rect: Option<Rect<i32>>) -> Result<()> {
         let rect = rect.map(|rect| rect.into());
-        update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
             canvas.set_clip_rect(rect);
             Ok(())
         })
@@ -174,7 +174,7 @@ impl Rendering for Renderer {
     /// Scale the current canvas.
     #[inline]
     fn scale(&mut self, x: f32, y: f32) -> Result<()> {
-        update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
             Ok(canvas.set_scale(x, y)?)
         })
     }
@@ -272,7 +272,7 @@ impl Rendering for Renderer {
     fn point(&mut self, p: PointI2, color: Color) -> Result<()> {
         let p: Point<i16, 2> = p.into();
         let [x, y]: [i16; 2] = p.into();
-        update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
             Ok(canvas.pixel(x, y, color)?)
         })
     }
@@ -282,7 +282,7 @@ impl Rendering for Renderer {
         let [start, end]: [Point<i16, 2>; 2] = line.into();
         let [x1, y1] = start.values();
         let [x2, y2] = end.values();
-        update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
             if y1 == y2 {
                 Ok(canvas.hline(x1, x2, y1, color)?)
             } else if x1 == x2 {
@@ -296,7 +296,7 @@ impl Rendering for Renderer {
     /// Draw a triangle to the current canvas.
     fn triangle(&mut self, tri: TriI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
         let [p1, p2, p3]: [Point<i16, 2>; 3] = tri.into();
-        update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
             if let Some(fill) = fill {
                 canvas.filled_trigon(p1.x(), p1.y(), p2.x(), p2.y(), p3.x(), p3.y(), fill)?;
             }
@@ -317,7 +317,7 @@ impl Rendering for Renderer {
     ) -> Result<()> {
         let rect: Rect<i16> = rect.into();
         let [x, y, width, height] = rect.values();
-        update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
             if let Some(radius) = radius {
                 let radius = radius as i16;
                 if let Some(fill) = fill {
@@ -343,7 +343,7 @@ impl Rendering for Renderer {
         let [p1, p2, p3, p4]: [Point<i16, 2>; 4] = quad.into();
         let vx = [p1.x(), p2.x(), p3.x(), p4.x()];
         let vy = [p1.y(), p2.y(), p3.y(), p4.y()];
-        update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
             if let Some(fill) = fill {
                 canvas.filled_polygon(&vx, &vy, fill)?;
             }
@@ -369,7 +369,7 @@ impl Rendering for Renderer {
                 (x, y)
             })
             .unzip();
-        update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
             if let Some(fill) = fill {
                 canvas.filled_polygon(&vx, &vy, fill)?;
             }
@@ -389,7 +389,7 @@ impl Rendering for Renderer {
     ) -> Result<()> {
         let ellipse: Ellipse<i16> = ellipse.into();
         let [x, y, width, height] = ellipse.values();
-        update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
             if let Some(fill) = fill {
                 canvas.filled_ellipse(x, y, width, height, fill)?;
             }
@@ -416,7 +416,7 @@ impl Rendering for Renderer {
         let radius = radius as i16;
         let start = start as i16;
         let end = end as i16;
-        update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
             match mode {
                 ArcMode::Default => {
                     if let Some(stroke) = stroke {
@@ -439,8 +439,9 @@ impl Rendering for Renderer {
     /// Draw an image to the current canvas, optionally rotated about a `center`, flipped or tinted
     fn image(
         &mut self,
-        rect: Rect<i32>,
         img: &Image,
+        src: Option<Rect<i32>>,
+        dst: Option<Rect<i32>>,
         angle: Scalar,
         center: Option<PointI2>,
         flipped: Option<Flipped>,
@@ -475,22 +476,32 @@ impl Rendering for Renderer {
             img.as_bytes(),
             img.format().channels() * img.width() as usize,
         )?;
-        let rect: SdlRect = rect.into();
+        let src = src.map(|r| r.into());
+        let dst = dst.map(|r| r.into());
         update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
             if angle > 0.0 || center.is_some() || flipped.is_some() {
                 Ok(canvas.copy_ex(
                     texture,
-                    None,
-                    rect,
+                    src,
+                    dst,
                     angle,
                     center.map(|c| c.into()),
                     matches!(flipped, Some(Flipped::Horizontal | Flipped::Both)),
                     matches!(flipped, Some(Flipped::Vertical | Flipped::Both)),
                 )?)
             } else {
-                Ok(canvas.copy(texture, None, rect)?)
+                Ok(canvas.copy(texture, src, dst)?)
             }
         })
+    }
+}
+
+impl Renderer {
+    pub(crate) fn update_canvas<F>(&mut self, mut f: F) -> Result<()>
+    where
+        for<'r> F: FnMut(&'r mut WindowCanvas) -> Result<()>,
+    {
+        update_canvas!(self, f)
     }
 }
 

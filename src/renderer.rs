@@ -119,7 +119,7 @@ pub(crate) trait Rendering: Sized {
     /// Set the font family for drawing to the current canvas.
     fn font_family(&mut self, family: &str) -> Result<()>;
 
-    /// Draw text to the current canvas.
+    /// Draw text to the current canvas. `angle` must be in degrees.
     fn text(
         &mut self,
         position: PointI2,
@@ -180,11 +180,14 @@ pub(crate) trait Rendering: Sized {
         stroke: Option<Color>,
     ) -> Result<()>;
 
-    /// Draw an image to the current canvas, optionally rotated about a `center`, flipped or tinted
+    /// Draw an image to the current canvas, optionally rotated about a `center`, flipped or
+    /// tinted. `angle` must be in degrees.
+    #[allow(clippy::too_many_arguments)]
     fn image(
         &mut self,
-        rect: Rect<i32>,
         img: &Image,
+        src: Option<Rect<i32>>,
+        dst: Option<Rect<i32>>,
         angle: Scalar,
         center: Option<PointI2>,
         flipped: Option<Flipped>,

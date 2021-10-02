@@ -4,6 +4,7 @@ use crate::{
     prelude::*,
     renderer::{RendererTexture, Result as RendererResult},
 };
+use num_traits::AsPrimitive;
 
 /// `TextureId`.
 pub type TextureId = usize;
@@ -35,11 +36,16 @@ pub(crate) trait TextureRenderer {
     ) -> RendererResult<()>;
 
     /// Draw texture to the curent canvas.
+    #[allow(clippy::too_many_arguments)]
     fn texture(
         &mut self,
-        texture: &Texture,
+        texture: &mut Texture,
         src: Option<Rect<i32>>,
         dst: Option<Rect<i32>>,
+        angle: Scalar,
+        center: Option<PointI2>,
+        flipped: Option<Flipped>,
+        tint: Option<Color>,
     ) -> RendererResult<()>;
 
     /// Set texture as the target for drawing operations.
@@ -136,13 +142,53 @@ impl std::fmt::Debug for Texture {
 }
 
 impl PixState {
-    /// Draw the `Texture` to the current canvas.
-    pub fn texture<R1, R2>(&mut self, texture: &Texture, src: R1, dst: R2) -> PixResult<()>
+    /// Draw a portion of a [Texture] to the current canvas resized to the target `dst`.
+    pub fn texture<R1, R2>(&mut self, texture: &mut Texture, src: R1, dst: R2) -> PixResult<()>
     where
         R1: Into<Option<Rect<i32>>>,
         R2: Into<Option<Rect<i32>>>,
     {
-        Ok(self.renderer.texture(texture, src.into(), dst.into())?)
+        Ok(self
+            .renderer
+            .texture(texture, src.into(), dst.into(), 0.0, None, None, None)?)
+    }
+
+    /// Draw a transformed [Texture] to the current canvas resized to the target `rect`, optionally
+    /// rotated by an `angle` about the `center` point or `flipped`. `angle` can be in either
+    /// radians or degrees based on [AngleMode].
+    #[allow(clippy::too_many_arguments)]
+    pub fn texture_transformed<R1, R2, A, C, F, T>(
+        &mut self,
+        texture: &mut Texture,
+        src: R1,
+        dst: R2,
+        angle: A,
+        center: C,
+        flipped: F,
+        tint: T,
+    ) -> PixResult<()>
+    where
+        R1: Into<Option<Rect<i32>>>,
+        R2: Into<Option<Rect<i32>>>,
+        A: AsPrimitive<Scalar>,
+        C: Into<Option<PointI2>>,
+        F: Into<Option<Flipped>>,
+        T: Into<Option<Color>>,
+    {
+        let s = &self.settings;
+        let mut angle: Scalar = angle.as_();
+        if let AngleMode::Radians = s.angle_mode {
+            angle = angle.to_degrees();
+        };
+        Ok(self.renderer.texture(
+            texture,
+            src.into(),
+            dst.into(),
+            angle,
+            center.into(),
+            flipped.into(),
+            tint.into(),
+        )?)
     }
 
     /// Constructs a `Texture` to render to.

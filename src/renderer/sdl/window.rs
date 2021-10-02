@@ -1,4 +1,4 @@
-use super::Renderer;
+use super::{Renderer, WindowCanvas};
 use crate::{
     core::window::{Error, Position, Result, WindowId},
     prelude::{Cursor, Event, SystemCursor},
@@ -7,9 +7,9 @@ use crate::{
 use sdl2::{
     image::LoadSurface,
     mouse::{Cursor as SdlCursor, SystemCursor as SdlSystemCursor},
-    render::{Canvas, TextureValueError},
+    render::TextureValueError,
     surface::Surface,
-    video::{FullscreenType, Window as SdlWindow, WindowBuildError},
+    video::{FullscreenType, WindowBuildError},
     IntegerOrSdlError, Sdl,
 };
 use std::borrow::Cow;
@@ -243,7 +243,7 @@ impl Renderer {
     pub(crate) fn create_window_canvas(
         context: &Sdl,
         s: &RendererSettings,
-    ) -> Result<(WindowId, Canvas<SdlWindow>)> {
+    ) -> Result<(WindowId, WindowCanvas)> {
         let video_subsys = context.video()?;
 
         // TODO: more testing - macOS performance seems low with default "metal" renderer

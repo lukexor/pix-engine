@@ -271,7 +271,6 @@ impl PixEngine {
                         self.frames.push_back(now);
 
                         self.frame_timer += time_since_last;
-                        dbg!(&state.renderer);
                         if self.frame_timer >= ONE_SECOND {
                             self.frame_timer -= ONE_SECOND;
                             state.env.frame_rate = self.frames.len();

@@ -1,6 +1,7 @@
 //! [Image] and [PixelFormat] functions.
 
 use crate::{prelude::*, renderer::Rendering};
+use num_traits::AsPrimitive;
 use png::{BitDepth, ColorType, Decoder};
 use std::{
     borrow::Cow,
@@ -297,38 +298,48 @@ impl PixState {
     {
         let pos = position.into();
         self.image_transformed(
-            rect![pos.x(), pos.y(), img.width() as i32, img.height() as i32],
             img,
+            None,
+            rect![pos.x(), pos.y(), img.width() as i32, img.height() as i32],
             0.0,
             None,
             None,
         )
     }
 
-    /// Draw a rotated [Image] to the current canvas.
-    pub fn image_transformed<R, T, C, F>(
+    /// Draw a transformed [Image] to the current canvas resized to the target `rect`, optionally
+    /// rotated by an `angle` about the `center` point or `flipped`. `angle` can be in either
+    /// radians or degrees based on [AngleMode].
+    pub fn image_transformed<R1, R2, T, C, F>(
         &mut self,
-        rect: R,
         img: &Image,
+        src: R1,
+        dst: R2,
         angle: T,
         center: C,
         flipped: F,
     ) -> PixResult<()>
     where
-        R: Into<Rect<i32>>,
-        T: Into<Scalar>,
+        R1: Into<Option<Rect<i32>>>,
+        R2: Into<Option<Rect<i32>>>,
+        T: AsPrimitive<Scalar>,
         C: Into<Option<PointI2>>,
         F: Into<Option<Flipped>>,
     {
         let s = &self.settings;
-        let mut rect = rect.into();
+        let mut dst = dst.into();
         if let ImageMode::Center = s.image_mode {
-            rect.center_on(rect.top_left());
+            dst = dst.map(|dst| Rect::from_center(dst.top_left(), dst.width(), dst.height()));
+        };
+        let mut angle: Scalar = angle.as_();
+        if let AngleMode::Radians = s.angle_mode {
+            angle = angle.to_degrees();
         };
         Ok(self.renderer.image(
-            rect,
             img,
-            angle.into(),
+            src.into(),
+            dst,
+            angle,
             center.into(),
             flipped.into(),
             s.image_tint,

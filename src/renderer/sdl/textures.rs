@@ -1,4 +1,4 @@
-use super::{Renderer, TTF};
+use super::{Renderer, WindowCanvas, TTF};
 use crate::renderer::*;
 use sdl2::{rect::Rect as SdlRect, render::Texture as SdlTexture};
 
@@ -61,17 +61,42 @@ impl TextureRenderer for Renderer {
     #[inline]
     fn texture(
         &mut self,
-        texture: &Texture,
+        texture: &mut Texture,
         src: Option<Rect<i32>>,
         dst: Option<Rect<i32>>,
+        angle: Scalar,
+        center: Option<PointI2>,
+        flipped: Option<Flipped>,
+        tint: Option<Color>,
     ) -> Result<()> {
+        match tint {
+            Some(tint) => {
+                let [r, g, b, a] = tint.channels();
+                texture.inner_mut().set_color_mod(r, g, b);
+                texture.inner_mut().set_alpha_mod(a);
+            }
+            None => {
+                texture.inner_mut().set_color_mod(255, 255, 255);
+                texture.inner_mut().set_alpha_mod(255);
+            }
+        }
         let src = src.map(|r| r.into());
         let dst = dst.map(|r| r.into());
-        let (canvas, _) = self
-            .canvases
-            .get_mut(&self.window_target)
-            .ok_or(WindowError::InvalidWindow(self.window_target))?;
-        Ok(canvas.copy(texture.inner(), src, dst)?)
+        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
+            if angle > 0.0 || center.is_some() || flipped.is_some() {
+                Ok(canvas.copy_ex(
+                    texture.inner(),
+                    src,
+                    dst,
+                    angle,
+                    center.map(|c| c.into()),
+                    matches!(flipped, Some(Flipped::Horizontal | Flipped::Both)),
+                    matches!(flipped, Some(Flipped::Vertical | Flipped::Both)),
+                )?)
+            } else {
+                Ok(canvas.copy(texture.inner(), src, dst)?)
+            }
+        })
     }
 
     /// Set texture as the target for drawing operations.
