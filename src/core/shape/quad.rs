@@ -27,8 +27,6 @@
 
 use crate::prelude::*;
 use num_traits::AsPrimitive;
-// #[cfg(feature = "serde")]
-// use serde::{Deserialize, Serialize};
 
 /// A `Quad` or quadrilateral, a four-sided polygon.
 ///
@@ -38,8 +36,6 @@ use num_traits::AsPrimitive;
 ///
 /// [module-level documentation]: crate::core::shape::quad
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-// TODO: serde is not ready for const generics yet
-// #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Quad<T, const N: usize>(pub(crate) [Point<T, N>; 4]);
 
 /// A 2D `Quad` represented by integers.

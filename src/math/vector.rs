@@ -64,8 +64,6 @@
 use crate::prelude::*;
 use num_traits::Signed;
 use rand::distributions::uniform::SampleUniform;
-// #[cfg(feature = "serde")]
-// use serde::{Deserialize, Serialize};
 use std::{fmt, ops::*};
 
 /// A [Euclidean] `Vector` in N-dimensional space.
@@ -90,8 +88,6 @@ use std::{fmt, ops::*};
 /// [vecmath]: https://en.wikipedia.org/wiki/Vector_(mathematics_and_p.y()sics)
 /// [module-level documentation]: crate::math::vector
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Hash)]
-// TODO: serde is not ready for const generics yet
-// #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Vector<T, const N: usize>(pub(crate) [T; N]);
 
 /// A 1D `Vector` represented by integers.

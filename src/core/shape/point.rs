@@ -25,8 +25,6 @@
 
 use crate::prelude::*;
 use num_traits::{AsPrimitive, Signed};
-// #[cfg(feature = "serde")]
-// use serde::{Deserialize, Serialize};
 use std::{fmt, ops::*};
 
 /// A `Point` in N-dimensional space.
@@ -35,8 +33,6 @@ use std::{fmt, ops::*};
 ///
 /// [module-level documentation]: crate::core::shape::point
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-// TODO: serde is not ready for const generics yet
-// #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Point<T, const N: usize>(pub(crate) [T; N]);
 
 /// A 1D `Point` represented by integers.

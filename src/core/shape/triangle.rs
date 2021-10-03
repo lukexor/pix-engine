@@ -18,8 +18,6 @@
 
 use crate::prelude::*;
 use num_traits::AsPrimitive;
-// #[cfg(feature = "serde")]
-// use serde::{Deserialize, Serialize};
 
 /// A `Triangle` with three [Point]s.
 ///
@@ -27,8 +25,6 @@ use num_traits::AsPrimitive;
 ///
 /// [module-level documentation]: crate::core::shape::triangle
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-// TODO: serde is not ready for const generics yet
-// #[cfg_ater(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Tri<T, const N: usize>(pub(crate) [Point<T, N>; 3]);
 
 /// A 2D `Triangle` represented by integers.

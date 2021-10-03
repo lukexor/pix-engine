@@ -96,7 +96,7 @@ fn main() -> PixResult<()> {
 * **opengl** -
   Forces `sdl2` to use `opengl` as its renderer. This feature is disabled by
   default, allowing `sdl2` to use whichever renderer it defaults to on the
-  target system. For example, macOs defaults to `metal`.
+  target system. For example, macOS defaults to `metal`.
 
 ## Known Issues
 

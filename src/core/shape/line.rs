@@ -20,8 +20,6 @@
 
 use crate::prelude::*;
 use num_traits::AsPrimitive;
-// #[cfg(feature = "serde")]
-// use serde::{Deserialize, Serialize};
 
 /// A `Line` with start and end [Point]s.
 ///
@@ -29,8 +27,6 @@ use num_traits::AsPrimitive;
 ///
 /// [module-level documentation]: crate::core::shape::line
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-// TODO: serde is not ready for const generics yet
-// #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Line<T, const N: usize>(pub(crate) [Point<T, N>; 2]);
 
 /// A 2D `Line` represented by integers.

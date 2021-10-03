@@ -1,13 +1,9 @@
 //! [Light] source functions.
 
 use crate::prelude::{Point, Scalar, Vector};
-// #[cfg(feature = "serde")]
-// use serde::{Deserialize, Serialize};
 
 /// Source of [Light].
 #[derive(Debug, Copy, Clone, PartialEq, Hash)]
-// TODO: serde is not ready for const generics yet
-// #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum LightSource<T, const N: usize> {
     /// Ambient light.
     Ambient,
@@ -19,8 +15,6 @@ pub enum LightSource<T, const N: usize> {
 
 /// `Light` representation including `source` and `intensity`.
 #[derive(Debug, Copy, Clone, PartialEq, Hash)]
-// TODO: serde is not ready for const generics yet
-// #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Light<T, const N: usize> {
     /// Source of light.
     pub source: LightSource<T, N>,
