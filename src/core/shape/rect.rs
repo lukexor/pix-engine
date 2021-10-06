@@ -196,6 +196,16 @@ impl<T: Num> Rect<T> {
         Self::new(p.x() - offset, p.y() - offset, size, size)
     }
 
+    /// Resize rectangle by a given value around the center.
+    pub fn resized(rect: Rect<T>, val: T) -> Self
+    where
+        T: std::fmt::Debug,
+    {
+        let [x, y, width, height] = rect.values();
+        let two_val = val + val;
+        rect!(x - val, y - val, width + two_val, height + two_val)
+    }
+
     /// Returns the `x-coordinate` of the rectangle.
     #[inline]
     pub fn x(&self) -> T {
@@ -332,6 +342,15 @@ impl<T: Num> Rect<T> {
         let two = T::one() + T::one();
         self.set_x(p.x() - self.width() / two);
         self.set_y(p.y() - self.height() / two);
+    }
+
+    /// Resize rectangle by a given value around the center.
+    pub fn resize_by(&mut self, val: T) {
+        let two = T::one();
+        self.set_x(self.x() - val);
+        self.set_y(self.y() - val);
+        self.set_width(self.width() + two * val);
+        self.set_height(self.height() + two * val);
     }
 }
 

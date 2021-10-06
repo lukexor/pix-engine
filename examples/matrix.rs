@@ -23,7 +23,7 @@ struct Glyph {
 }
 
 impl Glyph {
-    const FONT: &'static str = "assets/GN-Koharuiro_Sunray.ttf";
+    const FONT: &'static str = "gn_koharuiro_sunray";
     const SIZE: u32 = 24;
     const HEIGHT: u32 = 15;
     const WIDTH: u32 = 15;

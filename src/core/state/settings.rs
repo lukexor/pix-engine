@@ -66,6 +66,7 @@ pub enum AngleMode {
 
 bitflags! {
     /// Font style for drawing text.
+    #[derive(Default)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "serde", serde(transparent))]
     pub struct FontStyle: i32 {
@@ -89,9 +90,12 @@ pub(crate) struct Settings {
     pub(crate) background: Color,
     pub(crate) fill: Option<Color>,
     pub(crate) stroke: Option<Color>,
+    pub(crate) clip: Option<Rect<i32>>,
     pub(crate) running: bool,
     pub(crate) run_count: usize,
     pub(crate) show_frame_rate: bool,
+    pub(crate) scale_x: f32,
+    pub(crate) scale_y: f32,
     pub(crate) rect_mode: RectMode,
     pub(crate) ellipse_mode: EllipseMode,
     pub(crate) image_mode: ImageMode,
@@ -108,9 +112,12 @@ impl Default for Settings {
             background: Color::default(),
             fill: Some(WHITE),
             stroke: Some(BLACK),
+            clip: None,
             running: true,
             run_count: 0,
             show_frame_rate: false,
+            scale_x: 1.0,
+            scale_y: 1.0,
             rect_mode: RectMode::Corner,
             ellipse_mode: EllipseMode::Corner,
             image_mode: ImageMode::Corner,
@@ -164,11 +171,13 @@ impl PixState {
     where
         R: Into<Rect<i32>>,
     {
-        Ok(self.renderer.clip(Some(rect.into()))?)
+        self.settings.clip = Some(rect.into());
+        Ok(self.renderer.clip(self.settings.clip)?)
     }
 
     /// Clears the clip [Rect] used by the renderer to draw to the current canvas.
     pub fn no_clip(&mut self) -> PixResult<()> {
+        self.settings.clip = None;
         Ok(self.renderer.clip(None)?)
     }
 
@@ -195,7 +204,7 @@ impl PixState {
     /// Set the mouse cursor to a predefined symbol or image.
     pub fn cursor(&mut self, cursor: &Cursor) -> PixResult<()> {
         self.settings.cursor = Some(cursor.clone());
-        Ok(self.renderer.cursor(Some(cursor))?)
+        Ok(self.renderer.cursor(self.settings.cursor.as_ref())?)
     }
 
     /// Hide the mouse cursor.
@@ -253,27 +262,10 @@ impl PixState {
 
     /// Set the rendering scale of the current canvas.
     pub fn scale<T: AsPrimitive<f32>>(&mut self, x: T, y: T) -> PixResult<()> {
-        Ok(self.renderer.scale(x.as_(), y.as_())?)
-    }
-
-    /// Set the font size for drawing to the current canvas.
-    pub fn font_size<S: AsPrimitive<u32>>(&mut self, size: S) -> PixResult<()> {
-        Ok(self.renderer.font_size(size.as_())?)
-    }
-
-    /// Return the dimensions of given text for drawing to the current canvas.
-    pub fn size_of<S: AsRef<str>>(&self, text: S) -> PixResult<(u32, u32)> {
-        Ok(self.renderer.size_of(text.as_ref())?)
-    }
-
-    /// Set the font style for drawing to the current canvas.
-    pub fn font_style(&mut self, style: FontStyle) {
-        self.renderer.font_style(style);
-    }
-
-    /// Set the font family for drawing to the current canvas.
-    pub fn font_family<S: AsRef<str>>(&mut self, family: S) -> PixResult<()> {
-        Ok(self.renderer.font_family(family.as_ref())?)
+        let mut s = &mut self.settings;
+        s.scale_x = x.as_();
+        s.scale_y = y.as_();
+        Ok(self.renderer.scale(s.scale_x, s.scale_y)?)
     }
 
     /// Change the way parameters are interpreted for drawing [Square](Rect)s and
@@ -303,8 +295,7 @@ impl PixState {
     where
         C: Into<Option<Color>>,
     {
-        let tint = tint.into();
-        self.settings.image_tint = tint;
+        self.settings.image_tint = tint.into();
     }
 
     /// Change the way arcs are drawn.
@@ -334,6 +325,20 @@ impl PixState {
         if let Some(settings) = self.setting_stack.pop() {
             self.settings = settings;
         }
+        let s = &self.settings;
+        let t = &self.theme;
+        // SAFETY: All of these settings should be valid since they were set prior to `pop()` being
+        // called.
+        self.renderer.clip(s.clip).expect("valid clip setting");
+        // Excluding restoring cursor - as it's used for IMGUI for hover.
+        self.renderer
+            .font_size(t.font_sizes.body)
+            .expect("valid font size");
+        self.renderer.font_style(t.font_styles.body);
+        self.renderer
+            .font_family(&t.fonts.body)
+            .expect("valid font family");
+        self.renderer.blend_mode(s.blend_mode);
     }
 }
 

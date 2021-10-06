@@ -35,25 +35,19 @@ impl PixEngineBuilder {
         self
     }
 
-    /// Set a True-Type Font for text rendering.
-    #[cfg(not(target_arch = "wasm32"))]
-    pub fn with_font<P>(&mut self, path: P, size: u32) -> &mut Self
+    /// Set font for text rendering.
+    pub fn with_font<F>(&mut self, font: F, size: u32) -> &mut Self
     where
-        P: Into<PathBuf>,
+        F: Into<Font>,
     {
-        self.settings.font = path.into();
-        self.settings.font_size = size;
+        self.settings.theme.fonts.body = font.into();
+        self.settings.theme.font_sizes.body = size;
         self
     }
 
-    /// Set font for text rendering.
-    #[cfg(target_arch = "wasm32")]
-    pub fn with_font<S>(&mut self, font: S, size: u32) -> &mut Self
-    where
-        S: Into<String>,
-    {
-        self.settings.font = font.into();
-        self.settings.font_size = size;
+    /// Set theme for UI rendering.
+    pub fn with_theme(&mut self, theme: Theme) -> &mut Self {
+        self.settings.theme = theme;
         self
     }
 
@@ -320,7 +314,7 @@ impl PixEngine {
                     keymod,
                     repeat,
                 } => {
-                    state.keys.press(key);
+                    state.ui_state.keys.press(key, keymod);
                     app.on_key_pressed(
                         state,
                         KeyEvent {
@@ -336,7 +330,8 @@ impl PixEngine {
                     keymod,
                     repeat,
                 } => {
-                    state.keys.release(&key);
+                    // TODO: Add tab-selection of elements
+                    state.ui_state.keys.release(key, keymod);
                     app.on_key_released(
                         state,
                         KeyEvent {
@@ -351,29 +346,29 @@ impl PixEngine {
                     app.on_key_typed(state, text)?;
                 }
                 Event::MouseMotion { x, y, xrel, yrel } => {
-                    state.pmouse.set_pos(state.mouse.pos());
-                    state.mouse.set_pos(point!(x, y));
-                    if state.mouse.is_pressed() {
+                    state.ui_state.pmouse.pos = state.ui_state.mouse.pos;
+                    state.ui_state.mouse.pos = point!(x, y);
+                    if state.ui_state.mouse.is_pressed() {
                         app.on_mouse_dragged(state)?;
                     }
-                    app.on_mouse_motion(state, state.mouse.pos(), xrel, yrel)?;
+                    app.on_mouse_motion(state, state.ui_state.mouse.pos, xrel, yrel)?;
                 }
                 Event::MouseDown { button, x, y } => {
-                    state.mouse.press(button);
+                    state.ui_state.mouse.press(button);
                     app.on_mouse_pressed(state, button, point!(x, y))?;
                 }
                 Event::MouseUp { button, x, y } => {
-                    if state.mouse.is_down(button) {
+                    if state.ui_state.mouse.is_down(button) {
                         let now = Instant::now();
-                        if let Some(&clicked) = state.mouse.last_clicked(&button) {
+                        if let Some(&clicked) = state.ui_state.mouse.last_clicked(button) {
                             if now - clicked < Duration::from_millis(500) {
                                 app.on_mouse_dbl_clicked(state, button, point!(x, y))?;
                             }
                         }
-                        state.mouse.click(button, now);
+                        state.ui_state.mouse.click(button, now);
                         app.on_mouse_clicked(state, button, point!(x, y))?;
                     }
-                    state.mouse.release(&button);
+                    state.ui_state.mouse.release(button);
                     app.on_mouse_released(state, button, point!(x, y))?;
                 }
                 Event::MouseWheel { x, y, .. } => {

@@ -9,55 +9,6 @@ use num_traits::AsPrimitive;
 /// `TextureId`.
 pub type TextureId = usize;
 
-/// Trait for texture operations on the underlying `Renderer`.
-pub(crate) trait TextureRenderer {
-    /// Create a `Texture` to draw to.
-    fn create_texture(
-        &mut self,
-        width: u32,
-        height: u32,
-        format: Option<PixelFormat>,
-    ) -> RendererResult<Texture>;
-
-    /// Delete a `Texture`.
-    #[cfg(not(target_arch = "wasm32"))]
-    unsafe fn delete_texture(&mut self, texture: Texture) -> RendererResult<()>;
-    /// Delete a `Texture`.
-    #[cfg(target_arch = "wasm32")]
-    fn delete_texture(&mut self, texture: Texture) -> RendererResult<()>;
-
-    /// Update texture with pixel data.
-    fn update_texture<P: AsRef<[u8]>>(
-        &mut self,
-        texture: &mut Texture,
-        rect: Option<Rect<i32>>,
-        pixels: P,
-        pitch: usize,
-    ) -> RendererResult<()>;
-
-    /// Draw texture to the curent canvas.
-    #[allow(clippy::too_many_arguments)]
-    fn texture(
-        &mut self,
-        texture: &mut Texture,
-        src: Option<Rect<i32>>,
-        dst: Option<Rect<i32>>,
-        angle: Scalar,
-        center: Option<PointI2>,
-        flipped: Option<Flipped>,
-        tint: Option<Color>,
-    ) -> RendererResult<()>;
-
-    /// Set texture as the target for drawing operations.
-    fn set_texture_target(&mut self, texture: &mut Texture);
-
-    /// Clear texture as the target for drawing operations.
-    fn clear_texture_target(&mut self);
-
-    /// Clear internal texture cache.
-    fn clear_texture_cache(&mut self);
-}
-
 /// `Texture`.
 pub struct Texture {
     window_id: WindowId,
@@ -133,6 +84,55 @@ impl Texture {
     pub(crate) fn inner_mut(&mut self) -> &mut RendererTexture {
         &mut self.inner
     }
+}
+
+/// Trait for texture operations on the underlying `Renderer`.
+pub(crate) trait TextureRenderer {
+    /// Create a `Texture` to draw to.
+    fn create_texture(
+        &mut self,
+        width: u32,
+        height: u32,
+        format: Option<PixelFormat>,
+    ) -> RendererResult<Texture>;
+
+    /// Delete a `Texture`.
+    #[cfg(not(target_arch = "wasm32"))]
+    unsafe fn delete_texture(&mut self, texture: Texture) -> RendererResult<()>;
+    /// Delete a `Texture`.
+    #[cfg(target_arch = "wasm32")]
+    fn delete_texture(&mut self, texture: Texture) -> RendererResult<()>;
+
+    /// Update texture with pixel data.
+    fn update_texture<P: AsRef<[u8]>>(
+        &mut self,
+        texture: &mut Texture,
+        rect: Option<Rect<i32>>,
+        pixels: P,
+        pitch: usize,
+    ) -> RendererResult<()>;
+
+    /// Draw texture to the curent canvas.
+    #[allow(clippy::too_many_arguments)]
+    fn texture(
+        &mut self,
+        texture: &mut Texture,
+        src: Option<Rect<i32>>,
+        dst: Option<Rect<i32>>,
+        angle: Scalar,
+        center: Option<PointI2>,
+        flipped: Option<Flipped>,
+        tint: Option<Color>,
+    ) -> RendererResult<()>;
+
+    /// Set texture as the target for drawing operations.
+    fn set_texture_target(&mut self, texture: &mut Texture);
+
+    /// Clear texture as the target for drawing operations.
+    fn clear_texture_target(&mut self);
+
+    /// Clear internal texture cache.
+    fn clear_texture_cache(&mut self);
 }
 
 impl std::fmt::Debug for Texture {

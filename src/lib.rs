@@ -74,6 +74,7 @@ pub mod prelude {
         window::{Cursor, Position, SystemCursor, WindowBuilder, WindowId},
     };
     pub use event::{Axis, ControllerButton, Event, Key, KeyEvent, KeyMod, Mouse, WindowEvent};
+    pub use gui::{Font, Theme, ThemeBuilder};
     pub use image::{Image, PixelFormat};
     pub use math::{
         constants::*,

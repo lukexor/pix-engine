@@ -7,10 +7,7 @@
 //! # struct App;
 //! # impl App {
 //! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-//!     if s.button([0, 0, 100, 50], "Hover Me")?.hovered() {
-//!       println!("I was hovered over!");
-//!     }
-//!     if s.button([0, 0, 100, 50], "Click Me")?.clicked() {
+//!     if s.button([0, 0, 100, 50], "Click Me")? {
 //!       println!("I was clicked!");
 //!     }
 //!     Ok(())
@@ -18,91 +15,65 @@
 //! # }
 //! ```
 
-use crate::{core::state::MouseState, prelude::*};
-
-/// An immediate-gui button positioned at `(x, y`) with `width`, `height` and a label. Contains
-/// hovered and clicked state which can be checked with [Button::hovered] and [Button::clicked]
-/// respectively.
-#[derive(Debug, PartialEq, Eq, Hash)]
-pub struct Button<'a> {
-    rect: Rect<i32>,
-    label: &'a str,
-    hovered: bool,
-    clicked: bool,
-}
-
-impl Button<'_> {
-    /// Returns the button `Rect`.
-    pub fn rect(&self) -> Rect<i32> {
-        self.rect
-    }
-
-    /// Returns the button label.
-    pub fn label(&self) -> &str {
-        self.label
-    }
-
-    /// Returns whether the button was hovered this frame.
-    pub fn hovered(&self) -> bool {
-        self.hovered
-    }
-
-    /// Returns whether the button was clicked this frame.
-    pub fn clicked(&self) -> bool {
-        self.clicked
-    }
-}
-
-impl<'a> Button<'a> {
-    #[inline]
-    fn new(rect: Rect<i32>, label: &'a str, mouse: &MouseState) -> Self {
-        let hovered = rect.contains_point(mouse.pos());
-        let clicked = hovered && mouse.was_clicked(&Mouse::Left);
-        Self {
-            rect,
-            label,
-            hovered,
-            clicked,
-        }
-    }
-}
-
-impl Draw for Button<'_> {
-    fn draw(&self, s: &mut PixState) -> PixResult<()> {
-        s.push();
-
-        if self.hovered {
-            s.fill(NAVY);
-            s.frame_cursor(&Cursor::hand())?;
-        } else {
-            s.fill(GRAY);
-        }
-        s.stroke(WHITE);
-
-        s.rect_mode(RectMode::Corner);
-        s.rounded_rect(self.rect, 6.0)?;
-
-        s.fill(WHITE);
-        s.rect_mode(RectMode::Center);
-        s.text(self.rect.center(), self.label)?;
-
-        s.pop();
-        Ok(())
-    }
-}
+use super::get_hash;
+use crate::{prelude::*, renderer::Rendering};
 
 impl PixState {
-    /// Draw a [Button] to the current canvas.
-    pub fn button<'a, R>(&mut self, rect: R, label: &'a str) -> PixResult<Button<'a>>
+    /// Draw a button to the current canvas that returns `true` when clicked.
+    pub fn button<R>(&mut self, rect: R, label: &str) -> PixResult<bool>
     where
         R: Into<Rect<i32>>,
     {
-        let mut rect = rect.into();
-        if let RectMode::Center = self.settings.rect_mode {
-            rect.center_on(rect.top_left());
-        };
-        let button = Button::new(rect, label, &self.mouse);
-        button.draw(self)?;
-        Ok(button)
+        let s = self;
+        let rect = s.get_rect(rect);
+        let id = get_hash(&rect);
+
+        s.push();
+
+        // Check hover/active/keyboard focus
+        if rect.contains_point(s.mouse_pos()) {
+            s.ui_state.hover(id);
+        }
+        s.ui_state.try_capture(id);
+
+        // Render
+
+        // Button
+        s.rect_mode(RectMode::Corner);
+        if s.ui_state.is_focused(id) {
+            s.stroke(s.secondary_color());
+        } else {
+            s.stroke(s.muted_color());
+        }
+        let hovered = s.ui_state.is_hovered(id);
+        let active = s.ui_state.is_active(id);
+        if hovered {
+            s.frame_cursor(&Cursor::hand())?;
+            s.fill(s.accent_color());
+            if active {
+                let mut rect = rect;
+                rect.set_x(rect.x() + 2);
+                rect.set_y(rect.y() + 2);
+                s.rounded_rect(rect, 3.0)?;
+            } else {
+                s.rounded_rect(rect, 3.0)?;
+            }
+        } else {
+            s.fill(s.primary_color());
+            s.rounded_rect(rect, 3.0)?;
+        }
+
+        // Button text
+        s.rect_mode(RectMode::Center);
+        s.renderer.font_family(&s.theme.fonts.body)?;
+        s.fill(s.text_color());
+        s.text(rect.center(), label)?;
+
+        s.pop();
+
+        // Process input
+        s.ui_state.handle_tab(id);
+        s.ui_state.set_last(id);
+        Ok(s.ui_state.was_clicked(id))
     }
 }

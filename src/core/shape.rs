@@ -114,10 +114,7 @@ impl PixState {
         R: Into<Rect<i32>>,
     {
         let s = &self.settings;
-        let mut rect = rect.into();
-        if let RectMode::Center = s.rect_mode {
-            rect.center_on(rect.top_left());
-        };
+        let rect = self.get_rect(rect);
         Ok(self.renderer.rect(rect, None, s.fill, s.stroke)?)
     }
 
@@ -128,10 +125,7 @@ impl PixState {
         T: AsPrimitive<i32>,
     {
         let s = &self.settings;
-        let mut rect = rect.into();
-        if let RectMode::Center = s.rect_mode {
-            rect.center_on(rect.top_left());
-        };
+        let rect = self.get_rect(rect);
         Ok(self
             .renderer
             .rect(rect, Some(radius.as_()), s.fill, s.stroke)?)
@@ -166,10 +160,7 @@ impl PixState {
         E: Into<Ellipse<i32>>,
     {
         let s = &self.settings;
-        let mut ellipse = ellipse.into();
-        if let EllipseMode::Center = s.ellipse_mode {
-            ellipse.center_on(ellipse.top_left());
-        };
+        let ellipse = self.get_ellipse(ellipse);
         Ok(self.renderer.ellipse(ellipse, s.fill, s.stroke)?)
     }
 

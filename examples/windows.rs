@@ -17,9 +17,7 @@ impl AppState for WindowDemo {
         s.rect_mode(RectMode::Center);
         s.text([s.width() / 2, 20], "Window 1")?;
 
-        if s.button([s.width() / 2, 100, 200, 50], "Open Window")?
-            .clicked()
-        {
+        if s.button([s.width() / 2, 100, 200, 50], "Open Window")? {
             let (w, h) = s.display_dimensions();
             let window_id = s
                 .window()
@@ -30,9 +28,7 @@ impl AppState for WindowDemo {
             self.windows.push((window_id, Color::random()));
         }
 
-        if s.button([s.width() / 2, 180, 220, 50], "Close Windows")?
-            .clicked()
-        {
+        if s.button([s.width() / 2, 180, 220, 50], "Close Windows")? {
             for &(window_id, _) in &self.windows {
                 s.close_window(window_id)?;
             }

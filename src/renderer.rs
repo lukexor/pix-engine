@@ -33,11 +33,7 @@ const DEFAULT_SAMPLE_RATE: i32 = 44_100; // in Hz
 #[derive(Debug, Clone)]
 pub(crate) struct RendererSettings {
     pub(crate) title: String,
-    #[cfg(not(target_arch = "wasm32"))]
-    pub(crate) font: PathBuf,
-    #[cfg(target_arch = "wasm32")]
-    pub(crate) font: String,
-    pub(crate) font_size: u32,
+    pub(crate) theme: Theme,
     pub(crate) icon: Option<PathBuf>,
     pub(crate) asset_dir: PathBuf,
     pub(crate) x: Position,
@@ -61,11 +57,7 @@ impl Default for RendererSettings {
     fn default() -> Self {
         Self {
             title: String::new(),
-            #[cfg(not(target_arch = "wasm32"))]
-            font: DEFAULT_ASSET_DIR.join("emulogic.ttf"),
-            #[cfg(target_arch = "wasm32")]
-            font: "Courier New".to_string(),
-            font_size: 14,
+            theme: Theme::default(),
             icon: None,
             asset_dir: DEFAULT_ASSET_DIR.clone(),
             x: Position::default(),
@@ -110,13 +102,13 @@ pub(crate) trait Rendering: Sized {
     /// Scale the current canvas.
     fn scale(&mut self, x: f32, y: f32) -> Result<()>;
 
-    /// Set the font size for drawing to the current canvas.
+    /// Set the font size for drawing text to the current canvas.
     fn font_size(&mut self, size: u32) -> Result<()>;
 
-    /// Set the font style for drawing to the current canvas.
+    /// Set the font style for drawing text to the current canvas.
     fn font_style(&mut self, style: FontStyle);
 
-    /// Set the font family for drawing to the current canvas.
+    /// Set the font family for drawing text to the current canvas.
     fn font_family(&mut self, family: &str) -> Result<()>;
 
     /// Draw text to the current canvas. `angle` must be in degrees.

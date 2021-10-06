@@ -15,7 +15,7 @@ use sdl2::{
         BlendMode as SdlBlendMode, Canvas, SdlError, TargetRenderError, TextureCreator,
         TextureQuery, TextureValueError, UpdateTextureError,
     },
-    ttf::{Font, FontError, FontStyle as SdlFontStyle, InitError, Sdl2TtfContext},
+    ttf::{Font as SdlFont, FontError, FontStyle as SdlFontStyle, InitError, Sdl2TtfContext},
     video::{Window as SdlWindow, WindowBuildError, WindowContext},
     EventPump, IntegerOrSdlError, Sdl,
 };
@@ -31,7 +31,6 @@ mod textures;
 mod window;
 
 pub(crate) use textures::RendererTexture;
-
 pub(crate) type WindowCanvas = Canvas<SdlWindow>;
 
 lazy_static! {
@@ -78,7 +77,7 @@ pub(crate) struct Renderer {
     window_target: WindowId,
     texture_target: Option<*mut Texture>,
     canvases: HashMap<WindowId, (WindowCanvas, TextureCreator<WindowContext>)>,
-    font_cache: HashMap<(PathBuf, u16), Font<'static, 'static>>,
+    font_cache: HashMap<(PathBuf, u16), SdlFont<'static, 'static>>,
     text_cache: HashMap<(WindowId, String, Color), RendererTexture>,
     image_cache: HashMap<(WindowId, *const Image), RendererTexture>,
 }
@@ -107,8 +106,14 @@ impl Rendering for Renderer {
         audio_device.resume();
 
         let mut font_cache = HashMap::new();
-        let font = (s.font.clone(), s.font_size as u16);
-        font_cache.insert(font.clone(), TTF.load_font(&s.font, s.font_size as u16)?);
+        let mut font_path = s.asset_dir.join(&s.theme.fonts.body);
+        font_path.set_extension("ttf");
+        if !font_path.exists() {
+            font_path = s.asset_dir.join(Font::default());
+        }
+        let font_size = s.theme.font_sizes.body as u16;
+        let font = (font_path.clone(), font_size);
+        font_cache.insert(font.clone(), TTF.load_font(font_path, font_size)?);
 
         Ok(Self {
             context,
@@ -200,7 +205,9 @@ impl Rendering for Renderer {
     /// Set the font family for drawing to the current canvas.
     #[inline]
     fn font_family(&mut self, family: &str) -> Result<()> {
-        self.font.0 = PathBuf::from(&family);
+        let mut font_path = self.settings.asset_dir.join(family);
+        font_path.set_extension("ttf");
+        self.font.0 = font_path;
         self.update_font_cache()?;
         Ok(())
     }
@@ -321,7 +328,7 @@ impl Rendering for Renderer {
             if let Some(radius) = radius {
                 let radius = radius as i16;
                 if let Some(fill) = fill {
-                    canvas.rounded_box(x, y, x + width - 1, y + height - 1, radius, fill)?
+                    canvas.rounded_box(x, y, x + width, y + height, radius, fill)?
                 }
                 if let Some(stroke) = stroke {
                     canvas.rounded_rectangle(x, y, x + width, y + height, radius, stroke)?
