@@ -167,7 +167,7 @@ impl AppState for MazeApp {
         Ok(())
     }
 
-    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<()> {
+    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
         let frame_rate = s.target_frame_rate().unwrap_or(60);
         match event.key {
             Key::Return => {
@@ -185,7 +185,7 @@ impl AppState for MazeApp {
             }
             _ => (),
         }
-        Ok(())
+        Ok(false)
     }
 }
 

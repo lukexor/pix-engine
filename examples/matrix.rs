@@ -178,7 +178,7 @@ impl AppState for Matrix {
         Ok(())
     }
 
-    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<()> {
+    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
         match event.key {
             Key::Escape => {
                 if s.running() {
@@ -193,7 +193,7 @@ impl AppState for Matrix {
             }
             _ => (),
         }
-        Ok(())
+        Ok(false)
     }
 }
 

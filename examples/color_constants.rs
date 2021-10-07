@@ -194,12 +194,18 @@ impl AppState for ColorConsts {
         Ok(())
     }
 
-    fn on_mouse_motion(&mut self, _: &mut PixState, pos: PointI2, _: i32, _: i32) -> PixResult<()> {
+    fn on_mouse_motion(
+        &mut self,
+        _: &mut PixState,
+        pos: PointI2,
+        _: i32,
+        _: i32,
+    ) -> PixResult<bool> {
         let col = pos.x() as u32 / SIZE;
         let row = pos.y() as u32 / SIZE;
         let idx = (row * COLS + col) as usize;
         self.hovered = Some(idx);
-        Ok(())
+        Ok(false)
     }
 }
 

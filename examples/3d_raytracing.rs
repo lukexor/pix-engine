@@ -232,7 +232,7 @@ impl AppState for App {
         Ok(())
     }
 
-    fn on_key_pressed(&mut self, _s: &mut PixState, event: KeyEvent) -> PixResult<()> {
+    fn on_key_pressed(&mut self, _s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
         match (event.key, event.keymod) {
             // Move left/right
             (Key::Left, KeyMod::NONE) => self.origin -= point!(1.0, 0.0, 0.0) - self.looking,
@@ -251,7 +251,7 @@ impl AppState for App {
             (Key::Down, KeyMod::GUI) => self.looking.offset(point!(0.0, 0.05, 0.0)),
             _ => (),
         }
-        Ok(())
+        Ok(false)
     }
 }
 

@@ -31,7 +31,7 @@ impl AppState for ImageDemo {
         Ok(())
     }
 
-    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<()> {
+    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
         match event.key {
             Key::Escape => s.image_tint(None),
             Key::Return => s.image_tint(Color::random_alpha()),
@@ -41,7 +41,7 @@ impl AppState for ImageDemo {
             Key::Down => s.blend_mode(BlendMode::Mod),
             _ => (),
         }
-        Ok(())
+        Ok(false)
     }
 }
 

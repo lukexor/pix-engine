@@ -309,7 +309,7 @@ impl AppState for Asteroids {
         Ok(())
     }
 
-    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<()> {
+    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
         match event.key {
             Key::Escape => {
                 if s.running() {
@@ -322,10 +322,10 @@ impl AppState for Asteroids {
             Key::Space if self.gameover => self.reset(),
             _ => (),
         }
-        Ok(())
+        Ok(false)
     }
 
-    fn on_key_released(&mut self, _s: &mut PixState, event: KeyEvent) -> PixResult<()> {
+    fn on_key_released(&mut self, _s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
         match event.key {
             Key::Space if !self.gameover => {
                 self.bullets.push(SpaceObj::new(
@@ -337,7 +337,7 @@ impl AppState for Asteroids {
             }
             _ => (),
         }
-        Ok(())
+        Ok(false)
     }
 }
 

@@ -340,7 +340,7 @@ impl AppState for RayScene {
         Ok(())
     }
 
-    fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse, pos: PointI2) -> PixResult<()> {
+    fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse, pos: PointI2) -> PixResult<bool> {
         if btn == Mouse::Left
             && rect![0, 0, s.width() as i32, s.height() as i32].contains_point(pos)
         {
@@ -349,10 +349,10 @@ impl AppState for RayScene {
             self.drawing = self.cells[i].exists;
             self.convert_edges_to_poly_map()?;
         }
-        Ok(())
+        Ok(false)
     }
 
-    fn on_mouse_dragged(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn on_mouse_dragged(&mut self, s: &mut PixState) -> PixResult<bool> {
         if s.mouse_buttons().contains(&Mouse::Left) {
             let m = s.mouse_pos();
             let pm = s.pmouse_pos();
@@ -364,7 +364,7 @@ impl AppState for RayScene {
                 self.convert_edges_to_poly_map()?;
             }
         }
-        Ok(())
+        Ok(false)
     }
 }
 

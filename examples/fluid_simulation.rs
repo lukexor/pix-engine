@@ -304,8 +304,9 @@ impl AppState for App {
         Ok(())
     }
 
-    fn on_mouse_dragged(&mut self, s: &mut PixState) -> PixResult<()> {
-        self.drag(s)
+    fn on_mouse_dragged(&mut self, s: &mut PixState) -> PixResult<bool> {
+        self.drag(s)?;
+        Ok(false)
     }
 }
 

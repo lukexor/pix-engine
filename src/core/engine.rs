@@ -314,37 +314,25 @@ impl PixEngine {
                     keymod,
                     repeat,
                 } => {
-                    state.ui_state.keys.press(key, keymod);
-                    app.on_key_pressed(
-                        state,
-                        KeyEvent {
-                            key,
-                            keymod,
-                            pressed: true,
-                            repeat,
-                        },
-                    )?;
+                    let evt = KeyEvent::new(key, keymod, true, repeat);
+                    if !app.on_key_pressed(state, evt)? {
+                        state.ui_state.keys.press(key, keymod);
+                    }
                 }
                 Event::KeyUp {
                     key: Some(key),
                     keymod,
                     repeat,
                 } => {
-                    // TODO: Add tab-selection of elements
-                    state.ui_state.keys.release(key, keymod);
-                    app.on_key_released(
-                        state,
-                        KeyEvent {
-                            key,
-                            keymod,
-                            pressed: false,
-                            repeat,
-                        },
-                    )?;
+                    let evt = KeyEvent::new(key, keymod, false, repeat);
+                    if !app.on_key_released(state, evt)? {
+                        state.ui_state.keys.release(key, keymod);
+                    }
                 }
                 Event::TextInput { ref text, .. } => {
-                    app.on_key_typed(state, text)?;
-                    state.ui_state.keys.typed(text.clone());
+                    if !app.on_key_typed(state, text)? {
+                        state.ui_state.keys.typed(text.clone());
+                    }
                 }
                 Event::MouseMotion { x, y, xrel, yrel } => {
                     state.ui_state.pmouse.pos = state.ui_state.mouse.pos;
@@ -355,8 +343,9 @@ impl PixEngine {
                     app.on_mouse_motion(state, state.ui_state.mouse.pos, xrel, yrel)?;
                 }
                 Event::MouseDown { button, x, y } => {
-                    state.ui_state.mouse.press(button);
-                    app.on_mouse_pressed(state, button, point!(x, y))?;
+                    if !app.on_mouse_pressed(state, button, point!(x, y))? {
+                        state.ui_state.mouse.press(button);
+                    }
                 }
                 Event::MouseUp { button, x, y } => {
                     if state.ui_state.mouse.is_down(button) {
@@ -366,11 +355,13 @@ impl PixEngine {
                                 app.on_mouse_dbl_clicked(state, button, point!(x, y))?;
                             }
                         }
-                        state.ui_state.mouse.click(button, now);
-                        app.on_mouse_clicked(state, button, point!(x, y))?;
+                        if !app.on_mouse_clicked(state, button, point!(x, y))? {
+                            state.ui_state.mouse.click(button, now);
+                        }
                     }
-                    state.ui_state.mouse.release(button);
-                    app.on_mouse_released(state, button, point!(x, y))?;
+                    if !app.on_mouse_released(state, button, point!(x, y))? {
+                        state.ui_state.mouse.release(button);
+                    }
                 }
                 Event::MouseWheel { x, y, .. } => {
                     app.on_mouse_wheel(state, point!(x, y))?;

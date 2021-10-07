@@ -237,6 +237,17 @@ pub struct KeyEvent {
     pub repeat: bool,
 }
 
+impl KeyEvent {
+    pub(crate) fn new(key: Key, keymod: KeyMod, pressed: bool, repeat: bool) -> Self {
+        Self {
+            key,
+            keymod,
+            pressed,
+            repeat,
+        }
+    }
+}
+
 /// Window [Event].
 #[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]

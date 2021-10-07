@@ -38,69 +38,89 @@ pub trait AppState {
 
     /// Called each time a [Key] is pressed with the [KeyEvent] indicating which key and modifiers
     /// are pressed as well as whether this is a repeat event where the key is being held down.
-    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<()> {
-        Ok(())
+    ///
+    /// Returning `true` consumes this event, preventing any further event triggering.
+    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+        Ok(false)
     }
 
     /// Called each time a [Key] is pressed with the [KeyEvent] indicating which key and modifiers
     /// are released.
-    fn on_key_released(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<()> {
-        Ok(())
+    ///
+    /// Returning `true` consumes this event, preventing any further event triggering.
+    fn on_key_released(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+        Ok(false)
     }
 
     /// Called each time text input is received.
-    fn on_key_typed(&mut self, s: &mut PixState, text: &str) -> PixResult<()> {
-        Ok(())
+    ///
+    /// Returning `true` consumes this event, preventing any further event triggering.
+    fn on_key_typed(&mut self, s: &mut PixState, text: &str) -> PixResult<bool> {
+        Ok(false)
     }
 
     /// Called each time the [Mouse] is moved while any mouse button is being held.
     ///
     /// You can inspect which button is being held by calling [PixState::mouse_down] with the desired
     /// [Mouse] button. See also: [AppState::on_mouse_motion].
-    fn on_mouse_dragged(&mut self, s: &mut PixState) -> PixResult<()> {
-        Ok(())
+    ///
+    /// Returning `true` consumes this event, preventing any further event triggering.
+    fn on_mouse_dragged(&mut self, s: &mut PixState) -> PixResult<bool> {
+        Ok(false)
     }
 
     /// Called each time a [Mouse] button is pressed.
-    fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse, pos: PointI2) -> PixResult<()> {
-        Ok(())
+    ///
+    /// Returning `true` consumes this event, preventing any further event triggering.
+    fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse, pos: PointI2) -> PixResult<bool> {
+        Ok(false)
     }
 
     /// Called each time a [Mouse] button is released.
-    fn on_mouse_released(&mut self, s: &mut PixState, btn: Mouse, pos: PointI2) -> PixResult<()> {
-        Ok(())
+    ///
+    /// Returning `true` consumes this event, preventing any further event triggering.
+    fn on_mouse_released(&mut self, s: &mut PixState, btn: Mouse, pos: PointI2) -> PixResult<bool> {
+        Ok(false)
     }
 
     /// Called each time a [Mouse] button is clicked (a press followed by a release).
-    fn on_mouse_clicked(&mut self, s: &mut PixState, btn: Mouse, pos: PointI2) -> PixResult<()> {
-        Ok(())
+    ///
+    /// Returning `true` consumes this event, preventing any further event triggering.
+    fn on_mouse_clicked(&mut self, s: &mut PixState, btn: Mouse, pos: PointI2) -> PixResult<bool> {
+        Ok(false)
     }
 
     /// Called each time a [Mouse] button is clicked twice within 500ms.
+    ///
+    /// Returning `true` consumes this event, preventing any further event triggering.
     fn on_mouse_dbl_clicked(
         &mut self,
         s: &mut PixState,
         btn: Mouse,
         pos: PointI2,
-    ) -> PixResult<()> {
-        Ok(())
+    ) -> PixResult<bool> {
+        Ok(false)
     }
 
     /// Called each time the [Mouse] is moved with the `(x, y)` screen coordinates and relative
     /// `(xrel, yrel)` positions since last frame.
+    ///
+    /// Returning `true` consumes this event, preventing any further event triggering.
     fn on_mouse_motion(
         &mut self,
         s: &mut PixState,
         pos: PointI2,
         xrel: i32,
         yrel: i32,
-    ) -> PixResult<()> {
-        Ok(())
+    ) -> PixResult<bool> {
+        Ok(false)
     }
 
     /// Called each time the [Mouse] wheel is scrolled with the `(x, y)` delta since last frame.
-    fn on_mouse_wheel(&mut self, s: &mut PixState, pos: PointI2) -> PixResult<()> {
-        Ok(())
+    ///
+    /// Returning `true` consumes this event, preventing any further event triggering.
+    fn on_mouse_wheel(&mut self, s: &mut PixState, pos: PointI2) -> PixResult<bool> {
+        Ok(false)
     }
 
     /// Called each time a window event occurs.
