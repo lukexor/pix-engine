@@ -26,6 +26,11 @@ png = "0.17.1"
 serde = { version = "1.0.126", features = ["derive"], optional = true }
 rand = "0.8.4"
 
+[dev-dependencies.cargo-husky]
+version = "1.5.0"
+default-features = false
+features = ["prepush-hook", "run-cargo-test", "run-cargo-clippy"]
+
 [features]
 default = []
 opengl = []

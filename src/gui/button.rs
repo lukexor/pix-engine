@@ -20,12 +20,17 @@ use crate::{prelude::*, renderer::Rendering};
 
 impl PixState {
     /// Draw a button to the current canvas that returns `true` when clicked.
-    pub fn button<R>(&mut self, rect: R, label: &str) -> PixResult<bool>
+    pub fn button<R, L>(&mut self, rect: R, label: L) -> PixResult<bool>
     where
         R: Into<Rect<i32>>,
+        L: AsRef<str>,
     {
+        let rect = self.get_rect(rect);
+        self._button(rect, label.as_ref())
+    }
+
+    fn _button(&mut self, rect: Rect<i32>, label: &str) -> PixResult<bool> {
         let s = self;
-        let rect = s.get_rect(rect);
         let id = get_hash(&rect);
 
         s.push();
@@ -51,10 +56,8 @@ impl PixState {
             s.frame_cursor(&Cursor::hand())?;
             s.fill(s.accent_color());
             if active {
-                let mut rect = rect;
-                rect.set_x(rect.x() + 2);
-                rect.set_y(rect.y() + 2);
-                s.rounded_rect(rect, 3.0)?;
+                let [x, y, width, height] = rect.values();
+                s.rounded_rect([x + 1, y + 1, width, height], 3.0)?;
             } else {
                 s.rounded_rect(rect, 3.0)?;
             }
@@ -67,13 +70,14 @@ impl PixState {
         s.rect_mode(RectMode::Center);
         s.renderer.font_family(&s.theme.fonts.body)?;
         s.fill(s.text_color());
+        s.clip(rect)?;
         s.text(rect.center(), label)?;
+        s.no_clip()?;
 
         s.pop();
 
         // Process input
-        s.ui_state.handle_tab(id);
-        s.ui_state.set_last(id);
+        s.ui_state.handle_input(id);
         Ok(s.ui_state.was_clicked(id))
     }
 }

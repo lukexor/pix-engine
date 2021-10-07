@@ -1,5 +1,7 @@
 //! Immediate-GUI functions related to rendering and interacting with lists and select boxes.
 
+use num_traits::AsPrimitive;
+
 use super::get_hash;
 use crate::{prelude::*, renderer::Rendering};
 
@@ -7,31 +9,59 @@ const BOX_RADIUS: Scalar = 3.0;
 
 impl PixState {
     /// Draw a select list to the current canvas with a scrollable region.
-    pub fn select_list<'a, R>(
+    pub fn select_list<R, S, I, T>(
         &mut self,
         rect: R,
-        label: &'a str,
-        items: &'a [&'a str],
-        item_height: u32,
+        label: S,
+        items: &[I],
+        item_height: T,
         selected: &mut Option<usize>,
     ) -> PixResult<()>
     where
         R: Into<Rect<i32>>,
+        S: AsRef<str>,
+        I: AsRef<str>,
+        T: AsPrimitive<u32>,
+    {
+        let rect = self.get_rect(rect);
+        self._select_list(rect, label.as_ref(), items, item_height.as_(), selected)
+    }
+
+    fn _select_list<S>(
+        &mut self,
+        rect: Rect<i32>,
+        label: &str,
+        items: &[S],
+        item_height: u32,
+        selected: &mut Option<usize>,
+    ) -> PixResult<()>
+    where
+        S: AsRef<str>,
     {
         let s = self;
-        let rect = s.get_rect(rect);
         let id = get_hash(&rect);
 
         s.push();
 
-        let (_, h) = s.size_of(label)?;
         let pad = s.theme.padding;
         let scroll_width = 16;
 
         let mut border = rect;
-        border.set_y(border.y() + h as i32 + pad); // Push border down past label
+        if !label.is_empty() {
+            let (_, h) = s.size_of(&label)?;
+            border.set_y(border.y() + h as i32 + pad); // Push border down past label
+        }
         let mut content = Rect::resized(border, -BOX_RADIUS as i32);
-        content.set_width(content.width() - scroll_width);
+        let line_height = item_height as i32 + pad * 2;
+        let total_height = items.len() as i32 * line_height;
+        let mut scroll = s.ui_state.scroll(id);
+        let skip_count = (scroll.y() / line_height) as usize;
+        let displayed_count = (content.height() / line_height) as usize;
+
+        let scroll_enabled = total_height > content.height();
+        if scroll_enabled {
+            content.set_width(content.width() - scroll_width);
+        }
 
         // Check hover/active/keyboard focus
         if content.contains_point(s.mouse_pos()) {
@@ -40,23 +70,20 @@ impl PixState {
         s.ui_state.try_capture(id);
 
         // Render
-
-        // Label
         s.rect_mode(RectMode::Corner);
         s.renderer.font_family(&s.theme.fonts.body)?;
-        s.fill(s.text_color());
-        s.text([rect.x(), rect.y()], label)?;
+
+        // Label
+        if !label.is_empty() {
+            s.fill(s.text_color());
+            s.text([rect.x(), rect.y()], label)?;
+        }
 
         // Background
         s.fill(s.primary_color());
         s.rounded_rect(border, BOX_RADIUS)?;
 
         // Contents
-        let line_height = item_height as i32 + pad * 2;
-        let mut scroll = s.ui_state.scroll(id);
-        let skip_count = (scroll.y() / line_height) as usize;
-        let displayed_count = (content.height() / line_height) as usize;
-
         // TODO: Move this to ElementState (requires migrating back to textureId references)
         let mut texture =
             s.create_texture(content.width() as u32, content.height() as u32, None)?;
@@ -110,8 +137,8 @@ impl PixState {
         s.no_clip()?;
 
         // Process input
-        s.ui_state.handle_tab(id);
-        if s.ui_state.is_focused(id) {
+        let focused = s.ui_state.is_focused(id);
+        if focused {
             if let Some(key) = s.ui_state.key_entered() {
                 let changed_selection = match key {
                     Key::Up => {
@@ -140,32 +167,34 @@ impl PixState {
                         s.ui_state.set_scroll(id, scroll);
                     } else if sel_y + line_height > scroll.y() + content.height() {
                         // Snap scroll to bottom of the window
-                        scroll.set_y(sel_y - (content.height() - line_height - 1));
+                        scroll.set_y(sel_y - (content.height() - line_height));
                         s.ui_state.set_scroll(id, scroll);
                     }
                 }
             }
         }
-        s.ui_state.set_last(id);
+        s.ui_state.handle_input(id);
 
         // Scrollbar
-        let max_scroll = items.len() as i32 * line_height - content.height() + 1;
-        if s.slider(
-            [
-                border.right() - scroll_width,
-                border.top(),
-                scroll_width,
-                border.height(),
-            ],
-            max_scroll,
-            &mut scroll.y_mut(),
-        )? {
+        let max_scroll = total_height - content.height();
+        if scroll_enabled
+            && s.slider(
+                [
+                    border.right() - scroll_width,
+                    border.top(),
+                    scroll_width,
+                    border.height(),
+                ],
+                max_scroll,
+                &mut scroll.y_mut(),
+            )?
+        {
             s.ui_state.set_scroll(id, scroll);
         }
 
         // Border
         s.no_fill();
-        if s.ui_state.is_focused(id) {
+        if focused {
             s.stroke(s.secondary_color());
         } else {
             s.stroke(s.muted_color());

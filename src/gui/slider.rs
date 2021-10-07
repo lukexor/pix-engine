@@ -7,12 +7,30 @@ use super::get_hash;
 const SCROLL_SPEED: i32 = 2;
 
 impl PixState {
-    pub(crate) fn slider<R>(&mut self, rect: R, max: i32, value: &mut i32) -> PixResult<bool>
+    /// Draw a slider control that returns `true` when changed.
+    pub fn slider<R>(&mut self, rect: R, max: i32, value: &mut i32) -> PixResult<bool>
     where
         R: Into<Rect<i32>>,
     {
+        let rect = self.get_rect(rect);
+        self._slider(rect, max, value)
+    }
+
+    fn _slider(&mut self, rect: Rect<i32>, max: i32, value: &mut i32) -> PixResult<bool> {
+        if max <= 0 {
+            return Err(PixError::Other("invalid `max` value".into()));
+        }
+
+        let mut changed = false;
+        if *value < 0 {
+            *value = 0;
+            changed = true;
+        } else if *value > max {
+            *value = max;
+            changed = true;
+        }
+
         let s = self;
-        let rect = s.get_rect(rect);
         let id = get_hash(&rect);
 
         s.push();
@@ -51,7 +69,6 @@ impl PixState {
         s.pop();
 
         // Process keyboard input
-        s.ui_state.handle_tab(id);
         if s.ui_state.is_focused(id) {
             if let Some(key) = s.ui_state.key_entered() {
                 match key {
@@ -60,31 +77,30 @@ impl PixState {
                         if *value < 0 {
                             *value = 0;
                         }
-                        return Ok(true);
+                        changed = true;
                     }
                     Key::Down => {
                         *value = value.saturating_add(SCROLL_SPEED);
                         if *value > max {
                             *value = max;
                         }
-                        return Ok(true);
+                        changed = true;
                     }
                     _ => (),
                 }
             }
         }
-        s.ui_state.set_last(id);
-
         // Process mouse input
         if active {
             let my = (s.mouse_pos().y() - rect.y()).clamp(0, rect.height());
             let new_value = (my * max) / rect.height();
             if new_value != *value {
                 *value = new_value;
-                return Ok(true);
+                changed = true;
             }
         }
+        s.ui_state.handle_input(id);
 
-        Ok(false)
+        Ok(changed)
     }
 }

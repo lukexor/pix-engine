@@ -2,44 +2,51 @@ use pix_engine::prelude::*;
 
 struct ImGui {
     selected: Option<usize>,
-    background: Color,
-    text: String,
+    items: Vec<String>,
+    text_input: String,
+    rect: Rect<i32>,
 }
 
 impl ImGui {
     fn new() -> Self {
         Self {
             selected: None,
-            background: BLACK,
-            text: String::new(),
+            items: Vec::new(),
+            text_input: String::new(),
+            rect: rect![10, 45, 120, 103],
         }
     }
 }
 
 impl AppState for ImGui {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        self.background = s.background_color();
-        s.font_family("helvetica")?;
+        s.background(s.background_color())?;
+        s.font_family("arial")?;
         Ok(())
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.background(self.background)?;
-        let (_, h) = s.size_of("Item 1")?;
+        // Buttons
+        if s.button([10, 10, 100, 25], "Add Item")? {
+            self.items.push(format!("Item {}", self.items.len() + 1));
+        }
+        if s.button([120, 10, 100, 25], "Remove Item")? {
+            self.items.pop();
+        }
+
+        // Select List
         s.select_list(
-            [10, 10, 200, 125],
-            "Select",
-            &[
-                "Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 6", "Item 7", "Item 8",
-            ],
-            h,
+            [10, 50, 120, 103],
+            "Items",
+            &self.items,
+            14,
             &mut self.selected,
         )?;
-        if s.button([10, 160, 120, 25], "Click me")? {
-            self.background = Color::random();
-        }
-        if s.text_field([10, 200, 150, 20], "Type here", &mut self.text)? {}
-        s.text([200, 200], &self.text)?;
+
+        // Text Field
+        s.same_line(true);
+        s.text_field([10, 195, 130, 30], "Input:", &mut self.text_input)?;
+        s.text([10, 225], &format!("Output: {}", self.text_input))?;
         Ok(())
     }
 }

@@ -200,7 +200,7 @@ impl Asteroids {
                         // Break into two
                         let a1 = random!(TAU);
                         let a2 = random!(TAU);
-                        let speed = random!(0.0, SHATTERED_ASTEROID_SPEED);
+                        let speed = random!(MAX_ASTEROID_SPEED, SHATTERED_ASTEROID_SPEED);
                         self.broken_asteroids.push(SpaceObj::new(
                             a.pos,
                             VectorF2::from_angle(a1, speed),

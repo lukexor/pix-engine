@@ -8,7 +8,6 @@
     unused,
     deprecated_in_future,
     unreachable_pub,
-    unused_crate_dependencies,
     bare_trait_objects,
     ellipsis_inclusive_range_patterns,
     future_incompatible,

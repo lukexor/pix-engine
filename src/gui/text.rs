@@ -5,6 +5,8 @@ use num_traits::AsPrimitive;
 
 use super::get_hash;
 
+const TEXT_CURSOR: &str = "│";
+
 impl PixState {
     /// Draw text to the current canvas.
     pub fn text<P, S>(&mut self, p: P, text: S) -> PixResult<()>
@@ -32,39 +34,65 @@ impl PixState {
         F: Into<Option<Flipped>>,
         T: AsPrimitive<Scalar>,
     {
+        self._text_transformed(
+            p.into(),
+            text.as_ref(),
+            angle.as_(),
+            center.into(),
+            flipped.into(),
+        )
+    }
+
+    fn _text_transformed(
+        &mut self,
+        mut p: PointI2,
+        text: &str,
+        mut angle: Scalar,
+        center: Option<PointI2>,
+        flipped: Option<Flipped>,
+    ) -> PixResult<()> {
         let s = &self.settings;
-        let mut p = p.into();
-        let text = text.as_ref();
         if let RectMode::Center = s.rect_mode {
             let (width, height) = self.renderer.size_of(text)?;
-            p.offset(-point!(width as i32 / 2, height as i32 / 2));
+            p = point!(p.x() - width as i32 / 2, p.y() - height as i32 / 2);
         };
-        let mut angle: Scalar = angle.as_();
         if let AngleMode::Radians = s.angle_mode {
             angle = angle.to_degrees();
         };
         Ok(self
             .renderer
-            .text(p, text, angle, center.into(), flipped.into(), s.fill)?)
+            .text(p, text, angle, center, flipped, s.fill)?)
     }
 
     /// Draw a text field to the current canvas.
-    pub fn text_field<R>(&mut self, rect: R, label: &str, value: &mut String) -> PixResult<bool>
+    /// Affected by `PixState::same_line`.
+    pub fn text_field<R, L>(&mut self, rect: R, label: L, value: &mut String) -> PixResult<bool>
     where
         R: Into<Rect<i32>>,
+        L: AsRef<str>,
     {
+        let rect = self.get_rect(rect);
+        self._text_field(rect, label.as_ref(), value)
+    }
+
+    fn _text_field(&mut self, rect: Rect<i32>, label: &str, value: &mut String) -> PixResult<bool> {
         let s = self;
-        let rect = s.get_rect(rect);
         let id = get_hash(&rect);
         let mut changed = false;
 
         s.push();
 
-        let (_, h) = s.size_of(label)?;
-        let pad = s.theme.padding;
-
         let mut input = rect;
-        input.set_y(input.y() + h as i32 + pad);
+        let pad = s.theme.padding;
+        if !label.is_empty() {
+            let (w, h) = s.size_of(label)?;
+            if s.ui_state.same_line {
+                input.set_x(input.x() + w as i32 + pad);
+                input.set_y(input.y() - h as i32 / 2);
+            } else {
+                input.set_y(input.y() + h as i32 + pad);
+            }
+        }
 
         // Check hover/active/keyboard focus
         if input.contains_point(s.mouse_pos()) {
@@ -73,12 +101,14 @@ impl PixState {
         s.ui_state.try_capture(id);
 
         // Render
-
-        // Label
         s.rect_mode(RectMode::Corner);
         s.renderer.font_family(&s.theme.fonts.body)?;
-        s.fill(s.text_color());
-        s.text([rect.x(), rect.y()], label)?;
+
+        // Label
+        if !label.is_empty() {
+            s.fill(s.text_color());
+            s.text([rect.x(), rect.y()], label)?;
+        }
 
         // Input
         let focused = s.ui_state.is_focused(id);
@@ -93,24 +123,29 @@ impl PixState {
             s.frame_cursor(&Cursor::ibeam())?;
         }
         s.fill(s.primary_color());
-        s.rounded_rect(input, 3.0)?;
+        s.rect(input)?;
 
         // Text
         s.fill(s.text_color());
-        s.text([input.x() + pad, input.y() + pad], &value)?;
-        if focused && s.frame_count() >> 8 & 1 > 0 {
-            let (w, _) = if value.is_empty() {
-                (0, 0)
-            } else {
-                s.size_of(&value)?
-            };
-            s.text([input.x() + w as i32 + pad + 1, input.y() + pad], "_")?;
+        s.clip(input)?;
+        let (vw, vh) = s.size_of(&value)?;
+        let (cw, _) = s.size_of(&TEXT_CURSOR)?;
+        let mut x = input.x() + pad;
+        let y = input.center().y() - vh as i32 / 2;
+        let width = (vw + cw) as i32;
+        if width > input.width() {
+            x -= width - input.width();
         }
+        s.text([x, y], &value)?;
+        if focused && s.frame_count() >> 8 & 1 > 0 {
+            let offset = 2; // Remove some left space of the text cursor
+            s.text([x + vw as i32 - offset, y], &TEXT_CURSOR)?;
+        }
+        s.no_clip()?;
 
         s.pop();
 
         // Process input
-        s.ui_state.handle_tab(id);
         if focused {
             if let Some(key) = s.ui_state.key_entered() {
                 match key {
@@ -126,11 +161,7 @@ impl PixState {
                 changed = true;
             }
         }
-        let clicked = !s.mouse_down(Mouse::Left) && hovered && active;
-        if clicked {
-            s.ui_state.focus(id);
-        }
-        s.ui_state.set_last(id);
+        s.ui_state.handle_input(id);
 
         Ok(changed)
     }

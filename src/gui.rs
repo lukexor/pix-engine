@@ -2,13 +2,14 @@
 
 use self::{keys::KeyState, mouse::MouseState};
 use crate::prelude::*;
-use std::{
-    collections::{
-        hash_map::{DefaultHasher, Entry},
-        HashMap,
-    },
-    hash::{Hash, Hasher},
+#[cfg(target_pointer_width = "32")]
+use hash32::{FnvHasher, Hash, Hasher};
+use std::collections::{
+    hash_map::{DefaultHasher, Entry},
+    HashMap,
 };
+#[cfg(target_pointer_width = "64")]
+use std::hash::{Hash, Hasher};
 
 pub use theme::*;
 
@@ -21,11 +22,16 @@ pub mod text;
 pub mod theme;
 
 /// A hashed element identifier for internal state management.
+#[cfg(target_pointer_width = "32")]
+pub(crate) type ElementId = u32;
+/// A hashed element identifier for internal state management.
 pub(crate) type ElementId = u64;
+#[cfg(target_pointer_width = "64")]
 
 /// Internal tracked UI state.
 #[derive(Default, Debug, PartialEq, Eq)]
 pub(crate) struct UiState {
+    pub(crate) same_line: bool,
     pub(crate) mouse: MouseState,
     pub(crate) pmouse: MouseState,
     pub(crate) keys: KeyState,
@@ -131,7 +137,8 @@ impl UiState {
     }
 
     #[inline]
-    pub(crate) fn handle_tab(&mut self, id: ElementId) {
+    pub(crate) fn handle_input(&mut self, id: ElementId) {
+        // Tab-focus cycling
         if self.is_focused(id) && self.keys.was_entered(Key::Tab) {
             self.blur();
             if self.keys.mod_down(KeyMod::SHIFT) {
@@ -139,6 +146,12 @@ impl UiState {
             }
             self.clear_entered();
         }
+        // Click focusing
+        let clicked = !self.mouse.is_down(Mouse::Left) && self.is_hovered(id) && self.is_active(id);
+        if clicked {
+            self.focus(id);
+        }
+        self.set_last(id);
     }
 
     #[inline]
@@ -199,8 +212,24 @@ pub(crate) struct ElementState {
 }
 
 /// Helper function to hash element labels.
-pub(crate) fn get_hash<T: Hash>(t: &T) -> u64 {
+#[cfg(target_pointer_width = "32")]
+pub(crate) fn get_hash<T: Hash>(t: &T) -> ElementId {
+    let mut s = FnvHasher::default();
+    t.hash(&mut s);
+    s.finish()
+}
+
+/// Helper function to hash element labels.
+#[cfg(target_pointer_width = "64")]
+pub(crate) fn get_hash<T: Hash>(t: &T) -> ElementId {
     let mut s = DefaultHasher::new();
     t.hash(&mut s);
     s.finish()
+}
+
+impl PixState {
+    /// Alters how UI methods lay out new lines.
+    pub fn same_line(&mut self, value: bool) {
+        self.ui_state.same_line = value;
+    }
 }
