@@ -338,10 +338,11 @@ impl Rendering for Renderer {
                 }
             } else {
                 if let Some(fill) = fill {
-                    canvas.box_(x, y, x + width - 1, y + height - 1, fill)?
+                    canvas.box_(x, y, x + width, y + height, fill)?
                 }
                 if let Some(stroke) = stroke {
-                    canvas.rectangle(x, y, x + width, y + height, stroke)?;
+                    // EXPL: SDL2_gfx renders this 1px smaller than it should.
+                    canvas.rectangle(x, y, x + width + 1, y + height + 1, stroke)?;
                 }
             }
             Ok(())

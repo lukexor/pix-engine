@@ -11,6 +11,9 @@ repository = "https://github.com/lukexor/pix-engine.git"
 resolver = "2"
 version = "0.4.2"
 
+[package.metadata]
+msrv = "1.55.0"
+
 [package.metadata.docs.rs]
 features = ["serde"]
 targets = ["x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
@@ -42,6 +45,9 @@ sdl2 = { version = "0.34.5", default_features = false, features = ["gfx", "image
 
 [target."cfg(target_arch = \"wasm32\")".dependencies]
 getrandom = { version = "0.2.3", features = ["js"] }
+
+[target."cfg(target_pointer_width = \"32\")".dependencies]
+hash32 = "0.2.1"
 
 [target."cfg(target_arch = \"wasm32\")".dev-dependencies]
 console_error_panic_hook = "0.1.6"

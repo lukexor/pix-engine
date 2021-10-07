@@ -25,6 +25,10 @@ It is intended to be more than just a toy library, however, and can be used to
 drive real applications. The [Tetanes][] [NES][] emulator, for example uses
 `pix_engine` for rendering, window and event handling.
 
+## Minimum Supported Rust Version
+
+The current minimum Rust version is `1.55.0`.
+
 ## Getting Started
 
 Creating an application is as simple as implementing the only required method of

@@ -42,6 +42,7 @@ impl PixState {
         s.ui_state.try_capture(id);
 
         // Render
+        let radius = 3;
 
         // Scroll region
         let focused = s.ui_state.is_focused(id);
@@ -51,7 +52,7 @@ impl PixState {
             s.stroke(s.muted_color());
         }
         s.fill(s.primary_color());
-        s.rounded_rect(rect, 3.0)?;
+        s.rounded_rect(rect, radius)?;
 
         // Thumb slider
         s.no_stroke();
@@ -63,8 +64,11 @@ impl PixState {
         } else {
             s.fill(s.muted_color());
         }
-        let thumb_y = ((rect.height() - 16) * *value) / max;
-        s.rounded_rect([rect.x(), rect.y() + thumb_y, 16, 16], 3.0)?;
+        let thumb_w = 16;
+        let h = rect.height() as f32;
+        let thumb_h = ((h / (max as f32 + h)) * h) as i32;
+        let thumb_y = ((rect.height() - thumb_h) * *value) / max;
+        s.rounded_rect([rect.x(), rect.y() + thumb_y, thumb_w, thumb_h], radius)?;
 
         s.pop();
 

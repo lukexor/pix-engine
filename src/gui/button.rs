@@ -42,6 +42,7 @@ impl PixState {
         s.ui_state.try_capture(id);
 
         // Render
+        let radius = 3;
 
         // Button
         s.rect_mode(RectMode::Corner);
@@ -57,13 +58,13 @@ impl PixState {
             s.fill(s.accent_color());
             if active {
                 let [x, y, width, height] = rect.values();
-                s.rounded_rect([x + 1, y + 1, width, height], 3.0)?;
+                s.rounded_rect([x + 1, y + 1, width, height], radius)?;
             } else {
-                s.rounded_rect(rect, 3.0)?;
+                s.rounded_rect(rect, radius)?;
             }
         } else {
             s.fill(s.primary_color());
-            s.rounded_rect(rect, 3.0)?;
+            s.rounded_rect(rect, radius)?;
         }
 
         // Button text

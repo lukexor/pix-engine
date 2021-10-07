@@ -5,8 +5,6 @@ use num_traits::AsPrimitive;
 use super::get_hash;
 use crate::{prelude::*, renderer::Rendering};
 
-const BOX_RADIUS: Scalar = 3.0;
-
 impl PixState {
     /// Draw a select list to the current canvas with a scrollable region.
     pub fn select_list<R, S, I, T>(
@@ -44,6 +42,7 @@ impl PixState {
         s.push();
 
         let pad = s.theme.padding;
+        let radius = 3;
         let scroll_width = 16;
 
         let mut border = rect;
@@ -51,7 +50,7 @@ impl PixState {
             let (_, h) = s.size_of(&label)?;
             border.set_y(border.y() + h as i32 + pad); // Push border down past label
         }
-        let mut content = Rect::resized(border, -BOX_RADIUS as i32);
+        let mut content = Rect::resized(border, -radius);
         let line_height = item_height as i32 + pad * 2;
         let total_height = items.len() as i32 * line_height;
         let mut scroll = s.ui_state.scroll(id);
@@ -81,7 +80,7 @@ impl PixState {
 
         // Background
         s.fill(s.primary_color());
-        s.rounded_rect(border, BOX_RADIUS)?;
+        s.rounded_rect(border, radius)?;
 
         // Contents
         // TODO: Move this to ElementState (requires migrating back to textureId references)
@@ -122,7 +121,7 @@ impl PixState {
                 if matches!(*selected, Some(el) if el == i) {
                     s.no_stroke();
                     s.fill(s.highlight_color());
-                    s.rounded_rect(item_rect, 3.0)?;
+                    s.rounded_rect(item_rect, radius)?;
                     s.fill(BLACK);
                 } else {
                     s.fill(WHITE);
@@ -199,7 +198,7 @@ impl PixState {
         } else {
             s.stroke(s.muted_color());
         }
-        s.rounded_rect(border, BOX_RADIUS)?;
+        s.rounded_rect(border, radius)?;
 
         s.pop();
 
