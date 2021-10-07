@@ -222,6 +222,9 @@ impl Rendering for Renderer {
         flipped: Option<Flipped>,
         fill: Option<Color>,
     ) -> Result<()> {
+        if text.is_empty() {
+            return Ok(());
+        }
         let font = self.font_cache.get(&self.font);
         match (fill, font) {
             (Some(fill), Some(font)) => {

@@ -344,6 +344,7 @@ impl PixEngine {
                 }
                 Event::TextInput { ref text, .. } => {
                     app.on_key_typed(state, text)?;
+                    state.ui_state.keys.typed(text.clone());
                 }
                 Event::MouseMotion { x, y, xrel, yrel } => {
                     state.ui_state.pmouse.pos = state.ui_state.mouse.pos;

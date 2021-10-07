@@ -7,6 +7,7 @@ use std::collections::HashSet;
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub(crate) struct KeyState {
     pub(crate) entered: Option<Key>,
+    pub(crate) typed: Option<String>,
     pub(crate) pressed: HashSet<Key>,
     pub(crate) mods_pressed: HashSet<KeyMod>,
 }
@@ -49,5 +50,11 @@ impl KeyState {
     pub(crate) fn release(&mut self, key: Key, keymod: KeyMod) {
         self.pressed.remove(&key);
         self.mods_pressed.remove(&keymod);
+    }
+
+    /// Store a pressed [Key].
+    #[inline]
+    pub(crate) fn typed(&mut self, text: String) {
+        self.typed = Some(text);
     }
 }

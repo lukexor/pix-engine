@@ -170,6 +170,7 @@ impl UiState {
 
     #[inline]
     pub(crate) fn clear_entered(&mut self) {
+        self.keys.typed = None;
         self.keys.entered = None;
     }
 

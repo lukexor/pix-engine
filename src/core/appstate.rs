@@ -48,7 +48,7 @@ pub trait AppState {
         Ok(())
     }
 
-    /// Called each time a [Key] is typed with the text that was typed. Ignores special keys like [Key::Backspace].
+    /// Called each time text input is received.
     fn on_key_typed(&mut self, s: &mut PixState, text: &str) -> PixResult<()> {
         Ok(())
     }

@@ -3,6 +3,7 @@ use pix_engine::prelude::*;
 struct ImGui {
     selected: Option<usize>,
     background: Color,
+    text: String,
 }
 
 impl ImGui {
@@ -10,6 +11,7 @@ impl ImGui {
         Self {
             selected: None,
             background: BLACK,
+            text: String::new(),
         }
     }
 }
@@ -36,6 +38,8 @@ impl AppState for ImGui {
         if s.button([10, 160, 120, 25], "Click me")? {
             self.background = Color::random();
         }
+        if s.text_field([10, 200, 150, 20], "Type here", &mut self.text)? {}
+        s.text([200, 200], &self.text)?;
         Ok(())
     }
 }
