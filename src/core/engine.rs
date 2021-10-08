@@ -154,6 +154,20 @@ impl PixEngineBuilder {
         self
     }
 
+    /// Set a custom texture cache size other than the default of 20.
+    /// Affects font family and image rendering caching operations.
+    pub fn with_texture_cache(&mut self, size: usize) -> &mut Self {
+        self.settings.texture_cache_size = size;
+        self
+    }
+
+    /// Set a custom text cache size other than the default of 500.
+    /// Affects text rendering caching operations.
+    pub fn with_text_cache(&mut self, size: usize) -> &mut Self {
+        self.settings.text_cache_size = size;
+        self
+    }
+
     /// Convert [PixEngineBuilder] to a [PixEngine] instance.
     pub fn build(&self) -> PixEngine {
         PixEngine {

@@ -51,6 +51,8 @@ pub(crate) struct RendererSettings {
     pub(crate) hidden: bool,
     pub(crate) show_frame_rate: bool,
     pub(crate) target_frame_rate: Option<Scalar>,
+    pub(crate) texture_cache_size: usize,
+    pub(crate) text_cache_size: usize,
 }
 
 impl Default for RendererSettings {
@@ -75,6 +77,8 @@ impl Default for RendererSettings {
             hidden: false,
             show_frame_rate: false,
             target_frame_rate: None,
+            texture_cache_size: 20,
+            text_cache_size: 500,
         }
     }
 }
@@ -124,7 +128,7 @@ pub(crate) trait Rendering: Sized {
 
     /// Returns the rendered dimensions of the given text using the current font
     /// as `(width, height)`.
-    fn size_of(&self, text: &str) -> Result<(u32, u32)>;
+    fn size_of(&mut self, text: &str) -> Result<(u32, u32)>;
 
     /// Draw a pixel to the current canvas.
     fn point(&mut self, p: PointI2, color: Color) -> Result<()>;

@@ -294,7 +294,7 @@ impl PixState {
     }
 
     /// Return the dimensions of given text for drawing to the current canvas.
-    pub fn size_of<S: AsRef<str>>(&self, text: S) -> PixResult<(u32, u32)> {
+    pub fn size_of<S: AsRef<str>>(&mut self, text: S) -> PixResult<(u32, u32)> {
         Ok(self.renderer.size_of(text.as_ref())?)
     }
 

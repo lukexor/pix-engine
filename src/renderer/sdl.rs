@@ -4,6 +4,7 @@ use crate::{
     renderer::{Error, RendererSettings, Rendering, Result},
 };
 use lazy_static::lazy_static;
+use lru::LruCache;
 use sdl2::{
     audio::{AudioQueue, AudioSpecDesired},
     gfx::primitives::{DrawRenderer, ToColor},
@@ -19,11 +20,7 @@ use sdl2::{
     video::{Window as SdlWindow, WindowBuildError, WindowContext},
     EventPump, IntegerOrSdlError, Sdl,
 };
-use std::{
-    borrow::Cow,
-    collections::{hash_map::Entry, HashMap},
-    path::PathBuf,
-};
+use std::{borrow::Cow, collections::HashMap, path::PathBuf};
 
 mod audio;
 mod event;
@@ -77,9 +74,9 @@ pub(crate) struct Renderer {
     window_target: WindowId,
     texture_target: Option<*mut Texture>,
     canvases: HashMap<WindowId, (WindowCanvas, TextureCreator<WindowContext>)>,
-    font_cache: HashMap<(PathBuf, u16), SdlFont<'static, 'static>>,
-    text_cache: HashMap<(WindowId, String, Color), RendererTexture>,
-    image_cache: HashMap<(WindowId, *const Image), RendererTexture>,
+    font_cache: LruCache<(PathBuf, u16), SdlFont<'static, 'static>>,
+    text_cache: LruCache<(WindowId, String, Color), RendererTexture>,
+    image_cache: LruCache<(WindowId, *const Image), RendererTexture>,
 }
 
 impl Rendering for Renderer {
@@ -105,7 +102,7 @@ impl Rendering for Renderer {
         let audio_device = audio_sub.open_queue(None, &desired_spec)?;
         audio_device.resume();
 
-        let mut font_cache = HashMap::new();
+        let mut font_cache = LruCache::new(s.texture_cache_size);
         let mut font_path = s.asset_dir.join(&s.theme.fonts.body);
         font_path.set_extension("ttf");
         if !font_path.exists() {
@@ -113,7 +110,9 @@ impl Rendering for Renderer {
         }
         let font_size = s.theme.font_sizes.body as u16;
         let font = (font_path.clone(), font_size);
-        font_cache.insert(font.clone(), TTF.load_font(font_path, font_size)?);
+        font_cache.put(font.clone(), TTF.load_font(font_path, font_size)?);
+        let text_cache = LruCache::new(s.text_cache_size);
+        let image_cache = LruCache::new(s.texture_cache_size);
 
         Ok(Self {
             context,
@@ -129,8 +128,8 @@ impl Rendering for Renderer {
             texture_target: None,
             canvases,
             font_cache,
-            text_cache: HashMap::new(),
-            image_cache: HashMap::new(),
+            text_cache,
+            image_cache,
         })
     }
 
@@ -233,13 +232,14 @@ impl Rendering for Renderer {
                     .canvases
                     .get(&self.window_target)
                     .ok_or(WindowError::InvalidWindow(self.window_target))?;
-                let texture = match self.text_cache.entry(key) {
-                    Entry::Occupied(o) => o.into_mut(),
-                    Entry::Vacant(v) => {
-                        let surface = font.render(text).blended(fill)?;
-                        v.insert(texture_creator.create_texture_from_surface(&surface)?)
-                    }
-                };
+                if !self.text_cache.contains(&key) {
+                    let surface = font.render(text).blended(fill)?;
+                    self.text_cache.put(
+                        key.clone(),
+                        texture_creator.create_texture_from_surface(&surface)?,
+                    );
+                }
+                let texture = self.text_cache.get_mut(&key).expect("valid text cache");
                 let TextureQuery { width, height, .. } = texture.query();
                 update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
                     if angle > 0.0 || center.is_some() || flipped.is_some() {
@@ -269,9 +269,8 @@ impl Rendering for Renderer {
     /// Returns the rendered dimensions of the given text using the current font
     /// as `(width, height)`.
     #[inline]
-    fn size_of(&self, text: &str) -> Result<(u32, u32)> {
-        let cache = self.font_cache.get(&self.font);
-        match cache {
+    fn size_of(&mut self, text: &str) -> Result<(u32, u32)> {
+        match self.font_cache.get(&self.font) {
             Some(font) => Ok(font.size_of(text)?),
             None => Err(Error::InvalidFont(self.font.0.to_owned())),
         }
@@ -462,14 +461,19 @@ impl Rendering for Renderer {
             .canvases
             .get(&self.window_target)
             .ok_or(WindowError::InvalidWindow(self.window_target))?;
-        let texture = match self.image_cache.entry((self.window_target, img)) {
-            Entry::Occupied(o) => o.into_mut(),
-            Entry::Vacant(v) => v.insert(texture_creator.create_texture_static(
-                Some(img.format().into()),
-                img.width(),
-                img.height(),
-            )?),
-        };
+        let img_ptr: *const Image = img;
+        let key = (self.window_target, img_ptr);
+        if !self.image_cache.contains(&key) {
+            self.image_cache.put(
+                key,
+                texture_creator.create_texture_static(
+                    Some(img.format().into()),
+                    img.width(),
+                    img.height(),
+                )?,
+            );
+        }
+        let texture = self.image_cache.get_mut(&key).expect("valid image cache");
         match tint {
             Some(tint) => {
                 let [r, g, b, a] = tint.channels();

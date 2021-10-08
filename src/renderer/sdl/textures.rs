@@ -122,9 +122,9 @@ impl TextureRenderer for Renderer {
 
 impl Renderer {
     pub(crate) fn update_font_cache(&mut self) -> Result<()> {
-        if self.font_cache.get(&self.font).is_none() {
+        if !self.font_cache.contains(&self.font) {
             self.font_cache
-                .insert(self.font.clone(), TTF.load_font(&self.font.0, self.font.1)?);
+                .put(self.font.clone(), TTF.load_font(&self.font.0, self.font.1)?);
         }
         Ok(())
     }
