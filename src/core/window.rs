@@ -61,6 +61,11 @@ impl Cursor {
         Self::System(SystemCursor::IBeam)
     }
 
+    /// Constructs a `Cursor` with `SystemCursor::No`.
+    pub fn no() -> Self {
+        Self::System(SystemCursor::No)
+    }
+
     /// Constructs a `Cursor` with `SystemCursor::Hand`.
     pub fn hand() -> Self {
         Self::System(SystemCursor::Hand)

@@ -78,27 +78,37 @@ impl PixState {
     fn _text_field(&mut self, rect: Rect<i32>, label: &str, value: &mut String) -> PixResult<bool> {
         let s = self;
         let id = get_hash(&rect);
-        let mut changed = false;
 
-        s.push();
-
+        // Calculate input rect
         let mut input = rect;
         let pad = s.theme.padding;
+        let same_line = s.ui_state.same_line;
         if !label.is_empty() {
+            // Resize input area to fit label
             let (w, h) = s.size_of(label)?;
-            if s.ui_state.same_line {
-                input.set_x(input.x() + w as i32 + pad);
-                input.set_y(input.y() - h as i32 / 2);
+            if same_line {
+                let offset = w as i32 + pad;
+                input.set_x(input.x() + offset);
+                input.set_width(input.width() - offset);
             } else {
-                input.set_y(input.y() + h as i32 + pad);
+                let offset = h as i32 + pad;
+                input.set_y(input.y() + offset);
+                input.set_height(input.height() - offset);
             }
         }
 
         // Check hover/active/keyboard focus
-        if input.contains_point(s.mouse_pos()) {
+        let disabled = s.ui_state.disabled;
+        if !disabled && input.contains_point(s.mouse_pos()) {
             s.ui_state.hover(id);
         }
         s.ui_state.try_capture(id);
+        let focused = !disabled && s.ui_state.is_focused(id);
+        let hovered = s.ui_state.is_hovered(id);
+        let active = !disabled && s.ui_state.is_active(id);
+
+        s.push();
+        let mut changed = false;
 
         // Render
         s.rect_mode(RectMode::Corner);
@@ -107,18 +117,21 @@ impl PixState {
         // Label
         if !label.is_empty() {
             s.fill(s.text_color());
-            s.text([rect.x(), rect.y()], label)?;
+            if same_line {
+                let (_, h) = s.size_of(label)?;
+                let y = rect.center().y();
+                s.text([rect.x(), y - h as i32 / 2], label)?;
+            } else {
+                s.text([rect.x(), rect.y()], label)?;
+            }
         }
 
         // Input
-        let focused = s.ui_state.is_focused(id);
-        let active = s.ui_state.is_active(id);
         if focused || active {
             s.stroke(s.secondary_color());
         } else {
             s.stroke(s.muted_color());
         }
-        let hovered = s.ui_state.is_hovered(id);
         if hovered {
             s.frame_cursor(&Cursor::ibeam())?;
         }
@@ -137,7 +150,7 @@ impl PixState {
             x -= width - input.width();
         }
         s.text([x, y], &value)?;
-        if focused && s.frame_count() >> 8 & 1 > 0 {
+        if focused && !s.ui_state.disabled && s.frame_count() >> 8 & 1 > 0 {
             let offset = 2; // Remove some left space of the text cursor
             s.text([x + vw as i32 - offset, y], &TEXT_CURSOR)?;
         }

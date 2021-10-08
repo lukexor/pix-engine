@@ -32,6 +32,7 @@ pub(crate) type ElementId = u64;
 #[derive(Default, Debug, PartialEq, Eq)]
 pub(crate) struct UiState {
     pub(crate) same_line: bool,
+    pub(crate) disabled: bool,
     pub(crate) mouse: MouseState,
     pub(crate) pmouse: MouseState,
     pub(crate) keys: KeyState,
@@ -45,8 +46,6 @@ pub(crate) struct UiState {
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Scroll(i32, i32);
 
-// TODO: Add horizontal scrolling
-#[allow(dead_code)]
 impl Scroll {
     #[inline]
     pub(crate) fn x(&self) -> i32 {
@@ -103,9 +102,10 @@ impl UiState {
     #[inline]
     pub(crate) fn hover(&mut self, id: ElementId) {
         self.hovered = Some(id);
-        // If mouse is down this frame while hovered, focus element
+        // If mouse is down this frame while hovered, make element active, if something else isn't
+        // already
         if !self.has_active() && self.mouse.is_down(Mouse::Left) {
-            self.active = Some(id);
+            self.set_active(id);
         }
     }
 
@@ -231,5 +231,10 @@ impl PixState {
     /// Alters how UI methods lay out new lines.
     pub fn same_line(&mut self, value: bool) {
         self.ui_state.same_line = value;
+    }
+
+    /// Alters whether the elements rendered while `true` are disabled.
+    pub fn disabled(&mut self, value: bool) {
+        self.ui_state.disabled = value;
     }
 }

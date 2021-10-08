@@ -263,51 +263,61 @@ impl<T: Num> Rect<T> {
     /// let r = rect!(5, 10, 100, 100);
     /// assert_eq!(r.to_vec(), vec![5, 10, 100, 100]);
     /// ```
+    #[inline]
     pub fn to_vec(self) -> Vec<T> {
         self.0.to_vec()
     }
 
     /// Returns the horizontal position of the left edge.
+    #[inline]
     pub fn left(&self) -> T {
         self.x()
     }
 
     /// Set the horizontal position of the left edge.
+    #[inline]
     pub fn set_left(&mut self, left: T) {
         self.set_x(left);
     }
 
     /// Returns the horizontal position of the right edge.
+    #[inline]
     pub fn right(&self) -> T {
         self.x() + self.width()
     }
 
     /// Set the horizontal position of the right edge.
+    #[inline]
     pub fn set_right(&mut self, right: T) {
         self.set_x(right - self.width());
     }
 
     /// Returns the horizontal position of the top edge.
+    #[inline]
     pub fn top(&self) -> T {
         self.y()
     }
 
     /// Set the vertical position of the top edge.
+    #[inline]
     pub fn set_top(&mut self, top: T) {
         self.set_y(top);
     }
 
     /// Returns the vertical position of the bottom edge.
+    #[inline]
     pub fn bottom(&self) -> T {
         self.y() + self.height()
     }
 
     /// Set the vertical position of the bottom edge.
+    #[inline]
     pub fn set_bottom(&mut self, bottom: T) {
         self.set_y(bottom - self.height());
     }
 
     /// Returns the center position as [Point].
+    #[inline]
     pub fn center(&self) -> Point<T, 2> {
         let two = T::one() + T::one();
         point!(
@@ -317,26 +327,31 @@ impl<T: Num> Rect<T> {
     }
 
     /// Returns the top-left position as [Point].
+    #[inline]
     pub fn top_left(&self) -> Point<T, 2> {
         point!(self.left(), self.top())
     }
 
     /// Returns the top-right position as [Point].
+    #[inline]
     pub fn top_right(&self) -> Point<T, 2> {
         point!(self.right(), self.top())
     }
 
     /// Returns the bottom-left position as [Point].
+    #[inline]
     pub fn bottom_left(&self) -> Point<T, 2> {
         point!(self.left(), self.bottom())
     }
 
     /// Returns the bottom-right position as [Point].
+    #[inline]
     pub fn bottom_right(&self) -> Point<T, 2> {
         point!(self.right(), self.bottom())
     }
 
     /// Set position centered on a [Point].
+    #[inline]
     pub fn center_on<P: Into<Point<T, 2>>>(&mut self, p: P) {
         let p = p.into();
         let two = T::one() + T::one();
@@ -345,6 +360,7 @@ impl<T: Num> Rect<T> {
     }
 
     /// Resize rectangle by a given value around the center.
+    #[inline]
     pub fn resize_by(&mut self, val: T) {
         let two = T::one();
         self.set_x(self.x() - val);

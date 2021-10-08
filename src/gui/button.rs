@@ -33,26 +33,28 @@ impl PixState {
         let s = self;
         let id = get_hash(&rect);
 
-        s.push();
-
         // Check hover/active/keyboard focus
-        if rect.contains_point(s.mouse_pos()) {
+        let disabled = s.ui_state.disabled;
+        if !disabled && rect.contains_point(s.mouse_pos()) {
             s.ui_state.hover(id);
         }
         s.ui_state.try_capture(id);
+        let focused = !disabled && s.ui_state.is_focused(id);
+        let hovered = s.ui_state.is_hovered(id);
+        let active = s.ui_state.is_active(id);
+
+        s.push();
 
         // Render
         let radius = 3;
 
         // Button
         s.rect_mode(RectMode::Corner);
-        if s.ui_state.is_focused(id) {
+        if focused {
             s.stroke(s.secondary_color());
         } else {
             s.stroke(s.muted_color());
         }
-        let hovered = s.ui_state.is_hovered(id);
-        let active = s.ui_state.is_active(id);
         if hovered {
             s.frame_cursor(&Cursor::hand())?;
             s.fill(s.accent_color());
@@ -79,6 +81,10 @@ impl PixState {
 
         // Process input
         s.ui_state.handle_input(id);
-        Ok(s.ui_state.was_clicked(id))
+        if !disabled {
+            Ok(s.ui_state.was_clicked(id))
+        } else {
+            Ok(false)
+        }
     }
 }

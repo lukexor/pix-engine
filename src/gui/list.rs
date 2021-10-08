@@ -1,8 +1,10 @@
 //! Immediate-GUI functions related to rendering and interacting with lists and select boxes.
 
+use std::cmp::max;
+
 use num_traits::AsPrimitive;
 
-use super::get_hash;
+use super::{get_hash, slider::Direction};
 use crate::{prelude::*, renderer::Rendering};
 
 impl PixState {
@@ -39,34 +41,61 @@ impl PixState {
         let s = self;
         let id = get_hash(&rect);
 
-        s.push();
-
+        // Calculate list content rect
         let pad = s.theme.padding;
         let radius = 3;
-        let scroll_width = 16;
-
         let mut border = rect;
         if !label.is_empty() {
+            // Resize content area to fit label
             let (_, h) = s.size_of(&label)?;
-            border.set_y(border.y() + h as i32 + pad); // Push border down past label
+            let offset = h as i32 + pad;
+            border.set_y(border.y() + offset);
+            border.set_height(border.height() - offset);
         }
-        let mut content = Rect::resized(border, -radius);
+        let mut content = Rect::resized(border, -pad);
+
         let line_height = item_height as i32 + pad * 2;
-        let total_height = items.len() as i32 * line_height;
         let mut scroll = s.ui_state.scroll(id);
         let skip_count = (scroll.y() / line_height) as usize;
         let displayed_count = (content.height() / line_height) as usize;
+        let displayed_items = items
+            .iter()
+            .enumerate()
+            .skip(skip_count)
+            .take(displayed_count + 2);
 
-        let scroll_enabled = total_height > content.height();
-        if scroll_enabled {
+        // Calculate total height and whether a vertical scrollbar is needed
+        let total_height = items.len() as i32 * line_height;
+        let mut scroll_width = 0;
+        if total_height > content.height() {
+            scroll_width = 16;
             content.set_width(content.width() - scroll_width);
         }
 
+        // Calcualte total width and whether a horizontal scrollbar is needed
+        let mut total_width = 0;
+        let mut scroll_height = 0;
+        for (_, item) in displayed_items.clone() {
+            let (w, _) = s.size_of(item).unwrap_or((0, 0));
+            total_width = max(w as i32, total_width);
+            if scroll_height == 0 && w as i32 > content.width() {
+                scroll_height = 16;
+                content.set_height(content.height() - scroll_height);
+            }
+        }
+        total_width += scroll_width;
+
         // Check hover/active/keyboard focus
-        if content.contains_point(s.mouse_pos()) {
+        let disabled = s.ui_state.disabled;
+        if !disabled && content.contains_point(s.mouse_pos()) {
             s.ui_state.hover(id);
         }
         s.ui_state.try_capture(id);
+        let focused = !disabled && s.ui_state.is_focused(id);
+        let hovered = s.ui_state.is_hovered(id);
+        let active = s.ui_state.is_active(id);
+
+        s.push();
 
         // Render
         s.rect_mode(RectMode::Corner);
@@ -83,60 +112,37 @@ impl PixState {
         s.rounded_rect(border, radius)?;
 
         // Contents
-        // TODO: Move this to ElementState (requires migrating back to textureId references)
-        let mut texture =
-            s.create_texture(content.width() as u32, content.height() as u32, None)?;
-        s.with_texture(&mut texture, |s: &mut PixState| -> PixResult<()> {
-            // Because x/y is now relative to this texture and scroll, offset the mouse
-            let mut mouse = s.mouse_pos();
-            mouse.offset(-content.top_left());
-            s.background(s.primary_color())?;
+        let mouse = s.mouse_pos();
 
-            let x = pad;
-            let mut y = -scroll.y() + (skip_count as i32 * line_height);
-            for (i, item) in items
-                .iter()
-                .enumerate()
-                .skip(skip_count)
-                .take(displayed_count + 2)
-            {
-                let item_rect = rect!(0, y, content.width(), line_height);
-                let clickable = item_rect.bottom() > 0 || item_rect.top() < content.height();
-                if clickable {
-                    let mut click_area = item_rect;
-                    if click_area.top() < 0 {
-                        click_area.set_height(click_area.height() + click_area.y());
-                        click_area.set_top(0);
-                    }
-                    if click_area.bottom() > content.height() {
-                        click_area.set_height(content.height() - click_area.top());
-                    }
-                    if click_area.contains_point(mouse) {
-                        s.frame_cursor(&Cursor::hand())?;
-                        if s.ui_state.is_active(id) && s.mouse_down(Mouse::Left) {
-                            *selected = Some(i);
-                        }
-                    }
-                }
-                if matches!(*selected, Some(el) if el == i) {
-                    s.no_stroke();
-                    s.fill(s.highlight_color());
-                    s.rounded_rect(item_rect, radius)?;
-                    s.fill(BLACK);
-                } else {
-                    s.fill(WHITE);
-                }
-                s.text([x, y + pad], item)?;
-                y += line_height;
-            }
-            Ok(())
-        })?;
         s.clip(content)?;
-        s.texture(&mut texture, None, content)?;
+        let x = content.x() - scroll.x();
+        let mut y = content.y() - scroll.y() + (skip_count as i32 * line_height);
+        for (i, item) in displayed_items {
+            let item_rect = rect!(content.x(), y, content.width(), line_height);
+            let clickable = item_rect.bottom() > content.y() || item_rect.top() < content.height();
+            if clickable {
+                let click_area = item_rect;
+                if hovered && click_area.contains_point(mouse) {
+                    s.frame_cursor(&Cursor::hand())?;
+                    if active && s.mouse_down(Mouse::Left) {
+                        *selected = Some(i);
+                    }
+                }
+            }
+            if matches!(*selected, Some(el) if el == i) {
+                s.no_stroke();
+                s.fill(s.highlight_color());
+                s.rounded_rect(item_rect, radius)?;
+                s.fill(BLACK);
+            } else {
+                s.fill(WHITE);
+            }
+            s.text([x, y + pad], item)?;
+            y += line_height;
+        }
         s.no_clip()?;
 
         // Process input
-        let focused = s.ui_state.is_focused(id);
         if focused {
             if let Some(key) = s.ui_state.key_entered() {
                 let changed_selection = match key {
@@ -175,8 +181,7 @@ impl PixState {
         s.ui_state.handle_input(id);
 
         // Scrollbar
-        let max_scroll = total_height - content.height();
-        if scroll_enabled
+        if scroll_width > 0
             && s.slider(
                 [
                     border.right() - scroll_width,
@@ -184,8 +189,24 @@ impl PixState {
                     scroll_width,
                     border.height(),
                 ],
-                max_scroll,
+                total_height - content.height(),
                 &mut scroll.y_mut(),
+                Direction::Vertical,
+            )?
+        {
+            s.ui_state.set_scroll(id, scroll);
+        }
+        if scroll_height > 0
+            && s.slider(
+                [
+                    border.left(),
+                    border.bottom() - scroll_height,
+                    border.width() - scroll_width - 1,
+                    scroll_height,
+                ],
+                total_width - content.width() - scroll_width - 1,
+                &mut scroll.x_mut(),
+                Direction::Horizontal,
             )?
         {
             s.ui_state.set_scroll(id, scroll);
