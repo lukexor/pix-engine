@@ -5,6 +5,8 @@ struct ImGui {
     edit_target: usize,
     list_items: Vec<String>,
     selected_item: Option<usize>,
+    check1: bool,
+    check2: bool,
     text_input: String,
     rects: Vec<Rect<i32>>,
 }
@@ -16,13 +18,17 @@ impl ImGui {
             edit_target: 0,
             list_items: Vec::new(),
             selected_item: None,
+            check1: true,
+            check2: false,
             text_input: String::new(),
             rects: vec![
                 rect![10, 10, 100, 25],  // Add button
                 rect![120, 10, 100, 25], // Remove button
-                rect![10, 45, 210, 145], // Select List
-                rect![10, 200, 210, 30], // Text Field
-                rect![10, 240, 210, 50], // Output
+                rect![10, 45, 210, 160], // Select List
+                rect![10, 215, 210, 30], // Text Field
+                rect![10, 255, 210, 50], // Output
+                rect![240, 10, 100, 25], // Checkbox 1
+                rect![325, 10, 100, 25], // Checkbox 2
             ],
         }
     }
@@ -64,6 +70,9 @@ impl AppState for ImGui {
         s.disabled(true);
         s.text_field(self.rects[4], "Output:", &mut self.text_input)?;
         s.disabled(false);
+
+        s.checkbox(self.rects[5], "Lorem", &mut self.check1)?;
+        s.checkbox(self.rects[6], "ipsum", &mut self.check2)?;
 
         if self.edit_mode {
             let rect = self.rects[self.edit_target];

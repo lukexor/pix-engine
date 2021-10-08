@@ -378,7 +378,7 @@ impl PixState {
     /// Target a `Window` for drawing operations.
     pub fn with_window<F>(&mut self, id: WindowId, f: F) -> PixResult<()>
     where
-        for<'r> F: FnOnce(&'r mut PixState) -> PixResult<()>,
+        F: FnOnce(&mut PixState) -> PixResult<()>,
     {
         self.push();
         self.renderer.set_window_target(id)?;

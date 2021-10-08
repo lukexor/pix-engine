@@ -46,7 +46,6 @@ impl PixState {
         s.push();
 
         // Render
-        let radius = 3;
 
         // Button
         s.rect_mode(RectMode::Corner);
@@ -57,16 +56,16 @@ impl PixState {
         }
         if hovered {
             s.frame_cursor(&Cursor::hand())?;
-            s.fill(s.accent_color());
+            s.fill(s.highlight_color());
             if active {
                 let [x, y, width, height] = rect.values();
-                s.rounded_rect([x + 1, y + 1, width, height], radius)?;
+                s.rect([x + 1, y + 1, width, height])?;
             } else {
-                s.rounded_rect(rect, radius)?;
+                s.rect(rect)?;
             }
         } else {
             s.fill(s.primary_color());
-            s.rounded_rect(rect, radius)?;
+            s.rect(rect)?;
         }
 
         // Button text

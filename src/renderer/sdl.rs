@@ -514,7 +514,7 @@ impl Rendering for Renderer {
 impl Renderer {
     pub(crate) fn update_canvas<F>(&mut self, mut f: F) -> Result<()>
     where
-        for<'r> F: FnMut(&'r mut WindowCanvas) -> Result<()>,
+        F: FnMut(&mut WindowCanvas) -> Result<()>,
     {
         update_canvas!(self, f)
     }

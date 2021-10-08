@@ -231,15 +231,15 @@ pub struct ThemeColors {
 impl ThemeColors {
     /// A dark color theme.
     ///
-    /// Credit: <https://lospec.com/palette-list/wheat-field>
+    /// Inspired by: <https://lospec.com/palette-list/wheat-field>
     pub fn dark() -> Self {
         Self {
             text: WHITE,
             background: color!(0x15, 0x16, 0x17), // Dark gray
             primary: color!(0x2c, 0x31, 0x3c),    // Slate gray
             secondary: color!(0x97, 0xc8, 0x9b),  // Green
-            accent: color!(0x3e, 0x8e, 0x92),     // Teal
-            highlight: color!(0xb7, 0x8f, 0x43),  // Sand
+            accent: color!(0xb7, 0x8f, 0x43),     // Sand
+            highlight: color!(0x3e, 0x8e, 0x92),  // Teal
             muted: color!(0x62, 0x5e, 0x60),      // Sand gray
         }
     }

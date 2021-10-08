@@ -240,7 +240,7 @@ impl PixState {
     /// Target a `Texture` for drawing operations.
     pub fn with_texture<F>(&mut self, texture: &mut Texture, f: F) -> PixResult<()>
     where
-        for<'r> F: FnOnce(&'r mut PixState) -> PixResult<()>,
+        F: FnOnce(&mut PixState) -> PixResult<()>,
     {
         self.push();
         self.renderer.set_texture_target(texture);

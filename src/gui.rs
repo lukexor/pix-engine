@@ -14,6 +14,7 @@ use std::hash::{Hash, Hasher};
 pub use theme::*;
 
 pub mod button;
+pub mod checkbox;
 pub mod keys;
 pub mod list;
 pub mod mouse;

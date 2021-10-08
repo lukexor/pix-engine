@@ -64,7 +64,7 @@ impl PixState {
         *value = cmp::max(0, cmp::min(max, *value));
 
         // Render
-        let radius = 3;
+        let radius = 6;
 
         // Scroll region
         if focused {
@@ -72,8 +72,8 @@ impl PixState {
         } else {
             s.stroke(s.muted_color());
         }
-        s.fill(s.primary_color());
-        s.rounded_rect(rect, radius)?;
+        s.fill(s.background_color());
+        s.rect(rect)?;
 
         // Thumb slider
         s.no_stroke();
@@ -81,7 +81,7 @@ impl PixState {
             s.frame_cursor(&Cursor::hand())?;
         }
         if hovered || active || focused {
-            s.fill(s.secondary_color());
+            s.fill(s.highlight_color());
         } else {
             s.fill(s.muted_color());
         }

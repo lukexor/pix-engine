@@ -43,7 +43,6 @@ impl PixState {
 
         // Calculate list content rect
         let pad = s.theme.padding;
-        let radius = 3;
         let mut border = rect;
         if !label.is_empty() {
             // Resize content area to fit label
@@ -52,7 +51,8 @@ impl PixState {
             border.set_y(border.y() + offset);
             border.set_height(border.height() - offset);
         }
-        let mut content = Rect::resized(border, -pad);
+        let mut content = border;
+        content.set_x(content.x() + pad);
 
         let line_height = item_height as i32 + pad * 2;
         let mut scroll = s.ui_state.scroll(id);
@@ -109,12 +109,12 @@ impl PixState {
 
         // Background
         s.fill(s.primary_color());
-        s.rounded_rect(border, radius)?;
+        s.rect(border)?;
 
         // Contents
         let mouse = s.mouse_pos();
 
-        s.clip(content)?;
+        s.clip(border)?;
         let x = content.x() - scroll.x();
         let mut y = content.y() - scroll.y() + (skip_count as i32 * line_height);
         for (i, item) in displayed_items {
@@ -132,8 +132,8 @@ impl PixState {
             if matches!(*selected, Some(el) if el == i) {
                 s.no_stroke();
                 s.fill(s.highlight_color());
-                s.rounded_rect(item_rect, radius)?;
-                s.fill(BLACK);
+                s.rect([border.x(), y, border.width(), line_height])?;
+                s.fill(s.text_color());
             } else {
                 s.fill(WHITE);
             }
@@ -201,10 +201,10 @@ impl PixState {
                 [
                     border.left(),
                     border.bottom() - scroll_height,
-                    border.width() - scroll_width - 1,
+                    border.width() - scroll_width,
                     scroll_height,
                 ],
-                total_width - content.width() - scroll_width - 1,
+                total_width - content.width() - scroll_width,
                 &mut scroll.x_mut(),
                 Direction::Horizontal,
             )?
@@ -219,7 +219,7 @@ impl PixState {
         } else {
             s.stroke(s.muted_color());
         }
-        s.rounded_rect(border, radius)?;
+        s.rect(border)?;
 
         s.pop();
 
