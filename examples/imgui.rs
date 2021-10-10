@@ -7,6 +7,7 @@ struct ImGui {
     selected_item: Option<usize>,
     check1: bool,
     check2: bool,
+    radio: usize,
     text_input: String,
     rects: Vec<Rect<i32>>,
 }
@@ -20,15 +21,19 @@ impl ImGui {
             selected_item: None,
             check1: true,
             check2: false,
+            radio: 0,
             text_input: String::new(),
             rects: vec![
-                rect![10, 10, 100, 25],  // Add button
-                rect![120, 10, 100, 25], // Remove button
-                rect![10, 45, 210, 160], // Select List
-                rect![10, 215, 210, 30], // Text Field
-                rect![10, 255, 210, 50], // Output
-                rect![240, 10, 100, 25], // Checkbox 1
-                rect![325, 10, 100, 25], // Checkbox 2
+                rect![10, 10, 100, 25],   // Add button
+                rect![120, 10, 100, 25],  // Remove button
+                rect![10, 45, 210, 160],  // Select List
+                rect![10, 215, 210, 30],  // Text Field
+                rect![10, 255, 210, 50],  // Output
+                rect![240, 10, 100, 25],  // Checkbox 1
+                rect![325, 10, 100, 25],  // Checkbox 2
+                rect![240, 65, 100, 25],  // Radio 1
+                rect![240, 95, 100, 25],  // Radio 2
+                rect![240, 125, 100, 25], // Radio 3
             ],
         }
     }
@@ -72,7 +77,11 @@ impl AppState for ImGui {
         s.disabled(false);
 
         s.checkbox(self.rects[5], "Lorem", &mut self.check1)?;
-        s.checkbox(self.rects[6], "ipsum", &mut self.check2)?;
+        s.checkbox(self.rects[6], "Ipsum", &mut self.check2)?;
+
+        s.radio(self.rects[7], "Dolor", &mut self.radio, 0)?;
+        s.radio(self.rects[8], "Sit", &mut self.radio, 1)?;
+        s.radio(self.rects[9], "Amet", &mut self.radio, 2)?;
 
         if self.edit_mode {
             let rect = self.rects[self.edit_target];

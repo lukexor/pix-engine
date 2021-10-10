@@ -1,4 +1,4 @@
-//! Immediate-GUI functions related to rendering and interacting with slider controls.
+//! Immediate-GUI functions related to rendering and interacting with scroll controls.
 
 use super::get_hash;
 use crate::prelude::*;
@@ -6,7 +6,7 @@ use std::cmp;
 
 const SCROLL_SPEED: i32 = 2;
 
-/// Slider direction.
+/// Scroll direction.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Direction {
     /// Horizontal.
@@ -16,12 +16,12 @@ pub enum Direction {
 }
 
 impl PixState {
-    /// Draw a slider control that returns `true` when changed.
-    pub fn slider<R>(
+    /// Draw a scroll control that returns `true` when changed.
+    pub(crate) fn scroll<R>(
         &mut self,
         rect: R,
         label: &str,
-        max: i32,
+        max: u32,
         value: &mut i32,
         dir: Direction,
     ) -> PixResult<bool>
@@ -29,21 +29,17 @@ impl PixState {
         R: Into<Rect<i32>>,
     {
         let rect = self.get_rect(rect);
-        self._slider(rect, label, max, value, dir)
+        self._scroll(rect, label, max, value, dir)
     }
 
-    fn _slider(
+    fn _scroll(
         &mut self,
         rect: Rect<i32>,
         label: &str,
-        max: i32,
+        max: u32,
         value: &mut i32,
         dir: Direction,
     ) -> PixResult<bool> {
-        if max <= 0 {
-            return Err(PixError::Other("invalid `max` value".into()));
-        }
-
         use Direction::*;
 
         let s = self;
@@ -67,6 +63,7 @@ impl PixState {
         let mut changed = false;
 
         // Clamp value
+        let max = max as i32;
         *value = cmp::max(0, cmp::min(max, *value));
 
         // Render
@@ -81,7 +78,7 @@ impl PixState {
         s.fill(s.background_color());
         s.rect(rect)?;
 
-        // Thumb slider
+        // Thumb scroll
         s.no_stroke();
         if hovered {
             s.frame_cursor(&Cursor::hand())?;

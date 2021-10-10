@@ -1,6 +1,6 @@
 //! Immediate-GUI functions related to rendering and interacting with lists and select boxes.
 
-use super::{get_hash, slider::Direction};
+use super::{get_hash, scroll::Direction};
 use crate::{prelude::*, renderer::Rendering};
 use num_traits::AsPrimitive;
 use std::cmp::max;
@@ -181,7 +181,7 @@ impl PixState {
 
         // Scrollbar
         if scroll_width > 0
-            && s.slider(
+            && s.scroll(
                 [
                     border.right() - scroll_width,
                     border.top(),
@@ -189,7 +189,7 @@ impl PixState {
                     border.height(),
                 ],
                 label,
-                total_height - content.height(),
+                (total_height - content.height()) as u32,
                 &mut scroll.y_mut(),
                 Direction::Vertical,
             )?
@@ -197,7 +197,7 @@ impl PixState {
             s.ui_state.set_scroll(id, scroll);
         }
         if scroll_height > 0
-            && s.slider(
+            && s.scroll(
                 [
                     border.left(),
                     border.bottom() - scroll_height,
@@ -205,7 +205,7 @@ impl PixState {
                     scroll_height,
                 ],
                 label,
-                total_width - content.width() - scroll_width,
+                (total_width - content.width() - scroll_width) as u32,
                 &mut scroll.x_mut(),
                 Direction::Horizontal,
             )?

@@ -1,31 +1,44 @@
-//! Immediate-GUI functions related to rendering and interacting with check boxes.
+//! Immediate-GUI functions related to rendering and interacting with radio buttons.
 
 use super::get_hash;
 use crate::{prelude::*, renderer::Rendering};
 
 impl PixState {
-    /// Draw a checkbox to the current canvas.
-    pub fn checkbox<R, S>(&mut self, rect: R, label: S, checked: &mut bool) -> PixResult<bool>
+    /// Draw a set of radio buttons to the current canvas.
+    pub fn radio<R, S>(
+        &mut self,
+        rect: R,
+        label: S,
+        selected: &mut usize,
+        index: usize,
+    ) -> PixResult<bool>
     where
         R: Into<Rect<i32>>,
         S: AsRef<str>,
     {
         let rect = self.get_rect(rect);
-        self._checkbox(rect, label.as_ref(), checked)
+        self._radio(rect, label.as_ref(), selected, index)
     }
 
-    fn _checkbox(&mut self, rect: Rect<i32>, label: &str, checked: &mut bool) -> PixResult<bool> {
+    fn _radio(
+        &mut self,
+        rect: Rect<i32>,
+        label: &str,
+        selected: &mut usize,
+        index: usize,
+    ) -> PixResult<bool> {
         let s = self;
         let id = get_hash(&label);
 
-        // Calculate checkbox rect
+        // Calculate radio rect
+        let radius = 9;
         let (_, h) = s.size_of(label)?;
         let y = rect.center().y();
-        let checkbox = square![rect.x(), y - h as i32 / 2, 16];
+        let radio = circle![rect.x() + radius, y - h as i32 / 2 + radius, radius];
 
         // Check hover/active/keyboard focus
         let disabled = s.ui_state.disabled;
-        if !disabled && checkbox.contains_point(s.mouse_pos()) {
+        if !disabled && radio.contains_point(s.mouse_pos()) {
             s.ui_state.hover(id);
         }
         s.ui_state.try_capture(id);
@@ -43,7 +56,7 @@ impl PixState {
         // Label
         if !label.is_empty() {
             s.fill(s.text_color());
-            s.text([checkbox.right() + 2 * pad, y - h as i32 / 2], label)?;
+            s.text([radio.right() + 2 * pad, y - h as i32 / 2], label)?;
         }
 
         // Checkbox
@@ -55,19 +68,12 @@ impl PixState {
         if hovered {
             s.frame_cursor(&Cursor::hand())?;
         }
+        s.ellipse_mode(EllipseMode::Corner);
         s.fill(s.primary_color());
-        s.rect(checkbox)?;
-        if *checked {
-            s.stroke(s.highlight_color());
-            s.stroke_weight(2);
-            let third = 16 / 3;
-            let x = checkbox.x() + 3 + third;
-            let y = checkbox.bottom() - 1 - third / 2;
-            let start = [x - third + 1, y - third + 1];
-            let mid = [x, y];
-            let end = [x + third, y - third * 2 + 1];
-            s.line([start, mid])?;
-            s.line([mid, end])?;
+        s.circle(radio)?;
+        if *selected == index {
+            s.fill(s.highlight_color());
+            s.circle(circle![radio.x(), radio.y(), radio.radius() - 3])?;
         }
 
         s.pop();
@@ -77,7 +83,7 @@ impl PixState {
         if !disabled {
             let clicked = s.ui_state.was_clicked(id);
             if clicked {
-                *checked = !(*checked);
+                *selected = index;
             }
             Ok(clicked)
         } else {

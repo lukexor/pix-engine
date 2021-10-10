@@ -18,7 +18,8 @@ pub mod checkbox;
 pub mod keys;
 pub mod list;
 pub mod mouse;
-pub mod slider;
+pub mod radio;
+pub mod scroll;
 pub mod text;
 pub mod theme;
 
