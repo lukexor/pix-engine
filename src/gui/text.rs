@@ -77,7 +77,7 @@ impl PixState {
 
     fn _text_field(&mut self, rect: Rect<i32>, label: &str, value: &mut String) -> PixResult<bool> {
         let s = self;
-        let id = get_hash(&rect);
+        let id = get_hash(&label);
 
         // Calculate input rect
         let mut input = rect;

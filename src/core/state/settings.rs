@@ -90,6 +90,7 @@ pub(crate) struct Settings {
     pub(crate) background: Color,
     pub(crate) fill: Option<Color>,
     pub(crate) stroke: Option<Color>,
+    pub(crate) stroke_weight: u8,
     pub(crate) clip: Option<Rect<i32>>,
     pub(crate) running: bool,
     pub(crate) run_count: usize,
@@ -112,6 +113,7 @@ impl Default for Settings {
             background: Color::default(),
             fill: Some(WHITE),
             stroke: Some(BLACK),
+            stroke_weight: 1,
             clip: None,
             running: true,
             run_count: 0,
@@ -159,6 +161,14 @@ impl PixState {
         C: Into<Color>,
     {
         self.settings.stroke = Some(color.into());
+    }
+
+    /// Sets the width used to draw lines on the canvas.
+    pub fn stroke_weight<W>(&mut self, weight: W)
+    where
+        W: AsPrimitive<u8>,
+    {
+        self.settings.stroke_weight = weight.as_();
     }
 
     /// Disables outlining shapes drawn on the canvas.

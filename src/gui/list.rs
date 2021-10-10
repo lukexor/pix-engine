@@ -1,11 +1,9 @@
 //! Immediate-GUI functions related to rendering and interacting with lists and select boxes.
 
-use std::cmp::max;
-
-use num_traits::AsPrimitive;
-
 use super::{get_hash, slider::Direction};
 use crate::{prelude::*, renderer::Rendering};
+use num_traits::AsPrimitive;
+use std::cmp::max;
 
 impl PixState {
     /// Draw a select list to the current canvas with a scrollable region.
@@ -39,7 +37,7 @@ impl PixState {
         S: AsRef<str>,
     {
         let s = self;
-        let id = get_hash(&rect);
+        let id = get_hash(&label);
 
         // Calculate list content rect
         let pad = s.theme.padding;
@@ -54,6 +52,7 @@ impl PixState {
         let mut content = border;
         content.set_x(content.x() + pad);
 
+        // Calculate displayed items
         let line_height = item_height as i32 + pad * 2;
         let mut scroll = s.ui_state.scroll(id);
         let skip_count = (scroll.y() / line_height) as usize;
@@ -189,6 +188,7 @@ impl PixState {
                     scroll_width,
                     border.height(),
                 ],
+                label,
                 total_height - content.height(),
                 &mut scroll.y_mut(),
                 Direction::Vertical,
@@ -204,6 +204,7 @@ impl PixState {
                     border.width() - scroll_width,
                     scroll_height,
                 ],
+                label,
                 total_width - content.width() - scroll_width,
                 &mut scroll.x_mut(),
                 Direction::Horizontal,

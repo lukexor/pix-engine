@@ -31,7 +31,7 @@ impl PixState {
 
     fn _button(&mut self, rect: Rect<i32>, label: &str) -> PixResult<bool> {
         let s = self;
-        let id = get_hash(&rect);
+        let id = get_hash(&label);
 
         // Check hover/active/keyboard focus
         let disabled = s.ui_state.disabled;

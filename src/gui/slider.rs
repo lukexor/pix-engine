@@ -20,6 +20,7 @@ impl PixState {
     pub fn slider<R>(
         &mut self,
         rect: R,
+        label: &str,
         max: i32,
         value: &mut i32,
         dir: Direction,
@@ -28,12 +29,13 @@ impl PixState {
         R: Into<Rect<i32>>,
     {
         let rect = self.get_rect(rect);
-        self._slider(rect, max, value, dir)
+        self._slider(rect, label, max, value, dir)
     }
 
     fn _slider(
         &mut self,
         rect: Rect<i32>,
+        label: &str,
         max: i32,
         value: &mut i32,
         dir: Direction,
@@ -45,7 +47,11 @@ impl PixState {
         use Direction::*;
 
         let s = self;
-        let id = get_hash(&rect);
+        let mut id = get_hash(&label);
+        match dir {
+            Horizontal => id += rect.x() as u64,
+            Vertical => id += rect.y() as u64,
+        }
 
         // Check hover/active/keyboard focus
         let disabled = s.ui_state.disabled;

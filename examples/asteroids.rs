@@ -227,8 +227,8 @@ impl Asteroids {
         self.asteroids.retain(|a| !a.destroyed);
 
         // Draw bullets
-        s.fill(BLACK);
-        s.stroke(WHITE);
+        s.fill(WHITE);
+        s.no_stroke();
         for b in self.bullets.iter() {
             s.circle(Ellipse::from(b))?;
         }
@@ -241,6 +241,8 @@ impl Asteroids {
         let elapsed = s.delta_time();
         self.ship.pos += self.ship.vel * elapsed;
         self.ship.pos.wrap([w, h], self.ship.size as Scalar);
+        s.fill(BLACK);
+        s.stroke(WHITE);
         s.wireframe(&SHIP_MODEL, self.ship.pos, self.ship.angle, SHIP_SCALE)
     }
 

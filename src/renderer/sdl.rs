@@ -287,17 +287,21 @@ impl Rendering for Renderer {
     }
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, line: LineI2, color: Color) -> Result<()> {
+    fn line(&mut self, line: LineI2, stroke: u8, color: Color) -> Result<()> {
         let [start, end]: [Point<i16, 2>; 2] = line.into();
         let [x1, y1] = start.values();
         let [x2, y2] = end.values();
         self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
-            if y1 == y2 {
-                Ok(canvas.hline(x1, x2, y1, color)?)
-            } else if x1 == x2 {
-                Ok(canvas.vline(x1, y1, y2, color)?)
+            if stroke == 1 {
+                if y1 == y2 {
+                    Ok(canvas.hline(x1, x2, y1, color)?)
+                } else if x1 == x2 {
+                    Ok(canvas.vline(x1, y1, y2, color)?)
+                } else {
+                    Ok(canvas.aa_line(x1, y1, x2, y2, color)?)
+                }
             } else {
-                Ok(canvas.line(x1, y1, x2, y2, color)?)
+                Ok(canvas.thick_line(x1, y1, x2, y2, stroke, color)?)
             }
         })
     }
@@ -358,7 +362,7 @@ impl Rendering for Renderer {
                 canvas.filled_polygon(&vx, &vy, fill)?;
             }
             if let Some(stroke) = stroke {
-                canvas.polygon(&vx, &vy, stroke)?;
+                canvas.aa_polygon(&vx, &vy, stroke)?;
             }
             Ok(())
         })
@@ -384,7 +388,7 @@ impl Rendering for Renderer {
                 canvas.filled_polygon(&vx, &vy, fill)?;
             }
             if let Some(stroke) = stroke {
-                canvas.polygon(&vx, &vy, stroke)?;
+                canvas.aa_polygon(&vx, &vy, stroke)?;
             }
             Ok(())
         })
@@ -404,7 +408,7 @@ impl Rendering for Renderer {
                 canvas.filled_ellipse(x, y, width, height, fill)?;
             }
             if let Some(stroke) = stroke {
-                canvas.ellipse(x, y, width, height, stroke)?;
+                canvas.aa_ellipse(x, y, width, height, stroke)?;
             }
             Ok(())
         })

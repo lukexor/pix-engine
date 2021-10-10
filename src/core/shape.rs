@@ -76,8 +76,9 @@ impl PixState {
     where
         L: Into<LineI2>,
     {
-        if let Some(stroke) = self.settings.stroke {
-            self.renderer.line(line.into(), stroke)?;
+        let s = &self.settings;
+        if let Some(stroke) = s.stroke {
+            self.renderer.line(line.into(), s.stroke_weight, stroke)?;
         }
         Ok(())
     }

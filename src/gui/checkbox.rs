@@ -16,7 +16,7 @@ impl PixState {
 
     fn _checkbox(&mut self, rect: Rect<i32>, label: &str, checked: &mut bool) -> PixResult<bool> {
         let s = self;
-        let id = get_hash(&rect);
+        let id = get_hash(&label);
 
         // Calculate checkbox rect
         let (_, h) = s.size_of(label)?;
@@ -58,8 +58,16 @@ impl PixState {
         s.fill(s.primary_color());
         s.rect(checkbox)?;
         if *checked {
-            s.fill(s.accent_color());
-            s.rect(checkbox)?;
+            s.stroke(s.highlight_color());
+            s.stroke_weight(2);
+            let third = 16 / 3;
+            let x = checkbox.x() + 3 + third;
+            let y = checkbox.bottom() - 1 - third / 2;
+            let start = [x - third + 1, y - third + 1];
+            let mid = [x, y];
+            let end = [x + third, y - third * 2 + 1];
+            s.line([start, mid])?;
+            s.line([mid, end])?;
         }
 
         s.pop();
