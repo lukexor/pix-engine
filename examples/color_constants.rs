@@ -158,38 +158,23 @@ impl AppState for ColorConsts {
     #[allow(clippy::many_single_char_names)]
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         s.no_stroke();
+        let get_sq = |i| -> Rect<i32> {
+            let cols = COLS as i32;
+            let size = SIZE as i32;
+            let col = i as i32 % cols;
+            let row = i as i32 / cols;
+            let x = col * size;
+            let y = row * size;
+            square![x, y, size]
+        };
+
         for (i, &color) in COLORS.iter().enumerate() {
-            let col = i as u32 % COLS;
-            let row = i as u32 / COLS;
-            let x = col * SIZE;
-            let y = row * SIZE;
             s.fill(color.0);
-            s.square([x, y, SIZE])?;
+            s.square(get_sq(i))?;
         }
-        if let Some(idx) = self.hovered {
-            if let Some(color) = COLORS.get(idx) {
-                s.cursor(&Cursor::hand())?;
-                let pos = s.mouse_pos();
-
-                let (w, h) = s.size_of(color.1)?;
-                let pad = 4;
-                let w = w as i32 + pad * 2;
-                let h = h as i32 + pad * 2;
-                let mut x = pos.x() + 15;
-                let mut y = pos.y() + 25;
-                if x + w > WIDTH as i32 {
-                    x -= w;
-                }
-                if y + h > HEIGHT as i32 {
-                    y -= h;
-                }
-
-                s.fill(BLACK);
-                s.rect([x, y, w, h])?;
-
-                s.fill(WHITE);
-                s.text([x + pad, y + pad], color.1)?;
-            }
+        for (i, &color) in COLORS.iter().enumerate() {
+            let (w, h) = s.size_of(color.1)?;
+            s.tooltip([0, 0, w + 10, h + 10], color.1, get_sq(i))?;
         }
         Ok(())
     }

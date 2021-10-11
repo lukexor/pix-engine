@@ -13,15 +13,10 @@ use std::hash::{Hash, Hasher};
 
 pub use theme::*;
 
-pub mod button;
-pub mod checkbox;
 pub mod keys;
-pub mod list;
 pub mod mouse;
-pub mod radio;
-pub mod scroll;
-pub mod text;
 pub mod theme;
+pub mod widgets;
 
 /// A hashed element identifier for internal state management.
 #[cfg(target_pointer_width = "32")]

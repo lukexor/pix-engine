@@ -51,6 +51,16 @@ impl From<png::ColorType> for PixelFormat {
     }
 }
 
+impl From<PixelFormat> for png::ColorType {
+    fn from(format: PixelFormat) -> Self {
+        use PixelFormat::*;
+        match format {
+            Rgb => Self::Rgb,
+            Rgba => Self::Rgba,
+        }
+    }
+}
+
 impl Default for PixelFormat {
     fn default() -> Self {
         Self::Rgba
@@ -276,7 +286,7 @@ impl Image {
         let path = path.as_ref();
         let png_file = BufWriter::new(File::create(&path)?);
         let mut png = png::Encoder::new(png_file, self.width, self.height);
-        png.set_color(png::ColorType::Rgba);
+        png.set_color(self.format.into());
         png.set_depth(png::BitDepth::Eight);
         let mut writer = png.write_header()?;
         Ok(writer.write_image_data(self.as_bytes())?)

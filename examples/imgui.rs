@@ -5,7 +5,7 @@ struct ImGui {
     edit_target: usize,
     list_items: Vec<String>,
     selected_item: Option<usize>,
-    check1: bool,
+    disabled: bool,
     check2: bool,
     radio: usize,
     text_input: String,
@@ -19,8 +19,8 @@ impl ImGui {
             edit_target: 0,
             list_items: Vec::new(),
             selected_item: None,
-            check1: true,
-            check2: false,
+            disabled: false,
+            check2: true,
             radio: 0,
             text_input: String::new(),
             rects: vec![
@@ -34,6 +34,8 @@ impl ImGui {
                 rect![240, 65, 100, 25],  // Radio 1
                 rect![240, 95, 100, 25],  // Radio 2
                 rect![240, 125, 100, 25], // Radio 3
+                rect![395, 13, 14, 20],   // Tooltip Icon
+                rect![10, 10, 100, 30],   // Tooltip
             ],
         }
     }
@@ -47,6 +49,7 @@ impl AppState for ImGui {
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.disabled(self.disabled);
         // Buttons
         if s.button(self.rects[0], "Add Item")? {
             self.list_items.push(format!(
@@ -74,14 +77,27 @@ impl AppState for ImGui {
 
         s.disabled(true);
         s.text_field(self.rects[4], "Output:", &mut self.text_input)?;
-        s.disabled(false);
+        s.disabled(self.disabled);
 
-        s.checkbox(self.rects[5], "Lorem", &mut self.check1)?;
+        s.disabled(false);
+        s.checkbox(self.rects[5], "Disable", &mut self.disabled)?;
+        s.disabled(self.disabled);
+
         s.checkbox(self.rects[6], "Ipsum", &mut self.check2)?;
 
         s.radio(self.rects[7], "Dolor", &mut self.radio, 0)?;
         s.radio(self.rects[8], "Sit", &mut self.radio, 1)?;
         s.radio(self.rects[9], "Amet", &mut self.radio, 2)?;
+
+        let tooltip = "(?)";
+        let (w, h) = s.size_of(tooltip)?;
+        s.fill(s.muted_color());
+        s.text(self.rects[10].top_left(), tooltip)?;
+        s.tooltip(
+            self.rects[11],
+            "Some tooltip",
+            [self.rects[10].x(), self.rects[10].y(), w as i32, h as i32],
+        )?;
 
         if self.edit_mode {
             let rect = self.rects[self.edit_target];
