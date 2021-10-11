@@ -928,11 +928,12 @@ impl PixState {
         if hovered {
             s.stroke(s.muted_color());
             s.fill(s.primary_color());
+            let m = s.mouse_pos();
             let mut rect = rect![
-                hover.right() + pad,
-                hover.bottom() + pad,
-                rect.width(),
-                rect.height()
+                m.x() + rect.x() + 2 * pad,
+                m.y() + rect.y() + 2 * pad,
+                rect.width() + 2 * pad,
+                rect.height() + 2 * pad
             ];
             let (w, h) = s.dimensions();
             if rect.right() > w as i32 {

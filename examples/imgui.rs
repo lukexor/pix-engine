@@ -48,6 +48,7 @@ impl AppState for ImGui {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         s.background(s.background_color())?;
         s.font_family("arial")?;
+        s.fill(s.text_color());
         Ok(())
     }
 
@@ -77,9 +78,10 @@ impl AppState for ImGui {
         // Text Field
         s.same_line();
         s.text_field(self.rects[3], "Input:", &mut self.text_input)?;
-
-        s.ui_disable(true);
-        s.text_field(self.rects[4], "Output:", &mut self.text_input)?;
+        s.text(
+            self.rects[4].top_left(),
+            format!("Output: {}", self.text_input),
+        )?;
 
         s.ui_disable(false);
         s.checkbox(self.rects[5], "Disable", &mut self.disabled)?;
@@ -91,14 +93,17 @@ impl AppState for ImGui {
         s.radio(self.rects[8], "Sit", &mut self.radio, 1)?;
         s.radio(self.rects[9], "Amet", &mut self.radio, 2)?;
 
+        s.push();
         let tooltip = "(?)";
-        let (w, h) = s.size_of(tooltip)?;
+        let (hw, hh) = s.size_of(tooltip)?;
         s.fill(s.muted_color());
         s.text(self.rects[10].top_left(), tooltip)?;
+        let tooltip_text = "Some tooltip";
+        let (w, h) = s.size_of(tooltip_text)?;
         s.tooltip(
-            self.rects[11],
-            "Some tooltip",
-            [self.rects[10].x(), self.rects[10].y(), w as i32, h as i32],
+            rect![0, 0, w, h],
+            tooltip_text,
+            [self.rects[10].x(), self.rects[10].y(), hw as i32, hh as i32],
         )?;
 
         if self.edit_mode {
@@ -107,6 +112,7 @@ impl AppState for ImGui {
             s.no_fill();
             s.rect(rect)?;
         }
+        s.pop();
         Ok(())
     }
 

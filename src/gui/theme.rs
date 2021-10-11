@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     ops::{Deref, DerefMut},
     path::Path,
+    str::FromStr,
 };
 
 /// A builder to generate custom [Theme]s.
@@ -230,17 +231,15 @@ pub struct ThemeColors {
 
 impl ThemeColors {
     /// A dark color theme.
-    ///
-    /// Inspired by: <https://lospec.com/palette-list/sweetie-16>
     pub fn dark() -> Self {
         Self {
             text: color!(0xf4),
-            background: color!(0x15, 0x16, 0x17),
-            primary: color!(0x0d, 0x2b, 0x45),
-            secondary: color!(0x54, 0x4e, 0x68),
-            accent: color!(0xd0, 0x81, 0x59),
-            highlight: color!(0x8d, 0x69, 0x7a),
-            muted: color!(0x56, 0x6c, 0x86),
+            background: Color::from_str("#151617").unwrap(),
+            primary: Color::from_str("#0f2a3f").unwrap(),
+            secondary: Color::from_str("#414859").unwrap(),
+            accent: Color::from_str("#de6a38").unwrap(),
+            highlight: Color::from_str("#236d7a").unwrap(),
+            muted: Color::from_str("#4e495f").unwrap(),
         }
     }
 
