@@ -49,7 +49,8 @@ impl AppState for ImGui {
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.disabled(self.disabled);
+        s.ui_disable(self.disabled);
+
         // Buttons
         if s.button(self.rects[0], "Add Item")? {
             self.list_items.push(format!(
@@ -71,17 +72,15 @@ impl AppState for ImGui {
         )?;
 
         // Text Field
-        s.same_line(true);
+        s.same_line();
         s.text_field(self.rects[3], "Input:", &mut self.text_input)?;
-        s.same_line(false);
 
-        s.disabled(true);
+        s.ui_disable(true);
         s.text_field(self.rects[4], "Output:", &mut self.text_input)?;
-        s.disabled(self.disabled);
 
-        s.disabled(false);
+        s.ui_disable(false);
         s.checkbox(self.rects[5], "Disable", &mut self.disabled)?;
-        s.disabled(self.disabled);
+        s.ui_disable(self.disabled);
 
         s.checkbox(self.rects[6], "Ipsum", &mut self.check2)?;
 

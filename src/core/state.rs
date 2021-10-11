@@ -18,7 +18,7 @@ pub mod settings;
 pub struct PixState {
     pub(crate) renderer: Renderer,
     pub(crate) env: Environment,
-    pub(crate) ui_state: UiState,
+    pub(crate) ui: UiState,
     pub(crate) settings: Settings,
     pub(crate) setting_stack: Vec<Settings>,
     pub(crate) theme: Theme,
@@ -31,7 +31,7 @@ impl PixState {
         Self {
             renderer,
             env: Environment::default(),
-            ui_state: UiState::default(),
+            ui: UiState::default(),
             settings: Settings::default(),
             setting_stack: Vec::new(),
             theme: Theme::default(),
@@ -44,22 +44,22 @@ impl PixState {
         self.renderer
             .cursor(self.settings.cursor.as_ref())
             .expect("valid cursor");
-        self.ui_state.hovered = None;
+        self.ui.hovered = None;
     }
 
     /// Handle state changes this frame after calling [AppState::on_update].
     #[inline]
     pub(crate) fn post_update(&mut self) {
         if !self.mouse_down(Mouse::Left) {
-            self.ui_state.clear_active();
-        } else if !self.ui_state.has_active() {
+            self.ui.clear_active();
+        } else if !self.ui.has_active() {
             // Disable focused state while mouse is down from previous frame
-            self.ui_state.set_active(0);
+            self.ui.set_active(0);
         }
-        if self.ui_state.keys.was_entered(Key::Tab) {
-            self.ui_state.blur();
+        if self.ui.keys.was_entered(Key::Tab) {
+            self.ui.blur();
         }
-        self.ui_state.clear_entered();
+        self.ui.clear_entered();
     }
 
     #[inline]
@@ -103,61 +103,61 @@ impl PixState {
     /// Returns the current mouse position coordinates as `(x, y)`.
     #[inline]
     pub fn mouse_pos(&self) -> PointI2 {
-        self.ui_state.mouse.pos
+        self.ui.mouse.pos
     }
 
     /// Returns the previous mouse position coordinates last frame as `(x, y)`.
     #[inline]
     pub fn pmouse_pos(&self) -> PointI2 {
-        self.ui_state.pmouse.pos
+        self.ui.pmouse.pos
     }
 
     /// Returns if any [Mouse] button is currently being held.
     #[inline]
     pub fn mouse_pressed(&self) -> bool {
-        self.ui_state.mouse.is_pressed()
+        self.ui.mouse.is_pressed()
     }
 
     /// Returns if a specific [Mouse] button is currently being held.
     #[inline]
     pub fn mouse_down(&self, btn: Mouse) -> bool {
-        self.ui_state.mouse.is_down(btn)
+        self.ui.mouse.is_down(btn)
     }
 
     /// Returns the a list of the current mouse buttons being held.
     #[inline]
     pub fn mouse_buttons(&self) -> &HashSet<Mouse> {
-        &self.ui_state.mouse.pressed
+        &self.ui.mouse.pressed
     }
 
     /// Returns the a list of the current keys being held.
     #[inline]
     pub fn keys(&self) -> &HashSet<Key> {
-        &self.ui_state.keys.pressed
+        &self.ui.keys.pressed
     }
 
     /// Returns the a list of the current key modifiers being held.
     #[inline]
     pub fn keymods(&self) -> &HashSet<KeyMod> {
-        &self.ui_state.keys.mods_pressed
+        &self.ui.keys.mods_pressed
     }
 
     /// Returns if any [Key] is currently being held.
     #[inline]
     pub fn key_pressed(&self) -> bool {
-        self.ui_state.keys.is_pressed()
+        self.ui.keys.is_pressed()
     }
 
     /// Returns if a specific [Key] is currently being held.
     #[inline]
     pub fn key_down(&self, key: Key) -> bool {
-        self.ui_state.keys.is_down(key)
+        self.ui.keys.is_down(key)
     }
 
     /// Returns if a specific [KeyMod] is currently being held.
     #[inline]
     pub fn keymod_down(&self, keymod: KeyMod) -> bool {
-        self.ui_state.keys.mod_down(keymod)
+        self.ui.keys.mod_down(keymod)
     }
 }
 

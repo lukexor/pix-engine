@@ -54,6 +54,7 @@ impl PixState {
     }
 
     /// Draw a text field to the current canvas.
+    ///
     /// Affected by `PixState::same_line`.
     pub fn text_field<R, L>(&mut self, rect: R, label: L, value: &mut String) -> PixResult<bool>
     where
@@ -175,11 +176,10 @@ impl PixState {
         // Calculate input rect
         let mut input = rect;
         let pad = s.theme.padding;
-        let same_line = s.ui_state.same_line;
         if !label.is_empty() {
             // Resize input area to fit label
             let (w, h) = s.size_of(label)?;
-            if same_line {
+            if s.ui.same_line {
                 let offset = w as i32 + pad;
                 input.set_x(input.x() + offset);
                 input.set_width(input.width() - offset);
@@ -191,14 +191,14 @@ impl PixState {
         }
 
         // Check hover/active/keyboard focus
-        let disabled = s.ui_state.disabled;
+        let disabled = s.ui.disabled;
         if !disabled && input.contains_point(s.mouse_pos()) {
-            s.ui_state.hover(id);
+            s.ui.hover(id);
         }
-        s.ui_state.try_capture(id);
-        let focused = !disabled && s.ui_state.is_focused(id);
-        let hovered = s.ui_state.is_hovered(id);
-        let active = !disabled && s.ui_state.is_active(id);
+        s.ui.try_capture(id);
+        let focused = !disabled && s.ui.is_focused(id);
+        let hovered = s.ui.is_hovered(id);
+        let active = !disabled && s.ui.is_active(id);
 
         s.push();
         let mut changed = false;
@@ -209,7 +209,7 @@ impl PixState {
         // Label
         if !label.is_empty() {
             s.fill(s.text_color());
-            if same_line {
+            if s.ui.same_line {
                 let (_, h) = s.size_of(label)?;
                 let y = rect.center().y();
                 s.text([rect.x(), y - h as i32 / 2], label)?;
@@ -250,17 +250,18 @@ impl PixState {
             x -= width - input.width();
         }
         s.text([x, y], &value)?;
-        if focused && !s.ui_state.disabled && s.frame_count() >> 8 & 1 > 0 {
+        if focused && !s.ui.disabled && s.frame_count() >> 8 & 1 > 0 {
             let offset = 2; // Remove some left space of the text cursor
             s.text([x + vw as i32 - offset, y], &TEXT_CURSOR)?;
         }
         s.no_clip()?;
 
+        s.ui.same_line = false;
         s.pop();
 
         // Process input
         if focused {
-            if let Some(key) = s.ui_state.key_entered() {
+            if let Some(key) = s.ui.key_entered() {
                 match key {
                     Key::Backspace if !value.is_empty() => {
                         value.pop();
@@ -269,12 +270,12 @@ impl PixState {
                     _ => (),
                 }
             }
-            if let Some(text) = s.ui_state.keys.typed.take() {
+            if let Some(text) = s.ui.keys.typed.take() {
                 value.push_str(&text);
                 changed = true;
             }
         }
-        s.ui_state.handle_input(id);
+        s.ui.handle_input(id);
 
         Ok(changed)
     }
@@ -313,14 +314,14 @@ impl PixState {
         }
 
         // Check hover/active/keyboard focus
-        let disabled = s.ui_state.disabled;
+        let disabled = s.ui.disabled;
         if !disabled && rect.contains_point(s.mouse_pos()) {
-            s.ui_state.hover(id);
+            s.ui.hover(id);
         }
-        s.ui_state.try_capture(id);
-        let focused = !disabled && s.ui_state.is_focused(id);
-        let hovered = s.ui_state.is_hovered(id);
-        let active = !disabled && s.ui_state.is_active(id);
+        s.ui.try_capture(id);
+        let focused = !disabled && s.ui.is_focused(id);
+        let hovered = s.ui.is_hovered(id);
+        let active = !disabled && s.ui.is_active(id);
 
         s.push();
         let mut changed = false;
@@ -383,7 +384,7 @@ impl PixState {
 
         // Process keyboard input
         if focused {
-            if let Some(key) = s.ui_state.key_entered() {
+            if let Some(key) = s.ui.key_entered() {
                 match key {
                     Key::Up if dir == Vertical => {
                         *value = value.saturating_sub(SCROLL_SPEED);
@@ -434,7 +435,7 @@ impl PixState {
                 changed = true;
             }
         }
-        s.ui_state.handle_input(id);
+        s.ui.handle_input(id);
 
         Ok(changed)
     }
@@ -444,14 +445,14 @@ impl PixState {
         let id = get_hash(&label);
 
         // Check hover/active/keyboard focus
-        let disabled = s.ui_state.disabled;
+        let disabled = s.ui.disabled;
         if !disabled && rect.contains_point(s.mouse_pos()) {
-            s.ui_state.hover(id);
+            s.ui.hover(id);
         }
-        s.ui_state.try_capture(id);
-        let focused = !disabled && s.ui_state.is_focused(id);
-        let hovered = s.ui_state.is_hovered(id);
-        let active = s.ui_state.is_active(id);
+        s.ui.try_capture(id);
+        let focused = !disabled && s.ui.is_focused(id);
+        let hovered = s.ui.is_hovered(id);
+        let active = s.ui.is_active(id);
 
         s.push();
 
@@ -495,9 +496,9 @@ impl PixState {
         s.pop();
 
         // Process input
-        s.ui_state.handle_input(id);
+        s.ui.handle_input(id);
         if !disabled {
-            Ok(s.ui_state.was_clicked(id))
+            Ok(s.ui.was_clicked(id))
         } else {
             Ok(false)
         }
@@ -532,7 +533,7 @@ impl PixState {
 
         // Calculate displayed items
         let line_height = item_height as i32 + pad * 2;
-        let mut scroll = s.ui_state.scroll(id);
+        let mut scroll = s.ui.scroll(id);
         let skip_count = (scroll.y() / line_height) as usize;
         let displayed_count = (content.height() / line_height) as usize;
         let displayed_items = items
@@ -563,14 +564,14 @@ impl PixState {
         total_width += scroll_width;
 
         // Check hover/active/keyboard focus
-        let disabled = s.ui_state.disabled;
+        let disabled = s.ui.disabled;
         if !disabled && content.contains_point(s.mouse_pos()) {
-            s.ui_state.hover(id);
+            s.ui.hover(id);
         }
-        s.ui_state.try_capture(id);
-        let focused = !disabled && s.ui_state.is_focused(id);
-        let hovered = s.ui_state.is_hovered(id);
-        let active = s.ui_state.is_active(id);
+        s.ui.try_capture(id);
+        let focused = !disabled && s.ui.is_focused(id);
+        let hovered = s.ui.is_hovered(id);
+        let active = s.ui.is_active(id);
 
         s.push();
 
@@ -626,7 +627,7 @@ impl PixState {
 
         // Process input
         if focused {
-            if let Some(key) = s.ui_state.key_entered() {
+            if let Some(key) = s.ui.key_entered() {
                 let changed_selection = match key {
                     Key::Up => {
                         *selected = selected.map(|s| s.saturating_sub(1)).or(Some(0));
@@ -651,16 +652,16 @@ impl PixState {
                     // Snap scroll to top of the window
                     if sel_y < scroll.y() {
                         scroll.set_y(sel_y);
-                        s.ui_state.set_scroll(id, scroll);
+                        s.ui.set_scroll(id, scroll);
                     } else if sel_y + line_height > scroll.y() + content.height() {
                         // Snap scroll to bottom of the window
                         scroll.set_y(sel_y - (content.height() - line_height));
-                        s.ui_state.set_scroll(id, scroll);
+                        s.ui.set_scroll(id, scroll);
                     }
                 }
             }
         }
-        s.ui_state.handle_input(id);
+        s.ui.handle_input(id);
 
         // Scrollbar
         if scroll_width > 0
@@ -677,7 +678,7 @@ impl PixState {
                 Direction::Vertical,
             )?
         {
-            s.ui_state.set_scroll(id, scroll);
+            s.ui.set_scroll(id, scroll);
         }
         if scroll_height > 0
             && s.scroll(
@@ -693,7 +694,7 @@ impl PixState {
                 Direction::Horizontal,
             )?
         {
-            s.ui_state.set_scroll(id, scroll);
+            s.ui.set_scroll(id, scroll);
         }
 
         // Border
@@ -720,14 +721,14 @@ impl PixState {
         let checkbox = square![rect.x(), y - h as i32 / 2, 16];
 
         // Check hover/active/keyboard focus
-        let disabled = s.ui_state.disabled;
+        let disabled = s.ui.disabled;
         if !disabled && checkbox.contains_point(s.mouse_pos()) {
-            s.ui_state.hover(id);
+            s.ui.hover(id);
         }
-        s.ui_state.try_capture(id);
-        let focused = !disabled && s.ui_state.is_focused(id);
-        let hovered = s.ui_state.is_hovered(id);
-        let active = !disabled && s.ui_state.is_active(id);
+        s.ui.try_capture(id);
+        let focused = !disabled && s.ui.is_focused(id);
+        let hovered = s.ui.is_hovered(id);
+        let active = !disabled && s.ui.is_active(id);
 
         s.push();
 
@@ -780,9 +781,9 @@ impl PixState {
         s.pop();
 
         // Process input
-        s.ui_state.handle_input(id);
+        s.ui.handle_input(id);
         if !disabled {
-            let clicked = s.ui_state.was_clicked(id);
+            let clicked = s.ui.was_clicked(id);
             if clicked {
                 *checked = !(*checked);
             }
@@ -809,14 +810,14 @@ impl PixState {
         let radio = circle![rect.x() + radius, y - h as i32 / 2 + radius, radius];
 
         // Check hover/active/keyboard focus
-        let disabled = s.ui_state.disabled;
+        let disabled = s.ui.disabled;
         if !disabled && radio.contains_point(s.mouse_pos()) {
-            s.ui_state.hover(id);
+            s.ui.hover(id);
         }
-        s.ui_state.try_capture(id);
-        let focused = !disabled && s.ui_state.is_focused(id);
-        let hovered = s.ui_state.is_hovered(id);
-        let active = !disabled && s.ui_state.is_active(id);
+        s.ui.try_capture(id);
+        let focused = !disabled && s.ui.is_focused(id);
+        let hovered = s.ui.is_hovered(id);
+        let active = !disabled && s.ui.is_active(id);
 
         s.push();
 
@@ -862,9 +863,9 @@ impl PixState {
         s.pop();
 
         // Process input
-        s.ui_state.handle_input(id);
+        s.ui.handle_input(id);
         if !disabled {
-            let clicked = s.ui_state.was_clicked(id);
+            let clicked = s.ui.was_clicked(id);
             if clicked {
                 *selected = index;
             }
@@ -880,12 +881,12 @@ impl PixState {
 
         // Check hover/active/keyboard focus
         let pad = s.theme.padding;
-        let disabled = s.ui_state.disabled;
+        let disabled = s.ui.disabled;
         if !disabled && hover.contains_point(s.mouse_pos()) {
-            s.ui_state.hover(id);
+            s.ui.hover(id);
         }
-        s.ui_state.try_capture(id);
-        let hovered = !disabled && s.ui_state.is_hovered(id);
+        s.ui.try_capture(id);
+        let hovered = !disabled && s.ui.is_hovered(id);
 
         s.push();
 
@@ -919,7 +920,7 @@ impl PixState {
         s.pop();
 
         // Process input
-        s.ui_state.handle_input(id);
+        s.ui.handle_input(id);
 
         Ok(())
     }

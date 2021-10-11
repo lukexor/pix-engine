@@ -148,6 +148,7 @@ impl UiState {
         if clicked {
             self.focus(id);
         }
+        self.same_line = false; // Reset same_line
         self.set_last(id);
     }
 
@@ -225,13 +226,13 @@ pub(crate) fn get_hash<T: Hash>(t: &T) -> ElementId {
 }
 
 impl PixState {
-    /// Alters how UI methods lay out new lines.
-    pub fn same_line(&mut self, value: bool) {
-        self.ui_state.same_line = value;
+    /// Alters how UI methods lay out new lines for the next drawn element.
+    pub fn same_line(&mut self) {
+        self.ui.same_line = true;
     }
 
-    /// Alters whether the elements rendered while `true` are disabled.
-    pub fn disabled(&mut self, value: bool) {
-        self.ui_state.disabled = value;
+    /// Enables or sisables any UI elements drawn after this is called.
+    pub fn ui_disable(&mut self, value: bool) {
+        self.ui.disabled = value;
     }
 }

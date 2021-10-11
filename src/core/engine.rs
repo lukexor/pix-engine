@@ -330,7 +330,7 @@ impl PixEngine {
                 } => {
                     let evt = KeyEvent::new(key, keymod, true, repeat);
                     if !app.on_key_pressed(state, evt)? {
-                        state.ui_state.keys.press(key, keymod);
+                        state.ui.keys.press(key, keymod);
                     }
                 }
                 Event::KeyUp {
@@ -340,41 +340,41 @@ impl PixEngine {
                 } => {
                     let evt = KeyEvent::new(key, keymod, false, repeat);
                     if !app.on_key_released(state, evt)? {
-                        state.ui_state.keys.release(key, keymod);
+                        state.ui.keys.release(key, keymod);
                     }
                 }
                 Event::TextInput { ref text, .. } => {
                     if !app.on_key_typed(state, text)? {
-                        state.ui_state.keys.typed(text.clone());
+                        state.ui.keys.typed(text.clone());
                     }
                 }
                 Event::MouseMotion { x, y, xrel, yrel } => {
-                    state.ui_state.pmouse.pos = state.ui_state.mouse.pos;
-                    state.ui_state.mouse.pos = point!(x, y);
-                    if state.ui_state.mouse.is_pressed() {
+                    state.ui.pmouse.pos = state.ui.mouse.pos;
+                    state.ui.mouse.pos = point!(x, y);
+                    if state.ui.mouse.is_pressed() {
                         app.on_mouse_dragged(state)?;
                     }
-                    app.on_mouse_motion(state, state.ui_state.mouse.pos, xrel, yrel)?;
+                    app.on_mouse_motion(state, state.ui.mouse.pos, xrel, yrel)?;
                 }
                 Event::MouseDown { button, x, y } => {
                     if !app.on_mouse_pressed(state, button, point!(x, y))? {
-                        state.ui_state.mouse.press(button);
+                        state.ui.mouse.press(button);
                     }
                 }
                 Event::MouseUp { button, x, y } => {
-                    if state.ui_state.mouse.is_down(button) {
+                    if state.ui.mouse.is_down(button) {
                         let now = Instant::now();
-                        if let Some(&clicked) = state.ui_state.mouse.last_clicked(button) {
+                        if let Some(&clicked) = state.ui.mouse.last_clicked(button) {
                             if now - clicked < Duration::from_millis(500) {
                                 app.on_mouse_dbl_clicked(state, button, point!(x, y))?;
                             }
                         }
                         if !app.on_mouse_clicked(state, button, point!(x, y))? {
-                            state.ui_state.mouse.click(button, now);
+                            state.ui.mouse.click(button, now);
                         }
                     }
                     if !app.on_mouse_released(state, button, point!(x, y))? {
-                        state.ui_state.mouse.release(button);
+                        state.ui.mouse.release(button);
                     }
                 }
                 Event::MouseWheel { x, y, .. } => {
