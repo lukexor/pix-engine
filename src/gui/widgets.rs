@@ -256,7 +256,6 @@ impl PixState {
         }
         s.no_clip()?;
 
-        s.ui.same_line = false;
         s.pop();
 
         // Process input
@@ -331,7 +330,7 @@ impl PixState {
         *value = cmp::max(0, cmp::min(max, *value));
 
         // Render
-        let radius = 4;
+        let radius = 3;
 
         // Scroll region
         s.no_stroke();
@@ -347,7 +346,7 @@ impl PixState {
         } else if disabled {
             s.fill(s.muted_color());
         } else {
-            s.fill(s.primary_color());
+            s.fill(s.secondary_color());
         }
         let thumb_w = match dir {
             Horizontal => {
@@ -418,9 +417,21 @@ impl PixState {
                 }
             }
         }
+        let mut new_value = *value;
+        // Process mouse wheel
+        if hovered {
+            match dir {
+                Vertical => {
+                    new_value -= 3 * s.ui.mouse.yrel;
+                }
+                Horizontal => {
+                    new_value -= 3 * s.ui.mouse.xrel;
+                }
+            };
+        }
         // Process mouse input
         if active {
-            let new_value = match dir {
+            new_value = match dir {
                 Vertical => {
                     let my = (s.mouse_pos().y() - rect.y()).clamp(0, rect.height());
                     (my * max) / rect.height()
@@ -430,10 +441,10 @@ impl PixState {
                     (mx * max) / rect.width()
                 }
             };
-            if new_value != *value {
-                *value = new_value;
-                changed = true;
-            }
+        }
+        if new_value != *value {
+            *value = new_value;
+            changed = true;
         }
         s.ui.handle_input(id);
 
@@ -663,6 +674,26 @@ impl PixState {
         }
         s.ui.handle_input(id);
 
+        // Process mouse wheel
+        let ymax = total_height - content.height();
+        let xmax = total_width - content.width() - scroll_width;
+        if hovered {
+            if s.ui.mouse.yrel != 0 {
+                scroll.set_y(cmp::max(
+                    0,
+                    cmp::min(ymax, scroll.y() - 3 * s.ui.mouse.yrel),
+                ));
+                s.ui.set_scroll(id, scroll);
+            }
+            if s.ui.mouse.xrel != 0 {
+                scroll.set_x(cmp::max(
+                    0,
+                    cmp::min(xmax, scroll.x() - 3 * s.ui.mouse.xrel),
+                ));
+                s.ui.set_scroll(id, scroll);
+            }
+        }
+
         // Scrollbar
         if scroll_width > 0
             && s.scroll(
@@ -673,7 +704,7 @@ impl PixState {
                     border.height(),
                 ],
                 label,
-                (total_height - content.height()) as u32,
+                ymax as u32,
                 &mut scroll.y_mut(),
                 Direction::Vertical,
             )?
@@ -689,7 +720,7 @@ impl PixState {
                     scroll_height,
                 ],
                 label,
-                (total_width - content.width() - scroll_width) as u32,
+                xmax as u32,
                 &mut scroll.x_mut(),
                 Direction::Horizontal,
             )?

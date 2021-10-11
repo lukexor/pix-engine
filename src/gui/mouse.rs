@@ -10,6 +10,8 @@ use std::{
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub(crate) struct MouseState {
     pub(crate) pos: PointI2,
+    pub(crate) xrel: i32,
+    pub(crate) yrel: i32,
     pub(crate) pressed: HashSet<Mouse>,
     pub(crate) last_clicked: HashMap<Mouse, Instant>,
 }
@@ -31,6 +33,13 @@ impl MouseState {
     #[inline]
     pub(crate) fn press(&mut self, btn: Mouse) {
         self.pressed.insert(btn);
+    }
+
+    /// Store mouse wheel motion.
+    #[inline]
+    pub(crate) fn wheel(&mut self, x: i32, y: i32) {
+        self.xrel = x;
+        self.yrel = y;
     }
 
     /// Remove a pressed [Mouse] button.

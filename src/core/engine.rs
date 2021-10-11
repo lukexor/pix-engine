@@ -378,7 +378,9 @@ impl PixEngine {
                     }
                 }
                 Event::MouseWheel { x, y, .. } => {
-                    app.on_mouse_wheel(state, point!(x, y))?;
+                    if !app.on_mouse_wheel(state, point!(x, y))? {
+                        state.ui.mouse.wheel(x, y);
+                    }
                 }
                 _ => (),
             }

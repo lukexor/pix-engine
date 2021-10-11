@@ -17,7 +17,10 @@ impl ImGui {
         Self {
             edit_mode: false,
             edit_target: 0,
-            list_items: Vec::new(),
+            list_items: vec![
+                "1. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam".into(),
+                "2. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam".into(),
+            ],
             selected_item: None,
             disabled: false,
             check2: true,

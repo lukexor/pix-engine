@@ -50,6 +50,11 @@ impl Scroll {
     }
 
     #[inline]
+    pub(crate) fn set_x(&mut self, x: i32) {
+        self.0 = x;
+    }
+
+    #[inline]
     pub(crate) fn x_mut(&mut self) -> &mut i32 {
         &mut self.0
     }
@@ -183,6 +188,8 @@ impl UiState {
     pub(crate) fn clear_entered(&mut self) {
         self.keys.typed = None;
         self.keys.entered = None;
+        self.mouse.xrel = 0;
+        self.mouse.yrel = 0;
     }
 
     #[inline]
