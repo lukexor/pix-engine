@@ -174,6 +174,10 @@ where
 
     /// Returns the `x-coordinate`.
     ///
+    /// # Panics
+    ///
+    /// If `Point` has zero dimensions.
+    ///
     /// # Example
     ///
     /// ```
@@ -183,13 +187,15 @@ where
     /// ```
     #[inline]
     pub fn x(&self) -> T {
-        match self.0.get(0) {
-            Some(z) => *z,
-            None => T::default(),
-        }
+        *self.0.get(0).expect("greater than 0 dimensions")
     }
 
     /// Sets the `x-coordinate`.
+    ///
+    /// # Panics
+    ///
+    /// If `Vector` has zero dimensions.
+    ///
     /// # Example
     ///
     /// ```
@@ -200,12 +206,14 @@ where
     /// ```
     #[inline]
     pub fn set_x(&mut self, x: T) {
-        if !self.0.is_empty() {
-            self.0[0] = x;
-        }
+        self.0[0] = x;
     }
 
     /// Returns the `y-coordinate`.
+    ///
+    /// # Panics
+    ///
+    /// If `Vector` has less than 2 dimensions.
     ///
     /// # Example
     ///
@@ -216,13 +224,14 @@ where
     /// ```
     #[inline]
     pub fn y(&self) -> T {
-        match self.0.get(1) {
-            Some(z) => *z,
-            None => T::default(),
-        }
+        *self.0.get(1).expect("greater than 1 dimension")
     }
 
     /// Sets the `y-coordinate`.
+    ///
+    /// # Panics
+    ///
+    /// If `Vector` has less than 2 dimensions.
     ///
     /// # Example
     ///
@@ -234,12 +243,14 @@ where
     /// ```
     #[inline]
     pub fn set_y(&mut self, y: T) {
-        if self.0.len() > 1 {
-            self.0[1] = y;
-        }
+        self.0[1] = y;
     }
 
     /// Returns the `z-coordinate`.
+    ///
+    /// # Panics
+    ///
+    /// If `Vector` has less than 3 dimensions.
     ///
     /// # Example
     ///
@@ -250,13 +261,14 @@ where
     /// ```
     #[inline]
     pub fn z(&self) -> T {
-        match self.0.get(2) {
-            Some(z) => *z,
-            None => T::default(),
-        }
+        *self.0.get(2).expect("greater than 2 dimensions")
     }
 
     /// Sets the `z-magnitude`.
+    ///
+    /// # Panics
+    ///
+    /// If `Vector` has less than 3 dimensions.
     ///
     /// # Example
     ///
@@ -268,9 +280,7 @@ where
     /// ```
     #[inline]
     pub fn set_z(&mut self, z: T) {
-        if self.0.len() > 2 {
-            self.0[2] = z;
-        }
+        self.0[2] = z;
     }
 
     /// Returns `Point` as a [Vec].

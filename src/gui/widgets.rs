@@ -159,7 +159,7 @@ impl PixState {
         let s = self;
         if let RectMode::Center = s.settings.rect_mode {
             let (width, height) = s.renderer.size_of(text)?;
-            p = point!(p.x() - width as i32 / 2, p.y() - height as i32 / 2);
+            p.offset([-(width as i32 / 2), -(height as i32 / 2)]);
         };
         if let AngleMode::Radians = s.settings.angle_mode {
             angle = angle.map(|a| a.to_degrees());
