@@ -18,7 +18,7 @@ pub struct ThemeBuilder {
     font_sizes: ThemeFontSizes,
     font_styles: ThemeFontStyles,
     colors: ThemeColors,
-    padding: i32,
+    style: ThemeStyle,
 }
 
 /// Represents a given font-themed section in a UI.
@@ -102,8 +102,8 @@ impl ThemeBuilder {
     }
 
     /// Set element padding space.
-    pub fn with_padding(&mut self, padding: i32) -> &mut Self {
-        self.padding = padding;
+    pub fn with_style(&mut self, style: ThemeStyle) -> &mut Self {
+        self.style = style;
         self
     }
 
@@ -114,7 +114,7 @@ impl ThemeBuilder {
             font_sizes: self.font_sizes.clone(),
             font_styles: self.font_styles.clone(),
             colors: self.colors.clone(),
-            padding: self.padding,
+            style: self.style,
         }
     }
 }
@@ -255,6 +255,19 @@ impl Default for ThemeColors {
     }
 }
 
+/// A set of styles for sizing, padding, borders, etc for theming UI elements.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct ThemeStyle {
+    pub(crate) frame_pad: (u32, u32),
+}
+
+impl Default for ThemeStyle {
+    fn default() -> Self {
+        Self { frame_pad: (5, 5) }
+    }
+}
+
 /// A UI theme containing font families, sizes, styles, and colors.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Theme {
@@ -262,7 +275,7 @@ pub struct Theme {
     pub(crate) font_sizes: ThemeFontSizes,
     pub(crate) font_styles: ThemeFontStyles,
     pub(crate) colors: ThemeColors,
-    pub(crate) padding: i32,
+    pub(crate) style: ThemeStyle,
 }
 
 impl Default for Theme {
@@ -272,7 +285,7 @@ impl Default for Theme {
             font_sizes: ThemeFontSizes::default(),
             font_styles: ThemeFontStyles::default(),
             colors: ThemeColors::default(),
-            padding: 5,
+            style: ThemeStyle::default(),
         }
     }
 }

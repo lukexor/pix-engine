@@ -20,7 +20,7 @@ use sdl2::{
     video::{Window as SdlWindow, WindowBuildError, WindowContext},
     EventPump, IntegerOrSdlError, Sdl,
 };
-use std::{borrow::Cow, collections::HashMap, path::PathBuf};
+use std::{borrow::Cow, cmp, collections::HashMap, path::PathBuf};
 
 mod audio;
 mod event;
@@ -216,7 +216,8 @@ impl Rendering for Renderer {
         &mut self,
         pos: PointI2,
         text: &str,
-        angle: Scalar,
+        wrap_width: Option<u32>,
+        angle: Option<Scalar>,
         center: Option<PointI2>,
         flipped: Option<Flipped>,
         fill: Option<Color>,
@@ -233,7 +234,11 @@ impl Rendering for Renderer {
                     .get(&self.window_target)
                     .ok_or(WindowError::InvalidWindow(self.window_target))?;
                 if !self.text_cache.contains(&key) {
-                    let surface = font.render(text).blended(fill)?;
+                    let surface = if let Some(width) = wrap_width {
+                        font.render(text).blended_wrapped(fill, width)?
+                    } else {
+                        font.render(text).blended(fill)?
+                    };
                     self.text_cache.put(
                         key.clone(),
                         texture_creator.create_texture_from_surface(&surface)?,
@@ -242,12 +247,12 @@ impl Rendering for Renderer {
                 let texture = self.text_cache.get_mut(&key).expect("valid text cache");
                 let TextureQuery { width, height, .. } = texture.query();
                 update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
-                    if angle > 0.0 || center.is_some() || flipped.is_some() {
+                    if angle.is_some() || center.is_some() || flipped.is_some() {
                         Ok(canvas.copy_ex(
                             texture,
                             None,
                             Some(SdlRect::new(pos.x(), pos.y(), width, height)),
-                            angle,
+                            angle.unwrap_or(0.0),
                             center.map(|c| c.into()),
                             matches!(flipped, Some(Flipped::Horizontal | Flipped::Both)),
                             matches!(flipped, Some(Flipped::Vertical | Flipped::Both)),
@@ -271,7 +276,19 @@ impl Rendering for Renderer {
     #[inline]
     fn size_of(&mut self, text: &str) -> Result<(u32, u32)> {
         match self.font_cache.get(&self.font) {
-            Some(font) => Ok(font.size_of(text)?),
+            Some(font) => {
+                if text.contains('\n') {
+                    let mut size = (0, 0);
+                    for line in text.split('\n') {
+                        let (w, h) = font.size_of(line)?;
+                        size.0 = cmp::max(size.0, w);
+                        size.1 += h;
+                    }
+                    Ok(size)
+                } else {
+                    Ok(font.size_of(text)?)
+                }
+            }
             None => Err(Error::InvalidFont(self.font.0.to_owned())),
         }
     }

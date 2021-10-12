@@ -116,11 +116,13 @@ pub(crate) trait Rendering: Sized {
     fn font_family(&mut self, family: &str) -> Result<()>;
 
     /// Draw text to the current canvas. `angle` must be in degrees.
+    #[allow(clippy::too_many_arguments)]
     fn text(
         &mut self,
         position: PointI2,
         text: &str,
-        angle: Scalar,
+        wrap_width: Option<u32>,
+        angle: Option<Scalar>,
         center: Option<PointI2>,
         flipped: Option<Flipped>,
         fill: Option<Color>,

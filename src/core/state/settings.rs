@@ -91,6 +91,7 @@ pub(crate) struct Settings {
     pub(crate) fill: Option<Color>,
     pub(crate) stroke: Option<Color>,
     pub(crate) stroke_weight: u8,
+    pub(crate) wrap_width: Option<u32>,
     pub(crate) clip: Option<Rect<i32>>,
     pub(crate) running: bool,
     pub(crate) run_count: usize,
@@ -114,6 +115,7 @@ impl Default for Settings {
             fill: Some(WHITE),
             stroke: Some(BLACK),
             stroke_weight: 1,
+            wrap_width: None,
             clip: None,
             running: true,
             run_count: 0,
@@ -174,6 +176,19 @@ impl PixState {
     /// Disables outlining shapes drawn on the canvas.
     pub fn no_stroke(&mut self) {
         self.settings.stroke = None;
+    }
+
+    /// Sets the wrap width used to draw text on the canvas.
+    pub fn wrap_width<W>(&mut self, width: W)
+    where
+        W: AsPrimitive<u32>,
+    {
+        self.settings.wrap_width = Some(width.as_());
+    }
+
+    /// Disable wrapping when drawing text on the canvas.
+    pub fn no_wrap(&mut self) {
+        self.settings.wrap_width = None;
     }
 
     /// Sets the clip [Rect] used by the renderer to draw to the current canvas.
@@ -340,7 +355,7 @@ impl PixState {
         // SAFETY: All of these settings should be valid since they were set prior to `pop()` being
         // called.
         self.renderer.clip(s.clip).expect("valid clip setting");
-        // Excluding restoring cursor - as it's used for IMGUI for hover.
+        // Excluding restoring cursor - as it's used for mouse hover.
         self.renderer
             .font_size(t.font_sizes.body)
             .expect("valid font size");

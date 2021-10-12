@@ -6,7 +6,7 @@ struct ImGui {
     list_items: Vec<String>,
     selected_item: Option<usize>,
     disabled: bool,
-    check2: bool,
+    check: bool,
     radio: usize,
     text_input: String,
     rects: Vec<Rect<i32>>,
@@ -23,7 +23,7 @@ impl ImGui {
             ],
             selected_item: None,
             disabled: false,
-            check2: true,
+            check: true,
             radio: 0,
             text_input: String::new(),
             rects: vec![
@@ -69,7 +69,7 @@ impl AppState for ImGui {
         // Select List
         s.select_list(
             self.rects[2],
-            "Items",
+            "Items\nLine 2",
             &self.list_items,
             14,
             &mut self.selected_item,
@@ -77,17 +77,19 @@ impl AppState for ImGui {
 
         // Text Field
         s.same_line();
-        s.text_field(self.rects[3], "Input:", &mut self.text_input)?;
+        s.text_field(self.rects[3], "Input: ", &mut self.text_input)?;
+        s.wrap_width(70);
         s.text(
             self.rects[4].top_left(),
             format!("Output: {}", self.text_input),
         )?;
+        s.no_wrap();
 
         s.ui_disable(false);
         s.checkbox(self.rects[5], "Disable", &mut self.disabled)?;
         s.ui_disable(self.disabled);
 
-        s.checkbox(self.rects[6], "Ipsum", &mut self.check2)?;
+        s.checkbox(self.rects[6], "Ipsum", &mut self.check)?;
 
         s.radio(self.rects[7], "Dolor", &mut self.radio, 0)?;
         s.radio(self.rects[8], "Sit", &mut self.radio, 1)?;

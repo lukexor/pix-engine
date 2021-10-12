@@ -4,13 +4,15 @@ use self::{keys::KeyState, mouse::MouseState};
 use crate::prelude::*;
 #[cfg(target_pointer_width = "32")]
 use hash32::{FnvHasher, Hash, Hasher};
-use std::collections::{
-    hash_map::{DefaultHasher, Entry},
-    HashMap,
-};
 #[cfg(target_pointer_width = "64")]
-use std::hash::{Hash, Hasher};
-
+use std::{
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+};
+use std::{
+    collections::{hash_map::Entry, HashMap},
+    ops::{Deref, DerefMut},
+};
 pub use theme::*;
 
 pub mod keys;
@@ -22,11 +24,48 @@ pub mod widgets;
 #[cfg(target_pointer_width = "32")]
 pub(crate) type ElementId = u32;
 /// A hashed element identifier for internal state management.
-pub(crate) type ElementId = u64;
 #[cfg(target_pointer_width = "64")]
+pub(crate) type ElementId = u64;
+
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct Size(pub(crate) (u32, u32));
+
+#[allow(unused)]
+impl Size {
+    pub(crate) fn width(&self) -> u32 {
+        (self.0).0
+    }
+    pub(crate) fn height(&self) -> u32 {
+        (self.0).1
+    }
+}
+
+impl From<(u32, u32)> for Size {
+    fn from(size: (u32, u32)) -> Self {
+        Self(size)
+    }
+}
+
+impl Deref for Size {
+    type Target = (u32, u32);
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+impl DerefMut for Size {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct Scroll {
+    pub(crate) x: i32,
+    pub(crate) y: i32,
+}
 
 /// Internal tracked UI state.
-#[derive(Default, Debug, PartialEq, Eq)]
+#[derive(Default, Debug)]
 pub(crate) struct UiState {
     pub(crate) same_line: bool,
     pub(crate) disabled: bool,
@@ -38,41 +77,6 @@ pub(crate) struct UiState {
     pub(crate) hovered: Option<ElementId>,
     pub(crate) focused: Option<ElementId>,
     pub(crate) last_el: Option<ElementId>,
-}
-
-#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct Scroll(i32, i32);
-
-impl Scroll {
-    #[inline]
-    pub(crate) fn x(&self) -> i32 {
-        self.0
-    }
-
-    #[inline]
-    pub(crate) fn set_x(&mut self, x: i32) {
-        self.0 = x;
-    }
-
-    #[inline]
-    pub(crate) fn x_mut(&mut self) -> &mut i32 {
-        &mut self.0
-    }
-
-    #[inline]
-    pub(crate) fn y(&self) -> i32 {
-        self.1
-    }
-
-    #[inline]
-    pub(crate) fn set_y(&mut self, y: i32) {
-        self.1 = y;
-    }
-
-    #[inline]
-    pub(crate) fn y_mut(&mut self) -> &mut i32 {
-        &mut self.1
-    }
 }
 
 impl UiState {
@@ -217,16 +221,10 @@ pub(crate) struct ElementState {
 }
 
 /// Helper function to hash element labels.
-#[cfg(target_pointer_width = "32")]
 pub(crate) fn get_hash<T: Hash>(t: &T) -> ElementId {
+    #[cfg(target_pointer_width = "32")]
     let mut s = FnvHasher::default();
-    t.hash(&mut s);
-    s.finish()
-}
-
-/// Helper function to hash element labels.
-#[cfg(target_pointer_width = "64")]
-pub(crate) fn get_hash<T: Hash>(t: &T) -> ElementId {
+    #[cfg(target_pointer_width = "64")]
     let mut s = DefaultHasher::new();
     t.hash(&mut s);
     s.finish()
