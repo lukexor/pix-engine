@@ -50,7 +50,7 @@ pub(crate) struct RendererSettings {
     pub(crate) allow_highdpi: bool,
     pub(crate) hidden: bool,
     pub(crate) show_frame_rate: bool,
-    pub(crate) target_frame_rate: Option<Scalar>,
+    pub(crate) target_frame_rate: Option<usize>,
     pub(crate) texture_cache_size: usize,
     pub(crate) text_cache_size: usize,
 }

@@ -257,11 +257,6 @@ impl<'a> WindowBuilder<'a> {
 }
 
 impl PixState {
-    /// Whether the application has focus or not.
-    pub fn focused(&self) -> bool {
-        matches!(self.env.focused_window, Some(id) if id == self.renderer.window_id())
-    }
-
     /// Get the primary window ID.
     pub fn primary_window_id(&self) -> WindowId {
         self.renderer.primary_window_id()
@@ -280,7 +275,7 @@ impl PixState {
     /// Close a window.
     pub fn close_window(&mut self, id: WindowId) -> Result<()> {
         if id == self.window_id() {
-            self.env.quit = true;
+            self.quit();
             return Ok(());
         }
         self.renderer.close_window(id)

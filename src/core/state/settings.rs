@@ -94,7 +94,6 @@ pub(crate) struct Settings {
     pub(crate) wrap_width: Option<u32>,
     pub(crate) clip: Option<Rect<i32>>,
     pub(crate) running: bool,
-    pub(crate) run_count: usize,
     pub(crate) show_frame_rate: bool,
     pub(crate) scale_x: f32,
     pub(crate) scale_y: f32,
@@ -118,7 +117,6 @@ impl Default for Settings {
             wrap_width: None,
             clip: None,
             running: true,
-            run_count: 0,
             show_frame_rate: false,
             scale_x: 1.0,
             scale_y: 1.0,
@@ -254,30 +252,6 @@ impl PixState {
     /// [AppState::on_update]: crate::prelude::AppState::on_update
     pub fn no_run(&mut self) {
         self.settings.running = false;
-    }
-
-    /// Run the render loop 1 time by calling [AppState::on_update].
-    ///
-    /// This can be used to only redraw in response to user actions such as
-    /// [AppState::on_mouse_pressed] or [AppState::on_key_pressed].
-    ///
-    /// [AppState::on_update]: crate::prelude::AppState::on_update
-    /// [AppState::on_mouse_pressed]: crate::prelude::AppState::on_mouse_pressed
-    /// [AppState::on_key_pressed]: crate::prelude::AppState::on_key_pressed
-    pub fn redraw(&mut self) {
-        self.settings.run_count = 1;
-    }
-
-    /// Run the render loop N times by calling [AppState::on_update].
-    ///
-    /// This can be used to only redraw in response to user actions such as
-    /// [AppState::on_mouse_pressed] or [AppState::on_key_pressed].
-    ///
-    /// [AppState::on_update]: crate::prelude::AppState::on_update
-    /// [AppState::on_mouse_pressed]: crate::prelude::AppState::on_mouse_pressed
-    /// [AppState::on_key_pressed]: crate::prelude::AppState::on_key_pressed
-    pub fn run_times(&mut self, n: usize) {
-        self.settings.run_count = n;
     }
 
     /// Set whether to show the current frame rate per second in the title or not.

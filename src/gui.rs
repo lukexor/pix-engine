@@ -19,6 +19,7 @@ pub mod keys;
 pub mod mouse;
 pub mod theme;
 pub mod widgets;
+pub mod widgets2;
 
 /// A hashed element identifier for internal state management.
 #[cfg(target_pointer_width = "32")]
@@ -227,6 +228,7 @@ pub(crate) fn get_hash<T: Hash>(t: &T) -> ElementId {
     #[cfg(target_pointer_width = "64")]
     let mut s = DefaultHasher::new();
     t.hash(&mut s);
+    line!().hash(&mut s);
     s.finish()
 }
 

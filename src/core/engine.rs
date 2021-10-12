@@ -1,17 +1,12 @@
 //! [PixEngine] functions.
 
 use crate::{prelude::*, renderer::*};
-use std::{
-    collections::VecDeque,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
 #[cfg(not(target_arch = "wasm32"))]
 use crate::ASSETS;
 #[cfg(not(target_arch = "wasm32"))]
 use std::{fs, path::PathBuf};
-
-const ONE_SECOND: Duration = Duration::from_secs(1);
 
 /// Builds a [PixEngine] instance by providing several configration functions.
 #[must_use]
@@ -150,7 +145,7 @@ impl PixEngineBuilder {
     /// Set a target frame rate to render at, controls how often
     /// [on_update](crate::prelude::AppState::on_update) is called.
     pub fn target_frame_rate(&mut self, rate: usize) -> &mut Self {
-        self.settings.target_frame_rate = Some(rate as Scalar);
+        self.settings.target_frame_rate = Some(rate);
         self
     }
 
@@ -172,9 +167,6 @@ impl PixEngineBuilder {
     pub fn build(&self) -> PixEngine {
         PixEngine {
             settings: self.settings.clone(),
-            frames: VecDeque::with_capacity(128),
-            last_frame_time: Instant::now(),
-            frame_timer: Duration::from_secs(1),
         }
     }
 }
@@ -184,9 +176,6 @@ impl PixEngineBuilder {
 #[derive(Debug)]
 pub struct PixEngine {
     settings: RendererSettings,
-    frames: VecDeque<Instant>,
-    last_frame_time: Instant,
-    frame_timer: Duration,
 }
 
 impl PixEngine {
@@ -212,19 +201,14 @@ impl PixEngine {
         let renderer = Renderer::new(self.settings.clone())?;
         let mut state = PixState::new(renderer);
         state.show_frame_rate(self.settings.show_frame_rate);
-        state.env.target_frame_rate = self.settings.target_frame_rate;
-
-        // Clear and present once on start for both front and back buffers
-        for _ in 0..1 {
-            state.clear()?;
-            state.renderer.present();
+        if let Some(frame_rate) = self.settings.target_frame_rate {
+            state.set_frame_rate(frame_rate);
         }
 
         // Handle events before on_start to initialize window
         self.handle_events(&mut state, app)?;
-
         app.on_start(&mut state)?;
-        if state.env.quit {
+        if state.should_quit() {
             return Ok(());
         }
 
@@ -233,63 +217,28 @@ impl PixEngine {
             // running loop continues until an event or on_update returns false or errors
             'running: loop {
                 self.handle_events(&mut state, app)?;
-
-                if state.env.quit {
+                if state.should_quit() {
                     break 'running;
                 }
 
                 let now = Instant::now();
-                let time_since_last = now - self.last_frame_time;
-
-                // Target frame rate
-                let target_delta_time = state
-                    .env
-                    .target_frame_rate
-                    .map(|rate| 1000.0 / rate)
-                    .unwrap_or(0.0);
-
-                if time_since_last.as_millis() as Scalar >= target_delta_time {
-                    #[cfg(target_pointer_width = "32")]
-                    {
-                        state.env.delta_time = time_since_last.as_secs_f32();
-                    }
-                    #[cfg(target_pointer_width = "64")]
-                    {
-                        state.env.delta_time = time_since_last.as_secs_f64();
-                    }
-                    self.last_frame_time = now;
-
-                    if state.settings.running || state.settings.run_count > 0 {
+                let time_since_last = now - state.last_frame_time();
+                let target_delta_time = state.target_delta_time();
+                if time_since_last >= target_delta_time {
+                    state.set_delta_time(now, time_since_last);
+                    if state.is_running() {
                         state.clear()?;
                         state.pre_update();
                         app.on_update(&mut state)?;
                         state.post_update();
-                        state.renderer.present();
-                        if state.settings.run_count > 0 {
-                            state.settings.run_count -= 1;
-                        }
-                        state.env.frame_count += 1;
-                    }
-
-                    if state.settings.running && state.settings.show_frame_rate {
-                        let a_second_ago = now - ONE_SECOND;
-                        while self.frames.front().map_or(false, |&t| t < a_second_ago) {
-                            self.frames.pop_front();
-                        }
-                        self.frames.push_back(now);
-
-                        self.frame_timer += time_since_last;
-                        if self.frame_timer >= ONE_SECOND {
-                            self.frame_timer -= ONE_SECOND;
-                            state.env.frame_rate = self.frames.len();
-                            state.renderer.set_fps_title(state.env.frame_rate)?;
-                        }
+                        state.present();
+                        state.increment_frame(now, time_since_last)?;
                     }
                 }
             }
 
             app.on_stop(&mut state)?;
-            if state.env.quit {
+            if state.should_quit() {
                 #[cfg(not(target_arch = "wasm32"))]
                 {
                     fs::remove_dir_all(&self.settings.asset_dir)?;
@@ -311,17 +260,16 @@ impl PixEngine {
                 Event::Quit { .. } | Event::AppTerminating { .. } => state.quit(),
                 Event::Window {
                     window_id,
-                    ref win_event,
+                    win_event,
                 } => {
+                    let id = window_id as WindowId;
                     match win_event {
-                        WindowEvent::FocusGained => {
-                            state.env.focused_window = Some(window_id as WindowId)
-                        }
-                        WindowEvent::FocusLost => state.env.focused_window = None,
-                        WindowEvent::Close => state.close_window(window_id as WindowId)?,
+                        WindowEvent::FocusGained => state.focus_window(Some(id)),
+                        WindowEvent::FocusLost => state.focus_window(None),
+                        WindowEvent::Close => state.close_window(id)?,
                         _ => (),
                     }
-                    app.on_window_event(state, window_id as WindowId, *win_event)?;
+                    app.on_window_event(state, id, win_event)?;
                 }
                 Event::KeyDown {
                     key: Some(key),
