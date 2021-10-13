@@ -117,9 +117,10 @@ where
 {
     let v = v.into();
 
-    let x = v.x().abs();
-    let y = v.y().abs();
-    let z = v.z().abs();
+    let values = v.values();
+    let x = values.get(0).unwrap_or(&0.0).abs();
+    let y = values.get(1).unwrap_or(&0.0).abs();
+    let z = values.get(2).unwrap_or(&0.0).abs();
 
     let mut xi: usize = x.trunc() as usize;
     let mut yi: usize = y.trunc() as usize;

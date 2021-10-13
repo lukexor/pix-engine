@@ -30,8 +30,8 @@ impl ImGui {
                 rect![10, 10, 100, 25],   // Add button
                 rect![120, 10, 100, 25],  // Remove button
                 rect![10, 45, 210, 160],  // Select List
-                rect![10, 215, 210, 30],  // Text Field
-                rect![10, 255, 210, 50],  // Output
+                rect![10, 215, 210, 50],  // Text Field
+                rect![10, 275, 210, 50],  // Output
                 rect![240, 10, 100, 25],  // Checkbox 1
                 rect![325, 10, 100, 25],  // Checkbox 2
                 rect![240, 65, 100, 25],  // Radio 1
@@ -53,7 +53,7 @@ impl AppState for ImGui {
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.ui_disable(self.disabled);
+        s.disable(self.disabled);
 
         // Buttons
         if s.button(self.rects[0], "Add Item")? {
@@ -76,18 +76,17 @@ impl AppState for ImGui {
         )?;
 
         // Text Field
-        s.same_line();
         s.text_field(self.rects[3], "Input: ", &mut self.text_input)?;
-        s.wrap_width(70);
+        s.wrap_width(200);
         s.text(
             self.rects[4].top_left(),
             format!("Output: {}", self.text_input),
         )?;
         s.no_wrap();
 
-        s.ui_disable(false);
+        s.disable(false);
         s.checkbox(self.rects[5], "Disable", &mut self.disabled)?;
-        s.ui_disable(self.disabled);
+        s.disable(self.disabled);
 
         s.checkbox(self.rects[6], "Ipsum", &mut self.check)?;
 
@@ -96,7 +95,7 @@ impl AppState for ImGui {
         s.radio(self.rects[9], "Amet", &mut self.radio, 2)?;
 
         s.push();
-        let tooltip = "(?)";
+        let tooltip = " (?)";
         let (hw, hh) = s.size_of(tooltip)?;
         s.fill(s.muted_color());
         s.text(self.rects[10].top_left(), tooltip)?;

@@ -1,7 +1,7 @@
 //! [PixState] functions for the [PixEngine] and [AppState].
 
 use crate::{
-    gui::UiState,
+    gui::state::UiState,
     prelude::*,
     renderer::{Error as RendererError, Renderer, WindowRenderer},
 };
@@ -27,39 +27,31 @@ pub struct PixState {
 impl PixState {
     /// Constructs `PixState` with a given `Renderer`.
     #[inline]
-    pub(crate) fn new(renderer: Renderer) -> Self {
+    pub(crate) fn new(renderer: Renderer, theme: Theme) -> Self {
         Self {
             renderer,
             env: Environment::default(),
             ui: UiState::default(),
             settings: Settings::default(),
             setting_stack: Vec::new(),
-            theme: Theme::default(),
+            theme,
         }
     }
 
     /// Handle state changes this frame prior to calling [AppState::on_update].
     #[inline]
     pub(crate) fn pre_update(&mut self) {
-        self.renderer
-            .cursor(self.settings.cursor.as_ref())
-            .expect("valid cursor");
-        self.ui.hovered = None;
+        // Reset mouse cursor icon to the current setting
+        // Ignore any errors, as setting cursor in the first place should have succeeded.
+        let _ = self.renderer.cursor(self.settings.cursor.as_ref());
+        self.ui.pre_update();
+        self.ui.set_cursor(self.theme.style.frame_pad);
     }
 
     /// Handle state changes this frame after calling [AppState::on_update].
     #[inline]
     pub(crate) fn post_update(&mut self) {
-        if !self.mouse_down(Mouse::Left) {
-            self.ui.clear_active();
-        } else if !self.ui.has_active() {
-            // Disable focused state while mouse is down from previous frame
-            self.ui.set_active(0);
-        }
-        if self.ui.keys.was_entered(Key::Tab) {
-            self.ui.blur();
-        }
-        self.ui.clear_entered();
+        self.ui.post_update();
     }
 
     #[inline]

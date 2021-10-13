@@ -87,7 +87,7 @@ use std::{fmt, ops::*};
 /// [heading]: Vector::heading
 /// [vecmath]: https://en.wikipedia.org/wiki/Vector_(mathematics_and_p.y()sics)
 /// [module-level documentation]: crate::math::vector
-#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Vector<T, const N: usize>(pub(crate) [T; N]);
 
 /// A 1D `Vector` represented by integers.

@@ -199,7 +199,7 @@ impl PixEngine {
         }
 
         let renderer = Renderer::new(self.settings.clone())?;
-        let mut state = PixState::new(renderer);
+        let mut state = PixState::new(renderer, self.settings.theme.clone());
         state.show_frame_rate(self.settings.show_frame_rate);
         if let Some(frame_rate) = self.settings.target_frame_rate {
             state.set_frame_rate(frame_rate);

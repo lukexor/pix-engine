@@ -239,7 +239,7 @@ impl ThemeColors {
             secondary: Color::from_str("#414859").unwrap(),
             accent: Color::from_str("#de6a38").unwrap(),
             highlight: Color::from_str("#236d7a").unwrap(),
-            muted: Color::from_str("#4e495f").unwrap(),
+            muted: Color::from_str("#20394f").unwrap(),
         }
     }
 
@@ -259,12 +259,16 @@ impl Default for ThemeColors {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ThemeStyle {
-    pub(crate) frame_pad: (u32, u32),
+    pub(crate) frame_pad: PointI2,
+    pub(crate) item_pad: PointI2,
 }
 
 impl Default for ThemeStyle {
     fn default() -> Self {
-        Self { frame_pad: (5, 5) }
+        Self {
+            frame_pad: point![8, 8],
+            item_pad: point![8, 4],
+        }
     }
 }
 

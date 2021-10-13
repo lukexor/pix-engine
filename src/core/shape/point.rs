@@ -32,7 +32,7 @@ use std::{fmt, ops::*};
 /// Please see the [module-level documentation] for examples.
 ///
 /// [module-level documentation]: crate::core::shape::point
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Point<T, const N: usize>(pub(crate) [T; N]);
 
 /// A 1D `Point` represented by integers.

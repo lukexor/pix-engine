@@ -137,6 +137,7 @@ impl MazeApp {
         if s.button([200, h - 50, 140, 40], "Solve A*")? {
             self.start_solve_maze(Algorithm::AStar)?;
         }
+        // TODO: Handle duplicate button ID
         if s.button([345, h - 50, 40, 40], ">>")? {
             self.solve_maze()?;
         }
@@ -170,7 +171,7 @@ impl AppState for MazeApp {
     fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
         let frame_rate = s.target_frame_rate().unwrap_or(60);
         match event.key {
-            Key::Return => {
+            Key::V => {
                 let v = s.vsync();
                 s.set_vsync(!v)?;
             }

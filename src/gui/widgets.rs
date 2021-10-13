@@ -1,6 +1,5 @@
 //! UI widget rendering functions.
 
-use super::get_hash;
 use crate::{prelude::*, renderer::Rendering};
 use num_traits::AsPrimitive;
 use std::cmp;
@@ -54,8 +53,6 @@ impl PixState {
     }
 
     /// Draw a text field to the current canvas.
-    ///
-    /// Affected by `PixState::same_line`.
     pub fn text_field<R, L>(&mut self, rect: R, label: L, value: &mut String) -> PixResult<bool>
     where
         R: Into<Rect<i32>>,
@@ -194,24 +191,18 @@ impl PixState {
 
     fn _text_field(&mut self, rect: Rect<i32>, label: &str, value: &mut String) -> PixResult<bool> {
         let s = self;
-        let id = get_hash(&label);
+        let id = s.ui.get_hash(&label);
         let style = s.theme.style;
 
         // Calculate input rect
         let mut input = rect;
-        let (pad_x, pad_y) = style.frame_pad;
+        let pad = style.frame_pad;
         if !label.is_empty() {
             // Resize input area to fit label
-            let (w, h) = s.size_of(label)?;
-            if s.ui.same_line {
-                let offset = (w + pad_x) as i32;
-                input.set_x(input.x() + offset);
-                input.set_width(input.width() - offset);
-            } else {
-                let offset = (h + pad_y) as i32;
-                input.set_y(input.y() + offset);
-                input.set_height(input.height() - offset);
-            }
+            let (_, h) = s.size_of(label)?;
+            let offset = h as i32 + pad.y();
+            input.set_y(input.y() + offset);
+            input.set_height(input.height() - offset);
         }
 
         // Check hover/active/keyboard focus
@@ -233,13 +224,7 @@ impl PixState {
         // Label
         if !label.is_empty() {
             s.fill(s.text_color());
-            if s.ui.same_line {
-                let (_, h) = s.size_of(label)?;
-                let y = rect.center().y();
-                s.text([rect.x(), y - h as i32 / 2], label)?;
-            } else {
-                s.text([rect.x(), rect.y()], label)?;
-            }
+            s.text([rect.x(), rect.y()], label)?;
         }
 
         // Input
@@ -267,7 +252,7 @@ impl PixState {
         s.clip(input)?;
         let (vw, vh) = s.size_of(&value)?;
         let (cw, _) = s.size_of(&TEXT_CURSOR)?;
-        let mut x = input.x() + pad_x as i32;
+        let mut x = input.x() + pad.x();
         let y = input.center().y() - vh as i32 / 2;
         let width = (vw + cw) as i32;
         if width > input.width() {
@@ -303,23 +288,7 @@ impl PixState {
         Ok(changed)
     }
 
-    /// Draw a scroll control that returns `true` when changed.
-    fn scroll<R>(
-        &mut self,
-        rect: R,
-        label: &str,
-        max: u32,
-        value: &mut i32,
-        dir: Direction,
-    ) -> PixResult<bool>
-    where
-        R: Into<Rect<i32>>,
-    {
-        let rect = self.get_rect(rect);
-        self._scroll(rect, label, max, value, dir)
-    }
-
-    fn _scroll(
+    fn scroll(
         &mut self,
         rect: Rect<i32>,
         label: &str,
@@ -330,7 +299,7 @@ impl PixState {
         use Direction::*;
 
         let s = self;
-        let mut id = get_hash(&label);
+        let mut id = s.ui.get_hash(&label);
         match dir {
             Horizontal => id += rect.x() as u64,
             Vertical => id += rect.y() as u64,
@@ -477,7 +446,7 @@ impl PixState {
 
     fn _button(&mut self, rect: Rect<i32>, label: &str) -> PixResult<bool> {
         let s = self;
-        let id = get_hash(&label);
+        let id = s.ui.get_hash(&label);
 
         // Check hover/active/keyboard focus
         let disabled = s.ui.disabled;
@@ -551,26 +520,27 @@ impl PixState {
         S: AsRef<str>,
     {
         let s = self;
-        let id = get_hash(&label);
+        let id = s.ui.get_hash(&label);
         let style = s.theme.style;
 
         // Calculate list content rect
-        let (pad_x, pad_y) = style.frame_pad;
+        let pad = style.frame_pad;
         let mut border = rect;
         if !label.is_empty() {
             // Resize content area to fit label
             let (_, h) = s.size_of(&label)?;
-            let offset = (h + pad_y) as i32;
+            let offset = h as i32 + pad.y();
             border.set_y(border.y() + offset);
             border.set_height(border.height() - offset);
         }
         let mut content = border;
-        content.set_x(content.x() + pad_x as i32);
+        content.set_x(content.x() + pad.x());
 
         // Calculate displayed items
-        let line_height = item_height as i32 + pad_y as i32 * 2;
+        let pad = style.item_pad;
+        let line_height = item_height as i32 + pad.y() * 2;
         let mut scroll = s.ui.scroll(id);
-        let skip_count = (scroll.y / line_height) as usize;
+        let skip_count = (scroll.y() / line_height) as usize;
         let displayed_count = (content.height() / line_height) as usize;
         let displayed_items = items
             .iter()
@@ -632,8 +602,8 @@ impl PixState {
         let mouse = s.mouse_pos();
 
         s.clip(border)?;
-        let x = content.x() - scroll.x;
-        let mut y = content.y() - scroll.y + (skip_count as i32 * line_height);
+        let x = content.x() - scroll.x();
+        let mut y = content.y() - scroll.y() + (skip_count as i32 * line_height);
         for (i, item) in displayed_items {
             let item_rect = rect!(content.x(), y, content.width(), line_height);
             let clickable = item_rect.bottom() > content.y() || item_rect.top() < content.height();
@@ -656,7 +626,7 @@ impl PixState {
             } else {
                 s.fill(s.text_color());
             }
-            s.text([x, y + pad_y as i32], item)?;
+            s.text([x, y + pad.y()], item)?;
             y += line_height;
         }
         s.no_clip()?;
@@ -686,12 +656,12 @@ impl PixState {
                 if changed_selection {
                     let sel_y = selected.unwrap_or(0) as i32 * line_height;
                     // Snap scroll to top of the window
-                    if sel_y < scroll.y {
-                        scroll.y = sel_y;
+                    if sel_y < scroll.y() {
+                        scroll.set_y(sel_y);
                         s.ui.set_scroll(id, scroll);
-                    } else if sel_y + line_height > scroll.y + content.height() {
+                    } else if sel_y + line_height > scroll.y() + content.height() {
                         // Snap scroll to bottom of the window
-                        scroll.y = sel_y - (content.height() - line_height);
+                        scroll.set_y(sel_y - (content.height() - line_height));
                         s.ui.set_scroll(id, scroll);
                     }
                 }
@@ -704,19 +674,26 @@ impl PixState {
         let xmax = total_width - content.width() - scroll_width;
         if hovered {
             if s.ui.mouse.yrel != 0 {
-                scroll.y = cmp::max(0, cmp::min(ymax, scroll.y - 3 * s.ui.mouse.yrel));
+                scroll.set_y(cmp::max(
+                    0,
+                    cmp::min(ymax, scroll.y() - 3 * s.ui.mouse.yrel),
+                ));
                 s.ui.set_scroll(id, scroll);
             }
             if s.ui.mouse.xrel != 0 {
-                scroll.x = cmp::max(0, cmp::min(xmax, scroll.x - 3 * s.ui.mouse.xrel));
+                scroll.set_x(cmp::max(
+                    0,
+                    cmp::min(xmax, scroll.x() - 3 * s.ui.mouse.xrel),
+                ));
                 s.ui.set_scroll(id, scroll);
             }
         }
 
         // Scrollbar
+        let mut scroll_y = scroll.y();
         if scroll_width > 0
             && s.scroll(
-                [
+                rect![
                     border.right() - scroll_width,
                     border.top(),
                     scroll_width,
@@ -724,15 +701,17 @@ impl PixState {
                 ],
                 label,
                 ymax as u32,
-                &mut scroll.y,
+                &mut scroll_y,
                 Direction::Vertical,
             )?
         {
+            scroll.set_y(scroll_y);
             s.ui.set_scroll(id, scroll);
         }
+        let mut scroll_x = scroll.x();
         if scroll_height > 0
             && s.scroll(
-                [
+                rect![
                     border.left(),
                     border.bottom() - scroll_height,
                     border.width() - scroll_width,
@@ -740,10 +719,11 @@ impl PixState {
                 ],
                 label,
                 xmax as u32,
-                &mut scroll.x,
+                &mut scroll_x,
                 Direction::Horizontal,
             )?
         {
+            scroll.set_x(scroll_x);
             s.ui.set_scroll(id, scroll);
         }
 
@@ -763,7 +743,7 @@ impl PixState {
 
     fn _checkbox(&mut self, rect: Rect<i32>, label: &str, checked: &mut bool) -> PixResult<bool> {
         let s = self;
-        let id = get_hash(&label);
+        let id = s.ui.get_hash(&label);
         let style = s.theme.style;
 
         // Calculate checkbox rect
@@ -784,7 +764,7 @@ impl PixState {
         s.push();
 
         // Render
-        let (pad_x, _) = style.frame_pad;
+        let pad = style.frame_pad;
         s.rect_mode(RectMode::Corner);
 
         // Label
@@ -794,10 +774,7 @@ impl PixState {
             } else {
                 s.fill(s.text_color());
             }
-            s.text(
-                [checkbox.right() + 2 * pad_x as i32, y - h as i32 / 2],
-                label,
-            )?;
+            s.text([checkbox.right() + 2 * pad.x(), y - h as i32 / 2], label)?;
         }
 
         // Checkbox
@@ -855,7 +832,7 @@ impl PixState {
         index: usize,
     ) -> PixResult<bool> {
         let s = self;
-        let id = get_hash(&label);
+        let id = s.ui.get_hash(&label);
         let style = s.theme.style;
 
         // Calculate radio rect
@@ -877,7 +854,7 @@ impl PixState {
         s.push();
 
         // Render
-        let (pad_x, _) = style.frame_pad;
+        let pad = style.frame_pad;
         s.rect_mode(RectMode::Corner);
 
         // Label
@@ -887,7 +864,7 @@ impl PixState {
             } else {
                 s.fill(s.text_color());
             }
-            s.text([radio.right() + 2 * pad_x as i32, y - h as i32 / 2], label)?;
+            s.text([radio.right() + 2 * pad.x(), y - h as i32 / 2], label)?;
         }
 
         // Checkbox
@@ -932,11 +909,11 @@ impl PixState {
 
     fn _tooltip(&mut self, rect: Rect<i32>, text: &str, hover: Rect<i32>) -> PixResult<()> {
         let s = self;
-        let id = get_hash(&text);
+        let id = s.ui.get_hash(&text);
         let style = s.theme.style;
 
         // Check hover/active/keyboard focus
-        let (pad_x, pad_y) = style.frame_pad;
+        let pad = style.frame_pad;
         let disabled = s.ui.disabled;
         if !disabled && hover.contains_point(s.mouse_pos()) {
             s.ui.hover(id);
@@ -954,8 +931,8 @@ impl PixState {
             s.stroke(s.muted_color());
             s.fill(s.primary_color());
             let m = s.mouse_pos();
-            let pad_x2 = pad_x as i32 * 2;
-            let pad_y2 = pad_y as i32 * 2;
+            let pad_x2 = pad.x() * 2;
+            let pad_y2 = pad.y() * 2;
             let mut rect = rect![
                 m.x() + rect.x() + pad_x2,
                 m.y() + rect.y() + pad_y2,
@@ -972,7 +949,7 @@ impl PixState {
             s.rect(rect)?;
             s.clip(rect)?;
             s.fill(s.text_color());
-            s.text(rect.top_left() + point!(pad_x as i32, pad_y as i32), text)?;
+            s.text(rect.top_left() + point!(pad.x(), pad.y()), text)?;
             s.no_clip()?;
         }
 

@@ -19,6 +19,7 @@ pub(crate) struct Environment {
     focused: bool,
     focused_window: Option<WindowId>,
     delta_time: Scalar,
+    start: Instant,
     frame_rate: usize,
     target_frame_rate: Option<usize>,
     frame_count: usize,
@@ -35,6 +36,7 @@ impl Default for Environment {
             focused: false,
             focused_window: None,
             delta_time: 0.0,
+            start: Instant::now(),
             frame_rate: 0,
             target_frame_rate: None,
             frame_count: 0,
@@ -57,6 +59,16 @@ impl PixState {
     #[inline]
     pub fn delta_time(&self) -> Scalar {
         self.env.delta_time
+    }
+
+    /// The time elapsed since application start in milliseconds.
+    #[inline]
+    pub fn elapsed(&self) -> Scalar {
+        #[cfg(target_pointer_width = "32")]
+        let elapsed = self.env.start.elapsed().as_secs_f32();
+        #[cfg(target_pointer_width = "64")]
+        let elapsed = self.env.start.elapsed().as_secs_f64();
+        1000.0 * elapsed
     }
 
     /// The total number of frames rendered since application start.
