@@ -379,7 +379,7 @@ impl Rendering for Renderer {
                 canvas.filled_polygon(&vx, &vy, fill)?;
             }
             if let Some(stroke) = stroke {
-                canvas.aa_polygon(&vx, &vy, stroke)?;
+                canvas.polygon(&vx, &vy, stroke)?;
             }
             Ok(())
         })
@@ -405,7 +405,7 @@ impl Rendering for Renderer {
                 canvas.filled_polygon(&vx, &vy, fill)?;
             }
             if let Some(stroke) = stroke {
-                canvas.aa_polygon(&vx, &vy, stroke)?;
+                canvas.polygon(&vx, &vy, stroke)?;
             }
             Ok(())
         })
