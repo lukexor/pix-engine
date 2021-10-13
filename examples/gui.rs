@@ -1,6 +1,6 @@
 use pix_engine::prelude::*;
 
-struct ImGui {
+struct Gui {
     edit_mode: bool,
     edit_target: usize,
     list_items: Vec<String>,
@@ -12,7 +12,7 @@ struct ImGui {
     rects: Vec<Rect<i32>>,
 }
 
-impl ImGui {
+impl Gui {
     fn new() -> Self {
         Self {
             edit_mode: false,
@@ -44,7 +44,7 @@ impl ImGui {
     }
 }
 
-impl AppState for ImGui {
+impl AppState for Gui {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         s.background(s.background_color())?;
         s.font_family("arial")?;
@@ -189,6 +189,6 @@ fn main() -> PixResult<()> {
         .position_centered()
         .with_frame_rate()
         .build();
-    let mut app = ImGui::new();
+    let mut app = Gui::new();
     engine.run(&mut app)
 }

@@ -2,8 +2,6 @@
 
 use crate::{prelude::*, renderer::Rendering};
 use num_traits::AsPrimitive;
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
 use std::{
     ops::{Deref, DerefMut},
     path::Path,
@@ -12,7 +10,6 @@ use std::{
 
 /// A builder to generate custom [Theme]s.
 #[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ThemeBuilder {
     fonts: ThemeFonts,
     font_sizes: ThemeFontSizes,
@@ -123,7 +120,6 @@ impl ThemeBuilder {
 ///
 /// With SDL2 this resolves to a file path in the "assets" folder with ".ttf" file extension.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Font(String);
 
 impl Default for Font {
@@ -171,7 +167,6 @@ impl From<String> for Font {
 
 /// A set of font families for body, heading, and monospace text.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ThemeFonts {
     pub(crate) body: Font,
     pub(crate) heading: Font,
@@ -190,7 +185,6 @@ impl Default for ThemeFonts {
 
 /// A set of font sizes for body, heading, and monospace text.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ThemeFontSizes {
     pub(crate) body: u32,
     pub(crate) heading: u32,
@@ -209,7 +203,6 @@ impl Default for ThemeFontSizes {
 
 /// A set of font styles for body, heading, and monospace text.
 #[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ThemeFontStyles {
     pub(crate) body: FontStyle,
     pub(crate) heading: FontStyle,
@@ -218,7 +211,6 @@ pub struct ThemeFontStyles {
 
 /// A set of colors for theming UI elements.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ThemeColors {
     pub(crate) text: Color,
     pub(crate) background: Color,
@@ -257,7 +249,6 @@ impl Default for ThemeColors {
 
 /// A set of styles for sizing, padding, borders, etc for theming UI elements.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ThemeStyle {
     pub(crate) frame_pad: PointI2,
     pub(crate) item_pad: PointI2,

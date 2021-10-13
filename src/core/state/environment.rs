@@ -3,8 +3,6 @@
 //! [PixEngine]: crate::prelude::PixEngine
 
 use crate::{prelude::*, renderer::*};
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
 use std::{
     collections::VecDeque,
     time::{Duration, Instant},
@@ -14,7 +12,6 @@ const ONE_SECOND: Duration = Duration::from_secs(1);
 
 /// Environment values for [PixState]
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct Environment {
     focused: bool,
     focused_window: Option<WindowId>,
