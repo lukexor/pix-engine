@@ -152,6 +152,7 @@ impl PixState {
 
         // Calculate input rect
         let mut input = rect![pos, 15 * font_size, font_size + 2 * pad.y()];
+        let label = label.split("#").next().unwrap_or("");
         if !label.is_empty() {
             let (w, _) = s.size_of(label)?;
             input.offset_x(w as i32 + pad.x());
@@ -409,6 +410,7 @@ impl PixState {
         let pad = style.item_pad;
 
         // Calculate button size
+        let label = label.split("#").next().unwrap_or("");
         let (width, height) = s.size_of(label)?;
         let mut button = rect![
             pos.x(),
@@ -496,6 +498,7 @@ impl PixState {
 
         // Render label
         s.rect_mode(RectMode::Corner);
+        let label = label.split("#").next().unwrap_or("");
         if !label.is_empty() {
             s.fill(s.text_color());
             s.text(label)?;
@@ -765,6 +768,7 @@ impl PixState {
         s.advance_cursor(checkbox.size());
 
         // Label
+        let label = label.split("#").next().unwrap_or("");
         if !label.is_empty() {
             if disabled {
                 s.fill(s.muted_color());
@@ -841,6 +845,7 @@ impl PixState {
         s.advance_cursor(radio.size());
 
         // Label
+        let label = label.split("#").next().unwrap_or("");
         if !label.is_empty() {
             if disabled {
                 s.fill(s.muted_color());

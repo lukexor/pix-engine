@@ -248,12 +248,14 @@ impl Asteroids {
 
     fn draw_gameover(&mut self, s: &mut PixState) -> PixResult<()> {
         let x = self.width as i32 / 2 - 150;
-        let y = self.height as i32 / 2 - 100;
+        let y = self.height as i32 / 2 - 150;
         s.fill(WHITE);
         s.font_size(32)?;
-        s.text([x, y], "GAME OVER")?;
+        s.rect_mode(RectMode::Center);
+        s.set_cursor_pos([x, y]);
+        s.text("GAME OVER")?;
         s.font_size(16)?;
-        s.text([x - 30, y + 50], "PRESS SPACE TO RESTART")?;
+        s.text("PRESS SPACE TO RESTART")?;
         Ok(())
     }
 
@@ -261,20 +263,12 @@ impl Asteroids {
         // Draw Level, Lives, & Score
         s.font_size(16)?;
         s.fill(WHITE);
-        s.text(
-            [4, 4],
-            &format!("LEVEL: {}  SCORE: {}", self.level, self.score),
-        )?;
+        s.text(&format!("LEVEL: {}  SCORE: {}", self.level, self.score))?;
 
         s.fill(BLACK);
         s.stroke(WHITE);
         for i in 0..self.lives {
-            s.wireframe(
-                &SHIP_MODEL,
-                [12.0 + (i as Scalar * 14.0), 36.0],
-                -FRAC_PI_2,
-                2.0,
-            )?;
+            s.wireframe(&SHIP_MODEL, [12 + (i * 14), 40], -FRAC_PI_2, 2.0)?;
         }
 
         // Check win condition

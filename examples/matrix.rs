@@ -49,7 +49,8 @@ impl Glyph {
             self.value = Self::random_glyph();
         }
         let ch = &self.value.encode_utf8(&mut self.buf);
-        s.text_transformed([x, y], ch, 0.0, None, Flipped::Horizontal)?;
+        s.set_cursor_pos([x, y]);
+        s.text_transformed(ch, 0.0, None, Flipped::Horizontal)?;
         Ok(())
     }
 }
