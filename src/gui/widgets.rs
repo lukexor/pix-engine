@@ -152,7 +152,7 @@ impl PixState {
 
         // Calculate input rect
         let mut input = rect![pos, 15 * font_size, font_size + 2 * pad.y()];
-        let label = label.split("#").next().unwrap_or("");
+        let label = label.split('#').next().unwrap_or("");
         if !label.is_empty() {
             let (w, _) = s.size_of(label)?;
             input.offset_x(w as i32 + pad.x());
@@ -194,6 +194,7 @@ impl PixState {
         } else {
             s.fill(s.primary_color());
         }
+        s.same_line(None);
         s.rect(input)?;
 
         // Text
@@ -214,7 +215,7 @@ impl PixState {
         s.ui.push_cursor([x, y]);
         s.text(&value)?;
         s.ui.pop_cursor();
-        if focused && !s.ui.disabled && s.frame_count() >> 8 & 1 > 0 {
+        if focused && !s.ui.disabled && s.elapsed() as usize >> 8 & 1 > 0 {
             let offset = 2; // Remove some left space of the text cursor
             s.ui.push_cursor([x + vw as i32 - offset, y]);
             s.text(TEXT_CURSOR)?;
@@ -410,7 +411,7 @@ impl PixState {
         let pad = style.item_pad;
 
         // Calculate button size
-        let label = label.split("#").next().unwrap_or("");
+        let label = label.split('#').next().unwrap_or("");
         let (width, height) = s.size_of(label)?;
         let mut button = rect![
             pos.x(),
@@ -498,7 +499,7 @@ impl PixState {
 
         // Render label
         s.rect_mode(RectMode::Corner);
-        let label = label.split("#").next().unwrap_or("");
+        let label = label.split('#').next().unwrap_or("");
         if !label.is_empty() {
             s.fill(s.text_color());
             s.text(label)?;
@@ -572,12 +573,9 @@ impl PixState {
         // Contents
         let mouse = s.mouse_pos();
 
-        s.clip([
-            border.x() + 1,
-            border.y() + 1,
-            border.width() - 2,
-            border.height() - 2,
-        ])?;
+        let mut clip = border;
+        clip.offset_size([-1, -1]);
+        s.clip(clip)?;
         let x = content.x() - scroll.x();
         let mut y = content.y() - scroll.y() + (skip_count as i32 * line_height);
         for (i, item) in displayed_items {
@@ -768,7 +766,7 @@ impl PixState {
         s.advance_cursor(checkbox.size());
 
         // Label
-        let label = label.split("#").next().unwrap_or("");
+        let label = label.split('#').next().unwrap_or("");
         if !label.is_empty() {
             if disabled {
                 s.fill(s.muted_color());
@@ -800,7 +798,7 @@ impl PixState {
         let pos = s.cursor_pos();
 
         // Calculate radio rect
-        let radius = 9;
+        let radius = 8;
         let radio = circle![pos + radius, radius];
 
         // Check hover/active/keyboard focus
@@ -845,7 +843,7 @@ impl PixState {
         s.advance_cursor(radio.size());
 
         // Label
-        let label = label.split("#").next().unwrap_or("");
+        let label = label.split('#').next().unwrap_or("");
         if !label.is_empty() {
             if disabled {
                 s.fill(s.muted_color());
@@ -872,55 +870,65 @@ impl PixState {
     }
 
     fn _tooltip(&mut self, text: &str) -> PixResult<()> {
-        // let s = self;
-        // let id = s.ui.get_hash(&text);
-        // let style = s.theme.style;
+        let s = self;
+        let id = s.ui.get_hash(&text);
+        let pos = s.cursor_pos();
+        let font_size = s.theme.font_sizes.body as i32;
+        let style = s.theme.style;
+        let pad = style.frame_pad;
 
-        // // Check hover/active/keyboard focus
-        // let pad = style.frame_pad;
-        // let disabled = s.ui.disabled;
-        // if !disabled && hover.contains_point(s.mouse_pos()) {
-        //     s.ui.hover(id);
-        // }
-        // s.ui.try_capture(id);
-        // let hovered = !disabled && s.ui.is_hovered(id);
+        // Calculate hover area
+        let hover = circle!(pos, font_size);
 
-        // s.push();
+        // Check hover/active/keyboard focus
+        let disabled = s.ui.disabled;
+        if !disabled && hover.contains_point(s.mouse_pos()) {
+            s.ui.hover(id);
+        }
+        s.ui.try_capture(id);
+        let hovered = !disabled && s.ui.is_hovered(id);
 
-        // // Render
+        s.push();
 
-        // // Tooltip
-        // s.rect_mode(RectMode::Corner);
-        // if hovered {
-        //     s.stroke(s.muted_color());
-        //     s.fill(s.primary_color());
-        //     let m = s.mouse_pos();
-        //     let pad_x2 = pad.x() * 2;
-        //     let pad_y2 = pad.y() * 2;
-        //     let mut rect = rect![
-        //         m.x() + rect.x() + pad_x2,
-        //         m.y() + rect.y() + pad_y2,
-        //         rect.width() + pad_x2,
-        //         rect.height() + pad_y2
-        //     ];
-        //     let (w, h) = s.dimensions();
-        //     if rect.right() > w as i32 {
-        //         rect.set_x(rect.x() - rect.width() - pad_x2);
-        //     }
-        //     if rect.bottom() > h as i32 {
-        //         rect.set_y(rect.y() - rect.height() - pad_y2);
-        //     }
-        //     s.rect(rect)?;
-        //     s.clip(rect)?;
-        //     s.fill(s.text_color());
-        //     s.text(rect.top_left() + point!(pad.x(), pad.y()), text)?;
-        //     s.no_clip()?;
-        // }
+        // Render
 
-        // s.pop();
+        // Tooltip
+        s.rect_mode(RectMode::Corner);
+        s.fill(s.muted_color());
+        s.text("(?)")?;
+        if hovered {
+            s.stroke(s.muted_color());
+            s.fill(s.primary_color());
+            let m = s.mouse_pos();
+            let pad_x2 = pad.x() * 2;
+            let pad_y2 = pad.y() * 2;
+            let (width, height) = s.size_of(text)?;
+            let mut rect = rect![
+                m.x() + pad_x2,
+                m.y() + pad_y2,
+                width as i32 + pad_x2,
+                height as i32 + pad_y2
+            ];
+            let (w, h) = s.dimensions();
+            if rect.right() > w as i32 {
+                rect.offset_x(-rect.width() - pad_x2);
+            }
+            if rect.bottom() > h as i32 {
+                rect.offset_y(-rect.height() - pad_y2);
+            }
+            s.rect(rect)?;
+            s.clip(rect)?;
+            s.fill(s.text_color());
+            s.ui.push_cursor(rect.top_left() + point!(pad.x(), pad.y()));
+            s.text(text)?;
+            s.ui.pop_cursor();
+            s.no_clip()?;
+        }
 
-        // // Process input
-        // s.ui.handle_input(id);
+        s.pop();
+
+        // Process input
+        s.ui.handle_input(id);
 
         Ok(())
     }

@@ -319,11 +319,12 @@ impl PixState {
         let size = size.into();
         let pos = self.cursor_pos();
         let style = self.theme.style;
+        let padx = style.frame_pad.y();
         let pady = style.item_pad.y();
         // Previous cursor ends at the right of this item
         self.ui.pcursor = point![pos.x() + size.x(), pos.y()];
         // Move cursor to the next line with padding
-        self.ui.cursor = point![pos.x(), pos.y() + size.y() + pady]
+        self.ui.cursor = point![padx, pos.y() + size.y() + pady]
     }
 }
 

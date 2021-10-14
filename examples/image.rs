@@ -22,12 +22,12 @@ impl AppState for ImageDemo {
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         s.image([s.width() / 2, s.height() / 2], &self.0)?;
-        s.text([10, 10], "<Esc>: Disable Tint")?;
-        s.text([10, 35], "<Return>: Random Tint")?;
-        s.text([10, 60], "<Left>: Disable Blend Mode")?;
-        s.text([10, 85], "<Right>: Alpha Blend Mode")?;
-        s.text([10, 110], "<Up>: Additive Blend Mode")?;
-        s.text([10, 135], "<Down>: Modulated Blend Mode")?;
+        s.text("<Esc>: Disable Tint")?;
+        s.text("<Return>: Random Tint")?;
+        s.text("<Left>: Disable Blend Mode")?;
+        s.text("<Right>: Alpha Blend Mode")?;
+        s.text("<Up>: Additive Blend Mode")?;
+        s.text("<Down>: Modulated Blend Mode")?;
         Ok(())
     }
 

@@ -102,14 +102,6 @@ impl<T> Ellipse<T> {
     pub const fn new(x: T, y: T, width: T, height: T) -> Self {
         Self([x, y, width, height])
     }
-
-    /// Constructs a circle `Ellipse` at position `(x, y)` with `radius`.
-    pub fn circle(x: T, y: T, radius: T) -> Self
-    where
-        T: Copy,
-    {
-        Self::new(x, y, radius, radius)
-    }
 }
 
 impl<T: Copy + Default> Ellipse<T> {
@@ -175,15 +167,16 @@ impl<T: Copy + Default> Ellipse<T> {
     pub fn set_height(&mut self, height: T) {
         self.0[3] = height;
     }
-
-    /// Returns the `radius` of the circle.
-    #[inline]
-    pub fn radius(&self) -> T {
-        self.0[2]
-    }
 }
 
 impl<T: Num> Ellipse<T> {
+    /// Constructs a circle `Ellipse` at position `(x, y)` with `radius`.
+    pub fn circle(x: T, y: T, radius: T) -> Self {
+        let two = T::one() + T::one();
+        let diameter = radius * two;
+        Self::new(x, y, diameter, diameter)
+    }
+
     /// Constructs an `Ellipse` at position [Point] with `width` and `height`.
     pub fn with_position<P: Into<Point<T, 2>>>(p: P, width: T, height: T) -> Self {
         let p = p.into();
@@ -193,7 +186,7 @@ impl<T: Num> Ellipse<T> {
     /// Constructs a circle `Ellipse` at position [Point] with `radius`.
     pub fn circle_with_position<P: Into<Point<T, 2>>>(p: P, radius: T) -> Self {
         let p = p.into();
-        Self::new(p.x(), p.y(), radius, radius)
+        Self::circle(p.x(), p.y(), radius)
     }
 
     /// Constructs an `Ellipse` centered at position `(x, y)` with `width` and `height`.
@@ -218,20 +211,45 @@ impl<T: Num> Ellipse<T> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let c = Ellipse::circle_from_center([50, 50], 100);
-    /// assert_eq!(c.values(), [0, 0, 100, 100]);
+    /// assert_eq!(c.values(), [0, 0, 200, 200]);
     /// ```
     pub fn circle_from_center<P: Into<Point<T, 2>>>(p: P, radius: T) -> Self {
         let p = p.into();
         let two = T::one() + T::one();
-        let offset = radius / two;
-        Self::new(p.x() - offset, p.y() - offset, radius, radius)
+        Self::circle_with_position(p - radius / two, radius)
+    }
+
+    /// Returns the `radius` of the circle.
+    ///
+    /// # Panics
+    ///
+    /// Panics if not a circle.
+    #[inline]
+    pub fn radius(&self) -> T {
+        let two = T::one() + T::one();
+        self.diameter() / two
     }
 
     /// Sets the `radius` of the circle.
     #[inline]
     pub fn set_radius(&mut self, radius: T) {
-        self.0[2] = radius;
-        self.0[3] = radius;
+        let two = T::one() + T::one();
+        let diameter = radius * two;
+        self.0[2] = diameter;
+        self.0[3] = diameter;
+    }
+
+    /// Returns the `diameter` of the circle.
+    ///
+    /// # Panics
+    ///
+    /// Panics if not a circle.
+    #[inline]
+    pub fn diameter(&self) -> T {
+        if self.0[2] != self.0[3] {
+            panic!("shape is not a circle");
+        }
+        self.0[2]
     }
 
     /// Offsets an ellipse by shifting coordinates by given amount.
@@ -242,7 +260,7 @@ impl<T: Num> Ellipse<T> {
         P: Into<Point<T, 2>>,
     {
         let offset = offset.into();
-        for i in 0..1 {
+        for i in 0..=1 {
             self[i] += offset[i]
         }
     }
@@ -447,26 +465,24 @@ where
 
 impl<T, U> From<[U; 3]> for Ellipse<T>
 where
-    T: 'static + Copy,
-    U: AsPrimitive<T>,
+    T: 'static + Num,
+    U: Num + AsPrimitive<T>,
 {
     /// Converts `[U; 3]` into `Ellipse<T>`.
     #[inline]
     fn from([x, y, r]: [U; 3]) -> Self {
-        let r = r.as_();
-        Self([x.as_(), y.as_(), r, r])
+        Ellipse::circle(x.as_(), y.as_(), r.as_())
     }
 }
 
 impl<T, U> From<&[U; 3]> for Ellipse<T>
 where
-    T: 'static + Copy,
-    U: AsPrimitive<T>,
+    T: 'static + Num,
+    U: Num + AsPrimitive<T>,
 {
     /// Converts `&[U; 3]` into `Ellipse<T>`.
     #[inline]
     fn from(&[x, y, r]: &[U; 3]) -> Self {
-        let r = r.as_();
-        Self([x.as_(), y.as_(), r, r])
+        Ellipse::circle(x.as_(), y.as_(), r.as_())
     }
 }

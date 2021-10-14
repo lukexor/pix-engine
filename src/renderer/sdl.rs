@@ -420,12 +420,14 @@ impl Rendering for Renderer {
     ) -> Result<()> {
         let ellipse: Ellipse<i16> = ellipse.into();
         let [x, y, width, height] = ellipse.values();
+        let rw = width / 2;
+        let rh = height / 2;
         self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
             if let Some(fill) = fill {
-                canvas.filled_ellipse(x, y, width, height, fill)?;
+                canvas.filled_ellipse(x, y, rw, rh, fill)?;
             }
             if let Some(stroke) = stroke {
-                canvas.aa_ellipse(x, y, width, height, stroke)?;
+                canvas.aa_ellipse(x, y, rw, rh, stroke)?;
             }
             Ok(())
         })

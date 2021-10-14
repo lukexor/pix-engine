@@ -33,7 +33,8 @@ impl AppState for Textures {
 
                 s.fill(Color::random());
                 s.rect_mode(RectMode::Center);
-                s.text(center, &format!("Quadrant {}", i))?;
+                s.set_cursor_pos(center);
+                s.text(format!("Quadrant {}", i))?;
                 Ok(())
             })?;
 

@@ -263,7 +263,7 @@ impl Asteroids {
         // Draw Level, Lives, & Score
         s.font_size(16)?;
         s.fill(WHITE);
-        s.text(&format!("LEVEL: {}  SCORE: {}", self.level, self.score))?;
+        s.text(format!("LEVEL: {}  SCORE: {}", self.level, self.score))?;
 
         s.fill(BLACK);
         s.stroke(WHITE);

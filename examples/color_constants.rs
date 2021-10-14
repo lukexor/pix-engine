@@ -173,8 +173,7 @@ impl AppState for ColorConsts {
             s.square(get_sq(i))?;
         }
         for (i, &color) in COLORS.iter().enumerate() {
-            let (w, h) = s.size_of(color.1)?;
-            s.tooltip([0, 0, w + 10, h + 10], color.1, get_sq(i))?;
+            // s.tooltip(color.1, get_sq(i))?;
         }
         Ok(())
     }

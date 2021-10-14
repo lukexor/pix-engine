@@ -253,7 +253,7 @@ impl<T: Num> Rect<T> {
         P: Into<Point<T, 2>>,
     {
         let offset = offset.into();
-        for i in 0..1 {
+        for i in 0..=1 {
             self[i] += offset[i]
         }
     }
@@ -286,6 +286,22 @@ impl<T: Num> Rect<T> {
     #[inline]
     pub fn size(&self) -> Point<T, 2> {
         point!(self.width(), self.height())
+    }
+
+    /// Offsets a rectangle's size by shifting coordinates by given amount.
+    ///
+    #[inline]
+    pub fn offset_size<P>(&mut self, offset: P)
+    where
+        P: Into<Point<T, 2>>,
+    {
+        let offset = offset.into();
+        for i in 0..=1 {
+            self[i] -= offset[i]
+        }
+        for i in 2..=3 {
+            self[i] += offset[i - 2]
+        }
     }
 
     /// Returns `Rect` as a [Vec].

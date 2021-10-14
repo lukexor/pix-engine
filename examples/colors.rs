@@ -49,10 +49,11 @@ impl AppState for Colors {
         self.draw_gradient(s)?;
         s.no_stroke();
         s.fill(WHITE);
-        s.text([10, 10], "Hue: ")?;
-        s.text([80, 10], &self.h.to_string())?;
-        s.text([10, 35], "Left/Right/Up/Down: Change Hue")?;
-        s.text([10, 60], "<Escape>: Return to demo.")?;
+        s.text("Hue: ")?;
+        s.same_line(None);
+        s.text(self.h.to_string())?;
+        s.text("Left/Right/Up/Down: Change Hue")?;
+        s.text("<Escape>: Return to demo.")?;
         Ok(())
     }
 

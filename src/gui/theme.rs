@@ -258,7 +258,7 @@ impl Default for ThemeStyle {
     fn default() -> Self {
         Self {
             frame_pad: point![8, 8],
-            item_pad: point![8, 4],
+            item_pad: point![8, 6],
         }
     }
 }
