@@ -126,8 +126,57 @@ where
     /// let r = rect!(5, 10, 100, 100);
     /// assert_eq!(r.values(), [5, 10, 100, 100]);
     /// ```
+    #[inline]
     pub fn values(&self) -> [T; 4] {
         self.0
+    }
+
+    /// Returns the `x-coordinate` of the rectangle.
+    #[inline]
+    pub fn x(&self) -> T {
+        self.0[0]
+    }
+
+    /// Sets the `x-coordinate` of the rectangle.
+    #[inline]
+    pub fn set_x(&mut self, x: T) {
+        self.0[0] = x;
+    }
+
+    /// Returns the `y-coordinate` of the rectangle.
+    #[inline]
+    pub fn y(&self) -> T {
+        self.0[1]
+    }
+
+    /// Sets the `y-coordinate` of the rectangle.
+    #[inline]
+    pub fn set_y(&mut self, y: T) {
+        self.0[1] = y;
+    }
+
+    /// Returns the `width` of the rectangle.
+    #[inline]
+    pub fn width(&self) -> T {
+        self.0[2]
+    }
+
+    /// Sets the `width` of the rectangle.
+    #[inline]
+    pub fn set_width(&mut self, width: T) {
+        self.0[2] = width;
+    }
+
+    /// Returns the `height` of the rectangle.
+    #[inline]
+    pub fn height(&self) -> T {
+        self.0[3]
+    }
+
+    /// Sets the `height` of the rectangle.
+    #[inline]
+    pub fn set_height(&mut self, height: T) {
+        self.0[3] = height;
     }
 }
 
@@ -196,62 +245,47 @@ impl<T: Num> Rect<T> {
         Self::new(p.x() - offset, p.y() - offset, size, size)
     }
 
-    /// Resize rectangle by a given value around the center.
-    pub fn resized(rect: Rect<T>, val: T) -> Self
+    /// Offsets a rectangle by shifting coordinates by given amount.
+    ///
+    #[inline]
+    pub fn offset<P>(&mut self, offset: P)
     where
-        T: std::fmt::Debug,
+        P: Into<Point<T, 2>>,
     {
-        let [x, y, width, height] = rect.values();
-        let two_val = val + val;
-        rect!(x - val, y - val, width + two_val, height + two_val)
+        let offset = offset.into();
+        for i in 0..1 {
+            self[i] += offset[i]
+        }
     }
 
-    /// Returns the `x-coordinate` of the rectangle.
+    /// Offsets the `x-coordinate` of the rectangle by a given amount.
     #[inline]
-    pub fn x(&self) -> T {
-        self.0[0]
+    pub fn offset_x(&mut self, offset: T) {
+        self.0[0] += offset;
     }
 
-    /// Sets the `x-coordinate` of the rectangle.
+    /// Offsets the `y-coordinate` of the rectangle by a given amount.
     #[inline]
-    pub fn set_x(&mut self, x: T) {
-        self.0[0] = x;
+    pub fn offset_y(&mut self, offset: T) {
+        self.0[1] += offset;
     }
 
-    /// Returns the `y-coordinate` of the rectangle.
+    /// Offsets the `width` of the rectangle by a given amount.
     #[inline]
-    pub fn y(&self) -> T {
-        self.0[1]
+    pub fn offset_width(&mut self, offset: T) {
+        self.0[2] += offset;
     }
 
-    /// Sets the `y-coordinate` of the rectangle.
+    /// Offsets the `height` of the rectangle by a given amount.
     #[inline]
-    pub fn set_y(&mut self, y: T) {
-        self.0[1] = y;
+    pub fn offset_height(&mut self, offset: T) {
+        self.0[3] += offset;
     }
 
-    /// Returns the `width` of the rectangle.
+    /// Returns the `size` of the rectangle as a `Point`.
     #[inline]
-    pub fn width(&self) -> T {
-        self.0[2]
-    }
-
-    /// Sets the `width` of the rectangle.
-    #[inline]
-    pub fn set_width(&mut self, width: T) {
-        self.0[2] = width;
-    }
-
-    /// Returns the `height` of the rectangle.
-    #[inline]
-    pub fn height(&self) -> T {
-        self.0[3]
-    }
-
-    /// Sets the `height` of the rectangle.
-    #[inline]
-    pub fn set_height(&mut self, height: T) {
-        self.0[3] = height;
+    pub fn size(&self) -> Point<T, 2> {
+        point!(self.width(), self.height())
     }
 
     /// Returns `Rect` as a [Vec].
@@ -357,16 +391,6 @@ impl<T: Num> Rect<T> {
         let two = T::one() + T::one();
         self.set_x(p.x() - self.width() / two);
         self.set_y(p.y() - self.height() / two);
-    }
-
-    /// Resize rectangle by a given value around the center.
-    #[inline]
-    pub fn resize_by(&mut self, val: T) {
-        let two = T::one();
-        self.set_x(self.x() - val);
-        self.set_y(self.y() - val);
-        self.set_width(self.width() + two * val);
-        self.set_height(self.height() + two * val);
     }
 }
 

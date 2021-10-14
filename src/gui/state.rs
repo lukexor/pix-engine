@@ -27,6 +27,8 @@ pub(crate) struct UiState {
     cursor: PointI2,
     /// Previous global render position, in window coordinates.
     pcursor: PointI2,
+    /// Temporary stack of cursor positions.
+    cursor_stack: Vec<PointI2>,
     /// Whether UI elements are disabled.
     pub(crate) disabled: bool,
     /// Mouse state for the current frame.
@@ -88,9 +90,22 @@ impl UiState {
 
     /// Set the current UI rendering position.
     #[inline]
-    pub(crate) fn set_cursor(&mut self, cursor: PointI2) {
+    pub(crate) fn set_cursor<P: Into<PointI2>>(&mut self, cursor: P) {
         self.pcursor = self.cursor;
-        self.cursor = cursor;
+        self.cursor = cursor.into();
+    }
+
+    /// Push a new UI rendering position to the stack.
+    #[inline]
+    pub(crate) fn push_cursor<P: Into<PointI2>>(&mut self, cursor: P) {
+        self.cursor_stack.push(self.cursor);
+        self.cursor = cursor.into();
+    }
+
+    /// Pop a new UI rendering position from the stack.
+    #[inline]
+    pub(crate) fn pop_cursor(&mut self) {
+        self.cursor = self.cursor_stack.pop().unwrap_or_else(Point::default);
     }
 
     /// Whether an element is `active` or not. An element is marked `active` when there is no other
@@ -274,8 +289,8 @@ impl PixState {
 
     /// Set the current UI rendering position.
     #[inline]
-    pub fn set_cursor_pos(&mut self, cursor: PointI2) {
-        self.ui.set_cursor(cursor);
+    pub fn set_cursor_pos<P: Into<PointI2>>(&mut self, cursor: P) {
+        self.ui.set_cursor(cursor.into());
     }
 
     /// Reset current UI rendering position back to previous line with item padding, and continue
@@ -299,18 +314,16 @@ impl PixState {
 
 impl PixState {
     /// Advance the current UI cursor position for an element.
-    #[allow(dead_code)]
     #[inline]
     pub(crate) fn advance_cursor<S: Into<PointI2>>(&mut self, size: S) {
         let size = size.into();
-        let [x, y] = self.ui.cursor.values();
-        let frame_x = 0; // TODO
-        let frame_pad = self.theme.style.frame_pad;
-        let item_pad = self.theme.style.item_pad;
+        let pos = self.cursor_pos();
+        let style = self.theme.style;
+        let pady = style.item_pad.y();
         // Previous cursor ends at the right of this item
-        self.ui.pcursor = point![x + size.x(), y];
+        self.ui.pcursor = point![pos.x() + size.x(), pos.y()];
         // Move cursor to the next line with padding
-        self.ui.cursor = point![frame_x + frame_pad.x(), y + size.y() + item_pad.y()]
+        self.ui.cursor = point![pos.x(), pos.y() + size.y() + pady]
     }
 }
 

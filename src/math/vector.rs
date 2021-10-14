@@ -490,6 +490,7 @@ where
     /// v.offset([2.0, -4.0]);
     /// assert_eq!(v.values(), [4.0, -1.0, 1.5]);
     /// ```
+    #[inline]
     pub fn offset<U, const M: usize>(&mut self, offsets: [U; M])
     where
         T: AddAssign<U>,
@@ -499,6 +500,24 @@ where
         for i in 0..M {
             self[i] += offsets[i]
         }
+    }
+
+    /// Offsets the `x-coordinate` of the point by a given amount.
+    #[inline]
+    pub fn offset_x(&mut self, offset: T) {
+        self.0[0] += offset;
+    }
+
+    /// Offsets the `y-coordinate` of the point by a given amount.
+    #[inline]
+    pub fn offset_y(&mut self, offset: T) {
+        self.0[1] += offset;
+    }
+
+    /// Offsets the `z-coordinate` of the point by a given amount.
+    #[inline]
+    pub fn offset_z(&mut self, offset: T) {
+        self.0[2] += offset;
     }
 
     /// Constructs a `Vector` by multiplying it by the given scale factor.

@@ -128,26 +128,28 @@ impl MazeApp {
         }
         let w = WIDTH as i32;
         let h = HEIGHT as i32;
-        if s.button([10, h - 50, 125, 40], "Create")? {
+        s.set_cursor_pos([10, h - 50, 125, 40]);
+        if s.button("Create")? {
             self.start_create_maze();
         }
-        if s.button([140, h - 50, 40, 40], ">>")? {
+        s.same_line();
+        if s.button(">>#1")? {
             self.create_maze()?;
         }
-        if s.button([200, h - 50, 140, 40], "Solve A*")? {
+        s.same_line();
+        if s.button("Solve A*")? {
             self.start_solve_maze(Algorithm::AStar)?;
         }
+        s.same_line();
         // TODO: Handle duplicate button ID
-        if s.button([345, h - 50, 40, 40], ">>")? {
+        if s.button(">>#2")? {
             self.solve_maze()?;
         }
         s.fill(s.accent_color());
         let rate = s.target_frame_rate().unwrap_or(60);
-        s.text([w - 400, h - 50], &format!("Target FPS: {}", rate))?;
-        s.text(
-            [w - 400, h - 25],
-            &format!("Elapsed: {:.3}", self.timer.elapsed()),
-        )?;
+        s.ame_line();
+        s.text(format!("Target FPS: {}", rate))?;
+        s.text(format!("Elapsed: {:.3}", self.timer.elapsed()))?;
         Ok(())
     }
 }

@@ -302,7 +302,7 @@ impl<T, const N: usize> Point<T, N>
 where
     T: Num,
 {
-    /// Constructs a `Point` by shifting coordinates by given amount.
+    /// Offsets a `Point` by shifting coordinates by given amount.
     ///
     /// # Examples
     ///
@@ -312,6 +312,7 @@ where
     /// p.offset([2, -4]);
     /// assert_eq!(p.values(), [4, -1, 1]);
     /// ```
+    #[inline]
     pub fn offset<P, const M: usize>(&mut self, offset: P)
     where
         P: Into<Point<T, M>>,
@@ -321,6 +322,24 @@ where
         for i in 0..M {
             self[i] += offset[i]
         }
+    }
+
+    /// Offsets the `x-coordinate` of the point by a given amount.
+    #[inline]
+    pub fn offset_x(&mut self, offset: T) {
+        self.0[0] += offset;
+    }
+
+    /// Offsets the `y-coordinate` of the point by a given amount.
+    #[inline]
+    pub fn offset_y(&mut self, offset: T) {
+        self.0[1] += offset;
+    }
+
+    /// Offsets the `z-coordinate` of the point by a given amount.
+    #[inline]
+    pub fn offset_z(&mut self, offset: T) {
+        self.0[2] += offset;
     }
 
     /// Constructs a `Point` by multiplying it by the given scale factor.

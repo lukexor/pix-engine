@@ -123,53 +123,9 @@ impl<T: Copy + Default> Ellipse<T> {
     /// let e = ellipse!(5, 10, 100, 100);
     /// assert_eq!(e.values(), [5, 10, 100, 100]);
     /// ```
+    #[inline]
     pub fn values(&self) -> [T; 4] {
         self.0
-    }
-}
-
-impl<T: Num> Ellipse<T> {
-    /// Constructs an `Ellipse` at position [Point] with `width` and `height`.
-    pub fn with_position<P: Into<Point<T, 2>>>(p: P, width: T, height: T) -> Self {
-        let p = p.into();
-        Self::new(p.x(), p.y(), width, height)
-    }
-
-    /// Constructs a circle `Ellipse` at position [Point] with `radius`.
-    pub fn circle_with_position<P: Into<Point<T, 2>>>(p: P, radius: T) -> Self {
-        let p = p.into();
-        Self::new(p.x(), p.y(), radius, radius)
-    }
-
-    /// Constructs an `Ellipse` centered at position `(x, y)` with `width` and `height`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let e = Ellipse::from_center([50, 50], 100, 100);
-    /// assert_eq!(e.values(), [0, 0, 100, 100]);
-    /// ```
-    pub fn from_center<P: Into<Point<T, 2>>>(p: P, width: T, height: T) -> Self {
-        let p = p.into();
-        let two = T::one() + T::one();
-        Self::new(p.x() - width / two, p.y() - height / two, width, height)
-    }
-
-    /// Constructs a circle `Ellipse` centered at position `(x, y)` with `radius`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Ellipse::circle_from_center([50, 50], 100);
-    /// assert_eq!(c.values(), [0, 0, 100, 100]);
-    /// ```
-    pub fn circle_from_center<P: Into<Point<T, 2>>>(p: P, radius: T) -> Self {
-        let p = p.into();
-        let two = T::one() + T::one();
-        let offset = radius / two;
-        Self::new(p.x() - offset, p.y() - offset, radius, radius)
     }
 
     /// Returns the `x-coordinate` of the ellipse.
@@ -225,12 +181,107 @@ impl<T: Num> Ellipse<T> {
     pub fn radius(&self) -> T {
         self.0[2]
     }
+}
 
-    /// Sets the `width` of the circle.
+impl<T: Num> Ellipse<T> {
+    /// Constructs an `Ellipse` at position [Point] with `width` and `height`.
+    pub fn with_position<P: Into<Point<T, 2>>>(p: P, width: T, height: T) -> Self {
+        let p = p.into();
+        Self::new(p.x(), p.y(), width, height)
+    }
+
+    /// Constructs a circle `Ellipse` at position [Point] with `radius`.
+    pub fn circle_with_position<P: Into<Point<T, 2>>>(p: P, radius: T) -> Self {
+        let p = p.into();
+        Self::new(p.x(), p.y(), radius, radius)
+    }
+
+    /// Constructs an `Ellipse` centered at position `(x, y)` with `width` and `height`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let e = Ellipse::from_center([50, 50], 100, 100);
+    /// assert_eq!(e.values(), [0, 0, 100, 100]);
+    /// ```
+    pub fn from_center<P: Into<Point<T, 2>>>(p: P, width: T, height: T) -> Self {
+        let p = p.into();
+        let two = T::one() + T::one();
+        Self::new(p.x() - width / two, p.y() - height / two, width, height)
+    }
+
+    /// Constructs a circle `Ellipse` centered at position `(x, y)` with `radius`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let c = Ellipse::circle_from_center([50, 50], 100);
+    /// assert_eq!(c.values(), [0, 0, 100, 100]);
+    /// ```
+    pub fn circle_from_center<P: Into<Point<T, 2>>>(p: P, radius: T) -> Self {
+        let p = p.into();
+        let two = T::one() + T::one();
+        let offset = radius / two;
+        Self::new(p.x() - offset, p.y() - offset, radius, radius)
+    }
+
+    /// Sets the `radius` of the circle.
     #[inline]
     pub fn set_radius(&mut self, radius: T) {
         self.0[2] = radius;
         self.0[3] = radius;
+    }
+
+    /// Offsets an ellipse by shifting coordinates by given amount.
+    ///
+    #[inline]
+    pub fn offset<P>(&mut self, offset: P)
+    where
+        P: Into<Point<T, 2>>,
+    {
+        let offset = offset.into();
+        for i in 0..1 {
+            self[i] += offset[i]
+        }
+    }
+
+    /// Offsets the `x-coordinate` of the ellipse by a given amount.
+    #[inline]
+    pub fn offset_x(&mut self, offset: T) {
+        self.0[0] += offset;
+    }
+
+    /// Offsets the `y-coordinate` of the ellipse by a given amount.
+    #[inline]
+    pub fn offset_y(&mut self, offset: T) {
+        self.0[1] += offset;
+    }
+
+    /// Offsets the `width` of the ellipse by a given amount.
+    #[inline]
+    pub fn offset_width(&mut self, offset: T) {
+        self.0[2] += offset;
+    }
+
+    /// Offsets the `height` of the ellipse by a given amount.
+    #[inline]
+    pub fn offset_height(&mut self, offset: T) {
+        self.0[3] += offset;
+    }
+
+    /// Offsets the `radius` of the circle by a given amount.
+    #[inline]
+    pub fn offset_radius(&mut self, offset: T) {
+        self.0[2] += offset;
+        self.0[3] += offset;
+    }
+
+    /// Returns the `size` of the ellipse as a `Point`.
+    #[inline]
+    pub fn size(&self) -> Point<T, 2> {
+        point!(self.width(), self.height())
     }
 
     /// Returns `Ellipse` as a [Vec].

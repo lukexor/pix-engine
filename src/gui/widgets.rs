@@ -18,33 +18,29 @@ enum Direction {
 
 impl PixState {
     /// Draw text to the current canvas.
-    pub fn text<P, S>(&mut self, p: P, text: S) -> PixResult<()>
+    pub fn text<S>(&mut self, text: S) -> PixResult<()>
     where
-        P: Into<PointI2>,
         S: AsRef<str>,
     {
-        self.text_transformed(p, text, 0.0, None, None)
+        self.text_transformed(text, 0.0, None, None)
     }
 
     /// Draw transformed text to the current canvas, optionally rotated about a `center` by `angle`
     /// or `flipped`. `angle` can be in radians or degrees depending on [AngleMode].
-    pub fn text_transformed<P, S, T, C, F>(
+    pub fn text_transformed<S, T, C, F>(
         &mut self,
-        p: P,
         text: S,
         angle: T,
         center: C,
         flipped: F,
     ) -> PixResult<()>
     where
-        P: Into<PointI2>,
         S: AsRef<str>,
         C: Into<Option<PointI2>>,
         F: Into<Option<Flipped>>,
         T: AsPrimitive<Scalar>,
     {
         self._text_transformed(
-            p.into(),
             text.as_ref(),
             angle.as_().into(),
             center.into(),
@@ -53,156 +49,112 @@ impl PixState {
     }
 
     /// Draw a text field to the current canvas.
-    pub fn text_field<R, L>(&mut self, rect: R, label: L, value: &mut String) -> PixResult<bool>
+    pub fn text_field<L>(&mut self, label: L, value: &mut String) -> PixResult<bool>
     where
-        R: Into<Rect<i32>>,
         L: AsRef<str>,
     {
-        let rect = self.get_rect(rect);
-        self._text_field(rect, label.as_ref(), value)
+        self._text_field(label.as_ref(), value)
     }
 
     /// Draw a button to the current canvas that returns `true` when clicked.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # struct App;
-    /// # impl App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     if s.button([0, 0, 100, 50], "Click Me")? {
-    ///       println!("I was clicked!");
-    ///     }
-    ///     Ok(())
-    /// }
-    /// # }
-    /// ```
-    pub fn button<R, L>(&mut self, rect: R, label: L) -> PixResult<bool>
+    pub fn button<L>(&mut self, label: L) -> PixResult<bool>
     where
-        R: Into<Rect<i32>>,
         L: AsRef<str>,
     {
-        let rect = self.get_rect(rect);
-        self._button(rect, label.as_ref())
+        self._button(label.as_ref())
     }
 
     /// Draw a select list to the current canvas with a scrollable region.
-    pub fn select_list<R, S, I, T>(
+    pub fn select_list<S, I, T>(
         &mut self,
-        rect: R,
         label: S,
         items: &[I],
         item_height: T,
         selected: &mut Option<usize>,
     ) -> PixResult<()>
     where
-        R: Into<Rect<i32>>,
         S: AsRef<str>,
         I: AsRef<str>,
         T: AsPrimitive<u32>,
     {
-        let rect = self.get_rect(rect);
-        self._select_list(rect, label.as_ref(), items, item_height.as_(), selected)
+        self._select_list(label.as_ref(), items, item_height.as_(), selected)
     }
 
     /// Draw a checkbox to the current canvas.
-    pub fn checkbox<R, S>(&mut self, rect: R, label: S, checked: &mut bool) -> PixResult<bool>
+    pub fn checkbox<S>(&mut self, label: S, checked: &mut bool) -> PixResult<bool>
     where
-        R: Into<Rect<i32>>,
         S: AsRef<str>,
     {
-        let rect = self.get_rect(rect);
-        self._checkbox(rect, label.as_ref(), checked)
+        self._checkbox(label.as_ref(), checked)
     }
 
     /// Draw a set of radio buttons to the current canvas.
-    pub fn radio<R, S>(
-        &mut self,
-        rect: R,
-        label: S,
-        selected: &mut usize,
-        index: usize,
-    ) -> PixResult<bool>
+    pub fn radio<S>(&mut self, label: S, selected: &mut usize, index: usize) -> PixResult<bool>
     where
-        R: Into<Rect<i32>>,
         S: AsRef<str>,
     {
-        let rect = self.get_rect(rect);
-        self._radio(rect, label.as_ref(), selected, index)
+        self._radio(label.as_ref(), selected, index)
     }
 
     /// Draw a tooltip when hovered to the current canvas.
-    pub fn tooltip<R1, R2, S>(&mut self, rect: R1, text: S, hover: R2) -> PixResult<()>
+    pub fn tooltip<S>(&mut self, text: S) -> PixResult<()>
     where
-        R1: Into<Rect<i32>>,
-        R2: Into<Rect<i32>>,
         S: AsRef<str>,
     {
-        let rect = self.get_rect(rect);
-        self._tooltip(rect, text.as_ref(), hover.into())
+        self._tooltip(text.as_ref())
     }
 }
 
 impl PixState {
     fn _text_transformed(
         &mut self,
-        mut p: PointI2,
         text: &str,
         mut angle: Option<Scalar>,
         center: Option<PointI2>,
         flipped: Option<Flipped>,
     ) -> PixResult<()> {
         let s = self;
+        let mut pos = s.cursor_pos();
         if let RectMode::Center = s.settings.rect_mode {
             let (width, height) = s.renderer.size_of(text)?;
-            p.offset([-(width as i32 / 2), -(height as i32 / 2)]);
+            pos.offset([-(width as i32 / 2), -(height as i32 / 2)]);
         };
         if let AngleMode::Radians = s.settings.angle_mode {
             angle = angle.map(|a| a.to_degrees());
         };
-        if text.contains('\n') {
-            for line in text.split('\n') {
-                s.renderer.text(
-                    p,
-                    line,
-                    s.settings.wrap_width,
-                    angle,
-                    center,
-                    flipped,
-                    s.settings.fill,
-                )?;
-                let (_, h) = s.size_of(line)?;
-                p.set_y(p.y() + h as i32);
-            }
-            Ok(())
-        } else {
-            Ok(s.renderer.text(
-                p,
-                text,
+        let mut size = point!();
+        for line in text.split('\n') {
+            s.renderer.text(
+                pos,
+                line,
                 s.settings.wrap_width,
                 angle,
                 center,
                 flipped,
                 s.settings.fill,
-            )?)
+            )?;
+            let (w, h) = s.size_of(line)?;
+            pos.offset_y(h as i32);
+            size.set_x(cmp::max(w as i32, size.x()));
+            size.offset_y(h as i32);
         }
+        s.advance_cursor(size);
+        Ok(())
     }
 
-    fn _text_field(&mut self, rect: Rect<i32>, label: &str, value: &mut String) -> PixResult<bool> {
+    fn _text_field(&mut self, label: &str, value: &mut String) -> PixResult<bool> {
         let s = self;
         let id = s.ui.get_hash(&label);
+        let pos = s.cursor_pos();
+        let font_size = s.theme.font_sizes.body as i32;
         let style = s.theme.style;
+        let pad = style.item_pad;
 
         // Calculate input rect
-        let mut input = rect;
-        let pad = style.frame_pad;
+        let mut input = rect![pos, 15 * font_size, font_size + 2 * pad.y()];
         if !label.is_empty() {
-            // Resize input area to fit label
-            let (_, h) = s.size_of(label)?;
-            let offset = h as i32 + pad.y();
-            input.set_y(input.y() + offset);
-            input.set_height(input.height() - offset);
+            let (w, _) = s.size_of(label)?;
+            input.offset_x(w as i32 + pad.x());
         }
 
         // Check hover/active/keyboard focus
@@ -224,7 +176,7 @@ impl PixState {
         // Label
         if !label.is_empty() {
             s.fill(s.text_color());
-            s.text([rect.x(), rect.y()], label)?;
+            s.text(label)?;
         }
 
         // Input
@@ -251,17 +203,21 @@ impl PixState {
         }
         s.clip(input)?;
         let (vw, vh) = s.size_of(&value)?;
-        let (cw, _) = s.size_of(&TEXT_CURSOR)?;
+        let (cw, _) = s.size_of(TEXT_CURSOR)?;
         let mut x = input.x() + pad.x();
         let y = input.center().y() - vh as i32 / 2;
         let width = (vw + cw) as i32;
         if width > input.width() {
             x -= width - input.width();
         }
-        s.text([x, y], &value)?;
+        s.ui.push_cursor([x, y]);
+        s.text(&value)?;
+        s.ui.pop_cursor();
         if focused && !s.ui.disabled && s.frame_count() >> 8 & 1 > 0 {
             let offset = 2; // Remove some left space of the text cursor
-            s.text([x + vw as i32 - offset, y], &TEXT_CURSOR)?;
+            s.ui.push_cursor([x + vw as i32 - offset, y]);
+            s.text(TEXT_CURSOR)?;
+            s.ui.pop_cursor();
         }
         s.no_clip()?;
 
@@ -284,6 +240,7 @@ impl PixState {
             }
         }
         s.ui.handle_input(id);
+        s.advance_cursor(input.size());
 
         Ok(changed)
     }
@@ -326,7 +283,7 @@ impl PixState {
         let radius = 3;
 
         // Scroll region
-        s.no_stroke();
+        s.stroke(s.background_color());
         s.fill(s.background_color());
         s.rect(rect)?;
 
@@ -444,13 +401,25 @@ impl PixState {
         Ok(changed)
     }
 
-    fn _button(&mut self, rect: Rect<i32>, label: &str) -> PixResult<bool> {
+    fn _button(&mut self, label: &str) -> PixResult<bool> {
         let s = self;
         let id = s.ui.get_hash(&label);
+        let pos = s.cursor_pos();
+        let style = s.theme.style;
+        let pad = style.item_pad;
+
+        // Calculate button size
+        let (width, height) = s.size_of(label)?;
+        let mut button = rect![
+            pos.x(),
+            pos.y(),
+            width as i32 + 2 * pad.x(),
+            height as i32 + 2 * pad.y()
+        ];
 
         // Check hover/active/keyboard focus
         let disabled = s.ui.disabled;
-        if !disabled && rect.contains_point(s.mouse_pos()) {
+        if !disabled && button.contains_point(s.mouse_pos()) {
             s.ui.hover(id);
         }
         s.ui.try_capture(id);
@@ -473,34 +442,33 @@ impl PixState {
             s.frame_cursor(&Cursor::hand())?;
             s.fill(s.highlight_color());
             if active {
-                let [x, y, width, height] = rect.values();
-                s.rect([x + 1, y + 1, width, height])?;
-            } else {
-                s.rect(rect)?;
+                button.offset([1, 1]);
             }
         } else if disabled {
             s.fill(s.background_color());
-            s.rect(rect)?;
         } else {
             s.fill(s.primary_color());
-            s.rect(rect)?;
         }
+        s.rect(button)?;
 
         // Button text
-        s.rect_mode(RectMode::Center);
         if disabled {
             s.fill(s.muted_color());
         } else {
             s.fill(s.text_color());
         }
-        s.clip(rect)?;
-        s.text(rect.center(), label)?;
+        s.clip(button)?;
+        s.ui.push_cursor(button.center());
+        s.rect_mode(RectMode::Center);
+        s.text(label)?;
+        s.ui.pop_cursor();
         s.no_clip()?;
 
         s.pop();
 
         // Process input
         s.ui.handle_input(id);
+        s.advance_cursor(button.size());
         if !disabled {
             Ok(s.ui.was_clicked(id))
         } else {
@@ -510,7 +478,6 @@ impl PixState {
 
     fn _select_list<S>(
         &mut self,
-        rect: Rect<i32>,
         label: &str,
         items: &[S],
         item_height: u32,
@@ -521,20 +488,25 @@ impl PixState {
     {
         let s = self;
         let id = s.ui.get_hash(&label);
+        let font_size = s.theme.font_sizes.body as i32;
         let style = s.theme.style;
+        let pad = style.item_pad;
+
+        s.push();
+
+        // Render label
+        s.rect_mode(RectMode::Corner);
+        if !label.is_empty() {
+            s.fill(s.text_color());
+            s.text(label)?;
+        }
 
         // Calculate list content rect
-        let pad = style.frame_pad;
-        let mut border = rect;
-        if !label.is_empty() {
-            // Resize content area to fit label
-            let (_, h) = s.size_of(&label)?;
-            let offset = h as i32 + pad.y();
-            border.set_y(border.y() + offset);
-            border.set_height(border.height() - offset);
-        }
+        let pos = s.cursor_pos();
+        let border = rect![pos, 15 * font_size, 5 * (font_size + 2 * pad.y())];
         let mut content = border;
-        content.set_x(content.x() + pad.x());
+        content.offset_x(pad.x());
+        content.offset_width(-2 * pad.x());
 
         // Calculate displayed items
         let pad = style.item_pad;
@@ -579,18 +551,14 @@ impl PixState {
         let hovered = s.ui.is_hovered(id);
         let active = s.ui.is_active(id);
 
-        s.push();
+        // Render content
 
-        // Render
-        s.rect_mode(RectMode::Corner);
-
-        // Label
-        if !label.is_empty() {
-            s.fill(s.text_color());
-            s.text([rect.x(), rect.y()], label)?;
+        // Border
+        if focused {
+            s.stroke(s.highlight_color());
+        } else {
+            s.stroke(s.muted_color());
         }
-
-        // Background
         if disabled {
             s.fill(s.background_color());
         } else {
@@ -601,7 +569,12 @@ impl PixState {
         // Contents
         let mouse = s.mouse_pos();
 
-        s.clip(border)?;
+        s.clip([
+            border.x() + 1,
+            border.y() + 1,
+            border.width() - 2,
+            border.height() - 2,
+        ])?;
         let x = content.x() - scroll.x();
         let mut y = content.y() - scroll.y() + (skip_count as i32 * line_height);
         for (i, item) in displayed_items {
@@ -626,10 +599,11 @@ impl PixState {
             } else {
                 s.fill(s.text_color());
             }
-            s.text([x, y + pad.y()], item)?;
+            s.ui.push_cursor([x, y + pad.y()]);
+            s.text(item)?;
+            s.ui.pop_cursor();
             y += line_height;
         }
-        s.no_clip()?;
 
         // Process input
         if focused {
@@ -668,6 +642,7 @@ impl PixState {
             }
         }
         s.ui.handle_input(id);
+        s.advance_cursor(border.size());
 
         // Process mouse wheel
         let ymax = total_height - content.height();
@@ -695,7 +670,7 @@ impl PixState {
             && s.scroll(
                 rect![
                     border.right() - scroll_width,
-                    border.top(),
+                    border.top() + 1,
                     scroll_width,
                     border.height(),
                 ],
@@ -712,7 +687,7 @@ impl PixState {
         if scroll_height > 0
             && s.scroll(
                 rect![
-                    border.left(),
+                    border.left() + 1,
                     border.bottom() - scroll_height,
                     border.width() - scroll_width,
                     scroll_height,
@@ -727,29 +702,19 @@ impl PixState {
             s.ui.set_scroll(id, scroll);
         }
 
-        // Border
-        s.no_fill();
-        if focused {
-            s.stroke(s.highlight_color());
-        } else {
-            s.stroke(s.muted_color());
-        }
-        s.rect(border)?;
-
+        s.no_clip()?;
         s.pop();
 
         Ok(())
     }
 
-    fn _checkbox(&mut self, rect: Rect<i32>, label: &str, checked: &mut bool) -> PixResult<bool> {
+    fn _checkbox(&mut self, label: &str, checked: &mut bool) -> PixResult<bool> {
         let s = self;
         let id = s.ui.get_hash(&label);
-        let style = s.theme.style;
+        let pos = s.cursor_pos();
 
         // Calculate checkbox rect
-        let (_, h) = s.size_of(label)?;
-        let y = rect.center().y();
-        let checkbox = square![rect.x(), y - h as i32 / 2, 16];
+        let checkbox = square![pos, 16];
 
         // Check hover/active/keyboard focus
         let disabled = s.ui.disabled;
@@ -764,18 +729,7 @@ impl PixState {
         s.push();
 
         // Render
-        let pad = style.frame_pad;
         s.rect_mode(RectMode::Corner);
-
-        // Label
-        if !label.is_empty() {
-            if disabled {
-                s.fill(s.muted_color());
-            } else {
-                s.fill(s.text_color());
-            }
-            s.text([checkbox.right() + 2 * pad.x(), y - h as i32 / 2], label)?;
-        }
 
         // Checkbox
         if focused || active {
@@ -808,6 +762,18 @@ impl PixState {
             s.line([start, mid])?;
             s.line([mid, end])?;
         }
+        s.advance_cursor(checkbox.size());
+
+        // Label
+        if !label.is_empty() {
+            if disabled {
+                s.fill(s.muted_color());
+            } else {
+                s.fill(s.text_color());
+            }
+            s.same_line(None);
+            s.text(label)?;
+        }
 
         s.pop();
 
@@ -824,22 +790,14 @@ impl PixState {
         }
     }
 
-    fn _radio(
-        &mut self,
-        rect: Rect<i32>,
-        label: &str,
-        selected: &mut usize,
-        index: usize,
-    ) -> PixResult<bool> {
+    fn _radio(&mut self, label: &str, selected: &mut usize, index: usize) -> PixResult<bool> {
         let s = self;
         let id = s.ui.get_hash(&label);
-        let style = s.theme.style;
+        let pos = s.cursor_pos();
 
         // Calculate radio rect
         let radius = 9;
-        let (_, h) = s.size_of(label)?;
-        let y = rect.center().y();
-        let radio = circle![rect.x() + radius, y - h as i32 / 2 + radius, radius];
+        let radio = circle![pos + radius, radius];
 
         // Check hover/active/keyboard focus
         let disabled = s.ui.disabled;
@@ -854,18 +812,7 @@ impl PixState {
         s.push();
 
         // Render
-        let pad = style.frame_pad;
         s.rect_mode(RectMode::Corner);
-
-        // Label
-        if !label.is_empty() {
-            if disabled {
-                s.fill(s.muted_color());
-            } else {
-                s.fill(s.text_color());
-            }
-            s.text([radio.right() + 2 * pad.x(), y - h as i32 / 2], label)?;
-        }
 
         // Checkbox
         if focused || active {
@@ -889,7 +836,19 @@ impl PixState {
             } else {
                 s.fill(s.highlight_color());
             }
-            s.circle(circle![radio.x(), radio.y(), radio.radius() - 3])?;
+            s.circle([radio.x(), radio.y(), radio.radius() - 3])?;
+        }
+        s.advance_cursor(radio.size());
+
+        // Label
+        if !label.is_empty() {
+            if disabled {
+                s.fill(s.muted_color());
+            } else {
+                s.fill(s.text_color());
+            }
+            s.same_line(None);
+            s.text(label)?;
         }
 
         s.pop();
@@ -907,56 +866,56 @@ impl PixState {
         }
     }
 
-    fn _tooltip(&mut self, rect: Rect<i32>, text: &str, hover: Rect<i32>) -> PixResult<()> {
-        let s = self;
-        let id = s.ui.get_hash(&text);
-        let style = s.theme.style;
+    fn _tooltip(&mut self, text: &str) -> PixResult<()> {
+        // let s = self;
+        // let id = s.ui.get_hash(&text);
+        // let style = s.theme.style;
 
-        // Check hover/active/keyboard focus
-        let pad = style.frame_pad;
-        let disabled = s.ui.disabled;
-        if !disabled && hover.contains_point(s.mouse_pos()) {
-            s.ui.hover(id);
-        }
-        s.ui.try_capture(id);
-        let hovered = !disabled && s.ui.is_hovered(id);
+        // // Check hover/active/keyboard focus
+        // let pad = style.frame_pad;
+        // let disabled = s.ui.disabled;
+        // if !disabled && hover.contains_point(s.mouse_pos()) {
+        //     s.ui.hover(id);
+        // }
+        // s.ui.try_capture(id);
+        // let hovered = !disabled && s.ui.is_hovered(id);
 
-        s.push();
+        // s.push();
 
-        // Render
+        // // Render
 
-        // Tooltip
-        s.rect_mode(RectMode::Corner);
-        if hovered {
-            s.stroke(s.muted_color());
-            s.fill(s.primary_color());
-            let m = s.mouse_pos();
-            let pad_x2 = pad.x() * 2;
-            let pad_y2 = pad.y() * 2;
-            let mut rect = rect![
-                m.x() + rect.x() + pad_x2,
-                m.y() + rect.y() + pad_y2,
-                rect.width() + pad_x2,
-                rect.height() + pad_y2
-            ];
-            let (w, h) = s.dimensions();
-            if rect.right() > w as i32 {
-                rect.set_x(rect.x() - rect.width() - pad_x2);
-            }
-            if rect.bottom() > h as i32 {
-                rect.set_y(rect.y() - rect.height() - pad_y2);
-            }
-            s.rect(rect)?;
-            s.clip(rect)?;
-            s.fill(s.text_color());
-            s.text(rect.top_left() + point!(pad.x(), pad.y()), text)?;
-            s.no_clip()?;
-        }
+        // // Tooltip
+        // s.rect_mode(RectMode::Corner);
+        // if hovered {
+        //     s.stroke(s.muted_color());
+        //     s.fill(s.primary_color());
+        //     let m = s.mouse_pos();
+        //     let pad_x2 = pad.x() * 2;
+        //     let pad_y2 = pad.y() * 2;
+        //     let mut rect = rect![
+        //         m.x() + rect.x() + pad_x2,
+        //         m.y() + rect.y() + pad_y2,
+        //         rect.width() + pad_x2,
+        //         rect.height() + pad_y2
+        //     ];
+        //     let (w, h) = s.dimensions();
+        //     if rect.right() > w as i32 {
+        //         rect.set_x(rect.x() - rect.width() - pad_x2);
+        //     }
+        //     if rect.bottom() > h as i32 {
+        //         rect.set_y(rect.y() - rect.height() - pad_y2);
+        //     }
+        //     s.rect(rect)?;
+        //     s.clip(rect)?;
+        //     s.fill(s.text_color());
+        //     s.text(rect.top_left() + point!(pad.x(), pad.y()), text)?;
+        //     s.no_clip()?;
+        // }
 
-        s.pop();
+        // s.pop();
 
-        // Process input
-        s.ui.handle_input(id);
+        // // Process input
+        // s.ui.handle_input(id);
 
         Ok(())
     }
