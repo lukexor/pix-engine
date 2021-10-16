@@ -96,7 +96,16 @@ impl PixState {
         self._radio(label.as_ref(), selected, index)
     }
 
-    /// Draw a tooltip when hovered to the current canvas.
+    /// Draw help marker text that, when hovered, displays a help box with text to the current
+    /// canvas.
+    pub fn help_marker<S>(&mut self, text: S) -> PixResult<()>
+    where
+        S: AsRef<str>,
+    {
+        self._help_marker(text.as_ref())
+    }
+
+    /// Draw tooltip box with text to the current canvas.
     pub fn tooltip<S>(&mut self, text: S) -> PixResult<()>
     where
         S: AsRef<str>,
@@ -869,16 +878,15 @@ impl PixState {
         }
     }
 
-    fn _tooltip(&mut self, text: &str) -> PixResult<()> {
+    fn _help_marker(&mut self, text: &str) -> PixResult<()> {
         let s = self;
         let id = s.ui.get_hash(&text);
         let pos = s.cursor_pos();
-        let font_size = s.theme.font_sizes.body as i32;
-        let style = s.theme.style;
-        let pad = style.frame_pad;
 
         // Calculate hover area
-        let hover = circle!(pos, font_size);
+        let marker = "(?)";
+        let (w, h) = s.size_of(marker)?;
+        let hover = rect!(pos, w, h);
 
         // Check hover/active/keyboard focus
         let disabled = s.ui.disabled;
@@ -892,43 +900,62 @@ impl PixState {
 
         // Render
 
-        // Tooltip
+        // Marker
         s.rect_mode(RectMode::Corner);
         s.fill(s.muted_color());
-        s.text("(?)")?;
+        s.text(marker)?;
+
+        // Tooltip
         if hovered {
-            s.stroke(s.muted_color());
-            s.fill(s.primary_color());
-            let m = s.mouse_pos();
-            let pad_x2 = pad.x() * 2;
-            let pad_y2 = pad.y() * 2;
-            let (width, height) = s.size_of(text)?;
-            let mut rect = rect![
-                m.x() + pad_x2,
-                m.y() + pad_y2,
-                width as i32 + pad_x2,
-                height as i32 + pad_y2
-            ];
-            let (w, h) = s.dimensions();
-            if rect.right() > w as i32 {
-                rect.offset_x(-rect.width() - pad_x2);
-            }
-            if rect.bottom() > h as i32 {
-                rect.offset_y(-rect.height() - pad_y2);
-            }
-            s.rect(rect)?;
-            s.clip(rect)?;
-            s.fill(s.text_color());
-            s.ui.push_cursor(rect.top_left() + point!(pad.x(), pad.y()));
-            s.text(text)?;
-            s.ui.pop_cursor();
-            s.no_clip()?;
+            s._tooltip(text)?;
         }
 
         s.pop();
 
         // Process input
         s.ui.handle_input(id);
+
+        Ok(())
+    }
+
+    fn _tooltip(&mut self, text: &str) -> PixResult<()> {
+        let s = self;
+        let style = s.theme.style;
+        let pad = style.frame_pad;
+
+        s.push();
+
+        // Render
+        s.rect_mode(RectMode::Corner);
+
+        // Calculate rect
+        let pos = s.mouse_pos();
+        let (w, h) = s.size_of(text)?;
+        let mut rect = rect![pos.x() + 30, pos.y() + 30, w as i32, h as i32];
+        rect.offset_size([2 * pad.x(), 2 * pad.y()]);
+
+        // Ensure rect stays inside window
+        let (width, height) = s.dimensions();
+        if rect.right() > width as i32 {
+            rect.set_right(pos.x() - 10);
+        }
+        if rect.bottom() > height as i32 {
+            rect.set_bottom(pos.y() - 5);
+        }
+
+        s.stroke(s.muted_color());
+        s.fill(s.primary_color());
+        s.rect(rect)?;
+
+        s.wrap_width(rect.width() - 2 * pad.x());
+        s.clip(rect)?;
+
+        s.ui.push_cursor(rect.top_left() + point!(pad.x(), pad.y()));
+        s.fill(s.text_color());
+        s.text(text)?;
+        s.ui.pop_cursor();
+
+        s.no_clip()?;
 
         Ok(())
     }

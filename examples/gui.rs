@@ -60,7 +60,7 @@ impl AppState for Gui {
         s.same_line(None);
         s.checkbox("Ipsum", &mut self.check)?;
         s.same_line(None);
-        s.tooltip("A hot tooltip")?;
+        s.help_marker("A hot tooltip")?;
 
         s.radio("Red", &mut self.radio, 0)?;
         s.radio("Green", &mut self.radio, 1)?;

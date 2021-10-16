@@ -151,45 +151,39 @@ const COLORS: [(Color, &str); 142] = [
 ];
 
 struct ColorConsts {
-    hovered: Option<usize>,
+    cells: Vec<Rect<i32>>,
 }
 
-impl AppState for ColorConsts {
-    #[allow(clippy::many_single_char_names)]
-    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.no_stroke();
-        let get_sq = |i| -> Rect<i32> {
+impl ColorConsts {
+    pub fn new() -> Self {
+        let mut cells = Vec::with_capacity(COLORS.len());
+        for i in 0..COLORS.len() {
             let cols = COLS as i32;
             let size = SIZE as i32;
             let col = i as i32 % cols;
             let row = i as i32 / cols;
             let x = col * size;
             let y = row * size;
-            square![x, y, size]
-        };
+            cells.push(square![x, y, size]);
+        }
+        Self { cells }
+    }
+}
 
+impl AppState for ColorConsts {
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.no_stroke();
         for (i, &color) in COLORS.iter().enumerate() {
             s.fill(color.0);
-            s.square(get_sq(i))?;
+            s.square(self.cells[i])?;
         }
         for (i, &color) in COLORS.iter().enumerate() {
-            // s.tooltip(color.1, get_sq(i))?;
+            let pos = s.mouse_pos();
+            if self.cells[i].contains_point(pos) {
+                s.tooltip(color.1)?;
+            }
         }
         Ok(())
-    }
-
-    fn on_mouse_motion(
-        &mut self,
-        _: &mut PixState,
-        pos: PointI2,
-        _: i32,
-        _: i32,
-    ) -> PixResult<bool> {
-        let col = pos.x() as u32 / SIZE;
-        let row = pos.y() as u32 / SIZE;
-        let idx = (row * COLS + col) as usize;
-        self.hovered = Some(idx);
-        Ok(false)
     }
 }
 
@@ -199,6 +193,6 @@ fn main() -> PixResult<()> {
         .with_title("SVG Color Constants")
         .position_centered()
         .build();
-    let mut app = ColorConsts { hovered: None };
+    let mut app = ColorConsts::new();
     engine.run(&mut app)
 }
