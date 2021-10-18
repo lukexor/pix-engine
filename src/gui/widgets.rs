@@ -957,6 +957,8 @@ impl PixState {
 
         s.no_clip()?;
 
+        s.pop();
+
         Ok(())
     }
 }
