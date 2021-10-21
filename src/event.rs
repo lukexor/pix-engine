@@ -412,6 +412,22 @@ pub enum ControllerButton {
     DPadLeft,
     /// Directional pad right button.
     DPadRight,
+    /// Misc Controller button
+    /// - Xbox Series X share button
+    /// - PS5 microphone button
+    /// - Nintendo Switch Pro capture button
+    /// - Amazon Luna microphone button
+    Misc1,
+    /// Xbox Elite paddle P1
+    Paddle1,
+    /// Xbox Elite paddle P2
+    Paddle2,
+    /// Xbox Elite paddle P3
+    Paddle3,
+    /// Xbox Elite paddle P4
+    Paddle4,
+    /// PS4/PS5 touchpad button
+    Touchpad,
     /// An unknown/unsupported button
     Unknown,
 }

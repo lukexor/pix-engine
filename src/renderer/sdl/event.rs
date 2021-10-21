@@ -362,6 +362,12 @@ impl From<SdlButton> for ControllerButton {
             SdlButton::DPadDown => DPadDown,
             SdlButton::DPadLeft => DPadLeft,
             SdlButton::DPadRight => DPadRight,
+            SdlButton::Misc1 => Misc1,
+            SdlButton::Paddle1 => Paddle1,
+            SdlButton::Paddle2 => Paddle2,
+            SdlButton::Paddle3 => Paddle3,
+            SdlButton::Paddle4 => Paddle4,
+            SdlButton::Touchpad => Touchpad,
         }
     }
 }
