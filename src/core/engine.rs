@@ -230,6 +230,7 @@ impl PixEngine {
                         state.clear()?;
                         state.pre_update();
                         app.on_update(&mut state)?;
+                        state.on_update()?;
                         state.post_update();
                         state.present();
                         state.increment_frame(now, time_since_last)?;
@@ -297,12 +298,11 @@ impl PixEngine {
                     }
                 }
                 Event::MouseMotion { x, y, xrel, yrel } => {
-                    state.ui.pmouse.pos = state.ui.mouse.pos;
-                    state.ui.mouse.pos = point!(x, y);
+                    state.ui.set_mouse_pos([x, y]);
                     if state.ui.mouse.is_pressed() {
                         app.on_mouse_dragged(state)?;
                     }
-                    app.on_mouse_motion(state, state.ui.mouse.pos, xrel, yrel)?;
+                    app.on_mouse_motion(state, state.mouse_pos(), xrel, yrel)?;
                 }
                 Event::MouseDown { button, x, y } => {
                     if !app.on_mouse_pressed(state, button, point!(x, y))? {

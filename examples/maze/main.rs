@@ -140,7 +140,6 @@ impl MazeApp {
             self.start_solve_maze(Algorithm::AStar)?;
         }
         s.same_line(None);
-        // TODO: Handle duplicate button ID
         if s.button(">>#2")? {
             self.solve_maze()?;
         }
@@ -148,8 +147,12 @@ impl MazeApp {
         let rate = s.target_frame_rate().unwrap_or(60);
         s.same_line(None);
         s.set_cursor_pos([s.cursor_pos().x() + 20, h - 50]);
-        s.text(format!("Target FPS: {}", rate))?;
-        s.text(format!("Elapsed: {:.3}", self.timer.elapsed()))?;
+        s.text(format!(
+            "Target FPS: {}\n\
+        Elapsed: {:.3}",
+            rate,
+            self.timer.elapsed()
+        ))?;
         Ok(())
     }
 }

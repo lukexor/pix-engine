@@ -228,8 +228,8 @@ impl ThemeColors {
             text: color!(0xf4),
             background: Color::from_str("#151617").unwrap(),
             primary: Color::from_str("#0f2a3f").unwrap(),
-            secondary: Color::from_str("#414859").unwrap(),
-            accent: Color::from_str("#de6a38").unwrap(),
+            secondary: Color::from_str("#2b4455").unwrap(),
+            accent: Color::from_str("#c78654").unwrap(),
             highlight: Color::from_str("#236d7a").unwrap(),
             muted: Color::from_str("#20394f").unwrap(),
         }
@@ -237,7 +237,15 @@ impl ThemeColors {
 
     /// A light color theme.
     pub fn light() -> Self {
-        todo!("light theme")
+        Self {
+            text: Color::from_str("#272736").unwrap(),
+            background: Color::from_str("#fffefe").unwrap(),
+            primary: Color::from_str("#d0e3e6").unwrap(),
+            secondary: Color::from_str("#8bacc9").unwrap(),
+            accent: Color::from_str("#d8c072").unwrap(),
+            highlight: Color::from_str("#5c94b1").unwrap(),
+            muted: Color::from_str("#7b7995").unwrap(),
+        }
     }
 }
 
@@ -294,6 +302,11 @@ impl Theme {
 }
 
 impl PixState {
+    /// Set the font color for drawing to the current canvas.
+    pub fn font_color<C: Into<Color>>(&mut self, color: C) {
+        self.theme.colors.text = color.into();
+    }
+
     /// Set the font size for drawing to the current canvas.
     pub fn font_size<S: AsPrimitive<u32>>(&mut self, size: S) -> PixResult<()> {
         self.theme.font_sizes.body = size.as_();

@@ -66,12 +66,36 @@ impl Add for Color {
     }
 }
 
+impl Add<u8> for Color {
+    type Output = Self;
+    fn add(self, val: u8) -> Self::Output {
+        let [r, g, b, _] = self.channels;
+        Self::rgb(
+            r.saturating_add(val),
+            g.saturating_add(val),
+            b.saturating_add(val),
+        )
+    }
+}
+
 impl AddAssign for Color {
     fn add_assign(&mut self, other: Color) {
         let [v1, v2, v3, a] = self.levels;
         let [ov1, ov2, ov3, _] = convert_levels(other.levels, other.mode, self.mode);
         self.levels = clamp_levels([v1 + ov1, v2 + ov2, v3 + ov3, a]);
         self.calculate_channels();
+    }
+}
+
+impl AddAssign<u8> for Color {
+    fn add_assign(&mut self, val: u8) {
+        let [r, g, b, a] = self.channels;
+        *self = Self::rgba(
+            r.saturating_add(val),
+            g.saturating_add(val),
+            b.saturating_add(val),
+            a,
+        );
     }
 }
 
@@ -90,12 +114,36 @@ impl Sub for Color {
     }
 }
 
+impl Sub<u8> for Color {
+    type Output = Self;
+    fn sub(self, val: u8) -> Self::Output {
+        let [r, g, b, _] = self.channels;
+        Self::rgb(
+            r.saturating_sub(val),
+            g.saturating_sub(val),
+            b.saturating_sub(val),
+        )
+    }
+}
+
 impl SubAssign for Color {
     fn sub_assign(&mut self, other: Color) {
         let [v1, v2, v3, a] = self.levels;
         let [ov1, ov2, ov3, _] = convert_levels(other.levels, other.mode, self.mode);
         self.levels = clamp_levels([v1 - ov1, v2 - ov2, v3 - ov3, a]);
         self.calculate_channels();
+    }
+}
+
+impl SubAssign<u8> for Color {
+    fn sub_assign(&mut self, val: u8) {
+        let [r, g, b, a] = self.channels;
+        *self = Self::rgba(
+            r.saturating_sub(val),
+            g.saturating_sub(val),
+            b.saturating_sub(val),
+            a,
+        );
     }
 }
 

@@ -6,7 +6,10 @@ use crate::{
 };
 #[cfg(target_pointer_width = "32")]
 use hash32::{FnvHasher, Hash, Hasher};
-use std::collections::{hash_map::Entry, HashMap};
+use std::{
+    cmp,
+    collections::{hash_map::Entry, HashMap},
+};
 #[cfg(target_pointer_width = "64")]
 use std::{
     collections::hash_map::DefaultHasher,
@@ -20,19 +23,32 @@ pub(crate) type ElementId = u32;
 #[cfg(target_pointer_width = "64")]
 pub(crate) type ElementId = u64;
 
+/// UI Texture with source and destination.
+type TextureTarget = (Texture, Option<Rect<i32>>, Option<Rect<i32>>);
+
 /// Internal tracked UI state.
 #[derive(Default, Debug)]
 pub(crate) struct UiState {
     /// Current global render position, in window coordinates.
     cursor: PointI2,
     /// Previous global render position, in window coordinates.
-    pcursor: PointI2,
+    pub(crate) pcursor: PointI2,
+    /// Current line height.
+    pub(crate) line_height: i32,
+    /// Previous line height.
+    pub(crate) pline_height: i32,
     /// Temporary stack of cursor positions.
-    cursor_stack: Vec<PointI2>,
+    cursor_stack: Vec<(PointI2, PointI2)>,
+    /// Override for max-width elements.
+    pub(crate) next_width: Option<u32>,
+    /// UI texture to be drawn over rendered frame, in rendered order.
+    pub(crate) textures: Vec<TextureTarget>,
     /// Whether UI elements are disabled.
     pub(crate) disabled: bool,
     /// Mouse state for the current frame.
     pub(crate) mouse: MouseState,
+    /// Mouse position offset for rendering within textures and viewports.
+    pub(crate) mouse_offset: Option<PointI2>,
     /// Mouse state for the previous frame.
     pub(crate) pmouse: MouseState,
     /// Keyboard state for the current frame.
@@ -45,15 +61,19 @@ pub(crate) struct UiState {
     hovered: Option<ElementId>,
     /// Which element is focused.
     focused: Option<ElementId>,
-    /// Last element rendered.
-    last_el: Option<ElementId>,
+    /// Last focusable element rendered.
+    last_focusable: Option<ElementId>,
+    /// Last bounding box rendered.
+    last_size: Option<Rect<i32>>,
 }
 
 impl UiState {
     /// Handle state changes this frame prior to calling [AppState::on_update].
     #[inline]
-    pub(crate) fn pre_update(&mut self) {
+    pub(crate) fn pre_update(&mut self, theme: &Theme) {
         self.clear_hovered();
+        self.pcursor = point!();
+        self.cursor = theme.style.frame_pad;
     }
 
     /// Handle state changes this frame after calling [AppState::on_update].
@@ -91,21 +111,61 @@ impl UiState {
     /// Set the current UI rendering position.
     #[inline]
     pub(crate) fn set_cursor<P: Into<PointI2>>(&mut self, cursor: P) {
-        self.pcursor = self.cursor;
         self.cursor = cursor.into();
     }
 
     /// Push a new UI rendering position to the stack.
     #[inline]
-    pub(crate) fn push_cursor<P: Into<PointI2>>(&mut self, cursor: P) {
-        self.cursor_stack.push(self.cursor);
-        self.cursor = cursor.into();
+    pub(crate) fn push_cursor(&mut self) {
+        self.cursor_stack.push((self.pcursor, self.cursor));
     }
 
     /// Pop a new UI rendering position from the stack.
     #[inline]
     pub(crate) fn pop_cursor(&mut self) {
-        self.cursor = self.cursor_stack.pop().unwrap_or_else(Point::default);
+        if let Some((pcursor, cursor)) = self.cursor_stack.pop() {
+            self.pcursor = pcursor;
+            self.cursor = cursor;
+        }
+    }
+
+    /// Returns the current mouse position coordinates as `(x, y)`.
+    #[inline]
+    pub(crate) fn mouse_pos(&self) -> PointI2 {
+        if let Some(offset) = self.mouse_offset {
+            (self.mouse.pos - offset).into()
+        } else {
+            self.mouse.pos
+        }
+    }
+
+    /// Returns the previous mouse position coordinates last frame as `(x, y)`.
+    #[inline]
+    pub(crate) fn pmouse_pos(&self) -> PointI2 {
+        if let Some(offset) = self.mouse_offset {
+            (self.pmouse.pos - offset).into()
+        } else {
+            self.pmouse.pos
+        }
+    }
+
+    /// Set the current mouse position.
+    #[inline]
+    pub(crate) fn set_mouse_pos<P: Into<PointI2>>(&mut self, pos: P) {
+        self.pmouse.pos = self.mouse.pos;
+        self.mouse.pos = pos.into();
+    }
+
+    /// Set a mouse offset for rendering within textures or viewports.
+    #[inline]
+    pub(crate) fn set_mouse_offset<P: Into<PointI2>>(&mut self, offset: P) {
+        self.mouse_offset = Some(offset.into());
+    }
+
+    /// Clear mouse offset for rendering within textures or viewports.
+    #[inline]
+    pub(crate) fn clear_mouse_offset(&mut self) {
+        self.mouse_offset = None;
     }
 
     /// Whether an element is `active` or not. An element is marked `active` when there is no other
@@ -113,7 +173,7 @@ impl UiState {
     /// [Mouse::Left] button. `active` is cleared after every frame.
     #[inline]
     pub(crate) fn is_active(&self, id: ElementId) -> bool {
-        matches!(self.active, Some(el) if el == id)
+        !self.disabled && matches!(self.active, Some(el) if el == id)
     }
 
     /// Whether any element is currently `active`.
@@ -142,6 +202,12 @@ impl UiState {
         matches!(self.hovered, Some(el) if el == id)
     }
 
+    /// Whether any element currently is `hovered`.
+    #[inline]
+    pub(crate) fn has_hover(&self) -> bool {
+        self.hovered.is_some()
+    }
+
     /// Set a given element as `hovered` and check for [Mouse::Left] being down to set `active`
     /// only if there are no other `active` elements. `active` is cleared after every frame.
     #[inline]
@@ -160,20 +226,20 @@ impl UiState {
         self.hovered = None;
     }
 
-    /// Try to capture `focus` if no other element is currently `focued`. This supports tab-cycling
-    /// through elements with the keyboard.
+    /// Try to capture `hover` if no other element is currently `hovered`.
     #[inline]
-    pub(crate) fn try_capture(&mut self, id: ElementId) {
-        if !self.has_focused() {
-            self.focus(id);
+    pub(crate) fn try_hover<S: Contains<i32, 2>>(&mut self, id: ElementId, shape: S) -> bool {
+        if !self.has_hover() && !self.disabled && shape.contains_point(self.mouse_pos()) {
+            self.hover(id);
         }
+        self.is_hovered(id)
     }
 
     /// Whether an element is `focused` or not. An element is `focused` when it captures it via
     /// tab-cycling, or if it is clicked.
     #[inline]
     pub(crate) fn is_focused(&self, id: ElementId) -> bool {
-        matches!(self.focused, Some(el) if el == id)
+        !self.disabled && matches!(self.focused, Some(el) if el == id)
     }
 
     /// Whether any element currently has `focus`.
@@ -186,6 +252,16 @@ impl UiState {
     #[inline]
     pub(crate) fn focus(&mut self, id: ElementId) {
         self.focused = Some(id);
+    }
+
+    /// Try to capture `focus` if no other element is currently `focued`. This supports tab-cycling
+    /// through elements with the keyboard.
+    #[inline]
+    pub(crate) fn try_focus(&mut self, id: ElementId) -> bool {
+        if !self.has_focused() {
+            self.focus(id);
+        }
+        self.is_focused(id)
     }
 
     /// Clears the current `focused` element.
@@ -204,7 +280,7 @@ impl UiState {
         if self.is_focused(id) && self.keys.was_entered(Key::Tab) {
             self.blur();
             if self.keys.mod_down(KeyMod::SHIFT) {
-                self.focused = self.last_el;
+                self.focused = self.last_focusable;
             }
             self.clear_entered();
         }
@@ -213,7 +289,7 @@ impl UiState {
         if clicked {
             self.focus(id);
         }
-        self.last_el = Some(id);
+        self.last_focusable = Some(id);
     }
 
     /// Whether this element was `clicked` this frame. Treats [Key::Return] being pressed while
@@ -277,8 +353,13 @@ impl UiState {
 
 impl PixState {
     /// Disables any UI elements drawn after this is called.
-    pub fn disable(&mut self, val: bool) {
-        self.ui.disabled = val;
+    pub fn disable(&mut self) {
+        self.ui.disabled = true;
+    }
+
+    /// Enables any UI elements drawn after this is called.
+    pub fn no_disable(&mut self) {
+        self.ui.disabled = false;
     }
 
     /// Returns the current UI rendering position.
@@ -293,38 +374,38 @@ impl PixState {
         self.ui.set_cursor(cursor.into());
     }
 
-    /// Reset current UI rendering position back to previous line with item padding, and continue
-    /// with horizontal layout.
-    ///
-    /// You can optionally remove the item padding, or set a different horizontal position by
-    /// passing in an `x_offset`
-    #[allow(dead_code)]
+    /// Returns whether the last item drawn is hovered with the mouse.
     #[inline]
-    pub fn same_line<O>(&mut self, x_offset: O)
-    where
-        O: Into<Option<i32>>,
-    {
-        let [x, y] = self.ui.pcursor.values();
-        let x_offset = x_offset.into().unwrap_or(0);
-        let item_pad = self.theme.style.item_pad;
-        self.ui.cursor.set_x(x + item_pad.x() + x_offset);
-        self.ui.cursor.set_y(y);
+    pub fn hovered(&self) -> bool {
+        if let Some(rect) = self.ui.last_size {
+            if !self.ui.disabled {
+                return rect.contains_point(self.mouse_pos());
+            }
+        }
+        false
     }
 }
 
 impl PixState {
     /// Advance the current UI cursor position for an element.
     #[inline]
-    pub(crate) fn advance_cursor<S: Into<PointI2>>(&mut self, size: S) {
-        let size = size.into();
+    pub(crate) fn advance_cursor<R: Into<Rect<i32>>>(&mut self, rect: R) {
+        let rect = rect.into();
         let pos = self.cursor_pos();
         let style = self.theme.style;
         let padx = style.frame_pad.y();
         let pady = style.item_pad.y();
+
         // Previous cursor ends at the right of this item
-        self.ui.pcursor = point![pos.x() + size.x(), pos.y()];
-        // Move cursor to the next line with padding
-        self.ui.cursor = point![padx, pos.y() + size.y() + pady]
+        self.ui.pcursor = point![pos.x() + rect.width(), pos.y()];
+
+        // Move cursor to the next line with padding, choosing the maximum of the next line or the
+        // previous y value to account for variable line heights when using `same_line`.
+        let line_height = cmp::max(self.ui.line_height, rect.height());
+        self.ui.cursor = point![padx, pos.y() + line_height + pady];
+        self.ui.pline_height = line_height;
+        self.ui.line_height = 0;
+        self.ui.last_size = Some(rect);
     }
 }
 

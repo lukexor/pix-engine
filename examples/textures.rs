@@ -27,11 +27,12 @@ impl AppState for Textures {
             s.with_texture(&mut texture, |s: &mut PixState| -> PixResult<()> {
                 s.background(Color::random())?;
 
-                s.fill(Color::random());
+                let color = Color::random();
+                s.fill(color);
                 s.no_stroke();
                 s.rect([10, 10, w as i32 - 20, h as i32 - 20])?;
 
-                s.fill(Color::random());
+                s.font_color(color.inverted());
                 s.rect_mode(RectMode::Center);
                 s.set_cursor_pos(center);
                 s.text(format!("Quadrant {}", i))?;

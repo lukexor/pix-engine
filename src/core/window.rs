@@ -5,6 +5,8 @@ use crate::{prelude::*, renderer::RendererSettings};
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, error, ffi::NulError, fmt, path::PathBuf, result};
 
+use super::texture::TextureRenderer;
+
 /// The result type for `WindowRenderer` operations.
 pub type Result<T> = result::Result<T, Error>;
 
@@ -295,13 +297,17 @@ impl PixState {
             .expect("primary window should exist")
     }
 
-    /// The width of the primary window.
+    /// The width of the primary render target.
     pub fn width(&self) -> u32 {
-        let (width, _) = self
-            .renderer
-            .dimensions()
-            .expect("primary window should exist");
-        width
+        if let Some(texture) = self.renderer.texture_target() {
+            texture.width()
+        } else {
+            let (width, _) = self
+                .renderer
+                .dimensions()
+                .expect("primary window should exist");
+            width
+        }
     }
 
     /// Set the width of the primary window.
@@ -315,13 +321,17 @@ impl PixState {
             .expect("primary window should exist");
     }
 
-    /// The height of the primary window.
+    /// The height of the primary render target.
     pub fn height(&self) -> u32 {
-        let (_, height) = self
-            .renderer
-            .dimensions()
-            .expect("primary window should exist");
-        height
+        if let Some(texture) = self.renderer.texture_target() {
+            texture.height()
+        } else {
+            let (_, height) = self
+                .renderer
+                .dimensions()
+                .expect("primary window should exist");
+            height
+        }
     }
 
     /// Set the height of the primary window.
@@ -376,9 +386,14 @@ impl PixState {
         F: FnOnce(&mut PixState) -> PixResult<()>,
     {
         self.push();
+        self.ui.push_cursor();
+        self.set_cursor_pos(self.theme.style.frame_pad);
+
         self.renderer.set_window_target(id)?;
         let result = f(self);
         self.renderer.reset_window_target();
+
+        self.ui.pop_cursor();
         self.pop();
         result
     }

@@ -50,7 +50,7 @@ macro_rules! update_canvas {
             //
             // One other case that can invalidate this is toggling vsync - which checks for
             // texture_target being set.
-            let texture = unsafe { &mut (*ptr) };
+            let texture = unsafe { &mut *ptr };
             Ok(canvas.with_texture_canvas(&mut texture.inner_mut(), |canvas| {
                 let _ = $func(canvas);
             })?)
@@ -269,6 +269,24 @@ impl Rendering for Renderer {
             (Some(_), None) => Err(Error::InvalidFont(self.font.0.to_owned())),
             (None, _) => Ok(()),
         }
+    }
+
+    /// Get clipboard text from the system clipboard.
+    fn clipboard_text(&self) -> String {
+        if let Ok(video) = self.context.video() {
+            video.clipboard().clipboard_text().unwrap_or_default()
+        } else {
+            String::default()
+        }
+    }
+
+    /// Set clipboard text to the system clipboard.
+    fn set_clipboard_text(&self, value: &str) -> Result<()> {
+        Ok(self
+            .context
+            .video()?
+            .clipboard()
+            .set_clipboard_text(value)?)
     }
 
     /// Returns the rendered dimensions of the given text using the current font

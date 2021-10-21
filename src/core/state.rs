@@ -1,6 +1,7 @@
 //! [PixState] functions for the [PixEngine] and [AppState].
 
 use crate::{
+    core::texture::TextureRenderer,
     gui::state::UiState,
     prelude::*,
     renderer::{Error as RendererError, Renderer, WindowRenderer},
@@ -44,13 +45,23 @@ impl PixState {
         // Reset mouse cursor icon to the current setting
         // Ignore any errors, as setting cursor in the first place should have succeeded.
         let _ = self.renderer.cursor(self.settings.cursor.as_ref());
-        self.ui.pre_update();
-        self.ui.set_cursor(self.theme.style.frame_pad);
+        self.ui.pre_update(&self.theme);
+    }
+
+    /// Handle state updates for this frame.
+    #[inline]
+    pub(crate) fn on_update(&mut self) -> PixResult<()> {
+        for (texture, src, dst) in &mut self.ui.textures {
+            self.renderer
+                .texture(texture, *src, *dst, 0.0, None, None, None)?;
+        }
+        Ok(())
     }
 
     /// Handle state changes this frame after calling [AppState::on_update].
     #[inline]
     pub(crate) fn post_update(&mut self) {
+        self.ui.textures.clear();
         self.ui.post_update();
     }
 
@@ -95,13 +106,13 @@ impl PixState {
     /// Returns the current mouse position coordinates as `(x, y)`.
     #[inline]
     pub fn mouse_pos(&self) -> PointI2 {
-        self.ui.mouse.pos
+        self.ui.mouse_pos()
     }
 
     /// Returns the previous mouse position coordinates last frame as `(x, y)`.
     #[inline]
     pub fn pmouse_pos(&self) -> PointI2 {
-        self.ui.pmouse.pos
+        self.ui.pmouse_pos()
     }
 
     /// Returns if any [Mouse] button is currently being held.

@@ -248,7 +248,8 @@ impl Renderer {
 
         // TODO: more testing - macOS performance seems low with default "metal" renderer
         // However: https://github.com/libsdl-org/SDL/issues/4001
-        if cfg!(feature = "opengl") {
+        #[cfg(feature = "opengl")]
+        {
             sdl2::hint::set_with_priority(
                 "SDL_RENDER_DRIVER",
                 "opengl",
@@ -260,7 +261,8 @@ impl Renderer {
         let win_width = (s.scale_x * s.width as f32).floor() as u32;
         let win_height = (s.scale_y * s.height as f32).floor() as u32;
         let mut window_builder = video_subsys.window(&s.title, win_width, win_height);
-        if cfg!(feature = "opengl") {
+        #[cfg(feature = "opengl")]
+        {
             window_builder.opengl();
         }
         match (s.x, s.y) {

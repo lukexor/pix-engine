@@ -125,6 +125,9 @@ pub(crate) trait TextureRenderer {
         tint: Option<Color>,
     ) -> RendererResult<()>;
 
+    /// Returns texture used as the target for drawing operations, if set.
+    fn texture_target(&self) -> Option<&Texture>;
+
     /// Set texture as the target for drawing operations.
     fn set_texture_target(&mut self, texture: &mut Texture);
 
@@ -243,9 +246,14 @@ impl PixState {
         F: FnOnce(&mut PixState) -> PixResult<()>,
     {
         self.push();
+        self.ui.push_cursor();
+        self.set_cursor_pos([0, 0]);
+
         self.renderer.set_texture_target(texture);
         let result = f(self);
         self.renderer.clear_texture_target();
+
+        self.ui.pop_cursor();
         self.pop();
         result
     }

@@ -127,7 +127,7 @@ impl Stream {
             } else {
                 self.color
             };
-            s.fill(color);
+            s.font_color(color);
             s.font_size(self.size)?;
             glyph.draw(s, self.x, y)?;
         }

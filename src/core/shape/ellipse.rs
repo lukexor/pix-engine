@@ -302,6 +302,12 @@ impl<T: Num> Ellipse<T> {
         point!(self.width(), self.height())
     }
 
+    /// Returns the bounding [Rect] of the ellipse.
+    #[inline]
+    pub fn bounding_rect(&self) -> Rect<T> {
+        rect![self.left(), self.top(), self.width(), self.height()]
+    }
+
     /// Returns `Ellipse` as a [Vec].
     ///
     /// # Example
@@ -317,51 +323,55 @@ impl<T: Num> Ellipse<T> {
 
     /// Returns the horizontal position of the left edge.
     pub fn left(&self) -> T {
-        self.x()
+        let two = T::one() + T::one();
+        self.x() - self.width() / two
     }
 
     /// Returns the horizontal position of the right edge.
     pub fn right(&self) -> T {
-        self.x() + self.width()
+        let two = T::one() + T::one();
+        self.x() + self.width() / two
     }
 
     /// Returns the horizontal position of the top edge.
     pub fn top(&self) -> T {
-        self.y()
+        let two = T::one() + T::one();
+        self.y() - self.height() / two
     }
 
     /// Returns the vertical position of the bottom edge.
     pub fn bottom(&self) -> T {
-        self.y() + self.height()
+        let two = T::one() + T::one();
+        self.y() + self.height() / two
     }
 
     /// Set the horizontal position of the left edge.
     pub fn set_left(&mut self, left: T) {
-        self.set_x(left);
+        let two = T::one() + T::one();
+        self.set_x(left + self.width() / two);
     }
 
     /// Set the horizontal position of the right edge.
     pub fn set_right(&mut self, right: T) {
-        self.set_x(right - self.width());
+        let two = T::one() + T::one();
+        self.set_x(right - self.width() / two);
     }
 
     /// Set the vertical position of the top edge.
     pub fn set_top(&mut self, top: T) {
-        self.set_y(top);
+        let two = T::one() + T::one();
+        self.set_y(top + self.height() / two);
     }
 
     /// Set the vertical position of the bottom edge.
     pub fn set_bottom(&mut self, bottom: T) {
-        self.set_y(bottom - self.height());
+        let two = T::one() + T::one();
+        self.set_y(bottom - self.height() / two);
     }
 
     /// Returns the center position as [Point].
     pub fn center(&self) -> Point<T, 2> {
-        let two = T::one() + T::one();
-        point!(
-            self.x() + self.width() / two,
-            self.y() + self.height() / two
-        )
+        point!(self.x(), self.y())
     }
 
     /// Returns the top-left position as [Point].
@@ -387,9 +397,8 @@ impl<T: Num> Ellipse<T> {
     /// Set position centered on a [Point].
     pub fn center_on<P: Into<Point<T, 2>>>(&mut self, p: P) {
         let p = p.into();
-        let two = T::one() + T::one();
-        self.set_x(p.x() - self.width() / two);
-        self.set_y(p.y() - self.height() / two);
+        self.set_x(p.x());
+        self.set_y(p.y());
     }
 }
 
@@ -404,8 +413,9 @@ impl<T: Num, const N: usize> Contains<T, N> for Ellipse<T> {
         let p = p.into();
         let px = p.x() - self.x();
         let py = p.y() - self.y();
-        let rx = self.width();
-        let ry = self.height();
+        let two = T::one() + T::one();
+        let rx = self.width() / two;
+        let ry = self.height() / two;
         (px * px) / (rx * rx) + (py * py) / (ry * ry) <= T::one()
     }
 

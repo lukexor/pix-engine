@@ -99,6 +99,12 @@ impl TextureRenderer for Renderer {
         })
     }
 
+    /// Returns texture used as the target for drawing operations, if set.
+    #[inline]
+    fn texture_target(&self) -> Option<&Texture> {
+        self.texture_target.map(|ptr| unsafe { &*ptr })
+    }
+
     /// Set texture as the target for drawing operations.
     #[inline]
     fn set_texture_target(&mut self, texture: &mut Texture) {
