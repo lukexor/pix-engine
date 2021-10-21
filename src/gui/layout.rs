@@ -31,10 +31,18 @@ impl PixState {
 
 impl PixState {
     /// Draw a newline worth of spacing to the current canvas.
-    pub fn spacing(&mut self) -> PixResult<()> {
+    pub fn spacing(&mut self) {
         let s = self;
         let height = s.theme.font_sizes.body as i32;
         s.advance_cursor([0, 0, 0, height]);
+    }
+
+    /// Draw an indent worth of spacing to the current canvas.
+    pub fn indent(&mut self) -> PixResult<()> {
+        let s = self;
+        let (width, height) = s.size_of("    ")?;
+        s.advance_cursor([0, 0, width, height]);
+        s.same_line(None);
         Ok(())
     }
 

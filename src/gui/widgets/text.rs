@@ -12,6 +12,16 @@ impl PixState {
         self.text_transformed(text, 0.0, None, None)
     }
 
+    /// Draw bulleted text to the current canvas.
+    pub fn bullet<S>(&mut self, text: S) -> PixResult<()>
+    where
+        S: AsRef<str>,
+    {
+        self.text("•")?;
+        self.same_line(None);
+        self.text_transformed(text, 0.0, None, None)
+    }
+
     /// Draw transformed text to the current canvas, optionally rotated about a `center` by `angle`
     /// or `flipped`. `angle` can be in radians or degrees depending on [AngleMode].
     pub fn text_transformed<S, A, C, F>(

@@ -47,7 +47,7 @@ impl AppState for Gui {
         }
 
         s.text(format!("Mouse: {}", s.mouse_pos()))?;
-        s.spacing()?;
+        s.spacing();
         s.text("Widgets:")?;
         s.separator()?;
 
@@ -84,10 +84,13 @@ impl AppState for Gui {
             })?;
         }
 
+        s.indent()?;
+        s.bullet("Bulleted text indented")?;
+
         s.separator()?;
 
         // Text Fields
-        s.next_width(125);
+        s.next_width(200);
         s.text_field("Text Field", &mut self.text_field)?;
         s.same_line([0, 4]);
         s.help_marker(
@@ -95,15 +98,15 @@ impl AppState for Gui {
         CTRL-A or double click to select all.\n\
         CTRL-X, CTRL-C, CTRL-V to use the clipboard.",
         )?;
-        s.same_line([0, -4]);
-        s.next_width(125);
+
+        s.next_width(200);
         s.text_field_hint(
             "Text Field w/ hint",
             "placeholder text",
             &mut self.text_field_hint,
         )?;
-        s.same_line(None);
-        s.next_width(125);
+
+        s.next_width(200);
         s.text_field_filtered(
             "Filtered Text Field",
             &mut self.text_field_filtered,
@@ -132,6 +135,8 @@ impl AppState for Gui {
         )?;
         s.same_line(None);
         s.help_marker("Filters any non-alphabetic characters")?;
+
+        s.separator()?;
 
         // Selectables
         let items = [
@@ -162,7 +167,7 @@ impl AppState for Gui {
 
 fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
-        .with_dimensions(800, 600)
+        .with_dimensions(1000, 800)
         .with_title("GUI Demo")
         .position_centered()
         .with_frame_rate()
