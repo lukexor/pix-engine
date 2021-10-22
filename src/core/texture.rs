@@ -55,7 +55,7 @@ pub(crate) trait TextureRenderer {
 }
 
 impl PixState {
-    /// Draw a portion of a [Texture] to the current canvas resized to the target `dst`.
+    /// Draw a portion of a texture to the current canvas resized to the target `dst`.
     pub fn texture<R1, R2>(&mut self, texture_id: TextureId, src: R1, dst: R2) -> PixResult<()>
     where
         R1: Into<Option<Rect<i32>>>,
@@ -66,7 +66,7 @@ impl PixState {
             .texture(texture_id, src.into(), dst.into(), 0.0, None, None, None)?)
     }
 
-    /// Draw a transformed [Texture] to the current canvas resized to the target `rect`, optionally
+    /// Draw a transformed texture to the current canvas resized to the target `rect`, optionally
     /// rotated by an `angle` about the `center` point or `flipped`. `angle` can be in either
     /// radians or degrees based on [AngleMode].
     #[allow(clippy::too_many_arguments)]
