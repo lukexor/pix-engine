@@ -6,6 +6,7 @@ use crate::{
 };
 #[cfg(target_pointer_width = "32")]
 use hash32::{FnvHasher, Hash, Hasher};
+use indexmap::IndexMap;
 use std::{
     cmp,
     collections::{hash_map::Entry, HashMap},
@@ -24,7 +25,24 @@ pub(crate) type ElementId = u32;
 pub(crate) type ElementId = u64;
 
 /// UI Texture with source and destination.
-type TextureTarget = (Texture, Option<Rect<i32>>, Option<Rect<i32>>);
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub(crate) struct Texture {
+    pub(crate) id: TextureId,
+    pub(crate) src: Option<Rect<i32>>,
+    pub(crate) dst: Option<Rect<i32>>,
+    pub(crate) visible: bool,
+}
+
+impl Texture {
+    pub(crate) fn new(id: TextureId, src: Option<Rect<i32>>, dst: Option<Rect<i32>>) -> Self {
+        Self {
+            id,
+            src,
+            dst,
+            visible: true,
+        }
+    }
+}
 
 /// Internal tracked UI state.
 #[derive(Default, Debug)]
@@ -39,10 +57,12 @@ pub(crate) struct UiState {
     pub(crate) pline_height: i32,
     /// Temporary stack of cursor positions.
     cursor_stack: Vec<(PointI2, PointI2)>,
+    /// ID stack to assist with generating unique element IDs.
+    id_stack: Vec<ElementId>,
     /// Override for max-width elements.
     pub(crate) next_width: Option<u32>,
     /// UI texture to be drawn over rendered frame, in rendered order.
-    pub(crate) textures: Vec<TextureTarget>,
+    pub(crate) textures: IndexMap<ElementId, Texture>,
     /// Whether UI elements are disabled.
     pub(crate) disabled: bool,
     /// Mouse state for the current frame.
@@ -79,6 +99,10 @@ impl UiState {
     /// Handle state changes this frame after calling [AppState::on_update].
     #[inline]
     pub(crate) fn post_update(&mut self) {
+        for texture in &mut self.textures.values_mut() {
+            texture.visible = false;
+        }
+
         if !self.mouse.is_down(Mouse::Left) {
             self.clear_active();
         } else if !self.has_active() {
@@ -93,12 +117,15 @@ impl UiState {
 
     /// Helper function to hash element labels.
     #[inline]
-    pub(crate) fn get_hash<T: Hash>(&self, t: &T) -> ElementId {
+    pub(crate) fn get_id<T: Hash>(&self, t: &T) -> ElementId {
         #[cfg(target_pointer_width = "32")]
         let mut s = FnvHasher::default();
         #[cfg(target_pointer_width = "64")]
         let mut s = DefaultHasher::new();
         t.hash(&mut s);
+        if let Some(id) = self.id_stack.last() {
+            id.hash(&mut s);
+        }
         s.finish()
     }
 
@@ -127,6 +154,18 @@ impl UiState {
             self.pcursor = pcursor;
             self.cursor = cursor;
         }
+    }
+
+    /// Push a new seed to the ID stack.
+    #[inline]
+    pub(crate) fn push_id(&mut self, id: ElementId) {
+        self.id_stack.push(id);
+    }
+
+    /// Pop a seed from the ID stack.
+    #[inline]
+    pub(crate) fn pop_id(&mut self) {
+        self.id_stack.pop();
     }
 
     /// Returns the current mouse position coordinates as `(x, y)`.

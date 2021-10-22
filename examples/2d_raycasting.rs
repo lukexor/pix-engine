@@ -242,7 +242,7 @@ impl RayScene {
 
     fn draw_visibility_polygons(&mut self, s: &mut PixState) -> PixResult<()> {
         let mouse = s.mouse_pos();
-        if !rect![0, 0, s.width() as i32, s.height() as i32].contains_point(mouse) {
+        if !rect![0, 0, s.width()? as i32, s.height()? as i32].contains_point(mouse) {
             return Ok(());
         }
 
@@ -344,7 +344,7 @@ impl AppState for RayScene {
 
     fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse, pos: PointI2) -> PixResult<bool> {
         if btn == Mouse::Left
-            && rect![0, 0, s.width() as i32, s.height() as i32].contains_point(pos)
+            && rect![0, 0, s.width()? as i32, s.height()? as i32].contains_point(pos)
         {
             let i = self.get_cell_index(pos.x() as u32, pos.y() as u32);
             self.cells[i].exists = !self.cells[i].exists;
@@ -358,7 +358,7 @@ impl AppState for RayScene {
         if s.mouse_buttons().contains(&Mouse::Left) {
             let m = s.mouse_pos();
             let pm = s.pmouse_pos();
-            if rect![0, 0, s.width() as i32, s.height() as i32].contains_point(m) {
+            if rect![0, 0, s.width()? as i32, s.height()? as i32].contains_point(m) {
                 if m != pm {
                     let i = self.get_cell_index(m.x() as u32, m.y() as u32);
                     self.cells[i].exists = self.drawing;

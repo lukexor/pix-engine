@@ -1,6 +1,9 @@
 use super::{Renderer, WindowCanvas};
 use crate::{
-    core::window::{Error, Position, Result, WindowId},
+    core::{
+        ops::LruCacheExt,
+        window::{Error, Position, Result, WindowId},
+    },
     prelude::{Cursor, Event, SystemCursor},
     renderer::*,
 };
@@ -40,6 +43,8 @@ impl WindowRenderer for Renderer {
         if id == self.window_target {
             self.reset_window_target();
         }
+        self.text_cache.retain(|key, _| key.0 != id);
+        self.image_cache.retain(|key, _| key.0 != id);
         self.canvases
             .remove(&id)
             .map_or(Err(Error::InvalidWindow(id)), |_| Ok(()))
@@ -100,9 +105,24 @@ impl WindowRenderer for Renderer {
             .set_title(&format!("{} - FPS: {}", self.settings.title, fps))?)
     }
 
-    /// Dimensions of the primary window as `(width, height)`.
+    /// Dimensions of the current render target as `(width, height)`.
     #[inline]
     fn dimensions(&self) -> Result<(u32, u32)> {
+        if let Some(texture_id) = self.texture_target {
+            if let Some((_, texture)) = self.textures.get(texture_id) {
+                let query = texture.query();
+                Ok((query.width, query.height))
+            } else {
+                Err(Error::InvalidTexture(texture_id))
+            }
+        } else {
+            self.window_dimensions()
+        }
+    }
+
+    /// Dimensions of the current window target as `(width, height)`.
+    #[inline]
+    fn window_dimensions(&self) -> Result<(u32, u32)> {
         let (canvas, _) = self
             .canvases
             .get(&self.window_target)
@@ -110,9 +130,9 @@ impl WindowRenderer for Renderer {
         Ok(canvas.window().size())
     }
 
-    /// Set dimensions of the primary window as `(width, height)`.
+    /// Set dimensions of the current window target as `(width, height)`.
     #[inline]
-    fn set_dimensions(&mut self, (width, height): (u32, u32)) -> Result<()> {
+    fn set_window_dimensions(&mut self, (width, height): (u32, u32)) -> Result<()> {
         let (canvas, _) = self
             .canvases
             .get_mut(&self.window_target)
@@ -185,12 +205,14 @@ impl WindowRenderer for Renderer {
         let (window_id, new_canvas) = Self::create_window_canvas(&self.context, &self.settings)?;
         let new_texture_creator = new_canvas.texture_creator();
 
-        self.text_cache.clear();
-        self.image_cache.clear();
+        let previous_window_id = self.window_target;
+        self.text_cache.retain(|key, _| key.0 != previous_window_id);
+        self.image_cache
+            .retain(|key, _| key.0 != previous_window_id);
 
-        self.canvases.remove(&self.window_target);
+        self.canvases.remove(&previous_window_id);
 
-        if self.window_id == self.window_target {
+        if self.window_id == previous_window_id {
             self.window_id = window_id;
         }
         self.window_target = window_id;

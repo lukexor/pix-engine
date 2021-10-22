@@ -7,6 +7,7 @@ use std::cmp;
 mod field;
 mod select;
 mod text;
+mod tooltip;
 
 const SCROLL_SPEED: i32 = 2;
 const CHECKBOX_SIZE: i32 = 16;
@@ -21,7 +22,7 @@ impl PixState {
         let label = label.as_ref();
 
         let s = self;
-        let id = s.ui.get_hash(&label);
+        let id = s.ui.get_id(&label);
         let label = label.split('#').next().unwrap_or("");
         let pos = s.cursor_pos();
         let style = s.theme.style;
@@ -102,7 +103,7 @@ impl PixState {
         let label = label.as_ref();
 
         let s = self;
-        let id = s.ui.get_hash(&label);
+        let id = s.ui.get_id(&label);
         let label = label.split('#').next().unwrap_or("");
         let pos = s.cursor_pos();
 
@@ -181,7 +182,7 @@ impl PixState {
         let label = label.as_ref();
 
         let s = self;
-        let id = s.ui.get_hash(&label);
+        let id = s.ui.get_id(&label);
         let label = label.split('#').next().unwrap_or("");
         let pos = s.cursor_pos();
 
@@ -244,129 +245,6 @@ impl PixState {
             Ok(false)
         }
     }
-
-    /// Draw help marker text that, when hovered, displays a help box with text to the current
-    /// canvas.
-    pub fn help_marker<S>(&mut self, text: S) -> PixResult<()>
-    where
-        S: AsRef<str>,
-    {
-        let text = text.as_ref();
-
-        let s = self;
-        let id = s.ui.get_hash(&text);
-        let pos = s.cursor_pos();
-
-        // Calculate hover area
-        let marker = "(?)";
-        let (w, h) = s.size_of(marker)?;
-        let hover = rect!(pos, w as i32, h as i32);
-
-        // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, hover);
-        let focused = s.ui.try_focus(id);
-        let disabled = s.ui.disabled;
-
-        s.push();
-
-        // Render
-        s.rect_mode(RectMode::Corner);
-
-        if focused {
-            s.stroke(s.highlight_color());
-            s.no_fill();
-            s.rect(hover)?;
-        }
-
-        // Marker
-        s.disable();
-        s.text(marker)?;
-        if !disabled {
-            s.no_disable();
-        }
-
-        // Tooltip
-        if hovered || focused {
-            s.tooltip(text)?;
-        }
-
-        s.pop();
-
-        // Process input
-        s.ui.handle_input(id);
-
-        Ok(())
-    }
-
-    /// Draw tooltip box at the mouse cursor with text to the current canvas.
-    pub fn tooltip<S>(&mut self, text: S) -> PixResult<()>
-    where
-        S: AsRef<str>,
-    {
-        let text = text.as_ref();
-
-        let s = self;
-        let style = s.theme.style;
-        let pad = style.frame_pad;
-
-        let (w, h) = s.size_of(text)?;
-
-        // Render
-        s.ui.push_cursor();
-        s.advanced_tooltip(
-            w + 2 * pad.x() as u32,
-            h + 2 * pad.y() as u32,
-            |s: &mut PixState| {
-                s.background(s.primary_color())?;
-
-                s.rect_mode(RectMode::Corner);
-                s.stroke(s.muted_color());
-                s.no_fill();
-                s.rect([0, 0, s.width() - 1, s.height() - 1])?;
-
-                s.no_stroke();
-                s.fill(s.text_color());
-                s.text(text)?;
-
-                Ok(())
-            },
-        )?;
-        s.ui.pop_cursor();
-
-        Ok(())
-    }
-
-    /// Draw an advanced tooltip box at the mouse cursor to the current canvas.
-    pub fn advanced_tooltip<F>(&mut self, width: u32, height: u32, f: F) -> PixResult<()>
-    where
-        F: FnOnce(&mut PixState) -> PixResult<()>,
-    {
-        let s = self;
-
-        // Calculate rect
-        let mpos = s.mouse_pos();
-        let mut rect = rect![mpos.x() + 15, mpos.y() + 15, width as i32, height as i32];
-        let mut texture = s.create_texture(width, height, PixelFormat::Rgba)?;
-
-        // Ensure rect stays inside window
-        let (width, height) = s.dimensions();
-        if rect.right() > width as i32 {
-            rect.set_right(mpos.x() - 10);
-        }
-        if rect.bottom() > height as i32 {
-            rect.set_bottom(mpos.y() - 5);
-        }
-
-        s.ui.set_mouse_offset(rect.top_left());
-        s.with_texture(&mut texture, |s: &mut PixState| {
-            s.set_cursor_pos(s.theme.style.frame_pad);
-            f(s)
-        })?;
-        s.ui.clear_mouse_offset();
-        s.ui.textures.push((texture, None, Some(rect)));
-
-        Ok(())
-    }
 }
 
 impl PixState {
@@ -380,7 +258,7 @@ impl PixState {
         use Direction::*;
 
         let s = self;
-        let id = s.ui.get_hash(&rect);
+        let id = s.ui.get_id(&rect);
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, rect);

@@ -10,12 +10,12 @@ pub(crate) use crate::core::{
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) mod sdl;
 #[cfg(not(target_arch = "wasm32"))]
-pub(crate) use sdl::{Renderer, RendererTexture};
+pub(crate) use sdl::Renderer;
 
 #[cfg(target_arch = "wasm32")]
 pub(crate) mod wasm;
 #[cfg(target_arch = "wasm32")]
-pub(crate) use wasm::{Renderer, RendererTexture};
+pub(crate) use wasm::Renderer;
 
 /// The result type for `Renderer` operations.
 pub type Result<T> = result::Result<T, Error>;

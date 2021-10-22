@@ -1,5 +1,8 @@
 use pix_engine::prelude_3d::*;
 
+const WIDTH: u32 = 800;
+const HEIGHT: u32 = 800;
+
 struct SphereObj {
     sphere: Sphere<Scalar>,
     color: Color,
@@ -10,6 +13,8 @@ struct SphereObj {
 struct App {
     origin: PointF3,
     looking: PointF3,
+    width: Scalar,
+    height: Scalar,
     view_width: Scalar,
     view_height: Scalar,
     proj_plane_dist: Scalar,
@@ -73,6 +78,8 @@ impl App {
         Self {
             origin: point!(0.0, 0.0, -6.0),
             looking: point!(0.0, 0.0, 0.0),
+            width: WIDTH as Scalar,
+            height: HEIGHT as Scalar,
             view_width: 1.0,
             view_height: 1.0,
             proj_plane_dist: 1.0,
@@ -81,22 +88,18 @@ impl App {
         }
     }
 
-    fn canvas_to_viewport(&self, x: i32, y: i32, s: &PixState) -> PointF3 {
-        let width = s.width() as Scalar;
-        let height = s.height() as Scalar;
+    fn canvas_to_viewport(&self, x: i32, y: i32) -> PointF3 {
         point!(
-            x as Scalar * self.view_width / width,
-            y as Scalar * self.view_height / height,
+            x as Scalar * self.view_width / self.width,
+            y as Scalar * self.view_height / self.height,
             self.proj_plane_dist
         )
     }
 
-    fn canvas_to_screen(&self, x: i32, y: i32, s: &PixState) -> PointF2 {
-        let width = s.width() as Scalar;
-        let height = s.height() as Scalar;
+    fn canvas_to_screen(&self, x: i32, y: i32) -> PointF2 {
         point!(
-            (width / 2.0 + x as Scalar).round(),
-            (height / 2.0 - y as Scalar).round(),
+            (self.width / 2.0 + x as Scalar).round(),
+            (self.height / 2.0 - y as Scalar).round(),
         )
     }
 
@@ -213,11 +216,11 @@ impl App {
 impl AppState for App {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         s.fill(BLACK);
-        let half_w = s.width() as i32 / 2;
-        let half_h = s.height() as i32 / 2;
+        let half_w = s.width()? as i32 / 2;
+        let half_h = s.height()? as i32 / 2;
         for x in -half_w..=half_w {
             for y in -half_h..=half_h {
-                let direction: PointF3 = self.canvas_to_viewport(x, y, s);
+                let direction: PointF3 = self.canvas_to_viewport(x, y);
                 let color = self.trace_ray(
                     self.origin,
                     direction - self.looking,
@@ -226,7 +229,7 @@ impl AppState for App {
                     3,
                 );
                 s.stroke(color);
-                s.point(self.canvas_to_screen(x, y, s))?;
+                s.point(self.canvas_to_screen(x, y))?;
             }
         }
         Ok(())
@@ -257,7 +260,7 @@ impl AppState for App {
 
 pub fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
-        .with_dimensions(800, 800)
+        .with_dimensions(WIDTH, HEIGHT)
         .with_title("3D Raytracing")
         .position_centered()
         .with_frame_rate()

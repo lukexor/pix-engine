@@ -402,6 +402,8 @@ impl Iterator for Pixels<'_> {
         let g = self.1.next()?;
         let b = self.1.next()?;
         let channels = self.0;
+        // SAFETY: Creating colors from the image bytes should be valid since the image was
+        // constructed successfully.
         match channels {
             3 => Some(Color::from_slice(ColorMode::Rgb, [r, g, b]).expect("valid pixel")),
             4 => {

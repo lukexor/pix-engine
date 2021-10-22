@@ -5,8 +5,6 @@ use crate::{prelude::*, renderer::RendererSettings};
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, error, ffi::NulError, fmt, path::PathBuf, result};
 
-use super::texture::TextureRenderer;
-
 /// The result type for `WindowRenderer` operations.
 pub type Result<T> = result::Result<T, Error>;
 
@@ -134,11 +132,14 @@ pub(crate) trait WindowRenderer {
     /// Set the current window title with FPS appended.
     fn set_fps_title(&mut self, fps: usize) -> Result<()>;
 
-    /// Dimensions of the primary window as `(width, height)`.
+    /// Dimensions of the current render target as `(width, height)`.
     fn dimensions(&self) -> Result<(u32, u32)>;
 
-    /// Set dimensions of the primary window as `(width, height)`.
-    fn set_dimensions(&mut self, dimensions: (u32, u32)) -> Result<()>;
+    /// Dimensions of the current window target as `(width, height)`.
+    fn window_dimensions(&self) -> Result<(u32, u32)>;
+
+    /// Set dimensions of the current window target as `(width, height)`.
+    fn set_window_dimensions(&mut self, dimensions: (u32, u32)) -> Result<()>;
 
     /// Dimensions of the primary display as `(width, height)`.
     fn display_dimensions(&self) -> Result<(u32, u32)>;
@@ -276,98 +277,79 @@ impl PixState {
 
     /// Close a window.
     pub fn close_window(&mut self, id: WindowId) -> Result<()> {
-        if id == self.window_id() {
+        if id == self.primary_window_id() {
             self.quit();
             return Ok(());
         }
         self.renderer.close_window(id)
     }
 
-    /// The dimensions of the primary window as `(width, height)`.
-    pub fn dimensions(&self) -> (u32, u32) {
-        self.renderer
-            .dimensions()
-            .expect("primary window should exist")
+    /// The dimensions of the current render target as `(width, height)`.
+    pub fn dimensions(&self) -> PixResult<(u32, u32)> {
+        Ok(self.renderer.dimensions()?)
     }
 
-    /// Set the dimensions of the primary window from `(width, height)`.
-    pub fn set_dimensions(&mut self, dimensions: (u32, u32)) {
-        self.renderer
-            .set_dimensions(dimensions)
-            .expect("primary window should exist")
+    /// The dimensions of the current window as `(width, height)`.
+    pub fn window_dimensions(&self) -> PixResult<(u32, u32)> {
+        Ok(self.renderer.window_dimensions()?)
     }
 
-    /// The width of the primary render target.
-    pub fn width(&self) -> u32 {
-        if let Some(texture) = self.renderer.texture_target() {
-            texture.width()
-        } else {
-            let (width, _) = self
-                .renderer
-                .dimensions()
-                .expect("primary window should exist");
-            width
-        }
+    /// Set the dimensions of the current window from `(width, height)`.
+    pub fn set_window_dimensions(&mut self, dimensions: (u32, u32)) -> PixResult<()> {
+        Ok(self.renderer.set_window_dimensions(dimensions)?)
     }
 
-    /// Set the width of the primary window.
-    pub fn set_width(&mut self, width: u32) {
-        let (_, height) = self
-            .renderer
-            .dimensions()
-            .expect("primary window should exist");
-        self.renderer
-            .set_dimensions((width, height))
-            .expect("primary window should exist");
+    /// The width of the current render target.
+    pub fn width(&self) -> PixResult<u32> {
+        let (width, _) = self.renderer.dimensions()?;
+        Ok(width)
     }
 
-    /// The height of the primary render target.
-    pub fn height(&self) -> u32 {
-        if let Some(texture) = self.renderer.texture_target() {
-            texture.height()
-        } else {
-            let (_, height) = self
-                .renderer
-                .dimensions()
-                .expect("primary window should exist");
-            height
-        }
+    /// The width of the current window.
+    pub fn window_width(&self) -> PixResult<u32> {
+        let (width, _) = self.renderer.window_dimensions()?;
+        Ok(width)
     }
 
-    /// Set the height of the primary window.
-    pub fn set_height(&mut self, height: u32) {
-        let (width, _) = self
-            .renderer
-            .dimensions()
-            .expect("primary window should exist");
-        self.renderer
-            .set_dimensions((width, height))
-            .expect("primary window should exist");
+    /// Set the width of the current window.
+    pub fn set_window_width(&mut self, width: u32) -> PixResult<()> {
+        let (_, height) = self.renderer.window_dimensions()?;
+        Ok(self.renderer.set_window_dimensions((width, height))?)
+    }
+
+    /// The height of the current render target.
+    pub fn height(&self) -> PixResult<u32> {
+        let (_, height) = self.renderer.dimensions()?;
+        Ok(height)
+    }
+
+    /// The height of the current window.
+    pub fn window_height(&self) -> PixResult<u32> {
+        let (_, height) = self.renderer.window_dimensions()?;
+        Ok(height)
+    }
+
+    /// Set the height of the current window.
+    pub fn set_window_height(&mut self, height: u32) -> PixResult<()> {
+        let (width, _) = self.renderer.window_dimensions()?;
+        Ok(self.renderer.set_window_dimensions((width, height))?)
     }
 
     /// The dimensions of the primary display as `(width, height)`.
-    pub fn display_dimensions(&self) -> (u32, u32) {
-        self.renderer
-            .display_dimensions()
-            .expect("primary window should exist")
+    pub fn display_dimensions(&self) -> PixResult<(u32, u32)> {
+        Ok(self.renderer.display_dimensions()?)
     }
 
     /// The width of the primary display.
-    pub fn display_width(&self) -> u32 {
-        let (width, _) = self
-            .renderer
-            .display_dimensions()
-            .expect("primary window should exist");
-        width
+    pub fn display_width(&self) -> PixResult<u32> {
+        let (width, _) = self.renderer.display_dimensions()?;
+        Ok(width)
     }
 
     /// The height of the primary display.
-    pub fn display_height(&self) -> u32 {
-        let (_, height) = self
-            .renderer
-            .display_dimensions()
-            .expect("primary window should exist");
-        height
+    pub fn display_height(&self) -> PixResult<u32> {
+        let (_, height) = self.renderer.display_dimensions()?;
+        Ok(height)
     }
 
     /// Show the current window target.
@@ -407,6 +389,8 @@ pub enum Error {
     InvalidTitle(&'static str, NulError),
     /// Invalid [WindowId].
     InvalidWindow(WindowId),
+    /// Invalid [TextureId].
+    InvalidTexture(TextureId),
     /// Invalid `(x, y)` window [Position].
     InvalidPosition(Position, Position),
     /// An overflow occurred.
@@ -423,6 +407,7 @@ impl fmt::Display for Error {
         match self {
             InvalidTitle(msg, err) => write!(f, "invalid title: {}, {}", msg, err),
             InvalidWindow(window_id) => write!(f, "invalid window id: {}", window_id),
+            InvalidTexture(texture_id) => write!(f, "invalid texture id: {}", texture_id),
             InvalidPosition(x, y) => write!(f, "invalid window position: {:?}", (x, y)),
             InvalidText(msg, err) => write!(f, "invalid text: {}, {}", msg, err),
             Overflow(err, val) => write!(f, "overflow {}: {}", err, val),

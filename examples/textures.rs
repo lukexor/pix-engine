@@ -4,7 +4,7 @@ const WIDTH: u32 = 800;
 const HEIGHT: u32 = 800;
 
 struct Textures {
-    textures: Vec<Texture>,
+    textures: Vec<TextureId>,
 }
 
 impl Textures {
@@ -19,12 +19,12 @@ impl AppState for Textures {
 
         // One texture for each quadrant of the screen
         for i in 0..4 {
-            let mut texture = s.create_texture(WIDTH / 2, HEIGHT / 2, None)?;
+            let texture_id = s.create_texture(WIDTH / 2, HEIGHT / 2, None)?;
 
             // Draw to each texture separately
-            let (w, h) = texture.dimensions();
-            let center = texture.center();
-            s.with_texture(&mut texture, |s: &mut PixState| -> PixResult<()> {
+            s.with_texture(texture_id, |s: &mut PixState| -> PixResult<()> {
+                let (w, h) = s.dimensions()?;
+                let center = point!(w / 2, h / 2);
                 s.background(Color::random())?;
 
                 let color = Color::random();
@@ -39,16 +39,16 @@ impl AppState for Textures {
                 Ok(())
             })?;
 
-            self.textures.push(texture);
+            self.textures.push(texture_id);
         }
 
         Ok(())
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        for (i, texture) in self.textures.iter_mut().enumerate() {
-            let w = texture.width() as i32;
-            let h = texture.height() as i32;
+        for (i, texture_id) in self.textures.iter_mut().enumerate() {
+            let w = WIDTH as i32 / 2;
+            let h = HEIGHT as i32 / 2;
             let pos = match i {
                 0 => point!(0, 0),
                 1 => point!(w, 0),
@@ -56,7 +56,7 @@ impl AppState for Textures {
                 3 => point!(w, h),
                 _ => unreachable!(),
             };
-            s.texture(texture, None, rect!(pos.x(), pos.y(), w, h))?;
+            s.texture(*texture_id, None, rect!(pos.x(), pos.y(), w, h))?;
         }
         Ok(())
     }

@@ -54,9 +54,18 @@ impl PixState {
     /// Handle state updates for this frame.
     #[inline]
     pub(crate) fn on_update(&mut self) -> PixResult<()> {
-        for (texture, src, dst) in &mut self.ui.textures {
-            self.renderer
-                .texture(texture, *src, *dst, 0.0, None, None, None)?;
+        for texture in &mut self.ui.textures.values() {
+            if texture.visible {
+                self.renderer.texture(
+                    texture.id,
+                    texture.src,
+                    texture.dst,
+                    0.0,
+                    None,
+                    None,
+                    None,
+                )?;
+            }
         }
         Ok(())
     }
@@ -64,7 +73,6 @@ impl PixState {
     /// Handle state changes this frame after calling [AppState::on_update].
     #[inline]
     pub(crate) fn post_update(&mut self) {
-        self.ui.textures.clear();
         self.ui.post_update();
     }
 

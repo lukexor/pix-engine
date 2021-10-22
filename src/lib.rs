@@ -69,7 +69,7 @@ pub mod prelude {
             },
             PixState,
         },
-        texture::{Texture, TextureId},
+        texture::TextureId,
         window::{Cursor, Position, SystemCursor, WindowBuilder, WindowId},
     };
     pub use event::{Axis, ControllerButton, Event, Key, KeyEvent, KeyMod, Mouse, WindowEvent};

@@ -13,11 +13,11 @@ impl WindowDemo {
 impl AppState for WindowDemo {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         s.background(GRAY)?;
-        s.fill(BLACK);
+        s.font_color(WHITE);
         s.text("Window 1")?;
 
         if s.button("Open Window")? {
-            let (w, h) = s.display_dimensions();
+            let (w, h) = s.display_dimensions()?;
             let window_id = s
                 .window()
                 .with_dimensions(random!(200, 500), random!(200, 500))

@@ -44,7 +44,7 @@ impl PixState {
         let hint = hint.as_ref();
 
         let s = self;
-        let id = s.ui.get_hash(&label);
+        let id = s.ui.get_id(&label);
         let label = label.split('#').next().unwrap_or("");
         let pos = s.cursor_pos();
         let font_size = s.theme.font_sizes.body as i32;
@@ -56,7 +56,7 @@ impl PixState {
         let width =
             s.ui.next_width
                 .take()
-                .unwrap_or_else(|| s.width() - 2 * fpad.x() as u32);
+                .unwrap_or_else(|| s.width().unwrap_or(100) - 2 * fpad.x() as u32);
         let mut input = rect![pos, width as i32, font_size + 2 * ipad.y()];
         if !label.is_empty() {
             let (w, _) = s.size_of(label)?;
@@ -211,7 +211,7 @@ impl PixState {
         let hint = hint.as_ref();
 
         let s = self;
-        let id = s.ui.get_hash(&label);
+        let id = s.ui.get_id(&label);
         let label = label.split('#').next().unwrap_or("");
         let pos = s.cursor_pos();
         let style = s.theme.style;

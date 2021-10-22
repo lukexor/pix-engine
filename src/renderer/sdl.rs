@@ -45,17 +45,14 @@ macro_rules! update_canvas {
             .canvases
             .get_mut(&$self.window_target)
             .ok_or(WindowError::InvalidWindow($self.window_target))?;
-        if let Some(ptr) = $self.texture_target {
-            // SAFETY: We know this is safe because core::texture::with_texture controls setting and clearing
-            // texture_target and has exclusive access to Texture the entire time texture_target is
-            // set.
-            //
-            // One other case that can invalidate this is toggling vsync - which checks for
-            // texture_target being set.
-            let texture = unsafe { &mut *ptr };
-            Ok(canvas.with_texture_canvas(&mut texture.inner_mut(), |canvas| {
-                let _ = $func(canvas);
-            })?)
+        if let Some(texture_id) = $self.texture_target {
+            if let Some((_, texture)) = $self.textures.get_mut(texture_id) {
+                Ok(canvas.with_texture_canvas(texture, |canvas| {
+                    let _ = $func(canvas);
+                })?)
+            } else {
+                Err(Error::InvalidTexture(texture_id))
+            }
         } else {
             $func(canvas)
         }
@@ -102,8 +99,9 @@ pub(crate) struct Renderer {
     font_style: SdlFontStyle,
     window_id: WindowId,
     window_target: WindowId,
-    texture_target: Option<*mut Texture>,
+    texture_target: Option<TextureId>,
     canvases: HashMap<WindowId, (WindowCanvas, TextureCreator<WindowContext>)>,
+    textures: Vec<(WindowId, RendererTexture)>,
     font_cache: LruCache<(&'static str, u16), SdlFont<'static, 'static>>,
     text_cache: LruCache<(WindowId, String, Color), RendererTexture>,
     image_cache: LruCache<(WindowId, *const Image), RendererTexture>,
@@ -152,6 +150,7 @@ impl Rendering for Renderer {
             window_target: window_id,
             texture_target: None,
             canvases,
+            textures: Vec::new(),
             font_cache,
             text_cache,
             image_cache,
@@ -276,6 +275,7 @@ impl Rendering for Renderer {
                         texture_creator.create_texture_from_surface(&surface)?,
                     );
                 }
+                // SAFETY: We just checked or inserted a texture.
                 let texture = self.text_cache.get_mut(&key).expect("valid text cache");
                 let TextureQuery { width, height, .. } = texture.query();
                 update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
@@ -547,6 +547,7 @@ impl Rendering for Renderer {
                 )?,
             );
         }
+        // SAFETY: We just checked or inserted a texture.
         let texture = self.image_cache.get_mut(&key).expect("valid image cache");
         match tint {
             Some(tint) => {

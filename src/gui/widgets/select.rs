@@ -1,6 +1,9 @@
 //! Select UI widgets.
 
-use crate::{gui::Direction, prelude::*};
+use crate::{
+    gui::{state::Texture, Direction},
+    prelude::*,
+};
 use std::cmp;
 
 const SCROLL_SIZE: i32 = 12;
@@ -15,7 +18,7 @@ impl PixState {
         let label = label.as_ref();
 
         let s = self;
-        let id = s.ui.get_hash(&label);
+        let id = s.ui.get_id(&label);
         let label = label.split('#').next().unwrap_or("");
         let pos = s.cursor_pos();
         let font_size = s.theme.font_sizes.body as i32;
@@ -24,7 +27,10 @@ impl PixState {
         let ipad = style.item_pad;
 
         // Calculate rect
-        let width = s.ui.next_width.take().unwrap_or_else(|| s.width());
+        let width =
+            s.ui.next_width
+                .take()
+                .unwrap_or_else(|| s.width().unwrap_or(100));
         let (_, h) = s.size_of(items.get(0).map(|i| i.as_ref()).unwrap_or(""))?;
         let mut select_box = rect![pos, width as i32 - 2 * fpad.x(), h as i32 + 2 * ipad.y()];
         if !label.is_empty() {
@@ -108,24 +114,30 @@ impl PixState {
         // Process input
         if focused {
             // Pop select list
-            let height = 4 * (font_size + 2 * ipad.y()) + 1;
-            let mut texture = s.create_texture(
-                select_box.width() as u32 + 2 * fpad.x() as u32,
-                height as u32,
-                PixelFormat::Rgba,
-            )?;
+            if !s.ui.textures.contains_key(&id) {
+                let height = 4 * (font_size + 2 * ipad.y()) + 1;
+                let texture_id = s.create_texture(
+                    select_box.width() as u32 + 2 * fpad.x() as u32,
+                    height as u32,
+                    PixelFormat::Rgba,
+                )?;
+                let src = Some(rect![0, 0, select_box.width(), height]);
+                let dst = Some(rect![select_box.bottom_left(), select_box.width(), height]);
+                s.ui.textures.insert(id, Texture::new(texture_id, src, dst));
+            }
+            let texture_id = {
+                // SAFETY: We just checked or inserted a texture.
+                let texture = s.ui.textures.get_mut(&id).expect("valid texture target");
+                texture.visible = true;
+                texture.id
+            };
 
             s.ui.set_mouse_offset(select_box.bottom_left());
-            s.with_texture(&mut texture, |s: &mut PixState| {
+            s.with_texture(texture_id, |s: &mut PixState| {
                 s.select_list(format!("#{}", label), selected, items, 4)?;
                 Ok(())
             })?;
             s.ui.clear_mouse_offset();
-            s.ui.textures.push((
-                texture,
-                Some(rect![0, 0, select_box.width(), height]),
-                Some(rect![select_box.bottom_left(), select_box.width(), height]),
-            ));
         }
         s.ui.handle_input(id);
 
@@ -147,7 +159,7 @@ impl PixState {
         let label = label.as_ref();
 
         let s = self;
-        let id = s.ui.get_hash(&label);
+        let id = s.ui.get_id(&label);
         let label = label.split('#').next().unwrap_or("");
         let pos = s.cursor_pos();
         let font_size = s.theme.font_sizes.body as i32;
@@ -156,7 +168,10 @@ impl PixState {
         let ipad = style.item_pad;
 
         // Calculate rect
-        let width = s.ui.next_width.take().unwrap_or_else(|| s.width());
+        let width =
+            s.ui.next_width
+                .take()
+                .unwrap_or_else(|| s.width().unwrap_or(100));
         let mut select_box = rect![
             pos,
             width as i32 - 2 * fpad.x(),
