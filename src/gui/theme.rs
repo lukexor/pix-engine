@@ -2,11 +2,20 @@
 
 use crate::{prelude::*, renderer::Rendering};
 use num_traits::AsPrimitive;
-use std::{
-    ops::{Deref, DerefMut},
-    path::Path,
-    str::FromStr,
-};
+use std::str::FromStr;
+
+pub mod fonts {
+    //! A list of library-provided font families.
+
+    use super::{Font, FontSrc};
+
+    /// Arial
+    pub const ARIAL: Font = Font::new("Arial", FontSrc::Library("arial.ttf"));
+    /// Emulogic - bold, pixel font.
+    pub const EMULOGIC: Font = Font::new("Emulogic", FontSrc::Library("emulogic.ttf"));
+    /// Inconsolata - monospace font.
+    pub const INCONSOLATA: Font = Font::new("Library", FontSrc::Library("inconsolata.ttf"));
+}
 
 /// A builder to generate custom [Theme]s.
 #[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
@@ -117,51 +126,35 @@ impl ThemeBuilder {
 }
 
 /// Represents a font family. (e.g. "helvetica").
-///
-/// With SDL2 this resolves to a file path in the "assets" folder with ".ttf" file extension.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Font(String);
+pub struct Font {
+    /// Family name of the font.
+    pub name: &'static str,
+    /// Data source for the font.
+    pub source: FontSrc,
+}
+
+impl Font {
+    /// Constructs a new `Font` instance.
+    pub const fn new(name: &'static str, source: FontSrc) -> Self {
+        Self { name, source }
+    }
+}
+
+/// Represents source of font data.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum FontSrc {
+    /// An included library font, packaged with the crate.
+    Library(&'static str),
+    /// A font from static byte data.
+    Bytes(&'static [u8]),
+    /// A custom string or path to a `.ttf` font file.
+    Custom(String),
+}
 
 impl Default for Font {
     fn default() -> Self {
-        Self("emulogic".into())
-    }
-}
-
-impl Deref for Font {
-    type Target = String;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for Font {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl AsRef<str> for Font {
-    fn as_ref(&self) -> &str {
-        self.0.as_ref()
-    }
-}
-
-impl AsRef<Path> for Font {
-    fn as_ref(&self) -> &Path {
-        self.0.as_ref()
-    }
-}
-
-impl From<&str> for Font {
-    fn from(s: &str) -> Self {
-        Self(s.to_string())
-    }
-}
-
-impl From<String> for Font {
-    fn from(s: String) -> Self {
-        Self(s)
+        fonts::EMULOGIC
     }
 }
 
@@ -176,9 +169,9 @@ pub struct ThemeFonts {
 impl Default for ThemeFonts {
     fn default() -> Self {
         Self {
-            body: "emulogic".into(),
-            heading: "emulogic".into(),
-            monospace: "typewriter".into(),
+            body: fonts::EMULOGIC,
+            heading: fonts::EMULOGIC,
+            monospace: fonts::INCONSOLATA,
         }
     }
 }
@@ -325,8 +318,8 @@ impl PixState {
     }
 
     /// Set the font family for drawing to the current canvas.
-    pub fn font_family<S: AsRef<str>>(&mut self, family: S) -> PixResult<()> {
-        self.theme.fonts.body = family.as_ref().into();
+    pub fn font_family(&mut self, font: Font) -> PixResult<()> {
+        self.theme.fonts.body = font;
         Ok(self.renderer.font_family(&self.theme.fonts.body)?)
     }
 

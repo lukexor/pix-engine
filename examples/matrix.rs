@@ -4,6 +4,7 @@ use pix_engine::prelude::*;
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;
 const BG_COLOR: [u8; 4] = [0, 0, 0, 255];
+const FONT_DATA: &[u8] = include_bytes!("gn_koharuiro_sunray.ttf");
 
 lazy_static! {
     static ref GLYPHS: Vec<char> = {
@@ -23,12 +24,9 @@ struct Glyph {
 }
 
 impl Glyph {
-    const FONT: &'static str = "gn_koharuiro_sunray";
     const SIZE: u32 = 24;
     const HEIGHT: u32 = 15;
     const WIDTH: u32 = 15;
-    // const COLOR: [u8; 3] = [122, 235, 133];
-    // const COLOR: [u8; 3] = [94, 201, 102];
     const COLOR: [u8; 3] = [60, 255, 70];
     const HIGHLIGHT: [u8; 3] = [190, 255, 200];
     const MORPH_PROB: usize = 1;
@@ -160,8 +158,6 @@ impl AppState for Matrix {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         s.background(BG_COLOR)?;
         s.font_style(FontStyle::BOLD);
-        s.font_size(Glyph::SIZE)?;
-        s.font_family(Glyph::FONT)?;
         Ok(())
     }
 
@@ -205,6 +201,7 @@ fn main() -> PixResult<()> {
         .position_centered()
         .with_frame_rate()
         .vsync_enabled()
+        .with_font(Font::new("Sunray", FontSrc::Bytes(FONT_DATA)), Glyph::SIZE)
         .build();
     let mut app = Matrix::new();
     engine.run(&mut app)

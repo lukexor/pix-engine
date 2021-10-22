@@ -73,7 +73,7 @@ pub mod prelude {
         window::{Cursor, Position, SystemCursor, WindowBuilder, WindowId},
     };
     pub use event::{Axis, ControllerButton, Event, Key, KeyEvent, KeyMod, Mouse, WindowEvent};
-    pub use gui::{Font, Theme, ThemeBuilder};
+    pub use gui::{fonts::*, Font, FontSrc, Theme, ThemeBuilder};
     pub use image::{Image, PixelFormat};
     pub use math::{
         constants::*,
@@ -82,7 +82,6 @@ pub mod prelude {
         Float, Num, Scalar,
     };
     #[cfg(not(target_arch = "wasm32"))]
-    pub use renderer::DEFAULT_ASSET_DIR;
     pub use transform::Flipped;
     // Shape macros
     pub use {circle, ellipse, line_, point, quad, rect, square, tri};

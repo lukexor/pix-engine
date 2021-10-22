@@ -1,7 +1,6 @@
 //! Graphics renderer functions.
 
 use crate::{core::state::Error as StateError, prelude::*};
-use lazy_static::lazy_static;
 use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
 
 pub(crate) use crate::core::{
@@ -18,11 +17,6 @@ pub(crate) mod wasm;
 #[cfg(target_arch = "wasm32")]
 pub(crate) use wasm::{Renderer, RendererTexture};
 
-lazy_static! {
-    /// Default directory to extract static library assets into.
-    pub static ref DEFAULT_ASSET_DIR: PathBuf = PathBuf::from("/tmp/pix-engine");
-}
-
 /// The result type for `Renderer` operations.
 pub type Result<T> = result::Result<T, Error>;
 
@@ -35,7 +29,6 @@ pub(crate) struct RendererSettings {
     pub(crate) title: String,
     pub(crate) theme: Theme,
     pub(crate) icon: Option<PathBuf>,
-    pub(crate) asset_dir: PathBuf,
     pub(crate) x: Position,
     pub(crate) y: Position,
     pub(crate) width: u32,
@@ -61,7 +54,6 @@ impl Default for RendererSettings {
             title: String::new(),
             theme: Theme::default(),
             icon: None,
-            asset_dir: DEFAULT_ASSET_DIR.clone(),
             x: Position::default(),
             y: Position::default(),
             width: 640,
@@ -113,7 +105,7 @@ pub(crate) trait Rendering: Sized {
     fn font_style(&mut self, style: FontStyle);
 
     /// Set the font family for drawing text to the current canvas.
-    fn font_family(&mut self, family: &str) -> Result<()>;
+    fn font_family(&mut self, font: &Font) -> Result<()>;
 
     /// Get clipboard text from the system clipboard.
     fn clipboard_text(&self) -> String;
@@ -212,8 +204,7 @@ pub enum Error {
     /// Invalid text.
     InvalidText(&'static str, NulError),
     /// Invalid font.
-    #[cfg(not(target_arch = "wasm32"))]
-    InvalidFont(PathBuf),
+    InvalidFont(&'static str),
     /// Invalid Texture.
     InvalidTexture(TextureId),
     /// An error from invalid type conversions.

@@ -4,9 +4,7 @@ use crate::{prelude::*, renderer::*};
 use std::time::{Duration, Instant};
 
 #[cfg(not(target_arch = "wasm32"))]
-use crate::ASSETS;
-#[cfg(not(target_arch = "wasm32"))]
-use std::{fs, path::PathBuf};
+use std::path::PathBuf;
 
 /// Builds a [PixEngine] instance by providing several configration functions.
 #[must_use]
@@ -53,16 +51,6 @@ impl PixEngineBuilder {
         P: Into<PathBuf>,
     {
         self.settings.icon = Some(path.into());
-        self
-    }
-
-    /// Set the temporary directory for extraction of static library assets.
-    #[cfg(not(target_arch = "wasm32"))]
-    pub fn asset_dir<P>(&mut self, path: P) -> &mut Self
-    where
-        P: Into<PathBuf>,
-    {
-        self.settings.asset_dir = path.into();
         self
     }
 
@@ -189,15 +177,6 @@ impl PixEngine {
     where
         A: AppState,
     {
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            if self.settings.asset_dir.exists() {
-                fs::remove_dir_all(&self.settings.asset_dir)?;
-            }
-            fs::create_dir_all(&self.settings.asset_dir)?;
-            ASSETS.extract(&self.settings.asset_dir)?;
-        }
-
         let renderer = Renderer::new(self.settings.clone())?;
         let mut state = PixState::new(renderer, self.settings.theme.clone());
         state.show_frame_rate(self.settings.show_frame_rate);
@@ -240,10 +219,6 @@ impl PixEngine {
 
             app.on_stop(&mut state)?;
             if state.should_quit() {
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    fs::remove_dir_all(&self.settings.asset_dir)?;
-                }
                 break 'on_stop;
             }
         }

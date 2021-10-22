@@ -1,4 +1,4 @@
-use super::{Renderer, WindowCanvas, TTF};
+use super::{Renderer, WindowCanvas};
 use crate::renderer::*;
 use sdl2::{rect::Rect as SdlRect, render::Texture as SdlTexture};
 
@@ -123,15 +123,5 @@ impl TextureRenderer for Renderer {
         self.font_cache.clear();
         self.text_cache.clear();
         self.image_cache.clear();
-    }
-}
-
-impl Renderer {
-    pub(crate) fn update_font_cache(&mut self) -> Result<()> {
-        if !self.font_cache.contains(&self.font) {
-            self.font_cache
-                .put(self.font.clone(), TTF.load_font(&self.font.0, self.font.1)?);
-        }
-        Ok(())
     }
 }

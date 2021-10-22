@@ -35,12 +35,6 @@ impl Gui {
 }
 
 impl AppState for Gui {
-    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.background(s.background_color())?;
-        s.font_family("arial")?;
-        Ok(())
-    }
-
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         if self.disabled {
             s.disable();
@@ -171,6 +165,7 @@ fn main() -> PixResult<()> {
         .with_title("GUI Demo")
         .position_centered()
         .with_frame_rate()
+        .with_font(ARIAL, 14)
         .build();
     let mut app = Gui::new();
     engine.run(&mut app)

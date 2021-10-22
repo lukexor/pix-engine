@@ -11,6 +11,8 @@ const SOUTH: usize = 1;
 const EAST: usize = 2;
 const WEST: usize = 3;
 
+const LIGHT: &[u8] = include_bytes!("light.png");
+
 #[derive(Debug)]
 struct Cell {
     pos: PointI2,
@@ -292,7 +294,7 @@ impl AppState for RayScene {
 
         self.convert_edges_to_poly_map()?;
 
-        self.light = Image::from_file(DEFAULT_ASSET_DIR.join("light.png"))?;
+        self.light = Image::from_read(LIGHT)?;
         s.image_tint(color![255, 255, 153]);
 
         Ok(())
@@ -374,7 +376,6 @@ fn main() -> PixResult<()> {
         .with_title("2D Raycasting")
         .position_centered()
         .with_frame_rate()
-        .icon(DEFAULT_ASSET_DIR.join("light.png"))
         .build();
     let mut app = RayScene::new();
     engine.run(&mut app)

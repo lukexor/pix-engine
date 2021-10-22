@@ -156,8 +156,12 @@ impl Image {
         if ext != Some(OsStr::new("png")) {
             return Err(Error::InvalidFileType(ext.map(|e| e.to_os_string())));
         }
+        Self::from_read(File::open(&path)?)
+    }
 
-        let png_file = BufReader::new(File::open(&path)?);
+    /// Constructs an `Image` from a [png] reader.
+    pub fn from_read<R: io::Read>(read: R) -> Result<Self> {
+        let png_file = BufReader::new(read);
         let png = Decoder::new(png_file);
 
         // TODO: Make this machine-dependent to best match display capabilities for texture

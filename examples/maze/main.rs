@@ -158,11 +158,6 @@ impl MazeApp {
 }
 
 impl AppState for MazeApp {
-    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.background(s.background_color())?;
-        Ok(())
-    }
-
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         self.draw(s)?;
         match self.mode {

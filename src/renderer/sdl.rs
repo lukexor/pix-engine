@@ -2,6 +2,7 @@ use crate::{
     core::window::Error as WindowError,
     prelude::*,
     renderer::{Error, RendererSettings, Rendering, Result},
+    ASSETS,
 };
 use lazy_static::lazy_static;
 use lru::LruCache;
@@ -16,11 +17,12 @@ use sdl2::{
         BlendMode as SdlBlendMode, Canvas, SdlError, TargetRenderError, TextureCreator,
         TextureQuery, TextureValueError, UpdateTextureError,
     },
+    rwops::RWops,
     ttf::{Font as SdlFont, FontError, FontStyle as SdlFontStyle, InitError, Sdl2TtfContext},
     video::{Window as SdlWindow, WindowBuildError, WindowContext},
     EventPump, IntegerOrSdlError, Sdl,
 };
-use std::{borrow::Cow, cmp, collections::HashMap, path::PathBuf};
+use std::{borrow::Cow, cmp, collections::HashMap};
 
 mod audio;
 mod event;
@@ -60,6 +62,34 @@ macro_rules! update_canvas {
     }};
 }
 
+/// Update font cache
+macro_rules! update_font_cache {
+    ($font:expr, $cache:expr) => {{
+        let name = $font.0.name;
+        let size = $font.1;
+        let key = (name, size);
+        if !$cache.contains(&key) {
+            match $font.0.source {
+                FontSrc::Library(ref name) => {
+                    let contents = ASSETS
+                        .get_file(name)
+                        .expect("valid included font")
+                        .contents();
+                    let rwops = RWops::from_bytes(contents)?;
+                    $cache.put(key, TTF.load_font_from_rwops(rwops, size)?);
+                }
+                FontSrc::Bytes(bytes) => {
+                    let rwops = RWops::from_bytes(bytes)?;
+                    $cache.put(key, TTF.load_font_from_rwops(rwops, size)?);
+                }
+                FontSrc::Custom(ref path) => {
+                    $cache.put(key, TTF.load_font(path, size)?);
+                }
+            }
+        }
+    }};
+}
+
 /// An SDL [Renderer] implementation.
 pub(crate) struct Renderer {
     context: Sdl,
@@ -68,13 +98,13 @@ pub(crate) struct Renderer {
     settings: RendererSettings,
     cursor: Cursor,
     blend_mode: SdlBlendMode,
-    font: (PathBuf, u16),
+    font: (Font, u16),
     font_style: SdlFontStyle,
     window_id: WindowId,
     window_target: WindowId,
     texture_target: Option<*mut Texture>,
     canvases: HashMap<WindowId, (WindowCanvas, TextureCreator<WindowContext>)>,
-    font_cache: LruCache<(PathBuf, u16), SdlFont<'static, 'static>>,
+    font_cache: LruCache<(&'static str, u16), SdlFont<'static, 'static>>,
     text_cache: LruCache<(WindowId, String, Color), RendererTexture>,
     image_cache: LruCache<(WindowId, *const Image), RendererTexture>,
 }
@@ -102,15 +132,10 @@ impl Rendering for Renderer {
         let audio_device = audio_sub.open_queue(None, &desired_spec)?;
         audio_device.resume();
 
-        let mut font_cache = LruCache::new(s.texture_cache_size);
-        let mut font_path = s.asset_dir.join(&s.theme.fonts.body);
-        font_path.set_extension("ttf");
-        if !font_path.exists() {
-            font_path = s.asset_dir.join(Font::default());
-        }
         let font_size = s.theme.font_sizes.body as u16;
-        let font = (font_path.clone(), font_size);
-        font_cache.put(font.clone(), TTF.load_font(font_path, font_size)?);
+        let font = (s.theme.fonts.body.clone(), font_size);
+        let mut font_cache = LruCache::new(s.texture_cache_size);
+        update_font_cache!(font, font_cache);
         let text_cache = LruCache::new(s.text_cache_size);
         let image_cache = LruCache::new(s.texture_cache_size);
 
@@ -186,28 +211,34 @@ impl Rendering for Renderer {
     /// Set the font size for drawing to the current canvas.
     #[inline]
     fn font_size(&mut self, size: u32) -> Result<()> {
-        self.font.1 = size as u16;
-        self.update_font_cache()?;
+        let size = size as u16;
+        if self.font.1 != size {
+            self.font.1 = size;
+            update_font_cache!(self.font, self.font_cache);
+        }
         Ok(())
     }
 
     /// Set the font style for drawing to the current canvas.
     #[inline]
     fn font_style(&mut self, style: FontStyle) {
-        if let Some(font) = self.font_cache.get_mut(&self.font) {
+        let key = (self.font.0.name, self.font.1);
+        if let Some(font) = self.font_cache.get_mut(&key) {
             let style = style.into();
-            self.font_style = style;
-            font.set_style(style);
+            if self.font_style != style {
+                self.font_style = style;
+                font.set_style(style);
+            }
         }
     }
 
     /// Set the font family for drawing to the current canvas.
     #[inline]
-    fn font_family(&mut self, family: &str) -> Result<()> {
-        let mut font_path = self.settings.asset_dir.join(family);
-        font_path.set_extension("ttf");
-        self.font.0 = font_path;
-        self.update_font_cache()?;
+    fn font_family(&mut self, font: &Font) -> Result<()> {
+        if self.font.0.name != font.name {
+            self.font.0 = font.clone();
+            update_font_cache!(self.font, self.font_cache);
+        }
         Ok(())
     }
 
@@ -225,7 +256,8 @@ impl Rendering for Renderer {
         if text.is_empty() {
             return Ok(());
         }
-        let font = self.font_cache.get(&self.font);
+        let key = (self.font.0.name, self.font.1);
+        let font = self.font_cache.get(&key);
         match (fill, font) {
             (Some(fill), Some(font)) => {
                 let key = (self.window_target, text.to_string(), fill);
@@ -266,7 +298,7 @@ impl Rendering for Renderer {
                     }
                 })
             }
-            (Some(_), None) => Err(Error::InvalidFont(self.font.0.to_owned())),
+            (Some(_), None) => Err(Error::InvalidFont(self.font.0.name)),
             (None, _) => Ok(()),
         }
     }
@@ -293,7 +325,8 @@ impl Rendering for Renderer {
     /// as `(width, height)`.
     #[inline]
     fn size_of(&mut self, text: &str) -> Result<(u32, u32)> {
-        match self.font_cache.get(&self.font) {
+        let key = (self.font.0.name, self.font.1);
+        match self.font_cache.get(&key) {
             Some(font) => {
                 if text.contains('\n') {
                     let mut size = (0, 0);
@@ -307,7 +340,7 @@ impl Rendering for Renderer {
                     Ok(font.size_of(text)?)
                 }
             }
-            None => Err(Error::InvalidFont(self.font.0.to_owned())),
+            None => Err(Error::InvalidFont(self.font.0.name)),
         }
     }
 

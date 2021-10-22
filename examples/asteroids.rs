@@ -287,7 +287,8 @@ impl Asteroids {
 }
 
 impl AppState for Asteroids {
-    fn on_start(&mut self, _s: &mut PixState) -> PixResult<()> {
+    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.background(BLACK)?;
         self.spawn_new_ship();
         self.spawn_asteroids();
         Ok(())

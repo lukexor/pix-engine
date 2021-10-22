@@ -33,7 +33,10 @@ impl PixState {
             renderer,
             env: Environment::default(),
             ui: UiState::default(),
-            settings: Settings::default(),
+            settings: Settings {
+                background: theme.colors.background,
+                ..Default::default()
+            },
             setting_stack: Vec::new(),
             theme,
         }
