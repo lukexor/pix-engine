@@ -58,9 +58,9 @@ impl PixState {
                 .take()
                 .unwrap_or_else(|| s.width().unwrap_or(100) - 2 * fpad.x() as u32);
         let mut input = rect![pos, width as i32, font_size + 2 * ipad.y()];
+        let (lwidth, lheight) = s.size_of(label)?;
         if !label.is_empty() {
-            let (w, _) = s.size_of(label)?;
-            input.offset_x(w as i32 + ipad.x());
+            input.offset_x(lwidth as i32 + ipad.x());
         }
 
         // Check hover/active/keyboard focus
@@ -78,8 +78,7 @@ impl PixState {
 
         // Label
         if !label.is_empty() {
-            let (_, h) = s.size_of(label)?;
-            s.set_cursor_pos([pos.x(), pos.y() + input.height() / 2 - h as i32 / 2]);
+            s.set_cursor_pos([pos.x(), pos.y() + input.height() / 2 - lheight as i32 / 2]);
             s.text(label)?;
         }
 
@@ -102,10 +101,13 @@ impl PixState {
 
         // Text
         let (vw, vh) = s.size_of(&value)?;
-        let (cw, _) = s.size_of(TEXT_CURSOR)?;
         let mut x = input.x() + ipad.x();
         let y = input.center().y() - vh as i32 / 2;
-        let width = (vw + cw) as i32;
+        let mut width = vw as i32;
+        if focused {
+            let (cw, _) = s.size_of(TEXT_CURSOR)?;
+            width += cw as i32;
+        }
         if width > input.width() {
             x -= width - input.width();
         }
@@ -123,7 +125,7 @@ impl PixState {
             s.text(&value)?;
         }
 
-        if focused && !s.ui.disabled && s.elapsed() as usize >> 9 & 1 > 0 {
+        if focused && s.elapsed() as usize >> 9 & 1 > 0 {
             let offset = 2; // Remove some left space of the text cursor
             s.set_cursor_pos([x + vw as i32 - offset, y]);
             s.text(TEXT_CURSOR)?;
@@ -220,8 +222,8 @@ impl PixState {
         // Calculate input rect
         let mut input = rect![pos, width as i32, height as i32];
         if !label.is_empty() {
-            let (_, h) = s.size_of(label)?;
-            input.offset_y(h as i32 + ipad.y());
+            let (_, lheight) = s.size_of(label)?;
+            input.offset_y(lheight as i32 + ipad.y());
         }
 
         // Check hover/active/keyboard focus

@@ -33,9 +33,9 @@ impl PixState {
                 .unwrap_or_else(|| s.width().unwrap_or(100));
         let (_, h) = s.size_of(items.get(0).map(|i| i.as_ref()).unwrap_or(""))?;
         let mut select_box = rect![pos, width as i32 - 2 * fpad.x(), h as i32 + 2 * ipad.y()];
+        let (lwidth, lheight) = s.size_of(label)?;
         if !label.is_empty() {
-            let (w, _) = s.size_of(label)?;
-            let offset = w as i32 + ipad.x();
+            let offset = lwidth as i32 + ipad.x();
             select_box.offset_x(offset);
         }
 
@@ -52,8 +52,10 @@ impl PixState {
 
         // Label
         if !label.is_empty() {
-            let (_, h) = s.size_of(label)?;
-            s.set_cursor_pos([pos.x(), pos.y() + select_box.height() / 2 - h as i32 / 2]);
+            s.set_cursor_pos([
+                pos.x(),
+                pos.y() + select_box.height() / 2 - lheight as i32 / 2,
+            ]);
             s.text(label)?;
         }
 
