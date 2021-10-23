@@ -123,17 +123,20 @@ dual licensed as above, without any additional terms or conditions.
 
 ## Contact
 
-For issue reporting, please use the [github issue tracker][]. You can contact me directly
-[here](https://lukeworks.tech/contact/).
+For issue reporting, please use the [github issue tracker][]. You can also
+contact me directly at <https://lukeworks.tech/contact/>.
 
 ## Credits
 
-Implementation heavily inspired by
-[OneLoneCoder](https://github.com/OneLoneCoder/) and his amazing
-[olcPixelGameEngine](https://github.com/OneLoneCoder/olcPixelGameEngine)
-project.
+This has been a true passion project for several years and I can't thank the
+open source community enough for the all the amazing content and support.
 
-Also heavily influenced by [p5js](https://p5js.org/).
+A special shout out to the following projects which heavily inspired the
+implementation and evolution of this crate:
+
+  * [OneLoneCoder][] and the [olcPixelGameEngine][].
+  * [The Coding Train][] and [p5js][].
+  * [Dear ImGui][]
 
 [Rust]: https://www.rust-lang.org/
 [SDL2]: https://crates.io/crates/sdl2/
@@ -146,3 +149,8 @@ Also heavily influenced by [p5js](https://p5js.org/).
 [github issue tracker]: https://github.com/lukexor/pix-engine/issues
 [LICENSE-APACHE]: http://www.apache.org/licenses/LICENSE-2.0
 [LICENSE-MIT]: http://opensource.org/licenses/MIT
+[OneLoneCoder]: https://github.com/OneLoneCoder/
+[olcPixelGameEngine]: https://github.com/OneLoneCoder/olcPixelGameEngine
+[The Coding Train]: https://www.youtube.com/channel/UCvjgXvBlbQiydffZU7m1_aw
+[p5js]: https://p5js.org/
+[Dear ImGui]: https://github.com/ocornut/imgui
