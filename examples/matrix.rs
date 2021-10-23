@@ -1,8 +1,8 @@
 use lazy_static::lazy_static;
 use pix_engine::prelude::*;
 
-const WIDTH: u32 = 800;
-const HEIGHT: u32 = 600;
+const DEFAULT_WIDTH: u32 = 960;
+const DEFAULT_HEIGHT: u32 = 600;
 const BG_COLOR: [u8; 4] = [0, 0, 0, 255];
 const FONT_DATA: &[u8] = include_bytes!("gn_koharuiro_sunray.ttf");
 
@@ -136,35 +136,48 @@ impl Stream {
 struct Matrix {
     streams: Vec<Stream>,
     new_streams: Vec<Stream>,
+    width: u32,
+    height: u32,
 }
 
 impl Matrix {
     fn new() -> Self {
-        let count = (WIDTH / Glyph::WIDTH) as usize;
-        let mut streams = Vec::with_capacity(count);
+        Self {
+            streams: vec![],
+            new_streams: vec![],
+            width: DEFAULT_WIDTH,
+            height: DEFAULT_HEIGHT,
+        }
+    }
+
+    fn init(&mut self, (width, height): (u32, u32)) {
+        self.width = width;
+        self.height = height;
+        let count = (self.width / Glyph::WIDTH) as usize;
+        self.streams = Vec::with_capacity(count);
         let mut x = 0;
         for _ in 0..count {
-            streams.push(Stream::new(x));
+            self.streams.push(Stream::new(x));
             x += Glyph::WIDTH as i32;
-        }
-        Self {
-            streams,
-            new_streams: vec![],
         }
     }
 }
 
 impl AppState for Matrix {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.set_window_dimensions(s.display_dimensions()?)?;
+        self.init(s.dimensions()?);
         s.background(BG_COLOR)?;
         s.font_style(FontStyle::BOLD);
+        s.set_fullscreen(true)?;
         Ok(())
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         self.new_streams.clear();
+        let height = self.height;
         self.streams
-            .retain(|stream| stream.y < (HEIGHT + stream.height) as i32);
+            .retain(|stream| stream.y < (height + stream.height) as i32);
         for stream in &mut self.streams {
             stream.draw(s)?;
             if stream.should_spawn() {
@@ -196,9 +209,9 @@ impl AppState for Matrix {
 
 fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
-        .with_dimensions(WIDTH, HEIGHT)
+        .with_dimensions(DEFAULT_WIDTH, DEFAULT_HEIGHT)
+        .position(0, 0)
         .with_title("The Matrix")
-        .position_centered()
         .with_frame_rate()
         .vsync_enabled()
         .with_font(Font::new("Sunray", FontSrc::Bytes(FONT_DATA)), Glyph::SIZE)

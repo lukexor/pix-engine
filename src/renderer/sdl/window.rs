@@ -137,7 +137,11 @@ impl WindowRenderer for Renderer {
             .canvases
             .get_mut(&self.window_target)
             .ok_or(WindowError::InvalidWindow(self.window_target))?;
-        Ok(canvas.window_mut().set_size(width, height)?)
+        self.settings.width = width;
+        self.settings.height = height;
+        canvas.window_mut().set_size(width, height)?;
+        canvas.set_logical_size(width, height)?;
+        Ok(())
     }
 
     /// Dimensions of the primary display as `(width, height)`.
