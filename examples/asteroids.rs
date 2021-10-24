@@ -250,6 +250,7 @@ impl Asteroids {
         let x = self.width as i32 / 2 - 150;
         let y = self.height as i32 / 2 - 150;
         s.fill(WHITE);
+        s.no_stroke();
         s.font_size(32)?;
         s.rect_mode(RectMode::Center);
         s.set_cursor_pos([x, y]);
@@ -263,6 +264,7 @@ impl Asteroids {
         // Draw Level, Lives, & Score
         s.font_size(16)?;
         s.fill(WHITE);
+        s.no_stroke();
         s.text(format!("LEVEL: {}  SCORE: {}", self.level, self.score))?;
 
         s.fill(BLACK);

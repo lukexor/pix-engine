@@ -60,6 +60,7 @@ impl PixState {
         }
 
         // Select Box
+        s.push();
         if focused {
             s.stroke(s.highlight_color());
         } else {
@@ -99,6 +100,7 @@ impl PixState {
             [(x + width) - fourth, y + third + 1],
             [x + width / 2, (y + height) - third - 2],
         ])?;
+        s.pop();
 
         // Item
         s.no_wrap();
@@ -223,6 +225,7 @@ impl PixState {
         s.text(label)?;
 
         // Select List
+        s.push();
         if focused {
             s.stroke(s.highlight_color());
         } else {
@@ -234,6 +237,7 @@ impl PixState {
             s.fill(s.primary_color());
         }
         s.rect(select_box)?;
+        s.pop();
 
         // Items
         let mpos = s.mouse_pos();
@@ -249,6 +253,7 @@ impl PixState {
             let item_rect = rect!(select_box.x(), y, select_box.width(), line_height);
             let clickable =
                 item_rect.bottom() > select_box.y() || item_rect.top() < select_box.height();
+            s.push();
             if hovered && clickable && item_rect.contains_point(mpos) {
                 s.frame_cursor(&Cursor::hand())?;
                 s.no_stroke();
@@ -263,11 +268,7 @@ impl PixState {
                 s.fill(s.secondary_color());
                 s.rect([select_box.x(), y, select_box.width(), line_height])?;
             }
-            if disabled {
-                s.fill(s.text_color() / 2);
-            } else {
-                s.fill(s.text_color());
-            }
+            s.pop();
             s.set_cursor_pos([x + ipad.x(), y + ipad.y()]);
             s.text(item)?;
             y += line_height;

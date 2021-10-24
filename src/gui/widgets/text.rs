@@ -53,36 +53,57 @@ impl PixState {
             angle = angle.map(|a| a.to_degrees());
         };
 
-        s.push();
+        let fill = s.text_color();
+        let stroke = s.settings.stroke;
+        let stroke_weight = s.settings.stroke_weight;
+        let mut render_text = |color: Color, outline: u8| -> PixResult<()> {
+            s.push();
 
-        s.no_stroke();
-        if disabled {
-            s.fill(s.text_color() / 2);
-        } else {
-            s.fill(s.text_color());
+            // Make sure to offset the text if an outline was drawn
+            if stroke.is_some() && stroke_weight > 0 && outline == 0 {
+                pos += stroke_weight as i32;
+            }
+
+            if disabled {
+                s.fill(color / 2);
+            } else {
+                s.fill(color);
+            }
+
+            let mut rect = rect![pos.x(), pos.y(), 0, 0];
+            let mut y = pos.y();
+            for line in text.split('\n') {
+                s.renderer.text(
+                    point![rect.x(), y],
+                    line,
+                    s.settings.wrap_width,
+                    angle,
+                    center,
+                    flipped,
+                    s.settings.fill,
+                    outline,
+                )?;
+                let (w, h) = s.size_of(line)?;
+                y += h as i32;
+                rect.set_width(cmp::max(w as i32, rect.width()));
+                rect.offset_height(h as i32);
+            }
+
+            // Only advance the cursor if we're not drawing a text outline
+            if outline == 0 {
+                s.advance_cursor(rect);
+            }
+
+            s.pop();
+            Ok(())
+        };
+
+        if let Some(stroke) = stroke {
+            if stroke_weight > 0 {
+                render_text(stroke, stroke_weight)?;
+            }
         }
-
-        let mut rect = rect![pos.x(), pos.y(), 0, 0];
-        let mut y = pos.y();
-        for line in text.split('\n') {
-            s.renderer.text(
-                point![rect.x(), y],
-                line,
-                s.settings.wrap_width,
-                angle,
-                center,
-                flipped,
-                s.settings.fill,
-                s.settings.stroke_weight.saturating_sub(1),
-            )?;
-            let (w, h) = s.size_of(line)?;
-            y += h as i32;
-            rect.set_width(cmp::max(w as i32, rect.width()));
-            rect.offset_height(h as i32);
-        }
-
-        s.pop();
-        s.advance_cursor(rect);
+        render_text(fill, 0)?;
 
         Ok(())
     }

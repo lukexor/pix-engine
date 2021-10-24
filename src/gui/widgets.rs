@@ -50,6 +50,7 @@ impl PixState {
         s.rect_mode(RectMode::Corner);
 
         // Button
+        s.push();
         if focused {
             s.stroke(s.highlight_color());
         } else {
@@ -67,15 +68,9 @@ impl PixState {
             s.fill(s.primary_color());
         }
         s.rect(button)?;
+        s.pop();
 
         // Button text
-        s.no_stroke();
-        if disabled {
-            s.fill(s.text_color() / 2);
-        } else {
-            s.fill(s.text_color());
-        }
-
         s.rect_mode(RectMode::Center);
         s.clip(button)?;
         s.set_cursor_pos(button.center());
@@ -122,6 +117,7 @@ impl PixState {
         s.rect_mode(RectMode::Corner);
 
         // Checkbox
+        s.push();
         if focused || active {
             s.stroke(s.highlight_color());
         } else {
@@ -136,8 +132,8 @@ impl PixState {
             s.fill(s.primary_color());
         }
         s.rect(checkbox)?;
+
         if *checked {
-            s.push();
             if disabled {
                 s.stroke(s.highlight_color() / 2);
             } else {
@@ -153,15 +149,13 @@ impl PixState {
             let end = [x + third + 1, y - half + 2];
             s.line([start, mid])?;
             s.line([mid, end])?;
-            s.pop();
         }
         s.advance_cursor(checkbox);
+        s.pop();
 
         // Label
         s.same_line(None);
         s.text(label)?;
-
-        s.pop();
 
         // Process input
         s.ui.handle_input(id);
@@ -228,12 +222,11 @@ impl PixState {
             s.circle([radio.x(), radio.y(), radio.radius() - 2])?;
         }
         s.advance_cursor(radio.bounding_rect());
+        s.pop();
 
         // Label
         s.same_line(None);
         s.text(label)?;
-
-        s.pop();
 
         // Process input
         s.ui.handle_input(id);

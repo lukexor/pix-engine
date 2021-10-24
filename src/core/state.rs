@@ -21,7 +21,7 @@ pub struct PixState {
     pub(crate) env: Environment,
     pub(crate) ui: UiState,
     pub(crate) settings: Settings,
-    pub(crate) setting_stack: Vec<Settings>,
+    pub(crate) setting_stack: Vec<(Settings, Theme)>,
     pub(crate) theme: Theme,
 }
 
@@ -35,6 +35,7 @@ impl PixState {
             ui: UiState::default(),
             settings: Settings {
                 background: theme.colors.background,
+                fill: Some(theme.colors.text),
                 ..Default::default()
             },
             setting_stack: Vec::new(),

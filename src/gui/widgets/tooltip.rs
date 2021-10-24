@@ -31,9 +31,11 @@ impl PixState {
         s.rect_mode(RectMode::Corner);
 
         if focused {
+            s.push();
             s.stroke(s.highlight_color());
             s.no_fill();
             s.rect(hover)?;
+            s.pop();
         }
 
         // Marker
@@ -77,12 +79,12 @@ impl PixState {
             s.background(s.primary_color())?;
 
             s.rect_mode(RectMode::Corner);
+            s.push();
             s.stroke(s.muted_color());
             s.no_fill();
             s.rect([0, 0, w - 1, h - 1])?;
+            s.pop();
 
-            s.no_stroke();
-            s.fill(s.text_color());
             s.text(text)?;
 
             Ok(())

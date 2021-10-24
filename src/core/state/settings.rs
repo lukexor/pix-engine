@@ -74,10 +74,10 @@ bitflags! {
         const NORMAL = 0x00;
         /// Bold.
         const BOLD = 0x01;
-        /// Italic.
-        const ITALIC = 0x02;
         /// Underline
-        const UNDERLINE = 0x03;
+        const UNDERLINE = 0x02;
+        /// Italic.
+        const ITALIC = 0x03;
         /// Strike-through
         const STRIKETHROUGH = 0x04;
     }
@@ -110,9 +110,9 @@ pub(crate) struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            background: Color::default(),
+            background: BLACK,
             fill: Some(WHITE),
-            stroke: Some(BLACK),
+            stroke: None,
             stroke_weight: 1,
             wrap_width: None,
             clip: None,
@@ -315,14 +315,16 @@ impl PixState {
 
     /// Saves the current draw settings and transforms.
     pub fn push(&mut self) {
-        self.setting_stack.push(self.settings.clone());
+        self.setting_stack
+            .push((self.settings.clone(), self.theme.clone()));
     }
 
     /// Restores the previous draw settings and transforms, if present. If the settings stack is
     /// empty, the settings will remain unchanged.
     pub fn pop(&mut self) {
-        if let Some(settings) = self.setting_stack.pop() {
+        if let Some((settings, theme)) = self.setting_stack.pop() {
             self.settings = settings;
+            self.theme = theme;
         }
         let s = &self.settings;
         let t = &self.theme;

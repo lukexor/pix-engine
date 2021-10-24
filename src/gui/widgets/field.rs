@@ -83,6 +83,7 @@ impl PixState {
         }
 
         // Input
+        s.push();
         if focused || active {
             s.stroke(s.highlight_color());
         } else {
@@ -98,6 +99,7 @@ impl PixState {
         }
         s.same_line(None);
         s.rect(input)?;
+        s.pop();
 
         // Text
         let (vw, vh) = s.size_of(&value)?;
@@ -243,6 +245,7 @@ impl PixState {
         s.text(label)?;
 
         // Input
+        s.push();
         if focused || active {
             s.stroke(s.highlight_color());
         } else {
@@ -258,6 +261,7 @@ impl PixState {
         }
         s.same_line(None);
         s.rect(input)?;
+        s.pop();
 
         // Text
         // TODO: Handle vertical scrolling

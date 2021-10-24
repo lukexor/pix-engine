@@ -128,6 +128,8 @@ impl MazeApp {
         }
         let h = HEIGHT as i32;
         s.set_cursor_pos([10, h - 45]);
+        s.font_color(WHITE);
+        s.no_stroke();
         if s.button("Create")? {
             self.start_create_maze();
         }
@@ -143,7 +145,7 @@ impl MazeApp {
         if s.button(">>#2")? {
             self.solve_maze()?;
         }
-        s.fill(s.accent_color());
+        s.font_color(s.accent_color());
         let rate = s.target_frame_rate().unwrap_or(60);
         s.same_line(None);
         s.set_cursor_pos([s.cursor_pos().x() + 20, h - 50]);
