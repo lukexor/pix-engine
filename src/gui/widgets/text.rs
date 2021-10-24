@@ -73,6 +73,7 @@ impl PixState {
                 center,
                 flipped,
                 s.settings.fill,
+                s.settings.stroke_weight.saturating_sub(1),
             )?;
             let (w, h) = s.size_of(line)?;
             y += h as i32;

@@ -137,6 +137,7 @@ impl PixState {
         }
         s.rect(checkbox)?;
         if *checked {
+            s.push();
             if disabled {
                 s.stroke(s.highlight_color() / 2);
             } else {
@@ -152,6 +153,7 @@ impl PixState {
             let end = [x + third + 1, y - half + 2];
             s.line([start, mid])?;
             s.line([mid, end])?;
+            s.pop();
         }
         s.advance_cursor(checkbox);
 

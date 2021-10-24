@@ -251,14 +251,20 @@ impl Rendering for Renderer {
         center: Option<PointI2>,
         flipped: Option<Flipped>,
         fill: Option<Color>,
+        outline: u8,
     ) -> Result<()> {
         if text.is_empty() {
             return Ok(());
         }
         let key = (self.font.0.name, self.font.1);
-        let font = self.font_cache.get(&key);
+        let font = self.font_cache.get_mut(&key);
         match (fill, font) {
             (Some(fill), Some(font)) => {
+                let current_outline = font.get_outline_width();
+                if current_outline != outline as u16 {
+                    font.set_outline_width(outline as u16);
+                }
+
                 let key = (self.window_target, text.to_string(), fill);
                 let (_, texture_creator) = self
                     .canvases

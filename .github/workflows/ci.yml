@@ -57,5 +57,6 @@ jobs:
 
     - name: Run integration tests
       run: |
-        # Skip for now
+        # Skip until linux is set up with a video device and windows with an
+        # audio device
         # cargo test run_engine -- --test-threads=1 --ignored
