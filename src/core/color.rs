@@ -139,8 +139,6 @@ pub struct Color {
 
 /// Constructs a [Color] with `red`, `green`, `blue` and optional `alpha`.
 ///
-/// Alias for [rgb!].
-///
 /// # Examples
 ///
 /// ```
@@ -175,6 +173,8 @@ macro_rules! color {
 
 /// Constructs a [Color] with `red`, `green`, `blue` and optional `alpha`.
 ///
+/// Alias for [color!].
+///
 /// # Examples
 ///
 /// ```
@@ -191,6 +191,7 @@ macro_rules! color {
 /// let c = rgb!(128, 64, 128, 128); // Red, Green, Blue, Alpha
 /// assert_eq!(c.channels(), [128, 64, 128, 128]);
 /// ```
+#[doc(alias = "color")]
 #[macro_export]
 macro_rules! rgb {
     ($gray:expr) => {
@@ -378,6 +379,8 @@ impl Color {
 
     /// Constructs a `Color` with `red`, `green`, `blue` and max `alpha`.
     ///
+    /// Alias for [Color::new].
+    ///
     /// # Example
     ///
     /// ```
@@ -385,12 +388,15 @@ impl Color {
     /// let c = Color::rgb(128, 64, 0);
     /// assert_eq!(c.channels(), [128, 64, 0, 255]);
     /// ```
+    #[doc(alias = "new")]
     #[inline]
     pub fn rgb<T: Into<Scalar>>(r: T, g: T, b: T) -> Self {
         Self::with_mode(Rgb, r, g, b)
     }
 
     /// Constructs a `Color` with `red`, `green`, `blue` and `alpha`.
+    ///
+    /// Alias for [Color::new_alpha].
     ///
     /// # Example
     ///
@@ -399,6 +405,7 @@ impl Color {
     /// let c = Color::rgba(128, 64, 128, 128);
     /// assert_eq!(c.channels(), [128, 64, 128, 128]);
     /// ```
+    #[doc(alias = "new_alpha")]
     #[inline]
     pub fn rgba<T: Into<Scalar>>(r: T, g: T, b: T, a: T) -> Self {
         Self::with_mode_alpha(Rgb, r, g, b, a)
@@ -652,6 +659,7 @@ impl Color {
     /// let c = Color::rgba(128, 64, 128, 128);
     /// assert_eq!(c.rgba_channels(), [128, 64, 128, 128]);
     /// ```
+    #[doc(alias = "channels")]
     #[inline]
     pub const fn rgba_channels(&self) -> [u8; 4] {
         self.channels()

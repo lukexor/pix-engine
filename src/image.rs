@@ -81,14 +81,16 @@ pub struct Image {
 }
 
 impl Image {
-    /// Constructs an empty RGBA `Image` with given `width` and `height`. Alias for
-    /// [Image::with_rgba].
+    /// Constructs an empty RGBA `Image` with given `width` and `height`.
     #[inline]
     pub fn new(width: u32, height: u32) -> Self {
         Self::with_rgba(width, height)
     }
 
     /// Constructs an empty RGBA `Image` with given `width` and `height`.
+    ///
+    /// Alias for [Image::new].
+    #[doc(alias = "new")]
     #[inline]
     pub fn with_rgba(width: u32, height: u32) -> Self {
         let format = PixelFormat::Rgba;
