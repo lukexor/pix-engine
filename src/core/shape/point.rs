@@ -12,7 +12,7 @@
 //! ...or by using the [point!] macro:
 //!
 //! ```
-//! use pix_engine::prelude_3d::*;
+//! use pix_engine::prelude::*;
 //!
 //! let p: PointI2 = point!(); // origin point at (0, 0, 0)
 //!
@@ -161,7 +161,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// use pix_engine::prelude_3d::*;
+    /// use pix_engine::prelude::*;
     /// let mut p: PointI3 = Point::new([2, 1, 3]);
     /// assert_eq!(p.values(), [2, 1, 3]);
     /// p.set_values([1, 2, 4]);
@@ -255,7 +255,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let p = point!(1, 2, 2);
     /// assert_eq!(p.z(), 2);
     /// ```
@@ -273,7 +273,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let mut p = point!(1, 2, 1);
     /// p.set_z(3);
     /// assert_eq!(p.values(), [1, 2, 3]);
@@ -307,7 +307,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let mut p: PointI3 = point!(2, 3, 1);
     /// p.offset([2, -4]);
     /// assert_eq!(p.values(), [4, -1, 1]);
@@ -347,7 +347,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let mut p: PointI2 = point!(2, 3);
     /// p.scale(2);
     /// assert_eq!(p.values(), [4, 6]);

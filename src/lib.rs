@@ -48,7 +48,7 @@ pub mod transform;
 
 mod utils;
 
-/// Exports most commonly used 2D types, traits, and functions.
+/// Exports most commonly used types, traits, and functions.
 pub mod prelude {
     use super::*;
 
@@ -59,8 +59,9 @@ pub mod prelude {
         draw::Draw,
         engine::PixEngine,
         shape::{
-            Contains, Ellipse, Intersects, Line, LineF2, LineI2, Point, PointF2, PointI2, Quad,
-            QuadF2, QuadI2, Rect, Tri, TriF2, TriI2,
+            Contains, Ellipse, Intersects, Line, LineF2, LineF3, LineI2, LineI3, Point, PointF2,
+            PointF3, PointI2, PointI3, Quad, QuadF2, QuadF3, QuadI2, QuadI3, Rect, Sphere, Tri,
+            TriF2, TriF3, TriI2, TriI3,
         },
         state::{
             settings::{
@@ -73,37 +74,20 @@ pub mod prelude {
         window::{Cursor, Position, SystemCursor, WindowBuilder, WindowId},
     };
     pub use event::{Axis, ControllerButton, Event, Key, KeyEvent, KeyMod, Mouse, WindowEvent};
+    pub use graphics::lighting::{Light, LightF3, LightSource};
     pub use gui::{fonts::*, Font, FontSrc, Theme, ThemeBuilder};
     pub use image::{Image, PixelFormat};
     pub use math::{
         constants::*,
         map, random_rng,
-        vector::{Vector, VectorF2, VectorI2},
+        vector::{Vector, VectorF2, VectorF3, VectorI2, VectorI3},
         Float, Num, Scalar,
     };
     #[cfg(not(target_arch = "wasm32"))]
     pub use transform::Flipped;
-    // Shape macros
-    pub use {circle, ellipse, line_, point, quad, rect, square, tri};
-    // Math macros
-    pub use {noise, random, vector};
-    // Color macros
-    pub use {color, hsb, hsl, rgb};
-}
 
-/// Exports most commonly used 3D types, traits, and functions.
-pub mod prelude_3d {
-    use super::*;
-
-    pub use self::core::shape::{
-        LineF3, LineI3, PointF3, PointI3, QuadF3, QuadI3, Sphere, TriF3, TriI3,
-    };
-    pub use graphics::lighting::{Light, LightF3, LightSource};
-    pub use math::vector::{VectorF3, VectorI3};
-    pub use prelude::*;
-    pub use sphere;
     // Shape macros
-    pub use {circle, ellipse, line_, point, quad, rect, square, tri};
+    pub use {circle, ellipse, line_, point, quad, rect, sphere, square, tri};
     // Math macros
     pub use {noise, random, vector};
     // Color macros

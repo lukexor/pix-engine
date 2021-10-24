@@ -5,7 +5,7 @@
 //! You can create a [Line] using [Line::new]:
 //!
 //! ```
-//! use pix_engine::prelude_3d::*;
+//! use pix_engine::prelude::*;
 //!
 //! // 2D
 //! let line: LineI2 = Line::new([10, 20], [30, 10]);
@@ -44,7 +44,7 @@ pub type LineF3 = Line<Scalar, 3>;
 /// Constructs a [Line] with two points.
 ///
 /// ```
-/// # use pix_engine::prelude_3d::*;
+/// # use pix_engine::prelude::*;
 ///
 /// let l: LineI2 = line_!([10, 20], [30, 10]);
 /// assert_eq!(l.values(), [
@@ -76,7 +76,7 @@ impl<T, const N: usize> Line<T, N> {
     ///
     /// # Example
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// // 2D
     /// let line: LineI2 = Line::new([10, 20], [30, 10]);
     ///

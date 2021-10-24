@@ -2,7 +2,7 @@
 //!
 //! [PixEngine]: crate::prelude::PixEngine
 
-use crate::prelude_3d::*;
+use crate::prelude::*;
 use lru::LruCache;
 use num_traits::AsPrimitive;
 use std::{

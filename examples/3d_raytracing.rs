@@ -1,4 +1,4 @@
-use pix_engine::prelude_3d::*;
+use pix_engine::prelude::*;
 
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 800;

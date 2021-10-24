@@ -8,7 +8,7 @@
 //! You can create a [Quad] using [Quad::new]:
 //!
 //! ```
-//! use pix_engine::prelude_3d::*;
+//! use pix_engine::prelude::*;
 //!
 //! let quad: QuadI2 = Quad::new(
 //!     [10, 20],

@@ -5,14 +5,14 @@
 //! You can create a [Sphere] using [Sphere::new]:
 //!
 //! ```
-//! # use pix_engine::prelude_3d::*;
+//! # use pix_engine::prelude::*;
 //! let s = Sphere::new(10, 20, 100, 200);
 //! ```
 //!
 //! ...or by using the [sphere!] macro:
 //!
 //! ```
-//! # use pix_engine::prelude_3d::*;
+//! # use pix_engine::prelude::*;
 //! let s = sphere!(10, 20, 15, 200);
 //!
 //! // using a point
@@ -36,7 +36,7 @@ pub struct Sphere<T = i32>(pub(crate) [T; 4]);
 /// Constructs a [Sphere] at position `(x, y, z)` with `radius`.
 ///
 /// ```
-/// # use pix_engine::prelude_3d::*;
+/// # use pix_engine::prelude::*;
 /// let p = point!(10, 20, 10);
 /// let s = sphere!(p, 100);
 /// assert_eq!(s.x(), 10);
@@ -53,10 +53,10 @@ pub struct Sphere<T = i32>(pub(crate) [T; 4]);
 #[macro_export]
 macro_rules! sphere {
     ($p:expr, $r:expr$(,)?) => {
-        $crate::prelude_3d::Sphere::with_position($p, $r)
+        $crate::prelude::Sphere::with_position($p, $r)
     };
     ($x:expr, $y:expr, $z:expr, $r:expr$(,)?) => {
-        $crate::prelude_3d::Sphere::new($x, $y, $z, $r)
+        $crate::prelude::Sphere::new($x, $y, $z, $r)
     };
 }
 

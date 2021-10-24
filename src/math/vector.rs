@@ -13,13 +13,13 @@
 //! You can create a [Vector] using [Vector::new]:
 //!
 //! ```
-//! # use pix_engine::prelude_3d::*;
+//! # use pix_engine::prelude::*;
 //! let v: VectorF3 = Vector::new([10.0, 20.0, 15.0]);
 //! ```
 //! ...or by using the [vector!] macro:
 //!
 //! ```
-//! # use pix_engine::prelude_3d::*;
+//! # use pix_engine::prelude::*;
 //! let v: VectorF3 = vector!(); // vector at the origin (0, 0, 0) with no direction or magnitude
 //! assert_eq!(v.values(), [0.0, 0.0, 0.0]);
 //!
@@ -37,7 +37,7 @@
 //! magnitudes in the range `-1.0..=1.0`.
 //!
 //! ```
-//! use pix_engine::prelude_3d::*;
+//! use pix_engine::prelude::*;
 //! use pix_engine::math::vector::VectorF1;
 //!
 //! let v: VectorF1 = Vector::random();
@@ -113,7 +113,7 @@ pub type VectorF3 = Vector<Scalar, 3>;
 /// # Examples
 ///
 /// ```
-/// # use pix_engine::prelude_3d::*;
+/// # use pix_engine::prelude::*;
 /// let v: VectorF3 = vector!();
 /// assert_eq!(v.values(), [0.0, 0.0, 0.0]);
 ///
@@ -148,7 +148,7 @@ impl<T, const N: usize> Vector<T, N> {
     /// # Examples
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let v = Vector::new([2.1]);
     /// assert_eq!(v.values(), [2.1]);
     ///
@@ -168,7 +168,7 @@ impl<T, const N: usize> Vector<T, N> {
     /// # Example
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let v: VectorF3 = Vector::origin();
     /// assert_eq!(v.values(), [0.0, 0.0, 0.0]);
     /// ```
@@ -190,7 +190,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// use pix_engine::math::constants::FRAC_PI_2;
     /// let v1: VectorF2 = Vector::new([10.0, 20.0]);
     /// let v2 = Vector::rotated(v1, FRAC_PI_2);
@@ -265,7 +265,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let v1: VectorF3 = vector!(1.0, 2.0, 3.0);
     /// let v2: VectorF3 = vector!(1.0, 2.0, 3.0);
     /// let cross = v1.cross(v2);
@@ -285,7 +285,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let v1: VectorF3 = vector!(1.0, 0.0, 0.0);
     /// let v2: VectorF3 = vector!(0.0, 1.0, 0.0);
     /// let angle = v1.angle_between(v2);
@@ -403,7 +403,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let v = vector!(1.0, 2.0, 2.5);
     /// assert_eq!(v.z(), 2.5);
     /// ```
@@ -421,7 +421,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let mut v = vector!(1.0, 2.0, 1.0);
     /// v.set_z(3.0);
     /// assert_eq!(v.values(), [1.0, 2.0, 3.0]);
@@ -436,7 +436,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let v: VectorF3 = vector!(2.0, 1.0, 3.0);
     /// assert_eq!(v.values(), [2.0, 1.0, 3.0]);
     /// ```
@@ -450,7 +450,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let mut v: VectorF3 = Vector::new([2.0, 1.0, 3.0]);
     /// assert_eq!(v.values(), [2.0, 1.0, 3.0]);
     /// v.set_values([1.0, 2.0, 4.0]);
@@ -466,7 +466,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let v: VectorF3 = vector!(1.0, 1.0, 0.0);
     /// assert_eq!(v.to_vec(), vec![1.0, 1.0, 0.0]);
     /// ```
@@ -485,7 +485,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let mut v: VectorF3 = vector!(2.0, 3.0, 1.5);
     /// v.offset([2.0, -4.0]);
     /// assert_eq!(v.values(), [4.0, -1.0, 1.5]);
@@ -525,7 +525,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let mut v: VectorF3 = vector!(2.0, 3.0, 1.5);
     /// v.scale(2.0);
     /// assert_eq!(v.values(), [4.0, 6.0, 3.0]);
@@ -570,7 +570,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let v: VectorF3 = Vector::random();
     /// assert!(v.x() > -1.0 && v.x() < 1.0);
     /// assert!(v.y() > -1.0 && v.y() < 1.0);
@@ -603,7 +603,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let v1: VectorF3 = Vector::new([1.0, 1.0, 0.0]);
     /// let normal = Vector::new([0.0, 1.0, 0.0]);
     /// let v2: VectorF3 = Vector::reflection(v1, normal);
@@ -623,7 +623,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let v1: VectorF3 = Vector::new([0.0, 5.0, 0.0]);
     /// let v2: VectorF3 = Vector::normalized(v1);
     /// assert_eq!(v2.values(), [0.0, 1.0, 0.0]);
@@ -645,7 +645,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let v: VectorF3 = vector!(1.0, 2.0, 3.0);
     /// let abs_difference = (v.mag() - 3.7416).abs();
     /// assert!(abs_difference <= 1e-4);
@@ -663,7 +663,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let v: VectorF3 = vector!(1.0, 2.0, 3.0);
     /// assert_eq!(v.mag_sq(), 14.0);
     /// ```
@@ -680,7 +680,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let v1: VectorF3 = vector!(1.0, 2.0, 3.0);
     /// let v2: VectorF3 = vector!(2.0, 3.0, 4.0);
     /// let dot_product = v1.dot(v2);
@@ -717,7 +717,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let mut v: VectorF3 = vector!(10.0, 20.0, 2.0);
     /// v.set_mag(10.0);
     /// assert!(v.approx_eq(vector![4.4543, 8.9087, 0.8908], 1e-4));
@@ -732,7 +732,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let v1: VectorF3 = vector!(1.0, 0.0, 0.0);
     /// let v2: VectorF3 = vector!(0.0, 1.0, 0.0);
     /// let dist = v1.dist(v2);
@@ -749,7 +749,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let mut v: VectorF3 = vector!(10.0, 20.0, 2.0);
     /// v.normalize();
     /// assert!(v.approx_eq(vector!(0.4454, 0.8908, 0.0890), 1e-4));
@@ -767,7 +767,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let mut v: VectorF3 = vector!(10.0, 20.0, 2.0);
     /// v.limit(5.0);
     /// assert!(v.approx_eq(vector!(2.2271, 4.4543,  0.4454), 1e-4));
@@ -786,7 +786,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let v1: VectorF3 = vector!(1.0, 1.0, 0.0);
     /// let v2: VectorF3 = vector!(3.0, 3.0, 0.0);
     /// let v3 = v1.lerp(v2, 0.5);
@@ -808,7 +808,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use pix_engine::prelude_3d::*;
+    /// # use pix_engine::prelude::*;
     /// let v1: VectorF3 = vector!(10.0, 20.0, 2.0);
     /// let v2: VectorF3 = vector!(10.0001, 20.0, 2.0);
     /// assert!(v1.approx_eq(v2, 1e-3));
