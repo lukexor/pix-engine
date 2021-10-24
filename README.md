@@ -86,6 +86,13 @@ fn main() -> PixResult<()> {
 }
 ```
 
+## Dependencies
+
+When using the default targets for macOs, linux, or Windows, SDL2 libraries are
+a required dependency. You can either install them manually using one of the
+methods outlined in the [rust-sdl2][] crate, or you can use the `use-vcpkg`
+feature flag to statically link them.
+
 ## Crate features
 
 ### Utility features
@@ -94,6 +101,11 @@ fn main() -> PixResult<()> {
   Enables Serialize/Deserialize implementations for most enums/structs. `serde`
   support for const generics is still pending, so many structs are not
   serializable just yet.
+
+* **use-vcpkg** -
+  Enables static linking of the SDL2 libraries which are dependencies for macOs,
+  linux, and Windows targets. Using this feature is the easiest way to get up
+  and running unless you already have SDL2 installed on your system.
 
 ### Renderer features
 
@@ -140,6 +152,7 @@ implementation and evolution of this crate:
 
 [Rust]: https://www.rust-lang.org/
 [SDL2]: https://crates.io/crates/sdl2/
+[rust-sdl2]: https://github.com/Rust-SDL2/rust-sdl2#sdl20-development-libraries
 [WASM]: https://www.rust-lang.org/what/wasm
 [Tetanes]: https://crates.io/crates/tetanes
 [NES]: https://en.wikipedia.org/wiki/Nintendo_Entertainment_System
