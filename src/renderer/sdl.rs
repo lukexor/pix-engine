@@ -674,6 +674,18 @@ impl From<Rect<i32>> for SdlRect {
     }
 }
 
+impl From<SdlRect> for Rect<i32> {
+    /// Convert [`Rect<i32>`] to [SdlRect].
+    fn from(rect: SdlRect) -> Self {
+        Self::new(
+            rect.x(),
+            rect.y(),
+            rect.width() as i32,
+            rect.height() as i32,
+        )
+    }
+}
+
 impl From<&Rect<i32>> for SdlRect {
     /// Convert &[`Rect<i32>`] to [SdlRect].
     fn from(rect: &Rect<i32>) -> Self {

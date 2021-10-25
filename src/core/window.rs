@@ -141,6 +141,9 @@ pub(crate) trait WindowRenderer {
     /// Set dimensions of the current window target as `(width, height)`.
     fn set_window_dimensions(&mut self, dimensions: (u32, u32)) -> Result<()>;
 
+    /// Returns the rendering viewport of the current render target.
+    fn viewport(&mut self) -> Result<Rect<i32>>;
+
     /// Set the rendering viewport of the current render target.
     fn set_viewport(&mut self, rect: Option<Rect<i32>>) -> Result<()>;
 
@@ -300,6 +303,11 @@ impl PixState {
     /// Set the dimensions of the current window from `(width, height)`.
     pub fn set_window_dimensions(&mut self, dimensions: (u32, u32)) -> PixResult<()> {
         Ok(self.renderer.set_window_dimensions(dimensions)?)
+    }
+
+    /// Returns the rendering viewport of the current render target.
+    pub fn viewport(&mut self) -> PixResult<Rect<i32>> {
+        Ok(self.renderer.viewport()?)
     }
 
     /// Set the rendering viewport of the current render target.

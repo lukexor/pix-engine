@@ -144,6 +144,15 @@ impl WindowRenderer for Renderer {
         Ok(())
     }
 
+    /// Returns the rendering viewport of the current render target.
+    fn viewport(&mut self) -> Result<Rect<i32>> {
+        let (canvas, _) = self
+            .canvases
+            .get_mut(&self.window_target)
+            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+        Ok(canvas.viewport().into())
+    }
+
     /// Set the rendering viewport of the current render target.
     fn set_viewport(&mut self, rect: Option<Rect<i32>>) -> Result<()> {
         let (canvas, _) = self
