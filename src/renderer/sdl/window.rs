@@ -144,6 +144,16 @@ impl WindowRenderer for Renderer {
         Ok(())
     }
 
+    /// Set the rendering viewport of the current render target.
+    fn set_viewport(&mut self, rect: Option<Rect<i32>>) -> Result<()> {
+        let (canvas, _) = self
+            .canvases
+            .get_mut(&self.window_target)
+            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+        canvas.set_viewport(rect.map(|r| r.into()));
+        Ok(())
+    }
+
     /// Dimensions of the primary display as `(width, height)`.
     #[inline]
     fn display_dimensions(&self) -> Result<(u32, u32)> {
