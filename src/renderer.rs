@@ -125,7 +125,7 @@ pub(crate) trait Rendering: Sized {
         flipped: Option<Flipped>,
         fill: Option<Color>,
         outline: u8,
-    ) -> Result<()>;
+    ) -> Result<(u32, u32)>;
 
     /// Returns the rendered dimensions of the given text using the current font
     /// as `(width, height)`.

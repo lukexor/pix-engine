@@ -1,6 +1,6 @@
 //! UI widget rendering functions.
 
-use super::Direction;
+use super::{state::ElementId, Direction};
 use crate::prelude::*;
 use std::cmp;
 
@@ -9,6 +9,7 @@ mod select;
 mod text;
 mod tooltip;
 
+const SCROLL_SIZE: i32 = 12;
 const SCROLL_SPEED: i32 = 2;
 const CHECKBOX_SIZE: i32 = 16;
 const RADIO_SIZE: i32 = 8;
@@ -243,7 +244,75 @@ impl PixState {
 }
 
 impl PixState {
-    fn scroll(
+    /// Handles mouse wheel scroll for `hovered` elements.
+    pub(crate) fn scroll(
+        &mut self,
+        id: ElementId,
+        mut rect: Rect<i32>,
+        width: i32,
+        height: i32,
+    ) -> PixResult<()> {
+        use cmp::{max, min};
+        let s = self;
+
+        let mut scroll = s.ui.scroll(id);
+        let xmax = width - rect.width();
+        let ymax = height - rect.height();
+        if s.ui.is_hovered(id) {
+            let speed = 3;
+            if s.ui.mouse.xrel != 0 {
+                scroll.set_x(max(0, min(xmax, scroll.x() - speed * s.ui.mouse.xrel)));
+                s.ui.set_scroll(id, scroll);
+            }
+            if s.ui.mouse.yrel != 0 {
+                scroll.set_y(max(0, min(ymax, scroll.y() - speed * s.ui.mouse.yrel)));
+                s.ui.set_scroll(id, scroll);
+            }
+        }
+
+        // Vertical scroll
+        if height > rect.height() {
+            let mut scroll_y = scroll.y();
+            let scrolled = s.scrollbar(
+                rect![rect.right() + 1, rect.top(), SCROLL_SIZE, rect.height()],
+                ymax as u32,
+                &mut scroll_y,
+                Direction::Vertical,
+            )?;
+            if scrolled {
+                scroll.set_y(scroll_y);
+                s.ui.set_scroll(id, scroll);
+            }
+            rect.offset_width(SCROLL_SIZE);
+        }
+
+        // Horizontal scroll
+        if width > rect.width() {
+            let mut scroll_x = scroll.x();
+            let scrolled = s.scrollbar(
+                rect![
+                    rect.left(),
+                    rect.bottom() + 1,
+                    rect.width() - SCROLL_SIZE,
+                    SCROLL_SIZE
+                ],
+                xmax as u32,
+                &mut scroll_x,
+                Direction::Horizontal,
+            )?;
+            if scrolled {
+                scroll.set_x(scroll_x);
+                s.ui.set_scroll(id, scroll);
+            }
+            rect.offset_height(SCROLL_SIZE);
+        }
+
+        s.advance_cursor(rect);
+
+        Ok(())
+    }
+
+    fn scrollbar(
         &mut self,
         rect: Rect<i32>,
         max: u32,

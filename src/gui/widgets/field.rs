@@ -2,7 +2,7 @@
 
 use crate::{gui::MOD_CTRL, prelude::*};
 
-const TEXT_CURSOR: &str = "│";
+const TEXT_CURSOR: &str = "_";
 
 impl PixState {
     /// Draw a text field to the current canvas.
@@ -128,8 +128,7 @@ impl PixState {
         }
 
         if focused && s.elapsed() as usize >> 9 & 1 > 0 {
-            let offset = 2; // Remove some left space of the text cursor
-            s.set_cursor_pos([x + vw as i32 - offset, y]);
+            s.set_cursor_pos([x + vw as i32, y]);
             s.text(TEXT_CURSOR)?;
         }
 
@@ -235,7 +234,6 @@ impl PixState {
         let active = s.ui.is_active(id);
 
         s.push();
-        s.ui.push_cursor();
         let mut changed = false;
 
         // Render
@@ -259,45 +257,42 @@ impl PixState {
         } else {
             s.fill(s.primary_color());
         }
-        s.same_line(None);
         s.rect(input)?;
         s.pop();
 
         // Text
-        // TODO: Handle vertical scrolling
-        let (vw, _) = s.size_of(&value)?;
-        let x = input.x() + ipad.x();
-        let y = input.y() + ipad.y();
-
+        let scroll = s.ui.scroll(id);
         s.wrap_width(input.width() - 2 * ipad.x());
-        s.set_cursor_pos([x, y]);
+        s.set_cursor_pos(input.top_left() + ipad - scroll);
         s.clip(input)?;
-        if value.is_empty() {
+        // TODO: width here always maxes out at wrap_width when words can't wrap
+        let blink_cursor = focused && s.elapsed() as usize >> 9 & 1 > 0;
+        let (total_width, total_height) = if value.is_empty() {
             s.disable();
-            s.text(&hint)?;
+            let pos = s.cursor_pos();
+            let size = s.text(&hint)?;
             if !disabled {
                 s.no_disable();
             }
+            if blink_cursor {
+                s.set_cursor_pos(pos);
+                s.text(TEXT_CURSOR)?;
+            }
+            size
+        } else if blink_cursor {
+            s.text(format!("{}{}", value, TEXT_CURSOR))?
         } else {
-            s.text(&value)?;
-        }
-
-        if focused && !s.ui.disabled && s.elapsed() as usize >> 9 & 1 > 0 {
-            let offset = 2; // Remove some left space of the text cursor
-            s.set_cursor_pos([x + vw as i32 - offset, y]);
-            s.text(TEXT_CURSOR)?;
-        }
+            s.text(&value)?
+        };
 
         s.no_clip()?;
-        s.ui.pop_cursor();
         s.pop();
 
         // Process input
         if focused {
             if let Some(key) = s.ui.key_entered() {
                 match key {
-                    // TODO: Add return. Need to account for wrap_width
-                    // Key::Return => value.push('\n'),
+                    Key::Return => value.push('\n'),
                     Key::Backspace if !value.is_empty() => {
                         value.pop();
                         changed = true;
@@ -318,7 +313,15 @@ impl PixState {
             }
         }
         s.ui.handle_input(id);
-        s.advance_cursor(rect![pos, input.width(), input.bottom() - pos.y()]);
+
+        // Scrollbars
+        let total_width = total_width as i32 + 2 * ipad.x();
+        let total_height = total_height as i32 + 2 * ipad.y();
+        s.set_cursor_pos(pos);
+        s.scroll(id, input, total_width, total_height)?;
+        // EXPL: To preseve label pos being restored for `same_line`
+        s.same_line(None);
+        s.advance_cursor(rect![s.cursor_pos(), 0, input.bottom() - pos.y()]);
 
         Ok(changed)
     }

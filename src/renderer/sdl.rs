@@ -1,5 +1,5 @@
 use crate::{
-    core::window::Error as WindowError,
+    core::window::{Error as WindowError, WindowRenderer},
     prelude::*,
     renderer::{Error, RendererSettings, Rendering, Result},
     ASSETS,
@@ -252,11 +252,12 @@ impl Rendering for Renderer {
         flipped: Option<Flipped>,
         fill: Option<Color>,
         outline: u8,
-    ) -> Result<()> {
+    ) -> Result<(u32, u32)> {
         if text.is_empty() {
-            return Ok(());
+            return Ok((0, 0));
         }
         let key = (self.font.0.name, self.font.1);
+        let (win_width, _) = self.dimensions()?;
         let font = self.font_cache.get_mut(&key);
         match (fill, font) {
             (Some(fill), Some(font)) => {
@@ -274,7 +275,7 @@ impl Rendering for Renderer {
                     let surface = if let Some(width) = wrap_width {
                         font.render(text).blended_wrapped(fill, width)?
                     } else {
-                        font.render(text).blended(fill)?
+                        font.render(text).blended_wrapped(fill, win_width)?
                     };
                     self.text_cache.put(
                         key.clone(),
@@ -302,10 +303,11 @@ impl Rendering for Renderer {
                             Some(SdlRect::new(pos.x(), pos.y(), width, height)),
                         )?)
                     }
-                })
+                })?;
+                Ok((width, height))
             }
             (Some(_), None) => Err(Error::InvalidFont(self.font.0.name)),
-            (None, _) => Ok(()),
+            (None, _) => Ok((0, 0)),
         }
     }
 
@@ -334,17 +336,16 @@ impl Rendering for Renderer {
         let key = (self.font.0.name, self.font.1);
         match self.font_cache.get(&key) {
             Some(font) => {
-                if text.contains('\n') {
-                    let mut size = (0, 0);
-                    for line in text.split('\n') {
-                        let (w, h) = font.size_of(line)?;
-                        size.0 = cmp::max(size.0, w);
-                        size.1 += h;
-                    }
-                    Ok(size)
-                } else {
-                    Ok(font.size_of(text)?)
+                if text.is_empty() {
+                    return Ok(font.size_of("")?);
                 }
+                let mut size = (0, 0);
+                for line in text.lines() {
+                    let (w, h) = font.size_of(line)?;
+                    size.0 = cmp::max(size.0, w);
+                    size.1 += h;
+                }
+                Ok(size)
             }
             None => Err(Error::InvalidFont(self.font.0.name)),
         }
@@ -651,14 +652,7 @@ impl From<Color> for SdlColor {
 impl From<FontStyle> for SdlFontStyle {
     /// Convert [FontStyle] to [SdlFontStyle].
     fn from(style: FontStyle) -> Self {
-        match style {
-            FontStyle::NORMAL => SdlFontStyle::NORMAL,
-            FontStyle::BOLD => SdlFontStyle::BOLD,
-            FontStyle::ITALIC => SdlFontStyle::ITALIC,
-            FontStyle::UNDERLINE => SdlFontStyle::UNDERLINE,
-            FontStyle::STRIKETHROUGH => SdlFontStyle::STRIKETHROUGH,
-            _ => unreachable!("invalid FontStyle"),
-        }
+        SdlFontStyle::from_bits(style.bits()).expect("valid FontStyle")
     }
 }
 

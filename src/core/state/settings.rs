@@ -74,12 +74,12 @@ bitflags! {
         const NORMAL = 0x00;
         /// Bold.
         const BOLD = 0x01;
-        /// Underline
-        const UNDERLINE = 0x02;
         /// Italic.
-        const ITALIC = 0x03;
+        const ITALIC = 0x02;
+        /// Underline
+        const UNDERLINE = 0x04;
         /// Strike-through
-        const STRIKETHROUGH = 0x04;
+        const STRIKETHROUGH = 0x08;
     }
 }
 

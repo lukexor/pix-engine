@@ -1,11 +1,13 @@
 //! Text UI widgets.
 
 use crate::{prelude::*, renderer::Rendering};
-use std::cmp;
 
 impl PixState {
     /// Draw text to the current canvas.
-    pub fn text<S>(&mut self, text: S) -> PixResult<()>
+    ///
+    /// Returns the rendered `(width, height)` of the text, including any newlines or text
+    /// wrapping.
+    pub fn text<S>(&mut self, text: S) -> PixResult<(u32, u32)>
     where
         S: AsRef<str>,
     {
@@ -13,24 +15,31 @@ impl PixState {
     }
 
     /// Draw bulleted text to the current canvas.
-    pub fn bullet<S>(&mut self, text: S) -> PixResult<()>
+    ///
+    /// Returns the rendered `(width, height)` of the text, including any newlines or text
+    /// wrapping.
+    pub fn bullet<S>(&mut self, text: S) -> PixResult<(u32, u32)>
     where
         S: AsRef<str>,
     {
-        self.text("•")?;
+        let (bw, bh) = self.text("•")?;
         self.same_line(None);
-        self.text_transformed(text, 0.0, None, None)
+        let (w, h) = self.text_transformed(text, 0.0, None, None)?;
+        Ok((bw + w, bh + h))
     }
 
     /// Draw transformed text to the current canvas, optionally rotated about a `center` by `angle`
     /// or `flipped`. `angle` can be in radians or degrees depending on [AngleMode].
+    ///
+    /// Returns the rendered `(width, height)` of the text, including any newlines or text
+    /// wrapping.
     pub fn text_transformed<S, A, C, F>(
         &mut self,
         text: S,
         angle: A,
         center: C,
         flipped: F,
-    ) -> PixResult<()>
+    ) -> PixResult<(u32, u32)>
     where
         S: AsRef<str>,
         A: Into<Option<Scalar>>,
@@ -56,7 +65,8 @@ impl PixState {
         let fill = s.text_color();
         let stroke = s.settings.stroke;
         let stroke_weight = s.settings.stroke_weight;
-        let mut render_text = |color: Color, outline: u8| -> PixResult<()> {
+        let wrap_width = s.settings.wrap_width;
+        let mut render_text = |color: Color, outline: u8| -> PixResult<(u32, u32)> {
             s.push();
 
             // Make sure to offset the text if an outline was drawn
@@ -70,24 +80,11 @@ impl PixState {
                 s.fill(color);
             }
 
-            let mut rect = rect![pos.x(), pos.y(), 0, 0];
-            let mut y = pos.y();
-            for line in text.split('\n') {
-                s.renderer.text(
-                    point![rect.x(), y],
-                    line,
-                    s.settings.wrap_width,
-                    angle,
-                    center,
-                    flipped,
-                    s.settings.fill,
-                    outline,
-                )?;
-                let (w, h) = s.size_of(line)?;
-                y += h as i32;
-                rect.set_width(cmp::max(w as i32, rect.width()));
-                rect.offset_height(h as i32);
-            }
+            let fill = s.settings.fill;
+            let (w, h) = s
+                .renderer
+                .text(pos, text, wrap_width, angle, center, flipped, fill, outline)?;
+            let rect = rect![pos, w as i32, h as i32];
 
             // Only advance the cursor if we're not drawing a text outline
             if outline == 0 {
@@ -95,16 +92,15 @@ impl PixState {
             }
 
             s.pop();
-            Ok(())
+            Ok((w, h))
         };
 
-        if let Some(stroke) = stroke {
-            if stroke_weight > 0 {
-                render_text(stroke, stroke_weight)?;
-            }
-        }
-        render_text(fill, 0)?;
+        let stroke_size = match stroke {
+            Some(stroke) if stroke_weight > 0 => Some(render_text(stroke, stroke_weight)?),
+            _ => None,
+        };
+        let size = render_text(fill, 0)?;
 
-        Ok(())
+        Ok(stroke_size.unwrap_or(size))
     }
 }

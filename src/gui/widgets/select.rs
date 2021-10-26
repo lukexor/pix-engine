@@ -1,12 +1,10 @@
 //! Select UI widgets.
 
 use crate::{
-    gui::{state::Texture, Direction},
+    gui::{state::Texture, widgets::SCROLL_SIZE},
     prelude::*,
 };
 use std::cmp;
-
-const SCROLL_SIZE: i32 = 12;
 
 impl PixState {
     /// Draw a select box the current canvas.
@@ -118,8 +116,8 @@ impl PixState {
         // Process input
         if focused {
             // Pop select list
+            let height = 4 * (font_size + 2 * ipad.y()) + 1;
             if !s.ui.textures.contains_key(&id) {
-                let height = 4 * (font_size + 2 * ipad.y()) + 1;
                 let texture_id = s.create_texture(
                     select_box.width() as u32 + 2 * fpad.x() as u32,
                     height as u32,
@@ -138,6 +136,9 @@ impl PixState {
 
             s.ui.set_mouse_offset(select_box.bottom_left());
             s.with_texture(texture_id, |s: &mut PixState| {
+                if height > select_box.height() {
+                    s.next_width(select_box.width() as u32 + 2);
+                }
                 s.select_list(format!("#{}", label), selected, items, 4)?;
                 Ok(())
             })?;
@@ -204,12 +205,6 @@ impl PixState {
             cmp::max(w as i32, max_width)
         });
 
-        let vertical_scroll = total_height > select_box.height();
-        if vertical_scroll {
-            select_box.offset_width(-SCROLL_SIZE);
-        }
-        let horizontal_scroll = total_width > select_box.width();
-
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, select_box);
         let focused = s.ui.try_focus(id);
@@ -242,7 +237,6 @@ impl PixState {
         // Items
         let mpos = s.mouse_pos();
 
-        s.ui.push_cursor();
         let mut clip = select_box;
         clip.offset_size([-1, -1]);
         s.clip(clip)?;
@@ -275,7 +269,6 @@ impl PixState {
         }
 
         s.no_clip()?;
-        s.ui.pop_cursor();
         s.pop();
 
         // Process input
@@ -303,68 +296,21 @@ impl PixState {
         }
         s.ui.handle_input(id);
 
-        // Process mouse wheel
-        let ymax = total_height - select_box.height();
-        let xmax = total_width - select_box.width() - SCROLL_SIZE;
-        if hovered {
-            if s.ui.mouse.yrel != 0 {
-                scroll.set_y(cmp::max(
-                    0,
-                    cmp::min(ymax, scroll.y() - 3 * s.ui.mouse.yrel),
-                ));
-                s.ui.set_scroll(id, scroll);
-            }
-            if s.ui.mouse.xrel != 0 {
-                scroll.set_x(cmp::max(
-                    0,
-                    cmp::min(xmax, scroll.x() - 3 * s.ui.mouse.xrel),
-                ));
-                s.ui.set_scroll(id, scroll);
-            }
-        }
-
-        // Scrollbar
-        if vertical_scroll {
-            let mut scroll_y = scroll.y();
-            let scrolled = s.scroll(
-                rect![
-                    select_box.right() + 1,
-                    select_box.top(),
-                    SCROLL_SIZE,
-                    select_box.height(),
-                ],
-                ymax as u32,
-                &mut scroll_y,
-                Direction::Vertical,
-            )?;
-            if scrolled {
-                scroll.set_y(scroll_y);
-                s.ui.set_scroll(id, scroll);
-            }
-            select_box.offset_width(SCROLL_SIZE);
-        }
-        s.advance_cursor(select_box);
-
-        if horizontal_scroll {
-            let mut scroll_x = scroll.x();
-            let scrolled = s.scroll(
-                rect![
-                    select_box.left(),
-                    select_box.bottom() + 1,
-                    select_box.width(),
-                    SCROLL_SIZE,
-                ],
-                xmax as u32,
-                &mut scroll_x,
-                Direction::Horizontal,
-            )?;
-            if scrolled {
-                scroll.set_x(scroll_x);
-                s.ui.set_scroll(id, scroll);
-            }
-
-            s.advance_cursor(rect![s.cursor_pos(), select_box.width(), SCROLL_SIZE]);
-        }
+        // Scrollbars
+        s.set_cursor_pos(pos);
+        s.scroll(id, select_box, total_width, total_height)?;
+        // EXPL: To preseve label pos being restored for `same_line`
+        s.same_line(None);
+        let scroll_height = if total_width > select_box.width() {
+            SCROLL_SIZE
+        } else {
+            0
+        };
+        s.advance_cursor(rect![
+            s.cursor_pos(),
+            0,
+            select_box.bottom() - pos.y() + scroll_height
+        ]);
 
         Ok(())
     }

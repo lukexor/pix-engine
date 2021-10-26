@@ -89,6 +89,7 @@ impl AppState for Gui {
         s.stroke_weight(2);
         s.font_style(FontStyle::BOLD | FontStyle::ITALIC);
         s.text("Outlined Bold Italicized Text!")?;
+        s.spacing();
         s.pop();
 
         // Text Fields
