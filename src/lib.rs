@@ -26,13 +26,6 @@
     html_logo_url = ""
 )]
 
-#[cfg(not(target_arch = "wasm32"))]
-use include_dir::{include_dir, Dir};
-
-/// Bundles static binary assets with crate.
-#[cfg(not(target_arch = "wasm32"))]
-pub(crate) const ASSETS: Dir<'_> = include_dir!("./assets");
-
 #[macro_use]
 pub mod core;
 

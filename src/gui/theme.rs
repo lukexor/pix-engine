@@ -9,12 +9,18 @@ pub mod fonts {
 
     use super::{Font, FontSrc};
 
+    const ARIAL_TTF: &[u8] = include_bytes!("../../assets/arial.ttf");
+    const EMULOGIC_TTF: &[u8] = include_bytes!("../../assets/emulogic.ttf");
+    const INCONSOLATA_TTF: &[u8] = include_bytes!("../../assets/inconsolata.ttf");
+
     /// Arial
-    pub const ARIAL: Font = Font::new("Arial", FontSrc::Library("arial.ttf"));
+    pub const ARIAL: Font = Font::new("Arial", FontSrc::Bytes(ARIAL_TTF));
+
     /// Emulogic - bold, pixel font.
-    pub const EMULOGIC: Font = Font::new("Emulogic", FontSrc::Library("emulogic.ttf"));
+    pub const EMULOGIC: Font = Font::new("Emulogic", FontSrc::Bytes(EMULOGIC_TTF));
+
     /// Inconsolata - monospace font.
-    pub const INCONSOLATA: Font = Font::new("Library", FontSrc::Library("inconsolata.ttf"));
+    pub const INCONSOLATA: Font = Font::new("Inconsolata", FontSrc::Bytes(INCONSOLATA_TTF));
 }
 
 /// A builder to generate custom [Theme]s.
@@ -144,8 +150,6 @@ impl Font {
 /// Represents source of font data.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum FontSrc {
-    /// An included library font, packaged with the crate.
-    Library(&'static str),
     /// A font from static byte data.
     Bytes(&'static [u8]),
     /// A custom string or path to a `.ttf` font file.

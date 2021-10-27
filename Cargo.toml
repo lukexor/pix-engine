@@ -43,7 +43,6 @@ opengl = []
 use-vcpkg = ["sdl2/static-link", "sdl2/use-vcpkg"]
 
 [target."cfg(not(target_arch = \"wasm32\"))".dependencies]
-include_dir = "0.6.1"
 sdl2 = { version = "0.35.0", default_features = false, features = ["gfx", "image", "mixer", "ttf", "unsafe_textures"] }
 
 [target."cfg(target_arch = \"wasm32\")".dependencies]

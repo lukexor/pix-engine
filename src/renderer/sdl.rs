@@ -2,7 +2,6 @@ use crate::{
     core::window::{Error as WindowError, WindowRenderer},
     prelude::*,
     renderer::{Error, RendererSettings, Rendering, Result},
-    ASSETS,
 };
 use lazy_static::lazy_static;
 use lru::LruCache;
@@ -67,14 +66,6 @@ macro_rules! update_font_cache {
         let key = (name, size);
         if !$cache.contains(&key) {
             match $font.0.source {
-                FontSrc::Library(ref name) => {
-                    let contents = ASSETS
-                        .get_file(name)
-                        .expect("valid included font")
-                        .contents();
-                    let rwops = RWops::from_bytes(contents)?;
-                    $cache.put(key, TTF.load_font_from_rwops(rwops, size)?);
-                }
                 FontSrc::Bytes(bytes) => {
                     let rwops = RWops::from_bytes(bytes)?;
                     $cache.put(key, TTF.load_font_from_rwops(rwops, size)?);
