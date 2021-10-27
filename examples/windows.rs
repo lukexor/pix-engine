@@ -63,7 +63,7 @@ fn main() -> PixResult<()> {
         .with_dimensions(400, 400)
         .with_title("Window 1")
         .position(10, 10)
-        .build();
+        .build()?;
     let mut app = WindowDemo::new();
     engine.run(&mut app)
 }

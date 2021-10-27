@@ -2,6 +2,8 @@
 
 use crate::{prelude::*, renderer::Rendering};
 use num_traits::AsPrimitive;
+#[cfg(not(target_arch = "wasm32"))]
+use std::path::PathBuf;
 use std::str::FromStr;
 
 pub mod fonts {
@@ -131,7 +133,7 @@ impl ThemeBuilder {
     }
 }
 
-/// Represents a font family. (e.g. "helvetica").
+/// Represents a font family along with the source of the font data.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Font {
     /// Family name of the font.
@@ -152,8 +154,9 @@ impl Font {
 pub enum FontSrc {
     /// A font from static byte data.
     Bytes(&'static [u8]),
-    /// A custom string or path to a `.ttf` font file.
-    Custom(String),
+    #[cfg(not(target_arch = "wasm32"))]
+    /// A path to a `.ttf` font file.
+    Path(PathBuf),
 }
 
 impl Default for Font {

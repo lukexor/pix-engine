@@ -191,8 +191,7 @@ fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("SVG Color Constants")
-        .position_centered()
-        .build();
+        .build()?;
     let mut app = ColorConsts::new();
     engine.run(&mut app)
 }

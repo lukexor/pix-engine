@@ -11,6 +11,7 @@ use std::path::PathBuf;
 #[derive(Default, Debug)]
 pub struct PixEngineBuilder {
     settings: RendererSettings,
+    theme: Theme,
 }
 
 impl PixEngineBuilder {
@@ -33,14 +34,14 @@ impl PixEngineBuilder {
     where
         F: Into<Font>,
     {
-        self.settings.theme.fonts.body = font.into();
-        self.settings.theme.font_sizes.body = size;
+        self.theme.fonts.body = font.into();
+        self.theme.font_sizes.body = size;
         self
     }
 
     /// Set theme for UI rendering.
     pub fn with_theme(&mut self, theme: Theme) -> &mut Self {
-        self.settings.theme = theme;
+        self.theme = theme;
         self
     }
 
@@ -152,10 +153,10 @@ impl PixEngineBuilder {
     }
 
     /// Convert [PixEngineBuilder] to a [PixEngine] instance.
-    pub fn build(&self) -> PixEngine {
-        PixEngine {
-            settings: self.settings.clone(),
-        }
+    pub fn build(&self) -> PixResult<PixEngine> {
+        Ok(PixEngine {
+            state: PixState::new(self.settings.clone(), self.theme.clone())?,
+        })
     }
 }
 
@@ -163,7 +164,7 @@ impl PixEngineBuilder {
 #[must_use]
 #[derive(Debug)]
 pub struct PixEngine {
-    settings: RendererSettings,
+    state: PixState,
 }
 
 impl PixEngine {
@@ -177,17 +178,10 @@ impl PixEngine {
     where
         A: AppState,
     {
-        let renderer = Renderer::new(self.settings.clone())?;
-        let mut state = PixState::new(renderer, self.settings.theme.clone());
-        state.show_frame_rate(self.settings.show_frame_rate);
-        if let Some(frame_rate) = self.settings.target_frame_rate {
-            state.set_frame_rate(frame_rate);
-        }
-
         // Handle events before on_start to initialize window
-        self.handle_events(&mut state, app)?;
-        app.on_start(&mut state)?;
-        if state.should_quit() {
+        self.handle_events(app)?;
+        app.on_start(&mut self.state)?;
+        if self.state.should_quit() {
             return Ok(());
         }
 
@@ -195,30 +189,30 @@ impl PixEngine {
         'on_stop: loop {
             // running loop continues until an event or on_update returns false or errors
             'running: loop {
-                self.handle_events(&mut state, app)?;
-                if state.should_quit() {
+                self.handle_events(app)?;
+                if self.state.should_quit() {
                     break 'running;
                 }
 
                 let now = Instant::now();
-                let time_since_last = now - state.last_frame_time();
-                let target_delta_time = state.target_delta_time();
+                let time_since_last = now - self.state.last_frame_time();
+                let target_delta_time = self.state.target_delta_time();
                 if time_since_last >= target_delta_time {
-                    state.set_delta_time(now, time_since_last);
-                    if state.is_running() {
-                        state.clear()?;
-                        state.pre_update();
-                        app.on_update(&mut state)?;
-                        state.on_update()?;
-                        state.post_update();
-                        state.present();
-                        state.increment_frame(now, time_since_last)?;
+                    self.state.set_delta_time(now, time_since_last);
+                    if self.state.is_running() {
+                        self.state.clear()?;
+                        self.state.pre_update();
+                        app.on_update(&mut self.state)?;
+                        self.state.on_update()?;
+                        self.state.post_update();
+                        self.state.present();
+                        self.state.increment_frame(now, time_since_last)?;
                     }
                 }
             }
 
-            app.on_stop(&mut state)?;
-            if state.should_quit() {
+            app.on_stop(&mut self.state)?;
+            if self.state.should_quit() {
                 break 'on_stop;
             }
         }
@@ -227,11 +221,13 @@ impl PixEngine {
 
     /// Handle user and system events.
     #[inline]
-    fn handle_events<A>(&mut self, state: &mut PixState, app: &mut A) -> PixResult<()>
+    fn handle_events<A>(&mut self, app: &mut A) -> PixResult<()>
     where
         A: AppState,
     {
+        let state = &mut self.state;
         while let Some(event) = state.renderer.poll_event() {
+            app.on_event(state, &event)?;
             match event {
                 Event::Quit { .. } | Event::AppTerminating { .. } => state.quit(),
                 Event::Window {
@@ -267,9 +263,9 @@ impl PixEngine {
                         state.ui.keys.release(key, keymod);
                     }
                 }
-                Event::TextInput { ref text, .. } => {
-                    if !app.on_key_typed(state, text)? {
-                        state.ui.keys.typed(text.clone());
+                Event::TextInput { text, .. } => {
+                    if !app.on_key_typed(state, &text)? {
+                        state.ui.keys.typed(text);
                     }
                 }
                 Event::MouseMotion { x, y, xrel, yrel } => {
@@ -307,14 +303,7 @@ impl PixEngine {
                 }
                 _ => (),
             }
-            app.on_event(state, event)?;
         }
         Ok(())
-    }
-}
-
-impl Default for PixEngine {
-    fn default() -> Self {
-        PixEngine::builder().build()
     }
 }

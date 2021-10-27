@@ -2,6 +2,8 @@
 //!
 //! [PixEngine]: crate::prelude::PixEngine
 
+use std::time::Duration;
+
 use crate::{prelude::*, renderer::*};
 use bitflags::bitflags;
 use num_traits::AsPrimitive;
@@ -95,6 +97,7 @@ pub(crate) struct Settings {
     pub(crate) clip: Option<Rect<i32>>,
     pub(crate) running: bool,
     pub(crate) show_frame_rate: bool,
+    pub(crate) target_frame_rate: Option<usize>,
     pub(crate) scale_x: f32,
     pub(crate) scale_y: f32,
     pub(crate) rect_mode: RectMode,
@@ -118,6 +121,7 @@ impl Default for Settings {
             clip: None,
             running: true,
             show_frame_rate: false,
+            target_frame_rate: None,
             scale_x: 1.0,
             scale_y: 1.0,
             rect_mode: RectMode::Corner,
@@ -225,8 +229,8 @@ impl PixState {
     }
 
     /// Set the mouse cursor to a predefined symbol or image.
-    pub fn cursor(&mut self, cursor: &Cursor) -> PixResult<()> {
-        self.settings.cursor = Some(cursor.clone());
+    pub fn cursor(&mut self, cursor: Cursor) -> PixResult<()> {
+        self.settings.cursor = Some(cursor);
         Ok(self.renderer.cursor(self.settings.cursor.as_ref())?)
     }
 
@@ -257,6 +261,24 @@ impl PixState {
     /// Set whether to show the current frame rate per second in the title or not.
     pub fn show_frame_rate(&mut self, show: bool) {
         self.settings.show_frame_rate = show;
+    }
+
+    /// Get the target frame rate to render at.
+    #[inline]
+    pub fn target_frame_rate(&mut self) -> Option<usize> {
+        self.settings.target_frame_rate
+    }
+
+    /// Set a target frame rate to render at, controls how often
+    /// [on_update](crate::prelude::AppState::on_update) is called.
+    pub fn set_frame_rate(&mut self, rate: usize) {
+        self.settings.target_frame_rate = Some(rate);
+    }
+
+    /// Remove target frame rate and call [on_update](crate::prelude::AppState::on_update) as often
+    /// as possible.
+    pub fn clear_frame_rate(&mut self) {
+        self.settings.target_frame_rate = None;
     }
 
     /// Set the rendering scale of the current canvas.
@@ -347,7 +369,17 @@ impl PixState {
     /// Set the mouse cursor to a predefined symbol or image for a single frame.
     ///
     /// Cursor will get reset to the current setting next frame.
-    pub(crate) fn frame_cursor(&mut self, cursor: &Cursor) -> PixResult<()> {
-        Ok(self.renderer.cursor(Some(cursor))?)
+    #[inline]
+    pub(crate) fn frame_cursor(&mut self, cursor: Cursor) -> PixResult<()> {
+        Ok(self.renderer.cursor(Some(&cursor))?)
+    }
+
+    /// Get the target delta time between frames.
+    #[inline]
+    pub(crate) fn target_delta_time(&self) -> Duration {
+        self.settings
+            .target_frame_rate
+            .map(|rate| Duration::from_secs(rate as u64))
+            .unwrap_or_else(Duration::default)
     }
 }

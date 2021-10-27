@@ -374,9 +374,8 @@ fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("2D Raycasting")
-        .position_centered()
         .with_frame_rate()
-        .build();
+        .build()?;
     let mut app = RayScene::new();
     engine.run(&mut app)
 }

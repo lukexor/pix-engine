@@ -310,7 +310,7 @@ impl AppState for App {
         s.background(BLACK)?;
         s.rect_mode(RectMode::Center);
         s.no_stroke();
-        s.cursor(&Cursor::hand())?;
+        s.cursor(Cursor::hand())?;
         s.clip([15, 15, WIDTH - 30, HEIGHT - 30])?;
 
         for i in 0..COUNT {
@@ -341,10 +341,9 @@ pub fn main() -> PixResult<()> {
         .with_dimensions(WIDTH, HEIGHT)
         .scale(2.0, 2.0)
         .with_title("Fluid Simulation")
-        .position_centered()
         .with_frame_rate()
         .vsync_enabled()
-        .build();
+        .build()?;
     let mut app = App::new();
     engine.run(&mut app)
 }

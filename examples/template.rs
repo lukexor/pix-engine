@@ -31,8 +31,7 @@ fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(800, 600)
         .with_title("MyApp")
-        .position_centered()
-        .build();
+        .build()?;
     let mut app = MyApp;
     engine.run(&mut app)
 }

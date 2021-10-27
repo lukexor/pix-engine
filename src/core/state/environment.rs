@@ -18,7 +18,6 @@ pub(crate) struct Environment {
     delta_time: Scalar,
     start: Instant,
     frame_rate: usize,
-    target_frame_rate: Option<usize>,
     frame_count: usize,
     run_count: usize,
     quit: bool,
@@ -35,7 +34,6 @@ impl Default for Environment {
             delta_time: 0.0,
             start: Instant::now(),
             frame_rate: 0,
-            target_frame_rate: None,
             frame_count: 0,
             run_count: 0,
             quit: false,
@@ -104,26 +102,6 @@ impl PixState {
         self.env.frame_rate
     }
 
-    /// Get the target frame rate to render at.
-    #[inline]
-    pub fn target_frame_rate(&mut self) -> Option<usize> {
-        self.env.target_frame_rate
-    }
-
-    /// Set a target frame rate to render at, controls how often
-    /// [on_update](crate::prelude::AppState::on_update) is called.
-    #[inline]
-    pub fn set_frame_rate(&mut self, rate: usize) {
-        self.env.target_frame_rate = Some(rate);
-    }
-
-    /// Remove target frame rate and call [on_update](crate::prelude::AppState::on_update) as often
-    /// as possible.
-    #[inline]
-    pub fn clear_frame_rate(&mut self) {
-        self.env.target_frame_rate = None;
-    }
-
     /// Trigger exiting of the game loop.
     #[inline]
     pub fn quit(&mut self) {
@@ -141,14 +119,6 @@ impl PixState {
     #[inline]
     pub(crate) fn last_frame_time(&self) -> Instant {
         self.env.last_frame_time
-    }
-
-    #[inline]
-    pub(crate) fn target_delta_time(&self) -> Duration {
-        self.env
-            .target_frame_rate
-            .map(|rate| Duration::from_secs(rate as u64))
-            .unwrap_or_else(Duration::default)
     }
 
     #[inline]

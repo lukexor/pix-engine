@@ -35,6 +35,7 @@ pub type WindowId = usize;
 pub enum Cursor {
     /// A system supported cursor. e.g. Arrow, Hand, etc.
     System(SystemCursor),
+    #[cfg(not(target_arch = "wasm32"))]
     /// A custom cursor from a image path.
     Image(PathBuf),
 }

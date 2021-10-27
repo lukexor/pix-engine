@@ -172,10 +172,9 @@ fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(1000, 800)
         .with_title("GUI Demo")
-        .position_centered()
         .with_frame_rate()
         .with_font(ARIAL, 14)
-        .build();
+        .build()?;
     let mut app = Gui::new();
     engine.run(&mut app)
 }

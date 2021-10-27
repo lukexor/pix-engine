@@ -55,7 +55,7 @@ impl WindowRenderer for Renderer {
         match cursor {
             Some(cursor) => {
                 self.cursor = match cursor {
-                    Cursor::System(cursor) => SdlCursor::from_system(cursor.into())?,
+                    Cursor::System(cursor) => SdlCursor::from_system((*cursor).into())?,
                     Cursor::Image(path) => {
                         let surface = Surface::from_file(path)?;
                         SdlCursor::from_surface(surface, 0, 0)?
@@ -356,8 +356,8 @@ impl Renderer {
     }
 }
 
-impl From<&SystemCursor> for SdlSystemCursor {
-    fn from(cursor: &SystemCursor) -> Self {
+impl From<SystemCursor> for SdlSystemCursor {
+    fn from(cursor: SystemCursor) -> Self {
         use SdlSystemCursor::*;
         match cursor {
             SystemCursor::Arrow => Arrow,

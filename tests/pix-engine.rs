@@ -50,7 +50,7 @@ impl AppState for App {
     }
 }
 
-fn create_engine() -> PixEngine {
+fn create_engine() -> PixResult<PixEngine> {
     PixEngine::builder()
         .with_title("pix-engine integration test")
         .position_centered()
@@ -60,41 +60,44 @@ fn create_engine() -> PixEngine {
 
 #[test]
 #[ignore = "engine can only be tested in the main thread. --test-threads=1"]
-fn test_run_engine_start() {
-    let mut eng = create_engine();
+fn test_run_engine_start() -> PixResult<()> {
+    let mut eng = create_engine()?;
     // Quitting from on_start should exit the game loop early
     let mut app = App::new();
     app.quit_on_start = true;
-    let _ = eng.run(&mut app);
+    eng.run(&mut app)?;
     assert_eq!(app.start_count, 1, "on_start was called");
     assert_eq!(app.update_count, 0, "on_update was not called");
     assert_eq!(app.stop_count, 0, "on_stop was not called");
+    Ok(())
 }
 
 #[test]
 #[ignore = "engine can only be tested in the main thread. --test-threads=1"]
-fn test_run_engine_update() {
-    let mut eng = create_engine();
+fn test_run_engine_update() -> PixResult<()> {
+    let mut eng = create_engine()?;
     // Quitting from on_update should exit but still run on_stop
     let mut app = App::new();
     app.quit_on_update = true;
-    let _ = eng.run(&mut app);
+    eng.run(&mut app)?;
     assert_eq!(app.start_count, 1, "on_start was called");
     assert_eq!(app.update_count, 1, "on_update was called");
     assert_eq!(app.stop_count, 1, "on_stop was called");
+    Ok(())
 }
 
 #[test]
 #[ignore = "engine can only be tested in the main thread. --test-threads=1"]
-fn test_run_engine_stop() {
-    let mut eng = create_engine();
+fn test_run_engine_stop() -> PixResult<()> {
+    let mut eng = create_engine()?;
     // Aborting quit from on_stop should resume game loop
     let mut app = App::new();
     app.quit_on_update = true;
     app.abort_quit_on_stop = true;
-    let _ = eng.run(&mut app);
+    eng.run(&mut app)?;
     assert_eq!(app.start_count, 1, "on_start was called");
     // Accounts for the initial run, plus 1 more for on_stop being cancelled
     assert_eq!(app.update_count, 2, "on_update was called");
     assert_eq!(app.stop_count, 2, "on_stop was called");
+    Ok(())
 }

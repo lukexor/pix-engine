@@ -90,7 +90,7 @@ impl PixState {
             s.stroke(s.muted_color());
         }
         if hovered {
-            s.frame_cursor(&Cursor::ibeam())?;
+            s.frame_cursor(Cursor::ibeam())?;
             s.fill(s.secondary_color());
         } else if disabled {
             s.fill(s.primary_color() / 2);
@@ -250,7 +250,7 @@ impl PixState {
             s.stroke(s.muted_color());
         }
         if hovered {
-            s.frame_cursor(&Cursor::ibeam())?;
+            s.frame_cursor(Cursor::ibeam())?;
             s.fill(s.secondary_color());
         } else if disabled {
             s.fill(s.primary_color() / 2);

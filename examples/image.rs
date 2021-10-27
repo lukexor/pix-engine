@@ -53,9 +53,8 @@ fn main() -> PixResult<()> {
         let mut engine = PixEngine::builder()
             .with_dimensions(WIDTH, HEIGHT)
             .with_title("Image Demo")
-            .position_centered()
             .with_frame_rate()
-            .build();
+            .build()?;
         let mut app = ImageDemo::new(&args[1])?;
         engine.run(&mut app)
     }

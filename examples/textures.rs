@@ -66,9 +66,8 @@ fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("Textures")
-        .position_centered()
         .with_frame_rate()
-        .build();
+        .build()?;
     let mut app = Textures::new();
     engine.run(&mut app)
 }

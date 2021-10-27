@@ -108,7 +108,7 @@ impl PixState {
 
         // Thumb scroll
         if hovered {
-            s.frame_cursor(&Cursor::hand())?;
+            s.frame_cursor(Cursor::hand())?;
         }
         if hovered || active || focused {
             s.fill(s.highlight_color());

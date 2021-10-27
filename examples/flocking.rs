@@ -193,10 +193,9 @@ pub fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("Flocking")
-        .position_centered()
         .with_frame_rate()
         .vsync_enabled()
-        .build();
+        .build()?;
     let mut app = App::new();
     engine.run(&mut app)
 }

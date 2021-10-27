@@ -134,7 +134,7 @@ pub trait AppState {
     }
 
     /// Called for any system or user event.
-    fn on_event(&mut self, s: &mut PixState, event: Event) -> PixResult<()> {
+    fn on_event(&mut self, s: &mut PixState, event: &Event) -> PixResult<()> {
         Ok(())
     }
 }

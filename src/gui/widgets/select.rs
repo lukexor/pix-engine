@@ -65,7 +65,7 @@ impl PixState {
             s.stroke(s.muted_color());
         }
         if hovered {
-            s.frame_cursor(&Cursor::hand())?;
+            s.frame_cursor(Cursor::hand())?;
             s.fill(s.secondary_color());
         } else if disabled {
             s.fill(s.primary_color() / 2);
@@ -249,7 +249,7 @@ impl PixState {
                 item_rect.bottom() > select_box.y() || item_rect.top() < select_box.height();
             s.push();
             if hovered && clickable && item_rect.contains_point(mpos) {
-                s.frame_cursor(&Cursor::hand())?;
+                s.frame_cursor(Cursor::hand())?;
                 s.no_stroke();
                 s.fill(s.highlight_color());
                 s.rect([select_box.x(), y, select_box.width(), line_height])?;

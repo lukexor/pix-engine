@@ -70,7 +70,7 @@ macro_rules! update_font_cache {
                     let rwops = RWops::from_bytes(bytes)?;
                     $cache.put(key, TTF.load_font_from_rwops(rwops, size)?);
                 }
-                FontSrc::Custom(ref path) => {
+                FontSrc::Path(ref path) => {
                     $cache.put(key, TTF.load_font(path, size)?);
                 }
             }
@@ -106,6 +106,7 @@ impl Rendering for Renderer {
         let context = sdl2::init()?;
         let event_pump = context.event_pump()?;
 
+        let title = s.title.clone();
         let (window_id, canvas) = Self::create_window_canvas(&context, &s)?;
         let cursor = Cursor::from_system(SystemCursor::Arrow)?;
         cursor.set();
@@ -123,14 +124,11 @@ impl Rendering for Renderer {
         let audio_device = audio_sub.open_queue(None, &desired_spec)?;
         audio_device.resume();
 
-        let font_size = s.theme.font_sizes.body as u16;
-        let font = (s.theme.fonts.body.clone(), font_size);
+        let font = (Font::default(), 14);
         let mut font_cache = LruCache::new(s.texture_cache_size);
         update_font_cache!(font, font_cache);
         let text_cache = LruCache::new(s.text_cache_size);
         let image_cache = LruCache::new(s.texture_cache_size);
-
-        let title = s.title.clone();
 
         Ok(Self {
             context,

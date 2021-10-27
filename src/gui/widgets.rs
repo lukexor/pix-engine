@@ -54,7 +54,7 @@ impl PixState {
             s.stroke(s.muted_color());
         }
         if hovered {
-            s.frame_cursor(&Cursor::hand())?;
+            s.frame_cursor(Cursor::hand())?;
             s.fill(s.highlight_color());
             if active {
                 button.offset([1, 1]);
@@ -121,7 +121,7 @@ impl PixState {
             s.stroke(s.muted_color());
         }
         if hovered {
-            s.frame_cursor(&Cursor::hand())?;
+            s.frame_cursor(Cursor::hand())?;
             s.fill(s.secondary_color());
         } else if disabled {
             s.fill(s.primary_color() / 2);
@@ -201,7 +201,7 @@ impl PixState {
             s.stroke(s.muted_color());
         }
         if hovered {
-            s.frame_cursor(&Cursor::hand())?;
+            s.frame_cursor(Cursor::hand())?;
             s.fill(s.secondary_color());
         } else if disabled {
             s.fill(s.primary_color() / 2);

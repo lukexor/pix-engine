@@ -27,7 +27,7 @@ const DEFAULT_SAMPLE_RATE: i32 = 44_100; // in Hz
 #[derive(Debug, Clone)]
 pub(crate) struct RendererSettings {
     pub(crate) title: String,
-    pub(crate) theme: Theme,
+    #[cfg(not(target_arch = "wasm32"))]
     pub(crate) icon: Option<PathBuf>,
     pub(crate) x: Position,
     pub(crate) y: Position,
@@ -52,7 +52,7 @@ impl Default for RendererSettings {
     fn default() -> Self {
         Self {
             title: String::new(),
-            theme: Theme::default(),
+            #[cfg(not(target_arch = "wasm32"))]
             icon: None,
             x: Position::default(),
             y: Position::default(),

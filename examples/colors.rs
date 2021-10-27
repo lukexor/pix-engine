@@ -75,8 +75,7 @@ pub fn main() -> PixResult<()> {
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("Colors")
         .with_frame_rate()
-        .position_centered()
-        .build();
+        .build()?;
     let mut app = Colors::new();
     engine.run(&mut app)
 }

@@ -215,7 +215,7 @@ fn main() -> PixResult<()> {
         .with_frame_rate()
         .vsync_enabled()
         .with_font(Font::new("Sunray", FontSrc::Bytes(FONT_DATA)), Glyph::SIZE)
-        .build();
+        .build()?;
     let mut app = Matrix::new();
     engine.run(&mut app)
 }

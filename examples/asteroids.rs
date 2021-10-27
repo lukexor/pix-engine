@@ -347,8 +347,7 @@ pub fn main() -> PixResult<()> {
         .with_dimensions(width, height)
         .with_title("Asteroids")
         .with_frame_rate()
-        .position_centered()
-        .build();
+        .build()?;
     let mut app = Asteroids::new(width, height);
     engine.run(&mut app)
 }

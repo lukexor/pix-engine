@@ -4,7 +4,7 @@ use crate::{
     core::texture::TextureRenderer,
     gui::state::UiState,
     prelude::*,
-    renderer::{Error as RendererError, Renderer, WindowRenderer},
+    renderer::{Error as RendererError, Renderer, RendererSettings, Rendering, WindowRenderer},
 };
 use environment::Environment;
 use settings::Settings;
@@ -28,19 +28,24 @@ pub struct PixState {
 impl PixState {
     /// Constructs `PixState` with a given `Renderer`.
     #[inline]
-    pub(crate) fn new(renderer: Renderer, theme: Theme) -> Self {
-        Self {
+    pub(crate) fn new(settings: RendererSettings, theme: Theme) -> PixResult<Self> {
+        let show_frame_rate = settings.show_frame_rate;
+        let mut renderer = Renderer::new(settings)?;
+        renderer.font_size(theme.font_sizes.body)?;
+        renderer.font_family(&theme.fonts.body)?;
+        Ok(Self {
             renderer,
             env: Environment::default(),
             ui: UiState::default(),
             settings: Settings {
                 background: theme.colors.background,
                 fill: Some(theme.colors.text),
+                show_frame_rate,
                 ..Default::default()
             },
             setting_stack: Vec::new(),
             theme,
-        }
+        })
     }
 
     /// Handle state changes this frame prior to calling [AppState::on_update].

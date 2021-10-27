@@ -197,9 +197,8 @@ pub fn main() -> PixResult<()> {
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("Maze Generation")
         .with_frame_rate()
-        .position_centered()
         .vsync_enabled()
-        .build();
+        .build()?;
     let mut app = MazeApp::new(COLS, ROWS, SIZE);
     engine.run(&mut app)
 }
