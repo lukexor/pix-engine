@@ -129,8 +129,8 @@ pub(crate) trait WindowRenderer {
     /// Set the current window title.
     fn set_title(&mut self, title: &str) -> Result<()>;
 
-    /// Set the current window title with FPS appended.
-    fn set_fps_title(&mut self, fps: usize) -> Result<()>;
+    /// Set the average frames-per-second rendered.
+    fn set_fps(&mut self, fps: usize) -> Result<()>;
 
     /// Dimensions of the current render target as `(width, height)`.
     fn dimensions(&self) -> Result<(u32, u32)>;

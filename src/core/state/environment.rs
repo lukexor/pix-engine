@@ -195,7 +195,7 @@ impl PixState {
             if env.frame_timer >= ONE_SECOND {
                 env.frame_timer -= ONE_SECOND;
                 env.frame_rate = env.frames.len();
-                self.renderer.set_fps_title(env.frame_rate)?;
+                self.renderer.set_fps(env.frame_rate)?;
             }
         }
         Ok(())

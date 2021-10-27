@@ -83,6 +83,8 @@ pub(crate) struct Renderer {
     context: Sdl,
     event_pump: EventPump,
     audio_device: AudioQueue<f32>,
+    title: String,
+    fps: usize,
     settings: RendererSettings,
     cursor: Cursor,
     blend_mode: SdlBlendMode,
@@ -128,11 +130,15 @@ impl Rendering for Renderer {
         let text_cache = LruCache::new(s.text_cache_size);
         let image_cache = LruCache::new(s.texture_cache_size);
 
+        let title = s.title.clone();
+
         Ok(Self {
             context,
             event_pump,
             audio_device,
             settings: s,
+            title,
+            fps: 0,
             cursor,
             blend_mode: SdlBlendMode::None,
             font,

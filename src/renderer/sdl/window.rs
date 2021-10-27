@@ -15,7 +15,7 @@ use sdl2::{
     video::{FullscreenType, WindowBuildError},
     IntegerOrSdlError, Sdl,
 };
-use std::borrow::Cow;
+use std::{borrow::Cow, fmt::Write};
 
 impl WindowRenderer for Renderer {
     /// Get the primary window ID.
@@ -86,7 +86,7 @@ impl WindowRenderer for Renderer {
     /// Set the current window title.
     #[inline]
     fn set_title(&mut self, title: &str) -> Result<()> {
-        self.settings.title = title.to_owned();
+        self.settings.title.replace_range(.., title);
         let (canvas, _) = self
             .canvases
             .get_mut(&self.window_target)
@@ -95,14 +95,15 @@ impl WindowRenderer for Renderer {
     }
 
     #[inline]
-    fn set_fps_title(&mut self, fps: usize) -> Result<()> {
+    fn set_fps(&mut self, fps: usize) -> Result<()> {
+        self.fps = fps;
+        self.title.clear();
+        write!(self.title, "{} - FPS: {}", &self.settings.title, self.fps).expect("valid title");
         let (canvas, _) = self
             .canvases
             .get_mut(&self.window_target)
             .ok_or(WindowError::InvalidWindow(self.window_target))?;
-        Ok(canvas
-            .window_mut()
-            .set_title(&format!("{} - FPS: {}", self.settings.title, fps))?)
+        Ok(canvas.window_mut().set_title(&self.title)?)
     }
 
     /// Dimensions of the current render target as `(width, height)`.
