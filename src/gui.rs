@@ -9,6 +9,8 @@ pub mod state;
 pub mod theme;
 pub mod widgets;
 
+pub(crate) mod scroll;
+
 pub use theme::*;
 
 #[cfg(not(target_os = "macos"))]

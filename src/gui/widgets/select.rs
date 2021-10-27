@@ -1,7 +1,7 @@
 //! Select UI widgets.
 
 use crate::{
-    gui::{state::Texture, widgets::SCROLL_SIZE},
+    gui::{scroll::SCROLL_SIZE, state::Texture},
     prelude::*,
 };
 use std::cmp;
