@@ -1,11 +1,9 @@
 use super::{Renderer, WindowCanvas};
 use crate::{
-    core::{
-        ops::LruCacheExt,
-        window::{Error, Position, Result, WindowId},
-    },
+    ops::LruCacheExt,
     prelude::{Cursor, Event, SystemCursor},
     renderer::*,
+    window::{Error, Position, Result, WindowId},
 };
 use sdl2::{
     image::LoadSurface,

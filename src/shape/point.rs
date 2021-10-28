@@ -31,7 +31,7 @@ use std::{fmt, ops::*};
 ///
 /// Please see the [module-level documentation] for examples.
 ///
-/// [module-level documentation]: crate::core::shape::point
+/// [module-level documentation]: crate::shape::point
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Point<T, const N: usize>(pub(crate) [T; N]);
 

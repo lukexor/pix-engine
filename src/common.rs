@@ -1,9 +1,9 @@
 //! Common crate functions and error types.
 
 use crate::{
-    core::state,
     image,
     renderer::{Error as RendererError, WindowError},
+    state,
 };
 use std::{borrow::Cow, error, fmt, io, result};
 

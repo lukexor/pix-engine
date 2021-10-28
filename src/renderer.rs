@@ -1,9 +1,9 @@
 //! Graphics renderer functions.
 
-use crate::{core::state::Error as StateError, prelude::*};
+use crate::{prelude::*, state::Error as StateError};
 use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
 
-pub(crate) use crate::core::{
+pub(crate) use crate::{
     texture::TextureRenderer, window::Error as WindowError, window::WindowRenderer,
 };
 

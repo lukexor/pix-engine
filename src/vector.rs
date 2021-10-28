@@ -38,7 +38,7 @@
 //!
 //! ```
 //! use pix_engine::prelude::*;
-//! use pix_engine::math::vector::VectorF1;
+//! use pix_engine::vector::VectorF1;
 //!
 //! let v: VectorF1 = Vector::random();
 //! // `v.values()` will return something like:
@@ -86,7 +86,7 @@ use std::{fmt, ops::*};
 /// [mag]: Vector::mag
 /// [heading]: Vector::heading
 /// [vecmath]: https://en.wikipedia.org/wiki/Vector_(mathematics_and_p.y()sics)
-/// [module-level documentation]: crate::math::vector
+/// [module-level documentation]: mod@crate::vector
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Vector<T, const N: usize>(pub(crate) [T; N]);
 

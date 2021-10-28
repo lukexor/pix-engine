@@ -1,13 +1,10 @@
 //! Math functions and constants.
 
+use crate::prelude::Vector;
 use lazy_static::lazy_static;
 use num_traits::{Float as FloatTrait, Num as NumTrait, NumAssignOps, NumCast, NumOps};
 use rand::{self, distributions::uniform::SampleUniform, Rng};
 use std::ops::{AddAssign, Range};
-use vector::Vector;
-
-#[macro_use]
-pub mod vector;
 
 /// Default math constants.
 pub mod constants {

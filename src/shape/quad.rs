@@ -34,7 +34,7 @@ use num_traits::AsPrimitive;
 ///
 /// Please see the [module-level documentation] for examples.
 ///
-/// [module-level documentation]: crate::core::shape::quad
+/// [module-level documentation]: crate::shape::quad
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Quad<T, const N: usize>(pub(crate) [Point<T, N>; 4]);
 

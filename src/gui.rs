@@ -11,8 +11,6 @@ pub mod widgets;
 
 pub(crate) mod scroll;
 
-pub use theme::*;
-
 #[cfg(not(target_os = "macos"))]
 pub(crate) const MOD_CTRL: KeyMod = KeyMod::CTRL;
 #[cfg(target_os = "macos")]

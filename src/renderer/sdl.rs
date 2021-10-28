@@ -1,7 +1,7 @@
 use crate::{
-    core::window::{Error as WindowError, WindowRenderer},
     prelude::*,
     renderer::{Error, RendererSettings, Rendering, Result},
+    window::{Error as WindowError, WindowRenderer},
 };
 use lazy_static::lazy_static;
 use lru::LruCache;

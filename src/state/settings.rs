@@ -2,13 +2,12 @@
 //!
 //! [PixEngine]: crate::prelude::PixEngine
 
-use std::time::Duration;
-
 use crate::{prelude::*, renderer::*};
 use bitflags::bitflags;
 use num_traits::AsPrimitive;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 
 /// Drawing mode which changes how `(x, y)` coordinates are interpreted.
 #[non_exhaustive]

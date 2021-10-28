@@ -1,4 +1,4 @@
-use crate::event::{Axis, ControllerButton, Event, Key, KeyMod, Mouse, WindowEvent};
+use crate::prelude::{Axis, ControllerButton, Event, Key, KeyMod, Mouse, WindowEvent};
 use sdl2::{
     controller::{Axis as SdlAxis, Button as SdlButton},
     event::{Event as SdlEvent, WindowEvent as SdlWindowEvent},

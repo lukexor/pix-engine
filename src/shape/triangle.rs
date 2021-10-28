@@ -23,7 +23,7 @@ use num_traits::AsPrimitive;
 ///
 /// Please see the [module-level documentation] for examples.
 ///
-/// [module-level documentation]: crate::core::shape::triangle
+/// [module-level documentation]: crate::shape::triangle
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Tri<T, const N: usize>(pub(crate) [Point<T, N>; 3]);
 

@@ -1,10 +1,10 @@
 //! [PixState] functions for the [PixEngine] and [AppState].
 
 use crate::{
-    core::texture::TextureRenderer,
     gui::state::UiState,
     prelude::*,
     renderer::{Error as RendererError, Renderer, RendererSettings, Rendering, WindowRenderer},
+    texture::TextureRenderer,
 };
 use environment::Environment;
 use settings::Settings;

@@ -1,5 +1,4 @@
 //! A shape type representing circles and ellipses used for drawing.
-
 //!
 //! # Examples
 //!
@@ -37,7 +36,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// Please see the [module-level documentation] for examples.
 ///
-/// [module-level documentation]: crate::core::shape::ellipse
+/// [module-level documentation]: crate::shape::ellipse
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Ellipse<T = i32>(pub(crate) [T; 4]);
