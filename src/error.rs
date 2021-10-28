@@ -25,7 +25,9 @@ pub enum Error {
     #[error("invalid window id `{0}`")]
     InvalidWindow(WindowId),
     /// Invalid [Image].
-    #[error("invalid image")]
+    #[error(
+        "invalid image {{ width: {width}, height: {height}, size: {size}, format: {format:?} }}"
+    )]
     InvalidImage {
         /// `Image` width.
         width: u32,
@@ -37,7 +39,7 @@ pub enum Error {
         format: PixelFormat,
     },
     /// Unsupported [Image] format.
-    #[error("unsupported image format. bit_depth: {bit_depth:?}, color_type: {color_type:?}")]
+    #[error("unsupported image format {{ bit_depth: {bit_depth:?}, color_type: {color_type:?} }}")]
     UnsupportedImageFormat {
         /// `Image` [png::BitDepth].
         bit_depth: png::BitDepth,
