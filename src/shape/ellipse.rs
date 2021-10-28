@@ -245,9 +245,7 @@ impl<T: Num> Ellipse<T> {
     /// Panics if not a circle.
     #[inline]
     pub fn diameter(&self) -> T {
-        if self.0[2] != self.0[3] {
-            panic!("shape is not a circle");
-        }
+        assert!(self.0[2] == self.0[3], "shape is not a circle");
         self.0[2]
     }
 

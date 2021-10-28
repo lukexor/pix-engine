@@ -47,6 +47,6 @@ impl PixState {
                 .into()
             })
             .collect();
-        Ok(self.renderer.polygon(&vs, s.fill, s.stroke)?)
+        self.renderer.polygon(&vs, s.fill, s.stroke)
     }
 }

@@ -33,6 +33,6 @@ impl PixState {
 
     /// Set clipboard text to the system clipboard.
     fn set_clipboard_text(&self, value: &str) -> PixResult<()> {
-        Ok(self.renderer.set_clipboard_text(value)?)
+        self.renderer.set_clipboard_text(value)
     }
 }

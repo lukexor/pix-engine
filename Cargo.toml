@@ -31,6 +31,9 @@ rand = "0.8.4"
 lru = "0.7.0"
 indexmap = "1.7.0"
 rayon = "1.5.1"
+# TODO: `backtrace` feature can be removed when `Backtrace` lands in stable
+anyhow = { version = "1.0.44", features = ["backtrace"] }
+thiserror = "1.0.29"
 
 [dev-dependencies.cargo-husky]
 version = "1.5.0"

@@ -89,7 +89,7 @@ impl PixState {
         T: Into<TriI2>,
     {
         let s = &self.settings;
-        Ok(self.renderer.triangle(tri.into(), s.fill, s.stroke)?)
+        self.renderer.triangle(tri.into(), s.fill, s.stroke)
     }
 
     /// Draw a square [Rect] to the current canvas.
@@ -116,7 +116,7 @@ impl PixState {
     {
         let s = &self.settings;
         let rect = self.get_rect(rect);
-        Ok(self.renderer.rect(rect, None, s.fill, s.stroke)?)
+        self.renderer.rect(rect, None, s.fill, s.stroke)
     }
 
     /// Draw a rounded [Rectangle](Rect) to the current canvas.
@@ -127,9 +127,8 @@ impl PixState {
     {
         let s = &self.settings;
         let rect = self.get_rect(rect);
-        Ok(self
-            .renderer
-            .rect(rect, Some(radius.as_()), s.fill, s.stroke)?)
+        self.renderer
+            .rect(rect, Some(radius.as_()), s.fill, s.stroke)
     }
 
     /// Draw a [Quadrilateral](Quad) to the current canvas.
@@ -138,13 +137,13 @@ impl PixState {
         Q: Into<QuadI2>,
     {
         let s = &self.settings;
-        Ok(self.renderer.quad(quad.into(), s.fill, s.stroke)?)
+        self.renderer.quad(quad.into(), s.fill, s.stroke)
     }
 
     /// Draw a polygon to the current canvas.
     pub fn polygon<P: AsRef<[PointI2]>>(&mut self, points: P) -> PixResult<()> {
         let s = &self.settings;
-        Ok(self.renderer.polygon(points.as_ref(), s.fill, s.stroke)?)
+        self.renderer.polygon(points.as_ref(), s.fill, s.stroke)
     }
 
     /// Draw a circle [Ellipse] to the current canvas.
@@ -162,7 +161,7 @@ impl PixState {
     {
         let s = &self.settings;
         let ellipse = self.get_ellipse(ellipse);
-        Ok(self.renderer.ellipse(ellipse, s.fill, s.stroke)?)
+        self.renderer.ellipse(ellipse, s.fill, s.stroke)
     }
 
     /// Draw an arc to the current canvas.
@@ -173,7 +172,7 @@ impl PixState {
     {
         let s = &self.settings;
         let p = p.into();
-        Ok(self.renderer.arc(
+        self.renderer.arc(
             p,
             radius.as_(),
             start.as_(),
@@ -181,6 +180,6 @@ impl PixState {
             s.arc_mode,
             s.fill,
             s.stroke,
-        )?)
+        )
     }
 }

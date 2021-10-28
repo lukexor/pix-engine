@@ -1,22 +1,18 @@
 //! [Image] and [PixelFormat] functions.
 
 use crate::{prelude::*, renderer::Rendering};
+use anyhow::Context;
 use num_traits::AsPrimitive;
 use png::{BitDepth, ColorType, Decoder};
 use std::{
-    borrow::Cow,
-    error,
-    ffi::{OsStr, OsString},
+    ffi::OsStr,
     fmt,
     fs::File,
     io::{self, BufReader, BufWriter},
     iter::Copied,
     path::Path,
-    result, slice,
+    slice,
 };
-
-/// The result type for [Image] operations.
-pub type Result<T> = result::Result<T, Error>;
 
 /// Format for interpreting bytes when using textures.
 #[non_exhaustive]
@@ -113,10 +109,16 @@ impl Image {
         height: u32,
         bytes: B,
         format: PixelFormat,
-    ) -> Result<Self> {
+    ) -> PixResult<Self> {
         let bytes = bytes.as_ref();
         if bytes.len() != (format.channels() * width as usize * height as usize) {
-            return Err(Error::InvalidImage((width, height), bytes.len(), format));
+            return Err(PixError::InvalidImage {
+                width,
+                height,
+                size: bytes.len(),
+                format,
+            }
+            .into());
         }
         Ok(Self::from_vec(width, height, bytes.to_vec(), format))
     }
@@ -128,10 +130,16 @@ impl Image {
         height: u32,
         pixels: P,
         format: PixelFormat,
-    ) -> Result<Self> {
+    ) -> PixResult<Self> {
         let pixels = pixels.as_ref();
         if pixels.len() != (width as usize * height as usize) {
-            return Err(Error::InvalidImage((width, height), pixels.len(), format));
+            return Err(PixError::InvalidImage {
+                width,
+                height,
+                size: pixels.len() * format.channels(),
+                format,
+            }
+            .into());
         }
         let bytes: Vec<u8> = match format {
             PixelFormat::Rgb => pixels.iter().map(|c| c.rgb_channels()).flatten().collect(),
@@ -152,17 +160,17 @@ impl Image {
     }
 
     /// Constructs an `Image` from a [png] file.
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
+    pub fn from_file<P: AsRef<Path>>(path: P) -> PixResult<Self> {
         let path = path.as_ref();
         let ext = path.extension();
         if ext != Some(OsStr::new("png")) {
-            return Err(Error::InvalidFileType(ext.map(|e| e.to_os_string())));
+            return Err(PixError::UnsupportedFileType(ext.map(|e| e.to_os_string())).into());
         }
         Self::from_read(File::open(&path)?)
     }
 
     /// Constructs an `Image` from a [png] reader.
-    pub fn from_read<R: io::Read>(read: R) -> Result<Self> {
+    pub fn from_read<R: io::Read>(read: R) -> PixResult<Self> {
         let png_file = BufReader::new(read);
         let png = Decoder::new(png_file);
 
@@ -172,13 +180,19 @@ impl Image {
         // EXPL: Expand paletted to RGB and non-8-bit grayscale to 8-bits
         // png.set_transformations(Transformations::SWAP_ALPHA | Transformations::EXPAND);
 
-        let mut reader = png.read_info()?;
+        let mut reader = png.read_info().context("failed to read png data")?;
         let mut buf = vec![0x00; reader.output_buffer_size()];
-        let info = reader.next_frame(&mut buf)?;
-        if info.bit_depth != BitDepth::Eight {
-            return Err(Error::UnsupportedBitDepth(info.bit_depth));
-        } else if !matches!(info.color_type, ColorType::Rgb | ColorType::Rgba) {
-            return Err(Error::UnsupportedColorType(info.color_type));
+        let info = reader
+            .next_frame(&mut buf)
+            .context("failed to read png data frame")?;
+        if info.bit_depth != BitDepth::Eight
+            || !matches!(info.color_type, ColorType::Rgb | ColorType::Rgba)
+        {
+            return Err(PixError::UnsupportedImageFormat {
+                bit_depth: info.bit_depth,
+                color_type: info.color_type,
+            }
+            .into());
         }
 
         let data = &buf[..info.buffer_size()];
@@ -294,8 +308,12 @@ impl Image {
         let mut png = png::Encoder::new(png_file, self.width, self.height);
         png.set_color(self.format.into());
         png.set_depth(png::BitDepth::Eight);
-        let mut writer = png.write_header()?;
-        Ok(writer.write_image_data(self.as_bytes())?)
+        let mut writer = png
+            .write_header()
+            .with_context(|| format!("failed to write png header: {:?}", path))?;
+        writer
+            .write_image_data(self.as_bytes())
+            .with_context(|| format!("failed to write png data: {:?}", path))
     }
 }
 
@@ -351,7 +369,7 @@ impl PixState {
         if let AngleMode::Radians = s.angle_mode {
             angle = angle.to_degrees();
         };
-        Ok(self.renderer.image(
+        self.renderer.image(
             img,
             src.into(),
             dst,
@@ -359,7 +377,7 @@ impl PixState {
             center.into(),
             flipped.into(),
             s.image_tint,
-        )?)
+        )
     }
 }
 
@@ -414,86 +432,5 @@ impl Iterator for Pixels<'_> {
             }
             _ => unreachable!("invalid number of color channels"),
         }
-    }
-}
-
-/// The error type for [Image] operations.
-#[non_exhaustive]
-#[derive(Debug)]
-pub enum Error {
-    /// Invalid image.
-    InvalidImage((u32, u32), usize, PixelFormat),
-    /// Invalid file type.
-    InvalidFileType(Option<OsString>),
-    /// Invalid color type.
-    UnsupportedColorType(png::ColorType),
-    /// Invalid bit depth.
-    UnsupportedBitDepth(png::BitDepth),
-    /// I/O errors.
-    IoError(io::Error),
-    /// [png] decoding errors.
-    DecodingError(png::DecodingError),
-    /// [png] encoding errors.
-    EncodingError(png::EncodingError),
-    /// Unknown error.
-    Other(Cow<'static, str>),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use Error::*;
-        match self {
-            InvalidImage(dimensions, len, format) => write!(
-                f,
-                "invalid image. dimensions: {:?}, bytes: {}, format: {:?}",
-                dimensions, len, format
-            ),
-            InvalidFileType(ext) => write!(f, "invalid file type: {:?}", ext),
-            UnsupportedColorType(color_type) => write!(f, "invalid color type: {:?}", color_type),
-            UnsupportedBitDepth(depth) => write!(f, "invalid bit depth: {:?}", depth),
-            Other(err) => write!(f, "renderer error: {}", err),
-            err => err.fmt(f),
-        }
-    }
-}
-
-impl error::Error for Error {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        use Error::*;
-        match self {
-            IoError(err) => err.source(),
-            DecodingError(err) => err.source(),
-            _ => None,
-        }
-    }
-}
-
-impl From<Error> for PixError {
-    fn from(err: Error) -> Self {
-        Self::ImageError(err)
-    }
-}
-
-impl From<io::Error> for Error {
-    fn from(err: io::Error) -> Self {
-        Error::IoError(err)
-    }
-}
-
-impl From<png::DecodingError> for Error {
-    fn from(err: png::DecodingError) -> Self {
-        Error::DecodingError(err)
-    }
-}
-
-impl From<png::EncodingError> for Error {
-    fn from(err: png::EncodingError) -> Self {
-        Error::EncodingError(err)
-    }
-}
-
-impl From<png::EncodingError> for PixError {
-    fn from(err: png::EncodingError) -> Self {
-        PixError::ImageError(Error::EncodingError(err))
     }
 }

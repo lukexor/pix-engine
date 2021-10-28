@@ -198,23 +198,23 @@ impl PixState {
         R: Into<Rect<i32>>,
     {
         self.settings.clip = Some(rect.into());
-        Ok(self.renderer.clip(self.settings.clip)?)
+        self.renderer.clip(self.settings.clip)
     }
 
     /// Clears the clip [Rect] used by the renderer to draw to the current canvas.
     pub fn no_clip(&mut self) -> PixResult<()> {
         self.settings.clip = None;
-        Ok(self.renderer.clip(None)?)
+        self.renderer.clip(None)
     }
 
     /// Returns whether the application is fullscreen or not.
     pub fn fullscreen(&mut self) -> PixResult<bool> {
-        Ok(self.renderer.fullscreen()?)
+        self.renderer.fullscreen()
     }
 
     /// Set the application to fullscreen or not.
     pub fn set_fullscreen(&mut self, val: bool) -> PixResult<()> {
-        Ok(self.renderer.set_fullscreen(val)?)
+        self.renderer.set_fullscreen(val)
     }
 
     /// Returns whether the window synchronizes frame rate to the screens refresh rate.
@@ -224,13 +224,13 @@ impl PixState {
 
     /// Set the window to synchronize frame rate to the screens refresh rate.
     pub fn set_vsync(&mut self, val: bool) -> PixResult<()> {
-        Ok(self.renderer.set_vsync(val)?)
+        self.renderer.set_vsync(val)
     }
 
     /// Set the mouse cursor to a predefined symbol or image.
     pub fn cursor(&mut self, cursor: Cursor) -> PixResult<()> {
         self.settings.cursor = Some(cursor);
-        Ok(self.renderer.cursor(self.settings.cursor.as_ref())?)
+        self.renderer.cursor(self.settings.cursor.as_ref())
     }
 
     /// Hide the mouse cursor.
@@ -285,7 +285,7 @@ impl PixState {
         let mut s = &mut self.settings;
         s.scale_x = x.as_();
         s.scale_y = y.as_();
-        Ok(self.renderer.scale(s.scale_x, s.scale_y)?)
+        self.renderer.scale(s.scale_x, s.scale_y)
     }
 
     /// Change the way parameters are interpreted for drawing [Square](Rect)s and
@@ -370,7 +370,7 @@ impl PixState {
     /// Cursor will get reset to the current setting next frame.
     #[inline]
     pub(crate) fn frame_cursor(&mut self, cursor: Cursor) -> PixResult<()> {
-        Ok(self.renderer.cursor(Some(&cursor))?)
+        self.renderer.cursor(Some(&cursor))
     }
 
     /// Get the target delta time between frames.

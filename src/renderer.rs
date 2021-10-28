@@ -1,11 +1,10 @@
 //! Graphics renderer functions.
 
-use crate::{prelude::*, state::Error as StateError};
-use std::{borrow::Cow, error, ffi::NulError, fmt, io, path::PathBuf, result};
+use crate::prelude::*;
+#[cfg(not(target_arch = "wasm32"))]
+use std::path::PathBuf;
 
-pub(crate) use crate::{
-    texture::TextureRenderer, window::Error as WindowError, window::WindowRenderer,
-};
+pub(crate) use crate::{texture::TextureRenderer, window::WindowRenderer};
 
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) mod sdl;
@@ -16,9 +15,6 @@ pub(crate) use sdl::Renderer;
 pub(crate) mod wasm;
 #[cfg(target_arch = "wasm32")]
 pub(crate) use wasm::Renderer;
-
-/// The result type for `Renderer` operations.
-pub type Result<T> = result::Result<T, Error>;
 
 /// Default audio sample rate.
 const DEFAULT_SAMPLE_RATE: i32 = 44_100; // in Hz
@@ -78,16 +74,16 @@ impl Default for RendererSettings {
 /// Trait for operations on the underlying `Renderer`.
 pub(crate) trait Rendering: Sized {
     /// Creates a new Renderer instance.
-    fn new(settings: RendererSettings) -> Result<Self>;
+    fn new(settings: RendererSettings) -> PixResult<Self>;
 
     /// Clears the current canvas to the given clear color
-    fn clear(&mut self) -> Result<()>;
+    fn clear(&mut self) -> PixResult<()>;
 
     /// Sets the color used by the renderer to draw the current canvas.
-    fn set_draw_color(&mut self, color: Color) -> Result<()>;
+    fn set_draw_color(&mut self, color: Color) -> PixResult<()>;
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    fn clip(&mut self, rect: Option<Rect<i32>>) -> Result<()>;
+    fn clip(&mut self, rect: Option<Rect<i32>>) -> PixResult<()>;
 
     /// Sets the blend mode used by the renderer to drawing.
     fn blend_mode(&mut self, mode: BlendMode);
@@ -96,22 +92,22 @@ pub(crate) trait Rendering: Sized {
     fn present(&mut self);
 
     /// Scale the current canvas.
-    fn scale(&mut self, x: f32, y: f32) -> Result<()>;
+    fn scale(&mut self, x: f32, y: f32) -> PixResult<()>;
 
     /// Set the font size for drawing text to the current canvas.
-    fn font_size(&mut self, size: u32) -> Result<()>;
+    fn font_size(&mut self, size: u32) -> PixResult<()>;
 
     /// Set the font style for drawing text to the current canvas.
     fn font_style(&mut self, style: FontStyle);
 
     /// Set the font family for drawing text to the current canvas.
-    fn font_family(&mut self, font: &Font) -> Result<()>;
+    fn font_family(&mut self, font: &Font) -> PixResult<()>;
 
     /// Get clipboard text from the system clipboard.
     fn clipboard_text(&self) -> String;
 
     /// Set clipboard text to the system clipboard.
-    fn set_clipboard_text(&self, value: &str) -> Result<()>;
+    fn set_clipboard_text(&self, value: &str) -> PixResult<()>;
 
     /// Draw text to the current canvas. `angle` must be in degrees.
     #[allow(clippy::too_many_arguments)]
@@ -125,20 +121,21 @@ pub(crate) trait Rendering: Sized {
         flipped: Option<Flipped>,
         fill: Option<Color>,
         outline: u8,
-    ) -> Result<(u32, u32)>;
+    ) -> PixResult<(u32, u32)>;
 
     /// Returns the rendered dimensions of the given text using the current font
     /// as `(width, height)`.
-    fn size_of(&mut self, text: &str) -> Result<(u32, u32)>;
+    fn size_of(&mut self, text: &str) -> PixResult<(u32, u32)>;
 
     /// Draw a pixel to the current canvas.
-    fn point(&mut self, p: PointI2, color: Color) -> Result<()>;
+    fn point(&mut self, p: PointI2, color: Color) -> PixResult<()>;
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, line: LineI2, stroke: u8, color: Color) -> Result<()>;
+    fn line(&mut self, line: LineI2, stroke: u8, color: Color) -> PixResult<()>;
 
     /// Draw a triangle to the current canvas.
-    fn triangle(&mut self, tri: TriI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
+    fn triangle(&mut self, tri: TriI2, fill: Option<Color>, stroke: Option<Color>)
+        -> PixResult<()>;
 
     /// Draw a rectangle to the current canvas.
     fn rect(
@@ -147,14 +144,18 @@ pub(crate) trait Rendering: Sized {
         radius: Option<i32>,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> Result<()>;
+    ) -> PixResult<()>;
 
     /// Draw a quadrilateral to the current canvas.
-    fn quad(&mut self, quad: QuadI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()>;
+    fn quad(&mut self, quad: QuadI2, fill: Option<Color>, stroke: Option<Color>) -> PixResult<()>;
 
     /// Draw a polygon to the current canvas.
-    fn polygon(&mut self, ps: &[PointI2], fill: Option<Color>, stroke: Option<Color>)
-        -> Result<()>;
+    fn polygon(
+        &mut self,
+        ps: &[PointI2],
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> PixResult<()>;
 
     /// Draw a ellipse to the current canvas.
     fn ellipse(
@@ -162,7 +163,7 @@ pub(crate) trait Rendering: Sized {
         ellipse: Ellipse<i32>,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> Result<()>;
+    ) -> PixResult<()>;
 
     /// Draw an arc to the current canvas.
     #[allow(clippy::too_many_arguments)]
@@ -175,7 +176,7 @@ pub(crate) trait Rendering: Sized {
         mode: ArcMode,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> Result<()>;
+    ) -> PixResult<()>;
 
     /// Draw an image to the current canvas, optionally rotated about a `center`, flipped or
     /// tinted. `angle` must be in degrees.
@@ -189,100 +190,5 @@ pub(crate) trait Rendering: Sized {
         center: Option<PointI2>,
         flipped: Option<Flipped>,
         tint: Option<Color>,
-    ) -> Result<()>;
-}
-
-/// The error type for `Renderer` operations.
-#[non_exhaustive]
-#[derive(Debug)]
-pub enum Error {
-    /// Renderer initialization errors.
-    InitError,
-    /// Renderer I/O errors.
-    IoError(io::Error),
-    /// Window errors.
-    WindowError(WindowError),
-    /// Invalid text.
-    InvalidText(&'static str, NulError),
-    /// Invalid font.
-    InvalidFont(&'static str),
-    /// Invalid Texture.
-    InvalidTexture(TextureId),
-    /// An error from invalid type conversions.
-    Conversion(Cow<'static, str>),
-    /// An overflow occurred.
-    Overflow(Cow<'static, str>, u32),
-    /// Any other unknown error as a string.
-    Other(Cow<'static, str>),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use Error::*;
-        match self {
-            InitError => write!(f, "renderer initialization error"),
-            InvalidText(msg, err) => write!(f, "invalid text: {}, {}", msg, err),
-            InvalidTexture(id) => write!(f, "invalid texture_id: {}", id),
-            Conversion(err) => write!(f, "conversion error: {}", err),
-            Overflow(err, val) => write!(f, "overflow {}: {}", err, val),
-            Other(err) => write!(f, "unknown renderer error: {}", err),
-            _ => self.fmt(f),
-        }
-    }
-}
-
-impl error::Error for Error {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        use Error::*;
-        match self {
-            IoError(err) => err.source(),
-            WindowError(err) => err.source(),
-            _ => None,
-        }
-    }
-}
-
-impl From<Error> for PixError {
-    fn from(err: Error) -> Self {
-        Self::RendererError(err)
-    }
-}
-
-impl From<Error> for StateError {
-    fn from(err: Error) -> Self {
-        Self::RendererError(err)
-    }
-}
-
-impl From<String> for Error {
-    fn from(err: String) -> Self {
-        Self::Other(err.into())
-    }
-}
-
-impl From<std::num::TryFromIntError> for Error {
-    fn from(err: std::num::TryFromIntError) -> Self {
-        Self::Conversion(err.to_string().into())
-    }
-}
-
-impl From<NulError> for Error {
-    fn from(err: NulError) -> Self {
-        Self::InvalidText("unknown nul error", err)
-    }
-}
-
-impl From<PixError> for Error {
-    fn from(err: PixError) -> Self {
-        use PixError::*;
-        match err {
-            RendererError(err) => err,
-            WindowError(err) => Error::WindowError(err),
-            Conversion(err) => Error::Conversion(err),
-            IoError(err) => Error::IoError(err),
-            StateError(err) => Error::Other(err.to_string().into()),
-            ImageError(err) => Error::Other(err.to_string().into()),
-            Other(err) => Error::Other(err),
-        }
-    }
+    ) -> PixResult<()>;
 }

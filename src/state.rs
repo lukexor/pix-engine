@@ -3,12 +3,12 @@
 use crate::{
     gui::state::UiState,
     prelude::*,
-    renderer::{Error as RendererError, Renderer, RendererSettings, Rendering, WindowRenderer},
+    renderer::{Renderer, RendererSettings, Rendering, WindowRenderer},
     texture::TextureRenderer,
 };
 use environment::Environment;
 use settings::Settings;
-use std::{borrow::Cow, collections::HashSet, error, fmt, io};
+use std::collections::HashSet;
 
 pub mod environment;
 pub mod settings;
@@ -117,7 +117,7 @@ impl PixState {
     /// Set the current window title.
     #[inline]
     pub fn set_title<S: AsRef<str>>(&mut self, title: S) -> PixResult<()> {
-        Ok(self.renderer.set_title(title.as_ref())?)
+        self.renderer.set_title(title.as_ref())
     }
 
     /// Returns the current mouse position coordinates as `(x, y)`.
@@ -178,44 +178,5 @@ impl PixState {
     #[inline]
     pub fn keymod_down(&self, keymod: KeyMod) -> bool {
         self.ui.keys.mod_down(keymod)
-    }
-}
-
-/// The error type for [PixState] operations.
-#[non_exhaustive]
-#[derive(Debug)]
-pub enum Error {
-    /// IO specific errors.
-    IoError(io::Error),
-    /// Renderer specific errors.
-    RendererError(RendererError),
-    /// Unknown errors.
-    Other(Cow<'static, str>),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use Error::*;
-        match self {
-            Other(err) => write!(f, "image error: {}", err),
-            err => err.fmt(f),
-        }
-    }
-}
-
-impl error::Error for Error {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        use Error::*;
-        match self {
-            IoError(err) => err.source(),
-            RendererError(err) => err.source(),
-            _ => None,
-        }
-    }
-}
-
-impl From<Error> for PixError {
-    fn from(err: Error) -> Self {
-        Self::StateError(err)
     }
 }

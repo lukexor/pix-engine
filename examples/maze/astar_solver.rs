@@ -54,7 +54,6 @@ impl Ord for AStarCell {
 pub struct AStarSolver {
     start: Cell,
     end: Cell,
-    current: Option<AStarCell>,
     cells: Vec<AStarCell>,
     heap: BinaryHeap<AStarCell>,
     open_set: HashSet<usize>,
@@ -87,7 +86,6 @@ impl AStarSolver {
         Self {
             start,
             end,
-            current: Some(current),
             cells,
             heap,
             open_set,

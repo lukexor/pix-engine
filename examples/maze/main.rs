@@ -36,7 +36,6 @@ struct MazeApp {
     mode: MazeMode,
     cols: u32,
     rows: u32,
-    size: u32,
     maze: Maze,
     creator: MazeCreator,
     solver: AStarSolver,
@@ -44,15 +43,14 @@ struct MazeApp {
 }
 
 impl MazeApp {
-    fn new(cols: u32, rows: u32, size: u32) -> Self {
-        let maze = Maze::new(cols, rows, size);
+    fn new(cols: u32, rows: u32) -> Self {
+        let maze = Maze::new(cols, rows);
         let creator = MazeCreator::new(&maze);
         let solver = AStarSolver::new(&maze);
         Self {
             mode: MazeMode::Idle,
             cols,
             rows,
-            size,
             maze,
             creator,
             solver,
@@ -62,13 +60,13 @@ impl MazeApp {
 
     fn start_create_maze(&mut self) {
         self.mode = MazeMode::Creating;
-        self.maze = Maze::new(self.cols, self.rows, self.size);
+        self.maze = Maze::new(self.cols, self.rows);
         self.creator = MazeCreator::new(&self.maze);
         self.timer.start();
     }
 
     fn create_maze(&mut self) -> PixResult<()> {
-        self.maze = Maze::new(self.cols, self.rows, self.size);
+        self.maze = Maze::new(self.cols, self.rows);
         self.creator = MazeCreator::new(&self.maze);
         self.timer.start();
         while !self.creator.completed() {
@@ -199,6 +197,6 @@ pub fn main() -> PixResult<()> {
         .with_frame_rate()
         .vsync_enabled()
         .build()?;
-    let mut app = MazeApp::new(COLS, ROWS, SIZE);
+    let mut app = MazeApp::new(COLS, ROWS);
     engine.run(&mut app)
 }

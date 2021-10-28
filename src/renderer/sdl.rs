@@ -1,8 +1,9 @@
 use crate::{
     prelude::*,
-    renderer::{Error, RendererSettings, Rendering, Result},
-    window::{Error as WindowError, WindowRenderer},
+    renderer::{RendererSettings, Rendering},
+    window::WindowRenderer,
 };
+use anyhow::Context;
 use lazy_static::lazy_static;
 use lru::LruCache;
 use sdl2::{
@@ -12,16 +13,13 @@ use sdl2::{
     mouse::{Cursor, SystemCursor},
     pixels::{Color as SdlColor, PixelFormatEnum as SdlPixelFormat},
     rect::{Point as SdlPoint, Rect as SdlRect},
-    render::{
-        BlendMode as SdlBlendMode, Canvas, SdlError, TargetRenderError, TextureCreator,
-        TextureQuery, TextureValueError, UpdateTextureError,
-    },
+    render::{BlendMode as SdlBlendMode, Canvas, TextureCreator, TextureQuery},
     rwops::RWops,
-    ttf::{Font as SdlFont, FontError, FontStyle as SdlFontStyle, InitError, Sdl2TtfContext},
-    video::{Window as SdlWindow, WindowBuildError, WindowContext},
-    EventPump, IntegerOrSdlError, Sdl,
+    ttf::{Font as SdlFont, FontStyle as SdlFontStyle, Sdl2TtfContext},
+    video::{Window as SdlWindow, WindowContext},
+    EventPump, Sdl,
 };
-use std::{borrow::Cow, cmp, collections::HashMap};
+use std::{cmp, collections::HashMap};
 
 mod audio;
 mod event;
@@ -43,14 +41,18 @@ macro_rules! update_canvas {
         let (canvas, _) = $self
             .canvases
             .get_mut(&$self.window_target)
-            .ok_or(WindowError::InvalidWindow($self.window_target))?;
+            .ok_or(PixError::InvalidWindow($self.window_target))?;
         if let Some(texture_id) = $self.texture_target {
             if let Some((_, texture)) = $self.textures.get_mut(texture_id) {
-                Ok(canvas.with_texture_canvas(texture, |canvas| {
-                    let _ = $func(canvas);
-                })?)
+                let mut result = Ok(());
+                canvas
+                    .with_texture_canvas(texture, |canvas| {
+                        result = $func(canvas);
+                    })
+                    .with_context(|| format!("failed to update texture target {}", texture_id))?;
+                result
             } else {
-                Err(Error::InvalidTexture(texture_id))
+                Err(PixError::InvalidTexture(texture_id).into())
             }
         } else {
             $func(canvas)
@@ -65,15 +67,15 @@ macro_rules! update_font_cache {
         let size = $font.1;
         let key = (name, size);
         if !$cache.contains(&key) {
-            match $font.0.source {
+            let font = match $font.0.source {
                 FontSrc::Bytes(bytes) => {
-                    let rwops = RWops::from_bytes(bytes)?;
-                    $cache.put(key, TTF.load_font_from_rwops(rwops, size)?);
+                    let rwops = RWops::from_bytes(bytes).map_err(PixError::Renderer)?;
+                    TTF.load_font_from_rwops(rwops, size)
+                        .map_err(PixError::Renderer)?
                 }
-                FontSrc::Path(ref path) => {
-                    $cache.put(key, TTF.load_font(path, size)?);
-                }
-            }
+                FontSrc::Path(ref path) => TTF.load_font(path, size).map_err(PixError::Renderer)?,
+            };
+            $cache.put(key, font);
         }
     }};
 }
@@ -102,26 +104,28 @@ pub(crate) struct Renderer {
 
 impl Rendering for Renderer {
     /// Initializes the Sdl2Renderer using the given settings and opens a new window.
-    fn new(s: RendererSettings) -> Result<Self> {
-        let context = sdl2::init()?;
-        let event_pump = context.event_pump()?;
+    fn new(s: RendererSettings) -> PixResult<Self> {
+        let context = sdl2::init().map_err(PixError::Renderer)?;
+        let event_pump = context.event_pump().map_err(PixError::Renderer)?;
 
         let title = s.title.clone();
         let (window_id, canvas) = Self::create_window_canvas(&context, &s)?;
-        let cursor = Cursor::from_system(SystemCursor::Arrow)?;
+        let cursor = Cursor::from_system(SystemCursor::Arrow).map_err(PixError::Renderer)?;
         cursor.set();
         let texture_creator = canvas.texture_creator();
         let mut canvases = HashMap::new();
         canvases.insert(window_id, (canvas, texture_creator));
 
         // Set up Audio
-        let audio_sub = context.audio()?;
+        let audio_sub = context.audio().map_err(PixError::Renderer)?;
         let desired_spec = AudioSpecDesired {
             freq: Some(s.audio_sample_rate),
             channels: Some(1),
             samples: None,
         };
-        let audio_device = audio_sub.open_queue(None, &desired_spec)?;
+        let audio_device = audio_sub
+            .open_queue(None, &desired_spec)
+            .map_err(PixError::Renderer)?;
         audio_device.resume();
 
         let font = (Font::default(), 14);
@@ -154,8 +158,8 @@ impl Rendering for Renderer {
 
     /// Clears the canvas to the current clear color.
     #[inline]
-    fn clear(&mut self) -> Result<()> {
-        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
+    fn clear(&mut self) -> PixResult<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> PixResult<()> {
             canvas.clear();
             Ok(())
         })
@@ -163,8 +167,8 @@ impl Rendering for Renderer {
 
     /// Sets the color used by the renderer to draw to the current canvas.
     #[inline]
-    fn set_draw_color(&mut self, color: Color) -> Result<()> {
-        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
+    fn set_draw_color(&mut self, color: Color) -> PixResult<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> PixResult<()> {
             canvas.set_draw_color(color);
             Ok(())
         })
@@ -172,9 +176,9 @@ impl Rendering for Renderer {
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
     #[inline]
-    fn clip(&mut self, rect: Option<Rect<i32>>) -> Result<()> {
+    fn clip(&mut self, rect: Option<Rect<i32>>) -> PixResult<()> {
         let rect = rect.map(|rect| rect.into());
-        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> PixResult<()> {
             canvas.set_clip_rect(rect);
             Ok(())
         })
@@ -196,15 +200,15 @@ impl Rendering for Renderer {
 
     /// Scale the current canvas.
     #[inline]
-    fn scale(&mut self, x: f32, y: f32) -> Result<()> {
-        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
-            Ok(canvas.set_scale(x, y)?)
+    fn scale(&mut self, x: f32, y: f32) -> PixResult<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> PixResult<()> {
+            Ok(canvas.set_scale(x, y).map_err(PixError::Renderer)?)
         })
     }
 
     /// Set the font size for drawing to the current canvas.
     #[inline]
-    fn font_size(&mut self, size: u32) -> Result<()> {
+    fn font_size(&mut self, size: u32) -> PixResult<()> {
         let size = size as u16;
         if self.font.1 != size {
             self.font.1 = size;
@@ -228,7 +232,7 @@ impl Rendering for Renderer {
 
     /// Set the font family for drawing to the current canvas.
     #[inline]
-    fn font_family(&mut self, font: &Font) -> Result<()> {
+    fn font_family(&mut self, font: &Font) -> PixResult<()> {
         if self.font.0.name != font.name {
             self.font.0 = font.clone();
             update_font_cache!(self.font, self.font_cache);
@@ -247,62 +251,69 @@ impl Rendering for Renderer {
         flipped: Option<Flipped>,
         fill: Option<Color>,
         outline: u8,
-    ) -> Result<(u32, u32)> {
+    ) -> PixResult<(u32, u32)> {
         if text.is_empty() {
             return Ok((0, 0));
         }
-        let key = (self.font.0.name, self.font.1);
-        let (win_width, _) = self.dimensions()?;
-        let font = self.font_cache.get_mut(&key);
-        match (fill, font) {
-            (Some(fill), Some(font)) => {
-                let current_outline = font.get_outline_width();
-                if current_outline != outline as u16 {
-                    font.set_outline_width(outline as u16);
-                }
 
-                let key = (self.window_target, text.to_string(), fill);
-                let (_, texture_creator) = self
-                    .canvases
-                    .get(&self.window_target)
-                    .ok_or(WindowError::InvalidWindow(self.window_target))?;
-                if !self.text_cache.contains(&key) {
-                    let surface = if let Some(width) = wrap_width {
-                        font.render(text).blended_wrapped(fill, width)?
-                    } else {
-                        font.render(text).blended_wrapped(fill, win_width)?
-                    };
-                    self.text_cache.put(
-                        key.clone(),
-                        texture_creator.create_texture_from_surface(&surface)?,
-                    );
-                }
-                // SAFETY: We just checked or inserted a texture.
-                let texture = self.text_cache.get_mut(&key).expect("valid text cache");
-                let TextureQuery { width, height, .. } = texture.query();
-                update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
-                    if angle.is_some() || center.is_some() || flipped.is_some() {
-                        Ok(canvas.copy_ex(
-                            texture,
-                            None,
-                            Some(SdlRect::new(pos.x(), pos.y(), width, height)),
-                            angle.unwrap_or(0.0),
-                            center.map(|c| c.into()),
-                            matches!(flipped, Some(Flipped::Horizontal | Flipped::Both)),
-                            matches!(flipped, Some(Flipped::Vertical | Flipped::Both)),
-                        )?)
-                    } else {
-                        Ok(canvas.copy(
-                            texture,
-                            None,
-                            Some(SdlRect::new(pos.x(), pos.y(), width, height)),
-                        )?)
-                    }
-                })?;
-                Ok((width, height))
+        let key = (self.font.0.name, self.font.1);
+        if !self.font_cache.contains(&key) {
+            update_font_cache!(self.font, self.font_cache);
+        }
+        let (win_width, _) = self.dimensions()?;
+        let font = self.font_cache.get_mut(&key).expect("valid font");
+
+        if let Some(fill) = fill {
+            let current_outline = font.get_outline_width();
+            if current_outline != outline as u16 {
+                font.set_outline_width(outline as u16);
             }
-            (Some(_), None) => Err(Error::InvalidFont(self.font.0.name)),
-            (None, _) => Ok((0, 0)),
+
+            let key = (self.window_target, text.to_string(), fill);
+            let (_, texture_creator) = self
+                .canvases
+                .get(&self.window_target)
+                .ok_or(PixError::InvalidWindow(self.window_target))?;
+            if !self.text_cache.contains(&key) {
+                let surface = if let Some(width) = wrap_width {
+                    font.render(text).blended_wrapped(fill, width)
+                } else {
+                    font.render(text).blended_wrapped(fill, win_width)
+                };
+                let surface = surface.context("invalid text")?;
+                self.text_cache.put(
+                    key.clone(),
+                    texture_creator
+                        .create_texture_from_surface(&surface)
+                        .context("failed to create text surface")?,
+                );
+            }
+            // SAFETY: We just checked or inserted a texture.
+            let texture = self.text_cache.get_mut(&key).expect("valid text cache");
+            let TextureQuery { width, height, .. } = texture.query();
+            update_canvas!(self, |canvas: &mut WindowCanvas| -> PixResult<()> {
+                let result = if angle.is_some() || center.is_some() || flipped.is_some() {
+                    canvas.copy_ex(
+                        texture,
+                        None,
+                        Some(SdlRect::new(pos.x(), pos.y(), width, height)),
+                        angle.unwrap_or(0.0),
+                        center.map(|c| c.into()),
+                        matches!(flipped, Some(Flipped::Horizontal | Flipped::Both)),
+                        matches!(flipped, Some(Flipped::Vertical | Flipped::Both)),
+                    )
+                } else {
+                    canvas.copy(
+                        texture,
+                        None,
+                        Some(SdlRect::new(pos.x(), pos.y(), width, height)),
+                    )
+                };
+                Ok(result.map_err(PixError::Renderer)?)
+            })?;
+            Ok((width, height))
+        } else {
+            Ok((0, 0))
         }
     }
 
@@ -316,75 +327,87 @@ impl Rendering for Renderer {
     }
 
     /// Set clipboard text to the system clipboard.
-    fn set_clipboard_text(&self, value: &str) -> Result<()> {
+    fn set_clipboard_text(&self, value: &str) -> PixResult<()> {
         Ok(self
             .context
-            .video()?
+            .video()
+            .map_err(PixError::Renderer)?
             .clipboard()
-            .set_clipboard_text(value)?)
+            .set_clipboard_text(value)
+            .map_err(PixError::Renderer)?)
     }
 
     /// Returns the rendered dimensions of the given text using the current font
     /// as `(width, height)`.
     #[inline]
-    fn size_of(&mut self, text: &str) -> Result<(u32, u32)> {
+    fn size_of(&mut self, text: &str) -> PixResult<(u32, u32)> {
         let key = (self.font.0.name, self.font.1);
-        match self.font_cache.get(&key) {
-            Some(font) => {
-                if text.is_empty() {
-                    return Ok(font.size_of("")?);
-                }
-                let mut size = (0, 0);
-                for line in text.lines() {
-                    let (w, h) = font.size_of(line)?;
-                    size.0 = cmp::max(size.0, w);
-                    size.1 += h;
-                }
-                Ok(size)
-            }
-            None => Err(Error::InvalidFont(self.font.0.name)),
+        if !self.font_cache.contains(&key) {
+            update_font_cache!(self.font, self.font_cache);
         }
+        let font = self.font_cache.get(&key).expect("valid font");
+
+        if text.is_empty() {
+            return Ok(font.size_of("").unwrap_or_default());
+        }
+        let mut size = (0, 0);
+        for line in text.lines() {
+            let (w, h) = font.size_of(line).context("failed to get text size")?;
+            size.0 = cmp::max(size.0, w);
+            size.1 += h;
+        }
+        Ok(size)
     }
 
     /// Draw a pixel to the current canvas.
     #[inline]
-    fn point(&mut self, p: PointI2, color: Color) -> Result<()> {
+    fn point(&mut self, p: PointI2, color: Color) -> PixResult<()> {
         let p: Point<i16, 2> = p.into();
         let [x, y]: [i16; 2] = p.into();
-        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
-            Ok(canvas.pixel(x, y, color)?)
+        self.update_canvas(|canvas: &mut WindowCanvas| -> PixResult<()> {
+            Ok(canvas.pixel(x, y, color).map_err(PixError::Renderer)?)
         })
     }
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, line: LineI2, stroke: u8, color: Color) -> Result<()> {
+    fn line(&mut self, line: LineI2, stroke: u8, color: Color) -> PixResult<()> {
         let [start, end]: [Point<i16, 2>; 2] = line.into();
         let [x1, y1] = start.values();
         let [x2, y2] = end.values();
-        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
-            if stroke == 1 {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> PixResult<()> {
+            let result = if stroke == 1 {
                 if y1 == y2 {
-                    Ok(canvas.hline(x1, x2, y1, color)?)
+                    canvas.hline(x1, x2, y1, color)
                 } else if x1 == x2 {
-                    Ok(canvas.vline(x1, y1, y2, color)?)
+                    canvas.vline(x1, y1, y2, color)
                 } else {
-                    Ok(canvas.aa_line(x1, y1, x2, y2, color)?)
+                    canvas.aa_line(x1, y1, x2, y2, color)
                 }
             } else {
-                Ok(canvas.thick_line(x1, y1, x2, y2, stroke, color)?)
-            }
+                canvas.thick_line(x1, y1, x2, y2, stroke, color)
+            };
+            Ok(result.map_err(PixError::Renderer)?)
         })
     }
 
     /// Draw a triangle to the current canvas.
-    fn triangle(&mut self, tri: TriI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
+    fn triangle(
+        &mut self,
+        tri: TriI2,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> PixResult<()> {
         let [p1, p2, p3]: [Point<i16, 2>; 3] = tri.into();
-        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> PixResult<()> {
             if let Some(fill) = fill {
-                canvas.filled_trigon(p1.x(), p1.y(), p2.x(), p2.y(), p3.x(), p3.y(), fill)?;
+                canvas
+                    .filled_trigon(p1.x(), p1.y(), p2.x(), p2.y(), p3.x(), p3.y(), fill)
+                    .map_err(PixError::Renderer)?;
             }
             if let Some(stroke) = stroke {
-                canvas.trigon(p1.x(), p1.y(), p2.x(), p2.y(), p3.x(), p3.y(), stroke)?;
+                canvas
+                    .trigon(p1.x(), p1.y(), p2.x(), p2.y(), p3.x(), p3.y(), stroke)
+                    .map_err(PixError::Renderer)?;
             }
             Ok(())
         })
@@ -397,25 +420,33 @@ impl Rendering for Renderer {
         radius: Option<i32>,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> Result<()> {
+    ) -> PixResult<()> {
         let rect: Rect<i16> = rect.into();
         let [x, y, width, height] = rect.values();
-        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> PixResult<()> {
             if let Some(radius) = radius {
                 let radius = radius as i16;
                 if let Some(fill) = fill {
-                    canvas.rounded_box(x, y, x + width, y + height, radius, fill)?
+                    canvas
+                        .rounded_box(x, y, x + width, y + height, radius, fill)
+                        .map_err(PixError::Renderer)?;
                 }
                 if let Some(stroke) = stroke {
-                    canvas.rounded_rectangle(x, y, x + width, y + height, radius, stroke)?
+                    canvas
+                        .rounded_rectangle(x, y, x + width, y + height, radius, stroke)
+                        .map_err(PixError::Renderer)?;
                 }
             } else {
                 if let Some(fill) = fill {
-                    canvas.box_(x, y, x + width, y + height, fill)?
+                    canvas
+                        .box_(x, y, x + width, y + height, fill)
+                        .map_err(PixError::Renderer)?;
                 }
                 if let Some(stroke) = stroke {
                     // EXPL: SDL2_gfx renders this 1px smaller than it should.
-                    canvas.rectangle(x, y, x + width + 1, y + height + 1, stroke)?;
+                    canvas
+                        .rectangle(x, y, x + width + 1, y + height + 1, stroke)
+                        .map_err(PixError::Renderer)?;
                 }
             }
             Ok(())
@@ -423,16 +454,20 @@ impl Rendering for Renderer {
     }
 
     /// Draw a quadrilateral to the current canvas.
-    fn quad(&mut self, quad: QuadI2, fill: Option<Color>, stroke: Option<Color>) -> Result<()> {
+    fn quad(&mut self, quad: QuadI2, fill: Option<Color>, stroke: Option<Color>) -> PixResult<()> {
         let [p1, p2, p3, p4]: [Point<i16, 2>; 4] = quad.into();
         let vx = [p1.x(), p2.x(), p3.x(), p4.x()];
         let vy = [p1.y(), p2.y(), p3.y(), p4.y()];
-        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> PixResult<()> {
             if let Some(fill) = fill {
-                canvas.filled_polygon(&vx, &vy, fill)?;
+                canvas
+                    .filled_polygon(&vx, &vy, fill)
+                    .map_err(PixError::Renderer)?;
             }
             if let Some(stroke) = stroke {
-                canvas.polygon(&vx, &vy, stroke)?;
+                canvas
+                    .polygon(&vx, &vy, stroke)
+                    .map_err(PixError::Renderer)?;
             }
             Ok(())
         })
@@ -444,7 +479,7 @@ impl Rendering for Renderer {
         ps: &[PointI2],
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> Result<()> {
+    ) -> PixResult<()> {
         let (vx, vy): (Vec<i16>, Vec<i16>) = ps
             .iter()
             .map(|&p| -> (i16, i16) {
@@ -453,12 +488,16 @@ impl Rendering for Renderer {
                 (x, y)
             })
             .unzip();
-        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> PixResult<()> {
             if let Some(fill) = fill {
-                canvas.filled_polygon(&vx, &vy, fill)?;
+                canvas
+                    .filled_polygon(&vx, &vy, fill)
+                    .map_err(PixError::Renderer)?;
             }
             if let Some(stroke) = stroke {
-                canvas.polygon(&vx, &vy, stroke)?;
+                canvas
+                    .polygon(&vx, &vy, stroke)
+                    .map_err(PixError::Renderer)?;
             }
             Ok(())
         })
@@ -470,17 +509,21 @@ impl Rendering for Renderer {
         ellipse: Ellipse<i32>,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> Result<()> {
+    ) -> PixResult<()> {
         let ellipse: Ellipse<i16> = ellipse.into();
         let [x, y, width, height] = ellipse.values();
         let rw = width / 2;
         let rh = height / 2;
-        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> PixResult<()> {
             if let Some(fill) = fill {
-                canvas.filled_ellipse(x, y, rw, rh, fill)?;
+                canvas
+                    .filled_ellipse(x, y, rw, rh, fill)
+                    .map_err(PixError::Renderer)?;
             }
             if let Some(stroke) = stroke {
-                canvas.aa_ellipse(x, y, rw, rh, stroke)?;
+                canvas
+                    .aa_ellipse(x, y, rw, rh, stroke)
+                    .map_err(PixError::Renderer)?;
             }
             Ok(())
         })
@@ -496,25 +539,31 @@ impl Rendering for Renderer {
         mode: ArcMode,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> Result<()> {
+    ) -> PixResult<()> {
         let p: Point<i16, 2> = p.into();
         let [x, y] = p.values();
         let radius = radius as i16;
         let start = start as i16;
         let end = end as i16;
-        self.update_canvas(|canvas: &mut WindowCanvas| -> Result<()> {
+        self.update_canvas(|canvas: &mut WindowCanvas| -> PixResult<()> {
             match mode {
                 ArcMode::Default => {
                     if let Some(stroke) = stroke {
-                        canvas.arc(x, y, radius, start, end, stroke)?;
+                        canvas
+                            .arc(x, y, radius, start, end, stroke)
+                            .map_err(PixError::Renderer)?;
                     }
                 }
                 ArcMode::Pie => {
                     if let Some(fill) = fill {
-                        canvas.filled_pie(x, y, radius, start, end, fill)?;
+                        canvas
+                            .filled_pie(x, y, radius, start, end, fill)
+                            .map_err(PixError::Renderer)?;
                     }
                     if let Some(stroke) = stroke {
-                        canvas.pie(x, y, radius, start, end, stroke)?;
+                        canvas
+                            .pie(x, y, radius, start, end, stroke)
+                            .map_err(PixError::Renderer)?;
                     }
                 }
             }
@@ -532,21 +581,19 @@ impl Rendering for Renderer {
         center: Option<PointI2>,
         flipped: Option<Flipped>,
         tint: Option<Color>,
-    ) -> Result<()> {
+    ) -> PixResult<()> {
         let (_, texture_creator) = self
             .canvases
             .get(&self.window_target)
-            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+            .ok_or(PixError::InvalidWindow(self.window_target))?;
         let img_ptr: *const Image = img;
         let key = (self.window_target, img_ptr);
         if !self.image_cache.contains(&key) {
             self.image_cache.put(
                 key,
-                texture_creator.create_texture_static(
-                    Some(img.format().into()),
-                    img.width(),
-                    img.height(),
-                )?,
+                texture_creator
+                    .create_texture_static(Some(img.format().into()), img.width(), img.height())
+                    .context("failed to create image texture")?,
             );
         }
         // SAFETY: We just checked or inserted a texture.
@@ -563,16 +610,18 @@ impl Rendering for Renderer {
             }
         }
         texture.set_blend_mode(self.blend_mode);
-        texture.update(
-            None,
-            img.as_bytes(),
-            img.format().channels() * img.width() as usize,
-        )?;
+        texture
+            .update(
+                None,
+                img.as_bytes(),
+                img.format().channels() * img.width() as usize,
+            )
+            .context("failed to update image texture")?;
         let src = src.map(|r| r.into());
         let dst = dst.map(|r| r.into());
-        update_canvas!(self, |canvas: &mut WindowCanvas| -> Result<()> {
-            if angle > 0.0 || center.is_some() || flipped.is_some() {
-                Ok(canvas.copy_ex(
+        update_canvas!(self, |canvas: &mut WindowCanvas| -> PixResult<()> {
+            let result = if angle > 0.0 || center.is_some() || flipped.is_some() {
+                canvas.copy_ex(
                     texture,
                     src,
                     dst,
@@ -580,18 +629,19 @@ impl Rendering for Renderer {
                     center.map(|c| c.into()),
                     matches!(flipped, Some(Flipped::Horizontal | Flipped::Both)),
                     matches!(flipped, Some(Flipped::Vertical | Flipped::Both)),
-                )?)
+                )
             } else {
-                Ok(canvas.copy(texture, src, dst)?)
-            }
+                canvas.copy(texture, src, dst)
+            };
+            Ok(result.map_err(PixError::Renderer)?)
         })
     }
 }
 
 impl Renderer {
-    pub(crate) fn update_canvas<F>(&mut self, mut f: F) -> Result<()>
+    pub(crate) fn update_canvas<F>(&mut self, mut f: F) -> PixResult<()>
     where
-        F: FnMut(&mut WindowCanvas) -> Result<()>,
+        F: FnMut(&mut WindowCanvas) -> PixResult<()>,
     {
         update_canvas!(self, f)
     }
@@ -721,122 +771,6 @@ impl From<PixelFormat> for SdlPixelFormat {
         match format {
             Rgb => SdlPixelFormat::RGB24,
             Rgba => SdlPixelFormat::RGBA32,
-        }
-    }
-}
-
-/*
- * Error Conversions
- */
-
-impl From<InitError> for Error {
-    /// Convert [InitError] to [Error].
-    fn from(err: InitError) -> Self {
-        use InitError::*;
-        match err {
-            InitializationError(err) => Self::IoError(err),
-            AlreadyInitializedError => Self::InitError,
-        }
-    }
-}
-
-impl From<FontError> for Error {
-    /// Convert [FontError] to [Error].
-    fn from(err: FontError) -> Self {
-        use FontError::*;
-        match err {
-            InvalidLatin1Text(e) => Self::InvalidText("invalid latin1 text", e),
-            SdlError(s) => Self::Other(Cow::from(s)),
-        }
-    }
-}
-
-impl From<WindowError> for Error {
-    /// Convert [WindowError] to [Error].
-    fn from(err: WindowError) -> Self {
-        Error::WindowError(err)
-    }
-}
-
-impl From<WindowBuildError> for Error {
-    /// Convert [WindowBuildError] to [Error].
-    fn from(err: WindowBuildError) -> Self {
-        use WindowBuildError::*;
-        match err {
-            HeightOverflows(h) => Self::Overflow(Cow::from("window height"), h),
-            WidthOverflows(w) => Self::Overflow(Cow::from("window width"), w),
-            InvalidTitle(e) => Self::InvalidText("invalid title", e),
-            SdlError(s) => Self::Other(Cow::from(s)),
-        }
-    }
-}
-
-impl From<IntegerOrSdlError> for Error {
-    /// Convert [IntegerOrSdlError] to [Error].
-    fn from(err: IntegerOrSdlError) -> Self {
-        use IntegerOrSdlError::*;
-        match err {
-            IntegerOverflows(s, v) => Self::Overflow(Cow::from(s), v),
-            SdlError(s) => Self::Other(Cow::from(s)),
-        }
-    }
-}
-
-impl From<TextureValueError> for Error {
-    /// Convert [TextureValueError] to [Error].
-    fn from(err: TextureValueError) -> Self {
-        use TextureValueError::*;
-        match err {
-            HeightOverflows(h) => Self::Overflow(Cow::from("texture height"), h),
-            WidthOverflows(w) => Self::Overflow(Cow::from("texture width"), w),
-            WidthMustBeMultipleOfTwoForFormat(_, _) => {
-                Self::Other(Cow::from("width must be multiple of 2"))
-            }
-            SdlError(s) => Self::Other(Cow::from(s)),
-        }
-    }
-}
-
-impl From<TargetRenderError> for Error {
-    /// Convert [TargetRenderError] to [Error].
-    fn from(err: TargetRenderError) -> Self {
-        use TargetRenderError::*;
-        match err {
-            NotSupported => Self::Other(Cow::from("Not supported")),
-            SdlError(s) => s.into(),
-        }
-    }
-}
-
-impl From<SdlError> for Error {
-    /// Convert [SdlError] to [Error].
-    fn from(err: SdlError) -> Self {
-        Self::Other(Cow::from(err.to_string()))
-    }
-}
-
-impl From<UpdateTextureError> for Error {
-    /// Convert [UpdateTextureError] to [Error].
-    fn from(err: UpdateTextureError) -> Self {
-        use UpdateTextureError::*;
-        match err {
-            PitchOverflows(p) => Self::Overflow(Cow::from("pitch"), p as u32),
-            PitchMustBeMultipleOfTwoForFormat(_, _) => {
-                Self::Other(Cow::from("pitch must be multiple of 2"))
-            }
-            XMustBeMultipleOfTwoForFormat(_, _) => {
-                Self::Other(Cow::from("x must be multiple of 2"))
-            }
-            YMustBeMultipleOfTwoForFormat(_, _) => {
-                Self::Other(Cow::from("y must be multiple of 2"))
-            }
-            WidthMustBeMultipleOfTwoForFormat(_, _) => {
-                Self::Other(Cow::from("width must be multiple of 2"))
-            }
-            HeightMustBeMultipleOfTwoForFormat(_, _) => {
-                Self::Other(Cow::from("height must be multiple of 2"))
-            }
-            SdlError(s) => Self::Other(Cow::from(s)),
         }
     }
 }

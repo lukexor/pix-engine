@@ -1,5 +1,4 @@
 use pix_engine::prelude::*;
-use std::borrow::Cow;
 
 const WIDTH: u32 = 1000;
 const HEIGHT: u32 = 800;
@@ -80,16 +79,11 @@ impl RayScene {
     fn has_edge(&self, i: usize, dir: usize) -> bool {
         self.cells.get(i).map(|c| c.edges[dir].0).unwrap_or(false)
     }
-    fn get_edge_index(&mut self, i: usize, dir: usize) -> PixResult<usize> {
-        self.cells
-            .get(i)
-            .map(|c| c.edges[dir].1)
-            .ok_or_else(|| PixError::Other(Cow::from("invalid cell index")))
+    fn get_edge_index(&mut self, i: usize, dir: usize) -> usize {
+        self.cells[i].edges[dir].1
     }
-    fn get_edge_mut(&mut self, i: usize) -> PixResult<&mut Line<i32, 2>> {
-        self.edges
-            .get_mut(i)
-            .ok_or_else(|| PixError::Other(Cow::from("invalid edge index")))
+    fn get_edge_mut(&mut self, i: usize) -> &mut Line<i32, 2> {
+        &mut self.edges[i]
     }
 
     #[allow(clippy::many_single_char_names)]
@@ -118,8 +112,8 @@ impl RayScene {
                     if x > 0 && !self.exists(w) {
                         // Can extend down from northern neighbors WEST edge
                         if self.has_edge(n, WEST) {
-                            let edge_id = self.get_edge_index(n, WEST)?;
-                            let edge = self.get_edge_mut(edge_id)?;
+                            let edge_id = self.get_edge_index(n, WEST);
+                            let edge = self.get_edge_mut(edge_id);
                             edge.set_end([edge.end().x(), edge.end().y() + block_size]);
                             self.cells[i].edges[WEST] = (true, edge_id);
                         } else {
@@ -136,8 +130,8 @@ impl RayScene {
                     if x < rect.width() && !self.exists(e) {
                         // Can extend down from northern neighbors EAST edge
                         if self.has_edge(n, EAST) {
-                            let edge_id = self.get_edge_index(n, EAST)?;
-                            let edge = self.get_edge_mut(edge_id)?;
+                            let edge_id = self.get_edge_index(n, EAST);
+                            let edge = self.get_edge_mut(edge_id);
                             edge.set_end([edge.end().x(), edge.end().y() + block_size]);
                             self.cells[i].edges[EAST] = (true, edge_id);
                         } else {
@@ -154,8 +148,8 @@ impl RayScene {
                     if y > 0 && !self.exists(n) {
                         // Can extend from western neighbors NORTH edge
                         if self.has_edge(w, NORTH) {
-                            let edge_id = self.get_edge_index(w, NORTH)?;
-                            let edge = self.get_edge_mut(edge_id)?;
+                            let edge_id = self.get_edge_index(w, NORTH);
+                            let edge = self.get_edge_mut(edge_id);
                             edge.set_end([edge.end().x() + block_size, edge.end().y()]);
                             self.cells[i].edges[NORTH] = (true, edge_id);
                         } else {
@@ -172,8 +166,8 @@ impl RayScene {
                     if y < rect.height() && !self.exists(s) {
                         // Can extend from western neighbors SOUTH edge
                         if self.has_edge(w, SOUTH) {
-                            let edge_id = self.get_edge_index(w, SOUTH)?;
-                            let edge = self.get_edge_mut(edge_id)?;
+                            let edge_id = self.get_edge_index(w, SOUTH);
+                            let edge = self.get_edge_mut(edge_id);
                             edge.set_end([edge.end().x() + block_size, edge.end().y()]);
                             self.cells[i].edges[SOUTH] = (true, edge_id);
                         } else {

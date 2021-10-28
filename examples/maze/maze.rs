@@ -6,12 +6,11 @@ use crate::cell::{Cell, Direction};
 pub struct Maze {
     cols: u32,
     rows: u32,
-    size: u32,
     cells: Vec<Cell>,
 }
 
 impl Maze {
-    pub fn new(cols: u32, rows: u32, size: u32) -> Self {
+    pub fn new(cols: u32, rows: u32) -> Self {
         let mut cells = Vec::with_capacity((cols * rows) as usize);
         for row in 0..rows {
             // Ensure cols are added contiguously before rows
@@ -19,12 +18,7 @@ impl Maze {
                 cells.push(Cell::new(cells.len(), col, row));
             }
         }
-        Self {
-            cols,
-            rows,
-            size,
-            cells,
-        }
+        Self { cols, rows, cells }
     }
 
     pub fn idx(&self, col: u32, row: u32) -> Option<usize> {

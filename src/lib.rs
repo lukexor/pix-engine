@@ -31,10 +31,10 @@ pub mod color;
 pub mod appstate;
 pub mod draw;
 pub mod engine;
+pub mod error;
 #[macro_use]
 pub mod shape;
 pub mod audio;
-pub mod common;
 pub mod event;
 pub mod graphics;
 pub mod image;
@@ -58,9 +58,9 @@ pub mod prelude {
 
     pub use appstate::AppState;
     pub use color::{constants::*, Color, ColorMode, Error as ColorError};
-    pub use common::{Error as PixError, Result as PixResult};
     pub use draw::Draw;
     pub use engine::PixEngine;
+    pub use error::{Error as PixError, Result as PixResult};
     pub use event::{Axis, ControllerButton, Event, Key, KeyEvent, KeyMod, Mouse, WindowEvent};
     pub use graphics::lighting::{Light, LightF3, LightSource};
     pub use gui::theme::{fonts::*, Font, FontSrc, Theme, ThemeBuilder};

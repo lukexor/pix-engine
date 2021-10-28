@@ -1,5 +1,6 @@
 use super::Renderer;
 use crate::renderer::*;
+use anyhow::Context;
 use sdl2::{rect::Rect as SdlRect, render::Texture as SdlTexture};
 
 pub(crate) type RendererTexture = SdlTexture;
@@ -12,13 +13,14 @@ impl TextureRenderer for Renderer {
         width: u32,
         height: u32,
         format: Option<PixelFormat>,
-    ) -> Result<TextureId> {
+    ) -> PixResult<TextureId> {
         let (_, texture_creator) = self
             .canvases
             .get(&self.window_target)
-            .ok_or(WindowError::InvalidWindow(self.window_target))?;
-        let texture =
-            texture_creator.create_texture_target(format.map(|f| f.into()), width, height)?;
+            .ok_or(PixError::InvalidWindow(self.window_target))?;
+        let texture = texture_creator
+            .create_texture_target(format.map(|f| f.into()), width, height)
+            .context("failed to create texture")?;
         let texture_id = self.textures.len();
         self.textures.push((self.window_target, texture));
         Ok(texture_id)
@@ -35,7 +37,7 @@ impl TextureRenderer for Renderer {
     ///
     /// Destroying textures created from a dropped canvas is undefined behavior.
     #[inline]
-    fn delete_texture(&mut self, texture_id: TextureId) -> Result<()> {
+    fn delete_texture(&mut self, texture_id: TextureId) -> PixResult<()> {
         if self.textures.len() > texture_id {
             let (_, texture) = self.textures.remove(texture_id);
             // SAFETY: If we have a valid texture entry, it's safe to destroy as long as all
@@ -44,7 +46,7 @@ impl TextureRenderer for Renderer {
             unsafe { texture.destroy() };
             Ok(())
         } else {
-            Err(Error::InvalidTexture(texture_id))
+            Err(PixError::InvalidTexture(texture_id).into())
         }
     }
 
@@ -56,12 +58,14 @@ impl TextureRenderer for Renderer {
         rect: Option<Rect<i32>>,
         pixels: P,
         pitch: usize,
-    ) -> Result<()> {
+    ) -> PixResult<()> {
         if let Some((_, texture)) = self.textures.get_mut(texture_id) {
             let rect: Option<SdlRect> = rect.map(|r| r.into());
-            Ok(texture.update(rect, pixels.as_ref(), pitch)?)
+            Ok(texture
+                .update(rect, pixels.as_ref(), pitch)
+                .context("failed to update texture")?)
         } else {
-            Err(Error::InvalidTexture(texture_id))
+            Err(PixError::InvalidTexture(texture_id).into())
         }
     }
 
@@ -76,7 +80,7 @@ impl TextureRenderer for Renderer {
         center: Option<PointI2>,
         flipped: Option<Flipped>,
         tint: Option<Color>,
-    ) -> Result<()> {
+    ) -> PixResult<()> {
         if let Some((_, texture)) = self.textures.get_mut(texture_id) {
             match tint {
                 Some(tint) => {
@@ -95,8 +99,8 @@ impl TextureRenderer for Renderer {
             let (canvas, _) = self
                 .canvases
                 .get_mut(&self.window_target)
-                .ok_or(WindowError::InvalidWindow(self.window_target))?;
-            if angle > 0.0 || center.is_some() || flipped.is_some() {
+                .ok_or(PixError::InvalidWindow(self.window_target))?;
+            let result = if angle > 0.0 || center.is_some() || flipped.is_some() {
                 canvas.copy_ex(
                     texture,
                     src,
@@ -105,13 +109,13 @@ impl TextureRenderer for Renderer {
                     center.map(|c| c.into()),
                     matches!(flipped, Some(Flipped::Horizontal | Flipped::Both)),
                     matches!(flipped, Some(Flipped::Vertical | Flipped::Both)),
-                )?;
+                )
             } else {
-                canvas.copy(texture, src, dst)?;
-            }
-            Ok(())
+                canvas.copy(texture, src, dst)
+            };
+            Ok(result.map_err(PixError::Renderer)?)
         } else {
-            Err(Error::InvalidTexture(texture_id))
+            Err(PixError::InvalidTexture(texture_id).into())
         }
     }
 

@@ -3,17 +3,18 @@ use crate::{
     ops::LruCacheExt,
     prelude::{Cursor, Event, SystemCursor},
     renderer::*,
-    window::{Error, Position, Result, WindowId},
+    window::{Position, WindowId},
 };
+use anyhow::Context;
 use sdl2::{
     image::LoadSurface,
     mouse::{Cursor as SdlCursor, SystemCursor as SdlSystemCursor},
-    render::TextureValueError,
+    render::Canvas,
     surface::Surface,
-    video::{FullscreenType, WindowBuildError},
-    IntegerOrSdlError, Sdl,
+    video::{FullscreenType, Window},
+    Sdl,
 };
-use std::{borrow::Cow, fmt::Write};
+use std::fmt::Write;
 
 impl WindowRenderer for Renderer {
     /// Get the primary window ID.
@@ -29,7 +30,7 @@ impl WindowRenderer for Renderer {
     }
 
     /// Create a new window.
-    fn create_window(&mut self, s: &RendererSettings) -> Result<WindowId> {
+    fn create_window(&mut self, s: &RendererSettings) -> PixResult<WindowId> {
         let (window_id, canvas) = Self::create_window_canvas(&self.context, s)?;
         let texture_creator = canvas.texture_creator();
         self.canvases.insert(window_id, (canvas, texture_creator));
@@ -37,7 +38,7 @@ impl WindowRenderer for Renderer {
     }
 
     /// Close a window.
-    fn close_window(&mut self, id: WindowId) -> Result<()> {
+    fn close_window(&mut self, id: WindowId) -> PixResult<()> {
         if id == self.window_target {
             self.reset_window_target();
         }
@@ -45,18 +46,20 @@ impl WindowRenderer for Renderer {
         self.image_cache.retain(|key, _| key.0 != id);
         self.canvases
             .remove(&id)
-            .map_or(Err(Error::InvalidWindow(id)), |_| Ok(()))
+            .map_or(Err(PixError::InvalidWindow(id).into()), |_| Ok(()))
     }
 
     /// Set the mouse cursor to a predefined symbol or image, or hides cursor if `None`.
-    fn cursor(&mut self, cursor: Option<&Cursor>) -> Result<()> {
+    fn cursor(&mut self, cursor: Option<&Cursor>) -> PixResult<()> {
         match cursor {
             Some(cursor) => {
                 self.cursor = match cursor {
-                    Cursor::System(cursor) => SdlCursor::from_system((*cursor).into())?,
-                    Cursor::Image(path) => {
-                        let surface = Surface::from_file(path)?;
-                        SdlCursor::from_surface(surface, 0, 0)?
+                    Cursor::System(cursor) => {
+                        SdlCursor::from_system((*cursor).into()).map_err(PixError::Renderer)?
+                    }
+                    Cursor::Image(path, (x, y)) => {
+                        let surface = Surface::from_file(path).map_err(PixError::Renderer)?;
+                        SdlCursor::from_surface(surface, *x, *y).map_err(PixError::Renderer)?
                     }
                 };
                 self.cursor.set();
@@ -83,36 +86,39 @@ impl WindowRenderer for Renderer {
 
     /// Set the current window title.
     #[inline]
-    fn set_title(&mut self, title: &str) -> Result<()> {
+    fn set_title(&mut self, title: &str) -> PixResult<()> {
         self.settings.title.replace_range(.., title);
-        let (canvas, _) = self
-            .canvases
-            .get_mut(&self.window_target)
-            .ok_or(WindowError::InvalidWindow(self.window_target))?;
-        Ok(canvas.window_mut().set_title(title)?)
+        let canvas = self.get_current_canvas_mut()?;
+        canvas
+            .window_mut()
+            .set_title(title)
+            .context("invalid title")
     }
 
     #[inline]
-    fn set_fps(&mut self, fps: usize) -> Result<()> {
+    fn set_fps(&mut self, fps: usize) -> PixResult<()> {
         self.fps = fps;
         self.title.clear();
         write!(self.title, "{} - FPS: {}", &self.settings.title, self.fps).expect("valid title");
         let (canvas, _) = self
             .canvases
             .get_mut(&self.window_target)
-            .ok_or(WindowError::InvalidWindow(self.window_target))?;
-        Ok(canvas.window_mut().set_title(&self.title)?)
+            .ok_or(PixError::InvalidWindow(self.window_target))?;
+        canvas
+            .window_mut()
+            .set_title(&self.title)
+            .context("invalid title")
     }
 
     /// Dimensions of the current render target as `(width, height)`.
     #[inline]
-    fn dimensions(&self) -> Result<(u32, u32)> {
+    fn dimensions(&self) -> PixResult<(u32, u32)> {
         if let Some(texture_id) = self.texture_target {
             if let Some((_, texture)) = self.textures.get(texture_id) {
                 let query = texture.query();
                 Ok((query.width, query.height))
             } else {
-                Err(Error::InvalidTexture(texture_id))
+                Err(PixError::InvalidTexture(texture_id).into())
             }
         } else {
             self.window_dimensions()
@@ -121,81 +127,71 @@ impl WindowRenderer for Renderer {
 
     /// Dimensions of the current window target as `(width, height)`.
     #[inline]
-    fn window_dimensions(&self) -> Result<(u32, u32)> {
-        let (canvas, _) = self
-            .canvases
-            .get(&self.window_target)
-            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+    fn window_dimensions(&self) -> PixResult<(u32, u32)> {
+        let canvas = self.get_current_canvas()?;
         Ok(canvas.window().size())
     }
 
     /// Set dimensions of the current window target as `(width, height)`.
     #[inline]
-    fn set_window_dimensions(&mut self, (width, height): (u32, u32)) -> Result<()> {
-        let (canvas, _) = self
-            .canvases
-            .get_mut(&self.window_target)
-            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+    fn set_window_dimensions(&mut self, (width, height): (u32, u32)) -> PixResult<()> {
         self.settings.width = width;
         self.settings.height = height;
-        canvas.window_mut().set_size(width, height)?;
-        canvas.set_logical_size(width, height)?;
+        let canvas = self.get_current_canvas_mut()?;
+        canvas
+            .window_mut()
+            .set_size(width, height)
+            .context("invalid window dimensions")?;
+        canvas
+            .set_logical_size(width, height)
+            .context("invalid logical window size")?;
         Ok(())
     }
 
     /// Returns the rendering viewport of the current render target.
-    fn viewport(&mut self) -> Result<Rect<i32>> {
-        let (canvas, _) = self
-            .canvases
-            .get_mut(&self.window_target)
-            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+    fn viewport(&mut self) -> PixResult<Rect<i32>> {
+        let canvas = self.get_current_canvas_mut()?;
         Ok(canvas.viewport().into())
     }
 
     /// Set the rendering viewport of the current render target.
-    fn set_viewport(&mut self, rect: Option<Rect<i32>>) -> Result<()> {
-        let (canvas, _) = self
-            .canvases
-            .get_mut(&self.window_target)
-            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+    fn set_viewport(&mut self, rect: Option<Rect<i32>>) -> PixResult<()> {
+        let canvas = self.get_current_canvas_mut()?;
         canvas.set_viewport(rect.map(|r| r.into()));
         Ok(())
     }
 
     /// Dimensions of the primary display as `(width, height)`.
     #[inline]
-    fn display_dimensions(&self) -> Result<(u32, u32)> {
-        let (canvas, _) = self
-            .canvases
-            .get(&self.window_target)
-            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+    fn display_dimensions(&self) -> PixResult<(u32, u32)> {
+        let canvas = self.get_current_canvas()?;
         let window = canvas.window();
-        let display_index = window.display_index()?;
-        let bounds = window.subsystem().display_usable_bounds(display_index)?;
+        let display_index = window.display_index().map_err(PixError::Renderer)?;
+        let bounds = window
+            .subsystem()
+            .display_usable_bounds(display_index)
+            .map_err(PixError::Renderer)?;
         Ok((bounds.width(), bounds.height()))
     }
 
     /// Returns whether the application is fullscreen or not.
     #[inline]
-    fn fullscreen(&self) -> Result<bool> {
+    fn fullscreen(&self) -> PixResult<bool> {
         use FullscreenType::*;
-        let (canvas, _) = self
-            .canvases
-            .get(&self.window_target)
-            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+        let canvas = self.get_current_canvas()?;
         Ok(matches!(canvas.window().fullscreen_state(), True | Desktop))
     }
 
     /// Set the application to fullscreen or not.
     #[inline]
-    fn set_fullscreen(&mut self, val: bool) -> Result<()> {
+    fn set_fullscreen(&mut self, val: bool) -> PixResult<()> {
         use FullscreenType::*;
         let fullscreen_type = if val { True } else { Off };
-        let (canvas, _) = self
-            .canvases
-            .get_mut(&self.window_target)
-            .ok_or(WindowError::InvalidWindow(self.window_target))?;
-        Ok(canvas.window_mut().set_fullscreen(fullscreen_type)?)
+        let canvas = self.get_current_canvas_mut()?;
+        Ok(canvas
+            .window_mut()
+            .set_fullscreen(fullscreen_type)
+            .map_err(PixError::Renderer)?)
     }
 
     /// Returns whether the window synchronizes frame rate to the screens refresh rate.
@@ -205,11 +201,11 @@ impl WindowRenderer for Renderer {
     }
 
     /// Set the window to synchronize frame rate to the screens refresh rate.
-    fn set_vsync(&mut self, val: bool) -> Result<()> {
+    fn set_vsync(&mut self, val: bool) -> PixResult<()> {
         let (canvas, _) = self
             .canvases
-            .get(&self.window_target)
-            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+            .get_mut(&self.window_target)
+            .ok_or(PixError::InvalidWindow(self.window_target))?;
 
         self.settings.vsync = val;
         let window = canvas.window();
@@ -245,9 +241,9 @@ impl WindowRenderer for Renderer {
 
     /// Set window as the target for drawing operations.
     #[inline]
-    fn set_window_target(&mut self, id: WindowId) -> Result<()> {
+    fn set_window_target(&mut self, id: WindowId) -> PixResult<()> {
         if !self.canvases.contains_key(&id) {
-            Err(Error::InvalidWindow(id))
+            Err(PixError::InvalidWindow(id).into())
         } else {
             self.window_target = id;
             Ok(())
@@ -262,33 +258,41 @@ impl WindowRenderer for Renderer {
 
     /// Show the current window target.
     #[inline]
-    fn show(&mut self) -> Result<()> {
-        let (canvas, _) = self
-            .canvases
-            .get_mut(&self.window_target)
-            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+    fn show(&mut self) -> PixResult<()> {
+        let canvas = self.get_current_canvas_mut()?;
         canvas.window_mut().show();
         Ok(())
     }
 
     /// Hide the current window target.
     #[inline]
-    fn hide(&mut self) -> Result<()> {
-        let (canvas, _) = self
-            .canvases
-            .get_mut(&self.window_target)
-            .ok_or(WindowError::InvalidWindow(self.window_target))?;
+    fn hide(&mut self) -> PixResult<()> {
+        let canvas = self.get_current_canvas_mut()?;
         canvas.window_mut().hide();
         Ok(())
     }
 }
 
 impl Renderer {
+    pub(crate) fn get_current_canvas(&self) -> PixResult<&Canvas<Window>> {
+        let (canvas, _) = self
+            .canvases
+            .get(&self.window_target)
+            .ok_or(PixError::InvalidWindow(self.window_target))?;
+        Ok(canvas)
+    }
+    pub(crate) fn get_current_canvas_mut(&mut self) -> PixResult<&mut Canvas<Window>> {
+        let (canvas, _) = self
+            .canvases
+            .get_mut(&self.window_target)
+            .ok_or(PixError::InvalidWindow(self.window_target))?;
+        Ok(canvas)
+    }
     pub(crate) fn create_window_canvas(
         context: &Sdl,
         s: &RendererSettings,
-    ) -> Result<(WindowId, WindowCanvas)> {
-        let video_subsys = context.video()?;
+    ) -> PixResult<(WindowId, WindowCanvas)> {
+        let video_subsys = context.video().map_err(PixError::Renderer)?;
 
         // TODO: more testing - macOS performance seems low with default "metal" renderer
         // However: https://github.com/libsdl-org/SDL/issues/4001
@@ -316,7 +320,7 @@ impl Renderer {
             (Position::Positioned(x), Position::Positioned(y)) => {
                 window_builder.position(x, y);
             }
-            _ => return Err(Error::InvalidPosition(s.x, s.y)),
+            _ => return Err(PixError::InvalidPosition(s.x, s.y).into()),
         };
         if s.fullscreen {
             window_builder.fullscreen();
@@ -334,19 +338,23 @@ impl Renderer {
             window_builder.hidden();
         }
 
-        let window = window_builder.build()?;
+        let window = window_builder.build().context("failed to build window")?;
 
         let window_id = window.id() as usize;
         let mut canvas_builder = window.into_canvas().accelerated().target_texture();
         if s.vsync {
             canvas_builder = canvas_builder.present_vsync();
         }
-        let mut canvas = canvas_builder.build()?;
-        canvas.set_logical_size(win_width, win_height)?;
-        canvas.set_scale(s.scale_x, s.scale_y)?;
+        let mut canvas = canvas_builder.build().context("failed to build canvas")?;
+        canvas
+            .set_logical_size(win_width, win_height)
+            .context("invalid logical canvas size")?;
+        canvas
+            .set_scale(s.scale_x, s.scale_y)
+            .map_err(PixError::Renderer)?;
 
         if let Some(icon) = &s.icon {
-            let surface = Surface::from_file(icon)?;
+            let surface = Surface::from_file(icon).map_err(PixError::Renderer)?;
             canvas.window_mut().set_icon(surface);
         }
 
@@ -370,42 +378,6 @@ impl From<SystemCursor> for SdlSystemCursor {
             SystemCursor::SizeAll => SizeAll,
             SystemCursor::No => No,
             SystemCursor::Hand => Hand,
-        }
-    }
-}
-
-impl From<IntegerOrSdlError> for Error {
-    fn from(err: IntegerOrSdlError) -> Self {
-        use IntegerOrSdlError::*;
-        match err {
-            IntegerOverflows(s, v) => Self::Overflow(Cow::from(s), v),
-            SdlError(s) => Self::Other(Cow::from(s)),
-        }
-    }
-}
-
-impl From<WindowBuildError> for Error {
-    fn from(err: WindowBuildError) -> Self {
-        use WindowBuildError::*;
-        match err {
-            HeightOverflows(h) => Self::Overflow(Cow::from("window height"), h),
-            WidthOverflows(w) => Self::Overflow(Cow::from("window width"), w),
-            InvalidTitle(e) => Self::InvalidText("invalid title", e),
-            SdlError(s) => Self::Other(Cow::from(s)),
-        }
-    }
-}
-
-impl From<TextureValueError> for Error {
-    fn from(err: TextureValueError) -> Self {
-        use TextureValueError::*;
-        match err {
-            HeightOverflows(h) => Self::Overflow(Cow::from("texture height"), h),
-            WidthOverflows(w) => Self::Overflow(Cow::from("texture width"), w),
-            WidthMustBeMultipleOfTwoForFormat(_, _) => {
-                Self::Other(Cow::from("width must be multiple of 2"))
-            }
-            SdlError(s) => Self::Other(Cow::from(s)),
         }
     }
 }

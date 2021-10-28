@@ -272,25 +272,13 @@ impl Default for ThemeStyle {
 }
 
 /// A UI theme containing font families, sizes, styles, and colors.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Theme {
     pub(crate) fonts: ThemeFonts,
     pub(crate) font_sizes: ThemeFontSizes,
     pub(crate) font_styles: ThemeFontStyles,
     pub(crate) colors: ThemeColors,
     pub(crate) style: ThemeStyle,
-}
-
-impl Default for Theme {
-    fn default() -> Self {
-        Self {
-            fonts: ThemeFonts::default(),
-            font_sizes: ThemeFontSizes::default(),
-            font_styles: ThemeFontStyles::default(),
-            colors: ThemeColors::default(),
-            style: ThemeStyle::default(),
-        }
-    }
 }
 
 impl Theme {
@@ -310,12 +298,12 @@ impl PixState {
     /// Set the font size for drawing to the current canvas.
     pub fn font_size<S: AsPrimitive<u32>>(&mut self, size: S) -> PixResult<()> {
         self.theme.font_sizes.body = size.as_();
-        Ok(self.renderer.font_size(self.theme.font_sizes.body)?)
+        self.renderer.font_size(self.theme.font_sizes.body)
     }
 
     /// Return the dimensions of given text for drawing to the current canvas.
     pub fn size_of<S: AsRef<str>>(&mut self, text: S) -> PixResult<(u32, u32)> {
-        Ok(self.renderer.size_of(text.as_ref())?)
+        self.renderer.size_of(text.as_ref())
     }
 
     /// Set the font style for drawing to the current canvas.
@@ -327,7 +315,7 @@ impl PixState {
     /// Set the font family for drawing to the current canvas.
     pub fn font_family(&mut self, font: Font) -> PixResult<()> {
         self.theme.fonts.body = font;
-        Ok(self.renderer.font_family(&self.theme.fonts.body)?)
+        self.renderer.font_family(&self.theme.fonts.body)
     }
 
     /// Returns the current theme body font.

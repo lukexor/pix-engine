@@ -3,10 +3,7 @@
 use crate::{prelude::*, renderer::RendererSettings};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::{borrow::Cow, error, ffi::NulError, fmt, path::PathBuf, result};
-
-/// The result type for `WindowRenderer` operations.
-pub type Result<T> = result::Result<T, Error>;
+use std::path::PathBuf;
 
 /// Represents a possible screen position.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -36,8 +33,8 @@ pub enum Cursor {
     /// A system supported cursor. e.g. Arrow, Hand, etc.
     System(SystemCursor),
     #[cfg(not(target_arch = "wasm32"))]
-    /// A custom cursor from a image path.
-    Image(PathBuf),
+    /// A custom cursor from a image path starting at `(x, y)`.
+    Image(PathBuf, (i32, i32)),
 }
 
 impl Default for Cursor {
@@ -48,8 +45,8 @@ impl Default for Cursor {
 
 impl Cursor {
     /// Constructs a `Cursor` from a file path.
-    pub fn new<P: Into<PathBuf>>(path: P) -> Self {
-        Self::Image(path.into())
+    pub fn new<P: Into<PathBuf>>(path: P, x: i32, y: i32) -> Self {
+        Self::Image(path.into(), (x, y))
     }
 
     /// Constructs a `Cursor` with `SystemCursor::Arrow`.
@@ -113,13 +110,13 @@ pub(crate) trait WindowRenderer {
     fn window_id(&self) -> WindowId;
 
     /// Create a new window.
-    fn create_window(&mut self, s: &RendererSettings) -> Result<WindowId>;
+    fn create_window(&mut self, s: &RendererSettings) -> PixResult<WindowId>;
 
     /// Close a window.
-    fn close_window(&mut self, id: WindowId) -> Result<()>;
+    fn close_window(&mut self, id: WindowId) -> PixResult<()>;
 
     /// Set the mouse cursor to a predefined symbol or image, or hides cursor if `None`.
-    fn cursor(&mut self, cursor: Option<&Cursor>) -> Result<()>;
+    fn cursor(&mut self, cursor: Option<&Cursor>) -> PixResult<()>;
 
     /// Returns a single event or None if the event pump is empty.
     fn poll_event(&mut self) -> Option<Event>;
@@ -128,52 +125,52 @@ pub(crate) trait WindowRenderer {
     fn title(&self) -> &str;
 
     /// Set the current window title.
-    fn set_title(&mut self, title: &str) -> Result<()>;
+    fn set_title(&mut self, title: &str) -> PixResult<()>;
 
     /// Set the average frames-per-second rendered.
-    fn set_fps(&mut self, fps: usize) -> Result<()>;
+    fn set_fps(&mut self, fps: usize) -> PixResult<()>;
 
     /// Dimensions of the current render target as `(width, height)`.
-    fn dimensions(&self) -> Result<(u32, u32)>;
+    fn dimensions(&self) -> PixResult<(u32, u32)>;
 
     /// Dimensions of the current window target as `(width, height)`.
-    fn window_dimensions(&self) -> Result<(u32, u32)>;
+    fn window_dimensions(&self) -> PixResult<(u32, u32)>;
 
     /// Set dimensions of the current window target as `(width, height)`.
-    fn set_window_dimensions(&mut self, dimensions: (u32, u32)) -> Result<()>;
+    fn set_window_dimensions(&mut self, dimensions: (u32, u32)) -> PixResult<()>;
 
     /// Returns the rendering viewport of the current render target.
-    fn viewport(&mut self) -> Result<Rect<i32>>;
+    fn viewport(&mut self) -> PixResult<Rect<i32>>;
 
     /// Set the rendering viewport of the current render target.
-    fn set_viewport(&mut self, rect: Option<Rect<i32>>) -> Result<()>;
+    fn set_viewport(&mut self, rect: Option<Rect<i32>>) -> PixResult<()>;
 
     /// Dimensions of the primary display as `(width, height)`.
-    fn display_dimensions(&self) -> Result<(u32, u32)>;
+    fn display_dimensions(&self) -> PixResult<(u32, u32)>;
 
     /// Returns whether the application is fullscreen or not.
-    fn fullscreen(&self) -> Result<bool>;
+    fn fullscreen(&self) -> PixResult<bool>;
 
     /// Set the application to fullscreen or not.
-    fn set_fullscreen(&mut self, val: bool) -> Result<()>;
+    fn set_fullscreen(&mut self, val: bool) -> PixResult<()>;
 
     /// Returns whether the window synchronizes frame rate to the screens refresh rate.
     fn vsync(&self) -> bool;
 
     /// Set the window to synchronize frame rate to the screens refresh rate.
-    fn set_vsync(&mut self, val: bool) -> Result<()>;
+    fn set_vsync(&mut self, val: bool) -> PixResult<()>;
 
     /// Set window as the target for drawing operations.
-    fn set_window_target(&mut self, id: WindowId) -> Result<()>;
+    fn set_window_target(&mut self, id: WindowId) -> PixResult<()>;
 
     /// Reset main window as the target for drawing operations.
     fn reset_window_target(&mut self);
 
     /// Show the current window target.
-    fn show(&mut self) -> Result<()>;
+    fn show(&mut self) -> PixResult<()>;
 
     /// Hide the current window target.
-    fn hide(&mut self) -> Result<()>;
+    fn hide(&mut self) -> PixResult<()>;
 }
 
 /// WindowBuilder
@@ -261,7 +258,7 @@ impl<'a> WindowBuilder<'a> {
     /// Create a new window from the WindowBuilder and return its id.
     ///
     /// Returns Err if any options provided are invalid.
-    pub fn build(&mut self) -> Result<WindowId> {
+    pub fn build(&mut self) -> PixResult<WindowId> {
         self.state.renderer.create_window(&self.settings)
     }
 }
@@ -283,7 +280,7 @@ impl PixState {
     }
 
     /// Close a window.
-    pub fn close_window(&mut self, id: WindowId) -> Result<()> {
+    pub fn close_window(&mut self, id: WindowId) -> PixResult<()> {
         if id == self.primary_window_id() {
             self.quit();
             return Ok(());
@@ -293,32 +290,32 @@ impl PixState {
 
     /// The dimensions of the current render target as `(width, height)`.
     pub fn dimensions(&self) -> PixResult<(u32, u32)> {
-        Ok(self.renderer.dimensions()?)
+        self.renderer.dimensions()
     }
 
     /// The dimensions of the current window as `(width, height)`.
     pub fn window_dimensions(&self) -> PixResult<(u32, u32)> {
-        Ok(self.renderer.window_dimensions()?)
+        self.renderer.window_dimensions()
     }
 
     /// Set the dimensions of the current window from `(width, height)`.
     pub fn set_window_dimensions(&mut self, dimensions: (u32, u32)) -> PixResult<()> {
-        Ok(self.renderer.set_window_dimensions(dimensions)?)
+        self.renderer.set_window_dimensions(dimensions)
     }
 
     /// Returns the rendering viewport of the current render target.
     pub fn viewport(&mut self) -> PixResult<Rect<i32>> {
-        Ok(self.renderer.viewport()?)
+        self.renderer.viewport()
     }
 
     /// Set the rendering viewport of the current render target.
     pub fn set_viewport<R: Into<Rect<i32>>>(&mut self, rect: R) -> PixResult<()> {
-        Ok(self.renderer.set_viewport(Some(rect.into()))?)
+        self.renderer.set_viewport(Some(rect.into()))
     }
 
     /// Clears the rendering viewport of the current render target back to the entire target.
     pub fn clear_viewport(&mut self) -> PixResult<()> {
-        Ok(self.renderer.set_viewport(None)?)
+        self.renderer.set_viewport(None)
     }
 
     /// The width of the current render target.
@@ -336,7 +333,7 @@ impl PixState {
     /// Set the width of the current window.
     pub fn set_window_width(&mut self, width: u32) -> PixResult<()> {
         let (_, height) = self.renderer.window_dimensions()?;
-        Ok(self.renderer.set_window_dimensions((width, height))?)
+        self.renderer.set_window_dimensions((width, height))
     }
 
     /// The height of the current render target.
@@ -354,12 +351,12 @@ impl PixState {
     /// Set the height of the current window.
     pub fn set_window_height(&mut self, height: u32) -> PixResult<()> {
         let (width, _) = self.renderer.window_dimensions()?;
-        Ok(self.renderer.set_window_dimensions((width, height))?)
+        self.renderer.set_window_dimensions((width, height))
     }
 
     /// The dimensions of the primary display as `(width, height)`.
     pub fn display_dimensions(&self) -> PixResult<(u32, u32)> {
-        Ok(self.renderer.display_dimensions()?)
+        self.renderer.display_dimensions()
     }
 
     /// The width of the primary display.
@@ -376,12 +373,12 @@ impl PixState {
 
     /// Show the current window target.
     pub fn show_window(&mut self) -> PixResult<()> {
-        Ok(self.renderer.show()?)
+        self.renderer.show()
     }
 
     /// Hide the current window target.
     pub fn hide_window(&mut self) -> PixResult<()> {
-        Ok(self.renderer.hide()?)
+        self.renderer.hide()
     }
 
     /// Target a `Window` for drawing operations.
@@ -400,68 +397,5 @@ impl PixState {
         self.ui.pop_cursor();
         self.pop();
         result
-    }
-}
-
-/// The error type for `Renderer` operations.
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Error {
-    /// Invalid window title.
-    InvalidTitle(&'static str, NulError),
-    /// Invalid [WindowId].
-    InvalidWindow(WindowId),
-    /// Invalid [TextureId].
-    InvalidTexture(TextureId),
-    /// Invalid `(x, y)` window [Position].
-    InvalidPosition(Position, Position),
-    /// An overflow occurred.
-    Overflow(Cow<'static, str>, u32),
-    /// Invalid text.
-    InvalidText(&'static str, NulError),
-    /// Any other unknown error as a string.
-    Other(Cow<'static, str>),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use Error::*;
-        match self {
-            InvalidTitle(msg, err) => write!(f, "invalid title: {}, {}", msg, err),
-            InvalidWindow(window_id) => write!(f, "invalid window id: {}", window_id),
-            InvalidTexture(texture_id) => write!(f, "invalid texture id: {}", texture_id),
-            InvalidPosition(x, y) => write!(f, "invalid window position: {:?}", (x, y)),
-            InvalidText(msg, err) => write!(f, "invalid text: {}, {}", msg, err),
-            Overflow(err, val) => write!(f, "overflow {}: {}", err, val),
-            Other(err) => write!(f, "unknown window error: {}", err),
-        }
-    }
-}
-
-impl error::Error for Error {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        use Error::*;
-        match self {
-            InvalidTitle(_, err) | InvalidText(_, err) => err.source(),
-            _ => None,
-        }
-    }
-}
-
-impl From<Error> for PixError {
-    fn from(err: Error) -> Self {
-        Self::WindowError(err)
-    }
-}
-
-impl From<String> for Error {
-    fn from(err: String) -> Self {
-        Self::Other(Cow::from(err))
-    }
-}
-
-impl From<NulError> for Error {
-    fn from(err: NulError) -> Self {
-        Self::InvalidTitle("unknown nul error", err)
     }
 }

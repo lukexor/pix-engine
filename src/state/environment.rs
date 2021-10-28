@@ -13,7 +13,6 @@ const ONE_SECOND: Duration = Duration::from_secs(1);
 /// Environment values for [PixState]
 #[derive(Debug, Clone)]
 pub(crate) struct Environment {
-    focused: bool,
     focused_window: Option<WindowId>,
     delta_time: Scalar,
     start: Instant,
@@ -29,7 +28,6 @@ pub(crate) struct Environment {
 impl Default for Environment {
     fn default() -> Self {
         Self {
-            focused: false,
             focused_window: None,
             delta_time: 0.0,
             start: Instant::now(),

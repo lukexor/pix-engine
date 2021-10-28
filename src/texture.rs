@@ -1,6 +1,6 @@
 //! `Texture` functions.
 
-use crate::{prelude::*, renderer::Result as RendererResult};
+use crate::prelude::*;
 use num_traits::AsPrimitive;
 
 /// `TextureId`.
@@ -14,10 +14,10 @@ pub(crate) trait TextureRenderer {
         width: u32,
         height: u32,
         format: Option<PixelFormat>,
-    ) -> RendererResult<TextureId>;
+    ) -> PixResult<TextureId>;
 
     /// Delete a `Texture`.
-    fn delete_texture(&mut self, texture_id: TextureId) -> RendererResult<()>;
+    fn delete_texture(&mut self, texture_id: TextureId) -> PixResult<()>;
 
     /// Update texture with pixel data.
     fn update_texture<P: AsRef<[u8]>>(
@@ -26,7 +26,7 @@ pub(crate) trait TextureRenderer {
         rect: Option<Rect<i32>>,
         pixels: P,
         pitch: usize,
-    ) -> RendererResult<()>;
+    ) -> PixResult<()>;
 
     /// Draw texture to the curent canvas.
     #[allow(clippy::too_many_arguments)]
@@ -39,7 +39,7 @@ pub(crate) trait TextureRenderer {
         center: Option<PointI2>,
         flipped: Option<Flipped>,
         tint: Option<Color>,
-    ) -> RendererResult<()>;
+    ) -> PixResult<()>;
 
     /// Returns texture used as the target for drawing operations, if set.
     fn texture_target(&self) -> Option<TextureId>;
@@ -61,9 +61,8 @@ impl PixState {
         R1: Into<Option<Rect<i32>>>,
         R2: Into<Option<Rect<i32>>>,
     {
-        Ok(self
-            .renderer
-            .texture(texture_id, src.into(), dst.into(), 0.0, None, None, None)?)
+        self.renderer
+            .texture(texture_id, src.into(), dst.into(), 0.0, None, None, None)
     }
 
     /// Draw a transformed texture to the current canvas resized to the target `rect`, optionally
@@ -93,7 +92,7 @@ impl PixState {
         if let AngleMode::Radians = s.angle_mode {
             angle = angle.to_degrees();
         };
-        Ok(self.renderer.texture(
+        self.renderer.texture(
             texture_id,
             src.into(),
             dst.into(),
@@ -101,7 +100,7 @@ impl PixState {
             center.into(),
             flipped.into(),
             tint.into(),
-        )?)
+        )
     }
 
     /// Constructs a `Texture` to render to.
@@ -109,12 +108,12 @@ impl PixState {
     where
         F: Into<Option<PixelFormat>>,
     {
-        Ok(self.renderer.create_texture(width, height, format.into())?)
+        self.renderer.create_texture(width, height, format.into())
     }
 
     /// Delete a `Texture`.
     pub fn delete_texture(&mut self, texture_id: TextureId) -> PixResult<()> {
-        Ok(self.renderer.delete_texture(texture_id)?)
+        self.renderer.delete_texture(texture_id)
     }
 
     /// Update the `Texture` with a [u8] [slice] of pixel data.
@@ -131,9 +130,8 @@ impl PixState {
     {
         let rect = rect.into();
         let pixels = pixels.as_ref();
-        Ok(self
-            .renderer
-            .update_texture(texture_id, rect, pixels, pitch)?)
+        self.renderer
+            .update_texture(texture_id, rect, pixels, pitch)
     }
 
     /// Target a `Texture` for drawing operations.
