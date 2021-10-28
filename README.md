@@ -101,6 +101,11 @@ feature flag to statically link them.
   support for const generics is still pending, so many structs are not
   serializable just yet.
 
+* **backtrace** -
+  Enables the `backtrace` feature for `anyhow`, which allows printing backtraces
+  based on environment variables outlined in [std::backtrace][]. Useful for
+  debugging.
+
 * **use-vcpkg** -
   Enables static linking of the SDL2 libraries which are dependencies for macOs,
   linux, and Windows targets. Using this feature is the easiest way to get up
@@ -158,6 +163,7 @@ implementation and evolution of this crate:
 [AppState]: crate::prelude::AppState
 [AppState::on_update]: crate::prelude::AppState::on_update
 [PixState]: crate::prelude::PixState
+[std::backtrace]: https://doc.rust-lang.org/std/backtrace/index.html#environment-variables
 [github issue tracker]: https://github.com/lukexor/pix-engine/issues
 [LICENSE-APACHE]: http://www.apache.org/licenses/LICENSE-2.0
 [LICENSE-MIT]: http://opensource.org/licenses/MIT

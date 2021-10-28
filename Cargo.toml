@@ -31,8 +31,7 @@ rand = "0.8.4"
 lru = "0.7.0"
 indexmap = "1.7.0"
 rayon = "1.5.1"
-# TODO: `backtrace` feature can be removed when `Backtrace` lands in stable
-anyhow = { version = "1.0.44", features = ["backtrace"] }
+anyhow = "1.0.44"
 thiserror = "1.0.29"
 
 [dev-dependencies.cargo-husky]
@@ -43,6 +42,8 @@ features = ["prepush-hook", "run-cargo-test", "run-cargo-clippy"]
 [features]
 default = []
 opengl = []
+# TODO: `backtrace` feature can be removed when `Backtrace` lands in stable
+backtrace = ["anyhow/backtrace"]
 use-vcpkg = ["sdl2/static-link", "sdl2/use-vcpkg"]
 
 [target."cfg(not(target_arch = \"wasm32\"))".dependencies]
