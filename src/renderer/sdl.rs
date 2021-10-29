@@ -523,16 +523,13 @@ impl Rendering for Renderer {
     }
 
     /// Draw a polygon to the current canvas.
-    fn polygon(
-        &mut self,
-        ps: &[PointI2],
-        fill: Option<Color>,
-        stroke: Option<Color>,
-    ) -> PixResult<()> {
+    fn polygon<I>(&mut self, ps: I, fill: Option<Color>, stroke: Option<Color>) -> PixResult<()>
+    where
+        I: Iterator<Item = PointI2>,
+    {
         update_canvas!(self, |canvas: &mut WindowCanvas| -> PixResult<()> {
             let (vx, vy): (Vec<i16>, Vec<i16>) = ps
-                .iter()
-                .map(|&p| -> (i16, i16) {
+                .map(|p| -> (i16, i16) {
                     let p: Point<i16, 2> = p.into();
                     let [x, y] = p.values();
                     (x, y)

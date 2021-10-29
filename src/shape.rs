@@ -141,9 +141,14 @@ impl PixState {
     }
 
     /// Draw a polygon to the current canvas.
-    pub fn polygon<P: AsRef<[PointI2]>>(&mut self, points: P) -> PixResult<()> {
+    pub fn polygon<P, I>(&mut self, points: I) -> PixResult<()>
+    where
+        P: Into<PointI2>,
+        I: IntoIterator<Item = P>,
+    {
         let s = &self.settings;
-        self.renderer.polygon(points.as_ref(), s.fill, s.stroke)
+        self.renderer
+            .polygon(points.into_iter().map(|p| p.into()), s.fill, s.stroke)
     }
 
     /// Draw a circle [Ellipse] to the current canvas.

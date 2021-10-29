@@ -62,7 +62,7 @@ impl From<&SpaceObj> for Ellipse {
 }
 
 struct Asteroids {
-    asteroid_model: Vec<PointF2>,
+    asteroid_model: [PointF2; 20],
     asteroids: Vec<SpaceObj>,
     broken_asteroids: Vec<SpaceObj>,
     bullets: Vec<SpaceObj>,
@@ -78,11 +78,11 @@ struct Asteroids {
 
 impl Asteroids {
     fn new(width: u32, height: u32) -> Self {
-        let mut asteroid_model = Vec::with_capacity(20);
-        for i in 0..20 {
+        let mut asteroid_model = [Point::default(); 20];
+        for (i, p) in asteroid_model.iter_mut().enumerate() {
             let noise = random!(0.8, 1.2);
             let a = (i as Scalar / 20.0) * 2.0 * PI;
-            asteroid_model.push(point!(noise * a.sin(), noise * a.cos()));
+            *p = point!(noise * a.sin(), noise * a.cos());
         }
         Self {
             asteroid_model,
@@ -178,7 +178,7 @@ impl Asteroids {
             a.angle += 0.5 * elapsed; // Give some twirl
             s.fill(BLACK);
             s.stroke(YELLOW);
-            s.wireframe(&self.asteroid_model, a.pos, a.angle, a.size as Scalar)?;
+            s.wireframe(self.asteroid_model, a.pos, a.angle, a.size as Scalar)?;
         }
         Ok(())
     }
@@ -243,7 +243,7 @@ impl Asteroids {
         self.ship.pos.wrap([w, h], self.ship.size as Scalar);
         s.fill(BLACK);
         s.stroke(WHITE);
-        s.wireframe(&SHIP_MODEL, self.ship.pos, self.ship.angle, SHIP_SCALE)
+        s.wireframe(SHIP_MODEL, self.ship.pos, self.ship.angle, SHIP_SCALE)
     }
 
     fn draw_gameover(&mut self, s: &mut PixState) -> PixResult<()> {
@@ -270,7 +270,7 @@ impl Asteroids {
         s.fill(BLACK);
         s.stroke(WHITE);
         for i in 0..self.lives {
-            s.wireframe(&SHIP_MODEL, [12 + (i * 14), 40], -FRAC_PI_2, 2.0)?;
+            s.wireframe(SHIP_MODEL, [12 + (i * 14), 40], -FRAC_PI_2, 2.0)?;
         }
 
         // Check win condition

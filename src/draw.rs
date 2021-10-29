@@ -22,31 +22,34 @@ impl PixState {
     }
 
     /// Draw a wireframe to the current canvas., translated to a given [Point]
-    pub fn wireframe<V, P, T>(&mut self, vertexes: V, pos: P, angle: T, scale: T) -> PixResult<()>
+    pub fn wireframe<V, P1, P2, T>(
+        &mut self,
+        vertexes: V,
+        pos: P2,
+        angle: T,
+        scale: T,
+    ) -> PixResult<()>
     where
-        V: AsRef<[PointF2]>,
-        P: Into<PointF2>,
+        P1: Into<PointF2>,
+        P2: Into<PointI2>,
+        V: IntoIterator<Item = P1>,
         T: AsPrimitive<Scalar>,
     {
         let s = &self.settings;
-        let pos: PointF2 = pos.into();
-        let scale: Scalar = scale.as_();
-        let mut angle: Scalar = angle.as_();
+        let pos = pos.into();
+        let scale = scale.as_();
+        let mut angle = angle.as_();
         if let AngleMode::Degrees = s.angle_mode {
             angle = angle.to_radians();
         };
         let (sin, cos) = angle.sin_cos();
-        let vs: Vec<PointI2> = vertexes
-            .as_ref()
-            .iter()
-            .map(|v| {
-                point!(
-                    ((v.x() * cos - v.y() * sin) * scale + pos.x()).round(),
-                    ((v.x() * sin + v.y() * cos) * scale + pos.y()).round()
-                )
-                .into()
-            })
-            .collect();
-        self.renderer.polygon(&vs, s.fill, s.stroke)
+        let (px, py) = (pos.x() as Scalar, pos.y() as Scalar);
+        let vs = vertexes.into_iter().map(|v| {
+            let v = v.into();
+            let x = ((v.x() * cos - v.y() * sin) * scale + px).round() as i32;
+            let y = ((v.x() * sin + v.y() * cos) * scale + py).round() as i32;
+            point![x, y]
+        });
+        self.polygon(vs)
     }
 }
