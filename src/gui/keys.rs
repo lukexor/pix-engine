@@ -50,6 +50,13 @@ impl KeyState {
     pub(crate) fn release(&mut self, key: Key, keymod: KeyMod) {
         self.pressed.remove(&key);
         self.mods_pressed.remove(&keymod);
+        match key {
+            Key::LCtrl | Key::RCtrl => self.mods_pressed.remove(&KeyMod::CTRL),
+            Key::LAlt | Key::RAlt => self.mods_pressed.remove(&KeyMod::ALT),
+            Key::LGui | Key::RGui => self.mods_pressed.remove(&KeyMod::GUI),
+            Key::LShift | Key::RShift => self.mods_pressed.remove(&KeyMod::SHIFT),
+            _ => false,
+        };
     }
 
     /// Store a pressed [Key].

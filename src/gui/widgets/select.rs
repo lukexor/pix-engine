@@ -144,7 +144,7 @@ impl PixState {
             })?;
             s.ui.clear_mouse_offset();
         }
-        s.ui.handle_input(id);
+        s.ui.handle_events(id);
 
         Ok(())
     }
@@ -294,7 +294,7 @@ impl PixState {
                 }
             }
         }
-        s.ui.handle_input(id);
+        s.ui.handle_events(id);
 
         // Scrollbars
         s.set_cursor_pos(pos);

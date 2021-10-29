@@ -311,7 +311,7 @@ impl UiState {
 
     /// Handles global element inputs for `focused` checks.
     #[inline]
-    pub(crate) fn handle_input(&mut self, id: ElementId) {
+    pub(crate) fn handle_events(&mut self, id: ElementId) {
         // Tab-focus cycling
         // If element is focused when Tab pressed, clear it so the next element can capture focus.
         // If SHIFT was held, re-focus the last element rendered

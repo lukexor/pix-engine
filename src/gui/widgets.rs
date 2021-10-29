@@ -78,7 +78,7 @@ impl PixState {
         s.pop();
 
         // Process input
-        s.ui.handle_input(id);
+        s.ui.handle_events(id);
         s.advance_cursor(button);
         if !disabled {
             Ok(s.ui.was_clicked(id))
@@ -155,7 +155,7 @@ impl PixState {
         s.text(label)?;
 
         // Process input
-        s.ui.handle_input(id);
+        s.ui.handle_events(id);
         if !disabled {
             let clicked = s.ui.was_clicked(id);
             if clicked {
@@ -226,7 +226,7 @@ impl PixState {
         s.text(label)?;
 
         // Process input
-        s.ui.handle_input(id);
+        s.ui.handle_events(id);
         if !disabled {
             let clicked = s.ui.was_clicked(id);
             if clicked {

@@ -209,7 +209,7 @@ impl PixState {
             *value = new_value;
             changed = true;
         }
-        s.ui.handle_input(id);
+        s.ui.handle_events(id);
 
         Ok(changed)
     }

@@ -53,7 +53,7 @@ impl PixState {
         s.pop();
 
         // Process input
-        s.ui.handle_input(id);
+        s.ui.handle_events(id);
 
         Ok(())
     }

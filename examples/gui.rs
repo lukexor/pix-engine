@@ -97,9 +97,10 @@ impl AppState for Gui {
         s.text_field("Text Field", &mut self.text_field)?;
         s.same_line([0, 4]);
         s.help_marker(
-            "Hold SHIFT or use mouse to select text.\n\
-        CTRL-A or double click to select all.\n\
-        CTRL-X, CTRL-C, CTRL-V to use the clipboard.",
+            "CTRL-X, CTRL-C, CTRL-V to use the clipboard.\n\
+            ALT-Backspace to delete word.\n\
+            CTRL-Backspace to clear.\n\
+            (CTRL and ALT are mapped to CMD and OPTION on macOs)",
         )?;
 
         s.next_width(200);
@@ -120,6 +121,14 @@ impl AppState for Gui {
 
         // Text Areas
         s.text_area("Text Area", 200, 100, &mut self.text_area)?;
+        s.same_line(None);
+        s.help_marker(
+            "CTRL-X, CTRL-C, CTRL-V to use the clipboard.\n\
+            ALT-Backspace to delete word.\n\
+            CTRL-Backspace to clear.\n\
+            RETURN to enter newline.\n\
+            (CTRL and ALT are mapped to CMD and OPTION on macOs)",
+        )?;
         s.same_line(None);
         s.text_area_hint(
             "Text Area w/ hint",

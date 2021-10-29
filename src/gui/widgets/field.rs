@@ -25,7 +25,9 @@ impl PixState {
         F: FnMut(char) -> bool,
     {
         let changed = self.text_field_hint(label, "", value)?;
-        value.retain(filter);
+        if changed {
+            value.retain(filter);
+        }
         Ok(changed)
     }
 
@@ -71,7 +73,6 @@ impl PixState {
 
         s.push();
         s.ui.push_cursor();
-        let mut changed = false;
 
         // Render
         s.rect_mode(RectMode::Corner);
@@ -137,29 +138,14 @@ impl PixState {
         s.pop();
 
         // Process input
+        let mut changed = false;
         if focused {
-            if let Some(key) = s.ui.key_entered() {
-                match key {
-                    Key::Backspace if !value.is_empty() => {
-                        value.pop();
-                        changed = true;
-                    }
-                    Key::C if s.keymod_down(MOD_CTRL) => {
-                        s.set_clipboard_text(value)?;
-                    }
-                    Key::V if s.keymod_down(MOD_CTRL) => {
-                        *value += &s.clipboard_text().replace("\n", "");
-                        changed = true;
-                    }
-                    _ => (),
-                }
-            }
-            if let Some(text) = s.ui.keys.typed.take() {
-                value.push_str(&text.replace("\n", ""));
-                changed = true;
+            changed = s.handle_text_events(value)?;
+            if changed {
+                value.retain(|c| !c.is_control());
             }
         }
-        s.ui.handle_input(id);
+        s.ui.handle_events(id);
         s.advance_cursor(rect![pos, input.right() - pos.x(), input.height()]);
 
         Ok(changed)
@@ -193,7 +179,9 @@ impl PixState {
         F: FnMut(char) -> bool,
     {
         let changed = self.text_area_hint(label, "", width, height, value)?;
-        value.retain(filter);
+        if changed {
+            value.retain(filter);
+        }
         Ok(changed)
     }
 
@@ -234,7 +222,6 @@ impl PixState {
         let active = s.ui.is_active(id);
 
         s.push();
-        let mut changed = false;
 
         // Render
         s.rect_mode(RectMode::Corner);
@@ -262,12 +249,12 @@ impl PixState {
 
         // Text
         let scroll = s.ui.scroll(id);
-        s.wrap_width(input.width() - 2 * ipad.x());
+        s.wrap_width(input.width() - ipad.x());
         s.set_cursor_pos(input.top_left() + ipad - scroll);
         s.clip(input)?;
-        // TODO: width here always maxes out at wrap_width when words can't wrap
         let blink_cursor = focused && s.elapsed() as usize >> 9 & 1 > 0;
-        let (total_width, total_height) = if value.is_empty() {
+        // TODO: total width here always maxes out at wrap_width when words can't wrap
+        let (_, total_height) = if value.is_empty() {
             s.disable();
             let pos = s.cursor_pos();
             let size = s.text(&hint)?;
@@ -282,47 +269,94 @@ impl PixState {
         } else if blink_cursor {
             s.text(format!("{}{}", value, TEXT_CURSOR))?
         } else {
-            s.text(&value)?
+            s.text(format!("{}  ", value))?
         };
 
         s.no_clip()?;
         s.pop();
 
         // Process input
+        let mut changed = false;
         if focused {
-            if let Some(key) = s.ui.key_entered() {
-                match key {
-                    Key::Return => value.push('\n'),
-                    Key::Backspace if !value.is_empty() => {
-                        value.pop();
-                        changed = true;
-                    }
-                    Key::C if s.keymod_down(MOD_CTRL) => {
-                        s.set_clipboard_text(value)?;
-                    }
-                    Key::V if s.keymod_down(MOD_CTRL) => {
-                        *value += &s.clipboard_text();
-                        changed = true;
-                    }
-                    _ => (),
-                }
-            }
-            if let Some(text) = s.ui.keys.typed.take() {
-                value.push_str(&text);
+            changed = s.handle_text_events(value)?;
+            if let Some(Key::Return) = s.ui.key_entered() {
+                value.push('\n');
                 changed = true;
             }
+            if changed {
+                value.retain(|c| c == '\n' || !c.is_control());
+            }
+
+            // Keep cursor within scroll region
+            let mut scroll = s.ui.scroll(id);
+            let text_cursor = total_height as i32;
+            if text_cursor < input.height() {
+                scroll.set_y(0);
+                s.ui.set_scroll(id, scroll);
+            } else if text_cursor > scroll.y() + input.height() {
+                let (_, line_height) = s.size_of(TEXT_CURSOR)?;
+                scroll.set_y(text_cursor - (input.height() - line_height as i32));
+                s.ui.set_scroll(id, scroll);
+            }
         }
-        s.ui.handle_input(id);
+        s.ui.handle_events(id);
 
         // Scrollbars
-        let total_width = total_width as i32 + 2 * ipad.x();
         let total_height = total_height as i32 + 2 * ipad.y();
         s.set_cursor_pos(pos);
-        s.scroll(id, input, total_width, total_height)?;
+        s.scroll(id, input, 0, total_height)?;
         // EXPL: To preseve label pos being restored for `same_line`
         s.same_line(None);
-        s.advance_cursor(rect![s.cursor_pos(), 0, input.bottom() - pos.y()]);
+        s.advance_cursor(rect![pos, 0, input.bottom() - pos.y()]);
 
+        Ok(changed)
+    }
+}
+
+impl PixState {
+    fn handle_text_events(&mut self, value: &mut String) -> PixResult<bool> {
+        let s = self;
+        let mut changed = false;
+        if let Some(key) = s.ui.key_entered() {
+            match key {
+                Key::Backspace if !value.is_empty() => {
+                    if s.keymod_down(MOD_CTRL) {
+                        value.clear();
+                    } else if s.keymod_down(KeyMod::ALT) {
+                        // If last char is whitespace, remove it so we find the next previous
+                        // word
+                        if let Some(true) = value.chars().last().map(char::is_whitespace) {
+                            value.pop();
+                        }
+                        if let Some(idx) = value.rfind(char::is_whitespace) {
+                            value.truncate(idx + 1);
+                        } else {
+                            value.clear();
+                        }
+                    } else {
+                        value.pop();
+                    }
+                    changed = true;
+                }
+                Key::X if s.keymod_down(MOD_CTRL) => {
+                    s.set_clipboard_text(value)?;
+                    value.clear();
+                    changed = true;
+                }
+                Key::C if s.keymod_down(MOD_CTRL) => {
+                    s.set_clipboard_text(value)?;
+                }
+                Key::V if s.keymod_down(MOD_CTRL) => {
+                    value.push_str(&s.clipboard_text());
+                    changed = true;
+                }
+                _ => (),
+            }
+        }
+        if let Some(text) = s.ui.keys.typed.take() {
+            value.push_str(&text);
+            changed = true;
+        }
         Ok(changed)
     }
 }
