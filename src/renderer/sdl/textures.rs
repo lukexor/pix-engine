@@ -14,10 +14,7 @@ impl TextureRenderer for Renderer {
         height: u32,
         format: Option<PixelFormat>,
     ) -> PixResult<TextureId> {
-        let (_, texture_creator) = self
-            .canvases
-            .get(&self.window_target)
-            .ok_or(PixError::InvalidWindow(self.window_target))?;
+        let texture_creator = get_texture_creator!(self);
         let texture = texture_creator
             .create_texture_target(format.map(|f| f.into()), width, height)
             .context("failed to create texture")?;
@@ -96,10 +93,7 @@ impl TextureRenderer for Renderer {
             let src = src.map(|r| r.into());
             let dst = dst.map(|r| r.into());
 
-            let (canvas, _) = self
-                .canvases
-                .get_mut(&self.window_target)
-                .ok_or(PixError::InvalidWindow(self.window_target))?;
+            let canvas = get_canvas_mut!(self);
             let result = if angle > 0.0 || center.is_some() || flipped.is_some() {
                 canvas.copy_ex(
                     texture,
@@ -140,7 +134,7 @@ impl TextureRenderer for Renderer {
     /// Clear internal texture cache.
     #[inline]
     fn clear_texture_cache(&mut self) {
-        self.font_cache.clear();
+        self.loaded_fonts.clear();
         self.text_cache.clear();
         self.image_cache.clear();
     }

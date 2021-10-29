@@ -9,9 +9,8 @@ use anyhow::Context;
 use sdl2::{
     image::LoadSurface,
     mouse::{Cursor as SdlCursor, SystemCursor as SdlSystemCursor},
-    render::Canvas,
     surface::Surface,
-    video::{FullscreenType, Window},
+    video::FullscreenType,
     Sdl,
 };
 use std::fmt::Write;
@@ -88,11 +87,8 @@ impl WindowRenderer for Renderer {
     #[inline]
     fn set_title(&mut self, title: &str) -> PixResult<()> {
         self.settings.title.replace_range(.., title);
-        let canvas = self.get_current_canvas_mut()?;
-        canvas
-            .window_mut()
-            .set_title(title)
-            .context("invalid title")
+        let window = get_window_mut!(self);
+        window.set_title(title).context("invalid title")
     }
 
     #[inline]
@@ -100,14 +96,8 @@ impl WindowRenderer for Renderer {
         self.fps = fps;
         self.title.clear();
         write!(self.title, "{} - FPS: {}", &self.settings.title, self.fps).expect("valid title");
-        let (canvas, _) = self
-            .canvases
-            .get_mut(&self.window_target)
-            .ok_or(PixError::InvalidWindow(self.window_target))?;
-        canvas
-            .window_mut()
-            .set_title(&self.title)
-            .context("invalid title")
+        let window = get_window_mut!(self);
+        window.set_title(&self.title).context("invalid title")
     }
 
     /// Dimensions of the current render target as `(width, height)`.
@@ -128,8 +118,7 @@ impl WindowRenderer for Renderer {
     /// Dimensions of the current window target as `(width, height)`.
     #[inline]
     fn window_dimensions(&self) -> PixResult<(u32, u32)> {
-        let canvas = self.get_current_canvas()?;
-        Ok(canvas.window().size())
+        Ok(get_window!(self).size())
     }
 
     /// Set dimensions of the current window target as `(width, height)`.
@@ -137,7 +126,7 @@ impl WindowRenderer for Renderer {
     fn set_window_dimensions(&mut self, (width, height): (u32, u32)) -> PixResult<()> {
         self.settings.width = width;
         self.settings.height = height;
-        let canvas = self.get_current_canvas_mut()?;
+        let canvas = get_canvas_mut!(self);
         canvas
             .window_mut()
             .set_size(width, height)
@@ -149,23 +138,20 @@ impl WindowRenderer for Renderer {
     }
 
     /// Returns the rendering viewport of the current render target.
-    fn viewport(&mut self) -> PixResult<Rect<i32>> {
-        let canvas = self.get_current_canvas_mut()?;
-        Ok(canvas.viewport().into())
+    fn viewport(&self) -> PixResult<Rect<i32>> {
+        Ok(get_canvas!(self).viewport().into())
     }
 
     /// Set the rendering viewport of the current render target.
     fn set_viewport(&mut self, rect: Option<Rect<i32>>) -> PixResult<()> {
-        let canvas = self.get_current_canvas_mut()?;
-        canvas.set_viewport(rect.map(|r| r.into()));
+        get_canvas_mut!(self).set_viewport(rect.map(|r| r.into()));
         Ok(())
     }
 
     /// Dimensions of the primary display as `(width, height)`.
     #[inline]
     fn display_dimensions(&self) -> PixResult<(u32, u32)> {
-        let canvas = self.get_current_canvas()?;
-        let window = canvas.window();
+        let window = get_window!(self);
         let display_index = window.display_index().map_err(PixError::Renderer)?;
         let bounds = window
             .subsystem()
@@ -178,8 +164,10 @@ impl WindowRenderer for Renderer {
     #[inline]
     fn fullscreen(&self) -> PixResult<bool> {
         use FullscreenType::*;
-        let canvas = self.get_current_canvas()?;
-        Ok(matches!(canvas.window().fullscreen_state(), True | Desktop))
+        Ok(matches!(
+            get_window!(self).fullscreen_state(),
+            True | Desktop
+        ))
     }
 
     /// Set the application to fullscreen or not.
@@ -187,9 +175,7 @@ impl WindowRenderer for Renderer {
     fn set_fullscreen(&mut self, val: bool) -> PixResult<()> {
         use FullscreenType::*;
         let fullscreen_type = if val { True } else { Off };
-        let canvas = self.get_current_canvas_mut()?;
-        Ok(canvas
-            .window_mut()
+        Ok(get_window_mut!(self)
             .set_fullscreen(fullscreen_type)
             .map_err(PixError::Renderer)?)
     }
@@ -202,19 +188,14 @@ impl WindowRenderer for Renderer {
 
     /// Set the window to synchronize frame rate to the screens refresh rate.
     fn set_vsync(&mut self, val: bool) -> PixResult<()> {
-        let (canvas, _) = self
-            .canvases
-            .get_mut(&self.window_target)
-            .ok_or(PixError::InvalidWindow(self.window_target))?;
-
-        self.settings.vsync = val;
-        let window = canvas.window();
+        let window = get_window!(self);
         let (x, y) = window.position();
         let (w, h) = window.size();
         self.settings.width = (w as f32 / self.settings.scale_x).floor() as u32;
         self.settings.height = (h as f32 / self.settings.scale_y).floor() as u32;
         self.settings.x = Position::Positioned(x);
         self.settings.y = Position::Positioned(y);
+        self.settings.vsync = val;
         self.settings.fullscreen = matches!(
             window.fullscreen_state(),
             FullscreenType::True | FullscreenType::Desktop
@@ -242,11 +223,11 @@ impl WindowRenderer for Renderer {
     /// Set window as the target for drawing operations.
     #[inline]
     fn set_window_target(&mut self, id: WindowId) -> PixResult<()> {
-        if !self.canvases.contains_key(&id) {
-            Err(PixError::InvalidWindow(id).into())
-        } else {
+        if self.canvases.contains_key(&id) {
             self.window_target = id;
             Ok(())
+        } else {
+            Err(PixError::InvalidWindow(id).into())
         }
     }
 
@@ -259,35 +240,19 @@ impl WindowRenderer for Renderer {
     /// Show the current window target.
     #[inline]
     fn show(&mut self) -> PixResult<()> {
-        let canvas = self.get_current_canvas_mut()?;
-        canvas.window_mut().show();
+        get_window_mut!(self).show();
         Ok(())
     }
 
     /// Hide the current window target.
     #[inline]
     fn hide(&mut self) -> PixResult<()> {
-        let canvas = self.get_current_canvas_mut()?;
-        canvas.window_mut().hide();
+        get_window_mut!(self).hide();
         Ok(())
     }
 }
 
 impl Renderer {
-    pub(crate) fn get_current_canvas(&self) -> PixResult<&Canvas<Window>> {
-        let (canvas, _) = self
-            .canvases
-            .get(&self.window_target)
-            .ok_or(PixError::InvalidWindow(self.window_target))?;
-        Ok(canvas)
-    }
-    pub(crate) fn get_current_canvas_mut(&mut self) -> PixResult<&mut Canvas<Window>> {
-        let (canvas, _) = self
-            .canvases
-            .get_mut(&self.window_target)
-            .ok_or(PixError::InvalidWindow(self.window_target))?;
-        Ok(canvas)
-    }
     pub(crate) fn create_window_canvas(
         context: &Sdl,
         s: &RendererSettings,

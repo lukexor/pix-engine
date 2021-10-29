@@ -140,7 +140,7 @@ pub(crate) trait WindowRenderer {
     fn set_window_dimensions(&mut self, dimensions: (u32, u32)) -> PixResult<()>;
 
     /// Returns the rendering viewport of the current render target.
-    fn viewport(&mut self) -> PixResult<Rect<i32>>;
+    fn viewport(&self) -> PixResult<Rect<i32>>;
 
     /// Set the rendering viewport of the current render target.
     fn set_viewport(&mut self, rect: Option<Rect<i32>>) -> PixResult<()>;
