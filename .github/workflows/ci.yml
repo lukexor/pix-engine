@@ -68,7 +68,7 @@ jobs:
         path: ${{ matrix.build_cache }}
         key: ${{ matrix.os }}-${{ hashFiles('Cargo.toml') }}
         restore-keys: |
-          ${{ runner.os }}-
+          ${{ matrix.os }}-
 
     - name: Build dependencies
       run: cargo vcpkg -v build
