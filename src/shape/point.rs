@@ -391,6 +391,23 @@ impl<T, const N: usize> Point<T, N>
 where
     T: Num + Float,
 {
+    /// Returns the Euclidean distance between two `Point`s.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p1: PointF3 = point!(1.0, 0.0, 0.0);
+    /// let p2: PointF3 = point!(0.0, 1.0, 0.0);
+    /// let dist = p1.dist(v2);
+    /// let abs_difference: f64 = (dist - std::f64::consts::SQRT_2).abs();
+    /// assert!(abs_difference <= 1e-4);
+    /// ```
+    pub fn dist<P: Into<Point<T, N>>>(&self, p: P) -> T {
+        let p = p.into();
+        (*self - p).mag()
+    }
+
     /// Constructs a `Point` by linear interpolating between two `Point`s by a given amount
     /// between `0.0` and `1.0`.
     ///

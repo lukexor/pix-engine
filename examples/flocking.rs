@@ -23,7 +23,7 @@ const BOID_SIZE: Scalar = 3.0;
 
 #[derive(PartialEq)]
 struct Boid {
-    pos: VectorF2,
+    pos: PointF2,
     vel: VectorF2,
     acc: VectorF2,
     max_acc: Scalar,
@@ -33,7 +33,7 @@ struct Boid {
 impl Boid {
     fn new() -> Self {
         Self {
-            pos: vector!(random!(WIDTH as Scalar), random!(HEIGHT as Scalar)),
+            pos: point!(random!(WIDTH as Scalar), random!(HEIGHT as Scalar)),
             vel: vector!(random!(-1.0, 1.0), random!(-1.0, 1.0)),
             acc: vector!(),
             max_acc: 0.1,
@@ -119,7 +119,7 @@ impl App {
                                 adj.align.push(other.vel);
                             }
                             if d < cohesion_dist {
-                                adj.cohesion.push(other.pos);
+                                adj.cohesion.push(other.pos.into());
                             }
                             if d < sep_dist {
                                 let mut sep = boid.pos - other.pos;
@@ -156,7 +156,7 @@ impl App {
                 if !adj.cohesion.is_empty() {
                     let mut cohesion =
                         adj.cohesion.iter().sum::<VectorF2>() / adj.cohesion.len() as Scalar;
-                    cohesion -= boid.pos;
+                    cohesion -= Vector::from(boid.pos);
                     cohesion.normalize();
                     cohesion *= boid.max_vel;
                     cohesion -= boid.vel;

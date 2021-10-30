@@ -842,3 +842,27 @@ where
         write!(f, "{:?}", self.values())
     }
 }
+
+impl<T: Num, const N: usize> From<Point<T, N>> for Vector<T, N> {
+    fn from(p: Point<T, N>) -> Self {
+        Self::from_point(p)
+    }
+}
+
+impl<T: Num, const N: usize> From<&Point<T, N>> for Vector<T, N> {
+    fn from(p: &Point<T, N>) -> Self {
+        Self::from_point(*p)
+    }
+}
+
+impl<T: Num, const N: usize> From<Vector<T, N>> for Point<T, N> {
+    fn from(v: Vector<T, N>) -> Self {
+        Self::from_vector(v)
+    }
+}
+
+impl<T: Num, const N: usize> From<&Vector<T, N>> for Point<T, N> {
+    fn from(v: &Vector<T, N>) -> Self {
+        Self::from_vector(*v)
+    }
+}
