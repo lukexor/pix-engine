@@ -24,11 +24,14 @@ jobs:
         toolchain: [nightly, beta, stable, 1.55]
         include:
           - os: macos-latest
-            build_cache: ~/.cache/vcpkg/archives
+            build_cache: |
+              ~/.cache/vcpkg/archives
           - os: ubuntu-latest
-            build_cache: ~/.cache/vcpkg/archives
+            build_cache: |
+              ~/.cache/vcpkg/archives
           - os: windows-latest
-            build_cache: %LocalAppData%\vcpkg\archives
+            build_cache: |
+              %LocalAppData%\vcpkg\archives
     steps:
     - name: Checkout
       uses: actions/checkout@v2
