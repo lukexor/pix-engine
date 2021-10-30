@@ -257,6 +257,7 @@ impl Image {
 
     /// Returns the `Image` pixel data as a [`Vec<Color>`].
     #[inline]
+    #[allow(clippy::many_single_char_names)]
     pub fn into_pixels(self) -> Vec<Color> {
         self.data
             .chunks(self.format.channels())
@@ -270,6 +271,7 @@ impl Image {
 
     /// Returns the color value at the given `(x, y)` position.
     #[inline]
+    #[allow(clippy::many_single_char_names)]
     pub fn get_pixel(&self, x: u32, y: u32) -> Color {
         let idx = self.idx(x, y);
         let channels = self.format.channels();
