@@ -27,7 +27,6 @@
 //! ```
 
 use crate::prelude::*;
-use num_traits::AsPrimitive;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -462,7 +461,7 @@ impl<T: Num> Intersects<T, 2> for Ellipse<T> {
 impl<T> Draw for Ellipse<T>
 where
     Self: Into<Ellipse<i32>>,
-    T: Default + AsPrimitive<i32>,
+    T: Num,
 {
     /// Draw `Ellipse` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
@@ -470,26 +469,18 @@ where
     }
 }
 
-impl<T, U> From<[U; 3]> for Ellipse<T>
-where
-    T: 'static + Num,
-    U: Num + AsPrimitive<T>,
-{
-    /// Converts `[U; 3]` into `Ellipse<T>`.
+impl<T: Num> From<[T; 3]> for Ellipse<T> {
+    /// Converts `[T; 3]` into `Ellipse<T>`.
     #[inline]
-    fn from([x, y, r]: [U; 3]) -> Self {
-        Ellipse::circle(x.as_(), y.as_(), r.as_())
+    fn from([x, y, r]: [T; 3]) -> Self {
+        Ellipse::circle(x, y, r)
     }
 }
 
-impl<T, U> From<&[U; 3]> for Ellipse<T>
-where
-    T: 'static + Num,
-    U: Num + AsPrimitive<T>,
-{
-    /// Converts `&[U; 3]` into `Ellipse<T>`.
+impl<T: Num> From<&[T; 3]> for Ellipse<T> {
+    /// Converts `&[T; 3]` into `Ellipse<T>`.
     #[inline]
-    fn from(&[x, y, r]: &[U; 3]) -> Self {
-        Ellipse::circle(x.as_(), y.as_(), r.as_())
+    fn from(&[x, y, r]: &[T; 3]) -> Self {
+        Ellipse::circle(x, y, r)
     }
 }

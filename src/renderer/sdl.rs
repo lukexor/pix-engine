@@ -411,9 +411,8 @@ impl Rendering for Renderer {
     /// Draw a pixel to the current canvas.
     #[inline]
     fn point(&mut self, p: PointI2, color: Color) -> PixResult<()> {
-        let p: Point<i16, 2> = p.into();
-        let [x, y]: [i16; 2] = p.into();
         update_canvas!(self, |canvas: &mut WindowCanvas| -> PixResult<()> {
+            let [x, y] = p.map(|v| v as i16);
             Ok(canvas.pixel(x, y, color).map_err(PixError::Renderer)?)
         })
     }
@@ -421,9 +420,8 @@ impl Rendering for Renderer {
     /// Draw a line to the current canvas.
     fn line(&mut self, line: LineI2, stroke: u8, color: Color) -> PixResult<()> {
         update_canvas!(self, |canvas: &mut WindowCanvas| -> PixResult<()> {
-            let [start, end]: [Point<i16, 2>; 2] = line.into();
-            let [x1, y1] = start.values();
-            let [x2, y2] = end.values();
+            let [x1, y1] = line.start().map(|v| v as i16);
+            let [x2, y2] = line.end().map(|v| v as i16);
             let result = if stroke == 1 {
                 if y1 == y2 {
                     canvas.hline(x1, x2, y1, color)
@@ -447,15 +445,17 @@ impl Rendering for Renderer {
         stroke: Option<Color>,
     ) -> PixResult<()> {
         update_canvas!(self, |canvas: &mut WindowCanvas| -> PixResult<()> {
-            let [p1, p2, p3]: [Point<i16, 2>; 3] = tri.into();
+            let [x1, y1] = tri.p1().map(|v| v as i16);
+            let [x2, y2] = tri.p2().map(|v| v as i16);
+            let [x3, y3] = tri.p3().map(|v| v as i16);
             if let Some(fill) = fill {
                 canvas
-                    .filled_trigon(p1.x(), p1.y(), p2.x(), p2.y(), p3.x(), p3.y(), fill)
+                    .filled_trigon(x1, y1, x2, y2, x3, y3, fill)
                     .map_err(PixError::Renderer)?;
             }
             if let Some(stroke) = stroke {
                 canvas
-                    .trigon(p1.x(), p1.y(), p2.x(), p2.y(), p3.x(), p3.y(), stroke)
+                    .trigon(x1, y1, x2, y2, x3, y3, stroke)
                     .map_err(PixError::Renderer)?;
             }
             Ok(())
@@ -471,8 +471,7 @@ impl Rendering for Renderer {
         stroke: Option<Color>,
     ) -> PixResult<()> {
         update_canvas!(self, |canvas: &mut WindowCanvas| -> PixResult<()> {
-            let rect: Rect<i16> = rect.into();
-            let [x, y, width, height] = rect.values();
+            let [x, y, width, height] = rect.map(|v| v as i16);
             if let Some(radius) = radius {
                 let radius = radius as i16;
                 if let Some(fill) = fill {
@@ -505,9 +504,12 @@ impl Rendering for Renderer {
     /// Draw a quadrilateral to the current canvas.
     fn quad(&mut self, quad: QuadI2, fill: Option<Color>, stroke: Option<Color>) -> PixResult<()> {
         update_canvas!(self, |canvas: &mut WindowCanvas| -> PixResult<()> {
-            let [p1, p2, p3, p4]: [Point<i16, 2>; 4] = quad.into();
-            let vx = [p1.x(), p2.x(), p3.x(), p4.x()];
-            let vy = [p1.y(), p2.y(), p3.y(), p4.y()];
+            let [x1, y1] = quad.p1().map(|v| v as i16);
+            let [x2, y2] = quad.p2().map(|v| v as i16);
+            let [x3, y3] = quad.p3().map(|v| v as i16);
+            let [x4, y4] = quad.p4().map(|v| v as i16);
+            let vx = [x1, x2, x3, x4];
+            let vy = [y1, y2, y3, y4];
             if let Some(fill) = fill {
                 canvas
                     .filled_polygon(&vx, &vy, fill)
@@ -530,8 +532,7 @@ impl Rendering for Renderer {
         update_canvas!(self, |canvas: &mut WindowCanvas| -> PixResult<()> {
             let (vx, vy): (Vec<i16>, Vec<i16>) = ps
                 .map(|p| -> (i16, i16) {
-                    let p: Point<i16, 2> = p.into();
-                    let [x, y] = p.values();
+                    let [x, y] = p.map(|v| v as i16);
                     (x, y)
                 })
                 .unzip();
@@ -557,8 +558,7 @@ impl Rendering for Renderer {
         stroke: Option<Color>,
     ) -> PixResult<()> {
         update_canvas!(self, |canvas: &mut WindowCanvas| -> PixResult<()> {
-            let ellipse: Ellipse<i16> = ellipse.into();
-            let [x, y, width, height] = ellipse.values();
+            let [x, y, width, height] = ellipse.map(|v| v as i16);
             let rw = width / 2;
             let rh = height / 2;
             if let Some(fill) = fill {
@@ -587,8 +587,7 @@ impl Rendering for Renderer {
         stroke: Option<Color>,
     ) -> PixResult<()> {
         update_canvas!(self, |canvas: &mut WindowCanvas| -> PixResult<()> {
-            let p: Point<i16, 2> = p.into();
-            let [x, y] = p.values();
+            let [x, y] = p.map(|v| v as i16);
             let radius = radius as i16;
             let start = start as i16;
             let end = end as i16;

@@ -96,11 +96,10 @@ impl App {
         )
     }
 
-    fn canvas_to_screen(&self, x: i32, y: i32) -> PointF2 {
-        point!(
-            (self.width / 2.0 + x as Scalar).round(),
-            (self.height / 2.0 - y as Scalar).round(),
-        )
+    fn canvas_to_screen(&self, x: i32, y: i32) -> PointI2 {
+        let x = self.width / 2.0 + x as Scalar;
+        let y = self.height / 2.0 - y as Scalar;
+        point!(x, y).round().as_::<i32>()
     }
 
     fn compute_lighting(

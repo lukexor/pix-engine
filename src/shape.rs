@@ -19,7 +19,6 @@ pub mod triangle;
 
 pub use ellipse::*;
 pub use line::*;
-use num_traits::AsPrimitive;
 pub use point::*;
 pub use quad::*;
 pub use rect::*;
@@ -101,10 +100,9 @@ impl PixState {
     }
 
     /// Draw a rounded [Square](Rect) to the current canvas.
-    pub fn rounded_square<R, T>(&mut self, square: R, radius: T) -> PixResult<()>
+    pub fn rounded_square<R>(&mut self, square: R, radius: i32) -> PixResult<()>
     where
         R: Into<Rect<i32>>,
-        T: AsPrimitive<i32>,
     {
         self.rounded_rect(square, radius)
     }
@@ -120,15 +118,13 @@ impl PixState {
     }
 
     /// Draw a rounded [Rectangle](Rect) to the current canvas.
-    pub fn rounded_rect<R, T>(&mut self, rect: R, radius: T) -> PixResult<()>
+    pub fn rounded_rect<R>(&mut self, rect: R, radius: i32) -> PixResult<()>
     where
         R: Into<Rect<i32>>,
-        T: AsPrimitive<i32>,
     {
         let s = &self.settings;
         let rect = self.get_rect(rect);
-        self.renderer
-            .rect(rect, Some(radius.as_()), s.fill, s.stroke)
+        self.renderer.rect(rect, Some(radius), s.fill, s.stroke)
     }
 
     /// Draw a [Quadrilateral](Quad) to the current canvas.
@@ -170,21 +166,13 @@ impl PixState {
     }
 
     /// Draw an arc to the current canvas.
-    pub fn arc<P, T>(&mut self, p: P, radius: T, start: T, end: T) -> PixResult<()>
+    pub fn arc<P>(&mut self, p: P, radius: i32, start: i32, end: i32) -> PixResult<()>
     where
         P: Into<PointI2>,
-        T: AsPrimitive<i32>,
     {
         let s = &self.settings;
         let p = p.into();
-        self.renderer.arc(
-            p,
-            radius.as_(),
-            start.as_(),
-            end.as_(),
-            s.arc_mode,
-            s.fill,
-            s.stroke,
-        )
+        self.renderer
+            .arc(p, radius, start, end, s.arc_mode, s.fill, s.stroke)
     }
 }

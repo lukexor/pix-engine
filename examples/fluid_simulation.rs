@@ -13,7 +13,7 @@ const XVEL: Scalar = 1.8; // Velocity of fluid
 const SPACING: usize = 20;
 const COUNT: usize = N / SPACING + 1;
 
-const DT: Scalar = 0.17; // Delta time modifer
+const DT: Scalar = 0.003; // Delta time modifer
 const DIFF: Scalar = 0.000018; // Diffusion
 const VISC: Scalar = 0.00000001; // Viscosity
 
@@ -37,15 +37,8 @@ fn get_xy(idx: usize) -> (usize, usize) {
     (idx % N, idx / N)
 }
 
-fn diffuse(
-    b: usize,
-    xs: &mut [Scalar],
-    xs0: &[Scalar],
-    amt: Scalar,
-    tmp: &mut [Scalar],
-    delta: Scalar,
-) {
-    let a = DT * delta * amt * (N - 2).pow(2) as Scalar;
+fn diffuse(b: usize, xs: &mut [Scalar], xs0: &[Scalar], amt: Scalar, tmp: &mut [Scalar]) {
+    let a = DT * amt * (N - 2).pow(2) as Scalar;
     linear_solve(b, xs, xs0, a, 1.0 + 6.0 * a, tmp);
 }
 
@@ -85,19 +78,12 @@ fn project(
         });
 }
 
-fn advect(
-    b: usize,
-    d: &mut [Scalar],
-    d0: &[Scalar],
-    velx: &[Scalar],
-    vely: &[Scalar],
-    delta: Scalar,
-) {
+fn advect(b: usize, d: &mut [Scalar], d0: &[Scalar], velx: &[Scalar], vely: &[Scalar]) {
     d.par_iter_mut().enumerate().for_each(|(i, d)| {
         let (x, y) = get_xy(i);
         if (1..NLEN).contains(&x) && (1..NLEN).contains(&y) {
-            let mut x = x as Scalar - (DT * delta * N_SCALAR * velx[i]);
-            let mut y = y as Scalar - (DT * delta * N_SCALAR * vely[i]);
+            let mut x = x as Scalar - (DT * N_SCALAR * velx[i]);
+            let mut y = y as Scalar - (DT * N_SCALAR * vely[i]);
 
             if x < 0.5 {
                 x = 0.5;
@@ -195,9 +181,9 @@ impl Fluid {
         }
     }
 
-    fn step(&mut self, delta: Scalar) {
-        diffuse(1, &mut self.velx0, &self.velx, VISC, &mut self.tmp, delta);
-        diffuse(2, &mut self.vely0, &self.vely, VISC, &mut self.tmp, delta);
+    fn step(&mut self) {
+        diffuse(1, &mut self.velx0, &self.velx, VISC, &mut self.tmp);
+        diffuse(2, &mut self.vely0, &self.vely, VISC, &mut self.tmp);
 
         project(
             &mut self.velx0,
@@ -207,22 +193,8 @@ impl Fluid {
             &mut self.tmp,
         );
 
-        advect(
-            1,
-            &mut self.velx,
-            &self.velx0,
-            &self.velx0,
-            &self.vely0,
-            delta,
-        );
-        advect(
-            2,
-            &mut self.vely,
-            &self.vely0,
-            &self.velx0,
-            &self.vely0,
-            delta,
-        );
+        advect(1, &mut self.velx, &self.velx0, &self.velx0, &self.vely0);
+        advect(2, &mut self.vely, &self.vely0, &self.velx0, &self.vely0);
 
         project(
             &mut self.velx,
@@ -232,13 +204,13 @@ impl Fluid {
             &mut self.tmp,
         );
 
-        diffuse(0, &mut self.s, &self.density, DIFF, &mut self.tmp, delta);
-        advect(0, &mut self.density, &self.s, &self.velx, &self.vely, delta);
+        diffuse(0, &mut self.s, &self.density, DIFF, &mut self.tmp);
+        advect(0, &mut self.density, &self.s, &self.velx, &self.vely);
     }
 
     #[allow(clippy::many_single_char_names)]
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        self.step(s.delta_time());
+        self.step();
         for i in 0..N * N {
             let (x, y) = get_xy(i);
             if (15..WIDTH as usize - 15).contains(&x) && (15..HEIGHT as usize - 15).contains(&y) {
@@ -335,7 +307,7 @@ impl AppState for App {
         s.rect_mode(RectMode::Center);
         s.no_stroke();
         s.cursor(Cursor::hand())?;
-        s.clip([15, 15, WIDTH - 30, HEIGHT - 30])?;
+        s.clip([15, 15, WIDTH as i32 - 30, HEIGHT as i32 - 30])?;
 
         for i in 0..COUNT {
             self.xs[i] = (i * SPACING) as Scalar;

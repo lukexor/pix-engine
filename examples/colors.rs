@@ -26,7 +26,7 @@ impl Colors {
                 let s = map(x, 0.0, w, 0.0, 100.0);
                 let v = map(y, 0.0, h, 0.0, 100.0);
                 state.fill(hsb!(self.h, s, v));
-                state.rect(rect!(x, y, size, size))?;
+                state.rect(rect!(x, y, size, size).as_::<i32>())?;
             }
         }
         Ok(())

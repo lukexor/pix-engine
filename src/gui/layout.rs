@@ -41,7 +41,7 @@ impl PixState {
     pub fn indent(&mut self) -> PixResult<()> {
         let s = self;
         let (width, height) = s.size_of("    ")?;
-        s.advance_cursor([0, 0, width, height]);
+        s.advance_cursor([0, 0, width as i32, height as i32]);
         s.same_line(None);
         Ok(())
     }
@@ -58,7 +58,7 @@ impl PixState {
         s.push();
 
         s.stroke(s.primary_color());
-        s.line([[pad.x(), y], [s.width()? as i32 - pad.x(), y]])?;
+        s.line([point![pad.x(), y], point![s.width()? as i32 - pad.x(), y]])?;
 
         s.pop();
         s.advance_cursor([0, 0, 0, height]);

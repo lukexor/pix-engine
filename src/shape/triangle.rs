@@ -17,7 +17,6 @@
 //! ```
 
 use crate::prelude::*;
-use num_traits::AsPrimitive;
 
 /// A `Triangle` with three [Point]s.
 ///
@@ -181,7 +180,7 @@ where
 impl<T, const N: usize> Draw for Tri<T, N>
 where
     Self: Into<TriI2>,
-    T: Default + AsPrimitive<i32>,
+    T: Num,
 {
     /// Draw `Triangle` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {

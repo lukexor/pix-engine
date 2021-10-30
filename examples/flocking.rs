@@ -56,7 +56,12 @@ impl Boid {
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.stroke(SKY_BLUE);
         s.fill(SKY_BLUE);
-        s.wireframe(BOID_MODEL, self.pos, self.vel.heading(), BOID_SIZE)?;
+        s.wireframe(
+            BOID_MODEL,
+            self.pos.round().as_::<i32>(),
+            self.vel.heading(),
+            BOID_SIZE,
+        )?;
         Ok(())
     }
 }

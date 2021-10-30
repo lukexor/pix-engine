@@ -66,7 +66,7 @@ struct Stream {
 }
 
 impl Stream {
-    const SPEED_RANGE: (i32, i32) = (2, 6);
+    const SPEED_RANGE: (i32, i32) = (3, 10);
     const HEIGHT_RANGE: (usize, usize) = (1, 25);
     const START_RANGE: (i32, i32) = (-500, -50);
     const SPAWN_RANGE: (i32, i32) = (-200, -50);

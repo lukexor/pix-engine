@@ -45,19 +45,19 @@ impl SpaceObj {
     }
 
     fn contains_point(&self, p: PointF2) -> bool {
-        Ellipse::from(self).contains_point(p)
+        Ellipse::from(self).contains_point(p.round().as_::<i32>())
     }
 }
 
 impl From<SpaceObj> for Ellipse {
     fn from(obj: SpaceObj) -> Self {
-        Self::circle_with_position(obj.pos, obj.size as i32)
+        Self::circle_with_position(obj.pos.round().as_::<i32>(), obj.size as i32)
     }
 }
 
 impl From<&SpaceObj> for Ellipse {
     fn from(obj: &SpaceObj) -> Self {
-        Self::circle_with_position(obj.pos, obj.size as i32)
+        Self::circle_with_position(obj.pos.round().as_::<i32>(), obj.size as i32)
     }
 }
 
@@ -178,7 +178,12 @@ impl Asteroids {
             a.angle += 0.5 * elapsed; // Give some twirl
             s.fill(BLACK);
             s.stroke(YELLOW);
-            s.wireframe(self.asteroid_model, a.pos, a.angle, a.size as Scalar)?;
+            s.wireframe(
+                self.asteroid_model,
+                a.pos.round().as_::<i32>(),
+                a.angle,
+                a.size as Scalar,
+            )?;
         }
         Ok(())
     }
@@ -243,7 +248,12 @@ impl Asteroids {
         self.ship.pos.wrap([w, h], self.ship.size as Scalar);
         s.fill(BLACK);
         s.stroke(WHITE);
-        s.wireframe(SHIP_MODEL, self.ship.pos, self.ship.angle, SHIP_SCALE)
+        s.wireframe(
+            SHIP_MODEL,
+            self.ship.pos.round().as_::<i32>(),
+            self.ship.angle,
+            SHIP_SCALE,
+        )
     }
 
     fn draw_gameover(&mut self, s: &mut PixState) -> PixResult<()> {

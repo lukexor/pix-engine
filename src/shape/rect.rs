@@ -27,7 +27,6 @@
 //! ```
 
 use crate::prelude::*;
-use num_traits::AsPrimitive;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -481,7 +480,7 @@ impl<T: Float> Intersects<T, 2> for Rect<T> {
 impl<T> Draw for Rect<T>
 where
     Self: Into<Rect<i32>>,
-    T: Default + AsPrimitive<i32>,
+    T: Num,
 {
     /// Draw `Rect` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
@@ -489,28 +488,18 @@ where
     }
 }
 
-impl<T, U> From<[U; 3]> for Rect<T>
-where
-    T: 'static + Copy,
-    U: AsPrimitive<T>,
-{
-    /// Converts `[U; 3]` into `Rect<T>`.
+impl<T: Num> From<[T; 3]> for Rect<T> {
+    /// Converts `[T; 3]` into `Rect<T>`.
     #[inline]
-    fn from([x, y, s]: [U; 3]) -> Self {
-        let s = s.as_();
-        Self([x.as_(), y.as_(), s, s])
+    fn from([x, y, s]: [T; 3]) -> Self {
+        Self([x, y, s, s])
     }
 }
 
-impl<T, U> From<&[U; 3]> for Rect<T>
-where
-    T: 'static + Copy,
-    U: AsPrimitive<T>,
-{
-    /// Converts `&[U; 3]` into `Rect<T>`.
+impl<T: Num> From<&[T; 3]> for Rect<T> {
+    /// Converts `&[T; 3]` into `Rect<T>`.
     #[inline]
-    fn from(&[x, y, s]: &[U; 3]) -> Self {
-        let s = s.as_();
-        Self([x.as_(), y.as_(), s, s])
+    fn from(&[x, y, s]: &[T; 3]) -> Self {
+        Self([x, y, s, s])
     }
 }

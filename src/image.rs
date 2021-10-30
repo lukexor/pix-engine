@@ -2,7 +2,6 @@
 
 use crate::{prelude::*, renderer::Rendering};
 use anyhow::Context;
-use num_traits::AsPrimitive;
 use png::{BitDepth, ColorType, Decoder};
 use std::{
     ffi::OsStr,
@@ -344,19 +343,18 @@ impl PixState {
     /// Draw a transformed [Image] to the current canvas resized to the target `rect`, optionally
     /// rotated by an `angle` about the `center` point or `flipped`. `angle` can be in either
     /// radians or degrees based on [AngleMode].
-    pub fn image_transformed<R1, R2, T, C, F>(
+    pub fn image_transformed<R1, R2, C, F>(
         &mut self,
         img: &Image,
         src: R1,
         dst: R2,
-        angle: T,
+        mut angle: Scalar,
         center: C,
         flipped: F,
     ) -> PixResult<()>
     where
         R1: Into<Option<Rect<i32>>>,
         R2: Into<Option<Rect<i32>>>,
-        T: AsPrimitive<Scalar>,
         C: Into<Option<PointI2>>,
         F: Into<Option<Flipped>>,
     {
@@ -365,7 +363,6 @@ impl PixState {
         if let ImageMode::Center = s.image_mode {
             dst = dst.map(|dst| Rect::from_center(dst.top_left(), dst.width(), dst.height()));
         };
-        let mut angle: Scalar = angle.as_();
         if let AngleMode::Radians = s.angle_mode {
             angle = angle.to_degrees();
         };

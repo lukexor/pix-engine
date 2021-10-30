@@ -141,9 +141,9 @@ impl PixState {
             let third = CHECKBOX_SIZE / 3;
             let x = checkbox.left() + half - 1;
             let y = checkbox.bottom() - third;
-            let start = [x - third + 2, y - third + 2];
-            let mid = [x, y];
-            let end = [x + third + 1, y - half + 2];
+            let start = point![x - third + 2, y - third + 2];
+            let mid = point![x, y];
+            let end = point![x + third + 1, y - half + 2];
             s.line([start, mid])?;
             s.line([mid, end])?;
         }

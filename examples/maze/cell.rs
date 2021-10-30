@@ -37,7 +37,7 @@ impl Cell {
             id,
             col,
             row,
-            rect: square!(col * SIZE, row * SIZE, SIZE).into(),
+            rect: square!((col * SIZE) as i32, (row * SIZE) as i32, SIZE as i32),
             walls: [true; 4],
         }
     }

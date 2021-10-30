@@ -1,7 +1,6 @@
 //! `Texture` functions.
 
 use crate::prelude::*;
-use num_traits::AsPrimitive;
 
 /// `TextureId`.
 pub type TextureId = usize;
@@ -69,12 +68,12 @@ impl PixState {
     /// rotated by an `angle` about the `center` point or `flipped`. `angle` can be in either
     /// radians or degrees based on [AngleMode].
     #[allow(clippy::too_many_arguments)]
-    pub fn texture_transformed<R1, R2, A, C, F, T>(
+    pub fn texture_transformed<R1, R2, C, F, T>(
         &mut self,
         texture_id: TextureId,
         src: R1,
         dst: R2,
-        angle: A,
+        mut angle: Scalar,
         center: C,
         flipped: F,
         tint: T,
@@ -82,13 +81,11 @@ impl PixState {
     where
         R1: Into<Option<Rect<i32>>>,
         R2: Into<Option<Rect<i32>>>,
-        A: AsPrimitive<Scalar>,
         C: Into<Option<PointI2>>,
         F: Into<Option<Flipped>>,
         T: Into<Option<Color>>,
     {
         let s = &self.settings;
-        let mut angle: Scalar = angle.as_();
         if let AngleMode::Radians = s.angle_mode {
             angle = angle.to_degrees();
         };

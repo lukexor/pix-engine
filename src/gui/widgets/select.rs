@@ -94,9 +94,9 @@ impl PixState {
         s.no_stroke();
         s.fill(WHITE);
         s.triangle([
-            [x + fourth, y + third + 1],
-            [(x + width) - fourth, y + third + 1],
-            [x + width / 2, (y + height) - third - 2],
+            point![x + fourth, y + third + 1],
+            point![(x + width) - fourth, y + third + 1],
+            point![x + width / 2, (y + height) - third - 2],
         ])?;
         s.pop();
 

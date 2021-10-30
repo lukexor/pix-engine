@@ -1,7 +1,6 @@
 //! Drawing functions.
 
 use crate::{prelude::*, renderer::Rendering};
-use num_traits::AsPrimitive;
 use std::iter::Iterator;
 
 /// Trait for objects that can be drawn to the screen.
@@ -22,23 +21,20 @@ impl PixState {
     }
 
     /// Draw a wireframe to the current canvas., translated to a given [Point]
-    pub fn wireframe<V, P1, P2, T>(
+    pub fn wireframe<V, P1, P2>(
         &mut self,
         vertexes: V,
         pos: P2,
-        angle: T,
-        scale: T,
+        mut angle: Scalar,
+        scale: Scalar,
     ) -> PixResult<()>
     where
         P1: Into<PointF2>,
         P2: Into<PointI2>,
         V: IntoIterator<Item = P1>,
-        T: AsPrimitive<Scalar>,
     {
         let s = &self.settings;
         let pos = pos.into();
-        let scale = scale.as_();
-        let mut angle = angle.as_();
         if let AngleMode::Degrees = s.angle_mode {
             angle = angle.to_radians();
         };

@@ -19,7 +19,6 @@
 //! ```
 
 use crate::prelude::*;
-use num_traits::AsPrimitive;
 
 /// A `Line` with start and end [Point]s.
 ///
@@ -200,7 +199,7 @@ impl<T: Float> Intersects<T, 2> for Line<T, 2> {
 impl<T, const N: usize> Draw for Line<T, N>
 where
     Self: Into<LineI2>,
-    T: Default + AsPrimitive<i32>,
+    T: Num,
 {
     /// Draw `Line` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {

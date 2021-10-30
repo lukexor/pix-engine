@@ -198,7 +198,7 @@ impl RayScene {
     fn calc_visibility_polygons(&mut self, o: PointI2) {
         self.polygons.clear();
         for &p in self.points.iter() {
-            let v: VectorF2 = (p - o).into();
+            let v = (p - o).as_::<Scalar>();
             // Cast three rays - one at and one off to each side
             for offset in -1..=1 {
                 let angle = offset as Scalar / 10_000.0;
@@ -221,10 +221,10 @@ impl RayScene {
     fn cast_ray(&self, o: PointI2, r: VectorF2) -> Option<PointF2> {
         let mut intersect = None;
         let mut closest_param = Scalar::INFINITY;
-        let o: Point<Scalar, 2> = o.into();
-        let ray: Line<Scalar, 2> = Line::new(o, o + r);
+        let o = o.as_::<Scalar>();
+        let ray = Line::new(o, o + r);
         for &e in self.edges.iter() {
-            if let Some((point, param)) = ray.intersects_line(e) {
+            if let Some((point, param)) = ray.intersects_line(e.as_::<Scalar>()) {
                 if intersect.is_none() || param < closest_param {
                     intersect = Some(point);
                     closest_param = param;
@@ -266,7 +266,7 @@ impl RayScene {
 impl AppState for RayScene {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         s.background(BLACK)?;
-        s.scale(SCALE, SCALE)?;
+        s.scale(SCALE as f32, SCALE as f32)?;
         s.no_cursor();
 
         let w = self.xcells * BLOCK_SIZE;

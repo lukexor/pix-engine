@@ -82,7 +82,7 @@ impl PixState {
             s.push();
             s.stroke(s.muted_color());
             s.no_fill();
-            s.rect([0, 0, w - 1, h - 1])?;
+            s.rect([0, 0, w as i32 - 1, h as i32 - 1])?;
             s.pop();
 
             s.text(text)?;

@@ -26,7 +26,6 @@
 //! ```
 
 use crate::prelude::*;
-use num_traits::AsPrimitive;
 
 /// A `Quad` or quadrilateral, a four-sided polygon.
 ///
@@ -192,7 +191,7 @@ where
 impl<T, const N: usize> Draw for Quad<T, N>
 where
     Self: Into<QuadI2>,
-    T: Default + AsPrimitive<i32>,
+    T: Num,
 {
     /// Draw `Quad` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {

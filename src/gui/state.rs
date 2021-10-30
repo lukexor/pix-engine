@@ -171,21 +171,21 @@ impl UiState {
     /// Returns the current mouse position coordinates as `(x, y)`.
     #[inline]
     pub(crate) fn mouse_pos(&self) -> PointI2 {
+        let mut pos = self.mouse.pos;
         if let Some(offset) = self.mouse_offset {
-            (self.mouse.pos - offset).into()
-        } else {
-            self.mouse.pos
+            pos.offset(-offset);
         }
+        pos
     }
 
     /// Returns the previous mouse position coordinates last frame as `(x, y)`.
     #[inline]
     pub(crate) fn pmouse_pos(&self) -> PointI2 {
+        let mut pos = self.pmouse.pos;
         if let Some(offset) = self.mouse_offset {
-            (self.pmouse.pos - offset).into()
-        } else {
-            self.pmouse.pos
+            pos.offset(-offset);
         }
+        pos
     }
 
     /// Set the current mouse position.

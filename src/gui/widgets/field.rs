@@ -249,8 +249,10 @@ impl PixState {
 
         // Text
         let scroll = s.ui.scroll(id);
-        s.wrap_width(input.width() - ipad.x());
-        s.set_cursor_pos(input.top_left() + ipad - scroll);
+        s.wrap_width((input.width() - ipad.x()) as u32);
+        let mut text_pos = input.top_left();
+        text_pos.offset(ipad - scroll);
+        s.set_cursor_pos(text_pos);
         s.clip(input)?;
         let blink_cursor = focused && s.elapsed() as usize >> 9 & 1 > 0;
         // TODO: total width here always maxes out at wrap_width when words can't wrap

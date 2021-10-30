@@ -4,7 +4,6 @@
 
 use crate::{prelude::*, renderer::*};
 use bitflags::bitflags;
-use num_traits::AsPrimitive;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
@@ -167,11 +166,8 @@ impl PixState {
     }
 
     /// Sets the width used to draw lines on the canvas.
-    pub fn stroke_weight<W>(&mut self, weight: W)
-    where
-        W: AsPrimitive<u8>,
-    {
-        self.settings.stroke_weight = weight.as_();
+    pub fn stroke_weight(&mut self, weight: u8) {
+        self.settings.stroke_weight = weight;
     }
 
     /// Disables outlining shapes drawn on the canvas.
@@ -180,11 +176,8 @@ impl PixState {
     }
 
     /// Sets the wrap width used to draw text on the canvas.
-    pub fn wrap_width<W>(&mut self, width: W)
-    where
-        W: AsPrimitive<u32>,
-    {
-        self.settings.wrap_width = Some(width.as_());
+    pub fn wrap_width(&mut self, width: u32) {
+        self.settings.wrap_width = Some(width);
     }
 
     /// Disable wrapping when drawing text on the canvas.
@@ -281,10 +274,10 @@ impl PixState {
     }
 
     /// Set the rendering scale of the current canvas.
-    pub fn scale<T: AsPrimitive<f32>>(&mut self, x: T, y: T) -> PixResult<()> {
+    pub fn scale(&mut self, x: f32, y: f32) -> PixResult<()> {
         let mut s = &mut self.settings;
-        s.scale_x = x.as_();
-        s.scale_y = y.as_();
+        s.scale_x = x;
+        s.scale_y = y;
         self.renderer.scale(s.scale_x, s.scale_y)
     }
 

@@ -1,7 +1,6 @@
 //! UI theme functions.
 
 use crate::{prelude::*, renderer::Rendering};
-use num_traits::AsPrimitive;
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -296,8 +295,8 @@ impl PixState {
     }
 
     /// Set the font size for drawing to the current canvas.
-    pub fn font_size<S: AsPrimitive<u32>>(&mut self, size: S) -> PixResult<()> {
-        self.theme.font_sizes.body = size.as_();
+    pub fn font_size(&mut self, size: u32) -> PixResult<()> {
+        self.theme.font_sizes.body = size;
         self.renderer.font_size(self.theme.font_sizes.body)
     }
 

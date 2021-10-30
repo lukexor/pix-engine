@@ -34,7 +34,7 @@ impl AppState for Textures {
 
                 s.font_color(color.inverted());
                 s.rect_mode(RectMode::Center);
-                s.set_cursor_pos(center);
+                s.set_cursor_pos(center.as_::<i32>());
                 s.text(format!("Quadrant {}", i))?;
                 Ok(())
             })?;

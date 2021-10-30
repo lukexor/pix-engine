@@ -24,7 +24,7 @@
 //! ```
 
 use crate::prelude::*;
-use num_traits::{AsPrimitive, Signed};
+use num_traits::Signed;
 use std::{fmt, ops::*};
 
 /// A `Point` in N-dimensional space.
@@ -436,7 +436,7 @@ where
 impl<T, const N: usize> Draw for Point<T, N>
 where
     Self: Into<PointI2>,
-    T: Default + AsPrimitive<i32>,
+    T: Num,
 {
     /// Draw point to the current [p.x()State] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
