@@ -10,12 +10,12 @@ pub mod fonts {
 
     use super::{Font, FontSrc};
 
-    const ARIAL_TTF: &[u8] = include_bytes!("../../assets/arial.ttf");
+    const NOTO_TTF: &[u8] = include_bytes!("../../assets/noto_sans_regular.ttf");
     const EMULOGIC_TTF: &[u8] = include_bytes!("../../assets/emulogic.ttf");
-    const INCONSOLATA_TTF: &[u8] = include_bytes!("../../assets/inconsolata.ttf");
+    const INCONSOLATA_TTF: &[u8] = include_bytes!("../../assets/inconsolata_bold.ttf");
 
-    /// Arial
-    pub const ARIAL: Font = Font::new("Arial", FontSrc::Bytes(ARIAL_TTF));
+    /// Noto Sans Regular.
+    pub const NOTO: Font = Font::new("Noto", FontSrc::Bytes(NOTO_TTF));
 
     /// Emulogic - bold, pixel font.
     pub const EMULOGIC: Font = Font::new("Emulogic", FontSrc::Bytes(EMULOGIC_TTF));
