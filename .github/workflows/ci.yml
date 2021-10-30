@@ -33,21 +33,12 @@ jobs:
         components: rustfmt, clippy
 
     - name: Cache dependencies
-      id: cache-deps
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-        key: ${{ runner.os }}-${{ runner.toolchain }}-${{ hashFiles('Cargo.toml') }}
+      uses: Swatinem/rust-cache@v1
 
     - name: Install cargo-vcpkg
       run: cargo install cargo-vcpkg
 
     - name: Install dependencies
-      if: steps.cache-deps.outputs.cache-hit != 'true'
       run: cargo vcpkg -v build
 
     - name: Check format
