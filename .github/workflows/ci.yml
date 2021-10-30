@@ -2,13 +2,16 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
   workflow_dispatch:
+  release:
+    types: [created, edited]
 
 env:
   CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-Dwarnings"
 
 jobs:
   build:
@@ -17,34 +20,48 @@ jobs:
       fail-fast: false
       matrix:
         os:  [macos-latest, ubuntu-latest, windows-latest]
-        include:
-          - os: macos-latest
-            env:
-              LIBRARY_PATH: "/usr/local/lib"
+        # MSRV 1.55
+        toolchain: [nightly, beta, stable, 1.55]
     steps:
     - uses: actions/checkout@v2
+
+    - uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: ${{ matrix.toolchain }}
+        override: true
+        components: rustfmt, clippy
 
     - name: Cache dependencies
       id: cache-deps
       uses: actions/cache@v2
       with:
         path: |
-          ~/.cache/vcpkg/
           ~/.cargo/bin/
           ~/.cargo/registry/index/
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/debug/
           target/doc/
-          target/vcpkg/
-        key: ${{ runner.os }}-${{ hashFiles('Cargo.toml') }}
+        key: ${{ runner.os }}-${{ runner.toolchain }}-${{ hashFiles('Cargo.toml') }}
 
     - name: Install cargo-vcpkg
-      run: cargo install cargo-vcpkg --force
+      run: cargo install cargo-vcpkg
 
     - name: Install dependencies
       if: steps.cache-deps.outputs.cache-hit != 'true'
       run: cargo vcpkg -v build
+
+    - name: Check format
+      uses: actions-rs/cargo@v1
+      with:
+        command: fmt
+        args: --all -- --check
+
+    - name: Check lints
+      uses: actions-rs/cargo@v1
+      with:
+        command: clippy
 
     - name: Build source
       run: cargo build --all-targets --features "serde use-vcpkg" --verbose
@@ -56,7 +73,7 @@ jobs:
       run: cargo test --features "serde use-vcpkg" --verbose
 
     - name: Run integration tests
+      # TODO: Fix missing video device on linux and audio API issue on windows
+      if: ${{ matrix.os == 'macos-latest' }}
       run: |
-        # Skip until linux is set up with a video device and windows with an
-        # audio device
-        # cargo test run_engine -- --test-threads=1 --ignored
+        cargo test run_engine --features "serde use-vcpkg" -- --test-threads=1 --ignored
