@@ -342,7 +342,7 @@ impl PixState {
         }
         let s = &self.settings;
         let t = &self.theme;
-        // SAFETY: All of these settings should be valid since they were set prior to `pop()` being
+        // All of these settings should be valid since they were set prior to `pop()` being
         // called.
         self.renderer.clip(s.clip).expect("valid clip setting");
         // Excluding restoring cursor - as it's used for mouse hover.

@@ -95,7 +95,8 @@ impl WindowRenderer for Renderer {
     fn set_fps(&mut self, fps: usize) -> PixResult<()> {
         self.fps = fps;
         self.title.clear();
-        write!(self.title, "{} - FPS: {}", &self.settings.title, self.fps).expect("valid title");
+        write!(self.title, "{} - FPS: {}", &self.settings.title, self.fps)
+            .context("invalid title")?;
         let window = get_window_mut!(self);
         window.set_title(&self.title).context("invalid title")
     }

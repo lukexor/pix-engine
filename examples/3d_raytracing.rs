@@ -117,7 +117,7 @@ impl App {
                     let (light_dir, t_max) = match light.source {
                         LightSource::Point(p) => (p - position, 1.0),
                         LightSource::Direction(d) => (d, Scalar::INFINITY),
-                        _ => unreachable!("unreachable arm"),
+                        _ => unreachable!("invalid light source"),
                     };
 
                     // Shadows

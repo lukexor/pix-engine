@@ -30,10 +30,7 @@ impl UpperHex for Color {
 impl Index<usize> for Color {
     type Output = u8;
     fn index(&self, idx: usize) -> &Self::Output {
-        match idx {
-            i if i < 4 => &self.channels[i],
-            _ => panic!("index out of bounds: the len is 4 but the index is {}", idx),
-        }
+        &self.channels[idx]
     }
 }
 

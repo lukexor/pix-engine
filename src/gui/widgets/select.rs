@@ -117,19 +117,19 @@ impl PixState {
         if focused {
             // Pop select list
             let height = 4 * (font_size + 2 * ipad.y()) + 1;
-            if !s.ui.textures.contains_key(&id) {
-                let texture_id = s.create_texture(
-                    select_box.width() as u32 + 2 * fpad.x() as u32,
-                    height as u32,
-                    PixelFormat::Rgba,
-                )?;
-                let src = Some(rect![0, 0, select_box.width(), height]);
-                let dst = Some(rect![select_box.bottom_left(), select_box.width(), height]);
-                s.ui.textures.insert(id, Texture::new(texture_id, src, dst));
-            }
             let texture_id = {
+                if !s.ui.textures.contains_key(&id) {
+                    let texture_id = s.create_texture(
+                        select_box.width() as u32 + 2 * fpad.x() as u32,
+                        height as u32,
+                        PixelFormat::Rgba,
+                    )?;
+                    let src = Some(rect![0, 0, select_box.width(), height]);
+                    let dst = Some(rect![select_box.bottom_left(), select_box.width(), height]);
+                    s.ui.textures.insert(id, Texture::new(texture_id, src, dst));
+                }
                 // SAFETY: We just checked or inserted a texture.
-                let texture = s.ui.textures.get_mut(&id).expect("valid texture target");
+                let texture = s.ui.textures.get_mut(&id).expect("valid select target");
                 texture.visible = true;
                 texture.id
             };

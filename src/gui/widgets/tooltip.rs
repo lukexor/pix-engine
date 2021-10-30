@@ -117,14 +117,13 @@ impl PixState {
             rect.set_bottom(mpos.y() - 5);
         }
 
-        if !s.ui.textures.contains_key(&id) {
-            let texture_id = s.create_texture(width, height, PixelFormat::Rgba)?;
-            s.ui.textures
-                .insert(id, Texture::new(texture_id, None, Some(rect)));
-        }
         let texture_id = {
-            // SAFETY: We just checked or inserted a texture.
-            let texture = s.ui.textures.get_mut(&id).expect("valid texture target");
+            if !s.ui.textures.contains_key(&id) {
+                let texture_id = s.create_texture(width, height, PixelFormat::Rgba)?;
+                s.ui.textures
+                    .insert(id, Texture::new(texture_id, None, Some(rect)));
+            }
+            let texture = s.ui.textures.get_mut(&id).expect("valid tooltip target");
             texture.visible = true;
             texture.dst = Some(rect);
             texture.id

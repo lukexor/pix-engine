@@ -258,11 +258,13 @@ impl Image {
     /// Returns the `Image` pixel data as a [`Vec<Color>`].
     #[inline]
     pub fn into_pixels(self) -> Vec<Color> {
-        // SAFETY: Converting to Vec<Color> from data should be valid since the image could not have
-        // been constructed with an invalid set of bytes due to bounds checks in constructors.
         self.data
             .chunks(self.format.channels())
-            .map(|slice| Color::from_slice(ColorMode::Rgb, slice).expect("valid image"))
+            .map(|slice| match *slice {
+                [r, g, b] => Color::rgb(r, g, b),
+                [r, g, b, a] => Color::rgba(r, g, b, a),
+                _ => panic!("invalid number of color channels"),
+            })
             .collect()
     }
 
@@ -271,9 +273,11 @@ impl Image {
     pub fn get_pixel(&self, x: u32, y: u32) -> Color {
         let idx = self.idx(x, y);
         let channels = self.format.channels();
-        // SAFETY: Converting to Color from data should be valid since the image could not have
-        // been constructed with an invalid set of bytes due to bounds checks in constructors.
-        Color::from_slice(ColorMode::Rgb, &self.data[idx..idx + channels]).expect("valid image")
+        match self.data[idx..idx + channels] {
+            [r, g, b] => Color::rgb(r, g, b),
+            [r, g, b, a] => Color::rgba(r, g, b, a),
+            _ => panic!("invalid number of color channels"),
+        }
     }
 
     /// Sets the color value at the given `(x, y)` position.
@@ -419,15 +423,13 @@ impl Iterator for Pixels<'_> {
         let g = self.1.next()?;
         let b = self.1.next()?;
         let channels = self.0;
-        // SAFETY: Creating colors from the image bytes should be valid since the image was
-        // constructed successfully.
         match channels {
-            3 => Some(Color::from_slice(ColorMode::Rgb, [r, g, b]).expect("valid pixel")),
+            3 => Some(Color::rgb(r, g, b)),
             4 => {
                 let a = self.1.next()?;
-                Some(Color::from_slice(ColorMode::Rgb, [r, g, b, a]).expect("valid pixel"))
+                Some(Color::rgba(r, g, b, a))
             }
-            _ => unreachable!("invalid number of color channels"),
+            _ => panic!("invalid number of color channels"),
         }
     }
 }

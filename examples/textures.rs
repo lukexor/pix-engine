@@ -54,7 +54,7 @@ impl AppState for Textures {
                 1 => point!(w, 0),
                 2 => point!(0, h),
                 3 => point!(w, h),
-                _ => unreachable!(),
+                _ => unreachable!("invalid texture index"),
             };
             s.texture(*texture_id, None, rect!(pos.x(), pos.y(), w, h))?;
         }

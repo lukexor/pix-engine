@@ -629,17 +629,19 @@ impl Rendering for Renderer {
     ) -> PixResult<()> {
         let img_ptr: *const Image = img;
         let key = (self.window_target, img_ptr);
-        if !self.image_cache.contains(&key) {
-            let texture_creator = get_texture_creator!(self);
-            self.image_cache.put(
-                key,
-                texture_creator
-                    .create_texture_static(Some(img.format().into()), img.width(), img.height())
-                    .context("failed to create image texture")?,
-            );
-        }
-        // SAFETY: We just checked or inserted a texture.
-        let texture = self.image_cache.get_mut(&key).expect("valid image cache");
+        let texture = {
+            if !self.image_cache.contains(&key) {
+                let texture_creator = get_texture_creator!(self);
+                self.image_cache.put(
+                    key,
+                    texture_creator
+                        .create_texture_static(Some(img.format().into()), img.width(), img.height())
+                        .context("failed to create image texture")?,
+                );
+            }
+            // SAFETY: We just checked or inserted a texture.
+            self.image_cache.get_mut(&key).expect("valid image cache")
+        };
         match tint {
             Some(tint) => {
                 let [r, g, b, a] = tint.channels();
