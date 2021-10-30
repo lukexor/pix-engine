@@ -399,7 +399,7 @@ where
     /// # use pix_engine::prelude::*;
     /// let p1: PointF3 = point!(1.0, 0.0, 0.0);
     /// let p2: PointF3 = point!(0.0, 1.0, 0.0);
-    /// let dist = p1.dist(v2);
+    /// let dist = p1.dist(p2);
     /// let abs_difference: f64 = (dist - std::f64::consts::SQRT_2).abs();
     /// assert!(abs_difference <= 1e-4);
     /// ```
