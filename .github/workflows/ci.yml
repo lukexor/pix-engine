@@ -22,24 +22,27 @@ jobs:
         os:  [macos-latest, ubuntu-latest, windows-latest]
         # MSRV 1.55
         toolchain: [nightly, beta, stable, 1.55]
+        include:
+          - os: [macos-latest, ubuntu-latest]
+            build_cache: |
+              ~/.cache/vcpkg/archives
+          - os: windows-latest
+            build_cache: |
+              %LocalAppData%\vcpkg\archives
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v2
 
-    - uses: actions-rs/toolchain@v1
+    - name: Install toolchain
+      uses: actions-rs/toolchain@v1
       with:
         profile: minimal
         toolchain: ${{ matrix.toolchain }}
         override: true
         components: rustfmt, clippy
 
-    - name: Cache dependencies
+    - name: Cache Rust dependencies
       uses: Swatinem/rust-cache@v1
-
-    - name: Install cargo-vcpkg
-      run: cargo install cargo-vcpkg
-
-    - name: Install dependencies
-      run: cargo vcpkg -v build
 
     - name: Check format
       uses: actions-rs/cargo@v1
@@ -47,15 +50,30 @@ jobs:
         command: fmt
         args: --all -- --check
 
-    - name: Check lints
+    - name: Lint
       uses: actions-rs/cargo@v1
       with:
         command: clippy
 
+    - name: Install build dependencies
+      run: cargo install cargo-vcpkg
+
+    - name: Cache build dependencies
+      id: cache-build
+      uses: actions/cache@v2
+      with:
+        path: ${{ matrix.build_cache }}
+        key: ${{ matrix.os }}-${{ hashFiles('Cargo.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-
+
+    - name: Build dependencies
+      run: cargo vcpkg -v build
+
     - name: Build source
       run: cargo build --all-targets --features "serde use-vcpkg" --verbose
 
-    - name: Build docs
+    - name: Build documentation
       run: cargo doc --features "serde use-vcpkg" --verbose
 
     - name: Run unit tests
