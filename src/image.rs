@@ -147,7 +147,7 @@ impl Image {
         Ok(Self::from_vec(width, height, bytes, format))
     }
 
-    /// Constructs an `Image` from a [Vec<u8>] representing RGB/A values.
+    /// Constructs an `Image` from a [`Vec<u8>`] representing RGB/A values.
     #[inline]
     pub fn from_vec(width: u32, height: u32, data: Vec<u8>, format: PixelFormat) -> Self {
         Self {

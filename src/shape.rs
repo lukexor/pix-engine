@@ -27,7 +27,7 @@ pub use triangle::*;
 
 /// Trait for shape containing operations.
 pub trait Contains<T, const N: usize> {
-    /// The shape type. e.g. [Rect<T>].
+    /// The shape type. e.g. [`Rect<T>`].
     type Shape;
 
     /// Returns whether this shape contains a given [Point].
@@ -43,7 +43,7 @@ pub trait Contains<T, const N: usize> {
 
 /// Trait for shape intersection operations.
 pub trait Intersects<T, const N: usize> {
-    /// The shape type. e.g. [Rect<T>].
+    /// The shape type. e.g. [`Rect<T>`].
     type Shape;
 
     /// Returns the closest intersection point with a given line and distance along the line or
