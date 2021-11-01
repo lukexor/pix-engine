@@ -3,6 +3,8 @@
 use crate::{prelude::*, renderer::Rendering};
 use anyhow::Context;
 use png::{BitDepth, ColorType, Decoder};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 use std::{
     ffi::OsStr,
     fmt,
@@ -16,6 +18,7 @@ use std::{
 /// Format for interpreting bytes when using textures.
 #[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum PixelFormat {
     /// 8-bit Red, Green, and Blue
     Rgb,

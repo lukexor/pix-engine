@@ -1,6 +1,8 @@
 //! UI theme functions.
 
 use crate::{prelude::*, renderer::Rendering};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -26,6 +28,8 @@ pub mod fonts {
 
 /// A builder to generate custom [Theme]s.
 #[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'static")))]
 pub struct ThemeBuilder {
     fonts: ThemeFonts,
     font_sizes: ThemeFontSizes,
@@ -36,6 +40,7 @@ pub struct ThemeBuilder {
 
 /// Represents a given font-themed section in a UI.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum ThemeFontType {
     /// For paragraphs, links, buttons, etc
     Body,
@@ -47,6 +52,7 @@ pub enum ThemeFontType {
 
 /// Represents a given color-themed section in a UI.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum ThemeColorType {
     /// Body text foreground.
     Text,
@@ -134,6 +140,7 @@ impl ThemeBuilder {
 
 /// Represents a font family along with the source of the font data.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Font {
     /// Family name of the font.
     pub name: &'static str,
@@ -150,6 +157,7 @@ impl Font {
 
 /// Represents source of font data.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum FontSrc {
     /// A font from static byte data.
     Bytes(&'static [u8]),
@@ -166,6 +174,8 @@ impl Default for Font {
 
 /// A set of font families for body, heading, and monospace text.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'static")))]
 pub struct ThemeFonts {
     pub(crate) body: Font,
     pub(crate) heading: Font,
@@ -184,6 +194,7 @@ impl Default for ThemeFonts {
 
 /// A set of font sizes for body, heading, and monospace text.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ThemeFontSizes {
     pub(crate) body: u32,
     pub(crate) heading: u32,
@@ -202,6 +213,7 @@ impl Default for ThemeFontSizes {
 
 /// A set of font styles for body, heading, and monospace text.
 #[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ThemeFontStyles {
     pub(crate) body: FontStyle,
     pub(crate) heading: FontStyle,
@@ -210,6 +222,7 @@ pub struct ThemeFontStyles {
 
 /// A set of colors for theming UI elements.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ThemeColors {
     pub(crate) text: Color,
     pub(crate) background: Color,
@@ -256,6 +269,7 @@ impl Default for ThemeColors {
 
 /// A set of styles for sizing, padding, borders, etc for theming UI elements.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ThemeStyle {
     pub(crate) frame_pad: PointI2,
     pub(crate) item_pad: PointI2,
@@ -272,6 +286,8 @@ impl Default for ThemeStyle {
 
 /// A UI theme containing font families, sizes, styles, and colors.
 #[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'static")))]
 pub struct Theme {
     pub(crate) fonts: ThemeFonts,
     pub(crate) font_sizes: ThemeFontSizes,

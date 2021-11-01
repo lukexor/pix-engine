@@ -19,6 +19,8 @@
 //! ```
 
 use crate::prelude::*;
+#[cfg(feature = "serde")]
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 /// A `Line` with start and end [Point]s.
 ///
@@ -26,6 +28,8 @@ use crate::prelude::*;
 ///
 /// [module-level documentation]: crate::shape::line
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
 pub struct Line<T, const N: usize>(pub(crate) [Point<T, N>; 2]);
 
 /// A 2D `Line` represented by integers.

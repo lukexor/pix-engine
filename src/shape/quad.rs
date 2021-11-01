@@ -26,6 +26,8 @@
 //! ```
 
 use crate::prelude::*;
+#[cfg(feature = "serde")]
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 /// A `Quad` or quadrilateral, a four-sided polygon.
 ///
@@ -35,6 +37,8 @@ use crate::prelude::*;
 ///
 /// [module-level documentation]: crate::shape::quad
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
 pub struct Quad<T, const N: usize>(pub(crate) [Point<T, N>; 4]);
 
 /// A 2D `Quad` represented by integers.

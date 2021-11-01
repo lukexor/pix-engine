@@ -62,8 +62,12 @@
 //! [Euclidean]: https://en.wikipedia.org/wiki/Euclidean_vector
 
 use crate::prelude::*;
+#[cfg(feature = "serde")]
+use crate::serialize::arrays;
 use num_traits::Signed;
 use rand::distributions::uniform::SampleUniform;
+#[cfg(feature = "serde")]
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{fmt, ops::*};
 
 /// A [Euclidean] `Vector` in N-dimensional space.
@@ -88,7 +92,11 @@ use std::{fmt, ops::*};
 /// [vecmath]: https://en.wikipedia.org/wiki/Vector_(mathematics_and_p.y()sics)
 /// [module-level documentation]: mod@crate::vector
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Vector<T, const N: usize>(pub(crate) [T; N]);
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
+pub struct Vector<T, const N: usize>(
+    #[cfg_attr(feature = "serde", serde(with = "arrays"))] pub(crate) [T; N],
+);
 
 /// A 1D `Vector` represented by integers.
 pub type VectorI1 = Vector<i32, 1>;

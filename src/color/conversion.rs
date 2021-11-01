@@ -4,40 +4,8 @@ use super::{
     Color,
     ColorMode::{self, *},
 };
-use crate::prelude::Scalar;
-use std::{borrow::Cow, convert::TryFrom, error, fmt, result, str::FromStr};
-
-/// The result type for [Color] conversions.
-pub type Result<'a, T, U> = result::Result<T, Error<'a, U>>;
-
-/// The error type for [Color] operations.
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Error<'a, T>
-where
-    [T]: ToOwned<Owned = Vec<T>>,
-{
-    /// Error when creating a [Color] from an invalid [slice].
-    InvalidSlice(Cow<'a, [T]>),
-    /// Error when creating a [Color] from an invalid string using [FromStr](std::str::FromStr).
-    InvalidString(Cow<'a, str>),
-}
-
-impl<'a, T> fmt::Display for Error<'a, T>
-where
-    T: fmt::Debug,
-    [T]: ToOwned<Owned = Vec<T>>,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use Error::*;
-        match self {
-            InvalidSlice(slice) => write!(f, "invalid color slice: {:?}", slice),
-            InvalidString(s) => write!(f, "invalid color string format: {}", s),
-        }
-    }
-}
-
-impl<'a, T> error::Error for Error<'a, T> where T: fmt::Debug + Clone {}
+use crate::prelude::{PixError, Scalar};
+use std::{convert::TryFrom, result, str::FromStr};
 
 /// Return the max value for each [ColorMode].
 pub(crate) const fn maxes(mode: ColorMode) -> [Scalar; 4] {
@@ -290,7 +258,7 @@ impl Color {
 }
 
 impl FromStr for Color {
-    type Err = Error<'static, Scalar>;
+    type Err = PixError;
 
     /// Converts to [Color] from a hexadecimal string.
     ///
@@ -311,49 +279,40 @@ impl FromStr for Color {
     ///
     /// let c = Color::from_str("#F0F5BF5F")?; // 8-digit Hex string
     /// assert_eq!(c.channels(), [240, 245, 191, 95]);
-    /// # Ok::<(), ColorError<f64>>(())
+    /// # Ok::<(), PixError>(())
     /// ```
-    fn from_str(s: &str) -> result::Result<Self, Self::Err> {
-        if !s.starts_with('#') {
-            return Err(Error::InvalidString(Cow::from(s.to_owned())));
+    fn from_str(string: &str) -> result::Result<Self, Self::Err> {
+        if !string.starts_with('#') {
+            return Err(PixError::ParseColorError);
         }
 
         let mut channels: [u8; 4] = [0, 0, 0, 255];
-        let parse_hex = |hex: &str| {
-            if let Ok(value) = u8::from_str_radix(hex, 16) {
-                Ok(value)
-            } else {
-                Err(Error::InvalidString(Cow::from(hex.to_owned())))
-            }
-        };
+        let parse_hex =
+            |hex: &str| u8::from_str_radix(hex, 16).map_err(|_| PixError::ParseColorError);
 
-        let s = s.trim().to_lowercase();
-        match s.len() - 1 {
+        let string = string.trim().to_lowercase();
+        match string.len() - 1 {
             3 | 4 => {
-                for (i, _) in s[1..].char_indices() {
-                    let hex = parse_hex(&s[i + 1..i + 2])?;
+                for (i, _) in string[1..].char_indices() {
+                    let hex = parse_hex(&string[i + 1..i + 2])?;
                     channels[i] = (hex << 4) | hex;
                 }
             }
             6 | 8 => {
-                for (i, _) in s[1..].char_indices().step_by(2) {
-                    channels[i / 2] = parse_hex(&s[i + 1..i + 3])?;
+                for (i, _) in string[1..].char_indices().step_by(2) {
+                    channels[i / 2] = parse_hex(&string[i + 1..i + 3])?;
                 }
             }
-            _ => return Err(Error::InvalidString(Cow::from(s))),
+            _ => return Err(PixError::ParseColorError),
         }
 
-        Ok(Self::rgba(
-            channels[0],
-            channels[1],
-            channels[2],
-            channels[3],
-        ))
+        let [r, g, b, a] = channels;
+        Ok(Self::rgba(r, g, b, a))
     }
 }
 
 impl TryFrom<&str> for Color {
-    type Error = Error<'static, Scalar>;
+    type Error = PixError;
     /// Try to create a `Color` from a hexadecimal string.
     fn try_from(s: &str) -> result::Result<Self, Self::Error> {
         Self::from_str(s)

@@ -24,6 +24,12 @@ pub enum Error {
     /// Invalid Window ID.
     #[error("invalid window id `{0}`")]
     InvalidWindow(WindowId),
+    /// Hexadecimal [Color] string parsing error.
+    #[error("hexadecimal color string parsing error")]
+    ParseColorError,
+    /// Invalid [Color] slice.
+    #[error("invalid color slice")]
+    InvalidColorSlice,
     /// Invalid [Image].
     #[error(
         "invalid image {{ width: {width}, height: {height}, size: {size}, format: {format:?} }}"

@@ -96,16 +96,17 @@
 //!
 //! let c = Color::from_str("#F0F5BF5F")?; // 8-digit Hex string
 //! assert_eq!(c.channels(), [240, 245, 191, 95]);
-//! # Ok::<(), ColorError<f64>>(())
+//! # Ok::<(), PixError>(())
 //! ```
 
-use crate::{prelude::Scalar, random};
+use crate::{
+    prelude::{PixError, PixResult, Scalar},
+    random,
+};
 use conversion::{calculate_channels, clamp_levels, convert_levels, maxes};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::{borrow::Cow, fmt};
-
-pub use conversion::{Error, Result};
+use std::fmt;
 
 pub mod constants;
 pub mod conversion;
@@ -516,12 +517,12 @@ impl Color {
     /// let vals: [f64; 4] = [128.0, 64.0, 0.0, 128.0];
     /// let c = Color::from_slice(ColorMode::Rgb, &vals[..])?; // RGBA slice
     /// assert_eq!(c.channels(), [128, 64, 0, 128]);
-    /// # Ok::<(), ColorError<f64>>(())
+    /// # Ok::<(), PixError>(())
     /// ```
-    pub fn from_slice<T, S: AsRef<[T]>>(mode: ColorMode, slice: S) -> Result<'static, Self, T>
+    pub fn from_slice<T, S>(mode: ColorMode, slice: S) -> PixResult<Self>
     where
         T: Copy + Into<Scalar>,
-        [T]: ToOwned<Owned = Vec<T>>,
+        S: AsRef<[T]>,
     {
         let slice = slice.as_ref();
         let result = match *slice {
@@ -529,7 +530,7 @@ impl Color {
             [gray, a] => Self::with_mode_alpha(mode, gray, gray, gray, a),
             [v1, v2, v3] => Self::with_mode(mode, v1, v2, v3),
             [v1, v2, v3, a] => Self::with_mode_alpha(mode, v1, v2, v3, a),
-            _ => return Err(Error::InvalidSlice(Cow::from(slice.to_owned()))),
+            _ => return Err(PixError::InvalidColorSlice.into()),
         };
         Ok(result)
     }

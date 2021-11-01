@@ -24,7 +24,11 @@
 //! ```
 
 use crate::prelude::*;
+#[cfg(feature = "serde")]
+use crate::serialize::arrays;
 use num_traits::Signed;
+#[cfg(feature = "serde")]
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{fmt, ops::*};
 
 /// A `Point` in N-dimensional space.
@@ -33,7 +37,11 @@ use std::{fmt, ops::*};
 ///
 /// [module-level documentation]: crate::shape::point
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Point<T, const N: usize>(pub(crate) [T; N]);
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
+pub struct Point<T, const N: usize>(
+    #[cfg_attr(feature = "serde", serde(with = "arrays"))] pub(crate) [T; N],
+);
 
 /// A 1D `Point` represented by integers.
 pub type PointI1 = Point<i32, 1>;

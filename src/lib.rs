@@ -44,6 +44,8 @@ pub mod math;
 pub mod vector;
 pub mod gui;
 pub mod renderer;
+#[cfg(feature = "serde")]
+pub mod serialize;
 pub mod transform;
 
 mod utils;
@@ -53,7 +55,7 @@ pub mod prelude {
     use super::*;
 
     pub use appstate::AppState;
-    pub use color::{constants::*, Color, ColorMode, Error as ColorError};
+    pub use color::{constants::*, Color, ColorMode};
     pub use draw::Draw;
     pub use engine::PixEngine;
     pub use error::{Error as PixError, Result as PixResult};

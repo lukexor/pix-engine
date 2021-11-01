@@ -17,6 +17,8 @@
 //! ```
 
 use crate::prelude::*;
+#[cfg(feature = "serde")]
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 /// A `Triangle` with three [Point]s.
 ///
@@ -24,6 +26,8 @@ use crate::prelude::*;
 ///
 /// [module-level documentation]: crate::shape::triangle
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
 pub struct Tri<T, const N: usize>(pub(crate) [Point<T, N>; 3]);
 
 /// A 2D `Triangle` represented by integers.
