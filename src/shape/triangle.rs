@@ -30,16 +30,16 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
 pub struct Tri<T, const N: usize>(pub(crate) [Point<T, N>; 3]);
 
-/// A 2D `Triangle` represented by integers.
+/// A 2D `Triangle` represented by `i32`.
 pub type TriI2 = Tri<i32, 2>;
 
-/// A 3D `Tri` represented by integers.
+/// A 3D `Tri` represented by `i32`.
 pub type TriI3 = Tri<i32, 3>;
 
-/// A 2D `Tri` represented by floating point numbers.
+/// A 2D `Tri` represented by `f32` or `f64` depending on platform.
 pub type TriF2 = Tri<Scalar, 2>;
 
-/// A 3D `Tri` represented by floating point numbers.
+/// A 3D `Tri` represented by `f32` or `f64` depending on platform.
 pub type TriF3 = Tri<Scalar, 3>;
 
 /// Constructs a [Triangle][Tri] with three points.

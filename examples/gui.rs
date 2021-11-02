@@ -41,7 +41,7 @@ impl AppState for Gui {
         }
 
         s.text(format!("Mouse: {}", s.mouse_pos()))?;
-        s.spacing();
+        s.spacing()?;
         s.text("Widgets:")?;
         s.separator()?;
 
@@ -54,6 +54,12 @@ impl AppState for Gui {
         }
 
         s.checkbox("Checkbox", &mut self.checkbox)?;
+        s.same_line(None);
+        s.no_disable();
+        s.checkbox("Disable Elements", &mut self.disabled)?;
+        if self.disabled {
+            s.disable();
+        }
 
         s.radio("Radio 1", &mut self.radio, 0)?;
         s.same_line(None);
@@ -77,6 +83,14 @@ impl AppState for Gui {
                 Ok(())
             })?;
         }
+        s.same_line([20, 0]);
+        s.text_transformed("Flipped text", None, None, Flipped::Both)?;
+        if s.hovered() {
+            s.tooltip("Flipped text")?;
+        }
+        s.angle_mode(AngleMode::Degrees);
+        s.same_line(None);
+        s.text_transformed("Rotated text", 90.0, None, None)?;
 
         s.indent()?;
         s.bullet("Bulleted text indented")?;
@@ -89,7 +103,7 @@ impl AppState for Gui {
         s.stroke_weight(2);
         s.font_style(FontStyle::BOLD | FontStyle::ITALIC);
         s.text("Outlined Bold Italicized Text!")?;
-        s.spacing();
+        s.spacing()?;
         s.pop();
 
         // Text Fields
@@ -121,7 +135,7 @@ impl AppState for Gui {
 
         // Text Areas
         s.text_area("Text Area", 200, 100, &mut self.text_area)?;
-        s.same_line(None);
+        s.same_line([-145, 0]);
         s.help_marker(
             "CTRL-X, CTRL-C, CTRL-V to use the clipboard.\n\
             ALT-Backspace to delete word.\n\
@@ -129,7 +143,7 @@ impl AppState for Gui {
             RETURN to enter newline.\n\
             (CTRL and ALT are mapped to CMD and OPTION on macOs)",
         )?;
-        s.same_line(None);
+        s.same_line([115, 0]);
         s.text_area_hint(
             "Text Area w/ hint",
             "placeholder text",
@@ -145,7 +159,7 @@ impl AppState for Gui {
             &mut self.text_area_filtered,
             char::is_alphabetic,
         )?;
-        s.same_line(None);
+        s.same_line([-90, 0]);
         s.help_marker("Filters any non-alphabetic characters")?;
 
         s.separator()?;
@@ -165,13 +179,13 @@ impl AppState for Gui {
         s.select_box("Select Box", &mut self.select_box, &items)?;
 
         s.next_width(300);
-        s.select_list("Select List", &mut self.select_list, &items, 4)?;
-
-        s.no_disable();
-        s.checkbox("Disable Elements", &mut self.disabled)?;
-        if self.disabled {
-            s.disable();
-        }
+        let displayed_count = 4;
+        s.select_list(
+            "Select List",
+            &mut self.select_list,
+            &items,
+            displayed_count,
+        )?;
 
         Ok(())
     }

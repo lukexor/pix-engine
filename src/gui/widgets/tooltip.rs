@@ -1,10 +1,57 @@
-//! Tooltip UI widgets.
+//! Tooltip widget rendering methods.
+//!
+//! Provided [PixState] methods:
+//!
+//! - [PixState::help_marker]
+//! - [PixState::tooltip]
+//! - [PixState::advanced_tooltip]
+//!
+//! # Example
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! # struct App { select_box: usize };
+//! # impl AppState for App {
+//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+//!     s.help_marker("Help marker icon w/ tooltip")?;
+//!
+//!     s.text("Hover me")?;
+//!     if s.hovered() {
+//!         s.tooltip("Basic tooltip")?;
+//!     }
+//!
+//!     s.text("Hover me too!")?;
+//!     if s.hovered() {
+//!         s.advanced_tooltip(200, 100, |s: &mut PixState| {
+//!             s.background(CADET_BLUE);
+//!             s.font_color(BLACK);
+//!             s.bullet("Advanced tooltip")?;
+//!             Ok(())
+//!         })?;
+//!     }
+//!     Ok(())
+//! }
+//! # }
+//! ```
 
 use crate::{gui::state::Texture, prelude::*};
 
 impl PixState {
     /// Draw help marker text that, when hovered, displays a help box with text to the current
     /// canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { select_box: usize };
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.help_marker("Help marker icon w/ tooltip")?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn help_marker<S>(&mut self, text: S) -> PixResult<()>
     where
         S: AsRef<str>,
@@ -16,9 +63,10 @@ impl PixState {
         let pos = s.cursor_pos();
 
         // Calculate hover area
-        let marker = "(?)";
+        let marker = "?";
         let (w, h) = s.size_of(marker)?;
-        let hover = rect!(pos, w as i32, h as i32);
+        let r = h as i32 / 2;
+        let hover = circle![pos + r, r];
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, hover);
@@ -29,17 +77,18 @@ impl PixState {
 
         // Render
         s.rect_mode(RectMode::Corner);
-
+        s.no_fill();
         if focused {
-            s.push();
             s.stroke(s.highlight_color());
-            s.no_fill();
-            s.rect(hover)?;
-            s.pop();
+        } else {
+            s.stroke(s.text_color() / 2);
         }
+        s.circle(hover)?;
 
         // Marker
+        s.no_stroke();
         s.disable();
+        s.set_cursor_pos([pos.x() + r - w as i32 / 2, pos.y()]);
         s.text(marker)?;
         if !disabled {
             s.no_disable();
@@ -59,6 +108,22 @@ impl PixState {
     }
 
     /// Draw tooltip box at the mouse cursor with text to the current canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { select_box: usize };
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.text("Hover me")?;
+    ///     if s.hovered() {
+    ///         s.tooltip("Basic tooltip")?;
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn tooltip<S>(&mut self, text: S) -> PixResult<()>
     where
         S: AsRef<str>,
@@ -94,7 +159,31 @@ impl PixState {
         Ok(())
     }
 
-    /// Draw an advanced tooltip box at the mouse cursor to the current canvas.
+    /// Draw an advanced tooltip box at the mouse cursor to the current canvas. It accepts a
+    /// closure that is passed [`&mut PixState`][PixState] which you can use to draw all the
+    /// standard drawing primitives and change any drawing settings. Settings changed inside the
+    /// closure will not persist, similar to [PixState::with_texture].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { select_box: usize };
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.text("Hover me")?;
+    ///     if s.hovered() {
+    ///         s.advanced_tooltip(200, 100, |s: &mut PixState| {
+    ///             s.background(CADET_BLUE);
+    ///             s.font_color(BLACK);
+    ///             s.bullet("Advanced tooltip")?;
+    ///             Ok(())
+    ///         })?;
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn advanced_tooltip<F>(&mut self, width: u32, height: u32, f: F) -> PixResult<()>
     where
         F: FnOnce(&mut PixState) -> PixResult<()>,

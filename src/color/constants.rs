@@ -1,4 +1,18 @@
 //! [SVG 1.0 Color Keywords](https://www.w3.org/TR/SVG11/types.html#ColorKeywords).
+//!
+//! Provides a set a default named colors matching the `SVG 1.0 Color Keywords` and are included in
+//! the `prelude`.
+//!
+//! # Examples
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! let c: Color = ALICE_BLUE;
+//! assert_eq!(c.as_hex(), 0xF0F8FFFF);
+//!
+//! let c: Color = PALE_TURQUOISE;
+//! assert_eq!(c.as_hex(), 0xAFEEEEFF);
+//! ```
 
 use super::{Color, ColorMode::*};
 use crate::prelude::Scalar;

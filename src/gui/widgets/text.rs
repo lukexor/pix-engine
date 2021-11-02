@@ -1,4 +1,28 @@
-//! Text UI widgets.
+//! Text widget rendering methods.
+//!
+//! Provided [PixState] methods:
+//!
+//! - [PixState::text]
+//! - [PixState::text_transformed]
+//! - [PixState::bullet]
+//!
+//! # Example
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! # struct App { text_field: String, text_area: String};
+//! # impl AppState for App {
+//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+//!     s.text("Text")?;
+//!     s.angle_mode(AngleMode::Degrees);
+//!     let angle = 10.0;
+//!     let center = point!(10, 10);
+//!     s.text_transformed("Text", angle, center, Flipped::Horizontal)?;
+//!     s.bullet("Bulleted text")?;
+//!     Ok(())
+//! }
+//! # }
+//! ```
 
 use crate::{prelude::*, renderer::Rendering};
 
@@ -7,6 +31,19 @@ impl PixState {
     ///
     /// Returns the rendered `(width, height)` of the text, including any newlines or text
     /// wrapping.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { text_field: String, text_area: String};
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.text("Text")?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn text<S>(&mut self, text: S) -> PixResult<(u32, u32)>
     where
         S: AsRef<str>,
@@ -14,25 +51,32 @@ impl PixState {
         self.text_transformed(text, 0.0, None, None)
     }
 
-    /// Draw bulleted text to the current canvas.
-    ///
-    /// Returns the rendered `(width, height)` of the text, including any newlines or text
-    /// wrapping.
-    pub fn bullet<S>(&mut self, text: S) -> PixResult<(u32, u32)>
-    where
-        S: AsRef<str>,
-    {
-        let (bw, bh) = self.text("•")?;
-        self.same_line(None);
-        let (w, h) = self.text_transformed(text, 0.0, None, None)?;
-        Ok((bw + w, bh + h))
-    }
-
     /// Draw transformed text to the current canvas, optionally rotated about a `center` by `angle`
     /// or `flipped`. `angle` can be in radians or degrees depending on [AngleMode].
     ///
     /// Returns the rendered `(width, height)` of the text, including any newlines or text
     /// wrapping.
+    ///
+    /// # Note
+    ///
+    /// Returned `(width, height)` does not currently account for rotation and will instead return
+    /// the non-rotated size.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { text_field: String, text_area: String};
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.angle_mode(AngleMode::Degrees);
+    ///     let angle = 10.0;
+    ///     let center = point!(10, 10);
+    ///     s.text_transformed("Transformed text", angle, center, Flipped::Horizontal)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn text_transformed<S, A, C, F>(
         &mut self,
         text: S,
@@ -102,5 +146,32 @@ impl PixState {
         let size = render_text(fill, 0)?;
 
         Ok(stroke_size.unwrap_or(size))
+    }
+
+    /// Draw bulleted text to the current canvas.
+    ///
+    /// Returns the rendered `(width, height)` of the text, including any newlines or text
+    /// wrapping.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { text_field: String, text_area: String};
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.bullet("Bulleted text")?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    pub fn bullet<S>(&mut self, text: S) -> PixResult<(u32, u32)>
+    where
+        S: AsRef<str>,
+    {
+        let (bw, bh) = self.text("•")?;
+        self.same_line(None);
+        let (w, h) = self.text_transformed(text, 0.0, None, None)?;
+        Ok((bw + w, bh + h))
     }
 }

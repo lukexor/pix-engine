@@ -1,5 +1,9 @@
 #![doc = include_str!("../README.md")]
-#![deny(missing_docs, rustdoc::invalid_html_tags)]
+#![deny(
+    missing_docs,
+    // rustdoc::missing_doc_code_examples,
+    rustdoc::invalid_html_tags
+)]
 #![warn(
     unused,
     deprecated_in_future,

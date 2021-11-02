@@ -1,4 +1,26 @@
-//! Select UI widgets.
+//! Select widget rendering methods.
+//!
+//! Provided [PixState] methods:
+//!
+//! - [PixState::select_box]
+//! - [PixState::select_list]
+//!
+//! # Example
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! # struct App { select_box: usize };
+//! # impl AppState for App {
+//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+//!     let items = ["Item 1", "Item 2", "Item 3"];
+//!     s.select_box("Select Box", &mut self.select_box, &items)?;
+//!
+//!     let displayed_count = 4;
+//!     s.select_list("Select Box", &mut self.select_box, &items, displayed_count)?;
+//!     Ok(())
+//! }
+//! # }
+//! ```
 
 use crate::{
     gui::{scroll::SCROLL_SIZE, state::Texture},
@@ -8,6 +30,20 @@ use std::cmp;
 
 impl PixState {
     /// Draw a select box the current canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { select_box: usize };
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     let items = ["Item 1", "Item 2", "Item 3"];
+    ///     s.select_box("Select Box", &mut self.select_box, &items)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn select_box<S, I>(&mut self, label: S, selected: &mut usize, items: &[I]) -> PixResult<()>
     where
         S: AsRef<str>,
@@ -143,6 +179,10 @@ impl PixState {
                 Ok(())
             })?;
             s.ui.clear_mouse_offset();
+
+            if let Some(Key::Escape) = s.ui.key_entered() {
+                s.ui.blur();
+            }
         }
         s.ui.handle_events(id);
 
@@ -150,6 +190,21 @@ impl PixState {
     }
 
     /// Draw a select list to the current canvas with a scrollable region.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { select_box: usize };
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     let items = ["Item 1", "Item 2", "Item 3"];
+    ///     let displayed_count = 4;
+    ///     s.select_list("Select Box", &mut self.select_box, &items, displayed_count)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn select_list<S, I>(
         &mut self,
         label: S,

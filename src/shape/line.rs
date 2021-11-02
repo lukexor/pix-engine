@@ -32,16 +32,16 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
 pub struct Line<T, const N: usize>(pub(crate) [Point<T, N>; 2]);
 
-/// A 2D `Line` represented by integers.
+/// A 2D `Line` represented by `i32`.
 pub type LineI2 = Line<i32, 2>;
 
-/// A 3D `Line` represented by integers.
+/// A 3D `Line` represented by `i32`.
 pub type LineI3 = Line<i32, 3>;
 
-/// A 2D `Line` represented by floating point numbers.
+/// A 2D `Line` represented by `f32` or `f64` depending on platform.
 pub type LineF2 = Line<Scalar, 2>;
 
-/// A 3D `Line` represented by floating point numbers.
+/// A 3D `Line` represented by `f32` or `f64` depending on platform.
 pub type LineF3 = Line<Scalar, 3>;
 
 /// Constructs a [Line] with two points.

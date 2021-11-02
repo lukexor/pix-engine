@@ -1,13 +1,64 @@
-//! UI Layout functions.
+//! UI spacing & layout rendering methods.
+//!
+//! Provided [PixState] methods:
+//!
+//! - [PixState::same_line]
+//! - [PixState::next_width]
+//! - [PixState::spacing]
+//! - [PixState::indent]
+//! - [PixState::separator]
+//!
+//! # Example
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! # struct App { checkbox: bool, text_field: String };
+//! # impl AppState for App {
+//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+//!     s.text("Text")?;
+//!     s.same_line(None);
+//!     s.text("Same line")?;
+//!     s.same_line([20, 0]);
+//!     s.text("Same line with a +20 horizontal pixel offset")?;
+//!
+//!     s.separator();
+//!
+//!     s.spacing()?;
+//!     s.indent()?;
+//!     s.text("Indented!")?;
+//!
+//!     s.next_width(200);
+//!     if s.button("Button")? {
+//!         // was clicked
+//!     }
+//!     Ok(())
+//! }
+//! # }
+//! ```
 
 use crate::prelude::*;
 
 impl PixState {
-    /// Reset current UI rendering position back to previous line with item padding, and continue
-    /// with horizontal layout.
+    /// Reset current UI rendering position back to the previous line with item padding, and
+    /// continue with horizontal layout.
     ///
-    /// You can optionally remove the item padding, or set a different horizontal or vertical
+    /// You can optionally change the item padding, or set a different horizontal or vertical
     /// position by passing in an `offset`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { checkbox: bool, text_field: String };
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.text("Text")?;
+    ///     s.same_line(None);
+    ///     s.text("Same line")?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     #[inline]
     pub fn same_line<O>(&mut self, offset: O)
     where
@@ -22,7 +73,23 @@ impl PixState {
     }
 
     /// Change the default width of the next rendered element for elements that typically take up
-    /// the remaining width.
+    /// the remaining width of the window/frame they are rendered in.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { checkbox: bool, text_field: String };
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.next_width(200);
+    ///     if s.button("Button")? {
+    ///         // was clicked
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     #[inline]
     pub fn next_width(&mut self, width: u32) {
         self.ui.next_width = Some(width);
@@ -31,13 +98,43 @@ impl PixState {
 
 impl PixState {
     /// Draw a newline worth of spacing to the current canvas.
-    pub fn spacing(&mut self) {
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { checkbox: bool, text_field: String };
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.text("Some text")?;
+    ///     s.spacing()?;
+    ///     s.text("Some other text")?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    pub fn spacing(&mut self) -> PixResult<()> {
         let s = self;
-        let height = s.theme.font_sizes.body as i32;
-        s.advance_cursor([0, 0, 0, height]);
+        let (_, height) = s.size_of(" ")?;
+        s.advance_cursor([0, 0, 0, height as i32]);
+        Ok(())
     }
 
     /// Draw an indent worth of spacing to the current canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { checkbox: bool, text_field: String };
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.indent()?;
+    ///     s.text("Indented!")?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn indent(&mut self) -> PixResult<()> {
         let s = self;
         let (width, height) = s.size_of("    ")?;
@@ -47,6 +144,21 @@ impl PixState {
     }
 
     /// Draw a horizontal or vertical separator to the current canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { checkbox: bool, text_field: String };
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.text("Some text")?;
+    ///     s.separator()?;
+    ///     s.text("Some other text")?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn separator(&mut self) -> PixResult<()> {
         // TODO: Add s.layout(Direction) method
         let s = self;

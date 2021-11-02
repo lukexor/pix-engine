@@ -98,22 +98,22 @@ pub struct Vector<T, const N: usize>(
     #[cfg_attr(feature = "serde", serde(with = "arrays"))] pub(crate) [T; N],
 );
 
-/// A 1D `Vector` represented by integers.
+/// A 1D `Vector` represented by `i32`.
 pub type VectorI1 = Vector<i32, 1>;
 
-/// A 2D `Vector` represented by integers.
+/// A 2D `Vector` represented by `i32`.
 pub type VectorI2 = Vector<i32, 2>;
 
-/// A 3D `Vector` represented by integers.
+/// A 3D `Vector` represented by `i32`.
 pub type VectorI3 = Vector<i32, 3>;
 
-/// A 1D `Vector` represented by floating point numbers.
+/// A 1D `Vector` represented by `f32` or `f64` depending on platform.
 pub type VectorF1 = Vector<Scalar, 1>;
 
-/// A 2D `Vector` represented by floating point numbers.
+/// A 2D `Vector` represented by `f32` or `f64` depending on platform.
 pub type VectorF2 = Vector<Scalar, 2>;
 
-/// A 3D `Vector` represented by floating point numbers.
+/// A 3D `Vector` represented by `f32` or `f64` depending on platform.
 pub type VectorF3 = Vector<Scalar, 3>;
 
 /// Constructs a [Vector].

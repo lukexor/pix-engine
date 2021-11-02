@@ -41,16 +41,16 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
 pub struct Quad<T, const N: usize>(pub(crate) [Point<T, N>; 4]);
 
-/// A 2D `Quad` represented by integers.
+/// A 2D `Quad` represented by `i32`.
 pub type QuadI2 = Quad<i32, 2>;
 
-/// A 3D `Quad` represented by integers.
+/// A 3D `Quad` represented by `i32`.
 pub type QuadI3 = Quad<i32, 3>;
 
-/// A 2D `Quad` represented by floating point numbers.
+/// A 2D `Quad` represented by `f32` or `f64` depending on platform.
 pub type QuadF2 = Quad<Scalar, 2>;
 
-/// A 3D `Quad` represented by floating point numbers.
+/// A 3D `Quad` represented by `f32` or `f64` depending on platform.
 pub type QuadF3 = Quad<Scalar, 3>;
 
 /// Constructs a [Quad] with four points.

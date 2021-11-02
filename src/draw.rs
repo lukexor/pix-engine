@@ -1,51 +1,68 @@
 //! Drawing functions.
+//!
+//! Provides a [Draw] trait as well standard draw methods like [PixState::clear].
+//!
+//! # Example
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! # struct App;
+//! # impl AppState for App {
+//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+//!     s.background(ALICE_BLUE);
+//!     s.clear();
+//!     let rect = rect![0, 0, 100, 100];
+//!     s.fill(RED);
+//!     s.stroke(BLACK);
+//!     s.rect(rect)?;
+//!     Ok(())
+//! }
+//! # }
+//! ```
 
 use crate::{prelude::*, renderer::Rendering};
-use std::iter::Iterator;
 
 /// Trait for objects that can be drawn to the screen.
 pub trait Draw {
-    /// Draw shape to the current [PixState] canvas.
+    /// Draw object to the current [PixState] canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     let rect = rect![0, 0, 100, 100];
+    ///     // The following two lines are equivalent.
+    ///     s.rect(rect)?;
+    ///     rect.draw(s)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     fn draw(&self, s: &mut PixState) -> PixResult<()>;
 }
 
 impl PixState {
     /// Clears the render target to the current background [Color] set by [PixState::background].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.background(CADET_BLUE);
+    ///     s.clear();
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     #[inline]
     pub fn clear(&mut self) -> PixResult<()> {
-        let color = self.settings.background;
         self.renderer.set_draw_color(self.settings.background)?;
-        self.renderer.clear()?;
-        self.renderer.set_draw_color(color)?;
-        Ok(())
-    }
-
-    /// Draw a wireframe to the current canvas., translated to a given [Point]
-    pub fn wireframe<V, P1, P2>(
-        &mut self,
-        vertexes: V,
-        pos: P2,
-        mut angle: Scalar,
-        scale: Scalar,
-    ) -> PixResult<()>
-    where
-        P1: Into<PointF2>,
-        P2: Into<PointI2>,
-        V: IntoIterator<Item = P1>,
-    {
-        let s = &self.settings;
-        let pos = pos.into();
-        if let AngleMode::Degrees = s.angle_mode {
-            angle = angle.to_radians();
-        };
-        let (sin, cos) = angle.sin_cos();
-        let (px, py) = (pos.x() as Scalar, pos.y() as Scalar);
-        let vs = vertexes.into_iter().map(|v| {
-            let v = v.into();
-            let x = ((v.x() * cos - v.y() * sin) * scale + px).round() as i32;
-            let y = ((v.x() * sin + v.y() * cos) * scale + py).round() as i32;
-            point![x, y]
-        });
-        self.polygon(vs)
+        self.renderer.clear()
     }
 }

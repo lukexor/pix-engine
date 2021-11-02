@@ -1,4 +1,30 @@
 //! [PixState] functions for the [PixEngine] and [AppState].
+//!
+//! `PixState` is the global engine state and API for any application using `pix-engine`. A mutable
+//! reference is passed to most [AppState] methods and allows you to modify settings, query engine
+//! and input state, as well as drawing to the current render target.
+//!
+//! The most common use of `PixState` is in the [AppState::on_update] method.
+//!
+//! See the [Getting Started](crate#getting-started) section and the [PixState] page for the list
+//! of available methods.
+//!
+//! # Example
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! # struct App { checkbox: bool, text_field: String };
+//! # impl AppState for App {
+//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+//!     s.fill(s.accent_color());
+//!     s.rect([100, 0, 100, 100])?;
+//!     if s.button("Click me")? {
+//!         s.text("I was clicked!");
+//!     }
+//!     Ok(())
+//! }
+//! # }
+//! ```
 
 use crate::{
     gui::state::UiState,

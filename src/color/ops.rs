@@ -1,4 +1,16 @@
 //! [Color] operation functions.
+//!
+//! Provides numeric operations and trait implementations:
+//!
+//! - [LowerHex]: Allows displaying as lowercase hexadecimal value.
+//! - [UpperHex]: Allows displaying as uppercase hexadecimal value.
+//! - [Index]: Allows indexing to retrieve RGBA values. (e.g. `color[0]` for the red
+//!   channel).
+//! - [PartialEq] and [Eq]: Allows comparison.
+//! - [Hash]: Allows hashing.
+//!
+//! Also implemented are [Add], [Sub], [AddAssign], and [SubAssign] with other `Color`s and u8
+//! values channel-wise. [Deref] is also implemented which returns `[u8; 4]`.
 
 use super::{
     conversion::{calculate_channels, clamp_levels, convert_levels},
@@ -149,13 +161,6 @@ impl Deref for Color {
     /// Deref `Color` to `&[u8; 4]`.
     fn deref(&self) -> &Self::Target {
         &self.channels
-    }
-}
-
-impl DerefMut for Color {
-    /// Deref `Color` to `&mut [u8; 4]`.
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.channels
     }
 }
 

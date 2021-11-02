@@ -99,10 +99,7 @@
 //! # Ok::<(), PixError>(())
 //! ```
 
-use crate::{
-    prelude::{PixError, PixResult, Scalar},
-    random,
-};
+use crate::{prelude::Scalar, random};
 use conversion::{calculate_channels, clamp_levels, convert_levels, maxes};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -498,42 +495,6 @@ impl Color {
         }
     }
 
-    /// Constructs a `Color` from a [slice] of 1-4 values. The number of values
-    /// provided alter how they are interpreted similar to the [color!], [rgb!], [hsb!], and
-    /// [hsl!] macros.
-    ///
-    /// # Errors
-    ///
-    /// If the [slice] is empty or has more than 4 values, an error is returned.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let vals: Vec<f64> = vec![128.0, 64.0, 0.0];
-    /// let c = Color::from_slice(ColorMode::Rgb, &vals)?; // RGB Vec
-    /// assert_eq!(c.channels(), [128, 64, 0, 255]);
-    ///
-    /// let vals: [f64; 4] = [128.0, 64.0, 0.0, 128.0];
-    /// let c = Color::from_slice(ColorMode::Rgb, &vals[..])?; // RGBA slice
-    /// assert_eq!(c.channels(), [128, 64, 0, 128]);
-    /// # Ok::<(), PixError>(())
-    /// ```
-    pub fn from_slice<T, S>(mode: ColorMode, slice: S) -> PixResult<Self>
-    where
-        T: Copy + Into<Scalar>,
-        S: AsRef<[T]>,
-    {
-        let slice = slice.as_ref();
-        let result = match *slice {
-            [gray] => Self::with_mode(mode, gray, gray, gray),
-            [gray, a] => Self::with_mode_alpha(mode, gray, gray, gray, a),
-            [v1, v2, v3] => Self::with_mode(mode, v1, v2, v3),
-            [v1, v2, v3, a] => Self::with_mode_alpha(mode, v1, v2, v3, a),
-            _ => return Err(PixError::InvalidColorSlice.into()),
-        };
-        Ok(result)
-    }
     /// Constructs a random `Color` with `red`, `green`, `blue` and max alpha.
     ///
     /// # Example
@@ -564,24 +525,6 @@ impl Color {
     #[inline]
     pub fn random_alpha() -> Self {
         Self::new_alpha(random!(255u8), random!(255), random!(255), random!(255))
-    }
-
-    /// Constructs a `Color` from a [u32] RGBA hexadecimal value.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let c = Color::from_hex(0xF0FF00FF);
-    /// assert_eq!(c.channels(), [240, 255, 0, 255]);
-    ///
-    /// let c = Color::from_hex(0xF0FF0080);
-    /// assert_eq!(c.channels(), [240, 255, 0, 128]);
-    /// ```
-    #[inline]
-    pub fn from_hex(hex: u32) -> Self {
-        let [r, g, b, a] = hex.to_be_bytes();
-        Self::rgba(r, g, b, a)
     }
 
     /// Returns the [u32] RGBA hexadecimal value of a `Color`.

@@ -348,17 +348,20 @@ impl AppState for RayScene {
         Ok(false)
     }
 
-    fn on_mouse_dragged(&mut self, s: &mut PixState) -> PixResult<bool> {
+    fn on_mouse_dragged(
+        &mut self,
+        s: &mut PixState,
+        pos: PointI2,
+        rel_pos: PointI2,
+    ) -> PixResult<bool> {
         if s.mouse_buttons().contains(&Mouse::Left) {
-            let m = s.mouse_pos();
-            let pm = s.pmouse_pos();
-            if rect![0, 0, s.width()? as i32, s.height()? as i32].contains_point(m) {
-                if m != pm {
-                    let i = self.get_cell_index(m.x() as u32, m.y() as u32);
-                    self.cells[i].exists = self.drawing;
-                }
-                self.convert_edges_to_poly_map()?;
+            let within_window =
+                rect![0, 0, s.width()? as i32, s.height()? as i32].contains_point(pos);
+            if within_window && (rel_pos.x() > 0 || rel_pos.y() > 0) {
+                let i = self.get_cell_index(pos.x() as u32, pos.y() as u32);
+                self.cells[i].exists = self.drawing;
             }
+            self.convert_edges_to_poly_map()?;
         }
         Ok(false)
     }

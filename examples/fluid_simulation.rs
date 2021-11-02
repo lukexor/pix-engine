@@ -286,10 +286,9 @@ impl App {
         Ok(())
     }
 
-    fn drag(&mut self, s: &mut PixState) -> PixResult<()> {
-        let m = s.mouse_pos();
-        let mx = m.x() as Scalar;
-        let my = m.y() as Scalar;
+    fn drag(&mut self, pos: PointI2) -> PixResult<()> {
+        let mx = pos.x() as Scalar;
+        let my = pos.y() as Scalar;
         for r in 3..10 {
             let r = r as Scalar;
             for (sin, cos) in self.sincos.iter() {
@@ -319,15 +318,20 @@ impl AppState for App {
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         if s.mouse_down(Mouse::Left) {
-            self.drag(s)?;
+            self.drag(s.mouse_pos())?;
         }
         self.flame_on()?;
         self.fluid.on_update(s)?;
         Ok(())
     }
 
-    fn on_mouse_dragged(&mut self, s: &mut PixState) -> PixResult<bool> {
-        self.drag(s)?;
+    fn on_mouse_dragged(
+        &mut self,
+        _s: &mut PixState,
+        pos: PointI2,
+        _rel_pos: PointI2,
+    ) -> PixResult<bool> {
+        self.drag(pos)?;
         Ok(false)
     }
 }

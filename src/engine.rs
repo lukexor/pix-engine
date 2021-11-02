@@ -1,4 +1,36 @@
 //! [PixEngine] functions.
+//!
+//! This is the core module of the `pix-engine` crate and is responsible for building and running
+//! any application using it.
+//!
+//! [PixEngineBuilder] allows you to customize various engine features and, once built, can
+//! [run][PixEngine::run] your application which must implement [AppState::on_update].
+//!
+//!
+//!
+//! # Example
+//!
+//! ```rust no_run
+//! use pix_engine::prelude::*;
+//!
+//! struct MyApp;
+//!
+//! impl AppState for MyApp {
+//!     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+//!         // Update every frame
+//!         Ok(())
+//!     }
+//! }
+//!
+//! fn main() -> PixResult<()> {
+//!     let mut engine = PixEngine::builder()
+//!       .with_dimensions(800, 600)
+//!       .with_title("MyApp")
+//!       .build()?;
+//!     let mut app = MyApp;
+//!     engine.run(&mut app)
+//! }
+//! ```
 
 use crate::{prelude::*, renderer::*};
 use std::time::{Duration, Instant};
@@ -7,6 +39,27 @@ use std::time::{Duration, Instant};
 use std::path::PathBuf;
 
 /// Builds a [PixEngine] instance by providing several configration functions.
+///
+/// # Example
+///
+/// ```no_run
+/// # use pix_engine::prelude::*;
+/// # struct MyApp;
+/// # impl AppState for MyApp {
+/// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+/// # }
+/// fn main() -> PixResult<()> {
+///     let mut engine = PixEngine::builder()
+///         .with_title("My App")
+///         .position(10, 10)
+///         .resizable()
+///         .with_frame_rate()
+///         .icon("myapp.png")
+///         .build()?;
+///     let mut app = MyApp;
+///     engine.run(&mut app)
+/// }
+/// ```
 #[must_use]
 #[derive(Default, Debug)]
 pub struct PixEngineBuilder {
@@ -62,7 +115,7 @@ impl PixEngineBuilder {
         self
     }
 
-    /// Position the window in the center of the display.
+    /// Position the window in the center of the display. This is the default.
     pub fn position_centered(&mut self) -> &mut Self {
         self.settings.x = Position::Centered;
         self.settings.y = Position::Centered;
@@ -138,14 +191,14 @@ impl PixEngineBuilder {
         self
     }
 
-    /// Set a custom texture cache size other than the default of 20.
+    /// Set a custom texture cache size other than the default of `20`.
     /// Affects font family and image rendering caching operations.
     pub fn with_texture_cache(&mut self, size: usize) -> &mut Self {
         self.settings.texture_cache_size = size;
         self
     }
 
-    /// Set a custom text cache size other than the default of 500.
+    /// Set a custom text cache size other than the default of `500`.
     /// Affects text rendering caching operations.
     pub fn with_text_cache(&mut self, size: usize) -> &mut Self {
         self.settings.text_cache_size = size;
@@ -169,21 +222,44 @@ pub struct PixEngine {
 
 impl PixEngine {
     /// Constructs a default [PixEngineBuilder] which can build a `PixEngine` instance.
+    ///
+    /// See [PixEngineBuilder] for examples.
     pub fn builder() -> PixEngineBuilder {
         PixEngineBuilder::default()
     }
 
-    /// Starts the `PixEngine` application and begins executing the frame loop.
+    /// Starts the `PixEngine` application and begins executing the frame loop on a given
+    /// application which must implement [AppState]. The only required method of which is
+    /// [AppState::on_update].
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use pix_engine::prelude::*;
+    /// # struct MyApp;
+    /// # impl MyApp { fn new() -> Self { Self } }
+    /// # impl AppState for MyApp {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// # }
+    /// fn main() -> PixResult<()> {
+    ///     let mut engine = PixEngine::builder().build()?;
+    ///     let mut app = MyApp::new(); // MyApp implements `AppState`
+    ///     engine.run(&mut app)
+    /// }
+    /// ```
     pub fn run<A>(&mut self, app: &mut A) -> PixResult<()>
     where
         A: AppState,
     {
         // Handle events before on_start to initialize window
         self.handle_events(app)?;
+
+        self.state.clear()?;
         app.on_start(&mut self.state)?;
         if self.state.should_quit() {
             return Ok(());
         }
+        self.state.present();
 
         // on_stop loop enables on_stop to prevent application close if necessary
         'on_stop: loop {
@@ -218,7 +294,9 @@ impl PixEngine {
         }
         Ok(())
     }
+}
 
+impl PixEngine {
     /// Handle user and system events.
     #[inline]
     fn handle_events<A>(&mut self, app: &mut A) -> PixResult<()>
@@ -269,11 +347,13 @@ impl PixEngine {
                     }
                 }
                 Event::MouseMotion { x, y, xrel, yrel } => {
-                    state.ui.set_mouse_pos([x, y]);
+                    let pos = point!(x, y);
+                    let rel_pos = point!(xrel, yrel);
+                    state.ui.set_mouse_pos(pos);
                     if state.ui.mouse.is_pressed() {
-                        app.on_mouse_dragged(state)?;
+                        app.on_mouse_dragged(state, pos, rel_pos)?;
                     }
-                    app.on_mouse_motion(state, state.mouse_pos(), xrel, yrel)?;
+                    app.on_mouse_motion(state, state.mouse_pos(), rel_pos)?;
                 }
                 Event::MouseDown { button, x, y } => {
                     if !app.on_mouse_pressed(state, button, point!(x, y))? {

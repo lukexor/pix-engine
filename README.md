@@ -49,11 +49,12 @@ struct MyApp;
 
 impl AppState for MyApp {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        // Setup App state. PixState contains engine specific state and
+        // Setup App state. `PixState` contains engine specific state and
         // utility functions for things like getting mouse coordinates,
         // drawing shapes, etc.
         s.background(220)?;
-        s.circle([10, 10, 100])?;
+        s.font_family(NOTO)?;
+        s.font_size(16);
         Ok(())
     }
 

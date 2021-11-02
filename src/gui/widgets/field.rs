@@ -1,4 +1,42 @@
-//! Input field UI widgets.
+//! Input field widget rendering methods.
+//!
+//! Provided [PixState] methods:
+//!
+//! - [PixState::text_field]
+//! - [PixState::text_field_filtered]
+//! - [PixState::text_field_hint]
+//! - [PixState::text_area]
+//! - [PixState::text_area_filtered]
+//! - [PixState::text_area_hint]
+//!
+//! # Example
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! # struct App { text_field: String, text_area: String};
+//! # impl AppState for App {
+//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+//!     s.text_field("Text Field", &mut self.text_field)?;
+//!     s.text_field_hint("Text Field w/ hint", "placeholder", &mut self.text_field)?;
+//!     s.text_field_filtered(
+//!         "Filtered Text Field",
+//!         &mut self.text_field,
+//!         char::is_numeric
+//!     )?;
+//!
+//!     s.text_area("Text Area", 200, 100, &mut self.text_area)?;
+//!     s.text_area_hint("Text Area w/ hint", "placeholder", 200, 100, &mut self.text_area)?;
+//!     s.text_area_filtered(
+//!         "Filtered Text Area",
+//!         200,
+//!         100,
+//!         &mut self.text_area,
+//!         char::is_numeric
+//!     )?;
+//!     Ok(())
+//! }
+//! # }
+//! ```
 
 use crate::{gui::MOD_CTRL, prelude::*};
 
@@ -6,6 +44,19 @@ const TEXT_CURSOR: &str = "_";
 
 impl PixState {
     /// Draw a text field to the current canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { text_field: String, text_area: String};
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.text_field("Text Field", &mut self.text_field)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn text_field<L>(&mut self, label: L, value: &mut String) -> PixResult<bool>
     where
         L: AsRef<str>,
@@ -14,6 +65,23 @@ impl PixState {
     }
 
     /// Draw a text field that filters allowed values to the current canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { text_field: String, text_area: String};
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.text_field_filtered(
+    ///         "Filtered Text Field",
+    ///         &mut self.text_field,
+    ///         char::is_numeric
+    ///     )?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn text_field_filtered<L, F>(
         &mut self,
         label: L,
@@ -32,6 +100,19 @@ impl PixState {
     }
 
     /// Draw a text field with a placeholder hint to the current canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { text_field: String, text_area: String};
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.text_field_hint("Text Field w/ hint", "placeholder", &mut self.text_field)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn text_field_hint<L, H>(
         &mut self,
         label: L,
@@ -152,6 +233,19 @@ impl PixState {
     }
 
     /// Draw a text area field to the current canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { text_field: String, text_area: String};
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.text_area("Text Area", 200, 100, &mut self.text_area)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn text_area<L>(
         &mut self,
         label: L,
@@ -166,6 +260,25 @@ impl PixState {
     }
 
     /// Draw a text area field that filters allowed values to the current canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { text_field: String, text_area: String};
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.text_area_filtered(
+    ///         "Filtered Text Area",
+    ///         200,
+    ///         100,
+    ///         &mut self.text_area,
+    ///         char::is_numeric
+    ///     )?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn text_area_filtered<L, F>(
         &mut self,
         label: L,
@@ -186,6 +299,25 @@ impl PixState {
     }
 
     /// Draw a text area field with a placeholder hint to the current canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { text_field: String, text_area: String};
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.text_area_hint(
+    ///         "Text Area w/ hint",
+    ///         "placeholder",
+    ///         200,
+    ///         100,
+    ///         &mut self.text_area
+    ///     )?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn text_area_hint<L, H>(
         &mut self,
         label: L,

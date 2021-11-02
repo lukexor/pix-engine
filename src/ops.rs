@@ -259,8 +259,10 @@ macro_rules! impl_num_assign_op {
 }
 
 impl_num_assign_op!(AddAssign, add_assign, Point<T, N>, +=, Vector<T, N> = Point<T, N>);
+impl_num_assign_op!(AddAssign, add_assign, Point<T, N>, +=, Point<T, N> = Point<T, N>);
 impl_num_assign_op!(AddAssign, add_assign, Vector<T, N>, +=, Vector<T, N> = Vector<T, N>);
 impl_num_assign_op!(SubAssign, sub_assign, Point<T, N>, -=, Vector<T, N> = Point<T, N>);
+impl_num_assign_op!(SubAssign, sub_assign, Point<T, N>, -=, Point<T, N> = Point<T, N>);
 impl_num_assign_op!(SubAssign, sub_assign, Vector<T, N>, -=, Vector<T, N> = Vector<T, N>);
 
 macro_rules! impl_num_op {

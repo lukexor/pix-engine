@@ -43,22 +43,22 @@ pub struct Point<T, const N: usize>(
     #[cfg_attr(feature = "serde", serde(with = "arrays"))] pub(crate) [T; N],
 );
 
-/// A 1D `Point` represented by integers.
+/// A 1D `Point` represented by `i32`.
 pub type PointI1 = Point<i32, 1>;
 
-/// A 2D `Point` represented by integers.
+/// A 2D `Point` represented by `i32`.
 pub type PointI2 = Point<i32, 2>;
 
-/// A 3D `Point` represented by integers.
+/// A 3D `Point` represented by `i32`.
 pub type PointI3 = Point<i32, 3>;
 
-/// A 1D `Point` represented by integers.
+/// A 1D `Point` represented by `f32` or `f64` depending on platform.
 pub type PointF1 = Point<Scalar, 1>;
 
-/// A 2D `Point` represented by floating point numbers.
+/// A 2D `Point` represented by `f32` or `f64` depending on platform.
 pub type PointF2 = Point<Scalar, 2>;
 
-/// A 3D `Point` represented by floating point numbers.
+/// A 3D `Point` represented by `f32` or `f64` depending on platform.
 pub type PointF3 = Point<Scalar, 3>;
 
 /// Constructs a [Point] with N coordinates.

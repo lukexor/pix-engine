@@ -1,6 +1,7 @@
 //! Shape functions for drawing.
 
 use crate::{prelude::*, renderer::Rendering};
+use std::iter::Iterator;
 
 #[macro_use]
 pub mod ellipse;
@@ -145,6 +146,53 @@ impl PixState {
         let s = &self.settings;
         self.renderer
             .polygon(points.into_iter().map(|p| p.into()), s.fill, s.stroke)
+    }
+
+    /// Draw a wireframe to the current canvas, translated to a given [Point]
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.background(CADET_BLUE);
+    ///     s.clear();
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    pub fn wireframe<V, P1, P2, A, S>(
+        &mut self,
+        vertexes: V,
+        pos: P2,
+        angle: A,
+        scale: S,
+    ) -> PixResult<()>
+    where
+        V: IntoIterator<Item = P1>,
+        P1: Into<PointF2>,
+        P2: Into<PointI2>,
+        A: Into<Option<Scalar>>,
+        S: Into<Option<Scalar>>,
+    {
+        let s = &self.settings;
+        let pos = pos.into();
+        let mut angle = angle.into().unwrap_or(0.0);
+        if let AngleMode::Degrees = s.angle_mode {
+            angle = angle.to_radians();
+        };
+        let scale = scale.into().unwrap_or(1.0);
+        let (sin, cos) = angle.sin_cos();
+        let (px, py) = (pos.x() as Scalar, pos.y() as Scalar);
+        let vs = vertexes.into_iter().map(|v| {
+            let v = v.into();
+            let x = ((v.x() * cos - v.y() * sin) * scale + px).round() as i32;
+            let y = ((v.x() * sin + v.y() * cos) * scale + py).round() as i32;
+            point![x, y]
+        });
+        self.polygon(vs)
     }
 
     /// Draw a circle [Ellipse] to the current canvas.

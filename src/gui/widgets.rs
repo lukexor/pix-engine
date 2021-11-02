@@ -1,17 +1,57 @@
-//! UI widget rendering functions.
+//! UI widget rendering methods.
+//!
+//! Provided [PixState] methods:
+//!
+//! - [PixState::button]
+//! - [PixState::checkbox]
+//! - [PixState::radio]
+//!
+//! # Example
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! # struct App { checkbox: bool, radio: usize };
+//! # impl AppState for App {
+//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+//!     if s.button("Button")? {
+//!         // was clicked
+//!     }
+//!     s.checkbox("Checkbox", &mut self.checkbox)?;
+//!     s.radio("Radio 1", &mut self.radio, 0)?;
+//!     s.radio("Radio 2", &mut self.radio, 1)?;
+//!     s.radio("Radio 3", &mut self.radio, 2)?;
+//!     Ok(())
+//! }
+//! # }
+//! ```
 
 use crate::prelude::*;
 
-mod field;
-mod select;
-mod text;
-mod tooltip;
+pub mod field;
+pub mod select;
+pub mod text;
+pub mod tooltip;
 
 const CHECKBOX_SIZE: i32 = 16;
 const RADIO_SIZE: i32 = 8;
 
 impl PixState {
     /// Draw a button to the current canvas that returns `true` when clicked.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     if s.button("Button")? {
+    ///         // was clicked
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn button<L>(&mut self, label: L) -> PixResult<bool>
     where
         L: AsRef<str>,
@@ -26,7 +66,10 @@ impl PixState {
         let pad = style.item_pad;
 
         // Calculate button size
-        let (width, height) = s.size_of(label)?;
+        let (mut width, height) = s.size_of(label)?;
+        if let Some(next_width) = s.ui.next_width {
+            width = next_width;
+        }
         let mut button = rect![
             pos.x(),
             pos.y(),
@@ -88,6 +131,19 @@ impl PixState {
     }
 
     /// Draw a checkbox to the current canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { checkbox: bool };
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.checkbox("Checkbox", &mut self.checkbox)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn checkbox<S>(&mut self, label: S, checked: &mut bool) -> PixResult<bool>
     where
         S: AsRef<str>,
@@ -168,6 +224,21 @@ impl PixState {
     }
 
     /// Draw a set of radio buttons to the current canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { radio: usize };
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.radio("Radio 1", &mut self.radio, 0)?;
+    ///     s.radio("Radio 2", &mut self.radio, 1)?;
+    ///     s.radio("Radio 3", &mut self.radio, 2)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn radio<S>(&mut self, label: S, selected: &mut usize, index: usize) -> PixResult<bool>
     where
         S: AsRef<str>,

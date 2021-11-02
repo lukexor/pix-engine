@@ -286,7 +286,7 @@ impl Renderer {
             (Position::Positioned(x), Position::Positioned(y)) => {
                 window_builder.position(x, y);
             }
-            _ => return Err(PixError::InvalidPosition(s.x, s.y).into()),
+            _ => unreachable!("invalid window position combination"),
         };
         if s.fullscreen {
             window_builder.fullscreen();

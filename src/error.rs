@@ -15,22 +15,20 @@ pub type Result<T> = anyhow::Result<T, anyhow::Error>;
 #[non_exhaustive]
 #[derive(Debug, Error)]
 pub enum Error {
-    /// Invalid screen [Position].
-    #[error("invalid screen position: `({0:?}, {1:?})`")]
-    InvalidPosition(Position, Position),
-    /// Invalid Texture ID.
+    /// Invalid Texture ID. Texture either doesn't exist or was deleted.
     #[error("invalid texture id `{0}`")]
     InvalidTexture(TextureId),
-    /// Invalid Window ID.
+    /// Invalid Window ID. Window either doesn't exist or was closed.
     #[error("invalid window id `{0}`")]
     InvalidWindow(WindowId),
-    /// Hexadecimal [Color] string parsing error.
+    /// Hexadecimal [Color] string parsing error. String doesn't match any of `3`, `4`, `6`, or `8`
+    /// digit hexadecimal (radix `16`) values with a leading `#` character.
     #[error("hexadecimal color string parsing error")]
     ParseColorError,
-    /// Invalid [Color] slice.
+    /// Invalid [Color] slice. Slice length is not in the range `1..=4`.
     #[error("invalid color slice")]
     InvalidColorSlice,
-    /// Invalid [Image].
+    /// Invalid [Image]. `Image` data does not match it's dimensions based on [PixelFormat].
     #[error(
         "invalid image {{ width: {width}, height: {height}, size: {size}, format: {format:?} }}"
     )]
