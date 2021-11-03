@@ -695,6 +695,28 @@ impl Rendering for Renderer {
             Ok(result.map_err(PixError::Renderer)?)
         })
     }
+
+    /// Return the current rendered target pixels as an array of bytes.
+    fn to_bytes(&mut self) -> PixResult<Vec<u8>> {
+        let canvas = get_canvas_mut!(self);
+        if let Some(texture_id) = self.texture_target {
+            if let Some((_, texture)) = self.textures.get_mut(texture_id) {
+                let mut result = Ok(vec![]);
+                canvas
+                    .with_texture_canvas(texture, |canvas| {
+                        result = canvas.read_pixels(None, SdlPixelFormat::RGBA32)
+                    })
+                    .with_context(|| format!("failed to read texture target {}", texture_id))?;
+                Ok(result.map_err(PixError::Renderer)?)
+            } else {
+                Err(PixError::InvalidTexture(texture_id).into())
+            }
+        } else {
+            Ok(canvas
+                .read_pixels(None, SdlPixelFormat::RGBA32)
+                .map_err(PixError::Renderer)?)
+        }
+    }
 }
 
 impl std::fmt::Debug for Renderer {

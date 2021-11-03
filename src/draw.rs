@@ -20,7 +20,10 @@
 //! # }
 //! ```
 
+use anyhow::Context;
+
 use crate::{prelude::*, renderer::Rendering};
+use std::{fs::File, io::BufWriter, path::Path};
 
 /// Trait for objects that can be drawn to the screen.
 pub trait Draw {
@@ -64,5 +67,28 @@ impl PixState {
     pub fn clear(&mut self) -> PixResult<()> {
         self.renderer.set_draw_color(self.settings.background)?;
         self.renderer.clear()
+    }
+
+    /// Save currently rendered target to a `png` file.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// ```
+    pub fn save_canvas<P>(&mut self, path: P) -> PixResult<()>
+    where
+        P: AsRef<Path>,
+    {
+        let path = path.as_ref();
+        let png_file = BufWriter::new(File::create(&path)?);
+        let mut png = png::Encoder::new(png_file, self.width()?, self.height()?);
+        png.set_color(PixelFormat::Rgba.into());
+        png.set_depth(png::BitDepth::Eight);
+        let mut writer = png
+            .write_header()
+            .with_context(|| format!("failed to write png header: {:?}", path))?;
+        writer
+            .write_image_data(&self.renderer.to_bytes()?)
+            .with_context(|| format!("failed to write png data: {:?}", path))
     }
 }

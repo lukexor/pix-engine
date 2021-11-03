@@ -188,4 +188,7 @@ pub(crate) trait Rendering: Sized {
         flipped: Option<Flipped>,
         tint: Option<Color>,
     ) -> PixResult<()>;
+
+    /// Return the current rendered target pixels as an array of bytes.
+    fn to_bytes(&mut self) -> PixResult<Vec<u8>>;
 }
