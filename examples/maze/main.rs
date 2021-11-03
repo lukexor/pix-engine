@@ -143,16 +143,22 @@ impl MazeApp {
         if s.button(">>#2")? {
             self.solve_maze()?;
         }
+        s.push();
         s.font_color(s.accent_color());
         let rate = s.target_frame_rate().unwrap_or(60);
-        s.same_line(None);
-        s.set_cursor_pos([s.cursor_pos().x() + 20, h - 50]);
+        s.same_line([10, -5]);
         s.text(format!(
-            "Target FPS: {}\n\
-        Elapsed: {:.3}",
+            "Target FPS: {}\nElapsed: {:.3}",
             rate,
             self.timer.elapsed()
         ))?;
+        s.pop();
+        s.set_cursor_pos([s.width()? as i32 - 30, s.height()? as i32 - 40]);
+        s.help_marker(
+            "V: Toggle VSync\n\
+            Up Arrow: Increase target frame rate.\n\
+            Down Arrow: Decrease target frame rate.",
+        )?;
         Ok(())
     }
 }
@@ -171,18 +177,15 @@ impl AppState for MazeApp {
     fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
         let frame_rate = s.target_frame_rate().unwrap_or(60);
         match event.key {
-            Key::V => {
-                let v = s.vsync();
-                s.set_vsync(!v)?;
-            }
+            Key::V => s.toggle_vsync()?,
             Key::Up if frame_rate >= 60 => {
                 s.clear_frame_rate();
             }
             Key::Up if frame_rate < 60 => {
-                s.set_frame_rate(frame_rate + 10);
+                s.frame_rate(frame_rate + 10);
             }
             Key::Down if frame_rate > 10 => {
-                s.set_frame_rate(frame_rate - 10);
+                s.frame_rate(frame_rate - 10);
             }
             _ => (),
         }

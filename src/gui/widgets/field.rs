@@ -381,7 +381,7 @@ impl PixState {
 
         // Text
         let scroll = s.ui.scroll(id);
-        s.wrap_width((input.width() - ipad.x()) as u32);
+        s.wrap((input.width() - ipad.x()) as u32);
         let mut text_pos = input.top_left();
         text_pos.offset(ipad - scroll);
         s.set_cursor_pos(text_pos);

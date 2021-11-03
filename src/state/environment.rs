@@ -1,4 +1,18 @@
-//! Environment information for the [PixEngine].
+//! Environment methods for the [PixEngine].
+//!
+//! Methods for reading and setting various engine environment values.
+//!
+//! Provided [PixState] methods:
+//!
+//! - [PixState::focused]: Whether the current window target has focus.
+//! - [PixState::delta_time]: Time elapsed since last frame in milliseconds.
+//! - [PixState::elapsed]: Time elapsed since application start in milliseconds.
+//! - [PixState::frame_count]: Total number of frames since application start.
+//! - [PixState::redraw]: Run render loop 1 time, calling [AppState::on_update].
+//! - [PixState::run_times]: Run render loop N times, calling [AppState::on_update].
+//! - [PixState::avg_frame_rate]: Average frames per second rendered.
+//! - [PixState::quit]: Trigger application quit.
+//! - [PixState::abort_quit]: Abort application quit.
 //!
 //! [PixEngine]: crate::prelude::PixEngine
 
@@ -43,28 +57,105 @@ impl Default for Environment {
 }
 
 impl PixState {
-    /// Whether the application has focus or not.
+    /// Returns whether the current window target has focus.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     if s.focused() {
+    ///         // Update screen only when focused
+    ///         s.rect([0, 0, 100, 100])?;
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
     pub fn focused(&self) -> bool {
         matches!(self.env.focused_window, Some(id) if id == self.renderer.window_id())
     }
 
-    /// The time elapsed since last frame in seconds.
+    /// The time elapsed since last frame in milliseconds.
+    ///
+    /// Value can not exceed [Scalar::MAX].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { position: Scalar, velocity: Scalar };
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     // Update position based on frame timestep
+    ///     self.position = self.velocity * s.delta_time();
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     #[inline]
     pub fn delta_time(&self) -> Scalar {
-        self.env.delta_time
+        let delta = self.env.delta_time * 1000.0;
+        if delta.is_infinite() {
+            Scalar::MAX
+        } else {
+            delta
+        }
     }
 
     /// The time elapsed since application start in milliseconds.
+    ///
+    /// Value can not exceed [Scalar::MAX].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     // Draw a blinking box, indepdendent of frame rate
+    ///     if s.elapsed() as usize >> 9 & 1 > 0 {
+    ///         s.rect([0, 0, 10, 10])?;
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     #[inline]
     pub fn elapsed(&self) -> Scalar {
         #[cfg(target_pointer_width = "32")]
         let elapsed = self.env.start.elapsed().as_secs_f32();
         #[cfg(target_pointer_width = "64")]
         let elapsed = self.env.start.elapsed().as_secs_f64();
-        1000.0 * elapsed
+        let elapsed = elapsed * 1000.0;
+        if elapsed.is_infinite() {
+            Scalar::MAX
+        } else {
+            elapsed
+        }
     }
 
     /// The total number of frames rendered since application start.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     // Create a strobe effect, dependent on frame rate
+    ///     if s.frame_count() % 5 == 0 {
+    ///         s.rect([0, 0, 10, 10])?;
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     #[inline]
     pub fn frame_count(&self) -> usize {
         self.env.frame_count
@@ -75,9 +166,33 @@ impl PixState {
     /// This can be used to only redraw in response to user actions such as
     /// [AppState::on_mouse_pressed] or [AppState::on_key_pressed].
     ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.no_run(); // Disable render loop
+    ///     Ok(())
+    /// }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    ///     // Step one frame draw at a time on each space press
+    ///     // Useful for debugging frame-by-frame
+    ///     if let Key::Space = event.key {
+    ///         s.redraw();
+    ///         return Ok(true);
+    ///     }
+    ///     Ok(false)
+    /// # }
+    /// # }
+    /// ```
+    ///
     /// [AppState::on_update]: crate::prelude::AppState::on_update
     /// [AppState::on_mouse_pressed]: crate::prelude::AppState::on_mouse_pressed
     /// [AppState::on_key_pressed]: crate::prelude::AppState::on_key_pressed
+    #[inline]
     pub fn redraw(&mut self) {
         self.env.run_count = 1;
     }
@@ -87,26 +202,95 @@ impl PixState {
     /// This can be used to only redraw in response to user actions such as
     /// [AppState::on_mouse_pressed] or [AppState::on_key_pressed].
     ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.no_run(); // Disable render loop
+    ///     Ok(())
+    /// }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    ///     // Step one frame draw at a time on each space press
+    ///     // Useful for debugging by multiple frames at a time
+    ///     if let Key::Space = event.key {
+    ///         s.run_times(4);
+    ///         return Ok(true);
+    ///     }
+    ///     Ok(false)
+    /// # }
+    /// # }
+    /// ```
+    ///
     /// [AppState::on_update]: crate::prelude::AppState::on_update
     /// [AppState::on_mouse_pressed]: crate::prelude::AppState::on_mouse_pressed
     /// [AppState::on_key_pressed]: crate::prelude::AppState::on_key_pressed
+    #[inline]
     pub fn run_times(&mut self, n: usize) {
         self.env.run_count = n;
     }
 
     /// The average frames per second rendered.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.text(format!("FPS: {}", s.avg_frame_rate()))?;
+    ///     Ok(())
+    /// # }
+    /// # }
+    /// ```
     #[inline]
-    pub fn frame_rate(&self) -> usize {
+    pub fn avg_frame_rate(&self) -> usize {
         self.env.frame_rate
     }
 
-    /// Trigger exiting of the game loop.
+    /// Trigger application quit.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     if s.button("Quit?")? {
+    ///         s.quit();
+    ///     }
+    ///     Ok(())
+    /// # }
+    /// # }
+    /// ```
     #[inline]
     pub fn quit(&mut self) {
         self.env.quit = true;
     }
 
-    /// Abort exiting of the game loop.
+    /// Abort application quit and resume render loop by calling [AppState::on_update].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { has_unsaved_changes: bool, prompt_save_dialog: bool }
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_stop(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     if self.has_unsaved_changes {
+    ///         self.prompt_save_dialog = true;
+    ///         s.abort_quit();
+    ///     }
+    ///     Ok(())
+    /// # }
+    /// # }
+    /// ```
     #[inline]
     pub fn abort_quit(&mut self) {
         self.env.quit = false;

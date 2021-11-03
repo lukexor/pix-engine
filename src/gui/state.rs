@@ -417,11 +417,22 @@ impl PixState {
     #[inline]
     pub fn hovered(&self) -> bool {
         if let Some(rect) = self.ui.last_size {
-            if !self.ui.disabled {
-                return rect.contains_point(self.mouse_pos());
-            }
+            !self.ui.disabled && rect.contains_point(self.mouse_pos())
+        } else {
+            false
         }
-        false
+    }
+
+    /// Returns whether the last item drawn is hovered with the mouse.
+    #[inline]
+    pub fn clicked(&self) -> bool {
+        if let Some(rect) = self.ui.last_size {
+            !self.ui.disabled
+                && rect.contains_point(self.mouse_pos())
+                && self.ui.mouse.last_clicked(Mouse::Left).is_some()
+        } else {
+            false
+        }
     }
 }
 

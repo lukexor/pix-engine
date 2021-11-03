@@ -1,6 +1,53 @@
-//! Settings for the current [PixEngine] [PixState].
+//! Settings methods for the [PixEngine].
 //!
-//! [PixEngine]: crate::prelude::PixEngine
+//! Methods for reading and setting various engine configuration values.
+//!
+//! Provided [PixState] types:
+//!
+//! - [DrawMode]: Determines how `(x, y)` coordinates are used for rendering.
+//! - [RectMode]: Alias for `DrawMode`.
+//! - [EllipseMode]: Alias for `DrawMode`.
+//! - [ImageMode]: Alias for `DrawMode`.
+//! - [ArcMode]: Determines how arcs are rendered.
+//! - [BlendMode]: Determines how images and textures are blended.
+//! - [AngleMode]: Determines how angles are interpreted.
+//! - [FontStyle]: Determines how text is rendered.
+//!
+//! Provided [PixState] methods:
+//!
+//! - [PixState::background]: Sets the [Color] used by [PixState::clear] to clear the canvas.
+//! - [PixState::fill]: Sets the [Color] used to fill shapes.
+//! - [PixState::no_fill]: Clears the [Color] used to fill shapes.
+//! - [PixState::stroke]: Sets the [Color] used to stroke shapes and text.
+//! - [PixState::no_stroke]: Clears the [Color] used to stroke shapes and text.
+//! - [PixState::stroke_weight]: Sets the stroke line thickness for lines and text.
+//! - [PixState::wrap]: Sets the wrap width for rendering text.
+//! - [PixState::no_wrap]: Clears the wrap width for rendering text.
+//! - [PixState::clip]: Sets a clip rectangle for rendering.
+//! - [PixState::no_clip]: Clears the clip rectangle for rendering.
+//! - [PixState::fullscreen]: Sets fullscreen mode to enabled or disabled.
+//! - [PixState::toggle_fullscreen]: Toggles fullscreen.
+//! - [PixState::vsync]: Sets vertical sync mode to enabled or disabled.
+//! - [PixState::toggle_vsync]: Toggles vertical sync.
+//! - [PixState::cursor]: Set a custom window cursor.
+//! - [PixState::no_cursor]: Hide the window cursor.
+//! - [PixState::running]: Whether the render loop is running (calling [AppState::on_update]).
+//! - [PixState::run]: Enable the render loop.
+//! - [PixState::no_run]: Disable the render loop.
+//! - [PixState::show_frame_rate]: Display the average frame rate in the title bar.
+//! - [PixState::target_frame_rate]: Return the current targeted frame rate.
+//! - [PixState::frame_rate]: Set a targeted frame rate.
+//! - [PixState::clear_frame_rate]: Clears the targeted frame rate.
+//! - [PixState::scale]: Scale the current canvas.
+//! - [PixState::rect_mode]: Change the [RectMode] for rendering rectangles.
+//! - [PixState::ellipse_mode]: Change the [EllipseMode] for rendering ellipses.
+//! - [PixState::image_mode]: Change the [ImageMode] for rendering images.
+//! - [PixState::image_tint]: Set or clear a [Color] used to tint [Image]s.
+//! - [PixState::arc_mode]: Change the [ArcMode] for rendering arcs.
+//! - [PixState::angle_mode]: Change the [AngleMode] for angle interpretation.
+//! - [PixState::blend_mode]: Change the [BlendMode] for rendering images and textures.
+//! - [PixState::push]: Push a copy of all the current settings to a stack.
+//! - [PixState::pop]: Pop the previously pushed settings off the stack, restoring them.
 
 use crate::{prelude::*, renderer::*};
 use bitflags::bitflags;
@@ -19,27 +66,27 @@ pub enum DrawMode {
     Center,
 }
 
-/// Drawing mode which changes how `(x, y)` coordinates are interpreted when drawing [Rect]s.
+/// Drawing mode which determines how `(x, y)` coordinates are interpreted when drawing [Rect]s.
 pub type RectMode = DrawMode;
 
-/// Drawing mode which changes how `(x, y)` coordinates are interpreted when drawing [Ellipse]s.
+/// Drawing mode which determines how `(x, y)` coordinates are interpreted when drawing [Ellipse]s.
 pub type EllipseMode = DrawMode;
 
-/// Drawing mode which changes how `(x, y)` coordinates are interpreted when drawing [Image]s.
+/// Drawing mode which determines how `(x, y)` coordinates are interpreted when drawing [Image]s.
 pub type ImageMode = DrawMode;
 
-/// Drawing mode which changes how arcs are drawn.
+/// Drawing mode which determines how arcs are drawn.
 #[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum ArcMode {
-    /// Draws arc with fill as an open pie segment.
+    /// Draws arc as an open, unfilled pie segment using `stroke` color.
     Default,
-    /// Draws arc with fill as an closed pie segment.
+    /// Draws arc as a closed pie segment using `stroke` and `fill` colors.
     Pie,
 }
 
-/// Drawing mode which changes how textures are blended together.
+/// Drawing mode which determines how textures are blended together.
 #[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -54,7 +101,7 @@ pub enum BlendMode {
     Mod,
 }
 
-/// Angle mode which changes how math functions interpreted.
+/// Determines how angles are interpreted.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum AngleMode {
@@ -123,7 +170,7 @@ impl Default for Settings {
             scale_x: 1.0,
             scale_y: 1.0,
             rect_mode: RectMode::Corner,
-            ellipse_mode: EllipseMode::Corner,
+            ellipse_mode: EllipseMode::Center,
             image_mode: ImageMode::Corner,
             image_tint: None,
             arc_mode: ArcMode::Default,
@@ -136,6 +183,20 @@ impl Default for Settings {
 
 impl PixState {
     /// Sets the [Color] value used to clear the canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.background(ALICE_BLUE);
+    ///     s.clear();
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn background<C>(&mut self, color: C) -> PixResult<()>
     where
         C: Into<Color>,
@@ -145,6 +206,20 @@ impl PixState {
     }
 
     /// Sets the [Color] value used to fill shapes drawn on the canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.fill(ALICE_BLUE);
+    ///     s.rect([0, 0, 100, 100])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn fill<C>(&mut self, color: C)
     where
         C: Into<Color>,
@@ -153,11 +228,41 @@ impl PixState {
     }
 
     /// Disables filling shapes drawn on the canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.stroke(BLACK);
+    ///     s.no_fill();
+    ///     // Draws a black outlined rectangle, with the background showing through
+    ///     s.rect([0, 0, 100, 100])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn no_fill(&mut self) {
         self.settings.fill = None;
     }
 
     /// Sets the [Color] value used to outline shapes drawn on the canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.stroke(BLACK);
+    ///     s.rect([0, 0, 100, 100])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn stroke<C>(&mut self, color: C)
     where
         C: Into<Color>,
@@ -165,27 +270,112 @@ impl PixState {
         self.settings.stroke = Some(color.into());
     }
 
-    /// Sets the width used to draw lines on the canvas.
-    pub fn stroke_weight(&mut self, weight: u8) {
-        self.settings.stroke_weight = weight;
-    }
-
     /// Disables outlining shapes drawn on the canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.fill(BLUE);
+    ///     s.no_stroke();
+    ///     // Shows a solid blue rectangle with no outline
+    ///     s.rect([0, 0, 100, 100])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn no_stroke(&mut self) {
         self.settings.stroke = None;
     }
 
+    /// Sets the width used to draw lines on the canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.stroke(BLUE);
+    ///     s.stroke_weight(2);
+    ///     // Shows a 2-pixel wide diagonal line
+    ///     s.line([point![0, 0], point![100, 100]])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    pub fn stroke_weight(&mut self, weight: u8) {
+        self.settings.stroke_weight = weight;
+    }
+
     /// Sets the wrap width used to draw text on the canvas.
-    pub fn wrap_width(&mut self, width: u32) {
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.wrap(100);
+    ///     // Renders as (depending on font width):
+    ///     //
+    ///     // Lorem ipsum
+    ///     // dollor sit amet,
+    ///     // consetetur
+    ///     // sadipscing
+    ///     // elitr, sed diam
+    ///     s.text("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam")?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    pub fn wrap(&mut self, width: u32) {
         self.settings.wrap_width = Some(width);
     }
 
     /// Disable wrapping when drawing text on the canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.no_wrap();
+    ///     // Renders all on one line, which may extend beyond the window width
+    ///     s.text("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam")?;
+    ///     // Still honors newlines and so renders as two lines
+    ///     s.text("Lorem ipsum dolor sit amet,\nconsetetur sadipscing elitr, sed diam")?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn no_wrap(&mut self) {
         self.settings.wrap_width = None;
     }
 
     /// Sets the clip [Rect] used by the renderer to draw to the current canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.clip([0, 0, 100, 100])?;
+    ///     // Renders a quarter pie-slice with radius 100
+    ///     s.circle([100, 100, 200, 200])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn clip<R>(&mut self, rect: R) -> PixResult<()>
     where
         R: Into<Rect<i32>>,
@@ -195,38 +385,160 @@ impl PixState {
     }
 
     /// Clears the clip [Rect] used by the renderer to draw to the current canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.clip([0, 0, 100, 100])?;
+    ///     // Renders a quarter pie-slice with radius 100
+    ///     s.circle([100, 100, 200, 200])?;
+    ///     s.no_clip()?;
+    ///     // Renders a circle with radius 100 in the center of the pie-slice
+    ///     s.circle([100, 100, 100, 100])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn no_clip(&mut self) -> PixResult<()> {
         self.settings.clip = None;
         self.renderer.clip(None)
     }
 
-    /// Returns whether the application is fullscreen or not.
-    pub fn fullscreen(&mut self) -> PixResult<bool> {
-        self.renderer.fullscreen()
-    }
-
     /// Set the application to fullscreen or not.
-    pub fn set_fullscreen(&mut self, val: bool) -> PixResult<()> {
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    ///     if let Key::Return = event.key {
+    ///         s.fullscreen(true)?;
+    ///         return Ok(true);
+    ///     }
+    ///     Ok(false)
+    /// }
+    /// # }
+    /// ```
+    pub fn fullscreen(&mut self, val: bool) -> PixResult<()> {
         self.renderer.set_fullscreen(val)
     }
 
-    /// Returns whether the window synchronizes frame rate to the screens refresh rate.
-    pub fn vsync(&mut self) -> bool {
-        self.renderer.vsync()
+    /// Toggle fullscreen.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    ///     if let Key::Return = event.key {
+    ///         s.toggle_fullscreen()?;
+    ///         return Ok(true);
+    ///     }
+    ///     Ok(false)
+    /// }
+    /// # }
+    /// ```
+    pub fn toggle_fullscreen(&mut self) -> PixResult<()> {
+        let is_fullscreen = self.renderer.fullscreen()?;
+        self.renderer.set_fullscreen(!is_fullscreen)
     }
 
-    /// Set the window to synchronize frame rate to the screens refresh rate.
-    pub fn set_vsync(&mut self, val: bool) -> PixResult<()> {
+    /// Set the window to synchronize frame rate to the screens refresh rate (Vertical Sync).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    ///     if let Key::Return = event.key {
+    ///         s.vsync(true)?;
+    ///         return Ok(true);
+    ///     }
+    ///     Ok(false)
+    /// }
+    /// # }
+    /// ```
+    pub fn vsync(&mut self, val: bool) -> PixResult<()> {
         self.renderer.set_vsync(val)
     }
 
+    /// Toggle synchronizing frame rate to the screens refresh rate (Vertical Sync).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    ///     if let Key::Return = event.key {
+    ///         s.toggle_vsync()?;
+    ///         return Ok(true);
+    ///     }
+    ///     Ok(false)
+    /// }
+    /// # }
+    /// ```
+    pub fn toggle_vsync(&mut self) -> PixResult<()> {
+        let vsync_enabled = self.renderer.vsync();
+        self.renderer.set_vsync(vsync_enabled)
+    }
+
     /// Set the mouse cursor to a predefined symbol or image.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.text("Hover me")?;
+    ///     if s.hovered() {
+    ///         s.cursor(Cursor::hand())?;
+    ///     } else {
+    ///         s.cursor(Cursor::arrow())?;
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn cursor(&mut self, cursor: Cursor) -> PixResult<()> {
         self.settings.cursor = Some(cursor);
         self.renderer.cursor(self.settings.cursor.as_ref())
     }
 
     /// Hide the mouse cursor.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.no_cursor();
+    ///     if s.button("Hover me")? {
+    ///         println!("Interactable elements show a cursor temporarily");
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn no_cursor(&mut self) {
         self.settings.cursor = None;
         // SAFETY: Setting to NONE to hide cursor can't error.
@@ -234,46 +546,193 @@ impl PixState {
     }
 
     /// Whether the render loop is running or not.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    ///     if let Key::Return = event.key {
+    ///         // Pause rendering
+    ///         if s.running() {
+    ///             s.no_run();
+    ///         } else {
+    ///             s.run();
+    ///         }
+    ///         return Ok(true);
+    ///     }
+    ///     Ok(false)
+    /// }
+    /// # }
+    /// ```
     pub fn running(&mut self) -> bool {
         self.settings.running
     }
 
     /// Unpause the render loop.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    ///     if let Key::Return = event.key {
+    ///         // Pause rendering
+    ///         if s.running() {
+    ///             s.no_run();
+    ///         } else {
+    ///             s.run();
+    ///         }
+    ///         return Ok(true);
+    ///     }
+    ///     Ok(false)
+    /// }
+    /// # }
+    /// ```
     pub fn run(&mut self) {
         self.settings.running = true;
     }
 
     /// Pause the render loop by no longer calling [AppState::on_update] every frame.
     ///
-    /// [AppState::on_update]: crate::prelude::AppState::on_update
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    ///     if let Key::Return = event.key {
+    ///         // Pause rendering
+    ///         if s.running() {
+    ///             s.no_run();
+    ///         } else {
+    ///             s.run();
+    ///         }
+    ///         return Ok(true);
+    ///     }
+    ///     Ok(false)
+    /// }
+    /// # }
+    /// ```
     pub fn no_run(&mut self) {
         self.settings.running = false;
     }
 
     /// Set whether to show the current frame rate per second in the title or not.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    ///     if let Key::Return = event.key {
+    ///         s.show_frame_rate(true);
+    ///         return Ok(true);
+    ///     }
+    ///     Ok(false)
+    /// }
+    /// # }
+    /// ```
     pub fn show_frame_rate(&mut self, show: bool) {
         self.settings.show_frame_rate = show;
     }
 
     /// Get the target frame rate to render at.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    ///     if let Key::Down = event.key {
+    ///         let target = s.target_frame_rate().unwrap_or(60);
+    ///         s.frame_rate(target - 10);
+    ///         return Ok(true);
+    ///     }
+    ///     Ok(false)
+    /// }
+    /// # }
+    /// ```
     #[inline]
     pub fn target_frame_rate(&mut self) -> Option<usize> {
         self.settings.target_frame_rate
     }
 
-    /// Set a target frame rate to render at, controls how often
-    /// [on_update](crate::prelude::AppState::on_update) is called.
-    pub fn set_frame_rate(&mut self, rate: usize) {
+    /// Set a target frame rate to render at, controls how often [AppState::on_update] is called.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     // Target a lower FPS than natively possible
+    ///     s.frame_rate(30);
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    pub fn frame_rate(&mut self, rate: usize) {
         self.settings.target_frame_rate = Some(rate);
     }
 
-    /// Remove target frame rate and call [on_update](crate::prelude::AppState::on_update) as often
-    /// as possible.
+    /// Remove target frame rate and call [AppState::on_update] as often as possible.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    ///     if let Key::Escape = event.key {
+    ///         // Resume rendering as many frames as possible per second
+    ///         s.clear_frame_rate();
+    ///         return Ok(true);
+    ///     }
+    ///     Ok(false)
+    /// }
+    /// # }
+    /// ```
     pub fn clear_frame_rate(&mut self) {
         self.settings.target_frame_rate = None;
     }
 
     /// Set the rendering scale of the current canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    ///     if let Key::Plus = event.key {
+    ///         s.scale(2.0, 2.0)?;
+    ///         return Ok(true);
+    ///     }
+    ///     Ok(false)
+    /// }
+    /// # }
+    /// ```
     pub fn scale(&mut self, x: f32, y: f32) -> PixResult<()> {
         let mut s = &mut self.settings;
         s.scale_x = x;
@@ -283,27 +742,81 @@ impl PixState {
 
     /// Change the way parameters are interpreted for drawing [Square](Rect)s and
     /// [Rectangle](Rect)s.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.rect_mode(RectMode::Center);
+    ///     // Draw rect with center at `(100, 100)`
+    ///     s.rect([100, 100, 50, 50])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn rect_mode(&mut self, mode: RectMode) {
         self.settings.rect_mode = mode;
     }
 
     /// Change the way parameters are interpreted for drawing [Ellipse]s.
     ///
-    /// [Ellipse]: crate::prelude::Ellipse
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.ellipse_mode(EllipseMode::Center);
+    ///     // Draw ellipse with center at `(100, 100)`
+    ///     s.ellipse([100, 100, 50, 50])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn ellipse_mode(&mut self, mode: EllipseMode) {
         self.settings.ellipse_mode = mode;
     }
 
     /// Change the way parameters are interpreted for drawing [Image]s.
     ///
-    /// [Image]: crate::prelude::Image
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.image_mode(ImageMode::Center);
+    ///     // Draw image with center at `(100, 100)`
+    ///     s.image([100, 100], &Image::from_file("./some_image.png")?)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn image_mode(&mut self, mode: ImageMode) {
         self.settings.image_mode = mode;
     }
 
     /// Add a color tint to [Image]s when drawing.
     ///
-    /// [Image]: crate::prelude::Image
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.image_tint(RED);
+    ///     // Draw image tinted red
+    ///     s.image([0, 0], &Image::from_file("./some_image.png")?)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn image_tint<C>(&mut self, tint: C)
     where
         C: Into<Option<Color>>,
@@ -312,22 +825,95 @@ impl PixState {
     }
 
     /// Change the way arcs are drawn.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     // Draw arc as a open, unfilled pie segment using only the `stroke` (The default)
+    ///     s.arc_mode(ArcMode::Default);
+    ///     s.arc([100, 100], 20, 0, 180)?;
+    ///     s.arc_mode(ArcMode::Pie);
+    ///     // Draw arc as a closed pie segment using both `fill` and `stroke`
+    ///     s.arc([200, 200], 20, 0, 180)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn arc_mode(&mut self, mode: ArcMode) {
         self.settings.arc_mode = mode;
     }
 
     /// Change the way angles are interprted for matrix transformations.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.angle_mode(AngleMode::Degrees);
+    ///     let angle = 10.0;
+    ///     let center = point!(10, 10);
+    ///     s.text_transformed("Rotated text", angle, center, None)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn angle_mode(&mut self, mode: AngleMode) {
         self.settings.angle_mode = mode;
     }
 
     /// Change the way textures are blended together.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.blend_mode(BlendMode::Blend);
+    ///     // Draw image with alpha blended with background
+    ///     s.image([0, 0], &Image::from_file("./some_image.png")?)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn blend_mode(&mut self, mode: BlendMode) {
         self.settings.blend_mode = mode;
         self.renderer.blend_mode(mode);
     }
 
     /// Saves the current draw settings and transforms.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.fill(BLUE);
+    ///     s.stroke(WHITE);
+    ///
+    ///     s.push(); // Save settings
+    ///
+    ///     s.fill(RED);
+    ///     s.stroke(BLACK);
+    ///     s.rect([0, 0, 100, 100])?;
+    ///
+    ///     s.pop(); // Restore settings
+    ///
+    ///     // Rectangle is blue with a white outline
+    ///     s.rect([0, 0, 100, 100])?;
+    ///     Ok(())
+    /// }
+    /// # }
     pub fn push(&mut self) {
         self.setting_stack
             .push((self.settings.clone(), self.theme.clone()));
@@ -335,6 +921,30 @@ impl PixState {
 
     /// Restores the previous draw settings and transforms, if present. If the settings stack is
     /// empty, the settings will remain unchanged.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.fill(BLUE);
+    ///     s.stroke(WHITE);
+    ///
+    ///     s.push(); // Save settings
+    ///
+    ///     s.fill(RED);
+    ///     s.stroke(BLACK);
+    ///     s.rect([0, 0, 100, 100])?;
+    ///
+    ///     s.pop(); // Restore settings
+    ///
+    ///     // Rectangle is blue with a white outline
+    ///     s.rect([0, 0, 100, 100])?;
+    ///     Ok(())
+    /// }
+    /// # }
     pub fn pop(&mut self) {
         if let Some((settings, theme)) = self.setting_stack.pop() {
             self.settings = settings;

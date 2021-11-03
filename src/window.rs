@@ -183,7 +183,7 @@ pub struct WindowBuilder<'a> {
 impl<'a> WindowBuilder<'a> {
     /// Creates a new WindowBuilder instance.
     pub fn new(s: &'a mut PixState) -> Self {
-        let vsync = s.vsync();
+        let vsync = s.renderer.vsync();
         Self {
             state: s,
             settings: RendererSettings {

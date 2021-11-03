@@ -91,7 +91,7 @@ pub trait AppState {
     /// After [PixState::no_run] is called, you can call [PixState::redraw] or
     /// [PixState::run_times] to control the execution.
     ///
-    /// [target frame rate]: PixState::set_frame_rate
+    /// [target frame rate]: PixState::frame_rate
     ///
     /// # Example
     ///
@@ -149,7 +149,7 @@ pub trait AppState {
     /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
     ///     match event.key {
     ///         Key::Return if event.keymod == KeyMod::CTRL => {
-    ///             s.set_fullscreen(true);
+    ///             s.fullscreen(true);
     ///             Ok(true)
     ///         },
     ///         _ => Ok(false),

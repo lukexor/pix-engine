@@ -169,7 +169,7 @@ impl AppState for Matrix {
         self.init(s.dimensions()?);
         s.background(BG_COLOR)?;
         s.font_style(FontStyle::BOLD);
-        s.set_fullscreen(true)?;
+        s.fullscreen(true)?;
         Ok(())
     }
 
@@ -198,8 +198,7 @@ impl AppState for Matrix {
                 }
             }
             Key::Return => {
-                let fs = !s.fullscreen()?;
-                s.set_fullscreen(fs)?;
+                s.toggle_fullscreen()?;
             }
             _ => (),
         }

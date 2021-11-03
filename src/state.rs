@@ -9,6 +9,21 @@
 //! See the [Getting Started](crate#getting-started) section and the [PixState] page for the list
 //! of available methods.
 //!
+//! Provided [PixState] methods:
+//!
+//! - [PixState::title]: Current window title.
+//! - [PixState::set_title]: Set new window title.
+//! - [PixState::mouse_pos]: [Mouse] position this frame.
+//! - [PixState::pmouse_pos]: [Mouse] position previous frame.
+//! - [PixState::mouse_pressed]: Whether any [Mouse] button was pressed this frame.
+//! - [PixState::mouse_down]: Whether a given [Mouse] button was pressed this frame.
+//! - [PixState::mouse_buttons]: A [HashSet] of [Mouse] buttons pressed this frame.
+//! - [PixState::key_pressed]: Whether a given [Key] was pressed this frame.
+//! - [PixState::key_down]: Whether a given [Key] was pressed this frame.
+//! - [PixState::keys]: Whether any [Key] was pressed this frame.
+//! - [PixState::keymod_down]: Whether a given [key modifier][KeyMod] was pressed this frame.
+//! - [PixState::keymods]: A [HashSet] of [key modifiers][KeyMod] pressed this frame.
+//!
 //! # Example
 //!
 //! ```
@@ -49,6 +64,263 @@ pub struct PixState {
     pub(crate) settings: Settings,
     pub(crate) setting_stack: Vec<(Settings, Theme)>,
     pub(crate) theme: Theme,
+}
+
+impl PixState {
+    /// Get the current window title.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.text(format!("Window title: {}", s.title()))?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    pub fn title(&self) -> &str {
+        self.renderer.title()
+    }
+
+    /// Set the current window title.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     if s.button("Change title")? {
+    ///         s.set_title("Title changed!")?;
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    pub fn set_title<S: AsRef<str>>(&mut self, title: S) -> PixResult<()> {
+        self.renderer.set_title(title.as_ref())
+    }
+
+    /// Returns the current mouse position coordinates as `(x, y)`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     // Draw 100x100 rectangle that follows the mouse
+    ///     s.rect(rect![s.mouse_pos(), 100, 100])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    pub fn mouse_pos(&self) -> PointI2 {
+        self.ui.mouse_pos()
+    }
+
+    /// Returns the previous mouse position coordinates last frame as `(x, y)`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     // Draw 100x100 rectangle that follows the mouse last frame
+    ///     // Creates a yoyo-like effect
+    ///     s.rect(rect![s.pmouse_pos(), 100, 100])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    pub fn pmouse_pos(&self) -> PointI2 {
+        self.ui.pmouse_pos()
+    }
+
+    /// Returns if any [Mouse] button is currently being held.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     if s.mouse_pressed() {
+    ///         s.background(Color::random())?;
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    pub fn mouse_pressed(&self) -> bool {
+        self.ui.mouse.is_pressed()
+    }
+
+    /// Returns if a specific [Mouse] button is currently being held.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     if s.mouse_down(Mouse::Left) {
+    ///         s.background(Color::random())?;
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    pub fn mouse_down(&self, btn: Mouse) -> bool {
+        self.ui.mouse.is_down(btn)
+    }
+
+    /// Returns the a list of the current mouse buttons being held.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     // Only trigger if both buttons are pressed
+    ///     if s.mouse_buttons().contains(&Mouse::Left)
+    ///        && s.mouse_buttons().contains(&Mouse::Right)
+    ///     {
+    ///         s.background(Color::random())?;
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    pub fn mouse_buttons(&self) -> &HashSet<Mouse> {
+        &self.ui.mouse.pressed
+    }
+
+    /// Returns if any [Key] is currently being held.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     if s.key_pressed() {
+    ///         s.background(Color::random())?;
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    pub fn key_pressed(&self) -> bool {
+        self.ui.keys.is_pressed()
+    }
+
+    /// Returns if a specific [Key] is currently being held.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     if s.key_down(Key::Space) {
+    ///         s.background(Color::random())?;
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    pub fn key_down(&self, key: Key) -> bool {
+        self.ui.keys.is_down(key)
+    }
+
+    /// Returns the a list of the current keys being held.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     if s.keys().contains(&Key::Space) && s.keys().contains(&Key::Up) {
+    ///         s.background(Color::random())?;
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    pub fn keys(&self) -> &HashSet<Key> {
+        &self.ui.keys.pressed
+    }
+
+    /// Returns if a specific [KeyMod] is currently being held.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     if s.keymod_down(KeyMod::CTRL) && s.key_down(Key::Space) {
+    ///         s.background(Color::random())?;
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    pub fn keymod_down(&self, keymod: KeyMod) -> bool {
+        self.ui.keys.mod_down(keymod)
+    }
+
+    /// Returns the a list of the current key modifiers being held.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     if s.keymods().contains(&KeyMod::SHIFT)
+    ///         && s.keymods().contains(&KeyMod::CTRL)
+    ///         && s.key_down(Key::Space)
+    ///     {
+    ///         s.background(Color::random())?;
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    pub fn keymods(&self) -> &HashSet<KeyMod> {
+        &self.ui.keys.mods_pressed
+    }
 }
 
 impl PixState {
@@ -126,83 +398,9 @@ impl PixState {
         E: Into<Ellipse<i32>>,
     {
         let mut ellipse = ellipse.into();
-        if let RectMode::Center = self.settings.ellipse_mode {
-            ellipse.center_on(ellipse.top_left());
+        if let RectMode::Corner = self.settings.ellipse_mode {
+            ellipse.center_on(ellipse.bottom_right());
         }
         ellipse
-    }
-}
-
-impl PixState {
-    /// Get the current window title.
-    #[inline]
-    pub fn title(&self) -> &str {
-        self.renderer.title()
-    }
-
-    /// Set the current window title.
-    #[inline]
-    pub fn set_title<S: AsRef<str>>(&mut self, title: S) -> PixResult<()> {
-        self.renderer.set_title(title.as_ref())
-    }
-
-    /// Returns the current mouse position coordinates as `(x, y)`.
-    #[inline]
-    pub fn mouse_pos(&self) -> PointI2 {
-        self.ui.mouse_pos()
-    }
-
-    /// Returns the previous mouse position coordinates last frame as `(x, y)`.
-    #[inline]
-    pub fn pmouse_pos(&self) -> PointI2 {
-        self.ui.pmouse_pos()
-    }
-
-    /// Returns if any [Mouse] button is currently being held.
-    #[inline]
-    pub fn mouse_pressed(&self) -> bool {
-        self.ui.mouse.is_pressed()
-    }
-
-    /// Returns if a specific [Mouse] button is currently being held.
-    #[inline]
-    pub fn mouse_down(&self, btn: Mouse) -> bool {
-        self.ui.mouse.is_down(btn)
-    }
-
-    /// Returns the a list of the current mouse buttons being held.
-    #[inline]
-    pub fn mouse_buttons(&self) -> &HashSet<Mouse> {
-        &self.ui.mouse.pressed
-    }
-
-    /// Returns the a list of the current keys being held.
-    #[inline]
-    pub fn keys(&self) -> &HashSet<Key> {
-        &self.ui.keys.pressed
-    }
-
-    /// Returns the a list of the current key modifiers being held.
-    #[inline]
-    pub fn keymods(&self) -> &HashSet<KeyMod> {
-        &self.ui.keys.mods_pressed
-    }
-
-    /// Returns if any [Key] is currently being held.
-    #[inline]
-    pub fn key_pressed(&self) -> bool {
-        self.ui.keys.is_pressed()
-    }
-
-    /// Returns if a specific [Key] is currently being held.
-    #[inline]
-    pub fn key_down(&self, key: Key) -> bool {
-        self.ui.keys.is_down(key)
-    }
-
-    /// Returns if a specific [KeyMod] is currently being held.
-    #[inline]
-    pub fn keymod_down(&self, keymod: KeyMod) -> bool {
-        self.ui.keys.mod_down(keymod)
     }
 }

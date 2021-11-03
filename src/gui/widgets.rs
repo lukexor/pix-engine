@@ -263,7 +263,7 @@ impl PixState {
 
         // Render
         s.rect_mode(RectMode::Corner);
-        s.ellipse_mode(EllipseMode::Corner);
+        s.ellipse_mode(EllipseMode::Center);
 
         // Checkbox
         if focused || active {

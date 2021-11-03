@@ -1,7 +1,6 @@
 use crate::{
     prelude::*,
     renderer::{RendererSettings, Rendering},
-    window::WindowRenderer,
 };
 use anyhow::Context;
 use lazy_static::lazy_static;
@@ -13,7 +12,7 @@ use sdl2::{
     mouse::{Cursor, SystemCursor},
     pixels::{Color as SdlColor, PixelFormatEnum as SdlPixelFormat},
     rect::{Point as SdlPoint, Rect as SdlRect},
-    render::{BlendMode as SdlBlendMode, Canvas, TextureCreator, TextureQuery},
+    render::{BlendMode as SdlBlendMode, Canvas, Texture, TextureCreator, TextureQuery},
     rwops::RWops,
     ttf::{Font as SdlFont, FontStyle as SdlFontStyle, Sdl2TtfContext},
     video::{Window as SdlWindow, WindowContext},
@@ -30,19 +29,21 @@ lazy_static! {
 /// Helper macro for partial borrow of window target `(canvas, texture_creator)`.
 macro_rules! get_window_target {
     ($self:expr) => {{
+        let target = $self.window_target;
         $self
             .canvases
-            .get(&$self.window_target)
-            .ok_or(PixError::InvalidWindow($self.window_target))?
+            .get(&target)
+            .ok_or(PixError::InvalidWindow(target))?
     }};
 }
 /// Helper macro for partial mutable borrow of window target `(canvas, texture_creator)`.
 macro_rules! get_window_target_mut {
     ($self:expr) => {{
+        let target = $self.window_target;
         $self
             .canvases
-            .get_mut(&$self.window_target)
-            .ok_or(PixError::InvalidWindow($self.window_target))?
+            .get_mut(&target)
+            .ok_or(PixError::InvalidWindow(target))?
     }};
 }
 
@@ -159,7 +160,7 @@ pub(crate) struct Renderer {
     textures: Vec<(WindowId, RendererTexture)>,
     font_data: LruCache<&'static str, Font>,
     loaded_fonts: LruCache<(&'static str, u16), SdlFont<'static, 'static>>,
-    text_cache: LruCache<(WindowId, String, Color), RendererTexture>,
+    text_cache: LruCache<(WindowId, Color), HashMap<String, RendererTexture>>,
     image_cache: LruCache<(WindowId, *const Image), RendererTexture>,
 }
 
@@ -317,8 +318,8 @@ impl Rendering for Renderer {
             return Ok((0, 0));
         }
 
-        let (win_width, _) = self.dimensions()?;
         let font = get_loaded_font!(self);
+        let texture_creator = get_texture_creator!(self);
 
         if let Some(fill) = fill {
             let current_outline = font.get_outline_width();
@@ -326,24 +327,38 @@ impl Rendering for Renderer {
                 font.set_outline_width(outline as u16);
             }
 
-            let key = (self.window_target, text.to_string(), fill);
-            if !self.text_cache.contains(&key) {
+            let create_texture = |font: &SdlFont<'_, '_>, fill: Color| -> PixResult<Texture> {
                 let surface = if let Some(width) = wrap_width {
                     font.render(text).blended_wrapped(fill, width)
                 } else {
-                    font.render(text).blended_wrapped(fill, win_width)
-                };
-                let surface = surface.context("invalid text")?;
-                let texture_creator = get_texture_creator!(self);
-                self.text_cache.put(
-                    key.clone(),
-                    texture_creator
-                        .create_texture_from_surface(&surface)
-                        .context("failed to create text surface")?,
-                );
+                    font.render(text).blended(fill)
+                }
+                .context("invalid text")?;
+                texture_creator
+                    .create_texture_from_surface(&surface)
+                    .context("failed to create text surface")
+            };
+
+            let key = (self.window_target, fill);
+            match self.text_cache.get_mut(&key) {
+                Some(cache) if !cache.contains_key(text) => {
+                    cache.insert(text.to_string(), create_texture(font, fill)?);
+                }
+                None => {
+                    self.text_cache.put(
+                        key,
+                        HashMap::from([(text.to_string(), create_texture(font, fill)?)]),
+                    );
+                }
+                _ => (),
             }
-            // SAFETY: We just checked or inserted a texture.
-            let texture = self.text_cache.get_mut(&key).expect("valid text cache");
+
+            let texture = self
+                .text_cache
+                .get_mut(&key)
+                .context("valid text cache")?
+                .get_mut(text)
+                .context("valid text cache")?;
             let TextureQuery { width, height, .. } = texture.query();
             update_canvas!(self, |canvas: &mut WindowCanvas| -> PixResult<()> {
                 let result = if angle.is_some() || center.is_some() || flipped.is_some() {

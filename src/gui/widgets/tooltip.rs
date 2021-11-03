@@ -22,7 +22,7 @@
 //!
 //!     s.text("Hover me too!")?;
 //!     if s.hovered() {
-//!         s.advanced_tooltip(200, 100, |s: &mut PixState| {
+//!         s.advanced_tooltip(rect![s.mouse_pos(), 200, 100], |s: &mut PixState| {
 //!             s.background(CADET_BLUE);
 //!             s.font_color(BLACK);
 //!             s.bullet("Advanced tooltip")?;
@@ -61,6 +61,8 @@ impl PixState {
         let s = self;
         let id = s.ui.get_id(&text);
         let pos = s.cursor_pos();
+        let style = s.theme.style;
+        let pad = style.frame_pad;
 
         // Calculate hover area
         let marker = "?";
@@ -95,7 +97,25 @@ impl PixState {
         }
 
         // Tooltip
-        if hovered || focused {
+        if focused {
+            let (w, h) = s.size_of(text)?;
+            let w = w as i32 + 2 * pad.x();
+            let h = h as i32 + 2 * pad.y();
+            s.advanced_tooltip(
+                rect![hover.bottom_right() - 10, w, h],
+                |s: &mut PixState| {
+                    s.background(s.primary_color())?;
+                    s.rect_mode(RectMode::Corner);
+                    s.push();
+                    s.stroke(s.muted_color());
+                    s.no_fill();
+                    s.rect([0, 0, w - 1, h - 1])?;
+                    s.pop();
+                    s.text(text)?;
+                    Ok(())
+                },
+            )?;
+        } else if hovered {
             s.tooltip(text)?;
         }
 
@@ -135,26 +155,21 @@ impl PixState {
         let pad = style.frame_pad;
 
         let (w, h) = s.size_of(text)?;
-        let w = w + 2 * pad.x() as u32;
-        let h = h + 2 * pad.y() as u32;
+        let w = w as i32 + 2 * pad.x();
+        let h = h as i32 + 2 * pad.y();
 
         // Render
-        s.ui.push_cursor();
-        s.advanced_tooltip(w, h, |s: &mut PixState| {
+        s.advanced_tooltip(rect![s.mouse_pos(), w, h], |s: &mut PixState| {
             s.background(s.primary_color())?;
-
             s.rect_mode(RectMode::Corner);
             s.push();
             s.stroke(s.muted_color());
             s.no_fill();
-            s.rect([0, 0, w as i32 - 1, h as i32 - 1])?;
+            s.rect([0, 0, w - 1, h - 1])?;
             s.pop();
-
             s.text(text)?;
-
             Ok(())
         })?;
-        s.ui.pop_cursor();
 
         Ok(())
     }
@@ -173,7 +188,7 @@ impl PixState {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.text("Hover me")?;
     ///     if s.hovered() {
-    ///         s.advanced_tooltip(200, 100, |s: &mut PixState| {
+    ///         s.advanced_tooltip(rect![s.mouse_pos(), 200, 100], |s: &mut PixState| {
     ///             s.background(CADET_BLUE);
     ///             s.font_color(BLACK);
     ///             s.bullet("Advanced tooltip")?;
@@ -184,31 +199,40 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn advanced_tooltip<F>(&mut self, width: u32, height: u32, f: F) -> PixResult<()>
+    pub fn advanced_tooltip<R, F>(&mut self, rect: R, f: F) -> PixResult<()>
     where
+        R: Into<Rect<i32>>,
         F: FnOnce(&mut PixState) -> PixResult<()>,
     {
         let s = self;
         s.ui.push_id(1);
-        let id = s.ui.get_id(&[width, height]);
+        let mut rect = s.get_rect(rect);
+        let id = s.ui.get_id(&rect);
         s.ui.pop_id();
+        let pad = s.theme.style.frame_pad;
 
         // Calculate rect
-        let mpos = s.mouse_pos();
-        let mut rect = rect![mpos.x() + 15, mpos.y() + 15, width as i32, height as i32];
+        rect.offset([15, 15]);
 
         // Ensure rect stays inside window
         let (win_width, win_height) = s.window_dimensions()?;
         if rect.right() > win_width as i32 {
-            rect.set_right(mpos.x() - 10);
+            let offset = (rect.right() - win_width as i32) + pad.x();
+            rect.offset_x(-offset);
         }
         if rect.bottom() > win_height as i32 {
-            rect.set_bottom(mpos.y() - 5);
+            let offset = (rect.bottom() - win_height as i32) + pad.y();
+            rect.offset_y(-offset);
+            let mpos = s.mouse_pos();
+            if rect.contains_point(mpos) {
+                rect.set_bottom(mpos.y() - pad.y());
+            }
         }
 
         let texture_id = {
             if !s.ui.textures.contains_key(&id) {
-                let texture_id = s.create_texture(width, height, PixelFormat::Rgba)?;
+                let texture_id =
+                    s.create_texture(rect.width() as u32, rect.height() as u32, PixelFormat::Rgba)?;
                 s.ui.textures
                     .insert(id, Texture::new(texture_id, None, Some(rect)));
             }

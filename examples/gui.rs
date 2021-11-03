@@ -75,7 +75,7 @@ impl AppState for Gui {
         s.same_line(None);
         s.text("- and me!")?;
         if s.hovered() {
-            s.advanced_tooltip(200, 100, |s: &mut PixState| {
+            s.advanced_tooltip(rect![s.mouse_pos(), 200, 100], |s: &mut PixState| {
                 s.background(s.accent_color())?;
                 s.text("Advanced tip")?;
                 s.separator()?;

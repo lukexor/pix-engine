@@ -125,9 +125,29 @@ impl PixState {
             }
 
             let fill = s.settings.fill;
-            let (w, h) = s
-                .renderer
-                .text(pos, text, wrap_width, angle, center, flipped, fill, outline)?;
+            let (w, h) = if wrap_width.is_some() {
+                s.renderer
+                    .text(pos, text, wrap_width, angle, center, flipped, fill, outline)?
+            } else {
+                let (mut width, mut height) = (0, 0);
+                let mut y = pos.y();
+                for line in text.split('\n') {
+                    let (w, h) = s.renderer.text(
+                        point![pos.x(), y],
+                        line,
+                        wrap_width,
+                        angle,
+                        center,
+                        flipped,
+                        fill,
+                        outline,
+                    )?;
+                    width += w;
+                    height += h;
+                    y += h as i32;
+                }
+                (width, height)
+            };
             let rect = rect![pos, w as i32, h as i32];
 
             // Only advance the cursor if we're not drawing a text outline
