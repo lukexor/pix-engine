@@ -26,6 +26,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 ///
 /// [module-level documentation]: crate::shape::triangle
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[repr(transparent)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
 pub struct Tri<T, const N: usize>(pub(crate) [Point<T, N>; 3]);
@@ -48,14 +49,14 @@ pub type TriF3 = Tri<Scalar, 3>;
 /// # use pix_engine::prelude::*;
 ///
 /// let t = tri!([10, 20], [30, 10], [20, 25]);
-/// assert_eq!(t.values(), [
+/// assert_eq!(t.as_array(), [
 ///   point!(10, 20),
 ///   point!(30, 10),
 ///   point!(20, 25),
 /// ]);
 ///
 /// let t = tri!([10, 20, 10], [30, 10, 40], [20, 25, 20]);
-/// assert_eq!(t.values(), [
+/// assert_eq!(t.as_array(), [
 ///   point!(10, 20, 10),
 ///   point!(30, 10, 40),
 ///   point!(20, 25, 20),
@@ -82,9 +83,9 @@ impl<T, const N: usize> Tri<T, N> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let tri: TriI2 = Tri::new([10, 20], [30, 10], [20, 25]);
-    /// assert_eq!(tri.p1().values(), [10, 20]);
-    /// assert_eq!(tri.p2().values(), [30, 10]);
-    /// assert_eq!(tri.p3().values(), [20, 25]);
+    /// assert_eq!(tri.p1().as_array(), [10, 20]);
+    /// assert_eq!(tri.p2().as_array(), [30, 10]);
+    /// assert_eq!(tri.p3().as_array(), [20, 25]);
     /// ```
     pub fn new<P1, P2, P3>(p1: P1, p2: P2, p3: P3) -> Self
     where
@@ -96,10 +97,7 @@ impl<T, const N: usize> Tri<T, N> {
     }
 }
 
-impl<T, const N: usize> Tri<T, N>
-where
-    T: Copy + Default,
-{
+impl<T: Copy, const N: usize> Tri<T, N> {
     /// Returns the first point of the triangle.
     #[inline]
     pub fn p1(&self) -> Point<T, N> {
@@ -152,14 +150,54 @@ where
     /// ```
     /// # use pix_engine::prelude::*;
     /// let tri: TriI2 = Tri::new([10, 20], [30, 10], [20, 25]);
-    /// assert_eq!(tri.values(), [
+    /// assert_eq!(tri.as_array(), [
     ///     point!(10, 20),
     ///     point!(30, 10),
     ///     point!(20, 25),
     /// ]);
     /// ```
-    pub fn values(&self) -> [Point<T, N>; 3] {
+    #[inline]
+    pub fn as_array(&self) -> [Point<T, N>; 3] {
         self.0
+    }
+
+    /// Returns `Triangle` points as a byte slice `&[Point<T, N>; 3]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let tri: TriI2 = Tri::new([10, 20], [30, 10], [20, 25]);
+    /// assert_eq!(tri.as_bytes(), &[
+    ///     point!(10, 20),
+    ///     point!(30, 10),
+    ///     point!(20, 25),
+    /// ]);
+    /// ```
+    #[inline]
+    pub fn as_bytes(&self) -> &[Point<T, N>; 3] {
+        &self.0
+    }
+
+    /// Returns `Triangle` points as a mutable byte slice `&mut [Point<T, N>; 3]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut tri: TriI2 = Tri::new([10, 20], [30, 10], [20, 25]);
+    /// for p in tri.as_bytes_mut() {
+    ///     *p += 5;
+    /// }
+    /// assert_eq!(tri.as_bytes(), &[
+    ///     point!(15, 25),
+    ///     point!(35, 15),
+    ///     point!(25, 30),
+    /// ]);
+    /// ```
+    #[inline]
+    pub fn as_bytes_mut(&mut self) -> &mut [Point<T, N>; 3] {
+        &mut self.0
     }
 
     /// Returns `Triangle` as a [Vec].
@@ -183,11 +221,7 @@ where
     }
 }
 
-impl<T, const N: usize> Draw for Tri<T, N>
-where
-    Self: Into<TriI2>,
-    T: Num,
-{
+impl Draw for TriI2 {
     /// Draw `Triangle` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.triangle(*self)

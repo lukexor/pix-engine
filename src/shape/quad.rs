@@ -37,6 +37,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 ///
 /// [module-level documentation]: crate::shape::quad
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[repr(transparent)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
 pub struct Quad<T, const N: usize>(pub(crate) [Point<T, N>; 4]);
@@ -60,7 +61,7 @@ pub type QuadF3 = Quad<Scalar, 3>;
 /// let p1: PointI2 = [10, 10].into();
 /// let p2 = point!(100, 10);
 /// let q = quad!(p1, p2, [90, 50], [10, 80]);
-/// assert_eq!(q.values(), [
+/// assert_eq!(q.as_array(), [
 ///   point!(10, 10),
 ///   point!(100, 10),
 ///   point!(90, 50),
@@ -68,7 +69,7 @@ pub type QuadF3 = Quad<Scalar, 3>;
 /// ]);
 ///
 /// let q = quad!(10, 10, 100, 10, 90, 50, 10, 80);
-/// assert_eq!(q.values(), [
+/// assert_eq!(q.as_array(), [
 ///   point!(10, 10),
 ///   point!(100, 10),
 ///   point!(90, 50),
@@ -91,10 +92,10 @@ impl<T, const N: usize> Quad<T, N> {
     /// ```
     /// use pix_engine::prelude::*;
     /// let quad: QuadI2 = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
-    /// assert_eq!(quad.p1().values(), [10, 20]);
-    /// assert_eq!(quad.p2().values(), [30, 10]);
-    /// assert_eq!(quad.p3().values(), [20, 25]);
-    /// assert_eq!(quad.p4().values(), [15, 15]);
+    /// assert_eq!(quad.p1().as_array(), [10, 20]);
+    /// assert_eq!(quad.p2().as_array(), [30, 10]);
+    /// assert_eq!(quad.p3().as_array(), [20, 25]);
+    /// assert_eq!(quad.p4().as_array(), [15, 15]);
     /// ```
     pub fn new<P1, P2, P3, P4>(p1: P1, p2: P2, p3: P3, p4: P4) -> Self
     where
@@ -107,10 +108,7 @@ impl<T, const N: usize> Quad<T, N> {
     }
 }
 
-impl<T, const N: usize> Quad<T, N>
-where
-    T: Copy + Default,
-{
+impl<T: Copy, const N: usize> Quad<T, N> {
     /// Returns the first point of the quad.
     #[inline]
     pub fn p1(&self) -> Point<T, N> {
@@ -178,15 +176,57 @@ where
     /// ```
     /// # use pix_engine::prelude::*;
     /// let quad: QuadI2 = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
-    /// assert_eq!(quad.values(), [
+    /// assert_eq!(quad.as_array(), [
     ///     point!(10, 20),
     ///     point!(30, 10),
     ///     point!(20, 25),
     ///     point!(15, 15)
     /// ]);
     /// ```
-    pub fn values(&self) -> [Point<T, N>; 4] {
+    #[inline]
+    pub fn as_array(&self) -> [Point<T, N>; 4] {
         self.0
+    }
+
+    /// Returns `Quad` points as a byte slice `&[Point<T, N>; 4]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let quad: QuadI2 = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
+    /// assert_eq!(quad.as_bytes(), &[
+    ///     point!(10, 20),
+    ///     point!(30, 10),
+    ///     point!(20, 25),
+    ///     point!(15, 15)
+    /// ]);
+    /// ```
+    #[inline]
+    pub fn as_bytes(&self) -> &[Point<T, N>; 4] {
+        &self.0
+    }
+
+    /// Returns `Quad` points as a mutable byte slice `&mut [Point<T, N>; 4]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut quad: QuadI2 = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
+    /// for p in quad.as_bytes_mut() {
+    ///     *p += 5;
+    /// }
+    /// assert_eq!(quad.as_bytes(), &[
+    ///     point!(15, 25),
+    ///     point!(35, 15),
+    ///     point!(25, 30),
+    ///     point!(20, 20)
+    /// ]);
+    /// ```
+    #[inline]
+    pub fn as_bytes_mut(&mut self) -> &mut [Point<T, N>; 4] {
+        &mut self.0
     }
 
     /// Returns `Quad` points as a [Vec].
@@ -208,11 +248,7 @@ where
     }
 }
 
-impl<T, const N: usize> Draw for Quad<T, N>
-where
-    Self: Into<QuadI2>,
-    T: Num,
-{
+impl Draw for QuadI2 {
     /// Draw `Quad` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.quad(*self)
@@ -230,8 +266,8 @@ mod tests {
         ($i1:expr, $i2:expr, $e:expr) => {{
             match ($i1, $i2) {
                 (Some((p1, t1)), Some((p2, t2))) => {
-                    let [x1, y1]: [Scalar; 2] = p1.values();
-                    let [x2, y2]: [Scalar; 2] = p2.values();
+                    let [x1, y1]: [Scalar; 2] = p1.as_array();
+                    let [x2, y2]: [Scalar; 2] = p2.as_array();
                     let xd = (x1 - x2).abs();
                     let yd = (y1 - y2).abs();
                     let td = (t1 - t2).abs();

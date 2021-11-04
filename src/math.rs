@@ -114,7 +114,7 @@ where
 {
     let v = v.into();
 
-    let values = v.values();
+    let values = v.as_array();
     let x = values.get(0).unwrap_or(&0.0).abs();
     let y = values.get(1).unwrap_or(&0.0).abs();
     let z = values.get(2).unwrap_or(&0.0).abs();

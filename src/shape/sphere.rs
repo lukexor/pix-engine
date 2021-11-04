@@ -30,6 +30,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// [module-level documentation]: crate::shape::sphere
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[repr(transparent)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Sphere<T = i32>(pub(crate) [T; 4]);
 
@@ -67,13 +68,23 @@ impl<T> Sphere<T> {
     }
 }
 
-impl<T> Sphere<T>
-where
-    T: Copy + Default,
-{
-    /// Returns `Sphere` values as `[x, y, z, radius]`.
-    pub fn values(&self) -> [T; 4] {
+impl<T: Copy> Sphere<T> {
+    /// Returns `Sphere` as_array as `[x, y, z, radius]`.
+    #[inline]
+    pub fn as_array(&self) -> [T; 4] {
         self.0
+    }
+
+    /// Returns `Sphere` as_array as a byte slice `&[x, y, z, radius]`.
+    #[inline]
+    pub fn as_bytes(&self) -> &[T; 4] {
+        &self.0
+    }
+
+    /// Returns `Sphere` as_array as a mutable byte slice `&mut [x, y, z, radius]`.
+    #[inline]
+    pub fn as_bytes_mut(&mut self) -> &mut [T; 4] {
+        &mut self.0
     }
 }
 

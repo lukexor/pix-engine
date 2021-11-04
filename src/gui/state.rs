@@ -119,14 +119,14 @@ impl UiState {
     #[inline]
     pub(crate) fn get_id<T: Hash>(&self, t: &T) -> ElementId {
         #[cfg(target_pointer_width = "32")]
-        let mut s = FnvHasher::default();
+        let mut hasher = FnvHasher::default();
         #[cfg(target_pointer_width = "64")]
-        let mut s = DefaultHasher::new();
-        t.hash(&mut s);
+        let mut hasher = DefaultHasher::new();
+        t.hash(&mut hasher);
         if let Some(id) = self.id_stack.last() {
-            id.hash(&mut s);
+            id.hash(&mut hasher);
         }
-        s.finish()
+        hasher.finish()
     }
 
     /// Returns the current UI rendering position.

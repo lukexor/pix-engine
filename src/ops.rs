@@ -55,7 +55,7 @@ impl_from_array!(Quad<T, N> => [Point<T, N>; 4]);
 
 macro_rules! impl_as {
     ($($Type:ident<T$(, $N:ident)?>),*) => {$(
-        impl<T: Num$(, const $N: usize)?> $Type<T$(, $N)?> {
+        impl<T$(, const $N: usize)?> $Type<T$(, $N)?> {
             #[doc = concat!("Converts ", stringify!($Type<T$(, $N)?>),
                 " to ", stringify!($Type<U$(, $N)?>), ".")]
             #[inline]
@@ -69,7 +69,7 @@ macro_rules! impl_as {
         }
     )*};
     ($($Type:ident<T$(, $N:ident)?>),* from $U:ident) => {$(
-        impl<T: Num$(, const $N: usize)?> $Type<T$(, $N)?> {
+        impl<T$(, const $N: usize)?> $Type<T$(, $N)?> {
             /// Returns `Self` with the numbers cast using `as` operator.
             #[doc = concat!("Converts ", stringify!($Type<T$(, $N)?>),
                 " to ", stringify!($Type<U$(, $N)?>), ".")]
@@ -142,48 +142,63 @@ impl_float_conversion!(Line<T, N>, Tri<T, N>, Quad<T, N> from Point);
 macro_rules! impl_wrapper_traits {
     ($($Type:ident<T$(, $N:ident)?>),* => [$T:ty; $M:expr]) => {
         $(
-            impl<T: Num$(, const $N: usize)?> Deref for $Type<T$(, $N)?> {
+            impl<T$(, const $N: usize)?> Deref for $Type<T$(, $N)?> {
                 type Target = [$T; $M];
                 #[inline]
                 fn deref(&self) -> &Self::Target {
                     &self.0
                 }
             }
-            impl<T: Num$(, const $N: usize)?> DerefMut for $Type<T$(, $N)?> {
+            impl<T$(, const $N: usize)?> DerefMut for $Type<T$(, $N)?> {
                 #[inline]
                 fn deref_mut(&mut self) -> &mut Self::Target {
                     &mut self.0
                 }
             }
 
-            impl<T: Num$(, const $N: usize)?> AsRef<[$T; $M]> for $Type<T$(, $N)?> {
+            impl<T$(, const $N: usize)?> AsRef<[$T; $M]> for $Type<T$(, $N)?> {
                 #[inline]
                 fn as_ref(&self) -> &[$T; $M] {
                     &self.0
                 }
             }
-            impl<T: Num$(, const $N: usize)?> AsMut<[$T; $M]> for $Type<T$(, $N)?> {
+            impl<T$(, const $N: usize)?> AsMut<[$T; $M]> for $Type<T$(, $N)?> {
                 #[inline]
                 fn as_mut(&mut self) -> &mut [$T; $M] {
                     &mut self.0
                 }
             }
 
-            impl<T: Num$(, const $N: usize)?> Index<usize> for $Type<T$(, $N)?> {
+            impl<T$(, const $N: usize)?> AsRef<$Type<T$(, $N)?>> for [$T; $M] {
+                #[inline]
+                fn as_ref(&self) -> &$Type<T$(, $N)?> {
+                    let ptr: *const [$T; $M] = self;
+                    unsafe { &*(ptr as *const $Type<T$(, $N)?>) }
+                }
+            }
+            impl<T$(, const $N: usize)?> AsMut<$Type<T$(, $N)?>> for [$T; $M] {
+                #[inline]
+                fn as_mut(&mut self) -> &mut $Type<T$(, $N)?> {
+                    let ptr: *mut [$T; $M] = self;
+                    unsafe { &mut *(ptr as *mut $Type<T$(, $N)?>) }
+                }
+            }
+
+            impl<T$(, const $N: usize)?> Index<usize> for $Type<T$(, $N)?> {
                 type Output = $T;
                 #[inline]
                 fn index(&self, idx: usize) -> &Self::Output {
                     &self.0[idx]
                 }
             }
-            impl<T: Num$(, const $N: usize)?> IndexMut<usize> for $Type<T$(, $N)?> {
+            impl<T$(, const $N: usize)?> IndexMut<usize> for $Type<T$(, $N)?> {
                 #[inline]
                 fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
                     &mut self.0[idx]
                 }
             }
 
-            impl<T: Num$(, const $N: usize)?> IntoIterator for $Type<T$(, $N)?> {
+            impl<T$(, const $N: usize)?> IntoIterator for $Type<T$(, $N)?> {
                 type Item = $T;
                 type IntoIter = IntoIter<Self::Item, $M>;
                 #[inline]
@@ -191,16 +206,14 @@ macro_rules! impl_wrapper_traits {
                     Self::IntoIter::new(self.0)
                 }
             }
-            impl <T: Num$(, const $N: usize)?> FromIterator<$T> for $Type<T$(, $N)?> {
+            impl <T: Default$(, const $N: usize)?> FromIterator<$T> for $Type<T$(, $N)?> {
                 #[inline]
                 fn from_iter<I>(iter: I) -> Self
                 where
                     I: IntoIterator<Item = $T>
                 {
-                    let mut arr = [<$T>::default(); $M];
-                    for (i, v) in iter.into_iter().enumerate() {
-                        arr[i] = v;
-                    }
+                    let mut iter = iter.into_iter();
+                    let arr = [(); $M].map(|_| iter.next().unwrap_or_else(<$T>::default));
                     Self(arr)
                 }
             }

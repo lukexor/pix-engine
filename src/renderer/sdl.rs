@@ -91,7 +91,7 @@ macro_rules! update_canvas {
     ($self:expr, $func:expr) => {{
         let canvas = get_canvas_mut!($self);
         if let Some(texture_id) = $self.texture_target {
-            if let Some((_, texture)) = $self.textures.get_mut(texture_id) {
+            if let Some((_, texture)) = $self.textures.get_mut(&texture_id) {
                 let mut result = Ok(());
                 canvas
                     .with_texture_canvas(texture, |canvas| {
@@ -157,7 +157,8 @@ pub(crate) struct Renderer {
     window_target: WindowId,
     texture_target: Option<TextureId>,
     canvases: HashMap<WindowId, (WindowCanvas, TextureCreator<WindowContext>)>,
-    textures: Vec<(WindowId, RendererTexture)>,
+    textures: HashMap<TextureId, (WindowId, RendererTexture)>,
+    next_texture_id: usize,
     font_data: LruCache<&'static str, Font>,
     loaded_fonts: LruCache<(&'static str, u16), SdlFont<'static, 'static>>,
     text_cache: LruCache<(WindowId, Color), HashMap<String, RendererTexture>>,
@@ -213,7 +214,8 @@ impl Rendering for Renderer {
             window_target: window_id,
             texture_target: None,
             canvases,
-            textures: Vec::new(),
+            textures: HashMap::new(),
+            next_texture_id: 0,
             font_data,
             loaded_fonts: LruCache::new(texture_cache_size),
             text_cache: LruCache::new(text_cache_size),
@@ -700,7 +702,7 @@ impl Rendering for Renderer {
     fn to_bytes(&mut self) -> PixResult<Vec<u8>> {
         let canvas = get_canvas_mut!(self);
         if let Some(texture_id) = self.texture_target {
-            if let Some((_, texture)) = self.textures.get_mut(texture_id) {
+            if let Some((_, texture)) = self.textures.get_mut(&texture_id) {
                 let mut result = Ok(vec![]);
                 canvas
                     .with_texture_canvas(texture, |canvas| {

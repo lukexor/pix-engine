@@ -1,4 +1,4 @@
-use super::Renderer;
+use super::{Renderer, WindowCanvas};
 use crate::renderer::*;
 use anyhow::Context;
 use sdl2::{rect::Rect as SdlRect, render::Texture as SdlTexture};
@@ -18,8 +18,10 @@ impl TextureRenderer for Renderer {
         let texture = texture_creator
             .create_texture_target(format.map(|f| f.into()), width, height)
             .context("failed to create texture")?;
-        let texture_id = self.textures.len();
-        self.textures.push((self.window_target, texture));
+        let texture_id = self.next_texture_id;
+        self.next_texture_id += 1;
+        self.textures
+            .insert(texture_id, (self.window_target, texture));
         Ok(texture_id)
     }
 
@@ -35,8 +37,7 @@ impl TextureRenderer for Renderer {
     /// Destroying textures created from a dropped canvas is undefined behavior.
     #[inline]
     fn delete_texture(&mut self, texture_id: TextureId) -> PixResult<()> {
-        if self.textures.len() > texture_id {
-            let (_, texture) = self.textures.remove(texture_id);
+        if let Some((_, texture)) = self.textures.remove(&texture_id) {
             // SAFETY: If we have a valid texture entry, it's safe to destroy as long as all
             // other methods in this crate that remove canvases or closing windows handle
             // removing textures created for that canvas.
@@ -56,7 +57,7 @@ impl TextureRenderer for Renderer {
         pixels: P,
         pitch: usize,
     ) -> PixResult<()> {
-        if let Some((_, texture)) = self.textures.get_mut(texture_id) {
+        if let Some((_, texture)) = self.textures.get_mut(&texture_id) {
             let rect: Option<SdlRect> = rect.map(|r| r.into());
             Ok(texture
                 .update(rect, pixels.as_ref(), pitch)
@@ -78,7 +79,28 @@ impl TextureRenderer for Renderer {
         flipped: Option<Flipped>,
         tint: Option<Color>,
     ) -> PixResult<()> {
-        if let Some((_, texture)) = self.textures.get_mut(texture_id) {
+        // Hairy bit to get multiple mutable exclusive borrows from our texture hashmap in order to
+        // allow rendering one texture into another
+        let (texture, texture_target) = unsafe {
+            let t1 = self.textures.get_mut(&texture_id).map(|t| {
+                let t: *mut _ = t;
+                t
+            });
+            let t2 = if let Some(target) = self.texture_target {
+                self.textures.get_mut(&target).map(|t| {
+                    let t: *mut _ = t;
+                    t
+                })
+            } else {
+                None
+            };
+            assert_ne!(
+                t1, t2,
+                "texture_id must not be set as the current texture_target"
+            );
+            (t1.map(|t| &mut *t), t2.map(|t| &mut *t))
+        };
+        if let Some((_, texture)) = texture {
             match tint {
                 Some(tint) => {
                     let [r, g, b, a] = tint.channels();
@@ -92,22 +114,34 @@ impl TextureRenderer for Renderer {
             }
             let src = src.map(|r| r.into());
             let dst = dst.map(|r| r.into());
-
-            let canvas = get_canvas_mut!(self);
-            let result = if angle > 0.0 || center.is_some() || flipped.is_some() {
-                canvas.copy_ex(
-                    texture,
-                    src,
-                    dst,
-                    angle,
-                    center.map(|c| c.into()),
-                    matches!(flipped, Some(Flipped::Horizontal | Flipped::Both)),
-                    matches!(flipped, Some(Flipped::Vertical | Flipped::Both)),
-                )
-            } else {
-                canvas.copy(texture, src, dst)
+            let update = |canvas: &mut WindowCanvas| -> PixResult<()> {
+                let result = if angle > 0.0 || center.is_some() || flipped.is_some() {
+                    canvas.copy_ex(
+                        texture,
+                        src,
+                        dst,
+                        angle,
+                        center.map(|c| c.into()),
+                        matches!(flipped, Some(Flipped::Horizontal | Flipped::Both)),
+                        matches!(flipped, Some(Flipped::Vertical | Flipped::Both)),
+                    )
+                } else {
+                    canvas.copy(texture, src, dst)
+                };
+                Ok(result.map_err(PixError::Renderer)?)
             };
-            Ok(result.map_err(PixError::Renderer)?)
+            let canvas = get_canvas_mut!(self);
+            if let Some((_, texture)) = texture_target {
+                let mut result = Ok(());
+                canvas
+                    .with_texture_canvas(texture, |canvas| {
+                        result = update(canvas);
+                    })
+                    .with_context(|| format!("failed to update texture target {}", texture_id))?;
+                result
+            } else {
+                update(canvas)
+            }
         } else {
             Err(PixError::InvalidTexture(texture_id).into())
         }

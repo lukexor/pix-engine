@@ -204,7 +204,7 @@ impl RayScene {
                 let angle = offset as Scalar / 10_000.0;
                 let r = Vector::rotated(v, angle);
                 if let Some(intersect) = self.cast_ray(o, r) {
-                    let [x, y] = intersect.values();
+                    let [x, y] = intersect.as_array();
                     let intersect = point!(x.round() as i32, y.round() as i32);
                     self.polygons.push((r.heading(), intersect));
                     continue;
@@ -323,7 +323,7 @@ impl AppState for RayScene {
         }
 
         s.blend_mode(BlendMode::Mod);
-        s.image([mouse.x() - 255, mouse.y() - 255], &self.light)?;
+        s.image(&self.light, [mouse.x() - 255, mouse.y() - 255])?;
         s.blend_mode(BlendMode::None);
 
         if let Some(cell) = in_cell {

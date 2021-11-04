@@ -35,11 +35,11 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    /// let samples = [0.12, 0.23, 0.51];
-    /// s.enqueue_audio(&samples);
-    /// #   Ok(())
-    /// # }
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     let samples = [0.12, 0.23, 0.51];
+    ///     s.enqueue_audio(&samples);
+    ///     Ok(())
+    /// }
     /// # }
     /// ```
     pub fn enqueue_audio<S: AsRef<[f32]>>(&mut self, samples: S) {

@@ -37,6 +37,7 @@ use std::{fmt, ops::*};
 ///
 /// [module-level documentation]: crate::shape::point
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(transparent)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
 pub struct Point<T, const N: usize>(
@@ -66,16 +67,16 @@ pub type PointF3 = Point<Scalar, 3>;
 /// ```
 /// # use pix_engine::prelude::*;
 /// let p: PointI2 = point!();
-/// assert_eq!(p.values(), [0, 0]);
+/// assert_eq!(p.as_array(), [0, 0]);
 ///
 /// let p = point!(1);
-/// assert_eq!(p.values(), [1]);
+/// assert_eq!(p.as_array(), [1]);
 ///
 /// let p = point!(1, 2);
-/// assert_eq!(p.values(), [1, 2]);
+/// assert_eq!(p.as_array(), [1, 2]);
 ///
 /// let p = point!(1, -2, 1);
-/// assert_eq!(p.values(), [1, -2, 1]);
+/// assert_eq!(p.as_array(), [1, -2, 1]);
 /// ```
 #[macro_export]
 macro_rules! point {
@@ -101,13 +102,13 @@ impl<T, const N: usize> Point<T, N> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let p = Point::new([1]);
-    /// assert_eq!(p.values(), [1]);
+    /// assert_eq!(p.as_array(), [1]);
     ///
     /// let p = Point::new([1, 2]);
-    /// assert_eq!(p.values(), [1, 2]);
+    /// assert_eq!(p.as_array(), [1, 2]);
     ///
     /// let p = Point::new([1, -2, 1]);
-    /// assert_eq!(p.values(), [1, -2, 1]);
+    /// assert_eq!(p.as_array(), [1, -2, 1]);
     /// ```
     #[inline]
     pub const fn new(coords: [T; N]) -> Self {
@@ -121,21 +122,18 @@ impl<T, const N: usize> Point<T, N> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let p: PointI2 = Point::origin();
-    /// assert_eq!(p.values(), [0, 0]);
+    /// assert_eq!(p.as_array(), [0, 0]);
     /// ```
     #[inline]
     pub fn origin() -> Self
     where
-        T: Default + Copy,
+        T: Default,
     {
-        Self::new([T::default(); N])
+        Self::new([(); N].map(|_| T::default()))
     }
 }
 
-impl<T, const N: usize> Point<T, N>
-where
-    T: Copy + Default,
-{
+impl<T: Copy, const N: usize> Point<T, N> {
     /// Constructs a `Point` from a [Vector].
     ///
     /// # Example
@@ -144,10 +142,10 @@ where
     /// # use pix_engine::prelude::*;
     /// let v = vector!(1.0, 2.0);
     /// let p = Point::from_vector(v);
-    /// assert_eq!(p.values(), [1.0, 2.0]);
+    /// assert_eq!(p.as_array(), [1.0, 2.0]);
     /// ```
     pub fn from_vector(v: Vector<T, N>) -> Self {
-        Self::new(v.values())
+        Self::new(v.as_array())
     }
 
     /// Returns `Point` coordinates as `[T; N]`.
@@ -157,27 +155,42 @@ where
     /// ```
     /// # use pix_engine::prelude::*;
     /// let p = point!(2, 1, 3);
-    /// assert_eq!(p.values(), [2, 1, 3]);
+    /// assert_eq!(p.as_array(), [2, 1, 3]);
     /// ```
     #[inline]
-    pub fn values(&self) -> [T; N] {
+    pub fn as_array(&self) -> [T; N] {
         self.0
     }
 
-    /// Set `Point` coordinates from `[T; N]`.
+    /// Returns `Point` coordinates as a byte slice `&[T; N]`.
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```
-    /// use pix_engine::prelude::*;
-    /// let mut p: PointI3 = Point::new([2, 1, 3]);
-    /// assert_eq!(p.values(), [2, 1, 3]);
-    /// p.set_values([1, 2, 4]);
-    /// assert_eq!(p.values(), [1, 2, 4]);
+    /// # use pix_engine::prelude::*;
+    /// let p = point!(2, 1, 3);
+    /// assert_eq!(p.as_bytes(), &[2, 1, 3]);
     /// ```
     #[inline]
-    pub fn set_values(&mut self, coords: [T; N]) {
-        self.0 = coords;
+    pub fn as_bytes(&self) -> &[T; N] {
+        &self.0
+    }
+
+    /// Returns `Point` coordinates as a mutable byte slice `&mut [T; N]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut p = point!(2, 1, 3);
+    /// for v in p.as_bytes_mut() {
+    ///     *v *= 2;
+    /// }
+    /// assert_eq!(p.as_bytes(), &[4, 2, 6]);
+    /// ```
+    #[inline]
+    pub fn as_bytes_mut(&mut self) -> &mut [T; N] {
+        &mut self.0
     }
 
     /// Returns the `x-coordinate`.
@@ -195,7 +208,7 @@ where
     /// ```
     #[inline]
     pub fn x(&self) -> T {
-        *self.0.get(0).expect("greater than 0 dimensions")
+        self.0[0]
     }
 
     /// Sets the `x-coordinate`.
@@ -210,7 +223,7 @@ where
     /// # use pix_engine::prelude::*;
     /// let mut p = point!(1, 2);
     /// p.set_x(3);
-    /// assert_eq!(p.values(), [3, 2]);
+    /// assert_eq!(p.as_array(), [3, 2]);
     /// ```
     #[inline]
     pub fn set_x(&mut self, x: T) {
@@ -232,7 +245,7 @@ where
     /// ```
     #[inline]
     pub fn y(&self) -> T {
-        *self.0.get(1).expect("greater than 1 dimension")
+        self.0[1]
     }
 
     /// Sets the `y-coordinate`.
@@ -247,7 +260,7 @@ where
     /// # use pix_engine::prelude::*;
     /// let mut p = point!(1, 2);
     /// p.set_y(3);
-    /// assert_eq!(p.values(), [1, 3]);
+    /// assert_eq!(p.as_array(), [1, 3]);
     /// ```
     #[inline]
     pub fn set_y(&mut self, y: T) {
@@ -269,7 +282,7 @@ where
     /// ```
     #[inline]
     pub fn z(&self) -> T {
-        *self.0.get(2).expect("greater than 2 dimensions")
+        self.0[2]
     }
 
     /// Sets the `z-magnitude`.
@@ -284,7 +297,7 @@ where
     /// # use pix_engine::prelude::*;
     /// let mut p = point!(1, 2, 1);
     /// p.set_z(3);
-    /// assert_eq!(p.values(), [1, 2, 3]);
+    /// assert_eq!(p.as_array(), [1, 2, 3]);
     /// ```
     #[inline]
     pub fn set_z(&mut self, z: T) {
@@ -318,7 +331,7 @@ where
     /// # use pix_engine::prelude::*;
     /// let mut p: PointI3 = point!(2, 3, 1);
     /// p.offset([2, -4]);
-    /// assert_eq!(p.values(), [4, -1, 1]);
+    /// assert_eq!(p.as_array(), [4, -1, 1]);
     /// ```
     #[inline]
     pub fn offset<P, const M: usize>(&mut self, offset: P)
@@ -333,18 +346,30 @@ where
     }
 
     /// Offsets the `x-coordinate` of the point by a given amount.
+    ///
+    /// # Panics
+    ///
+    /// If `Point` has zero dimensions.
     #[inline]
     pub fn offset_x(&mut self, offset: T) {
         self.0[0] += offset;
     }
 
     /// Offsets the `y-coordinate` of the point by a given amount.
+    ///
+    /// # Panics
+    ///
+    /// If `Vector` has less than 2 dimensions.
     #[inline]
     pub fn offset_y(&mut self, offset: T) {
         self.0[1] += offset;
     }
 
     /// Offsets the `z-coordinate` of the point by a given amount.
+    ///
+    /// # Panics
+    ///
+    /// If `Vector` has less than 3 dimensions.
     #[inline]
     pub fn offset_z(&mut self, offset: T) {
         self.0[2] += offset;
@@ -358,7 +383,7 @@ where
     /// # use pix_engine::prelude::*;
     /// let mut p: PointI2 = point!(2, 3);
     /// p.scale(2);
-    /// assert_eq!(p.values(), [4, 6]);
+    /// assert_eq!(p.as_array(), [4, 6]);
     /// ```
     pub fn scale<U>(&mut self, s: U)
     where
@@ -375,11 +400,11 @@ where
     /// # use pix_engine::prelude::*;
     /// let mut p = point!(200.0, 300.0);
     /// p.wrap([150.0, 400.0], 10.0);
-    /// assert_eq!(p.values(), [-10.0, 300.0]);
+    /// assert_eq!(p.as_array(), [-10.0, 300.0]);
     ///
     /// let mut p = point!(-100.0, 300.0);
     /// p.wrap([150.0, 400.0], 10.0);
-    /// assert_eq!(p.values(), [160.0, 300.0]);
+    /// assert_eq!(p.as_array(), [160.0, 300.0]);
     /// ```
     pub fn wrap(&mut self, wrap: [T; N], size: T)
     where
@@ -412,8 +437,7 @@ where
     /// assert!(abs_difference <= 1e-4);
     /// ```
     pub fn dist<P: Into<Point<T, N>>>(&self, p: P) -> T {
-        let p = p.into();
-        (*self - p).mag()
+        (*self - p.into()).mag()
     }
 
     /// Constructs a `Point` by linear interpolating between two `Point`s by a given amount
@@ -426,7 +450,7 @@ where
     /// let p1 = point!(1.0, 1.0, 0.0);
     /// let p2 = point!(3.0, 3.0, 0.0);
     /// let p3 = p1.lerp(p2, 0.5);
-    /// assert_eq!(p3.values(), [2.0, 2.0, 0.0]);
+    /// assert_eq!(p3.as_array(), [2.0, 2.0, 0.0]);
     /// ```
     pub fn lerp<P: Into<Point<T, N>>>(&self, p: P, amt: T) -> Self {
         let p = p.into();
@@ -458,21 +482,14 @@ where
     }
 }
 
-impl<T, const N: usize> Draw for Point<T, N>
-where
-    Self: Into<PointI2>,
-    T: Num,
-{
-    /// Draw point to the current [p.x()State] canvas.
+impl Draw for PointI2 {
+    /// Draw point to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.point(*self)
     }
 }
 
-impl<T, const N: usize> Default for Point<T, N>
-where
-    T: Default + Copy,
-{
+impl<T: Default, const N: usize> Default for Point<T, N> {
     /// Return default `Point` as origin.
     fn default() -> Self {
         Self::origin()
@@ -481,10 +498,10 @@ where
 
 impl<T, const N: usize> fmt::Display for Point<T, N>
 where
-    T: Copy + Default + fmt::Debug,
+    [T; N]: fmt::Debug,
 {
     /// Display [Point] as a string of coordinates.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self.values())
+        write!(f, "{:?}", self.0)
     }
 }

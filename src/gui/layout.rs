@@ -64,7 +64,7 @@ impl PixState {
     where
         O: Into<Option<[i32; 2]>>,
     {
-        let [x, y] = self.ui.pcursor.values();
+        let [x, y] = self.ui.pcursor.as_array();
         let offset = offset.into().unwrap_or([0; 2]);
         let item_pad = self.theme.style.item_pad;
         self.ui

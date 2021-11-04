@@ -792,7 +792,7 @@ impl PixState {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.image_mode(ImageMode::Center);
     ///     // Draw image with center at `(100, 100)`
-    ///     s.image([100, 100], &Image::from_file("./some_image.png")?)?;
+    ///     s.image(&Image::from_file("./some_image.png")?, [100, 100])?;
     ///     Ok(())
     /// }
     /// # }
@@ -812,7 +812,7 @@ impl PixState {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.image_tint(RED);
     ///     // Draw image tinted red
-    ///     s.image([0, 0], &Image::from_file("./some_image.png")?)?;
+    ///     s.image(&Image::from_file("./some_image.png")?, [0, 0])?;
     ///     Ok(())
     /// }
     /// # }
@@ -879,7 +879,7 @@ impl PixState {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.blend_mode(BlendMode::Blend);
     ///     // Draw image with alpha blended with background
-    ///     s.image([0, 0], &Image::from_file("./some_image.png")?)?;
+    ///     s.image(&Image::from_file("./some_image.png")?, [0, 0])?;
     ///     Ok(())
     /// }
     /// # }

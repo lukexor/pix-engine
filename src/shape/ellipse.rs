@@ -37,6 +37,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// [module-level documentation]: crate::shape::ellipse
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[repr(transparent)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Ellipse<T = i32>(pub(crate) [T; 4]);
 
@@ -102,20 +103,50 @@ impl<T> Ellipse<T> {
     }
 }
 
-impl<T: Copy + Default> Ellipse<T> {
+impl<T: Copy> Ellipse<T> {
     /// Returns `Ellipse` values as `[x, y, width, height]`.
-    ///
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
     /// let e = ellipse!(5, 10, 100, 100);
-    /// assert_eq!(e.values(), [5, 10, 100, 100]);
+    /// assert_eq!(e.as_array(), [5, 10, 100, 100]);
     /// ```
     #[inline]
-    pub fn values(&self) -> [T; 4] {
+    pub fn as_array(&self) -> [T; 4] {
         self.0
+    }
+
+    /// Returns `Ellipse` values as a byte slice `&[x, y, width, height]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let e = ellipse!(5, 10, 100, 100);
+    /// assert_eq!(e.as_bytes(), &[5, 10, 100, 100]);
+    /// ```
+    #[inline]
+    pub fn as_bytes(&self) -> &[T; 4] {
+        &self.0
+    }
+
+    /// Returns `Ellipse` values as a mutable byte slice `&[x, y, width, height]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut e = ellipse!(5, 10, 100, 100);
+    /// for v in e.as_bytes_mut() {
+    ///     *v += 5;
+    /// }
+    /// assert_eq!(e.as_bytes(), &[10, 15, 105, 105]);
+    /// ```
+    #[inline]
+    pub fn as_bytes_mut(&mut self) -> &mut [T; 4] {
+        &mut self.0
     }
 
     /// Returns the `x-coordinate` of the ellipse.
@@ -194,7 +225,7 @@ impl<T: Num> Ellipse<T> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let e = Ellipse::from_center([50, 50], 100, 100);
-    /// assert_eq!(e.values(), [0, 0, 100, 100]);
+    /// assert_eq!(e.as_array(), [0, 0, 100, 100]);
     /// ```
     pub fn from_center<P: Into<Point<T, 2>>>(p: P, width: T, height: T) -> Self {
         let p = p.into();
@@ -209,7 +240,7 @@ impl<T: Num> Ellipse<T> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let c = Ellipse::circle_from_center([50, 50], 100);
-    /// assert_eq!(c.values(), [0, 0, 200, 200]);
+    /// assert_eq!(c.as_array(), [0, 0, 200, 200]);
     /// ```
     pub fn circle_from_center<P: Into<Point<T, 2>>>(p: P, radius: T) -> Self {
         let p = p.into();
@@ -458,11 +489,7 @@ impl<T: Num> Intersects<T, 2> for Ellipse<T> {
     }
 }
 
-impl<T> Draw for Ellipse<T>
-where
-    Self: Into<Ellipse<i32>>,
-    T: Num,
-{
+impl Draw for Ellipse<i32> {
     /// Draw `Ellipse` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.ellipse(*self)

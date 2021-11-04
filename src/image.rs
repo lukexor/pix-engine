@@ -220,6 +220,28 @@ impl Image {
         (self.width, self.height)
     }
 
+    /// Returns the `pitch` of the image data which is the number of bytes in a row of pixel data,
+    /// including padding between lines.
+    #[inline]
+    pub fn pitch(&self) -> usize {
+        self.width() as usize * self.format.channels()
+    }
+
+    /// Returns the `Image` bounding [Rect] positioned at `(0, 0)`.
+    #[inline]
+    pub fn bounding_rect(&self) -> Rect<i32> {
+        rect![0, 0, self.width as i32, self.height as i32]
+    }
+
+    /// Returns the `Image` bounding [Rect] positioned at `offset`.
+    #[inline]
+    pub fn bounding_rect_offset<P>(&self, offset: P) -> Rect<i32>
+    where
+        P: Into<PointI2>,
+    {
+        rect![offset.into(), self.width as i32, self.height as i32]
+    }
+
     /// Returns the center position as [Point].
     #[inline]
     pub fn center(&self) -> PointI2 {
@@ -334,24 +356,52 @@ impl Image {
 
 impl PixState {
     /// Draw an [Image] to the current canvas.
-    pub fn image<P>(&mut self, position: P, img: &Image) -> PixResult<()>
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { text_field: String, text_area: String};
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     let image = Image::from_file("./some_image.png")?;
+    ///     s.image(&image, [10, 10])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    pub fn image<P>(&mut self, img: &Image, position: P) -> PixResult<()>
     where
         P: Into<PointI2>,
     {
         let pos = position.into();
-        self.image_transformed(
-            img,
-            None,
-            rect![pos.x(), pos.y(), img.width() as i32, img.height() as i32],
-            0.0,
-            None,
-            None,
-        )
+        let dst = img.bounding_rect_offset(pos);
+        self.image_transformed(img, None, dst, 0.0, None, None)
     }
 
     /// Draw a transformed [Image] to the current canvas resized to the target `rect`, optionally
     /// rotated by an `angle` about the `center` point or `flipped`. `angle` can be in either
-    /// radians or degrees based on [AngleMode].
+    /// radians or degrees based on [AngleMode]. [PixState::image_tint] can optionally add a tint
+    /// color to the rendered image.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { text_field: String, text_area: String};
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.angle_mode(AngleMode::Degrees);
+    ///     let image = Image::from_file("./some_image.png")?;
+    ///     let src = None; // Draw entire image instead of a sub-image
+    ///     let dst = image.bounding_rect_offset([10, 10]); // Draw image at `(10, 10)`.
+    ///     let angle = 10.0;
+    ///     let center = point!(10, 10);
+    ///     s.image_transformed(&image, src, dst, angle, center, Flipped::Horizontal)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn image_transformed<R1, R2, A, C, F>(
         &mut self,
         img: &Image,

@@ -28,6 +28,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 ///
 /// [module-level documentation]: crate::shape::line
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[repr(transparent)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
 pub struct Line<T, const N: usize>(pub(crate) [Point<T, N>; 2]);
@@ -50,13 +51,13 @@ pub type LineF3 = Line<Scalar, 3>;
 /// # use pix_engine::prelude::*;
 ///
 /// let l: LineI2 = line_!([10, 20], [30, 10]);
-/// assert_eq!(l.values(), [
+/// assert_eq!(l.as_array(), [
 ///   point!(10, 20),
 ///   point!(30, 10),
 /// ]);
 ///
 /// let l: LineI3 = line_!([10, 20, 10], [30, 10, 40]);
-/// assert_eq!(l.values(), [
+/// assert_eq!(l.as_array(), [
 ///   point!(10, 20, 10),
 ///   point!(30, 10, 40),
 /// ]);
@@ -99,10 +100,7 @@ impl<T, const N: usize> Line<T, N> {
     }
 }
 
-impl<T, const N: usize> Line<T, N>
-where
-    T: Copy + Default,
-{
+impl<T: Copy, const N: usize> Line<T, N> {
     /// Returns the starting point of the line.
     #[inline]
     pub fn start(&self) -> Point<T, N> {
@@ -136,10 +134,46 @@ where
     /// let p1 = point!(5, 10);
     /// let p2 = point!(100, 100);
     /// let l: LineI2 = Line::new(p1, p2);
-    /// assert_eq!(l.values(), [point!(5, 10), point!(100, 100)]);
+    /// assert_eq!(l.as_array(), [point!(5, 10), point!(100, 100)]);
     /// ```
-    pub fn values(&self) -> [Point<T, N>; 2] {
+    #[inline]
+    pub fn as_array(&self) -> [Point<T, N>; 2] {
         self.0
+    }
+
+    /// Returns `Line` coordinates as a byte slice `&[x1, y1, z1, x2, y2, z2]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p1 = point!(5, 10);
+    /// let p2 = point!(100, 100);
+    /// let l: LineI2 = Line::new(p1, p2);
+    /// assert_eq!(l.as_bytes(), &[point!(5, 10), point!(100, 100)]);
+    /// ```
+    #[inline]
+    pub fn as_bytes(&self) -> &[Point<T, N>; 2] {
+        &self.0
+    }
+
+    /// Returns `Line` coordinates as a mutable byte slice `&mut [x1, y1, z1, x2, y2, z2]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p1 = point!(5, 10);
+    /// let p2 = point!(100, 100);
+    /// let mut l: LineI2 = Line::new(p1, p2);
+    /// for p in l.as_bytes_mut() {
+    ///     *p += 5;
+    /// }
+    /// assert_eq!(l.as_bytes(), &[point!(10, 15), point!(105, 105)]);
+    /// ```
+    #[inline]
+    pub fn as_bytes_mut(&mut self) -> &mut [Point<T, N>; 2] {
+        &mut self.0
     }
 
     /// Returns `Line` as a [Vec].
@@ -171,12 +205,12 @@ impl<T: Float> Intersects<T, 2> for Line<T, 2> {
         L: Into<Line<T, 2>>,
     {
         let other = other.into();
-        let [start1, end1] = self.values();
-        let [start2, end2] = other.values();
-        let [x1, y1] = start1.values();
-        let [x2, y2] = end1.values();
-        let [x3, y3] = start2.values();
-        let [x4, y4] = end2.values();
+        let [start1, end1] = self.as_array();
+        let [start2, end2] = other.as_array();
+        let [x1, y1] = start1.as_array();
+        let [x2, y2] = end1.as_array();
+        let [x3, y3] = start2.as_array();
+        let [x4, y4] = end2.as_array();
         let d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
         if d == T::zero() {
             return None;
@@ -201,11 +235,7 @@ impl<T: Float> Intersects<T, 2> for Line<T, 2> {
     }
 }
 
-impl<T, const N: usize> Draw for Line<T, N>
-where
-    Self: Into<LineI2>,
-    T: Num,
-{
+impl Draw for LineI2 {
     /// Draw `Line` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.line(*self)

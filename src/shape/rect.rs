@@ -37,6 +37,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// [module-level documentation]: crate::shape::rect
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[repr(transparent)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Rect<T = i32>(pub(crate) [T; 4]);
 
@@ -112,22 +113,50 @@ impl<T> Rect<T> {
     }
 }
 
-impl<T> Rect<T>
-where
-    T: Copy + Default,
-{
-    /// Returns `Rect` values as `[x, y, width, height]`.
+impl<T: Copy> Rect<T> {
+    /// Returns `Rect` as_array as `[x, y, width, height]`.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
     /// let r = rect!(5, 10, 100, 100);
-    /// assert_eq!(r.values(), [5, 10, 100, 100]);
+    /// assert_eq!(r.as_array(), [5, 10, 100, 100]);
     /// ```
     #[inline]
-    pub fn values(&self) -> [T; 4] {
+    pub fn as_array(&self) -> [T; 4] {
         self.0
+    }
+
+    /// Returns `Rect` as_array as a byte slice `&[x, y, width, height]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let r = rect!(5, 10, 100, 100);
+    /// assert_eq!(r.as_bytes(), &[5, 10, 100, 100]);
+    /// ```
+    #[inline]
+    pub fn as_bytes(&self) -> &[T; 4] {
+        &self.0
+    }
+
+    /// Returns `Rect` as_array as a mutable byte slice `&mut [x, y, width, height]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let mut r = rect!(5, 10, 100, 100);
+    /// for p in r.as_bytes_mut() {
+    ///     *p += 5;
+    /// }
+    /// assert_eq!(r.as_bytes(), &[10, 15, 105, 105]);
+    /// ```
+    #[inline]
+    pub fn as_bytes_mut(&mut self) -> &mut [T; 4] {
+        &mut self.0
     }
 
     /// Returns the `x-coordinate` of the rectangle.
@@ -202,7 +231,7 @@ impl<T: Num> Rect<T> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let r: Rect<i32> = Rect::with_points([50, 50], [150, 150]);
-    /// assert_eq!(r.values(), [50, 50, 100, 100]);
+    /// assert_eq!(r.as_array(), [50, 50, 100, 100]);
     /// ```
     pub fn with_points<P: Into<Point<T, 2>>>(p1: P, p2: P) -> Self {
         let p1 = p1.into();
@@ -220,7 +249,7 @@ impl<T: Num> Rect<T> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let r = Rect::from_center([50, 50], 100, 100);
-    /// assert_eq!(r.values(), [0, 0, 100, 100]);
+    /// assert_eq!(r.as_array(), [0, 0, 100, 100]);
     /// ```
     pub fn from_center<P: Into<Point<T, 2>>>(p: P, width: T, height: T) -> Self {
         let p = p.into();
@@ -235,7 +264,7 @@ impl<T: Num> Rect<T> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let s = Rect::square_from_center([50, 50], 100);
-    /// assert_eq!(s.values(), [0, 0, 100, 100]);
+    /// assert_eq!(s.as_array(), [0, 0, 100, 100]);
     /// ```
     pub fn square_from_center<P: Into<Point<T, 2>>>(p: P, size: T) -> Self {
         let p = p.into();
@@ -477,11 +506,7 @@ impl<T: Float> Intersects<T, 2> for Rect<T> {
     }
 }
 
-impl<T> Draw for Rect<T>
-where
-    Self: Into<Rect<i32>>,
-    T: Num,
-{
+impl Draw for Rect<i32> {
     /// Draw `Rect` to the current [PixState] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.rect(*self)

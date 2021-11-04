@@ -112,7 +112,7 @@ impl PixState {
         s.rect(select_box)?;
 
         // Arrow
-        let [_, y, _, height] = select_box.values();
+        let [_, y, _, height] = select_box.as_array();
         let arrow_box = square![select_box.right() - height, y, height];
         s.no_stroke();
         if hovered || focused {
@@ -126,7 +126,7 @@ impl PixState {
 
         let third = arrow_box.width() / 3;
         let fourth = arrow_box.width() / 4;
-        let [x, y, width, height] = arrow_box.values();
+        let [x, y, width, height] = arrow_box.as_array();
         s.no_stroke();
         s.fill(WHITE);
         s.triangle([

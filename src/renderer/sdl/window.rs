@@ -42,6 +42,7 @@ impl WindowRenderer for Renderer {
         if id == self.window_target {
             self.reset_window_target();
         }
+        self.textures.retain(|_, (window_id, _)| *window_id != id);
         self.text_cache.retain(|key, _| key.0 != id);
         self.image_cache.retain(|key, _| key.0 != id);
         self.canvases
@@ -106,7 +107,7 @@ impl WindowRenderer for Renderer {
     #[inline]
     fn dimensions(&self) -> PixResult<(u32, u32)> {
         if let Some(texture_id) = self.texture_target {
-            if let Some((_, texture)) = self.textures.get(texture_id) {
+            if let Some((_, texture)) = self.textures.get(&texture_id) {
                 let query = texture.query();
                 Ok((query.width, query.height))
             } else {
@@ -207,7 +208,7 @@ impl WindowRenderer for Renderer {
         let new_texture_creator = new_canvas.texture_creator();
 
         let previous_window_id = self.window_target;
-        for (texture_window_id, texture) in &mut self.textures {
+        for (texture_window_id, texture) in self.textures.values_mut() {
             if *texture_window_id == previous_window_id {
                 let TextureQuery {
                     width,
