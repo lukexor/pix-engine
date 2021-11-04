@@ -90,9 +90,10 @@ impl<T, const N: usize> Line<T, N> {
     /// // 3D
     /// let line: LineI3 = Line::new([10, 20, 5], [30, 10, 5]);
     /// ```
-    pub fn new<P>(start: P, end: P) -> Self
+    pub fn new<P1, P2>(start: P1, end: P2) -> Self
     where
-        P: Into<Point<T, N>>,
+        P1: Into<Point<T, N>>,
+        P2: Into<Point<T, N>>,
     {
         Self([start.into(), end.into()])
     }

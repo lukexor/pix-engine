@@ -1,4 +1,4 @@
-//! [PixState] functions for the [PixEngine] and [AppState].
+//! [PixState] methods for the [PixEngine] and [AppState].
 //!
 //! `PixState` is the global engine state and API for any application using `pix-engine`. A mutable
 //! reference is passed to most [AppState] methods and allows you to modify settings, query engine

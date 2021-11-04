@@ -1,6 +1,11 @@
 //! Drawing functions.
 //!
-//! Provides a [Draw] trait as well standard draw methods like [PixState::clear].
+//! Provides a [Draw] trait as well standard draw methods.
+//!
+//! Provided [PixState] methods:
+//!
+//! - [PixState::clear]: Clear the render target to the current background [Color].
+//! - [PixState::save_canvas]: Save the current render target out to a [png] file.
 //!
 //! # Example
 //!
@@ -69,11 +74,28 @@ impl PixState {
         self.renderer.clear()
     }
 
-    /// Save currently rendered target to a `png` file.
+    /// Save currently rendered target to a [png] file.
     ///
     /// # Example
     ///
     /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    ///     if let Key::S = event.key {
+    ///         let texture_id = s.create_texture(200, 200, None)?;
+    ///         s.with_texture(texture_id, |s: &mut PixState| -> PixResult<()> {
+    ///             s.background(s.accent_color())?;
+    ///             s.text("Hello!")?;
+    ///             s.save_canvas("test_image.png")?;
+    ///             Ok(())
+    ///         });
+    ///     }
+    ///     Ok(false)
+    /// }
+    /// # }
     /// ```
     pub fn save_canvas<P>(&mut self, path: P) -> PixResult<()>
     where

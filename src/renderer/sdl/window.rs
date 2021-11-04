@@ -9,6 +9,7 @@ use anyhow::Context;
 use sdl2::{
     image::LoadSurface,
     mouse::{Cursor as SdlCursor, SystemCursor as SdlSystemCursor},
+    render::TextureQuery,
     surface::Surface,
     video::FullscreenType,
     Sdl,
@@ -206,6 +207,17 @@ impl WindowRenderer for Renderer {
         let new_texture_creator = new_canvas.texture_creator();
 
         let previous_window_id = self.window_target;
+        for (texture_window_id, texture) in &mut self.textures {
+            if *texture_window_id == previous_window_id {
+                let TextureQuery {
+                    width,
+                    height,
+                    format,
+                    ..
+                } = texture.query();
+                *texture = new_texture_creator.create_texture_target(format, width, height)?;
+            }
+        }
         self.text_cache.retain(|key, _| key.0 != previous_window_id);
         self.image_cache
             .retain(|key, _| key.0 != previous_window_id);

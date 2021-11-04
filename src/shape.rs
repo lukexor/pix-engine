@@ -1,4 +1,32 @@
-//! Shape functions for drawing.
+//! Shape methods for drawing.
+//!
+//! Methods for drawing and interacting with shapes such as points, lines, rectangles, etc.
+//!
+//! Provided traits:
+//!
+//! - [Contains]: Defines [contains_point] and [contains_shape].
+//! - [Intersects]: Defines [intersects_line] and [intersects_shape].
+//!
+//! Provided [PixState] methods;
+//!
+//! - [point]: Draw a [Point] to the current canvas.
+//! - [line]: Draw a [Line] to the current canvas.
+//! - [triangle]: Draw a [Triangle][Tri] to the current canvas.
+//! - [square]: Draw a square [Rect] to the current canvas.
+//! - [rounded_square]: Draw a square [Rect] with rounded corners to the current canvas.
+//! - [rect]: Draw a [Rect] to the current canvas.
+//! - [rounded_rect]: Draw a [Rect] with rounded corners to the current canvas.
+//! - [quad]: Draw a [Quad] to the current canvas.
+//! - [polygon]: Draw a polygon defined by a set of [Point]s to the current canvas.
+//! - [wireframe]: Draw a wireframe defined by a set vertexes to the current canvas.
+//! - [circle]: Draw a circle [Ellipse] to the current canvas.
+//! - [ellipse]: Draw an [Ellipse] to the current canvas.
+//! - [arc]: Draw an arc to the current canvas.
+//!
+//! [contains_point]: Contains::contains_point
+//! [contains_shape]: Contains::contains_shape
+//! [intersects_line]: Intersects::intersects_line
+//! [intersects_shape]: Intersects::intersects_shape
 
 use crate::{prelude::*, renderer::Rendering};
 use std::iter::Iterator;
@@ -60,7 +88,22 @@ pub trait Intersects<T, const N: usize> {
 }
 
 impl PixState {
-    /// Draw a [Point] to the current canvas.
+    /// Draw a [Point] to the current canvas. [PixState::stroke] controls whether the point is
+    /// drawn or not. [PixState::stroke_weight] and [PixState::fill] have no effect.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.stroke(RED);
+    ///     s.point(s.mouse_pos())?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn point<P>(&mut self, p: P) -> PixResult<()>
     where
         P: Into<PointI2>,
@@ -71,7 +114,23 @@ impl PixState {
         Ok(())
     }
 
-    /// Draw a [Line] to the current canvas.
+    /// Draw a [Line] to the current canvas. [PixState::stroke] controls whether the line is drawn
+    /// or not. [PixState::stroke_weight] controls the line thickness. [PixState::fill] has no
+    /// effect.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.stroke(RED);
+    ///     s.line([s.pmouse_pos(), s.mouse_pos()])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn line<L>(&mut self, line: L) -> PixResult<()>
     where
         L: Into<LineI2>,
@@ -83,7 +142,23 @@ impl PixState {
         Ok(())
     }
 
-    /// Draw a [Triangle][Tri] to the current canvas.
+    /// Draw a [Triangle][Tri] to the current canvas. [PixState::fill] and [PixState::stroke]
+    /// control whether the triangle is filled or outlined.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.fill(BLACK);
+    ///     s.stroke(RED);
+    ///     s.triangle(tri!([10, 0], [-5, 5], [5, 5]))?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn triangle<T>(&mut self, tri: T) -> PixResult<()>
     where
         T: Into<TriI2>,
@@ -92,7 +167,27 @@ impl PixState {
         self.renderer.triangle(tri.into(), s.fill, s.stroke)
     }
 
-    /// Draw a square [Rect] to the current canvas.
+    /// Draw a square [Rect] to the current canvas. [PixState::fill] and [PixState::stroke] control
+    /// whether the square is filled or outlined. [RectMode] controls how the `(x, y)` position is
+    /// interpreted.
+    ///
+    /// Alias for [PixState::rect].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.fill(BLACK);
+    ///     s.stroke(RED);
+    ///     s.square(square![s.mouse_pos(), 100])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[doc(alias = "rect")]
     pub fn square<R>(&mut self, square: R) -> PixResult<()>
     where
         R: Into<Rect<i32>>,
@@ -100,7 +195,27 @@ impl PixState {
         self.rect(square)
     }
 
-    /// Draw a rounded [Square](Rect) to the current canvas.
+    /// Draw a rounded [Square](Rect) to the current canvas. [PixState::fill] and
+    /// [PixState::stroke] control whether the square is filled or outlined. [RectMode] controls
+    /// how the `(x, y)` position is interpreted.
+    ///
+    /// Alias for [PixState::rounded_rect].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.fill(BLACK);
+    ///     s.stroke(RED);
+    ///     s.rounded_square(square![s.mouse_pos(), 100], 10)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[doc(alias = "rounded_rect")]
     pub fn rounded_square<R>(&mut self, square: R, radius: i32) -> PixResult<()>
     where
         R: Into<Rect<i32>>,
@@ -108,7 +223,24 @@ impl PixState {
         self.rounded_rect(square, radius)
     }
 
-    /// Draw a [Rectangle](Rect) to the current canvas.
+    /// Draw a [Rectangle](Rect) to the current canvas. [PixState::fill] and [PixState::stroke]
+    /// control whether the rect is filled or outlined. [RectMode] controls how the `(x, y)`
+    /// position is interpreted.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.fill(BLACK);
+    ///     s.stroke(RED);
+    ///     s.rect(rect![s.mouse_pos(), 100, 100])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn rect<R>(&mut self, rect: R) -> PixResult<()>
     where
         R: Into<Rect<i32>>,
@@ -118,7 +250,24 @@ impl PixState {
         self.renderer.rect(rect, None, s.fill, s.stroke)
     }
 
-    /// Draw a rounded [Rectangle](Rect) to the current canvas.
+    /// Draw a rounded [Rectangle](Rect) to the current canvas. [PixState::fill] and
+    /// [PixState::stroke] control whether the rect is filled or outlined. [RectMode] controls how
+    /// the `(x, y)` position is interpreted.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.fill(BLACK);
+    ///     s.stroke(RED);
+    ///     s.rounded_rect(rect![s.mouse_pos(), 100, 100], 10)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn rounded_rect<R>(&mut self, rect: R, radius: i32) -> PixResult<()>
     where
         R: Into<Rect<i32>>,
@@ -128,7 +277,24 @@ impl PixState {
         self.renderer.rect(rect, Some(radius), s.fill, s.stroke)
     }
 
-    /// Draw a [Quadrilateral](Quad) to the current canvas.
+    /// Draw a [Quadrilateral](Quad) to the current canvas. [PixState::fill] and
+    /// [PixState::stroke] control whether the quad is filled or outlined. [RectMode] has no
+    /// effect.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.fill(BLACK);
+    ///     s.stroke(RED);
+    ///     s.quad(quad![10, 20, 30, 10, 20, 25, 15, 15])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn quad<Q>(&mut self, quad: Q) -> PixResult<()>
     where
         Q: Into<QuadI2>,
@@ -137,7 +303,23 @@ impl PixState {
         self.renderer.quad(quad.into(), s.fill, s.stroke)
     }
 
-    /// Draw a polygon to the current canvas.
+    /// Draw a polygon to the current canvas. [PixState::fill] and [PixState::stroke] control
+    /// whether the polygon is filled or outlined. [RectMode] has no effect.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.fill(BLACK);
+    ///     s.stroke(RED);
+    ///     s.polygon([[10, 10], [50, 20], [70, 30], [60, 50], [10, 50]])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn polygon<P, I>(&mut self, points: I) -> PixResult<()>
     where
         P: Into<PointI2>,
@@ -148,7 +330,10 @@ impl PixState {
             .polygon(points.into_iter().map(|p| p.into()), s.fill, s.stroke)
     }
 
-    /// Draw a wireframe to the current canvas, translated to a given [Point]
+    /// Draw a wireframe to the current canvas, translated to a given [Point] and optionally
+    /// rotated by `angle` and `scaled`. [PixState::fill] and [PixState::stroke] control whether
+    /// the wireframe is filled or outlined. `angle` can be in either radians or degrees based on
+    /// [AngleMode].
     ///
     /// # Example
     ///
@@ -157,8 +342,15 @@ impl PixState {
     /// # struct App;
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.background(CADET_BLUE);
-    ///     s.clear();
+    ///     let wireframe = [
+    ///         point!(5.0, 0.0),
+    ///         point!(-2.5, -2.5),
+    ///         point!(-2.5, 2.5)
+    ///     ];
+    ///     s.fill(CADET_BLUE);
+    ///     s.stroke(BLACK);
+    ///     s.angle_mode(AngleMode::Degrees);
+    ///     s.wireframe(wireframe, [10, 10], 45.0, 2.0)?;
     ///     Ok(())
     /// }
     /// # }
@@ -195,7 +387,27 @@ impl PixState {
         self.polygon(vs)
     }
 
-    /// Draw a circle [Ellipse] to the current canvas.
+    /// Draw a circle [Ellipse] to the current canvas. [PixState::fill] and [PixState::stroke]
+    /// control whether the circle is filled or outlined. [EllipseMode] controls how the `(x, y)`
+    /// position is interpreted.
+    ///
+    /// Alias for [PixState::ellipse].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.fill(BLACK);
+    ///     s.stroke(RED);
+    ///     s.circle(circle![s.mouse_pos(), 100])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[doc(alias = "ellipse")]
     pub fn circle<C>(&mut self, circle: C) -> PixResult<()>
     where
         C: Into<Ellipse<i32>>,
@@ -203,7 +415,24 @@ impl PixState {
         self.ellipse(circle)
     }
 
-    /// Draw a [Ellipse] to the current canvas.
+    /// Draw a [Ellipse] to the current canvas. [PixState::fill] and [PixState::stroke] control
+    /// whether the ellipse is filled or outlined. [EllipseMode] controls how the `(x, y)` position
+    /// is interpreted.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.fill(BLACK);
+    ///     s.stroke(RED);
+    ///     s.ellipse(ellipse![s.mouse_pos(), 100, 100])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn ellipse<E>(&mut self, ellipse: E) -> PixResult<()>
     where
         E: Into<Ellipse<i32>>,
@@ -213,7 +442,25 @@ impl PixState {
         self.renderer.ellipse(ellipse, s.fill, s.stroke)
     }
 
-    /// Draw an arc to the current canvas.
+    /// Draw an arc of a given `radius` and length defined by `start` and `end` to the current
+    /// canvas. [PixState::fill] and [PixState::stroke] control whether the pie is filled or
+    /// outlined. [ArcMode] changes whether the arc is drawn as an open segment or a pie shape.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.fill(BLACK);
+    ///     s.stroke(RED);
+    ///     s.arc_mode(ArcMode::Pie);
+    ///     s.arc(s.mouse_pos(), 20, 0, 180)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn arc<P>(&mut self, p: P, radius: i32, start: i32, end: i32) -> PixResult<()>
     where
         P: Into<PointI2>,

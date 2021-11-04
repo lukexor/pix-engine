@@ -2,7 +2,7 @@
 //!
 //! Methods for reading and setting various engine configuration values.
 //!
-//! Provided [PixState] types:
+//! Provided types:
 //!
 //! - [DrawMode]: Determines how `(x, y)` coordinates are used for rendering.
 //! - [RectMode]: Alias for `DrawMode`.
@@ -303,7 +303,7 @@ impl PixState {
     ///     s.stroke(BLUE);
     ///     s.stroke_weight(2);
     ///     // Shows a 2-pixel wide diagonal line
-    ///     s.line([point![0, 0], point![100, 100]])?;
+    ///     s.line(line_![0, 0, 100, 100])?;
     ///     Ok(())
     /// }
     /// # }

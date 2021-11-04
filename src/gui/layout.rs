@@ -170,7 +170,7 @@ impl PixState {
         s.push();
 
         s.stroke(s.primary_color());
-        s.line([point![pad.x(), y], point![s.width()? as i32 - pad.x(), y]])?;
+        s.line(line_![pad.x(), y, s.width()? as i32 - pad.x(), y])?;
 
         s.pop();
         s.advance_cursor([0, 0, 0, height]);

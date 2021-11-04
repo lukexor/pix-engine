@@ -86,9 +86,11 @@ impl<T, const N: usize> Tri<T, N> {
     /// assert_eq!(tri.p2().values(), [30, 10]);
     /// assert_eq!(tri.p3().values(), [20, 25]);
     /// ```
-    pub fn new<P>(p1: P, p2: P, p3: P) -> Self
+    pub fn new<P1, P2, P3>(p1: P1, p2: P2, p3: P3) -> Self
     where
-        P: Into<Point<T, N>>,
+        P1: Into<Point<T, N>>,
+        P2: Into<Point<T, N>>,
+        P3: Into<Point<T, N>>,
     {
         Self([p1.into(), p2.into(), p3.into()])
     }

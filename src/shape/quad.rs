@@ -57,18 +57,31 @@ pub type QuadF3 = Quad<Scalar, 3>;
 ///
 /// ```
 /// # use pix_engine::prelude::*;
-/// let q = quad!([10, 20], [30, 10], [20, 25], [15, 15]);
+/// let p1: PointI2 = [10, 10].into();
+/// let p2 = point!(100, 10);
+/// let q = quad!(p1, p2, [90, 50], [10, 80]);
 /// assert_eq!(q.values(), [
-///   point!(10, 20),
-///   point!(30, 10),
-///   point!(20, 25),
-///   point!(15, 15),
+///   point!(10, 10),
+///   point!(100, 10),
+///   point!(90, 50),
+///   point!(10, 80),
+/// ]);
+///
+/// let q = quad!(10, 10, 100, 10, 90, 50, 10, 80);
+/// assert_eq!(q.values(), [
+///   point!(10, 10),
+///   point!(100, 10),
+///   point!(90, 50),
+///   point!(10, 80),
 /// ]);
 /// ```
 #[macro_export]
 macro_rules! quad {
-    ($p1:expr, $p2:expr, $p3:expr, $p4: expr$(,)?) => {
+    ($p1:expr, $p2:expr, $p3:expr, $p4:expr$(,)?) => {
         $crate::prelude::Quad::new($p1, $p2, $p3, $p4)
+    };
+    ($p1:expr, $p2:expr, $p3:expr, $p4:expr, $p5:expr, $p6:expr, $p7:expr, $p8:expr$(,)?) => {
+        $crate::prelude::Quad::new([$p1, $p2], [$p3, $p4], [$p5, $p6], [$p7, $p8])
     };
 }
 
@@ -83,9 +96,12 @@ impl<T, const N: usize> Quad<T, N> {
     /// assert_eq!(quad.p3().values(), [20, 25]);
     /// assert_eq!(quad.p4().values(), [15, 15]);
     /// ```
-    pub fn new<P>(p1: P, p2: P, p3: P, p4: P) -> Self
+    pub fn new<P1, P2, P3, P4>(p1: P1, p2: P2, p3: P3, p4: P4) -> Self
     where
-        P: Into<Point<T, N>>,
+        P1: Into<Point<T, N>>,
+        P2: Into<Point<T, N>>,
+        P3: Into<Point<T, N>>,
+        P4: Into<Point<T, N>>,
     {
         Self([p1.into(), p2.into(), p3.into(), p4.into()])
     }
