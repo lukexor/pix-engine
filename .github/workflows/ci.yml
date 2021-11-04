@@ -20,8 +20,8 @@ jobs:
       fail-fast: false
       matrix:
         os:  [macos-latest, ubuntu-latest, windows-latest]
-        # MSRV 1.55
-        toolchain: [nightly, beta, stable, 1.55]
+        # MSRV 1.56.1
+        toolchain: [nightly, beta, stable, 1.56.1]
         include:
           - os: macos-latest
             build_cache: |

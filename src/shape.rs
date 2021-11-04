@@ -9,19 +9,19 @@
 //!
 //! Provided [PixState] methods;
 //!
-//! - [point]: Draw a [Point] to the current canvas.
-//! - [line]: Draw a [Line] to the current canvas.
-//! - [triangle]: Draw a [Triangle][Tri] to the current canvas.
-//! - [square]: Draw a square [Rect] to the current canvas.
-//! - [rounded_square]: Draw a square [Rect] with rounded corners to the current canvas.
-//! - [rect]: Draw a [Rect] to the current canvas.
-//! - [rounded_rect]: Draw a [Rect] with rounded corners to the current canvas.
-//! - [quad]: Draw a [Quad] to the current canvas.
-//! - [polygon]: Draw a polygon defined by a set of [Point]s to the current canvas.
-//! - [wireframe]: Draw a wireframe defined by a set vertexes to the current canvas.
-//! - [circle]: Draw a circle [Ellipse] to the current canvas.
-//! - [ellipse]: Draw an [Ellipse] to the current canvas.
-//! - [arc]: Draw an arc to the current canvas.
+//! - [PixState::point]: Draw a [Point] to the current canvas.
+//! - [PixState::line]: Draw a [Line] to the current canvas.
+//! - [PixState::triangle]: Draw a [Triangle][Tri] to the current canvas.
+//! - [PixState::square]: Draw a square [Rect] to the current canvas.
+//! - [PixState::rounded_square]: Draw a square [Rect] with rounded corners to the current canvas.
+//! - [PixState::rect]: Draw a [Rect] to the current canvas.
+//! - [PixState::rounded_rect]: Draw a [Rect] with rounded corners to the current canvas.
+//! - [PixState::quad]: Draw a [Quad] to the current canvas.
+//! - [PixState::polygon]: Draw a polygon defined by a set of [Point]s to the current canvas.
+//! - [PixState::wireframe]: Draw a wireframe defined by a set vertexes to the current canvas.
+//! - [PixState::circle]: Draw a circle [Ellipse] to the current canvas.
+//! - [PixState::ellipse]: Draw an [Ellipse] to the current canvas.
+//! - [PixState::arc]: Draw an arc to the current canvas.
 //!
 //! [contains_point]: Contains::contains_point
 //! [contains_shape]: Contains::contains_shape

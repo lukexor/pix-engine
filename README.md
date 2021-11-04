@@ -27,7 +27,7 @@ drive real applications. The [Tetanes][] [NES][] emulator, for example uses
 
 ## Minimum Supported Rust Version
 
-The current minimum Rust version is `1.55.0`.
+The current minimum Rust version is `1.56.1`.
 
 ## Getting Started
 
