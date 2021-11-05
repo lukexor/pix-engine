@@ -13,7 +13,7 @@
 //!     s.font_color(CADET_BLUE); // Change theme text color
 //!     s.font_size(14)?; // Change theme body text size
 //!     s.font_style(FontStyle::BOLD); // Change theme body font stylle
-//!     s.font_family(INCONSOLATA)?;
+//!     s.font_family(fonts::INCONSOLATA)?;
 //!     s.fill(s.background_color());
 //!     Ok(())
 //! }
@@ -30,7 +30,7 @@ use std::str::FromStr;
 pub mod fonts {
     //! A list of library-provided font families.
 
-    use super::{Font, FontSrc};
+    use super::Font;
 
     const NOTO_TTF: &[u8] = include_bytes!("../../assets/noto_sans_regular.ttf");
     const EMULOGIC_TTF: &[u8] = include_bytes!("../../assets/emulogic.ttf");
@@ -38,14 +38,14 @@ pub mod fonts {
 
     /// [Noto Sans Regular](https://fonts.google.com/noto/specimen/Noto+Sans) - an open-source used
     /// by Linux and Google.
-    pub const NOTO: Font = Font::new("Noto", FontSrc::Bytes(NOTO_TTF));
+    pub const NOTO: Font = Font::from_bytes("Noto", NOTO_TTF);
 
     /// Emulogic - a bold, retro gaming pixel font by Freaky Fonts.
-    pub const EMULOGIC: Font = Font::new("Emulogic", FontSrc::Bytes(EMULOGIC_TTF));
+    pub const EMULOGIC: Font = Font::from_bytes("Emulogic", EMULOGIC_TTF);
 
     /// [Inconsolata](https://fonts.google.com/specimen/Inconsolata) - an open-source monospace
     /// font designed for source code and terminals.
-    pub const INCONSOLATA: Font = Font::new("Inconsolata", FontSrc::Bytes(INCONSOLATA_TTF));
+    pub const INCONSOLATA: Font = Font::from_bytes("Inconsolata", INCONSOLATA_TTF);
 }
 
 /// A builder to generate custom [Theme]s.
@@ -64,13 +64,13 @@ pub mod fonts {
 ///     let theme = Theme::builder()
 ///         .with_font(
 ///             FontType::Body,
-///             Font::new("Some font", FontSrc::Path("./some_font.ttf".into())),
+///             Font::from_file("Some font", "./some_font.ttf"),
 ///             16,
 ///             FontStyle::ITALIC,
 ///         )
 ///         .with_font(
 ///             FontType::Heading,
-///             NOTO,
+///             fonts::NOTO,
 ///             22,
 ///             FontStyle::BOLD | FontStyle::UNDERLINE
 ///         )
@@ -209,17 +209,34 @@ pub struct Font {
     pub(crate) source: FontSrc,
 }
 
+impl Default for Font {
+    fn default() -> Self {
+        fonts::EMULOGIC
+    }
+}
+
 impl Font {
-    /// Constructs a new `Font` instance.
-    pub const fn new(name: &'static str, source: FontSrc) -> Self {
-        Self { name, source }
+    /// Constructs a new `Font` instance from a static byte array.
+    pub const fn from_bytes(name: &'static str, bytes: &'static [u8]) -> Self {
+        Self {
+            name,
+            source: FontSrc::from_bytes(bytes),
+        }
+    }
+
+    /// Constructs a new `Font` instance from a file.
+    pub fn from_file<P: Into<PathBuf>>(name: &'static str, path: P) -> Self {
+        Self {
+            name,
+            source: FontSrc::from_file(path),
+        }
     }
 }
 
 /// Represents a source of font glyph data.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub enum FontSrc {
+pub(crate) enum FontSrc {
     /// A font from static byte data.
     Bytes(&'static [u8]),
     #[cfg(not(target_arch = "wasm32"))]
@@ -227,9 +244,13 @@ pub enum FontSrc {
     Path(PathBuf),
 }
 
-impl Default for Font {
-    fn default() -> Self {
-        fonts::EMULOGIC
+impl FontSrc {
+    pub(crate) const fn from_bytes(bytes: &'static [u8]) -> Self {
+        Self::Bytes(bytes)
+    }
+
+    pub(crate) fn from_file<P: Into<PathBuf>>(path: P) -> Self {
+        Self::Path(path.into())
     }
 }
 
@@ -368,9 +389,7 @@ impl Default for ThemeStyle {
 /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 ///     s.fill(s.accent_color());
 ///     s.font_size(s.heading_font_size())?;
-///     s.font_family(
-///         Font::new("Some font", FontSrc::Path("./some_font.ttf".into()))
-///     )?;
+///     s.font_family(Font::from_file("Some font", "./some_font.ttf"))?;
 ///     Ok(())
 /// }
 /// # }
@@ -398,28 +417,103 @@ impl Theme {
 
 impl PixState {
     /// Set the font color for drawing to the current canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.font_color(ALICE_BLUE);
+    ///     s.text("Some blue text")?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn font_color<C: Into<Color>>(&mut self, color: C) {
         self.theme.colors.text = color.into();
     }
 
     /// Set the font size for drawing to the current canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.font_size(22);
+    ///     s.text("Some big text")?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn font_size(&mut self, size: u32) -> PixResult<()> {
         self.theme.font_sizes.body = size;
         self.renderer.font_size(self.theme.font_sizes.body)
     }
 
     /// Return the dimensions of given text for drawing to the current canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     let text = "Some text";
+    ///     let (w, h) = s.size_of(text)?;
+    ///     // Draw a box behind the text
+    ///     s.rect(rect![s.cursor_pos() - 10, w as i32 + 20, h as i32 + 20]);
+    ///     s.text(text)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn size_of<S: AsRef<str>>(&mut self, text: S) -> PixResult<(u32, u32)> {
         self.renderer.size_of(text.as_ref())
     }
 
     /// Set the font style for drawing to the current canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.font_style(FontStyle::BOLD);
+    ///     s.text("Some bold text")?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn font_style(&mut self, style: FontStyle) {
         self.theme.font_styles.body = style;
         self.renderer.font_style(style);
     }
 
     /// Set the font family for drawing to the current canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.font_family(fonts::NOTO)?;
+    ///     s.text("Some NOTO family text")?;
+    ///     s.font_family(Font::from_file("Custom font", "./custom_font.ttf"))?;
+    ///     s.text("Some custom family text")?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn font_family(&mut self, font: Font) -> PixResult<()> {
         self.theme.fonts.body = font;
         self.renderer.font_family(&self.theme.fonts.body)
@@ -479,58 +573,58 @@ impl PixState {
         &self.theme.fonts.monospace
     }
 
-    /// Body text foreground color.
-    ///
     /// Returns the current theme text color.
+    ///
+    /// Used as the body text foreground color.
     #[inline]
     pub fn text_color(&self) -> Color {
         self.theme.colors.text
     }
 
-    /// Window/frame background color, used to clear the screen each frame.
-    ///
     /// Returns the current theme background color.
+    ///
+    /// Used as the window/frame background color to clear the screen each frame.
     #[inline]
     pub fn background_color(&self) -> Color {
         self.theme.colors.background
     }
 
-    /// Primary brand color for links, buttons, etc.
-    ///
     /// Returns the current theme primary color.
+    ///
+    /// Used as the primary brand color for links, buttons, etc.
     #[inline]
     pub fn primary_color(&self) -> Color {
         self.theme.colors.primary
     }
 
-    /// Secondary brand color for alternative styling.
-    ///
     /// Returns the current theme secondary color.
+    ///
+    /// Used as the secondary brand color for alternative styling.
     #[inline]
     pub fn secondary_color(&self) -> Color {
         self.theme.colors.secondary
     }
 
-    /// A contrast color for emphasis.
-    ///
     /// Returns the current theme accent color.
+    ///
+    /// Used as a contrast color for emphasis.
     #[inline]
     pub fn accent_color(&self) -> Color {
         self.theme.colors.accent
     }
 
-    /// A background color for highlighting text or focusing widgets.
-    ///
     /// Returns the current theme highlight color.
+    ///
+    /// Used as a background color for highlighting text or focusing widgets.
     #[inline]
     pub fn highlight_color(&self) -> Color {
         self.theme.colors.highlight
     }
 
-    /// A faint color for backgrounds, borders, and accents that do not require high contrast with
-    /// the background.
-    ///
     /// Returns the current theme muted color.
+    ///
+    /// Used as a faint color for backgrounds, borders, and accents that do not require high
+    /// contrast with the background.
     #[inline]
     pub fn muted_color(&self) -> Color {
         self.theme.colors.muted

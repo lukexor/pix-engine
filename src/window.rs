@@ -320,38 +320,50 @@ impl PixState {
 
     /// The width of the current render target.
     pub fn width(&self) -> PixResult<u32> {
-        let (width, _) = self.renderer.dimensions()?;
+        let (width, _) = self.dimensions()?;
         Ok(width)
     }
 
     /// The width of the current window.
     pub fn window_width(&self) -> PixResult<u32> {
-        let (width, _) = self.renderer.window_dimensions()?;
+        let (width, _) = self.window_dimensions()?;
         Ok(width)
     }
 
     /// Set the width of the current window.
     pub fn set_window_width(&mut self, width: u32) -> PixResult<()> {
-        let (_, height) = self.renderer.window_dimensions()?;
+        let (_, height) = self.window_dimensions()?;
         self.renderer.set_window_dimensions((width, height))
     }
 
     /// The height of the current render target.
     pub fn height(&self) -> PixResult<u32> {
-        let (_, height) = self.renderer.dimensions()?;
+        let (_, height) = self.dimensions()?;
         Ok(height)
     }
 
     /// The height of the current window.
     pub fn window_height(&self) -> PixResult<u32> {
-        let (_, height) = self.renderer.window_dimensions()?;
+        let (_, height) = self.window_dimensions()?;
         Ok(height)
     }
 
     /// Set the height of the current window.
     pub fn set_window_height(&mut self, height: u32) -> PixResult<()> {
-        let (width, _) = self.renderer.window_dimensions()?;
+        let (width, _) = self.window_dimensions()?;
         self.renderer.set_window_dimensions((width, height))
+    }
+
+    /// The center [Point] of the current render target.
+    pub fn center(&self) -> PixResult<PointI2> {
+        let (w, h) = self.dimensions()?;
+        Ok(point![w as i32 / 2, h as i32 / 2])
+    }
+
+    /// The center [Point] of the current window.
+    pub fn window_center(&self) -> PixResult<PointI2> {
+        let (w, h) = self.window_dimensions()?;
+        Ok(point![w as i32 / 2, h as i32 / 2])
     }
 
     /// The dimensions of the primary display as `(width, height)`.
@@ -361,13 +373,13 @@ impl PixState {
 
     /// The width of the primary display.
     pub fn display_width(&self) -> PixResult<u32> {
-        let (width, _) = self.renderer.display_dimensions()?;
+        let (width, _) = self.display_dimensions()?;
         Ok(width)
     }
 
     /// The height of the primary display.
     pub fn display_height(&self) -> PixResult<u32> {
-        let (_, height) = self.renderer.display_dimensions()?;
+        let (_, height) = self.display_dimensions()?;
         Ok(height)
     }
 

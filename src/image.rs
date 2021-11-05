@@ -444,8 +444,8 @@ impl fmt::Debug for Image {
         f.debug_struct("Image")
             .field("width", &self.width)
             .field("height", &self.height)
-            .field("format", &self.format)
             .field("size", &self.data.len())
+            .field("format", &self.format)
             .finish()
     }
 }

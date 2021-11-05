@@ -13,7 +13,7 @@
 //!         // utility functions for things like getting mouse coordinates,
 //!         // drawing shapes, etc.
 //!         s.background(220)?;
-//!         s.font_family(NOTO)?;
+//!         s.font_family(fonts::NOTO)?;
 //!         s.font_size(16);
 //!         Ok(())
 //!     }
@@ -72,7 +72,7 @@ pub trait AppState {
     /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
     /// fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.background(220)?;
-    ///     s.font_family(NOTO)?;
+    ///     s.font_family(fonts::NOTO)?;
     ///     s.font_size(16);
     ///     Ok(())
     /// }

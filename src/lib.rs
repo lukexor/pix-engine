@@ -65,7 +65,7 @@ pub mod prelude {
     pub use error::{Error as PixError, Result as PixResult};
     pub use event::{Axis, ControllerButton, Event, Key, KeyEvent, KeyMod, Mouse, WindowEvent};
     pub use graphics::lighting::{Light, LightF3, LightSource};
-    pub use gui::theme::{fonts::*, Font, FontSrc, Theme, ThemeBuilder};
+    pub use gui::theme::{fonts, Font, Theme, ThemeBuilder};
     pub use image::{Image, PixelFormat};
     pub use math::{constants::*, map, random_rng, Float, Num, Scalar};
     pub use shape::{

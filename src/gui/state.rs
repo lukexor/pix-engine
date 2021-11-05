@@ -392,28 +392,108 @@ impl UiState {
 
 impl PixState {
     /// Disables any UI elements drawn after this is called.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { checkbox: bool };
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     if s.button("Disable UI")? {
+    ///         s.disable();
+    ///     }
+    ///     s.checkbox("Disabled checkbox", &mut self.checkbox)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn disable(&mut self) {
         self.ui.disabled = true;
     }
 
     /// Enables any UI elements drawn after this is called.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { checkbox: bool };
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.disable();
+    ///     if s.button("Enable UI")? {
+    ///         s.no_disable();
+    ///     }
+    ///     s.checkbox("Enabled checkbox", &mut self.checkbox)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn no_disable(&mut self) {
         self.ui.disabled = false;
     }
 
     /// Returns the current UI rendering position.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     let mut pos = s.cursor_pos();
+    ///     pos.offset_y(20);
+    ///     s.set_cursor_pos(pos);
+    ///     s.text("Some text, offset down by 20 pixels")?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     #[inline]
     pub fn cursor_pos(&self) -> PointI2 {
         self.ui.cursor()
     }
 
     /// Set the current UI rendering position.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.set_cursor_pos(s.center()?);
+    ///     s.rect_mode(RectMode::Center);
+    ///     s.text("Centered text")?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     #[inline]
     pub fn set_cursor_pos<P: Into<PointI2>>(&mut self, cursor: P) {
         self.ui.set_cursor(cursor.into());
     }
 
     /// Returns whether the last item drawn is hovered with the mouse.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.text("Hover me")?;
+    ///     if s.hovered() {
+    ///         s.tooltip("I'm a tooltip!");
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     #[inline]
     pub fn hovered(&self) -> bool {
         if let Some(rect) = self.ui.last_size {
@@ -424,6 +504,22 @@ impl PixState {
     }
 
     /// Returns whether the last item drawn is hovered with the mouse.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.text("Hover me")?;
+    ///     if s.clicked() {
+    ///         println!("I was clicked!");
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     #[inline]
     pub fn clicked(&self) -> bool {
         if let Some(rect) = self.ui.last_size {

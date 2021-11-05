@@ -213,7 +213,7 @@ fn main() -> PixResult<()> {
         .with_title("The Matrix")
         .with_frame_rate()
         .vsync_enabled()
-        .with_font(Font::new("Sunray", FontSrc::Bytes(FONT_DATA)), Glyph::SIZE)
+        .with_font(Font::from_bytes("Sunray", FONT_DATA), Glyph::SIZE)
         .build()?;
     let mut app = Matrix::new();
     engine.run(&mut app)

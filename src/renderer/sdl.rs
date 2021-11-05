@@ -1,4 +1,5 @@
 use crate::{
+    gui::theme::FontSrc,
     prelude::*,
     renderer::{RendererSettings, Rendering},
 };
@@ -728,24 +729,32 @@ impl std::fmt::Debug for Renderer {
             .get(&self.window_id)
             .expect("valid main window");
         f.debug_struct("SdlRenderer")
+            .field("average_fps", &self.fps)
             .field("settings", &self.settings)
             .field("blend_mode", &self.blend_mode)
             .field("font_name", &self.font_name)
             .field("font_size", &self.font_size)
             .field("font_style", &self.font_style)
-            .field("window_id", &self.window_id)
+            .field("primary_window_id", &self.window_id)
             .field("window_target", &self.texture_target)
             .field("texture_target", &self.texture_target)
+            .field("window_count", &self.canvases.len())
+            .field("texture_count", &self.textures.len())
+            .field("next_texture_id", &self.next_texture_id)
+            .field("font_data", &self.font_data)
+            .field("loaded_fonts", &self.loaded_fonts)
+            .field("text_cache", &self.text_cache)
+            .field(
+                "cached_strings",
+                &self.text_cache.iter().fold(0, |sum, (_, v)| sum + v.len()),
+            )
+            .field("image_cache", &self.image_cache)
             .field("primary_title", &canvas.window().title())
             .field("primary_dimensions", &canvas.output_size())
             .field("primary_scale", &canvas.scale())
             .field("primary_draw_color", &canvas.draw_color())
             .field("primary_clip", &canvas.clip_rect())
-            .field("window_count", &self.canvases.len())
-            .field("loaded_fonts_count", &self.loaded_fonts.len())
-            .field("text_cache_count", &self.text_cache.len())
-            .field("image_cache_count", &self.image_cache.len())
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 
