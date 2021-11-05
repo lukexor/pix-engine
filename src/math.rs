@@ -210,9 +210,9 @@ macro_rules! random {
     ($v:expr) => {
         $crate::math::random($v)
     };
-    ($s:expr, $e:expr$(,)?) => {{
+    ($s:expr, $e:expr$(,)?) => {
         $crate::math::random_rng($s..$e)
-    }};
+    };
 }
 
 /// Returns the [Perlin noise](https://en.wikipedia.org/wiki/Perlin_noise) value at specified
@@ -234,10 +234,10 @@ macro_rules! random {
 #[macro_export]
 macro_rules! noise {
     ($x:expr$(,)?) => {
-        $crate::math::noise([$x, 0.0, 0.0])
+        $crate::math::noise([$x])
     };
     ($x:expr, $y:expr$(,)?) => {
-        $crate::math::noise([$x, $y, 0.0])
+        $crate::math::noise([$x, $y])
     };
     ($x:expr, $y:expr, $z:expr$(,)?) => {
         $crate::math::noise([$x, $y, $z])

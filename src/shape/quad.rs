@@ -10,14 +10,14 @@
 //! ```
 //! use pix_engine::prelude::*;
 //!
-//! let quad: QuadI2 = Quad::new(
+//! let quad = Quad::new(
 //!     [10, 20],
 //!     [30, 10],
 //!     [20, 25],
 //!     [15, 15]
 //! );
 //!
-//! let plane: QuadI3 = Quad::new(
+//! let plane = Quad::new(
 //!     [10, 20, 10],
 //!     [30, 10, 5],
 //!     [20, 25, 20],
@@ -81,8 +81,11 @@ macro_rules! quad {
     ($p1:expr, $p2:expr, $p3:expr, $p4:expr$(,)?) => {
         $crate::prelude::Quad::new($p1, $p2, $p3, $p4)
     };
-    ($p1:expr, $p2:expr, $p3:expr, $p4:expr, $p5:expr, $p6:expr, $p7:expr, $p8:expr$(,)?) => {
-        $crate::prelude::Quad::new([$p1, $p2], [$p3, $p4], [$p5, $p6], [$p7, $p8])
+    ($x1:expr, $y1:expr, $x2:expr, $y2:expr, $x3:expr, $y3:expr, $x4:expr, $y4:expr$(,)?) => {
+        $crate::prelude::Quad::from_xy($x1, $y1, $x2, $y2, $x3, $y3, $x4, $y4)
+    };
+    ($x1:expr, $y1:expr, $z1:expr, $x2:expr, $y2:expr, $z2:expr, $x3:expr, $y3:expr, $z3:expr, $x4:expr, $y4:expr, $z4:expr$(,)?) => {
+        $crate::prelude::Quad::from_xy($x1, $y1, $z1, $x2, $y2, $z2, $x3, $y3, $z3, $x4, $y4, $z4)
     };
 }
 
@@ -91,7 +94,7 @@ impl<T, const N: usize> Quad<T, N> {
     ///
     /// ```
     /// use pix_engine::prelude::*;
-    /// let quad: QuadI2 = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
+    /// let quad = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
     /// assert_eq!(quad.p1().as_array(), [10, 20]);
     /// assert_eq!(quad.p2().as_array(), [30, 10]);
     /// assert_eq!(quad.p3().as_array(), [20, 25]);
@@ -105,6 +108,47 @@ impl<T, const N: usize> Quad<T, N> {
         P4: Into<Point<T, N>>,
     {
         Self([p1.into(), p2.into(), p3.into(), p4.into()])
+    }
+}
+
+impl<T> Quad<T, 2> {
+    /// Constructs a `Quad` from individual x/y coordinates.
+    #[allow(clippy::too_many_arguments)]
+    #[inline]
+    pub const fn from_xy(x1: T, y1: T, x2: T, y2: T, x3: T, y3: T, x4: T, y4: T) -> Self {
+        Self([
+            point!(x1, y1),
+            point!(x2, y2),
+            point!(x3, y3),
+            point!(x4, y4),
+        ])
+    }
+}
+
+impl<T> Quad<T, 3> {
+    /// Constructs a `Quad` from individual x/y/z coordinates.
+    #[allow(clippy::too_many_arguments)]
+    #[inline]
+    pub const fn from_xyz(
+        x1: T,
+        y1: T,
+        z1: T,
+        x2: T,
+        y2: T,
+        z2: T,
+        x3: T,
+        y3: T,
+        z3: T,
+        x4: T,
+        y4: T,
+        z4: T,
+    ) -> Self {
+        Self([
+            point!(x1, y1, z1),
+            point!(x2, y2, z2),
+            point!(x3, y3, z3),
+            point!(x4, y4, z4),
+        ])
     }
 }
 
@@ -175,7 +219,7 @@ impl<T: Copy, const N: usize> Quad<T, N> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let quad: QuadI2 = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
+    /// let quad = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
     /// assert_eq!(quad.as_array(), [
     ///     point!(10, 20),
     ///     point!(30, 10),
@@ -194,7 +238,7 @@ impl<T: Copy, const N: usize> Quad<T, N> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let quad: QuadI2 = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
+    /// let quad = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
     /// assert_eq!(quad.as_bytes(), &[
     ///     point!(10, 20),
     ///     point!(30, 10),
@@ -213,7 +257,7 @@ impl<T: Copy, const N: usize> Quad<T, N> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let mut quad: QuadI2 = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
+    /// let mut quad = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
     /// for p in quad.as_bytes_mut() {
     ///     *p += 5;
     /// }
@@ -235,7 +279,7 @@ impl<T: Copy, const N: usize> Quad<T, N> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let quad: QuadI2 = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
+    /// let quad = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
     /// assert_eq!(quad.to_vec(), vec![
     ///     point!(10, 20),
     ///     point!(30, 10),

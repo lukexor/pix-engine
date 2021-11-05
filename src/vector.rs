@@ -14,7 +14,7 @@
 //!
 //! ```
 //! # use pix_engine::prelude::*;
-//! let v: VectorF3 = Vector::new([10.0, 20.0, 15.0]);
+//! let v = Vector::new([10.0, 20.0, 15.0]);
 //! ```
 //! ...or by using the [vector!] macro:
 //!
@@ -141,13 +141,13 @@ macro_rules! vector {
         $crate::prelude::Vector::origin()
     };
     ($x:expr) => {
-        $crate::prelude::Vector::new([$x])
+        $crate::prelude::Vector::from_x($x)
     };
     ($x:expr, $y:expr$(,)?) => {
-        $crate::prelude::Vector::new([$x, $y])
+        $crate::prelude::Vector::from_xy($x, $y)
     };
     ($x:expr, $y:expr, $z:expr$(,)?) => {
-        $crate::prelude::Vector::new([$x, $y, $z])
+        $crate::prelude::Vector::from_xyz($x, $y, $z)
     };
 }
 
@@ -190,10 +190,31 @@ impl<T, const N: usize> Vector<T, N> {
     }
 }
 
-impl<T> Vector<T, 2>
-where
-    T: Num + Float,
-{
+impl<T> Vector<T, 1> {
+    /// Constructs a `Vector` from an individual x coordinate.
+    #[inline]
+    pub const fn from_x(x: T) -> Self {
+        Self([x])
+    }
+}
+
+impl<T> Vector<T, 2> {
+    /// Constructs a `Vector` from individual x/y coordinates.
+    #[inline]
+    pub const fn from_xy(x: T, y: T) -> Self {
+        Self([x, y])
+    }
+}
+
+impl<T> Vector<T, 3> {
+    /// Constructs a `Vector` from individual x/y/z coordinates.
+    #[inline]
+    pub const fn from_xyz(x: T, y: T, z: T) -> Self {
+        Self([x, y, z])
+    }
+}
+
+impl<T: Num + Float> Vector<T, 2> {
     /// Constructs a `Vector` from another `Vector`, rotated by an `angle`.
     ///
     /// # Example
@@ -201,7 +222,7 @@ where
     /// ```
     /// # use pix_engine::prelude::*;
     /// use pix_engine::math::constants::FRAC_PI_2;
-    /// let v1: VectorF2 = Vector::new([10.0, 20.0]);
+    /// let v1 = Vector::new([10.0, 20.0]);
     /// let v2 = Vector::rotated(v1, FRAC_PI_2);
     /// assert!(v2.approx_eq(vector![-20.0, 10.0], 1e-4));
     /// ```
@@ -221,7 +242,7 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v: VectorF2 = Vector::from_angle(FRAC_PI_4, 15.0);
+    /// let v = Vector::from_angle(FRAC_PI_4, 15.0);
     /// assert!(v.approx_eq(vector!(10.6066, 10.6066), 1e-4));
     /// ```
     pub fn from_angle(angle: T, length: T) -> Self {
@@ -235,7 +256,7 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v: VectorF2 = vector!(10.0, 10.0);
+    /// let v = vector!(10.0, 10.0);
     /// let heading = v.heading();
     /// assert_eq!(heading.to_degrees(), 45.0);
     /// ```
@@ -251,7 +272,7 @@ where
     /// ```
     /// # use pix_engine::prelude::*;
     /// use pix_engine::math::constants::FRAC_PI_2;
-    /// let mut v: VectorF2 = vector!(10.0, 20.0);
+    /// let mut v = vector!(10.0, 20.0);
     /// v.rotate(FRAC_PI_2);
     /// assert!(v.approx_eq(vector![-20.0, 10.0], 1e-4));
     /// ```
@@ -264,10 +285,7 @@ where
     }
 }
 
-impl<T> Vector<T, 3>
-where
-    T: Num + Float,
-{
+impl<T: Num + Float> Vector<T, 3> {
     /// Returns the [cross product](https://en.wikipedia.org/wiki/Cross_product) between two
     /// `Vector`s. Only defined for 3D `Vector`s.
     ///
@@ -275,8 +293,8 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v1: VectorF3 = vector!(1.0, 2.0, 3.0);
-    /// let v2: VectorF3 = vector!(1.0, 2.0, 3.0);
+    /// let v1 = vector!(1.0, 2.0, 3.0);
+    /// let v2 = vector!(1.0, 2.0, 3.0);
     /// let cross = v1.cross(v2);
     /// assert_eq!(cross.as_array(), [0.0, 0.0, 0.0]);
     /// ```
@@ -295,8 +313,8 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v1: VectorF3 = vector!(1.0, 0.0, 0.0);
-    /// let v2: VectorF3 = vector!(0.0, 1.0, 0.0);
+    /// let v1 = vector!(1.0, 0.0, 0.0);
+    /// let v2 = vector!(0.0, 1.0, 0.0);
     /// let angle = v1.angle_between(v2);
     /// assert_eq!(angle, std::f64::consts::FRAC_PI_2);
     /// ```
@@ -318,7 +336,7 @@ impl<T: Copy, const N: usize> Vector<T, N> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let p = point!(1.0, 2.0);
-    /// let v: VectorF2 = Vector::from_point(p);
+    /// let v = Vector::from_point(p);
     /// assert_eq!(v.as_array(), [1.0, 2.0]);
     /// ```
     #[inline]
@@ -443,7 +461,7 @@ impl<T: Copy, const N: usize> Vector<T, N> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v: VectorF3 = vector!(2.0, 1.0, 3.0);
+    /// let v = vector!(2.0, 1.0, 3.0);
     /// assert_eq!(v.as_array(), [2.0, 1.0, 3.0]);
     /// ```
     #[inline]
@@ -457,7 +475,7 @@ impl<T: Copy, const N: usize> Vector<T, N> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v: VectorF3 = vector!(2.0, 1.0, 3.0);
+    /// let v = vector!(2.0, 1.0, 3.0);
     /// assert_eq!(v.as_bytes(), &[2.0, 1.0, 3.0]);
     /// ```
     #[inline]
@@ -471,7 +489,7 @@ impl<T: Copy, const N: usize> Vector<T, N> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let mut vector: VectorF3 = vector!(2.0, 1.0, 3.0);
+    /// let mut vector = vector!(2.0, 1.0, 3.0);
     /// for v in vector.as_bytes_mut() {
     ///     *v *= 2.0;
     /// }
@@ -488,7 +506,7 @@ impl<T: Copy, const N: usize> Vector<T, N> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v: VectorF3 = vector!(1.0, 1.0, 0.0);
+    /// let v = vector!(1.0, 1.0, 0.0);
     /// assert_eq!(v.to_vec(), vec![1.0, 1.0, 0.0]);
     /// ```
     #[inline]
@@ -497,17 +515,14 @@ impl<T: Copy, const N: usize> Vector<T, N> {
     }
 }
 
-impl<T, const N: usize> Vector<T, N>
-where
-    T: Num,
-{
+impl<T: Num, const N: usize> Vector<T, N> {
     /// Constructs a `Vector` by shifting coordinates by given amount.
     ///
     /// # Examples
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let mut v: VectorF3 = vector!(2.0, 3.0, 1.5);
+    /// let mut v = vector!(2.0, 3.0, 1.5);
     /// v.offset([2.0, -4.0]);
     /// assert_eq!(v.as_array(), [4.0, -1.0, 1.5]);
     /// ```
@@ -559,7 +574,7 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let mut v: VectorF3 = vector!(2.0, 3.0, 1.5);
+    /// let mut v = vector!(2.0, 3.0, 1.5);
     /// v.scale(2.0);
     /// assert_eq!(v.as_array(), [4.0, 6.0, 3.0]);
     /// ```
@@ -577,11 +592,11 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let mut v: VectorF2 = vector!(200.0, 300.0);
+    /// let mut v = vector!(200.0, 300.0);
     /// v.wrap([150.0, 400.0], 10.0);
     /// assert_eq!(v.as_array(), [-10.0, 300.0]);
     ///
-    /// let mut v: VectorF2 = vector!(-100.0, 300.0);
+    /// let mut v = vector!(-100.0, 300.0);
     /// v.wrap([150.0, 400.0], 10.0);
     /// assert_eq!(v.as_array(), [160.0, 300.0]);
     /// ```
@@ -626,10 +641,7 @@ where
     }
 }
 
-impl<T, const N: usize> Vector<T, N>
-where
-    T: Num + Float,
-{
+impl<T: Num + Float, const N: usize> Vector<T, N> {
     /// Constructs a `Vector` from a reflection about a normal to a line in 2D space or a plane in 3D
     /// space.
     ///
@@ -637,9 +649,9 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v1: VectorF3 = Vector::new([1.0, 1.0, 0.0]);
+    /// let v1 = Vector::new([1.0, 1.0, 0.0]);
     /// let normal = Vector::new([0.0, 1.0, 0.0]);
-    /// let v2: VectorF3 = Vector::reflection(v1, normal);
+    /// let v2 = Vector::reflection(v1, normal);
     /// assert_eq!(v2.as_array(), [-1.0, 1.0, 0.0]);
     /// ```
     pub fn reflection<V>(v: V, normal: V) -> Self
@@ -657,8 +669,8 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v1: VectorF3 = Vector::new([0.0, 5.0, 0.0]);
-    /// let v2: VectorF3 = Vector::normalized(v1);
+    /// let v1 = Vector::new([0.0, 5.0, 0.0]);
+    /// let v2 = Vector::normalized(v1);
     /// assert_eq!(v2.as_array(), [0.0, 1.0, 0.0]);
     /// ```
     pub fn normalized<V>(v: V) -> Self
@@ -679,7 +691,7 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v: VectorF3 = vector!(1.0, 2.0, 3.0);
+    /// let v = vector!(1.0, 2.0, 3.0);
     /// let abs_difference = (v.mag() - 3.7416).abs();
     /// assert!(abs_difference <= 1e-4);
     /// ```
@@ -697,7 +709,7 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v: VectorF3 = vector!(1.0, 2.0, 3.0);
+    /// let v = vector!(1.0, 2.0, 3.0);
     /// assert_eq!(v.mag_sq(), 14.0);
     /// ```
     pub fn mag_sq(&self) -> T {
@@ -714,8 +726,8 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v1: VectorF3 = vector!(1.0, 2.0, 3.0);
-    /// let v2: VectorF3 = vector!(2.0, 3.0, 4.0);
+    /// let v1 = vector!(1.0, 2.0, 3.0);
+    /// let v2 = vector!(2.0, 3.0, 4.0);
     /// let dot_product = v1.dot(v2);
     /// assert_eq!(dot_product, 20.0);
     /// ```
@@ -734,8 +746,8 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let mut v: VectorF2 = vector!(4.0, 6.0); // Vector heading right and down
-    /// let n: VectorF2 = vector!(0.0, 1.0); // Surface normal facing up
+    /// let mut v = vector!(4.0, 6.0); // Vector heading right and down
+    /// let n = vector!(0.0, 1.0); // Surface normal facing up
     /// v.reflect(n); // Reflect about the surface normal (e.g. the x-axis)
     /// assert_eq!(v.x(), -4.0);
     /// assert_eq!(v.y(), 6.0);
@@ -751,7 +763,7 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let mut v: VectorF3 = vector!(10.0, 20.0, 2.0);
+    /// let mut v = vector!(10.0, 20.0, 2.0);
     /// v.set_mag(10.0);
     /// assert!(v.approx_eq(vector![4.4543, 8.9087, 0.8908], 1e-4));
     /// ```
@@ -766,8 +778,8 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v1: VectorF3 = vector!(1.0, 0.0, 0.0);
-    /// let v2: VectorF3 = vector!(0.0, 1.0, 0.0);
+    /// let v1 = vector!(1.0, 0.0, 0.0);
+    /// let v2 = vector!(0.0, 1.0, 0.0);
     /// let dist = v1.dist(v2);
     /// let abs_difference: f64 = (dist - std::f64::consts::SQRT_2).abs();
     /// assert!(abs_difference <= 1e-4);
@@ -782,7 +794,7 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let mut v: VectorF3 = vector!(10.0, 20.0, 2.0);
+    /// let mut v = vector!(10.0, 20.0, 2.0);
     /// v.normalize();
     /// assert!(v.approx_eq(vector!(0.4454, 0.8908, 0.0890), 1e-4));
     /// ```
@@ -800,7 +812,7 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let mut v: VectorF3 = vector!(10.0, 20.0, 2.0);
+    /// let mut v = vector!(10.0, 20.0, 2.0);
     /// v.limit(5.0);
     /// assert!(v.approx_eq(vector!(2.2271, 4.4543,  0.4454), 1e-4));
     /// ```
@@ -819,8 +831,8 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v1: VectorF3 = vector!(1.0, 1.0, 0.0);
-    /// let v2: VectorF3 = vector!(3.0, 3.0, 0.0);
+    /// let v1 = vector!(1.0, 1.0, 0.0);
+    /// let v2 = vector!(3.0, 3.0, 0.0);
     /// let v3 = v1.lerp(v2, 0.5);
     /// assert_eq!(v3.as_array(), [2.0, 2.0, 0.0]);
     /// ```
@@ -841,8 +853,8 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v1: VectorF3 = vector!(10.0, 20.0, 2.0);
-    /// let v2: VectorF3 = vector!(10.0001, 20.0, 2.0);
+    /// let v1 = vector!(10.0, 20.0, 2.0);
+    /// let v2 = vector!(10.0001, 20.0, 2.0);
     /// assert!(v1.approx_eq(v2, 1e-3));
     /// ```
     pub fn approx_eq<V: Into<Vector<T, N>>>(&self, other: V, epsilon: T) -> bool {
@@ -872,25 +884,25 @@ where
     }
 }
 
-impl<T: Num, const N: usize> From<Point<T, N>> for Vector<T, N> {
+impl<T: Copy, const N: usize> From<Point<T, N>> for Vector<T, N> {
     fn from(p: Point<T, N>) -> Self {
         Self::from_point(p)
     }
 }
 
-impl<T: Num, const N: usize> From<&Point<T, N>> for Vector<T, N> {
+impl<T: Copy, const N: usize> From<&Point<T, N>> for Vector<T, N> {
     fn from(p: &Point<T, N>) -> Self {
         Self::from_point(*p)
     }
 }
 
-impl<T: Num, const N: usize> From<Vector<T, N>> for Point<T, N> {
+impl<T: Copy, const N: usize> From<Vector<T, N>> for Point<T, N> {
     fn from(v: Vector<T, N>) -> Self {
         Self::from_vector(v)
     }
 }
 
-impl<T: Num, const N: usize> From<&Vector<T, N>> for Point<T, N> {
+impl<T: Copy, const N: usize> From<&Vector<T, N>> for Point<T, N> {
     fn from(v: &Vector<T, N>) -> Self {
         Self::from_vector(*v)
     }

@@ -7,7 +7,7 @@
 //! ```
 //! use pix_engine::prelude::*;
 //!
-//! let p: PointI2 = Point::new([10, 20]);
+//! let p = Point::new([10, 20]);
 //! ```
 //! ...or by using the [point!] macro:
 //!
@@ -84,13 +84,13 @@ macro_rules! point {
         $crate::prelude::Point::origin()
     };
     ($x:expr) => {
-        $crate::prelude::Point::new([$x])
+        $crate::prelude::Point::from_x($x)
     };
     ($x:expr, $y:expr$(,)?) => {
-        $crate::prelude::Point::new([$x, $y])
+        $crate::prelude::Point::from_xy($x, $y)
     };
     ($x:expr, $y:expr, $z:expr$(,)?) => {
-        $crate::prelude::Point::new([$x, $y, $z])
+        $crate::prelude::Point::from_xyz($x, $y, $z)
     };
 }
 
@@ -130,6 +130,30 @@ impl<T, const N: usize> Point<T, N> {
         T: Default,
     {
         Self::new([(); N].map(|_| T::default()))
+    }
+}
+
+impl<T> Point<T, 1> {
+    /// Constructs a `Point` from an individual x coordinate.
+    #[inline]
+    pub const fn from_x(x: T) -> Self {
+        Self([x])
+    }
+}
+
+impl<T> Point<T, 2> {
+    /// Constructs a `Point` from individual x/y coordinates.
+    #[inline]
+    pub const fn from_xy(x: T, y: T) -> Self {
+        Self([x, y])
+    }
+}
+
+impl<T> Point<T, 3> {
+    /// Constructs a `Point` from individual x/y/z coordinates.
+    #[inline]
+    pub const fn from_xyz(x: T, y: T, z: T) -> Self {
+        Self([x, y, z])
     }
 }
 
@@ -319,17 +343,14 @@ impl<T: Copy, const N: usize> Point<T, N> {
     }
 }
 
-impl<T, const N: usize> Point<T, N>
-where
-    T: Num,
-{
+impl<T: Num, const N: usize> Point<T, N> {
     /// Offsets a `Point` by shifting coordinates by given amount.
     ///
     /// # Examples
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let mut p: PointI3 = point!(2, 3, 1);
+    /// let mut p = point!(2, 3, 1);
     /// p.offset([2, -4]);
     /// assert_eq!(p.as_array(), [4, -1, 1]);
     /// ```
@@ -381,7 +402,7 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let mut p: PointI2 = point!(2, 3);
+    /// let mut p = point!(2, 3);
     /// p.scale(2);
     /// assert_eq!(p.as_array(), [4, 6]);
     /// ```
@@ -420,18 +441,15 @@ where
     }
 }
 
-impl<T, const N: usize> Point<T, N>
-where
-    T: Num + Float,
-{
+impl<T: Num + Float, const N: usize> Point<T, N> {
     /// Returns the Euclidean distance between two `Point`s.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let p1: PointF3 = point!(1.0, 0.0, 0.0);
-    /// let p2: PointF3 = point!(0.0, 1.0, 0.0);
+    /// let p1 = point!(1.0, 0.0, 0.0);
+    /// let p2 = point!(0.0, 1.0, 0.0);
     /// let dist = p1.dist(p2);
     /// let abs_difference: f64 = (dist - std::f64::consts::SQRT_2).abs();
     /// assert!(abs_difference <= 1e-4);
@@ -469,8 +487,8 @@ where
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let p1: PointF2 = point!(10.0, 20.0);
-    /// let p2: PointF2 = point!(10.0001, 20.0);
+    /// let p1 = point!(10.0, 20.0);
+    /// let p2 = point!(10.0001, 20.0);
     /// assert!(p1.approx_eq(p2, 1e-3));
     /// ```
     pub fn approx_eq(&self, other: Point<T, N>, epsilon: T) -> bool {

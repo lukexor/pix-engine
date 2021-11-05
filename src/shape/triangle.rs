@@ -8,12 +8,12 @@
 //! use pix_engine::prelude::*;
 //!
 //! // 2D
-//! let tri: TriI2 = Tri::new([10, 20], [30, 10], [20, 25]);
+//! let tri = Tri::new([10, 20], [30, 10], [20, 25]);
 //!
 //! let p1 = point!(10, 20);
 //! let p2 = point!(30, 10);
 //! let p3 = point!(20, 25);
-//! let tri: TriI2 = Tri::new(p1, p2, p3);
+//! let tri = Tri::new(p1, p2, p3);
 //! ```
 
 use crate::prelude::*;
@@ -68,10 +68,10 @@ macro_rules! tri {
         $crate::prelude::Tri::new($p1, $p2, $p3)
     };
     ($x1:expr, $y1:expr, $x2:expr, $y2:expr, $x3:expr, $y3:expr$(,)?) => {
-        $crate::prelude::Line::new([$x1, $y1], [$x2, $y2], [$x3, $y3])
+        $crate::prelude::Tri::from_xy($x1, $y1, $x2, $y2, $x3, $y3)
     };
     ($x1:expr, $y1:expr, $z1:expr, $x2:expr, $y2:expr, $z2:expr, $x3:expr, $y3:expr, $z3:expr$(,)?) => {
-        $crate::prelude::Line::new([$x1, $y1, $z2], [$x2, $y2, $z2], [$x3, $y3, $z3])
+        $crate::prelude::Tri::from_xyz($x1, $y1, $z2, $x2, $y2, $z2, $x3, $y3, $z3)
     };
 }
 
@@ -82,7 +82,7 @@ impl<T, const N: usize> Tri<T, N> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let tri: TriI2 = Tri::new([10, 20], [30, 10], [20, 25]);
+    /// let tri = Tri::new([10, 20], [30, 10], [20, 25]);
     /// assert_eq!(tri.p1().as_array(), [10, 20]);
     /// assert_eq!(tri.p2().as_array(), [30, 10]);
     /// assert_eq!(tri.p3().as_array(), [20, 25]);
@@ -94,6 +94,23 @@ impl<T, const N: usize> Tri<T, N> {
         P3: Into<Point<T, N>>,
     {
         Self([p1.into(), p2.into(), p3.into()])
+    }
+}
+
+impl<T> Tri<T, 2> {
+    /// Constructs a `Triangle` from individual x/y coordinates.
+    #[inline]
+    pub const fn from_xy(x1: T, y1: T, x2: T, y2: T, x3: T, y3: T) -> Self {
+        Self([point!(x1, y1), point!(x2, y2), point!(x3, y3)])
+    }
+}
+
+impl<T> Tri<T, 3> {
+    /// Constructs a `Triangle` from individual x/y/z coordinates.
+    #[allow(clippy::too_many_arguments)]
+    #[inline]
+    pub const fn from_xyz(x1: T, y1: T, z1: T, x2: T, y2: T, z2: T, x3: T, y3: T, z3: T) -> Self {
+        Self([point!(x1, y1, z1), point!(x2, y2, z2), point!(x3, y3, z3)])
     }
 }
 
@@ -149,7 +166,7 @@ impl<T: Copy, const N: usize> Tri<T, N> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let tri: TriI2 = Tri::new([10, 20], [30, 10], [20, 25]);
+    /// let tri = Tri::new([10, 20], [30, 10], [20, 25]);
     /// assert_eq!(tri.as_array(), [
     ///     point!(10, 20),
     ///     point!(30, 10),
@@ -167,7 +184,7 @@ impl<T: Copy, const N: usize> Tri<T, N> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let tri: TriI2 = Tri::new([10, 20], [30, 10], [20, 25]);
+    /// let tri = Tri::new([10, 20], [30, 10], [20, 25]);
     /// assert_eq!(tri.as_bytes(), &[
     ///     point!(10, 20),
     ///     point!(30, 10),
@@ -185,7 +202,7 @@ impl<T: Copy, const N: usize> Tri<T, N> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let mut tri: TriI2 = Tri::new([10, 20], [30, 10], [20, 25]);
+    /// let mut tri = Tri::new([10, 20], [30, 10], [20, 25]);
     /// for p in tri.as_bytes_mut() {
     ///     *p += 5;
     /// }
@@ -206,7 +223,7 @@ impl<T: Copy, const N: usize> Tri<T, N> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let tri: TriI2 = Tri::new([10, 20], [30, 10], [20, 25]);
+    /// let tri = Tri::new([10, 20], [30, 10], [20, 25]);
     /// assert_eq!(
     ///   tri.to_vec(),
     ///   vec![

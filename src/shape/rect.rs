@@ -230,7 +230,7 @@ impl<T: Num> Rect<T> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let r: Rect<i32> = Rect::with_points([50, 50], [150, 150]);
+    /// let r = Rect::with_points([50, 50], [150, 150]);
     /// assert_eq!(r.as_array(), [50, 50, 100, 100]);
     /// ```
     pub fn with_points<P: Into<Point<T, 2>>>(p1: P, p2: P) -> Self {
@@ -513,7 +513,7 @@ impl Draw for Rect<i32> {
     }
 }
 
-impl<T: Num> From<[T; 3]> for Rect<T> {
+impl<T: Copy> From<[T; 3]> for Rect<T> {
     /// Converts `[T; 3]` into `Rect<T>`.
     #[inline]
     fn from([x, y, s]: [T; 3]) -> Self {
@@ -521,7 +521,7 @@ impl<T: Num> From<[T; 3]> for Rect<T> {
     }
 }
 
-impl<T: Num> From<&[T; 3]> for Rect<T> {
+impl<T: Copy> From<&[T; 3]> for Rect<T> {
     /// Converts `&[T; 3]` into `Rect<T>`.
     #[inline]
     fn from(&[x, y, s]: &[T; 3]) -> Self {

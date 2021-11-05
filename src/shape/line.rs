@@ -8,14 +8,14 @@
 //! use pix_engine::prelude::*;
 //!
 //! // 2D
-//! let line: LineI2 = Line::new([10, 20], [30, 10]);
+//! let line = Line::new([10, 20], [30, 10]);
 //!
 //! let p1 = point![10, 20];
 //! let p2 = point![30, 10];
-//! let line: LineI2 = Line::new(p1, p2);
+//! let line = Line::new(p1, p2);
 //!
 //! // 3D
-//! let line: LineI3 = Line::new([10, 20, 5], [30, 10, 5]);
+//! let line = Line::new([10, 20, 5], [30, 10, 5]);
 //! ```
 
 use crate::prelude::*;
@@ -50,13 +50,13 @@ pub type LineF3 = Line<Scalar, 3>;
 /// ```
 /// # use pix_engine::prelude::*;
 ///
-/// let l: LineI2 = line_!([10, 20], [30, 10]);
+/// let l = line_!([10, 20], [30, 10]);
 /// assert_eq!(l.as_array(), [
 ///   point!(10, 20),
 ///   point!(30, 10),
 /// ]);
 ///
-/// let l: LineI3 = line_!([10, 20, 10], [30, 10, 40]);
+/// let l = line_!([10, 20, 10], [30, 10, 40]);
 /// assert_eq!(l.as_array(), [
 ///   point!(10, 20, 10),
 ///   point!(30, 10, 40),
@@ -68,10 +68,10 @@ macro_rules! line_ {
         $crate::prelude::Line::new($p1, $p2)
     };
     ($x1:expr, $y1:expr, $x2:expr, $y2:expr$(,)?) => {
-        $crate::prelude::Line::new([$x1, $y1], [$x2, $y2])
+        $crate::prelude::Line::from_xy($x1, $y1, $x2, $y2)
     };
     ($x1:expr, $y1:expr, $z1:expr, $x2:expr, $y2:expr, $z2:expr$(,)?) => {
-        $crate::prelude::Line::new([$x1, $y1, $z2], [$x2, $y2, $z2])
+        $crate::prelude::Line::from_xyz($x1, $y1, $z2, $x2, $y2, $z2)
     };
 }
 
@@ -82,11 +82,11 @@ impl<T, const N: usize> Line<T, N> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// // 2D
-    /// let line: LineI2 = Line::new([10, 20], [30, 10]);
+    /// let line = Line::new([10, 20], [30, 10]);
     ///
     /// let p1 = point![10, 20];
     /// let p2 = point![30, 10];
-    /// let line: LineI2 = Line::new(p1, p2);
+    /// let line = Line::new(p1, p2);
     ///
     /// // 3D
     /// let line: LineI3 = Line::new([10, 20, 5], [30, 10, 5]);
@@ -97,6 +97,22 @@ impl<T, const N: usize> Line<T, N> {
         P2: Into<Point<T, N>>,
     {
         Self([start.into(), end.into()])
+    }
+}
+
+impl<T> Line<T, 2> {
+    /// Constructs a `Line` from individual x/y coordinates.
+    #[inline]
+    pub const fn from_xy(x1: T, y1: T, x2: T, y2: T) -> Self {
+        Self([point!(x1, y1), point!(x2, y2)])
+    }
+}
+
+impl<T> Line<T, 3> {
+    /// Constructs a `Line` from individual x/y/z coordinates.
+    #[inline]
+    pub const fn from_xyz(x1: T, y1: T, z1: T, x2: T, y2: T, z2: T) -> Self {
+        Self([point!(x1, y1, z1), point!(x2, y2, z2)])
     }
 }
 
@@ -133,7 +149,7 @@ impl<T: Copy, const N: usize> Line<T, N> {
     /// # use pix_engine::prelude::*;
     /// let p1 = point!(5, 10);
     /// let p2 = point!(100, 100);
-    /// let l: LineI2 = Line::new(p1, p2);
+    /// let l = Line::new(p1, p2);
     /// assert_eq!(l.as_array(), [point!(5, 10), point!(100, 100)]);
     /// ```
     #[inline]
@@ -149,7 +165,7 @@ impl<T: Copy, const N: usize> Line<T, N> {
     /// # use pix_engine::prelude::*;
     /// let p1 = point!(5, 10);
     /// let p2 = point!(100, 100);
-    /// let l: LineI2 = Line::new(p1, p2);
+    /// let l = Line::new(p1, p2);
     /// assert_eq!(l.as_bytes(), &[point!(5, 10), point!(100, 100)]);
     /// ```
     #[inline]
@@ -165,7 +181,7 @@ impl<T: Copy, const N: usize> Line<T, N> {
     /// # use pix_engine::prelude::*;
     /// let p1 = point!(5, 10);
     /// let p2 = point!(100, 100);
-    /// let mut l: LineI2 = Line::new(p1, p2);
+    /// let mut l = Line::new(p1, p2);
     /// for p in l.as_bytes_mut() {
     ///     *p += 5;
     /// }
@@ -184,7 +200,7 @@ impl<T: Copy, const N: usize> Line<T, N> {
     /// # use pix_engine::prelude::*;
     /// let p1 = point!(5, 10);
     /// let p2 = point!(100, 100);
-    /// let l: LineI2 = Line::new(p1, p2);
+    /// let l = Line::new(p1, p2);
     /// assert_eq!(l.to_vec(), vec![[5, 10], [100, 100]]);
     /// ```
     pub fn to_vec(self) -> Vec<Vec<T>> {
