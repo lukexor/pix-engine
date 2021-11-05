@@ -66,9 +66,9 @@ struct Stream {
 }
 
 impl Stream {
-    const SPEED_RANGE: (i32, i32) = (3, 10);
+    const SPEED_RANGE: (i32, i32) = (2, 9);
     const HEIGHT_RANGE: (usize, usize) = (1, 25);
-    const START_RANGE: (i32, i32) = (-500, -50);
+    const START_RANGE: (i32, i32) = (-500, -100);
     const SPAWN_RANGE: (i32, i32) = (-200, -50);
     const HIGHLIGHT_PROB: usize = 30;
 
@@ -165,6 +165,7 @@ impl Matrix {
 
 impl AppState for Matrix {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.no_cursor();
         s.set_window_dimensions(s.display_dimensions()?)?;
         self.init(s.dimensions()?);
         s.background(BG_COLOR)?;
