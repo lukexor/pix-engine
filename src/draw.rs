@@ -98,15 +98,19 @@ impl PixState {
         R: Into<Option<Rect<i32>>>,
     {
         if let Some(src) = src.into() {
+            // Copy current texture target to a texture
             let bytes = self.renderer.to_bytes()?;
             let render_texture = self.create_texture(self.width()?, self.height()?, None)?;
             self.update_texture(render_texture, None, bytes, self.width()? as usize * 4)?;
+            // Render the `src` rect from texture onto another texture, and save it
             let src_texture = self.create_texture(src.width() as u32, src.height() as u32, None)?;
-            self.texture(render_texture, None, None)?;
             self.with_texture(src_texture, |s: &mut PixState| -> PixResult<()> {
                 s.texture(render_texture, src, None)?;
                 s.save_canvas(None, path)
-            })
+            })?;
+            self.delete_texture(render_texture)?;
+            self.delete_texture(src_texture)?;
+            Ok(())
         } else {
             let path = path.as_ref();
             let png_file = BufWriter::new(File::create(&path)?);
