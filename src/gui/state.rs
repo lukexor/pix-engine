@@ -4,24 +4,17 @@ use crate::{
     gui::{keys::KeyState, mouse::MouseState},
     prelude::*,
 };
-#[cfg(target_pointer_width = "32")]
-use hash32::{FnvHasher, Hash, Hasher};
 use indexmap::IndexMap;
 use std::{
     cmp,
     collections::{hash_map::Entry, HashMap},
 };
-#[cfg(target_pointer_width = "64")]
 use std::{
     collections::hash_map::DefaultHasher,
     hash::{Hash, Hasher},
 };
 
 /// A hashed element identifier for internal state management.
-#[cfg(target_pointer_width = "32")]
-pub(crate) type ElementId = u32;
-/// A hashed element identifier for internal state management.
-#[cfg(target_pointer_width = "64")]
 pub(crate) type ElementId = u64;
 
 /// UI Texture with source and destination.
@@ -118,9 +111,6 @@ impl UiState {
     /// Helper function to hash element labels.
     #[inline]
     pub(crate) fn get_id<T: Hash>(&self, t: &T) -> ElementId {
-        #[cfg(target_pointer_width = "32")]
-        let mut hasher = FnvHasher::default();
-        #[cfg(target_pointer_width = "64")]
         let mut hasher = DefaultHasher::new();
         t.hash(&mut hasher);
         if let Some(id) = self.id_stack.last() {
@@ -154,18 +144,6 @@ impl UiState {
             self.pcursor = pcursor;
             self.cursor = cursor;
         }
-    }
-
-    /// Push a new seed to the ID stack.
-    #[inline]
-    pub(crate) fn push_id(&mut self, id: ElementId) {
-        self.id_stack.push(id);
-    }
-
-    /// Pop a seed from the ID stack.
-    #[inline]
-    pub(crate) fn pop_id(&mut self) {
-        self.id_stack.pop();
     }
 
     /// Returns the current mouse position coordinates as `(x, y)`.
@@ -391,6 +369,19 @@ impl UiState {
 }
 
 impl PixState {
+    /// Push a new seed to the UI ID stack. Helps in generating unique widget identifiers that have
+    /// the same text label. Pushing a unique ID to the stack will seed the hash of the label.
+    #[inline]
+    pub fn push_id(&mut self, id: ElementId) {
+        self.ui.id_stack.push(id);
+    }
+
+    /// Pop a seed from the UI ID stack.
+    #[inline]
+    pub fn pop_id(&mut self) {
+        self.ui.id_stack.pop();
+    }
+
     /// Disables any UI elements drawn after this is called.
     ///
     /// # Example

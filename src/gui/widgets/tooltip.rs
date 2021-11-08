@@ -205,10 +205,8 @@ impl PixState {
         F: FnOnce(&mut PixState) -> PixResult<()>,
     {
         let s = self;
-        s.ui.push_id(1);
         let mut rect = s.get_rect(rect);
         let id = s.ui.get_id(&rect);
-        s.ui.pop_id();
         let pad = s.theme.style.frame_pad;
 
         // Calculate rect

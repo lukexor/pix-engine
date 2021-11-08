@@ -52,9 +52,6 @@ sdl2 = { version = "0.35.0", default_features = false, features = ["gfx", "image
 [target."cfg(target_arch = \"wasm32\")".dependencies]
 getrandom = { version = "0.2.3", features = ["js"] }
 
-[target."cfg(target_pointer_width = \"32\")".dependencies]
-hash32 = "0.2.1"
-
 [target."cfg(target_arch = \"wasm32\")".dev-dependencies]
 console_error_panic_hook = "0.1.6"
 wasm-bindgen-test = "0.3.24"
