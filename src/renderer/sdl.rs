@@ -13,13 +13,17 @@ use sdl2::{
     mouse::{Cursor, SystemCursor},
     pixels::{Color as SdlColor, PixelFormatEnum as SdlPixelFormat},
     rect::{Point as SdlPoint, Rect as SdlRect},
-    render::{BlendMode as SdlBlendMode, Canvas, Texture, TextureCreator, TextureQuery},
+    render::{BlendMode as SdlBlendMode, Canvas, TextureCreator, TextureQuery},
     rwops::RWops,
     ttf::{Font as SdlFont, FontStyle as SdlFontStyle, Sdl2TtfContext},
     video::{Window as SdlWindow, WindowContext},
     EventPump, Sdl,
 };
-use std::{cmp, collections::HashMap};
+use std::{
+    cmp,
+    collections::{hash_map::DefaultHasher, HashMap},
+    hash::{Hash, Hasher},
+};
 
 lazy_static! {
     static ref TTF: Sdl2TtfContext = sdl2::ttf::init().expect("sdl2_ttf initialized");
@@ -139,6 +143,7 @@ mod textures;
 mod window;
 
 pub(crate) use textures::RendererTexture;
+
 pub(crate) type WindowCanvas = Canvas<SdlWindow>;
 
 /// An SDL [Renderer] implementation.
@@ -162,7 +167,7 @@ pub(crate) struct Renderer {
     next_texture_id: usize,
     font_data: LruCache<&'static str, Font>,
     loaded_fonts: LruCache<(&'static str, u16), SdlFont<'static, 'static>>,
-    text_cache: LruCache<(WindowId, Color), HashMap<String, RendererTexture>>,
+    text_cache: LruCache<(WindowId, Color, u64), RendererTexture>,
     image_cache: LruCache<(WindowId, *const Image), RendererTexture>,
 }
 
@@ -330,38 +335,28 @@ impl Rendering for Renderer {
                 font.set_outline_width(outline as u16);
             }
 
-            let create_texture = |font: &SdlFont<'_, '_>, fill: Color| -> PixResult<Texture> {
-                let surface = if let Some(width) = wrap_width {
-                    font.render(text).blended_wrapped(fill, width)
-                } else {
-                    font.render(text).blended(fill)
-                }
-                .context("invalid text")?;
-                texture_creator
-                    .create_texture_from_surface(&surface)
-                    .context("failed to create text surface")
-            };
-
-            let key = (self.window_target, fill);
-            match self.text_cache.get_mut(&key) {
-                Some(cache) if !cache.contains_key(text) => {
-                    cache.insert(text.to_string(), create_texture(font, fill)?);
-                }
-                None => {
+            let mut hasher = DefaultHasher::new();
+            text.hash(&mut hasher);
+            let key = (self.window_target, fill, hasher.finish());
+            let texture = {
+                if !self.text_cache.contains(&key) {
+                    let surface = if let Some(width) = wrap_width {
+                        font.render(text).blended_wrapped(fill, width)
+                    } else {
+                        font.render(text).blended(fill)
+                    }
+                    .context("invalid text")?;
                     self.text_cache.put(
                         key,
-                        HashMap::from([(text.to_string(), create_texture(font, fill)?)]),
+                        texture_creator
+                            .create_texture_from_surface(&surface)
+                            .context("failed to create text surface")?,
                     );
                 }
-                _ => (),
-            }
+                // SAFETY: We just checked or inserted a texture.
+                self.text_cache.get_mut(&key).expect("valid text cache")
+            };
 
-            let texture = self
-                .text_cache
-                .get_mut(&key)
-                .context("valid text cache")?
-                .get_mut(text)
-                .context("valid text cache")?;
             let TextureQuery { width, height, .. } = texture.query();
             update_canvas!(self, |canvas: &mut WindowCanvas| -> PixResult<()> {
                 let result = if angle.is_some() || center.is_some() || flipped.is_some() {
@@ -744,10 +739,6 @@ impl std::fmt::Debug for Renderer {
             .field("font_data", &self.font_data)
             .field("loaded_fonts", &self.loaded_fonts)
             .field("text_cache", &self.text_cache)
-            .field(
-                "cached_strings",
-                &self.text_cache.iter().fold(0, |sum, (_, v)| sum + v.len()),
-            )
             .field("image_cache", &self.image_cache)
             .field("primary_title", &canvas.window().title())
             .field("primary_dimensions", &canvas.output_size())

@@ -288,6 +288,7 @@ impl PixEngine {
             }
 
             app.on_stop(&mut self.state)?;
+            dbg!(&self.state.renderer);
             if self.state.should_quit() {
                 break 'on_stop;
             }
