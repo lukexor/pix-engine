@@ -25,7 +25,7 @@ use crate::{prelude::*, renderer::Rendering};
 use serde::{Deserialize, Serialize};
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
-use std::str::FromStr;
+use std::{borrow::Cow, str::FromStr};
 
 pub mod fonts {
     //! A list of library-provided font families.
@@ -202,9 +202,10 @@ impl ThemeBuilder {
 /// Represents a font family name along with the font glyph source.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'static")))]
 pub struct Font {
     /// Family name of the font.
-    pub(crate) name: &'static str,
+    pub(crate) name: Cow<'static, str>,
     /// Data source for the font.
     pub(crate) source: FontSrc,
 }
@@ -219,13 +220,13 @@ impl Font {
     /// Constructs a new `Font` instance from a static byte array.
     pub const fn from_bytes(name: &'static str, bytes: &'static [u8]) -> Self {
         Self {
-            name,
+            name: Cow::Borrowed(name),
             source: FontSrc::from_bytes(bytes),
         }
     }
 
     /// Constructs a new `Font` instance from a file.
-    pub fn from_file<P>(name: &'static str, path: P) -> Self
+    pub fn from_file<P>(name: Cow<'static, str>, path: P) -> Self
     where
         P: Into<PathBuf>,
     {
@@ -240,7 +241,7 @@ impl Font {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) enum FontSrc {
-    /// A font from static byte data.
+    /// A font from byte data.
     Bytes(&'static [u8]),
     #[cfg(not(target_arch = "wasm32"))]
     /// A path to a `.ttf` font file.

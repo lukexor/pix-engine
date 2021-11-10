@@ -123,7 +123,7 @@ macro_rules! load_font {
                 .get(&$self.current_font)
                 .expect("valid loaded font");
             let loaded_font = match font_data.source {
-                FontSrc::Bytes(bytes) => {
+                FontSrc::Bytes(ref bytes) => {
                     let rwops = RWops::from_bytes(bytes).map_err(PixError::Renderer)?;
                     TTF.load_font_from_rwops(rwops, $self.font_size)
                         .map_err(PixError::Renderer)?
