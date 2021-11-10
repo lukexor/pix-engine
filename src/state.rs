@@ -358,7 +358,7 @@ impl PixState {
     /// Handle state updates for this frame.
     #[inline]
     pub(crate) fn on_update(&mut self) -> PixResult<()> {
-        for texture in &mut self.ui.textures.values() {
+        for (_, texture) in &mut self.ui.textures {
             if texture.visible {
                 self.renderer.texture(
                     texture.id,

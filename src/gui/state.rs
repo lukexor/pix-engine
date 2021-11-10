@@ -4,18 +4,17 @@ use crate::{
     gui::{keys::KeyState, mouse::MouseState},
     prelude::*,
 };
-use indexmap::IndexMap;
+use lru::LruCache;
 use std::{
     cmp,
-    collections::{hash_map::Entry, HashMap},
-};
-use std::{
     collections::hash_map::DefaultHasher,
     hash::{Hash, Hasher},
 };
 
 /// A hashed element identifier for internal state management.
 pub(crate) type ElementId = u64;
+
+const ELEMENT_CACHE_SIZE: usize = 128;
 
 /// UI Texture with source and destination.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -38,7 +37,7 @@ impl Texture {
 }
 
 /// Internal tracked UI state.
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub(crate) struct UiState {
     /// Current global render position, in window coordinates.
     cursor: PointI2,
@@ -55,7 +54,7 @@ pub(crate) struct UiState {
     /// Override for max-width elements.
     pub(crate) next_width: Option<u32>,
     /// UI texture to be drawn over rendered frame, in rendered order.
-    pub(crate) textures: IndexMap<ElementId, Texture>,
+    pub(crate) textures: Vec<(ElementId, Texture)>,
     /// Whether UI elements are disabled.
     pub(crate) disabled: bool,
     /// Mouse state for the current frame.
@@ -67,7 +66,7 @@ pub(crate) struct UiState {
     /// Keyboard state for the current frame.
     pub(crate) keys: KeyState,
     /// Element state for the current frame,
-    pub(crate) elements: HashMap<ElementId, ElementState>,
+    pub(crate) elements: LruCache<ElementId, ElementState>,
     /// Which element is active.
     active: Option<ElementId>,
     /// Which element is hovered.
@@ -78,6 +77,32 @@ pub(crate) struct UiState {
     last_focusable: Option<ElementId>,
     /// Last bounding box rendered.
     last_size: Option<Rect<i32>>,
+}
+
+impl Default for UiState {
+    fn default() -> Self {
+        Self {
+            cursor: point!(),
+            pcursor: point!(),
+            line_height: 0,
+            pline_height: 0,
+            cursor_stack: vec![],
+            id_stack: vec![],
+            next_width: None,
+            textures: vec![],
+            disabled: false,
+            mouse: MouseState::default(),
+            mouse_offset: None,
+            pmouse: MouseState::default(),
+            keys: KeyState::default(),
+            elements: LruCache::new(ELEMENT_CACHE_SIZE),
+            active: None,
+            hovered: None,
+            focused: None,
+            last_focusable: None,
+            last_size: None,
+        }
+    }
 }
 
 impl UiState {
@@ -92,7 +117,7 @@ impl UiState {
     /// Handle state changes this frame after calling [AppState::on_update].
     #[inline]
     pub(crate) fn post_update(&mut self) {
-        for texture in &mut self.textures.values_mut() {
+        for (_, texture) in &mut self.textures {
             texture.visible = false;
         }
 
@@ -350,7 +375,7 @@ impl UiState {
 
     /// Returns the current `scroll` state for this element.
     #[inline]
-    pub(crate) fn scroll(&self, id: ElementId) -> VectorI2 {
+    pub(crate) fn scroll(&mut self, id: ElementId) -> VectorI2 {
         self.elements
             .get(&id)
             .map(|s| s.scroll)
@@ -360,11 +385,11 @@ impl UiState {
     /// Set the current `scroll` state for this element.
     #[inline]
     pub(crate) fn set_scroll(&mut self, id: ElementId, scroll: VectorI2) {
-        let state = match self.elements.entry(id) {
-            Entry::Occupied(o) => o.into_mut(),
-            Entry::Vacant(v) => v.insert(ElementState::default()),
-        };
-        state.scroll = scroll;
+        if let Some(state) = self.elements.get_mut(&id) {
+            state.scroll = scroll;
+        } else {
+            self.elements.put(id, ElementState { scroll });
+        }
     }
 }
 
@@ -543,6 +568,34 @@ impl PixState {
         self.ui.pline_height = line_height;
         self.ui.line_height = 0;
         self.ui.last_size = Some(rect);
+    }
+
+    /// Get or create a UI texture to render to
+    #[inline]
+    pub(crate) fn get_or_create_texture<R>(
+        &mut self,
+        id: ElementId,
+        src: R,
+        dst: Rect<i32>,
+    ) -> PixResult<TextureId>
+    where
+        R: Into<Option<Rect<i32>>>,
+    {
+        if let Some((_, texture)) = self.ui.textures.iter_mut().find(|(i, _)| i == &id) {
+            texture.visible = true;
+            texture.dst = Some(dst);
+            Ok(texture.id)
+        } else {
+            let texture_id =
+                self.create_texture(dst.width() as u32, dst.height() as u32, PixelFormat::Rgba)?;
+            self.ui
+                .textures
+                .push((id, Texture::new(texture_id, src.into(), Some(dst))));
+            if self.ui.textures.len() > 2 * ELEMENT_CACHE_SIZE {
+                self.ui.textures.truncate(ELEMENT_CACHE_SIZE);
+            }
+            Ok(texture_id)
+        }
     }
 }
 

@@ -34,7 +34,7 @@
 //! # }
 //! ```
 
-use crate::{gui::state::Texture, prelude::*};
+use crate::prelude::*;
 
 impl PixState {
     /// Draw help marker text that, when hovered, displays a help box with text to the current
@@ -206,7 +206,6 @@ impl PixState {
     {
         let s = self;
         let mut rect = s.get_rect(rect);
-        // TODO: rect is not a stable ID when mouse pos is used.
         let id = s.ui.get_id(&rect);
         let pad = s.theme.style.frame_pad;
 
@@ -228,19 +227,7 @@ impl PixState {
             }
         }
 
-        let texture_id = {
-            if !s.ui.textures.contains_key(&id) {
-                let texture_id =
-                    s.create_texture(rect.width() as u32, rect.height() as u32, PixelFormat::Rgba)?;
-                s.ui.textures
-                    .insert(id, Texture::new(texture_id, None, Some(rect)));
-            }
-            let texture = s.ui.textures.get_mut(&id).expect("valid tooltip target");
-            texture.visible = true;
-            texture.dst = Some(rect);
-            texture.id
-        };
-
+        let texture_id = s.get_or_create_texture(id, None, rect)?;
         s.ui.set_mouse_offset(rect.top_left());
         s.with_texture(texture_id, |s: &mut PixState| {
             s.set_cursor_pos(s.theme.style.frame_pad);
