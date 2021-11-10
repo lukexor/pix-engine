@@ -61,6 +61,15 @@ jobs:
     - name: Install build dependencies
       run: cargo install cargo-vcpkg
 
+    - name: Cache package dependencies
+      id: cache-build
+      uses: actions/cache@v2
+      with:
+        path: ${{ matrix.build_cache }}
+        key: ${{ matrix.os }}-${{ hashFiles('Cargo.lock') }}
+        restore-keys: |
+          ${{ matrix.os }}-
+
     - name: Build dependencies
       run: cargo vcpkg -v build
 
