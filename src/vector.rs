@@ -257,7 +257,7 @@ impl<T: Num + Float> Vector<T, 2> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let v = vector!(10.0, 10.0);
-    /// let heading = v.heading();
+    /// let heading: f64 = v.heading();
     /// assert_eq!(heading.to_degrees(), 45.0);
     /// ```
     pub fn heading(&self) -> T {
@@ -692,7 +692,7 @@ impl<T: Num + Float, const N: usize> Vector<T, N> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let v = vector!(1.0, 2.0, 3.0);
-    /// let abs_difference = (v.mag() - 3.7416).abs();
+    /// let abs_difference = (v.mag() as f64 - 3.7416).abs();
     /// assert!(abs_difference <= 1e-4);
     /// ```
     pub fn mag(&self) -> T {
