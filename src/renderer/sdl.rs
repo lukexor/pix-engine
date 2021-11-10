@@ -85,7 +85,7 @@ macro_rules! get_texture_creator {
 /// Helper macro to get current loaded font.
 macro_rules! get_loaded_font {
     ($self:expr) => {{
-        let key = ($self.font_name, $self.font_size);
+        let key = ($self.current_font, $self.font_size);
         $self.loaded_fonts.get_mut(&key).expect("valid font")
     }};
 }
@@ -116,11 +116,11 @@ macro_rules! update_canvas {
 /// Helper macro for partial borrow that loads the font cache, if not already populated.
 macro_rules! load_font {
     ($self:expr) => {{
-        let key = ($self.font_name, $self.font_size);
+        let key = ($self.current_font, $self.font_size);
         if !$self.loaded_fonts.contains(&key) {
             let font_data = $self
                 .font_data
-                .get(&$self.font_name)
+                .get(&$self.current_font)
                 .expect("valid loaded font");
             let loaded_font = match font_data.source {
                 FontSrc::Bytes(bytes) => {
@@ -145,6 +145,14 @@ mod window;
 pub(crate) use textures::RendererTexture;
 
 pub(crate) type WindowCanvas = Canvas<SdlWindow>;
+pub(crate) type HashId = u64;
+
+#[inline]
+fn get_hash<T: Hash>(t: &T) -> HashId {
+    let mut hasher = DefaultHasher::new();
+    t.hash(&mut hasher);
+    hasher.finish()
+}
 
 /// An SDL [Renderer] implementation.
 pub(crate) struct Renderer {
@@ -156,7 +164,7 @@ pub(crate) struct Renderer {
     settings: RendererSettings,
     cursor: Cursor,
     blend_mode: SdlBlendMode,
-    font_name: &'static str,
+    current_font: HashId,
     font_size: u16,
     font_style: SdlFontStyle,
     window_id: WindowId,
@@ -165,9 +173,9 @@ pub(crate) struct Renderer {
     canvases: HashMap<WindowId, (WindowCanvas, TextureCreator<WindowContext>)>,
     textures: HashMap<TextureId, (WindowId, RendererTexture)>,
     next_texture_id: usize,
-    font_data: LruCache<&'static str, Font>,
-    loaded_fonts: LruCache<(&'static str, u16), SdlFont<'static, 'static>>,
-    text_cache: LruCache<(WindowId, Color, u64), RendererTexture>,
+    font_data: LruCache<HashId, Font>,
+    loaded_fonts: LruCache<(HashId, u16), SdlFont<'static, 'static>>,
+    text_cache: LruCache<(WindowId, Color, HashId), RendererTexture>,
     image_cache: LruCache<(WindowId, *const Image), RendererTexture>,
 }
 
@@ -200,9 +208,9 @@ impl Rendering for Renderer {
         let texture_cache_size = s.texture_cache_size;
         let text_cache_size = s.text_cache_size;
         let default_font = Font::default();
-        let font_name = default_font.name;
+        let current_font = get_hash(&default_font.name);
         let mut font_data = LruCache::new(text_cache_size);
-        font_data.put(default_font.name, default_font);
+        font_data.put(current_font, default_font);
 
         let mut renderer = Self {
             context,
@@ -213,7 +221,7 @@ impl Rendering for Renderer {
             fps: 0,
             cursor,
             blend_mode: SdlBlendMode::None,
-            font_name,
+            current_font,
             font_size: 14,
             font_style: SdlFontStyle::NORMAL,
             window_id,
@@ -302,9 +310,9 @@ impl Rendering for Renderer {
     /// Set the font family for drawing to the current canvas.
     #[inline]
     fn font_family(&mut self, font: &Font) -> PixResult<()> {
-        self.font_name = font.name;
-        if !self.font_data.contains(&self.font_name) {
-            self.font_data.put(self.font_name, font.clone());
+        self.current_font = get_hash(&font.name);
+        if !self.font_data.contains(&self.current_font) {
+            self.font_data.put(self.current_font, font.clone());
         }
         load_font!(self);
         Ok(())
@@ -335,9 +343,8 @@ impl Rendering for Renderer {
                 font.set_outline_width(outline as u16);
             }
 
-            let mut hasher = DefaultHasher::new();
-            text.hash(&mut hasher);
-            let key = (self.window_target, fill, hasher.finish());
+            let text_hash = get_hash(&text);
+            let key = (self.window_target, fill, text_hash);
             let texture = {
                 if !self.text_cache.contains(&key) {
                     let surface = if let Some(width) = wrap_width {
@@ -727,7 +734,10 @@ impl std::fmt::Debug for Renderer {
             .field("average_fps", &self.fps)
             .field("settings", &self.settings)
             .field("blend_mode", &self.blend_mode)
-            .field("font_name", &self.font_name)
+            .field(
+                "current_font",
+                &self.font_data.peek(&self.current_font).map(|f| &f.name),
+            )
             .field("font_size", &self.font_size)
             .field("font_style", &self.font_style)
             .field("primary_window_id", &self.window_id)

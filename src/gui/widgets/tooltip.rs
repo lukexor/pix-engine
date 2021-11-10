@@ -206,6 +206,7 @@ impl PixState {
     {
         let s = self;
         let mut rect = s.get_rect(rect);
+        // TODO: rect is not a stable ID when mouse pos is used.
         let id = s.ui.get_id(&rect);
         let pad = s.theme.style.frame_pad;
 

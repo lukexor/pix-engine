@@ -83,11 +83,8 @@ impl PixEngineBuilder {
     }
 
     /// Set font for text rendering.
-    pub fn with_font<F>(&mut self, font: F, size: u32) -> &mut Self
-    where
-        F: Into<Font>,
-    {
-        self.theme.fonts.body = font.into();
+    pub fn with_font(&mut self, font: Font, size: u32) -> &mut Self {
+        self.theme.fonts.body = font;
         self.theme.font_sizes.body = size;
         self
     }
@@ -288,7 +285,6 @@ impl PixEngine {
             }
 
             app.on_stop(&mut self.state)?;
-            dbg!(&self.state.renderer);
             if self.state.should_quit() {
                 break 'on_stop;
             }

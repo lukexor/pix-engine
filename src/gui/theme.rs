@@ -225,7 +225,10 @@ impl Font {
     }
 
     /// Constructs a new `Font` instance from a file.
-    pub fn from_file<P: Into<PathBuf>>(name: &'static str, path: P) -> Self {
+    pub fn from_file<P>(name: &'static str, path: P) -> Self
+    where
+        P: Into<PathBuf>,
+    {
         Self {
             name,
             source: FontSrc::from_file(path),

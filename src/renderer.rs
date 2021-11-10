@@ -65,8 +65,8 @@ impl Default for RendererSettings {
             hidden: false,
             show_frame_rate: false,
             target_frame_rate: None,
-            texture_cache_size: 128,
-            text_cache_size: 256,
+            texture_cache_size: 256,
+            text_cache_size: 512,
         }
     }
 }

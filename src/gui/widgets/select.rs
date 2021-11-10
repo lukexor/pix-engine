@@ -128,7 +128,11 @@ impl PixState {
         let fourth = arrow_box.width() / 4;
         let [x, y, width, height] = arrow_box.as_array();
         s.no_stroke();
-        s.fill(WHITE);
+        if disabled {
+            s.fill(WHITE / 2);
+        } else {
+            s.fill(WHITE);
+        }
         s.triangle([
             point![x + fourth, y + third + 1],
             point![(x + width) - fourth, y + third + 1],
