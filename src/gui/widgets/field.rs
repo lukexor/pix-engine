@@ -3,11 +3,9 @@
 //! Provided [PixState] methods:
 //!
 //! - [PixState::text_field]
-//! - [PixState::text_field_filtered]
-//! - [PixState::text_field_hint]
+//! - [PixState::advanced_text_field]
 //! - [PixState::text_area]
-//! - [PixState::text_area_filtered]
-//! - [PixState::text_area_hint]
+//! - [PixState::advanced_text_area]
 //!
 //! # Example
 //!
@@ -17,22 +15,22 @@
 //! # impl AppState for App {
 //! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!     s.text_field("Text Field", &mut self.text_field)?;
-//!     s.text_field_hint("Text Field w/ hint", "placeholder", &mut self.text_field)?;
-//!     s.text_field_filtered(
-//!         "Filtered Text Field",
+//!     s.advanced_text_field(
+//!         "Filtered Text Field w/ hint",
+//!         "placeholder",
 //!         &mut self.text_field,
-//!         char::is_numeric
+//!         Some(char::is_numeric),
 //!     )?;
 //!
 //!     s.text_area("Text Area", 200, 100, &mut self.text_area)?;
-//!     s.text_area_hint("Text Area w/ hint", "placeholder", 200, 100, &mut self.text_area)?;
-//!     s.text_area_filtered(
-//!         "Filtered Text Area",
+//!     s.advanced_text_area(
+//!         "Filtered Text Area w/ hint",
+//!         "placeholder",
 //!         200,
 //!         100,
 //!         &mut self.text_area,
-//!         char::is_numeric
-//!     )?;
+//!         None,
+//!         )?;
 //!     Ok(())
 //! }
 //! # }
@@ -61,42 +59,7 @@ impl PixState {
     where
         L: AsRef<str>,
     {
-        self.text_field_hint(label, "", value)
-    }
-
-    /// Draw a text field that filters allowed values to the current canvas.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # struct App { text_field: String, text_area: String};
-    /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.text_field_filtered(
-    ///         "Filtered Text Field",
-    ///         &mut self.text_field,
-    ///         char::is_numeric
-    ///     )?;
-    ///     Ok(())
-    /// }
-    /// # }
-    /// ```
-    pub fn text_field_filtered<L, F>(
-        &mut self,
-        label: L,
-        value: &mut String,
-        filter: F,
-    ) -> PixResult<bool>
-    where
-        L: AsRef<str>,
-        F: FnMut(char) -> bool,
-    {
-        let changed = self.text_field_hint(label, "", value)?;
-        if changed {
-            value.retain(filter);
-        }
-        Ok(changed)
+        self.advanced_text_field(label, "", value, None)
     }
 
     /// Draw a text field with a placeholder hint to the current canvas.
@@ -108,16 +71,22 @@ impl PixState {
     /// # struct App { text_field: String, text_area: String};
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.text_field_hint("Text Field w/ hint", "placeholder", &mut self.text_field)?;
+    ///     s.advanced_text_field(
+    ///         "Filtered Text Field w/ hint",
+    ///         "placeholder",
+    ///         &mut self.text_field,
+    ///         Some(char::is_numeric),
+    ///     )?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    pub fn text_field_hint<L, H>(
+    pub fn advanced_text_field<L, H>(
         &mut self,
         label: L,
         hint: H,
         value: &mut String,
+        filter: Option<fn(char) -> bool>,
     ) -> PixResult<bool>
     where
         L: AsRef<str>,
@@ -227,6 +196,13 @@ impl PixState {
             }
         }
         s.ui.handle_events(id);
+
+        if let Some(filter) = filter {
+            if changed {
+                value.retain(filter);
+            }
+        }
+
         s.advance_cursor(rect![pos, input.right() - pos.x(), input.height()]);
 
         Ok(changed)
@@ -256,46 +232,7 @@ impl PixState {
     where
         L: AsRef<str>,
     {
-        self.text_area_hint(label, "", width, height, value)
-    }
-
-    /// Draw a text area field that filters allowed values to the current canvas.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # struct App { text_field: String, text_area: String};
-    /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.text_area_filtered(
-    ///         "Filtered Text Area",
-    ///         200,
-    ///         100,
-    ///         &mut self.text_area,
-    ///         char::is_numeric
-    ///     )?;
-    ///     Ok(())
-    /// }
-    /// # }
-    /// ```
-    pub fn text_area_filtered<L, F>(
-        &mut self,
-        label: L,
-        width: u32,
-        height: u32,
-        value: &mut String,
-        filter: F,
-    ) -> PixResult<bool>
-    where
-        L: AsRef<str>,
-        F: FnMut(char) -> bool,
-    {
-        let changed = self.text_area_hint(label, "", width, height, value)?;
-        if changed {
-            value.retain(filter);
-        }
-        Ok(changed)
+        self.advanced_text_area(label, "", width, height, value, None)
     }
 
     /// Draw a text area field with a placeholder hint to the current canvas.
@@ -307,24 +244,26 @@ impl PixState {
     /// # struct App { text_field: String, text_area: String};
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.text_area_hint(
-    ///         "Text Area w/ hint",
+    ///     s.advanced_text_area(
+    ///         "Filtered Text Area w/ hint",
     ///         "placeholder",
     ///         200,
     ///         100,
-    ///         &mut self.text_area
+    ///         &mut self.text_area,
+    ///         Some(char::is_alphabetic),
     ///     )?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    pub fn text_area_hint<L, H>(
+    pub fn advanced_text_area<L, H>(
         &mut self,
         label: L,
         hint: H,
         width: u32,
         height: u32,
         value: &mut String,
+        filter: Option<fn(char) -> bool>,
     ) -> PixResult<bool>
     where
         L: AsRef<str>,
@@ -434,6 +373,12 @@ impl PixState {
             }
         }
         s.ui.handle_events(id);
+
+        if let Some(filter) = filter {
+            if changed {
+                value.retain(filter);
+            }
+        }
 
         // Scrollbars
         let total_height = total_height as i32 + 2 * ipad.y();

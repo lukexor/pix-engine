@@ -118,17 +118,19 @@ impl AppState for Gui {
         )?;
 
         s.next_width(200);
-        s.text_field_hint(
+        s.advanced_text_field(
             "Text Field w/ hint",
             "placeholder text",
             &mut self.text_field_hint,
+            None,
         )?;
 
         s.next_width(200);
-        s.text_field_filtered(
+        s.advanced_text_field(
             "Filtered Text Field",
+            "",
             &mut self.text_field_filtered,
-            char::is_numeric,
+            Some(char::is_numeric),
         )?;
         s.same_line([0, 4]);
         s.help_marker("Filters any non-numeric characters")?;
@@ -144,20 +146,22 @@ impl AppState for Gui {
             (CTRL and ALT are mapped to CMD and OPTION on macOs)",
         )?;
         s.same_line([115, 0]);
-        s.text_area_hint(
+        s.advanced_text_area(
             "Text Area w/ hint",
             "placeholder text",
             200,
             100,
             &mut self.text_area_hint,
+            None,
         )?;
         s.same_line(None);
-        s.text_area_filtered(
+        s.advanced_text_area(
             "Text Area Filtered",
+            "",
             200,
             100,
             &mut self.text_area_filtered,
-            char::is_alphabetic,
+            Some(char::is_alphabetic),
         )?;
         s.same_line([-90, 0]);
         s.help_marker("Filters any non-alphabetic characters")?;
