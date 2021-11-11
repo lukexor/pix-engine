@@ -9,6 +9,10 @@ struct Gui {
     advanced_text_field: String,
     text_area: String,
     advanced_text_area: String,
+    drag_int: i32,
+    advanced_drag_int: i32,
+    drag_float: f32,
+    advanced_drag_float: f64,
     select_box: usize,
     select_list: usize,
 }
@@ -24,6 +28,10 @@ impl Gui {
             advanced_text_field: String::new(),
             text_area: "Hello, world!".into(),
             advanced_text_area: String::new(),
+            drag_int: 50,
+            advanced_drag_int: 100,
+            drag_float: 0.5,
+            advanced_drag_float: 1.0,
             select_box: 0,
             select_list: 0,
         }
@@ -113,9 +121,6 @@ impl AppState for Gui {
             (CTRL and ALT are mapped to CMD and OPTION on macOs)",
         )?;
 
-        s.same_line([8, 0]);
-        s.next_width(200);
-
         s.next_width(200);
         s.advanced_text_field(
             "Filtered Text Field w/ hint",
@@ -148,6 +153,33 @@ impl AppState for Gui {
         s.same_line(None);
         s.help_marker("Filters any non-alphabetic characters")?;
 
+        // Drag bars
+        s.next_width(200);
+        s.drag("Drag Int", &mut self.drag_int, 1)?;
+        s.same_line(None);
+        s.next_width(200);
+        s.drag("Drag Float", &mut self.drag_float, 0.005)?;
+
+        s.next_width(200);
+        s.advanced_drag(
+            "Advanced Drag Int",
+            &mut self.advanced_drag_int,
+            1,
+            0,
+            100,
+            None,
+        )?;
+        s.same_line(None);
+        s.next_width(200);
+        s.advanced_drag(
+            "Advanced Drag Float",
+            &mut self.advanced_drag_float,
+            0.005,
+            0.0,
+            1.0,
+            Some(|val| format!("{:.3}", val).into()),
+        )?;
+
         s.separator()?;
 
         // Selectables
@@ -161,8 +193,6 @@ impl AppState for Gui {
             "Pikachu",
             "Rattata",
         ];
-        s.next_width(150);
-        s.select_box("Select Box", &mut self.select_box, &items)?;
 
         s.next_width(300);
         let displayed_count = 4;
@@ -173,16 +203,21 @@ impl AppState for Gui {
             displayed_count,
         )?;
 
+        s.same_line(None);
+        s.next_width(150);
+        s.select_box("Select Box", &mut self.select_box, &items)?;
+
         Ok(())
     }
 }
 
 fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
-        .with_dimensions(1000, 800)
+        .with_dimensions(1024, 768)
         .with_title("GUI Demo")
         .with_frame_rate()
-        .with_font(fonts::NOTO, 14)
+        .with_font(fonts::NOTO, 13)
+        .vsync_enabled()
         .build()?;
     let mut app = Gui::new();
     engine.run(&mut app)

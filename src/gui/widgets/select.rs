@@ -22,7 +22,7 @@
 //! # }
 //! ```
 
-use crate::{gui::scroll::SCROLL_SIZE, prelude::*};
+use crate::prelude::*;
 use std::cmp;
 
 impl PixState {
@@ -255,6 +255,7 @@ impl PixState {
         let active = s.ui.is_active(id);
 
         s.push();
+        s.ui.push_cursor();
 
         // Render
         s.rect_mode(RectMode::Corner);
@@ -312,6 +313,7 @@ impl PixState {
         }
 
         s.no_clip()?;
+        s.ui.pop_cursor();
         s.pop();
 
         // Process input
@@ -340,20 +342,8 @@ impl PixState {
         s.ui.handle_events(id);
 
         // Scrollbars
-        s.set_cursor_pos(pos);
-        s.scroll(id, select_box, total_width, total_height)?;
-        // EXPL: To preseve label pos being restored for `same_line`
-        s.same_line(None);
-        let scroll_height = if total_width > select_box.width() {
-            SCROLL_SIZE
-        } else {
-            0
-        };
-        s.advance_cursor(rect![
-            s.cursor_pos(),
-            0,
-            select_box.bottom() - pos.y() + scroll_height
-        ]);
+        let rect = s.scroll(id, select_box, total_width, total_height)?;
+        s.advance_cursor(rect![pos, rect.width(), rect.bottom() - pos.y()]);
 
         Ok(())
     }

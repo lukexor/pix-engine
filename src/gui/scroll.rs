@@ -69,7 +69,7 @@ impl PixState {
             }
         }
 
-        rect.offset([SCROLL_SIZE, SCROLL_SIZE]);
+        rect.offset_size([SCROLL_SIZE, SCROLL_SIZE]);
         Ok(rect)
     }
 

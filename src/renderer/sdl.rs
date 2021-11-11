@@ -20,6 +20,7 @@ use sdl2::{
     EventPump, Sdl,
 };
 use std::{
+    cmp,
     collections::{hash_map::DefaultHasher, HashMap},
     hash::{Hash, Hasher},
 };
@@ -424,13 +425,23 @@ impl Rendering for Renderer {
         if text.is_empty() {
             return Ok(font.size_of("").unwrap_or_default());
         }
-        let surface = if let Some(width) = wrap_width {
-            font.render(text).blended_wrapped(BLACK, width)
+        if let Some(width) = wrap_width {
+            Ok(font
+                .render(text)
+                .blended_wrapped(BLACK, width)
+                .context("invalid text")?
+                .size())
+        } else if text.contains('\n') {
+            let mut size = (0, 0);
+            for line in text.lines() {
+                let (w, h) = font.size_of(line).context("failed to get text size")?;
+                size.0 = cmp::max(size.0, w);
+                size.1 += h;
+            }
+            Ok(size)
         } else {
-            font.render(text).solid(BLACK)
+            Ok(font.size_of(text)?)
         }
-        .context("invalid text")?;
-        Ok(surface.size())
     }
 
     /// Draw a pixel to the current canvas.

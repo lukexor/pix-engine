@@ -29,6 +29,7 @@ use crate::prelude::*;
 
 pub mod field;
 pub mod select;
+pub mod slider;
 pub mod text;
 pub mod tooltip;
 
