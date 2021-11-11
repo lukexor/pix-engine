@@ -76,6 +76,7 @@ impl PixState {
         let disabled = s.ui.disabled;
 
         s.push();
+        s.ui.push_cursor();
 
         // Render
         s.rect_mode(RectMode::Corner);
@@ -119,10 +120,12 @@ impl PixState {
             s.tooltip(text)?;
         }
 
+        s.ui.pop_cursor();
         s.pop();
 
         // Process input
         s.ui.handle_events(id);
+        s.advance_cursor(rect![pos, hover.right() - pos.x(), hover.height()]);
 
         Ok(())
     }

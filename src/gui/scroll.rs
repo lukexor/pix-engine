@@ -15,7 +15,7 @@ impl PixState {
         mut rect: Rect<i32>,
         width: i32,
         height: i32,
-    ) -> PixResult<()> {
+    ) -> PixResult<Rect<i32>> {
         use cmp::{max, min};
         let s = self;
 
@@ -47,7 +47,6 @@ impl PixState {
                 scroll.set_y(scroll_y);
                 s.ui.set_scroll(id, scroll);
             }
-            rect.offset_width(SCROLL_SIZE);
         }
 
         // Horizontal scroll
@@ -68,12 +67,10 @@ impl PixState {
                 scroll.set_x(scroll_x);
                 s.ui.set_scroll(id, scroll);
             }
-            rect.offset_height(SCROLL_SIZE);
         }
 
-        s.advance_cursor(rect);
-
-        Ok(())
+        rect.offset([SCROLL_SIZE, SCROLL_SIZE]);
+        Ok(rect)
     }
 
     fn scrollbar(
@@ -180,6 +177,7 @@ impl PixState {
                 }
             }
         }
+
         let mut new_value = *value;
         // Process mouse wheel
         if hovered {

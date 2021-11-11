@@ -38,7 +38,7 @@
 
 use crate::{gui::MOD_CTRL, prelude::*};
 
-const TEXT_CURSOR: &str = "_";
+const TEXT_CURSOR: &str = "|";
 
 impl PixState {
     /// Draw a text field to the current canvas.
@@ -293,6 +293,7 @@ impl PixState {
         let active = s.ui.is_active(id);
 
         s.push();
+        s.ui.push_cursor();
 
         // Render
         s.rect_mode(RectMode::Corner);
@@ -327,7 +328,7 @@ impl PixState {
         s.clip(input)?;
         let blink_cursor = focused && s.elapsed() as usize >> 9 & 1 > 0;
         // TODO: total width here always maxes out at wrap_width when words can't wrap
-        let (_, total_height) = if value.is_empty() {
+        let (_, mut total_height) = if value.is_empty() {
             s.disable();
             let pos = s.cursor_pos();
             let size = s.text(&hint)?;
@@ -346,7 +347,6 @@ impl PixState {
         };
 
         s.no_clip()?;
-        s.pop();
 
         // Process input
         let mut changed = false;
@@ -358,21 +358,28 @@ impl PixState {
             }
             if changed {
                 value.retain(|c| c == '\n' || !c.is_control());
-            }
 
-            // Keep cursor within scroll region
-            let mut scroll = s.ui.scroll(id);
-            let text_cursor = total_height as i32;
-            if text_cursor < input.height() {
-                scroll.set_y(0);
-                s.ui.set_scroll(id, scroll);
-            } else if text_cursor > scroll.y() + input.height() {
-                let (_, line_height) = s.size_of(TEXT_CURSOR)?;
-                scroll.set_y(text_cursor - (input.height() - line_height as i32));
+                // Keep cursor within scroll region
+                let mut scroll = s.ui.scroll(id);
+                let (_, vh) = s.size_of(&value)?;
+                let (_, ch) = s.size_of(TEXT_CURSOR)?;
+                total_height = vh;
+                // EXPL: wrapping chops off the trailing newline, so make sure to adjust height
+                if value.ends_with('\n') {
+                    total_height += ch;
+                }
+                if (total_height as i32) < input.height() {
+                    scroll.set_y(0);
+                } else {
+                    scroll.set_y(total_height as i32 + 2 * ipad.y() - input.height());
+                }
                 s.ui.set_scroll(id, scroll);
             }
         }
         s.ui.handle_events(id);
+
+        s.ui.pop_cursor();
+        s.pop();
 
         if let Some(filter) = filter {
             if changed {
@@ -381,12 +388,8 @@ impl PixState {
         }
 
         // Scrollbars
-        let total_height = total_height as i32 + 2 * ipad.y();
-        s.set_cursor_pos(pos);
-        s.scroll(id, input, 0, total_height)?;
-        // EXPL: To preseve label pos being restored for `same_line`
-        s.same_line(None);
-        s.advance_cursor(rect![pos, 0, input.bottom() - pos.y()]);
+        let rect = s.scroll(id, input, 0, total_height as i32 + 2 * ipad.y())?;
+        s.advance_cursor(rect![pos, rect.width(), rect.bottom() - pos.y()]);
 
         Ok(changed)
     }

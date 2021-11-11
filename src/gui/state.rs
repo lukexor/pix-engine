@@ -48,7 +48,7 @@ pub(crate) struct UiState {
     /// Previous line height.
     pub(crate) pline_height: i32,
     /// Temporary stack of cursor positions.
-    cursor_stack: Vec<(PointI2, PointI2)>,
+    cursor_stack: Vec<(PointI2, PointI2, i32, i32)>,
     /// ID stack to assist with generating unique element IDs.
     id_stack: Vec<ElementId>,
     /// Override for max-width elements.
@@ -159,15 +159,22 @@ impl UiState {
     /// Push a new UI rendering position to the stack.
     #[inline]
     pub(crate) fn push_cursor(&mut self) {
-        self.cursor_stack.push((self.pcursor, self.cursor));
+        self.cursor_stack.push((
+            self.pcursor,
+            self.cursor,
+            self.pline_height,
+            self.line_height,
+        ));
     }
 
     /// Pop a new UI rendering position from the stack.
     #[inline]
     pub(crate) fn pop_cursor(&mut self) {
-        if let Some((pcursor, cursor)) = self.cursor_stack.pop() {
+        if let Some((pcursor, cursor, pline_height, line_height)) = self.cursor_stack.pop() {
             self.pcursor = pcursor;
             self.cursor = cursor;
+            self.pline_height = pline_height;
+            self.line_height = line_height;
         }
     }
 

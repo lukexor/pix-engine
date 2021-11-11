@@ -20,7 +20,6 @@ use sdl2::{
     EventPump, Sdl,
 };
 use std::{
-    cmp,
     collections::{hash_map::DefaultHasher, HashMap},
     hash::{Hash, Hasher},
 };
@@ -355,8 +354,8 @@ impl Rendering for Renderer {
                     .context("invalid text")?;
                     self.text_cache.put(
                         key,
-                        texture_creator
-                            .create_texture_from_surface(&surface)
+                        surface
+                            .as_texture(texture_creator)
                             .context("failed to create text surface")?,
                     );
                 }
@@ -387,7 +386,13 @@ impl Rendering for Renderer {
             })?;
             Ok((width, height))
         } else {
-            Ok((0, 0))
+            let surface = if let Some(width) = wrap_width {
+                font.render(text).blended_wrapped(BLACK, width)
+            } else {
+                font.render(text).blended(BLACK)
+            }
+            .context("invalid text")?;
+            Ok(surface.size())
         }
     }
 
@@ -414,18 +419,18 @@ impl Rendering for Renderer {
     /// Returns the rendered dimensions of the given text using the current font
     /// as `(width, height)`.
     #[inline]
-    fn size_of(&mut self, text: &str) -> PixResult<(u32, u32)> {
+    fn size_of(&mut self, text: &str, wrap_width: Option<u32>) -> PixResult<(u32, u32)> {
         let font = get_loaded_font!(self);
         if text.is_empty() {
             return Ok(font.size_of("").unwrap_or_default());
         }
-        let mut size = (0, 0);
-        for line in text.lines() {
-            let (w, h) = font.size_of(line).context("failed to get text size")?;
-            size.0 = cmp::max(size.0, w);
-            size.1 += h;
+        let surface = if let Some(width) = wrap_width {
+            font.render(text).blended_wrapped(BLACK, width)
+        } else {
+            font.render(text).solid(BLACK)
         }
-        Ok(size)
+        .context("invalid text")?;
+        Ok(surface.size())
     }
 
     /// Draw a pixel to the current canvas.

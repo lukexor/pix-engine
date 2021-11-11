@@ -99,7 +99,7 @@ impl PixState {
         let disabled = s.ui.disabled;
         let mut pos = s.cursor_pos();
         if let RectMode::Center = s.settings.rect_mode {
-            let (width, height) = s.renderer.size_of(text)?;
+            let (width, height) = s.size_of(text)?;
             pos.offset([-(width as i32 / 2), -(height as i32 / 2)]);
         };
         if let AngleMode::Radians = s.settings.angle_mode {

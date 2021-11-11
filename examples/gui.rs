@@ -6,11 +6,9 @@ struct Gui {
     checkbox: bool,
     radio: usize,
     text_field: String,
-    text_field_hint: String,
-    text_field_filtered: String,
+    advanced_text_field: String,
     text_area: String,
-    text_area_hint: String,
-    text_area_filtered: String,
+    advanced_text_area: String,
     select_box: usize,
     select_list: usize,
 }
@@ -23,11 +21,9 @@ impl Gui {
             checkbox: true,
             radio: 0,
             text_field: "Hello, world!".into(),
-            text_field_hint: String::new(),
-            text_field_filtered: String::new(),
+            advanced_text_field: String::new(),
             text_area: "Hello, world!".into(),
-            text_area_hint: String::new(),
-            text_area_filtered: String::new(),
+            advanced_text_area: String::new(),
             select_box: 0,
             select_list: 0,
         }
@@ -109,7 +105,7 @@ impl AppState for Gui {
         // Text Fields
         s.next_width(200);
         s.text_field("Text Field", &mut self.text_field)?;
-        s.same_line([0, 4]);
+        s.same_line(None);
         s.help_marker(
             "CTRL-X, CTRL-C, CTRL-V to use the clipboard.\n\
             ALT-Backspace to delete word.\n\
@@ -117,27 +113,22 @@ impl AppState for Gui {
             (CTRL and ALT are mapped to CMD and OPTION on macOs)",
         )?;
 
+        s.same_line([8, 0]);
         s.next_width(200);
-        s.advanced_text_field(
-            "Text Field w/ hint",
-            "placeholder text",
-            &mut self.text_field_hint,
-            None,
-        )?;
 
         s.next_width(200);
         s.advanced_text_field(
-            "Filtered Text Field",
-            "",
-            &mut self.text_field_filtered,
+            "Filtered Text Field w/ hint",
+            "type here",
+            &mut self.advanced_text_field,
             Some(char::is_numeric),
         )?;
-        s.same_line([0, 4]);
+        s.same_line(None);
         s.help_marker("Filters any non-numeric characters")?;
 
         // Text Areas
         s.text_area("Text Area", 200, 100, &mut self.text_area)?;
-        s.same_line([-145, 0]);
+        s.same_line(None);
         s.help_marker(
             "CTRL-X, CTRL-C, CTRL-V to use the clipboard.\n\
             ALT-Backspace to delete word.\n\
@@ -145,25 +136,16 @@ impl AppState for Gui {
             RETURN to enter newline.\n\
             (CTRL and ALT are mapped to CMD and OPTION on macOs)",
         )?;
-        s.same_line([115, 0]);
+        s.same_line([8, 0]);
         s.advanced_text_area(
-            "Text Area w/ hint",
-            "placeholder text",
+            "Filtered Text Area w/ hint",
+            "type here",
             200,
             100,
-            &mut self.text_area_hint,
-            None,
-        )?;
-        s.same_line(None);
-        s.advanced_text_area(
-            "Text Area Filtered",
-            "",
-            200,
-            100,
-            &mut self.text_area_filtered,
+            &mut self.advanced_text_area,
             Some(char::is_alphabetic),
         )?;
-        s.same_line([-90, 0]);
+        s.same_line(None);
         s.help_marker("Filters any non-alphabetic characters")?;
 
         s.separator()?;
