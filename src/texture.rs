@@ -288,7 +288,7 @@ impl PixState {
     {
         self.push();
         self.ui.push_cursor();
-        self.set_cursor_pos([0, 0]);
+        self.set_cursor_pos(self.theme.style.frame_pad);
 
         self.renderer.set_texture_target(texture_id);
         let result = f(self);

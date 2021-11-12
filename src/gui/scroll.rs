@@ -2,11 +2,83 @@
 
 use super::{state::ElementId, Direction};
 use crate::prelude::*;
-use std::cmp;
 
 pub(crate) const THUMB_MIN: i32 = 10;
 pub(crate) const SCROLL_SIZE: i32 = 12;
 pub(crate) const SCROLL_SPEED: i32 = 3;
+
+impl PixState {
+    /// Draw a scrollable region to the current canvas.
+    pub fn scroll_area<S, F>(&mut self, label: S, width: u32, height: u32, f: F) -> PixResult<()>
+    where
+        S: AsRef<str>,
+        F: FnOnce(&mut PixState) -> PixResult<()>,
+    {
+        let label = label.as_ref();
+
+        let s = self;
+        let id = s.ui.get_id(&label);
+        let pos = s.cursor_pos();
+        let style = s.theme.style;
+        let fpad = style.frame_pad;
+
+        // Calculate rect
+        let scroll_area = rect![
+            pos,
+            width as i32 - 2 * fpad.x(),
+            height as i32 - 2 * fpad.y()
+        ];
+
+        // Check hover/active/keyboard focus
+        let _hovered = s.ui.try_hover(id, scroll_area);
+        let focused = s.ui.try_focus(id);
+        let disabled = s.ui.disabled;
+        let active = s.ui.is_active(id);
+
+        s.ui.reset_line_height();
+
+        // Scroll area
+        let scroll = s.ui.scroll(id);
+        let texture_id = s.get_or_create_texture(id, None, scroll_area)?;
+        s.ui.set_mouse_offset(scroll_area.top_left());
+        s.ui.set_cursor_offset_x(-scroll.x());
+        let mut max_cursor_pos = s.cursor_pos();
+        s.with_texture(texture_id, |s: &mut PixState| {
+            s.push();
+            if disabled {
+                s.background(s.primary_color() / 2)?;
+            } else {
+                s.background(s.primary_color())?;
+            }
+            s.rect_mode(RectMode::Corner);
+            if focused || active {
+                s.stroke(s.highlight_color());
+            } else {
+                s.stroke(s.muted_color());
+            }
+            s.no_fill();
+            s.rect([0, 0, scroll_area.width() - 1, scroll_area.height() - 1])?;
+            s.pop();
+
+            s.set_cursor_pos(s.cursor_pos() - scroll);
+            f(s)?;
+            max_cursor_pos = s.cursor_pos() + scroll;
+            Ok(())
+        })?;
+        s.ui.clear_cursor_offset();
+        s.ui.clear_mouse_offset();
+
+        s.ui.handle_events(id);
+
+        // Scrollbars
+        let total_width = max_cursor_pos.x() + s.ui.last_width() + fpad.x();
+        let total_height = max_cursor_pos.y();
+        let rect = s.scroll(id, scroll_area, total_width, total_height)?;
+        s.advance_cursor(rect![pos, rect.width(), rect.bottom() - pos.y()]);
+
+        Ok(())
+    }
+}
 
 impl PixState {
     /// Handles mouse wheel scroll for `hovered` elements.
@@ -17,57 +89,79 @@ impl PixState {
         width: i32,
         height: i32,
     ) -> PixResult<Rect<i32>> {
-        use cmp::{max, min};
         let s = self;
 
-        let mut scroll = s.ui.scroll(id);
+        let scroll = s.ui.scroll(id);
         let xmax = width - rect.width();
         let ymax = height - rect.height();
-        if s.ui.is_hovered(id) {
-            let speed = 3;
-            if s.ui.mouse.xrel != 0 {
-                scroll.set_x(max(0, min(xmax, scroll.x() - speed * s.ui.mouse.xrel)));
-                s.ui.set_scroll(id, scroll);
-            }
-            if s.ui.mouse.yrel != 0 {
-                scroll.set_y(max(0, min(ymax, scroll.y() - speed * s.ui.mouse.yrel)));
-                s.ui.set_scroll(id, scroll);
-            }
-        }
+        let mut new_scroll = scroll;
 
         // Vertical scroll
-        if height > rect.height() {
-            let mut scroll_y = scroll.y();
+        if ymax > 0 {
+            if s.ui.is_hovered(id) {
+                new_scroll.set_y((scroll.y() + SCROLL_SPEED * s.ui.mouse.yrel).clamp(0, ymax));
+            }
+
+            if s.ui.is_focused(id) {
+                if let Some(key) = s.ui.key_entered() {
+                    match key {
+                        Key::Up => {
+                            new_scroll.set_y((scroll.y() - SCROLL_SPEED).clamp(0, ymax));
+                        }
+                        Key::Down => {
+                            new_scroll.set_y((scroll.y() + SCROLL_SPEED).clamp(0, ymax));
+                        }
+                        _ => (),
+                    };
+                }
+            }
+
+            let mut scroll_y = new_scroll.y();
             let scrolled = s.scrollbar(
                 rect![rect.right() + 1, rect.top(), SCROLL_SIZE, rect.height()],
-                ymax as u32,
+                ymax,
                 &mut scroll_y,
                 Direction::Vertical,
             )?;
             if scrolled {
-                scroll.set_y(scroll_y);
-                s.ui.set_scroll(id, scroll);
+                new_scroll.set_y(scroll_y);
             }
         }
 
         // Horizontal scroll
-        if width > rect.width() {
-            let mut scroll_x = scroll.x();
+        if xmax > 0 {
+            if s.ui.is_hovered(id) {
+                new_scroll.set_x((scroll.x() + SCROLL_SPEED * s.ui.mouse.xrel).clamp(0, xmax));
+            }
+
+            if s.ui.is_focused(id) {
+                if let Some(key) = s.ui.key_entered() {
+                    match key {
+                        Key::Left => {
+                            new_scroll.set_x((scroll.x() - SCROLL_SPEED).clamp(0, xmax));
+                        }
+                        Key::Right => {
+                            new_scroll.set_x((scroll.x() + SCROLL_SPEED).clamp(0, xmax));
+                        }
+                        _ => (),
+                    };
+                }
+            }
+
+            let mut scroll_x = new_scroll.x();
             let scrolled = s.scrollbar(
-                rect![
-                    rect.left(),
-                    rect.bottom() + 1,
-                    rect.width() - SCROLL_SIZE,
-                    SCROLL_SIZE
-                ],
-                xmax as u32,
+                rect![rect.left(), rect.bottom() + 1, rect.width(), SCROLL_SIZE],
+                xmax,
                 &mut scroll_x,
                 Direction::Horizontal,
             )?;
             if scrolled {
-                scroll.set_x(scroll_x);
-                s.ui.set_scroll(id, scroll);
+                new_scroll.set_x(scroll_x);
             }
+        }
+
+        if new_scroll != scroll {
+            s.ui.set_scroll(id, new_scroll);
         }
 
         rect.offset_size([SCROLL_SIZE, SCROLL_SIZE]);
@@ -77,7 +171,7 @@ impl PixState {
     fn scrollbar(
         &mut self,
         rect: Rect<i32>,
-        max: u32,
+        max: i32,
         value: &mut i32,
         dir: Direction,
     ) -> PixResult<bool> {
@@ -95,8 +189,7 @@ impl PixState {
         s.push();
 
         // Clamp value
-        let max = max as i32;
-        *value = cmp::max(0, cmp::min(max, *value));
+        *value = (*value).clamp(0, max);
 
         // Scroll region
         s.no_stroke();
@@ -147,17 +240,11 @@ impl PixState {
         let mut new_value = *value;
         if focused {
             if let Some(key) = s.ui.key_entered() {
-                match key {
-                    Key::Up if dir == Vertical => {
+                match (key, dir) {
+                    (Key::Up, Vertical) | (Key::Left, Horizontal) => {
                         new_value = value.saturating_sub(SCROLL_SPEED).max(0);
                     }
-                    Key::Down if dir == Vertical => {
-                        new_value = value.saturating_add(SCROLL_SPEED).min(max);
-                    }
-                    Key::Left if dir == Horizontal => {
-                        new_value = value.saturating_sub(SCROLL_SPEED).max(0);
-                    }
-                    Key::Right if dir == Horizontal => {
+                    (Key::Down, Vertical) | (Key::Right, Horizontal) => {
                         new_value = value.saturating_add(SCROLL_SPEED).min(max);
                     }
                     _ => (),
@@ -167,33 +254,29 @@ impl PixState {
 
         // Process mouse wheel
         if hovered {
-            match dir {
-                Vertical if s.ui.mouse.yrel != 0 => {
-                    new_value -= SCROLL_SPEED * s.ui.mouse.yrel;
-                }
-                Horizontal if s.ui.mouse.xrel != 0 => {
-                    new_value -= SCROLL_SPEED * s.ui.mouse.xrel;
-                }
-                _ => (),
+            let offset = match dir {
+                Horizontal => s.ui.mouse.xrel,
+                Vertical => s.ui.mouse.yrel,
             };
+            new_value -= SCROLL_SPEED * offset;
         }
         // Process mouse input
         if active {
             new_value = match dir {
-                Vertical => {
-                    let my = (s.mouse_pos().y() - rect.y()).clamp(0, rect.height());
-                    (my * max) / rect.height()
-                }
                 Horizontal => {
                     let mx = (s.mouse_pos().x() - rect.x()).clamp(0, rect.width());
                     (mx * max) / rect.width()
+                }
+                Vertical => {
+                    let my = (s.mouse_pos().y() - rect.y()).clamp(0, rect.height());
+                    (my * max) / rect.height()
                 }
             };
         }
         s.ui.handle_events(id);
 
         if new_value != *value {
-            *value = new_value;
+            *value = new_value.clamp(0, max);
             Ok(true)
         } else {
             Ok(false)

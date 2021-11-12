@@ -233,7 +233,7 @@ impl PixState {
 
         // Calculate displayed items
         let line_height = font_size + ipad.y() * 2;
-        let mut scroll = s.ui.scroll(id);
+        let scroll = s.ui.scroll(id);
         let skip_count = (scroll.y() / line_height) as usize;
         let displayed_items = items
             .iter()
@@ -246,7 +246,7 @@ impl PixState {
         let total_width = items.iter().fold(0, |max_width, item| {
             let (w, _) = s.size_of(item).unwrap_or((0, 0));
             cmp::max(w as i32, max_width)
-        });
+        }) + 2 * fpad.x();
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, select_box);
@@ -325,16 +325,19 @@ impl PixState {
                     _ => *selected,
                 };
                 if *selected != new_selected {
+                    s.ui.clear_entered();
                     *selected = new_selected;
                     let sel_y = *selected as i32 * line_height;
-                    // Snap scroll to top of the window
+                    let mut new_scroll = scroll;
                     if sel_y < scroll.y() {
-                        scroll.set_y(sel_y);
-                        s.ui.set_scroll(id, scroll);
+                        // Snap scroll to top of the window
+                        new_scroll.set_y(sel_y);
                     } else if sel_y + line_height > scroll.y() + select_box.height() {
                         // Snap scroll to bottom of the window
-                        scroll.set_y(sel_y - (select_box.height() - line_height));
-                        s.ui.set_scroll(id, scroll);
+                        new_scroll.set_y(sel_y - (select_box.height() - line_height));
+                    }
+                    if new_scroll != scroll {
+                        s.ui.set_scroll(id, new_scroll);
                     }
                 }
             }

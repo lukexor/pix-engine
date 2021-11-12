@@ -79,13 +79,17 @@ impl AppState for Gui {
         s.same_line(None);
         s.text("- and me!")?;
         if s.hovered() {
-            s.advanced_tooltip(rect![s.mouse_pos(), 200, 100], |s: &mut PixState| {
-                s.background(s.accent_color())?;
-                s.text("Advanced tip")?;
-                s.separator()?;
-                s.text("Draw all the things!")?;
-                Ok(())
-            })?;
+            s.advanced_tooltip(
+                "Advanced Tooltip",
+                rect![s.mouse_pos(), 200, 100],
+                |s: &mut PixState| {
+                    s.background(s.accent_color())?;
+                    s.text("Advanced tip")?;
+                    s.separator()?;
+                    s.text("Draw all the things!")?;
+                    Ok(())
+                },
+            )?;
         }
         s.same_line([20, 0]);
         s.text_transformed("Flipped text", None, None, Flipped::Both)?;
@@ -218,6 +222,15 @@ impl AppState for Gui {
         s.same_line(None);
         s.next_width(150);
         s.select_box("Select Box", &mut self.select_box, &items)?;
+
+        // Scroll area
+        s.same_line(None);
+        s.scroll_area("Scroll Area", 200, 150, |s: &mut PixState| {
+            for i in 0..10 {
+                s.text(format!("{}: Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam", i))?;
+            }
+            Ok(())
+        })?;
 
         Ok(())
     }

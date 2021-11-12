@@ -46,6 +46,8 @@ pub(crate) struct UiState {
     cursor: PointI2,
     /// Previous global render position, in window coordinates.
     pub(crate) pcursor: PointI2,
+    /// X offset for global render position, in window coordinates.
+    offset_x: i32,
     /// Current line height.
     pub(crate) line_height: i32,
     /// Previous line height.
@@ -89,6 +91,7 @@ impl Default for UiState {
         Self {
             cursor: point!(),
             pcursor: point!(),
+            offset_x: 0,
             line_height: 0,
             pline_height: 0,
             cursor_stack: vec![],
@@ -163,6 +166,18 @@ impl UiState {
         self.cursor = cursor.into();
     }
 
+    /// Set the x offset for the current UI rendering position.
+    #[inline]
+    pub(crate) fn set_cursor_offset_x(&mut self, x: i32) {
+        self.offset_x = x;
+    }
+
+    /// Clears the x offset for the current UI rendering position.
+    #[inline]
+    pub(crate) fn clear_cursor_offset(&mut self) {
+        self.offset_x = 0;
+    }
+
     /// Push a new UI rendering position to the stack.
     #[inline]
     pub(crate) fn push_cursor(&mut self) {
@@ -183,6 +198,12 @@ impl UiState {
             self.pline_height = pline_height;
             self.line_height = line_height;
         }
+    }
+
+    /// Reset current line height.
+    #[inline]
+    pub(crate) fn reset_line_height(&mut self) {
+        self.line_height = 0;
     }
 
     /// Returns the current mouse position coordinates as `(x, y)`.
@@ -472,6 +493,13 @@ impl UiState {
             Ok(default)
         }
     }
+
+    /// Returns the width of the last rendered UI element, or 0 if there is no last rendered
+    /// element.
+    #[inline]
+    pub(crate) fn last_width(&self) -> i32 {
+        self.last_size.map(|s| s.width()).unwrap_or_default()
+    }
 }
 
 impl PixState {
@@ -638,6 +666,7 @@ impl PixState {
         let style = self.theme.style;
         let padx = style.frame_pad.y();
         let pady = style.item_pad.y();
+        let offset_x = self.ui.offset_x;
 
         // Previous cursor ends at the right of this item
         self.ui.pcursor = point![pos.x() + rect.width(), pos.y()];
@@ -645,7 +674,7 @@ impl PixState {
         // Move cursor to the next line with padding, choosing the maximum of the next line or the
         // previous y value to account for variable line heights when using `same_line`.
         let line_height = cmp::max(self.ui.line_height, rect.height());
-        self.ui.cursor = point![padx, pos.y() + line_height + pady];
+        self.ui.cursor = point![padx + offset_x, pos.y() + line_height + pady];
         self.ui.pline_height = line_height;
         self.ui.line_height = 0;
         self.ui.last_size = Some(rect);

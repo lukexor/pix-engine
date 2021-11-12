@@ -22,12 +22,16 @@
 //!
 //!     s.text("Hover me too!")?;
 //!     if s.hovered() {
-//!         s.advanced_tooltip(rect![s.mouse_pos(), 200, 100], |s: &mut PixState| {
-//!             s.background(CADET_BLUE);
-//!             s.font_color(BLACK);
-//!             s.bullet("Advanced tooltip")?;
-//!             Ok(())
-//!         })?;
+//!         s.advanced_tooltip(
+//!             "Advanced tooltip",
+//!             rect![s.mouse_pos(), 200, 100],
+//!             |s: &mut PixState| {
+//!                 s.background(CADET_BLUE);
+//!                 s.font_color(BLACK);
+//!                 s.bullet("Advanced tooltip")?;
+//!                 Ok(())
+//!             }
+//!         )?;
 //!     }
 //!     Ok(())
 //! }
@@ -102,7 +106,9 @@ impl PixState {
             let (w, h) = s.size_of(text)?;
             let w = w as i32 + 2 * pad.x();
             let h = h as i32 + 2 * pad.y();
+            s.push_id(id);
             s.advanced_tooltip(
+                text,
                 rect![hover.bottom_right() - 10, w, h],
                 |s: &mut PixState| {
                     s.background(s.primary_color())?;
@@ -116,6 +122,7 @@ impl PixState {
                     Ok(())
                 },
             )?;
+            s.pop_id();
         } else if hovered {
             s.tooltip(text)?;
         }
@@ -154,6 +161,7 @@ impl PixState {
         let text = text.as_ref();
 
         let s = self;
+        let id = s.ui.get_id(&text);
         let style = s.theme.style;
         let pad = style.frame_pad;
 
@@ -162,7 +170,8 @@ impl PixState {
         let h = h as i32 + 2 * pad.y();
 
         // Render
-        s.advanced_tooltip(rect![s.mouse_pos(), w, h], |s: &mut PixState| {
+        s.push_id(id);
+        s.advanced_tooltip(text, rect![s.mouse_pos(), w, h], |s: &mut PixState| {
             s.background(s.primary_color())?;
             s.rect_mode(RectMode::Corner);
             s.push();
@@ -173,6 +182,7 @@ impl PixState {
             s.text(text)?;
             Ok(())
         })?;
+        s.pop_id();
 
         Ok(())
     }
@@ -191,28 +201,35 @@ impl PixState {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.text("Hover me")?;
     ///     if s.hovered() {
-    ///         s.advanced_tooltip(rect![s.mouse_pos(), 200, 100], |s: &mut PixState| {
-    ///             s.background(CADET_BLUE);
-    ///             s.font_color(BLACK);
-    ///             s.bullet("Advanced tooltip")?;
-    ///             Ok(())
-    ///         })?;
+    ///         s.advanced_tooltip(
+    ///             "Tooltip",
+    ///             rect![s.mouse_pos(), 200, 100],
+    ///             |s: &mut PixState| {
+    ///                 s.background(CADET_BLUE);
+    ///                 s.font_color(BLACK);
+    ///                 s.bullet("Advanced tooltip")?;
+    ///                 Ok(())
+    ///             },
+    ///         )?;
     ///     }
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    pub fn advanced_tooltip<R, F>(&mut self, rect: R, f: F) -> PixResult<()>
+    pub fn advanced_tooltip<S, R, F>(&mut self, label: S, rect: R, f: F) -> PixResult<()>
     where
+        S: AsRef<str>,
         R: Into<Rect<i32>>,
         F: FnOnce(&mut PixState) -> PixResult<()>,
     {
+        let label = label.as_ref();
+
         let s = self;
-        let mut rect = s.get_rect(rect);
-        let id = s.ui.get_id(&rect);
+        let id = s.ui.get_id(&label);
         let pad = s.theme.style.frame_pad;
 
         // Calculate rect
+        let mut rect = s.get_rect(rect);
         rect.offset([15, 15]);
 
         // Ensure rect stays inside window
@@ -232,10 +249,7 @@ impl PixState {
 
         let texture_id = s.get_or_create_texture(id, None, rect)?;
         s.ui.set_mouse_offset(rect.top_left());
-        s.with_texture(texture_id, |s: &mut PixState| {
-            s.set_cursor_pos(s.theme.style.frame_pad);
-            f(s)
-        })?;
+        s.with_texture(texture_id, f)?;
         s.ui.clear_mouse_offset();
 
         Ok(())
