@@ -51,7 +51,8 @@ impl PixState {
     /// ```
     pub fn drag<T, L>(&mut self, label: L, value: &mut T, speed: T) -> PixResult<bool>
     where
-        T: Num + NumCast + Bounded + fmt::Display,
+        T: Num + NumCast + Bounded + fmt::Display + FromStr,
+        <T as FromStr>::Err: Error + Sync + Send + 'static,
         L: AsRef<str>,
     {
         self.advanced_drag(label, value, speed, T::min_value(), T::max_value(), None)
@@ -87,7 +88,8 @@ impl PixState {
         formatter: Option<fn(&T) -> Cow<'a, str>>,
     ) -> PixResult<bool>
     where
-        T: Num + NumCast + fmt::Display,
+        T: Num + NumCast + fmt::Display + FromStr,
+        <T as FromStr>::Err: Error + Sync + Send + 'static,
         L: AsRef<str>,
     {
         let label = label.as_ref();
@@ -99,6 +101,30 @@ impl PixState {
         let style = s.theme.style;
         let fpad = style.frame_pad;
         let ipad = style.item_pad;
+
+        // If editing, render editable text field instead
+        let editing = s.ui.is_editing(id);
+        let disabled = s.ui.disabled;
+        if editing {
+            if disabled {
+                s.ui.end_edit();
+            } else {
+                let mut text = s.ui.text_edit(id, value.to_string());
+                let changed = s.advanced_text_field(
+                    label,
+                    "",
+                    &mut text,
+                    Some(|c| c.is_ascii_digit() || c == '.' || c == '-'),
+                )?;
+                s.ui.set_text_edit(id, text);
+
+                if let Some(Key::Return | Key::Escape) = s.ui.key_entered() {
+                    s.ui.end_edit();
+                }
+                return Ok(changed);
+            }
+        }
+        *value = clamp(s.ui.parse_text_edit(id, *value)?, min, max);
 
         // Calculate drag rect
         let width =
@@ -167,26 +193,30 @@ impl PixState {
         s.pop();
 
         // Process drag
-        let mut changed = false;
         let mut new_value = *value;
         if active {
-            let delta = s.mouse_pos().x() - s.pmouse_pos().x();
-            let mut delta: T = NumCast::from(delta).expect("valid i32 cast");
-            if s.keymod_down(KeyMod::ALT) {
-                delta /= NumCast::from(100).expect("valid number cast");
-            } else if s.keymod_down(KeyMod::SHIFT) {
-                delta *= NumCast::from(10).expect("valid number cast");
+            if s.keymod_down(MOD_CTRL) {
+                // Process keyboard input
+                s.ui.begin_edit(id);
+            } else {
+                let delta = s.mouse_pos().x() - s.pmouse_pos().x();
+                let mut delta: T = NumCast::from(delta).expect("valid i32 cast");
+                if s.keymod_down(KeyMod::ALT) {
+                    delta /= NumCast::from(100).expect("valid number cast");
+                } else if s.keymod_down(KeyMod::SHIFT) {
+                    delta *= NumCast::from(10).expect("valid number cast");
+                }
+                new_value = clamp(new_value + (delta * speed), min, max);
             }
-            new_value = clamp(new_value + (delta * speed), min, max);
-        }
-        if new_value != *value {
-            *value = new_value;
-            changed = true;
         }
         s.ui.handle_events(id);
         s.advance_cursor(rect![pos, drag.right() - pos.x(), drag.height()]);
-
-        Ok(changed)
+        if new_value != *value {
+            *value = new_value;
+            Ok(true)
+        } else {
+            Ok(false)
+        }
     }
 
     /// Draw a slider widget to the current canvas.
@@ -363,12 +393,12 @@ impl PixState {
         s.pop();
 
         let mut new_value = *value;
-        if active && s.keymod_down(MOD_CTRL) {
-            // Process keyboard input
-            s.ui.begin_edit(id);
-        } else {
-            // Process mouse input
-            if active {
+        if active {
+            if s.keymod_down(MOD_CTRL) {
+                // Process keyboard input
+                s.ui.begin_edit(id);
+            } else {
+                // Process mouse input
                 let mx = (s.mouse_pos().x() - slider.x()).clamp(0, slider.width()) as Scalar
                     / slider.width() as Scalar;
                 new_value = NumCast::from(mx * (vmax - vmin) + vmin).unwrap();
