@@ -8,7 +8,10 @@ use lru::LruCache;
 use std::{
     cmp,
     collections::hash_map::DefaultHasher,
+    error::Error,
     hash::{Hash, Hasher},
+    mem,
+    str::FromStr,
 };
 
 /// A hashed element identifier for internal state management.
@@ -73,6 +76,8 @@ pub(crate) struct UiState {
     hovered: Option<ElementId>,
     /// Which element is focused.
     focused: Option<ElementId>,
+    /// Which element is being edited.
+    editing: Option<ElementId>,
     /// Last focusable element rendered.
     last_focusable: Option<ElementId>,
     /// Last bounding box rendered.
@@ -99,6 +104,7 @@ impl Default for UiState {
             active: None,
             hovered: None,
             focused: None,
+            editing: None,
             last_focusable: None,
             last_size: None,
         }
@@ -320,6 +326,24 @@ impl UiState {
         self.focused = None;
     }
 
+    /// Whether an element is being edited or not.
+    #[inline]
+    pub(crate) fn is_editing(&self, id: ElementId) -> bool {
+        !self.disabled && matches!(self.editing, Some(el) if el == id)
+    }
+
+    /// Start edit mode for a given element.
+    #[inline]
+    pub(crate) fn begin_edit(&mut self, id: ElementId) {
+        self.editing = Some(id);
+    }
+
+    /// End edit mode for a given element.
+    #[inline]
+    pub(crate) fn end_edit(&mut self) {
+        self.editing = None;
+    }
+
     /// Handles global element inputs for `focused` checks.
     #[inline]
     pub(crate) fn handle_events(&mut self, id: ElementId) {
@@ -396,7 +420,56 @@ impl UiState {
         if let Some(state) = self.elements.get_mut(&id) {
             state.scroll = scroll;
         } else {
-            self.elements.put(id, ElementState { scroll });
+            self.elements.put(
+                id,
+                ElementState {
+                    scroll,
+                    ..Default::default()
+                },
+            );
+        }
+    }
+
+    /// Returns the current `text_edit` state for this element.
+    #[inline]
+    pub(crate) fn text_edit<S>(&mut self, id: ElementId, initial_text: S) -> String
+    where
+        S: Into<String>,
+    {
+        if let Some(state) = self.elements.get_mut(&id) {
+            mem::take(&mut state.text_edit)
+        } else {
+            initial_text.into()
+        }
+    }
+
+    /// Updates the current `text_edit` state for this element.
+    #[inline]
+    pub(crate) fn set_text_edit(&mut self, id: ElementId, text_edit: String) {
+        if let Some(state) = self.elements.get_mut(&id) {
+            state.text_edit = text_edit;
+        } else {
+            self.elements.put(
+                id,
+                ElementState {
+                    text_edit,
+                    ..Default::default()
+                },
+            );
+        }
+    }
+
+    /// Parses the current `text_edit` state for this element into a given type.
+    #[inline]
+    pub(crate) fn parse_text_edit<T>(&mut self, id: ElementId, default: T) -> PixResult<T>
+    where
+        T: FromStr,
+        <T as FromStr>::Err: Error + Sync + Send + 'static,
+    {
+        if let Some(state) = self.elements.pop(&id) {
+            Ok(state.text_edit.parse().unwrap_or(default))
+        } else {
+            Ok(default)
         }
     }
 }
@@ -608,7 +681,8 @@ impl PixState {
 }
 
 /// Internal tracked UI element state.
-#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct ElementState {
     scroll: VectorI2,
+    text_edit: String,
 }

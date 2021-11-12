@@ -9,10 +9,10 @@ struct Gui {
     advanced_text_field: String,
     text_area: String,
     advanced_text_area: String,
-    drag_int: i32,
-    advanced_drag_int: i32,
-    drag_float: f32,
-    advanced_drag_float: f64,
+    drag: i32,
+    advanced_drag: f64,
+    slider: i32,
+    advanced_slider: f32,
     select_box: usize,
     select_list: usize,
 }
@@ -28,10 +28,10 @@ impl Gui {
             advanced_text_field: String::new(),
             text_area: "Hello, world!".into(),
             advanced_text_area: String::new(),
-            drag_int: 50,
-            advanced_drag_int: 100,
-            drag_float: 0.5,
-            advanced_drag_float: 1.0,
+            drag: 50,
+            advanced_drag: 1.0,
+            slider: 0,
+            advanced_slider: 0.5,
             select_box: 0,
             select_list: 0,
         }
@@ -155,29 +155,41 @@ impl AppState for Gui {
 
         // Drag bars
         s.next_width(200);
-        s.drag("Drag Int", &mut self.drag_int, 1)?;
+        s.drag("Drag", &mut self.drag, 1)?;
         s.same_line(None);
-        s.next_width(200);
-        s.drag("Drag Float", &mut self.drag_float, 0.005)?;
-
-        s.next_width(200);
-        s.advanced_drag(
-            "Advanced Drag Int",
-            &mut self.advanced_drag_int,
-            1,
-            0,
-            100,
-            None,
+        s.help_marker(
+            "Click and drag to edit value.\n\
+            Hold SHIFT/ALT for faster/slower edit.\n\
+            CTRL+click to input a value.\n\
+            (CTRL is mapped to CMD on macOs)",
         )?;
         s.same_line(None);
         s.next_width(200);
         s.advanced_drag(
-            "Advanced Drag Float",
-            &mut self.advanced_drag_float,
+            "Advanced Drag",
+            &mut self.advanced_drag,
             0.005,
             0.0,
             1.0,
             Some(|val| format!("{:.3}", val).into()),
+        )?;
+
+        // Sliders
+        s.next_width(200);
+        s.slider("Slider", &mut self.slider, -5, 5)?;
+        s.same_line(None);
+        s.help_marker(
+            "CTRL+click to input a value.\n
+            (CTRL is mapped to CMD on macOs)",
+        )?;
+        s.same_line(None);
+        s.next_width(200);
+        s.advanced_slider(
+            "Advanced Slider",
+            &mut self.advanced_slider,
+            0.0,
+            3.0,
+            Some(|v| format!("{:.3}", v).into()),
         )?;
 
         s.separator()?;

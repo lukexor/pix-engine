@@ -360,8 +360,8 @@ impl PixEngine {
                 Event::MouseUp { button, x, y } => {
                     if state.ui.mouse.is_down(button) {
                         let now = Instant::now();
-                        if let Some(&clicked) = state.ui.mouse.last_clicked(button) {
-                            if now - clicked < Duration::from_millis(500) {
+                        if let Some(clicked) = state.ui.mouse.last_clicked(button) {
+                            if now - *clicked < Duration::from_millis(500) {
                                 app.on_mouse_dbl_clicked(state, button, point!(x, y))?;
                             }
                         }

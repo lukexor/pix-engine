@@ -4,8 +4,9 @@ use super::{state::ElementId, Direction};
 use crate::prelude::*;
 use std::cmp;
 
+pub(crate) const THUMB_MIN: i32 = 10;
 pub(crate) const SCROLL_SIZE: i32 = 12;
-pub(crate) const SCROLL_SPEED: i32 = 2;
+pub(crate) const SCROLL_SPEED: i32 = 3;
 
 impl PixState {
     /// Handles mouse wheel scroll for `hovered` elements.
@@ -92,7 +93,6 @@ impl PixState {
         let active = s.ui.is_active(id);
 
         s.push();
-        let mut changed = false;
 
         // Clamp value
         let max = max as i32;
@@ -103,7 +103,7 @@ impl PixState {
         s.fill(s.background_color());
         s.rect(rect)?;
 
-        // Thumb scroll
+        // Scroll thumb
         if hovered {
             s.frame_cursor(Cursor::hand())?;
         }
@@ -117,7 +117,8 @@ impl PixState {
         let thumb_w = match dir {
             Horizontal => {
                 let w = rect.width() as f32;
-                ((w / (max as f32 + w)) * w) as i32
+                let w = ((w / (max as f32 + w)) * w) as i32;
+                w.max(THUMB_MIN).min(w)
             }
             Vertical => rect.width(),
         };
@@ -125,7 +126,8 @@ impl PixState {
             Horizontal => rect.height(),
             Vertical => {
                 let h = rect.height() as f32;
-                ((h / (max as f32 + h)) * h) as i32
+                let h = ((h / (max as f32 + h)) * h) as i32;
+                h.max(THUMB_MIN).min(h)
             }
         };
         match dir {
@@ -142,52 +144,37 @@ impl PixState {
         s.pop();
 
         // Process keyboard input
+        let mut new_value = *value;
         if focused {
             if let Some(key) = s.ui.key_entered() {
                 match key {
                     Key::Up if dir == Vertical => {
-                        *value = value.saturating_sub(SCROLL_SPEED);
-                        if *value < 0 {
-                            *value = 0;
-                        }
-                        changed = true;
+                        new_value = value.saturating_sub(SCROLL_SPEED).max(0);
                     }
                     Key::Down if dir == Vertical => {
-                        *value = value.saturating_add(SCROLL_SPEED);
-                        if *value > max {
-                            *value = max;
-                        }
-                        changed = true;
+                        new_value = value.saturating_add(SCROLL_SPEED).min(max);
                     }
                     Key::Left if dir == Horizontal => {
-                        *value = value.saturating_sub(SCROLL_SPEED);
-                        if *value < 0 {
-                            *value = 0;
-                        }
-                        changed = true;
+                        new_value = value.saturating_sub(SCROLL_SPEED).max(0);
                     }
                     Key::Right if dir == Horizontal => {
-                        *value = value.saturating_add(SCROLL_SPEED);
-                        if *value > max {
-                            *value = max;
-                        }
-                        changed = true;
+                        new_value = value.saturating_add(SCROLL_SPEED).min(max);
                     }
                     _ => (),
                 }
             }
         }
 
-        let mut new_value = *value;
         // Process mouse wheel
         if hovered {
             match dir {
-                Vertical => {
-                    new_value -= 3 * s.ui.mouse.yrel;
+                Vertical if s.ui.mouse.yrel != 0 => {
+                    new_value -= SCROLL_SPEED * s.ui.mouse.yrel;
                 }
-                Horizontal => {
-                    new_value -= 3 * s.ui.mouse.xrel;
+                Horizontal if s.ui.mouse.xrel != 0 => {
+                    new_value -= SCROLL_SPEED * s.ui.mouse.xrel;
                 }
+                _ => (),
             };
         }
         // Process mouse input
@@ -203,12 +190,13 @@ impl PixState {
                 }
             };
         }
-        if new_value != *value {
-            *value = new_value;
-            changed = true;
-        }
         s.ui.handle_events(id);
 
-        Ok(changed)
+        if new_value != *value {
+            *value = new_value;
+            Ok(true)
+        } else {
+            Ok(false)
+        }
     }
 }
