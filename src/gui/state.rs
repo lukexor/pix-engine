@@ -673,7 +673,11 @@ impl PixState {
                 .textures
                 .push((id, Texture::new(texture_id, src.into(), Some(dst))));
             if self.ui.textures.len() > 2 * ELEMENT_CACHE_SIZE {
-                self.ui.textures.truncate(ELEMENT_CACHE_SIZE);
+                let deleted: Vec<(u64, Texture)> =
+                    self.ui.textures.drain(ELEMENT_CACHE_SIZE..).collect();
+                for (_, texture) in deleted.iter() {
+                    self.delete_texture(texture.id)?;
+                }
             }
             Ok(texture_id)
         }
