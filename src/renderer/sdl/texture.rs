@@ -5,8 +5,41 @@ use sdl2::{
     rect::Rect as SdlRect,
     render::{Canvas, Texture as SdlTexture},
 };
+use std::ops::{Deref, DerefMut};
 
-pub(crate) type RendererTexture = SdlTexture;
+pub(crate) struct RendererTexture {
+    inner: Option<SdlTexture>,
+}
+
+impl RendererTexture {
+    pub(crate) fn new(texture: SdlTexture) -> Self {
+        Self {
+            inner: Some(texture),
+        }
+    }
+}
+
+impl Deref for RendererTexture {
+    type Target = SdlTexture;
+    fn deref(&self) -> &Self::Target {
+        self.inner.as_ref().expect("texture has been dropped")
+    }
+}
+
+impl DerefMut for RendererTexture {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.inner.as_mut().expect("texture has been dropped")
+    }
+}
+
+impl Drop for RendererTexture {
+    fn drop(&mut self) {
+        let texture = self.inner.take().expect("texture has been dropped");
+        // SAFETY: A RendererTexture can only exist inside of a WindowCanvas, which contains the
+        // TextureCreator that created this texture, therefore it's safe to destroy.
+        unsafe { texture.destroy() };
+    }
+}
 
 impl TextureRenderer for Renderer {
     /// Create a texture to render to.
@@ -24,7 +57,9 @@ impl TextureRenderer for Renderer {
             .texture_creator
             .create_texture_target(format.map(|f| f.into()), width, height)
             .context("failed to create texture")?;
-        window_canvas.textures.insert(texture_id, texture);
+        window_canvas
+            .textures
+            .insert(texture_id, RendererTexture::new(texture));
         Ok(texture_id)
     }
 
@@ -40,15 +75,10 @@ impl TextureRenderer for Renderer {
     /// Destroying textures created from a dropped canvas is undefined behavior.
     #[inline]
     fn delete_texture(&mut self, texture_id: TextureId) -> PixResult<()> {
-        let window_canvas = self.window_canvas_mut()?;
-        if let Some(texture) = window_canvas.textures.remove(&texture_id) {
-            // SAFETY: If we have a valid texture entry, it's safe to destroy since the
-            // texture_creator is still alive inside window_canvas.
-            unsafe { texture.destroy() };
-            Ok(())
-        } else {
-            Err(PixError::InvalidTexture(texture_id).into())
-        }
+        self.window_canvas_mut()?
+            .textures
+            .remove(&texture_id)
+            .map_or(Err(PixError::InvalidTexture(texture_id).into()), |_| Ok(()))
     }
 
     /// Update texture with pixel data.
@@ -60,8 +90,7 @@ impl TextureRenderer for Renderer {
         pixels: P,
         pitch: usize,
     ) -> PixResult<()> {
-        let window_canvas = self.window_canvas_mut()?;
-        if let Some(texture) = window_canvas.textures.get_mut(&texture_id) {
+        if let Some(texture) = self.window_canvas_mut()?.textures.get_mut(&texture_id) {
             let rect: Option<SdlRect> = rect.map(|r| r.into());
             Ok(texture
                 .update(rect, pixels.as_ref(), pitch)

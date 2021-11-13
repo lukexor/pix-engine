@@ -133,9 +133,11 @@ impl WindowCanvas {
             .context("invalid text")?;
             text_cache.put(
                 key,
-                surface
-                    .as_texture(texture_creator)
-                    .context("failed to create text surface")?,
+                RendererTexture::new(
+                    surface
+                        .as_texture(texture_creator)
+                        .context("failed to create text surface")?,
+                ),
             );
         }
 
@@ -152,9 +154,11 @@ impl WindowCanvas {
         if !image_cache.contains(&key) {
             image_cache.put(
                 key,
-                texture_creator
-                    .create_texture_static(Some(img.format().into()), img.width(), img.height())
-                    .context("failed to create image texture")?,
+                RendererTexture::new(
+                    texture_creator
+                        .create_texture_static(Some(img.format().into()), img.width(), img.height())
+                        .context("failed to create image texture")?,
+                ),
             );
         }
         // SAFETY: We just checked or inserted a texture.
@@ -387,7 +391,9 @@ impl WindowRenderer for Renderer {
             } = texture.query();
             new_window.textures.insert(
                 *texture_id,
-                new_texture_creator.create_texture_target(format, width, height)?,
+                RendererTexture::new(
+                    new_texture_creator.create_texture_target(format, width, height)?,
+                ),
             );
         }
 
