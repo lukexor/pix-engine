@@ -103,8 +103,8 @@ pub enum SystemCursor {
 
 /// Trait representing window operations.
 pub(crate) trait WindowRenderer {
-    /// Get the primary window ID.
-    fn primary_window_id(&self) -> WindowId;
+    /// Get the count of open windows.
+    fn window_count(&self) -> usize;
 
     /// Get the current window target ID.
     fn window_id(&self) -> WindowId;
@@ -264,11 +264,6 @@ impl<'a> WindowBuilder<'a> {
 }
 
 impl PixState {
-    /// Get the primary window ID.
-    pub fn primary_window_id(&self) -> WindowId {
-        self.renderer.primary_window_id()
-    }
-
     /// Get the current window target ID.
     pub fn window_id(&self) -> WindowId {
         self.renderer.window_id()
@@ -281,7 +276,7 @@ impl PixState {
 
     /// Close a window.
     pub fn close_window(&mut self, id: WindowId) -> PixResult<()> {
-        if id == self.primary_window_id() {
+        if self.renderer.window_count() == 1 {
             self.quit();
             return Ok(());
         }
