@@ -22,7 +22,7 @@
 //! # }
 //! ```
 
-use crate::prelude::*;
+use crate::{gui::scroll::SCROLL_SIZE, prelude::*};
 use std::cmp;
 
 impl PixState {
@@ -36,12 +36,19 @@ impl PixState {
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     let items = ["Item 1", "Item 2", "Item 3"];
-    ///     s.select_box("Select Box", &mut self.select_box, &items)?;
+    ///     let displayed_count = 4;
+    ///     s.select_box("Select Box", &mut self.select_box, &items, displayed_count)?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    pub fn select_box<S, I>(&mut self, label: S, selected: &mut usize, items: &[I]) -> PixResult<()>
+    pub fn select_box<S, I>(
+        &mut self,
+        label: S,
+        selected: &mut usize,
+        items: &[I],
+        displayed_count: usize,
+    ) -> PixResult<()>
     where
         S: AsRef<str>,
         I: AsRef<str>,
@@ -153,17 +160,24 @@ impl PixState {
         // Process input
         if focused {
             // Pop select list
-            let height = 4 * (font_size + 2 * ipad.y()) + 1;
-            let src = rect![0, 0, select_box.width(), height];
-            let dst = rect![select_box.bottom_left(), select_box.width(), height];
+            let mut width = select_box.width() + 1;
+            let height = displayed_count as i32 * (font_size + 2 * ipad.y()) + 1;
+            let total_height = items.len() as i32 * (font_size + 2 * ipad.y());
+            let mut src = rect![0, 0, width, height];
+            let dst = rect![select_box.left(), select_box.bottom() + 1, width, height];
             let texture_id = s.get_or_create_texture(id, src, dst)?;
+
+            if total_height < height {
+                width += SCROLL_SIZE + 1;
+                src.offset_width(-(SCROLL_SIZE));
+            }
 
             s.ui.set_mouse_offset(select_box.bottom_left());
             s.with_texture(texture_id, |s: &mut PixState| {
-                if height > select_box.height() {
-                    s.next_width(select_box.width() as u32 + 2);
-                }
-                s.select_list(format!("#{}", label), selected, items, 4)?;
+                s.set_cursor_pos([0, 0]);
+                // Extend width to account for border
+                s.next_width(width as u32 + 2);
+                s.select_list(format!("#{}", label), selected, items, displayed_count)?;
                 Ok(())
             })?;
             s.ui.clear_mouse_offset();

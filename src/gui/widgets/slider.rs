@@ -102,30 +102,6 @@ impl PixState {
         let fpad = style.frame_pad;
         let ipad = style.item_pad;
 
-        // If editing, render editable text field instead
-        let editing = s.ui.is_editing(id);
-        let disabled = s.ui.disabled;
-        if editing {
-            if disabled {
-                s.ui.end_edit();
-            } else {
-                let mut text = s.ui.text_edit(id, value.to_string());
-                let changed = s.advanced_text_field(
-                    label,
-                    "",
-                    &mut text,
-                    Some(|c| c.is_ascii_digit() || c == '.' || c == '-'),
-                )?;
-                s.ui.set_text_edit(id, text);
-
-                if let Some(Key::Return | Key::Escape) = s.ui.key_entered() {
-                    s.ui.end_edit();
-                }
-                return Ok(changed);
-            }
-        }
-        *value = clamp(s.ui.parse_text_edit(id, *value)?, min, max);
-
         // Calculate drag rect
         let width =
             s.ui.next_width
@@ -142,6 +118,30 @@ impl PixState {
         let focused = s.ui.try_focus(id);
         let disabled = s.ui.disabled;
         let active = s.ui.is_active(id);
+
+        // If editing, render editable text field instead
+        let editing = s.ui.is_editing(id);
+        if editing {
+            if !focused || disabled {
+                s.ui.end_edit();
+            } else {
+                s.next_width(width);
+                let mut text = s.ui.text_edit(id, value.to_string());
+                let changed = s.advanced_text_field(
+                    label,
+                    "",
+                    &mut text,
+                    Some(|c| c.is_ascii_digit() || c == '.' || c == '-'),
+                )?;
+                s.ui.set_text_edit(id, text);
+
+                if let Some(Key::Return | Key::Escape) = s.ui.key_entered() {
+                    s.ui.end_edit();
+                }
+                return Ok(changed);
+            }
+        }
+        *value = clamp(s.ui.parse_text_edit(id, *value)?, min, max);
 
         s.push();
         s.ui.push_cursor();
@@ -285,13 +285,30 @@ impl PixState {
         let fpad = style.frame_pad;
         let ipad = style.item_pad;
 
+        // Calculate slider rect
+        let width =
+            s.ui.next_width
+                .take()
+                .unwrap_or_else(|| s.width().unwrap_or(100) - 2 * fpad.x() as u32);
+        let mut slider = rect![pos, width as i32, font_size + 2 * ipad.y()];
+        let (lwidth, lheight) = s.size_of(label)?;
+        if !label.is_empty() {
+            slider.offset_x(lwidth as i32 + ipad.x());
+        }
+
+        // Check hover/active/keyboard focus
+        let hovered = s.ui.try_hover(id, slider);
+        let focused = s.ui.try_focus(id);
+        let active = s.ui.is_active(id);
+
         // If editing, render editable text field instead
         let editing = s.ui.is_editing(id);
         let disabled = s.ui.disabled;
         if editing {
-            if disabled {
+            if !focused || disabled {
                 s.ui.end_edit();
             } else {
+                s.next_width(width);
                 let mut text = s.ui.text_edit(id, value.to_string());
                 let changed = s.advanced_text_field(
                     label,
@@ -308,22 +325,6 @@ impl PixState {
             }
         }
         *value = clamp(s.ui.parse_text_edit(id, *value)?, min, max);
-
-        // Calculate slider rect
-        let width =
-            s.ui.next_width
-                .take()
-                .unwrap_or_else(|| s.width().unwrap_or(100) - 2 * fpad.x() as u32);
-        let mut slider = rect![pos, width as i32, font_size + 2 * ipad.y()];
-        let (lwidth, lheight) = s.size_of(label)?;
-        if !label.is_empty() {
-            slider.offset_x(lwidth as i32 + ipad.x());
-        }
-
-        // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, slider);
-        let focused = s.ui.try_focus(id);
-        let active = s.ui.is_active(id);
 
         s.push();
         s.ui.push_cursor();

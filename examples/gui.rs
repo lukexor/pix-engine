@@ -221,7 +221,7 @@ impl AppState for Gui {
 
         s.same_line(None);
         s.next_width(150);
-        s.select_box("Select Box", &mut self.select_box, &items)?;
+        s.select_box("Select Box", &mut self.select_box, &items, displayed_count)?;
 
         // Scroll area
         s.same_line(None);
