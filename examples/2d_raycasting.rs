@@ -297,19 +297,23 @@ impl AppState for RayScene {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         let mouse = s.mouse_pos();
 
-        let (cx, cw) = if mouse.x() - 254 < 0 {
-            (0, mouse.x() + 255)
-        } else {
-            (mouse.x() - 254, 511)
-        };
-        let (cy, ch) = if mouse.y() - 254 < 0 {
-            (0, mouse.y() + 255)
-        } else {
-            (mouse.y() - 254, 511)
-        };
-        s.clip([cx, cy, cw, ch])?;
+        if !s.mouse_down(Mouse::Left) {
+            let (cx, cw) = if mouse.x() - 254 < 0 {
+                (0, mouse.x() + 255)
+            } else {
+                (mouse.x() - 254, 511)
+            };
+            let (cy, ch) = if mouse.y() - 254 < 0 {
+                (0, mouse.y() + 255)
+            } else {
+                (mouse.y() - 254, 511)
+            };
+            s.clip([cx, cy, cw, ch])?;
 
-        self.draw_visibility_polygons(s)?;
+            self.draw_visibility_polygons(s)?;
+        } else {
+            s.no_clip()?;
+        }
 
         s.fill(BLUE);
         let mut in_cell = None;
@@ -317,17 +321,17 @@ impl AppState for RayScene {
             let sq = square![cell.pos, BLOCK_SIZE as i32];
             if sq.contains_point(mouse) {
                 in_cell = Some(cell);
-                break;
             }
             s.square(sq)?;
         }
 
-        s.blend_mode(BlendMode::Mod);
-        s.image(&self.light, [mouse.x() - 255, mouse.y() - 255])?;
-        s.blend_mode(BlendMode::None);
+        if !s.mouse_down(Mouse::Left) {
+            s.blend_mode(BlendMode::Mod);
+            s.image(&self.light, [mouse.x() - 255, mouse.y() - 255])?;
+            s.blend_mode(BlendMode::None);
+        }
 
         if let Some(cell) = in_cell {
-            s.clear()?;
             s.square([cell.pos.x(), cell.pos.y(), BLOCK_SIZE as i32])?;
             s.fill(YELLOW);
             s.circle([mouse.x(), mouse.y(), 2])?;
