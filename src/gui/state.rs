@@ -200,12 +200,6 @@ impl UiState {
         }
     }
 
-    /// Reset current line height.
-    #[inline]
-    pub(crate) fn reset_line_height(&mut self) {
-        self.line_height = 0;
-    }
-
     /// Returns the current mouse position coordinates as `(x, y)`.
     #[inline]
     pub(crate) fn mouse_pos(&self) -> PointI2 {

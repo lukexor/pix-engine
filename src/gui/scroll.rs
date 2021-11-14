@@ -18,12 +18,19 @@ impl PixState {
 
         let s = self;
         let id = s.ui.get_id(&label);
+        let label = label.split('#').next().unwrap_or("");
         let pos = s.cursor_pos();
         let style = s.theme.style;
         let fpad = style.frame_pad;
+        let ipad = style.item_pad;
 
         // Calculate rect
-        let scroll_area = rect![pos, width as i32, height as i32];
+        let mut scroll_area = rect![pos, width as i32, height as i32];
+        if !label.is_empty() {
+            let (_, h) = s.size_of(label)?;
+            let offset = h as i32 + ipad.y();
+            scroll_area.offset_y(offset);
+        }
 
         // Check hover/active/keyboard focus
         let _hovered = s.ui.try_hover(id, scroll_area);
@@ -31,7 +38,13 @@ impl PixState {
         let disabled = s.ui.disabled;
         let active = s.ui.is_active(id);
 
-        s.ui.reset_line_height();
+        s.push();
+
+        // Render
+        s.rect_mode(RectMode::Corner);
+
+        // Label
+        s.text(label)?;
 
         // Scroll area
         let scroll = s.ui.scroll(id);
@@ -79,6 +92,8 @@ impl PixState {
         })?;
         s.ui.clear_cursor_offset();
         s.ui.clear_mouse_offset();
+
+        s.pop();
 
         s.ui.handle_events(id);
 
