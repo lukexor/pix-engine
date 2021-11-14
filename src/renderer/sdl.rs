@@ -333,8 +333,7 @@ impl Rendering for Renderer {
                 wrap_width,
                 fill,
                 outline,
-                &mut self
-                    .loaded_fonts
+                self.loaded_fonts
                     .get_mut(&(self.current_font, self.font_size))
                     .expect("valid font"),
             )?;
