@@ -13,6 +13,7 @@ pub(crate) struct MouseState {
     pub(crate) xrel: i32,
     pub(crate) yrel: i32,
     pub(crate) pressed: HashSet<Mouse>,
+    pub(crate) clicked: bool,
     pub(crate) last_clicked: HashMap<Mouse, Instant>,
 }
 
@@ -51,6 +52,7 @@ impl MouseState {
     /// Store last time a [Mouse] button was clicked.
     #[inline]
     pub(crate) fn click(&mut self, btn: Mouse, time: Instant) {
+        self.clicked = true;
         self.last_clicked.insert(btn, time);
     }
 

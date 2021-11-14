@@ -33,7 +33,10 @@
 //! ```
 
 use crate::{prelude::*, renderer::*};
-use std::time::{Duration, Instant};
+use std::{
+    mem,
+    time::{Duration, Instant},
+};
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
@@ -354,6 +357,7 @@ impl PixEngine {
                 }
                 Event::MouseDown { button, x, y } => {
                     if !app.on_mouse_pressed(state, button, point!(x, y))? {
+                        state.ui.pmouse.pressed = mem::take(&mut state.ui.mouse.pressed);
                         state.ui.mouse.press(button);
                     }
                 }
@@ -366,15 +370,20 @@ impl PixEngine {
                             }
                         }
                         if !app.on_mouse_clicked(state, button, point!(x, y))? {
+                            state.ui.pmouse.last_clicked =
+                                mem::take(&mut state.ui.mouse.last_clicked);
                             state.ui.mouse.click(button, now);
                         }
                     }
                     if !app.on_mouse_released(state, button, point!(x, y))? {
+                        state.ui.pmouse.pressed = mem::take(&mut state.ui.mouse.pressed);
                         state.ui.mouse.release(button);
                     }
                 }
                 Event::MouseWheel { x, y, .. } => {
                     if !app.on_mouse_wheel(state, point!(x, y))? {
+                        state.ui.pmouse.xrel = state.ui.mouse.xrel;
+                        state.ui.pmouse.yrel = state.ui.mouse.yrel;
                         state.ui.mouse.wheel(x, y);
                     }
                 }

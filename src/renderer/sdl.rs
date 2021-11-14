@@ -75,12 +75,15 @@ impl Renderer {
     where
         F: FnOnce(&mut Canvas<Window>) -> PixResult<()>,
     {
-        let window = self
-            .windows
-            .get_mut(&self.window_target)
-            .ok_or(PixError::InvalidWindow(self.window_target))?;
         if let Some(texture_id) = self.texture_target {
-            if let Some(texture) = window.textures.get_mut(&texture_id) {
+            let window = self.windows.iter_mut().find_map(|(_, w)| {
+                match w.textures.contains_key(&texture_id) {
+                    true => Some(w),
+                    false => None,
+                }
+            });
+            if let Some(window) = window {
+                let texture = window.textures.get_mut(&texture_id).expect("valid texture");
                 let mut result = Ok(());
                 window
                     .canvas
@@ -93,7 +96,7 @@ impl Renderer {
                 Err(PixError::InvalidTexture(texture_id).into())
             }
         } else {
-            f(&mut window.canvas)
+            f(self.canvas_mut()?)
         }
     }
 
@@ -514,9 +517,8 @@ impl Rendering for Renderer {
                         .map_err(PixError::Renderer)?;
                 }
                 if let Some(stroke) = stroke {
-                    // EXPL: SDL2_gfx renders this 1px smaller than it should.
                     canvas
-                        .rectangle(x, y, x + width + 1, y + height + 1, stroke)
+                        .rectangle(x, y, x + width, y + height, stroke)
                         .map_err(PixError::Renderer)?;
                 }
             }
@@ -712,7 +714,7 @@ impl Rendering for Renderer {
                 }
             });
             if let Some(window) = window {
-                let texture = window.textures.get_mut(&texture_id).expect("valid teture");
+                let texture = window.textures.get_mut(&texture_id).expect("valid texture");
                 let mut result = Ok(vec![]);
                 window
                     .canvas

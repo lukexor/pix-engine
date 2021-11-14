@@ -422,6 +422,7 @@ impl UiState {
     pub(crate) fn clear_entered(&mut self) {
         self.keys.typed = None;
         self.keys.entered = None;
+        self.mouse.clicked = false;
         self.mouse.xrel = 0;
         self.mouse.yrel = 0;
     }
@@ -474,6 +475,31 @@ impl UiState {
                 id,
                 ElementState {
                     text_edit,
+                    ..Default::default()
+                },
+            );
+        }
+    }
+
+    /// Returns the currently selected tab state for this element.
+    #[inline]
+    pub(crate) fn current_tab(&mut self, id: ElementId) -> usize {
+        self.elements
+            .get(&id)
+            .map(|s| s.current_tab)
+            .unwrap_or_default()
+    }
+
+    /// Updates the currently selected tab state for this element.
+    #[inline]
+    pub(crate) fn set_current_tab(&mut self, id: ElementId, tab: usize) {
+        if let Some(state) = self.elements.get_mut(&id) {
+            state.current_tab = tab;
+        } else {
+            self.elements.put(
+                id,
+                ElementState {
+                    current_tab: tab,
                     ..Default::default()
                 },
             );
@@ -648,9 +674,7 @@ impl PixState {
     #[inline]
     pub fn clicked(&self) -> bool {
         if let Some(rect) = self.ui.last_size {
-            !self.ui.disabled
-                && rect.contains_point(self.mouse_pos())
-                && self.ui.mouse.last_clicked(Mouse::Left).is_some()
+            !self.ui.disabled && self.ui.mouse.clicked && rect.contains_point(self.mouse_pos())
         } else {
             false
         }
@@ -714,4 +738,5 @@ impl PixState {
 pub(crate) struct ElementState {
     scroll: VectorI2,
     text_edit: String,
+    current_tab: usize,
 }

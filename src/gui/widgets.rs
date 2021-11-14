@@ -71,12 +71,7 @@ impl PixState {
         if let Some(next_width) = s.ui.next_width {
             width = next_width;
         }
-        let mut button = rect![
-            pos.x(),
-            pos.y(),
-            width as i32 + 2 * pad.x(),
-            height as i32 + 2 * pad.y()
-        ];
+        let mut button = rect![pos, width as i32 + 2 * pad.x(), height as i32 + 2 * pad.y()];
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, button);
@@ -124,11 +119,7 @@ impl PixState {
         // Process input
         s.ui.handle_events(id);
         s.advance_cursor(button);
-        if !disabled {
-            Ok(s.ui.was_clicked(id))
-        } else {
-            Ok(false)
-        }
+        Ok(!disabled && s.ui.was_clicked(id))
     }
 
     /// Draw a checkbox to the current canvas.

@@ -23,11 +23,7 @@ impl PixState {
         let fpad = style.frame_pad;
 
         // Calculate rect
-        let scroll_area = rect![
-            pos,
-            width as i32 - 2 * fpad.x(),
-            height as i32 - 2 * fpad.y()
-        ];
+        let scroll_area = rect![pos, width as i32, height as i32];
 
         // Check hover/active/keyboard focus
         let _hovered = s.ui.try_hover(id, scroll_area);
@@ -43,6 +39,11 @@ impl PixState {
         s.ui.set_mouse_offset(scroll_area.top_left());
         s.ui.set_cursor_offset_x(-scroll.x());
         let mut max_cursor_pos = s.cursor_pos();
+
+        let w = scroll_area.width();
+        let h = scroll_area.height();
+        let right = scroll_area.width() - fpad.x();
+        let bottom = scroll_area.height() - fpad.y();
         s.with_texture(texture_id, |s: &mut PixState| {
             s.push();
             if disabled {
@@ -57,12 +58,23 @@ impl PixState {
                 s.stroke(s.muted_color());
             }
             s.no_fill();
-            s.rect([0, 0, scroll_area.width() - 1, scroll_area.height() - 1])?;
+            s.rect([0, 0, scroll_area.width(), scroll_area.height()])?;
             s.pop();
 
             s.set_cursor_pos(s.cursor_pos() - scroll);
             f(s)?;
             max_cursor_pos = s.cursor_pos() + scroll;
+
+            // Since clip doesn't work texture targets, we fake it
+            if disabled {
+                s.fill(s.primary_color() / 2);
+            } else {
+                s.fill(s.primary_color());
+            }
+            s.rect([0, 0, fpad.x() - 1, h])?;
+            s.rect([0, 0, w, fpad.y()])?;
+            s.rect([right, 0, fpad.x(), h])?;
+            s.rect([0, bottom, w, fpad.y()])?;
             Ok(())
         })?;
         s.ui.clear_cursor_offset();
@@ -74,7 +86,7 @@ impl PixState {
         let total_width = max_cursor_pos.x() + s.ui.last_width() + fpad.x();
         let total_height = max_cursor_pos.y();
         let rect = s.scroll(id, scroll_area, total_width, total_height)?;
-        s.advance_cursor(rect![pos, rect.width(), rect.bottom() - pos.y()]);
+        s.advance_cursor(rect![pos, rect.width(), rect.height()]);
 
         Ok(())
     }
@@ -118,7 +130,7 @@ impl PixState {
 
             let mut scroll_y = new_scroll.y();
             let scrolled = s.scrollbar(
-                rect![rect.right() + 1, rect.top(), SCROLL_SIZE, rect.height()],
+                rect![rect.right(), rect.top(), SCROLL_SIZE, rect.height()],
                 ymax,
                 &mut scroll_y,
                 Direction::Vertical,
@@ -150,7 +162,7 @@ impl PixState {
 
             let mut scroll_x = new_scroll.x();
             let scrolled = s.scrollbar(
-                rect![rect.left(), rect.bottom() + 1, rect.width(), SCROLL_SIZE],
+                rect![rect.left(), rect.bottom(), rect.width(), SCROLL_SIZE],
                 xmax,
                 &mut scroll_x,
                 Direction::Horizontal,
@@ -164,7 +176,8 @@ impl PixState {
             s.ui.set_scroll(id, new_scroll);
         }
 
-        rect.offset_size([SCROLL_SIZE, SCROLL_SIZE]);
+        rect.offset_width(SCROLL_SIZE);
+        rect.offset_height(SCROLL_SIZE);
         Ok(rect)
     }
 

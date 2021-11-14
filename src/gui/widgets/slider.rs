@@ -353,6 +353,7 @@ impl PixState {
         if hovered {
             s.frame_cursor(Cursor::hand())?;
         }
+        s.no_stroke();
         if hovered || active || focused {
             s.fill(s.highlight_color());
         } else if disabled {
@@ -372,7 +373,7 @@ impl PixState {
         let thumb_w = thumb_w.min(slider_w);
         let offset = ((val - vmin) / (vmax - vmin)) * (slider_w - thumb_w);
         let x = slider.x() + offset as i32;
-        let thumb = rect![x, slider.y(), thumb_w as i32, slider.height()];
+        let thumb = rect![x, slider.y(), thumb_w as i32, slider.height() - 1];
         s.rect(thumb)?;
 
         s.pop();

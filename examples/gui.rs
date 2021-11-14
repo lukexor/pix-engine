@@ -3,6 +3,7 @@ use pix_engine::prelude::*;
 struct Gui {
     disabled: bool,
     button_clicked: bool,
+    text_clicked: bool,
     checkbox: bool,
     radio: usize,
     text_field: String,
@@ -22,6 +23,7 @@ impl Gui {
         Self {
             disabled: false,
             button_clicked: false,
+            text_clicked: false,
             checkbox: true,
             radio: 0,
             text_field: "Hello, world!".into(),
@@ -36,19 +38,8 @@ impl Gui {
             select_list: 0,
         }
     }
-}
 
-impl AppState for Gui {
-    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        if self.disabled {
-            s.disable();
-        }
-
-        s.text(format!("Mouse: {}", s.mouse_pos()))?;
-        s.spacing()?;
-        s.text("Widgets:")?;
-        s.separator()?;
-
+    fn basic_widgets(&mut self, s: &mut PixState) -> PixResult<()> {
         if s.button("Button")? {
             self.button_clicked = !self.button_clicked;
         }
@@ -58,12 +49,6 @@ impl AppState for Gui {
         }
 
         s.checkbox("Checkbox", &mut self.checkbox)?;
-        s.same_line(None);
-        s.no_disable();
-        s.checkbox("Disable Elements", &mut self.disabled)?;
-        if self.disabled {
-            s.disable();
-        }
 
         s.radio("Radio 1", &mut self.radio, 0)?;
         s.same_line(None);
@@ -71,7 +56,10 @@ impl AppState for Gui {
         s.same_line(None);
         s.radio("Radio 3", &mut self.radio, 2)?;
 
-        // Tooltips
+        Ok(())
+    }
+
+    fn tooltip_widgets(&mut self, s: &mut PixState) -> PixResult<()> {
         s.text("Hover me")?;
         if s.hovered() {
             s.tooltip("A hot tooltip")?;
@@ -91,19 +79,30 @@ impl AppState for Gui {
                 },
             )?;
         }
-        s.same_line([20, 0]);
+        s.text("Click me")?;
+        if s.clicked() {
+            self.text_clicked = !self.text_clicked;
+        }
+        if self.text_clicked {
+            s.same_line(None);
+            s.text("Clicked!")?;
+        }
+
+        Ok(())
+    }
+
+    fn text_widgets(&mut self, s: &mut PixState) -> PixResult<()> {
         s.text_transformed("Flipped text", None, None, Flipped::Both)?;
         if s.hovered() {
             s.tooltip("Flipped text")?;
         }
+        s.spacing()?;
         s.angle_mode(AngleMode::Degrees);
-        s.same_line(None);
         s.text_transformed("Rotated text", 90.0, None, None)?;
+        s.spacing()?;
 
         s.indent()?;
         s.bullet("Bulleted text indented")?;
-
-        s.separator()?;
 
         s.push();
         s.stroke(s.accent_color());
@@ -111,10 +110,12 @@ impl AppState for Gui {
         s.stroke_weight(2);
         s.font_style(FontStyle::BOLD | FontStyle::ITALIC);
         s.text("Outlined Bold Italicized Text!")?;
-        s.spacing()?;
         s.pop();
 
-        // Text Fields
+        Ok(())
+    }
+
+    fn text_field_widgets(&mut self, s: &mut PixState) -> PixResult<()> {
         s.next_width(200);
         s.text_field("Text Field", &mut self.text_field)?;
         s.same_line(None);
@@ -135,7 +136,6 @@ impl AppState for Gui {
         s.same_line(None);
         s.help_marker("Filters any non-numeric characters")?;
 
-        // Text Areas
         s.text_area("Text Area", 200, 100, &mut self.text_area)?;
         s.same_line(None);
         s.help_marker(
@@ -157,6 +157,10 @@ impl AppState for Gui {
         s.same_line(None);
         s.help_marker("Filters any non-alphabetic characters")?;
 
+        Ok(())
+    }
+
+    fn drag_and_slider_widgets(&mut self, s: &mut PixState) -> PixResult<()> {
         // Drag bars
         s.next_width(200);
         s.drag("Drag", &mut self.drag, 1)?;
@@ -196,9 +200,10 @@ impl AppState for Gui {
             Some(|v| format!("{:.3}", v).into()),
         )?;
 
-        s.separator()?;
+        Ok(())
+    }
 
-        // Selectables
+    fn select_widgets(&mut self, s: &mut PixState) -> PixResult<()> {
         let items = [
             "Bulbasaur",
             "Charmander",
@@ -209,9 +214,12 @@ impl AppState for Gui {
             "Pikachu",
             "Rattata",
         ];
+        let displayed_count = 4;
+
+        s.next_width(150);
+        s.select_box("Select Box", &mut self.select_box, &items, displayed_count)?;
 
         s.next_width(300);
-        let displayed_count = 4;
         s.select_list(
             "Select List",
             &mut self.select_list,
@@ -219,13 +227,8 @@ impl AppState for Gui {
             displayed_count,
         )?;
 
-        s.same_line(None);
-        s.next_width(150);
-        s.select_box("Select Box", &mut self.select_box, &items, displayed_count)?;
-
         // Scroll area
-        s.same_line(None);
-        s.scroll_area("Scroll Area", 200, 150, |s: &mut PixState| {
+        s.scroll_area("Scroll Area", 300, 200, |s: &mut PixState| {
             for i in 0..10 {
                 s.text(format!("{}: Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam", i))?;
             }
@@ -236,12 +239,60 @@ impl AppState for Gui {
     }
 }
 
+impl AppState for Gui {
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        if self.disabled {
+            s.disable();
+        }
+
+        s.push();
+        s.font_style(FontStyle::BOLD);
+        s.font_size(20)?;
+        s.text("Widgets")?;
+        s.pop();
+
+        s.spacing()?;
+
+        s.tab_bar(
+            "Tab Bar",
+            &["Basic", "Fields & Sliders", "Selectables"],
+            |tab: &str, s: &mut PixState| {
+                match tab {
+                    "Basic" => {
+                        self.basic_widgets(s)?;
+                        self.tooltip_widgets(s)?;
+                        self.text_widgets(s)?;
+                    }
+                    "Fields & Sliders" => {
+                        self.text_field_widgets(s)?;
+                        self.drag_and_slider_widgets(s)?;
+                    }
+                    "Selectables" => self.select_widgets(s)?,
+                    _ => (),
+                }
+                Ok(())
+            },
+        )?;
+
+        s.separator()?;
+
+        s.no_disable();
+        s.checkbox("Disable Elements", &mut self.disabled)?;
+        if self.disabled {
+            s.disable();
+        }
+        s.text(format!("Mouse: {}", s.mouse_pos()))?;
+
+        Ok(())
+    }
+}
+
 fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(1024, 768)
         .with_title("GUI Demo")
         .with_frame_rate()
-        .with_font(fonts::NOTO, 13)
+        .with_font(fonts::NOTO, 14)
         .vsync_enabled()
         .build()?;
     let mut app = Gui::new();

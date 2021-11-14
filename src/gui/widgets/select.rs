@@ -9,14 +9,13 @@
 //!
 //! ```
 //! # use pix_engine::prelude::*;
-//! # struct App { select_box: usize };
+//! # struct App { selected_box: usize, selected_list: usize };
 //! # impl AppState for App {
 //! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!     let items = ["Item 1", "Item 2", "Item 3"];
-//!     s.select_box("Select Box", &mut self.select_box, &items)?;
-//!
 //!     let displayed_count = 4;
-//!     s.select_list("Select Box", &mut self.select_box, &items, displayed_count)?;
+//!     s.select_box("Select Box", &mut self.selected_box, &items, displayed_count)?;
+//!     s.select_list("Select List", &mut self.selected_list, &items, displayed_count)?;
 //!     Ok(())
 //! }
 //! # }
@@ -138,8 +137,8 @@ impl PixState {
             s.fill(WHITE);
         }
         s.triangle([
-            point![x + fourth, y + third + 1],
-            point![(x + width) - fourth, y + third + 1],
+            point![x + fourth, y + third + 2],
+            point![(x + width) - fourth, y + third + 2],
             point![x + width / 2, (y + height) - third - 2],
         ])?;
         s.pop();
@@ -160,29 +159,37 @@ impl PixState {
         // Process input
         if focused {
             // Pop select list
-            let mut width = select_box.width() + 1;
-            let height = displayed_count as i32 * (font_size + 2 * ipad.y()) + 1;
-            let total_height = items.len() as i32 * (font_size + 2 * ipad.y());
-            let mut src = rect![0, 0, width, height];
-            let dst = rect![select_box.left(), select_box.bottom() + 1, width, height];
-            let texture_id = s.get_or_create_texture(id, src, dst)?;
-
-            if total_height < height {
-                width += SCROLL_SIZE + 1;
-                src.offset_width(-(SCROLL_SIZE));
-            }
+            let line_height = font_size + 2 * ipad.y();
+            let height = displayed_count as i32 * line_height + 2 * fpad.y();
+            let total_height = items.len() as i32 * line_height + 2 * fpad.y();
+            let dst = rect![
+                select_box.left(),
+                select_box.bottom(),
+                select_box.width() + 1,
+                height
+            ];
+            let texture_id = s.get_or_create_texture(id, None, dst)?;
 
             s.ui.set_mouse_offset(select_box.bottom_left());
             s.with_texture(texture_id, |s: &mut PixState| {
                 s.set_cursor_pos([0, 0]);
-                // Extend width to account for border
-                s.next_width(width as u32 + 2);
+                if total_height > height {
+                    s.next_width((dst.width() - SCROLL_SIZE) as u32);
+                } else {
+                    s.next_width(dst.width() as u32);
+                }
                 s.select_list(format!("#{}", label), selected, items, displayed_count)?;
                 Ok(())
             })?;
             s.ui.clear_mouse_offset();
 
-            if let Some(Key::Escape) = s.ui.key_entered() {
+            if let Some(Key::Escape | Key::Return) = s.ui.key_entered() {
+                s.ui.blur();
+            }
+            if s.ui.mouse.clicked
+                && !select_box.contains_point(s.mouse_pos())
+                && !dst.contains_point(s.mouse_pos())
+            {
                 s.ui.blur();
             }
         }
@@ -234,15 +241,15 @@ impl PixState {
             s.ui.next_width
                 .take()
                 .unwrap_or_else(|| s.width().unwrap_or(100));
-        let mut select_box = rect![
+        let mut select_list = rect![
             pos,
-            width as i32 - 2 * fpad.x(),
-            displayed_count as i32 * (font_size + 2 * ipad.y())
+            width as i32,
+            displayed_count as i32 * (font_size + 2 * ipad.y()) + 2 * fpad.y()
         ];
         if !label.is_empty() {
             let (_, h) = s.size_of(label)?;
             let offset = h as i32 + ipad.y();
-            select_box.offset_y(offset);
+            select_list.offset_y(offset);
         }
 
         // Calculate displayed items
@@ -263,7 +270,7 @@ impl PixState {
         }) + 2 * fpad.x();
 
         // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, select_box);
+        let hovered = s.ui.try_hover(id, select_list);
         let focused = s.ui.try_focus(id);
         let disabled = s.ui.disabled;
         let active = s.ui.is_active(id);
@@ -289,28 +296,39 @@ impl PixState {
         } else {
             s.fill(s.primary_color());
         }
-        s.rect(select_box)?;
+        s.rect(select_list)?;
         s.pop();
 
         // Items
         let mpos = s.mouse_pos();
 
-        let mut clip = select_box;
-        clip.offset_size([-1, -1]);
-        s.clip(clip)?;
+        let mut border_clip = select_list;
+        border_clip.offset_size([-1, -1]);
+        s.clip(border_clip)?;
+        let content_clip = rect![
+            border_clip.top_left() + fpad,
+            border_clip.width() - 2 * fpad.x(),
+            border_clip.height() - 2 * fpad.y(),
+        ];
 
-        let x = select_box.x() - scroll.x();
-        let mut y = select_box.y() - scroll.y() + (skip_count as i32 * line_height);
+        let x = select_list.x() - scroll.x();
+        let mut y = content_clip.y() - scroll.y() + (skip_count as i32 * line_height);
         for (i, item) in displayed_items {
-            let item_rect = rect!(select_box.x(), y, select_box.width(), line_height);
+            let item_rect = rect!(select_list.x(), y, select_list.width(), line_height);
             let clickable =
-                item_rect.bottom() > select_box.y() || item_rect.top() < select_box.height();
+                item_rect.bottom() > content_clip.y() || item_rect.top() < select_list.height();
             s.push();
+            s.clip([
+                select_list.x() + 1,
+                content_clip.y(),
+                select_list.width() - 2,
+                content_clip.height(),
+            ])?;
             if hovered && clickable && item_rect.contains_point(mpos) {
                 s.frame_cursor(Cursor::hand())?;
                 s.no_stroke();
                 s.fill(s.highlight_color());
-                s.rect([select_box.x(), y, select_box.width(), line_height])?;
+                s.rect([select_list.x(), y, select_list.width(), line_height])?;
                 if active && s.mouse_down(Mouse::Left) {
                     *selected = i;
                 }
@@ -318,11 +336,13 @@ impl PixState {
             if *selected == i {
                 s.no_stroke();
                 s.fill(s.secondary_color());
-                s.rect([select_box.x(), y, select_box.width(), line_height])?;
+                s.rect([select_list.x(), y, select_list.width(), line_height])?;
             }
             s.pop();
+            s.clip(content_clip)?;
             s.set_cursor_pos([x + ipad.x(), y + ipad.y()]);
             s.text(item)?;
+            s.clip(border_clip)?;
             y += line_height;
         }
 
@@ -346,9 +366,9 @@ impl PixState {
                     if sel_y < scroll.y() {
                         // Snap scroll to top of the window
                         new_scroll.set_y(sel_y);
-                    } else if sel_y + line_height > scroll.y() + select_box.height() {
+                    } else if sel_y + line_height > scroll.y() + select_list.height() {
                         // Snap scroll to bottom of the window
-                        new_scroll.set_y(sel_y - (select_box.height() - line_height));
+                        new_scroll.set_y(sel_y - (select_list.height() - line_height));
                     }
                     if new_scroll != scroll {
                         s.ui.set_scroll(id, new_scroll);
@@ -359,7 +379,12 @@ impl PixState {
         s.ui.handle_events(id);
 
         // Scrollbars
-        let rect = s.scroll(id, select_box, total_width, total_height)?;
+        let rect = s.scroll(
+            id,
+            select_list,
+            total_width + 2 * fpad.x(),
+            total_height + 2 * fpad.y(),
+        )?;
         s.advance_cursor(rect![pos, rect.width(), rect.bottom() - pos.y()]);
 
         Ok(())
