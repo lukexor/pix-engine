@@ -192,6 +192,9 @@ impl AppState for Matrix {
     fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
         match event.key {
             Key::Escape => {
+                s.quit();
+            }
+            Key::Space => {
                 if s.running() {
                     s.no_run();
                 } else {
