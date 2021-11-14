@@ -453,7 +453,7 @@ impl Rendering for Renderer {
                 } else if x1 == x2 {
                     canvas.vline(x1, y1, y2, color)
                 } else {
-                    canvas.aa_line(x1, y1, x2, y2, color)
+                    canvas.line(x1, y1, x2, y2, color)
                 }
             } else {
                 canvas.thick_line(x1, y1, x2, y2, stroke, color)
@@ -592,7 +592,7 @@ impl Rendering for Renderer {
             }
             if let Some(stroke) = stroke {
                 canvas
-                    .aa_ellipse(x, y, rw, rh, stroke)
+                    .ellipse(x, y, rw, rh, stroke)
                     .map_err(PixError::Renderer)?;
             }
             Ok(())

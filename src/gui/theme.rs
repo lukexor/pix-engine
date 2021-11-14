@@ -191,9 +191,9 @@ impl ThemeBuilder {
     pub fn build(&self) -> Theme {
         Theme {
             fonts: self.fonts.clone(),
-            font_sizes: self.font_sizes.clone(),
-            font_styles: self.font_styles.clone(),
-            colors: self.colors.clone(),
+            font_sizes: self.font_sizes,
+            font_styles: self.font_styles,
+            colors: self.colors,
             style: self.style,
         }
     }
@@ -280,7 +280,7 @@ impl Default for ThemeFonts {
 }
 
 /// A set of font sizes for body, heading, and monospace text.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct ThemeFontSizes {
     pub(crate) body: u32,
@@ -299,7 +299,7 @@ impl Default for ThemeFontSizes {
 }
 
 /// A set of [FontStyle]s for body, heading, and monospace text.
-#[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct ThemeFontStyles {
     pub(crate) body: FontStyle,
@@ -308,7 +308,7 @@ pub(crate) struct ThemeFontStyles {
 }
 
 /// A set of [Color]s for theming UI elements.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ThemeColors {
     /// Body text foreground color.

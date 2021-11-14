@@ -71,8 +71,7 @@ impl PixState {
         // Calculate hover area
         let marker = "?";
         let (w, h) = s.size_of(marker)?;
-        let r = h as i32 / 2;
-        let hover = circle![pos + r, r];
+        let hover = square![pos, h as i32];
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, hover);
@@ -90,12 +89,12 @@ impl PixState {
         } else {
             s.stroke(s.text_color() / 2);
         }
-        s.circle(hover)?;
+        s.square(hover)?;
 
         // Marker
         s.no_stroke();
         s.disable();
-        s.set_cursor_pos([pos.x() + r - w as i32 / 2, pos.y()]);
+        s.set_cursor_pos([pos.x() + w as i32, pos.y()]);
         s.text(marker)?;
         if !disabled {
             s.no_disable();

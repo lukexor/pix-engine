@@ -180,7 +180,7 @@ impl PixState {
         let text = if let Some(formatter) = formatter {
             formatter(value)
         } else {
-            format!("{}", value).into()
+            value.to_string().into()
         };
         let (vw, vh) = s.size_of(&text)?;
         let center = drag.center();
@@ -382,7 +382,7 @@ impl PixState {
         let text = if let Some(formatter) = formatter {
             formatter(value)
         } else {
-            format!("{}", value).into()
+            value.to_string().into()
         };
         let (vw, vh) = s.size_of(&text)?;
         let center = slider.center();

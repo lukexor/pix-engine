@@ -343,7 +343,7 @@ impl PixState {
         } else if blink_cursor {
             s.text(format!("{}{}", value, TEXT_CURSOR))?
         } else {
-            s.text(format!("{}  ", value))?
+            s.text(&value)?
         };
 
         s.no_clip()?;

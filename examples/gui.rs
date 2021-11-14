@@ -137,7 +137,7 @@ impl Gui {
         s.help_marker("Filters any non-numeric characters")?;
 
         s.text_area("Text Area", 200, 100, &mut self.text_area)?;
-        s.same_line(None);
+        s.same_line([-145, 0]);
         s.help_marker(
             "CTRL-X, CTRL-C, CTRL-V to use the clipboard.\n\
             ALT-Backspace to delete word.\n\
@@ -145,7 +145,7 @@ impl Gui {
             RETURN to enter newline.\n\
             (CTRL and ALT are mapped to CMD and OPTION on macOs)",
         )?;
-        s.same_line([8, 0]);
+        s.same_line([110, 0]);
         s.advanced_text_area(
             "Filtered Text Area w/ hint",
             "type here",
@@ -154,7 +154,7 @@ impl Gui {
             &mut self.advanced_text_area,
             Some(char::is_alphabetic),
         )?;
-        s.same_line(None);
+        s.same_line([-40, 0]);
         s.help_marker("Filters any non-alphabetic characters")?;
 
         Ok(())
@@ -171,7 +171,7 @@ impl Gui {
             CTRL+click to input a value.\n\
             (CTRL is mapped to CMD on macOs)",
         )?;
-        s.same_line(None);
+        s.same_line([8, 0]);
         s.next_width(200);
         s.advanced_drag(
             "Advanced Drag",
@@ -190,7 +190,7 @@ impl Gui {
             "CTRL+click to input a value.\n
             (CTRL is mapped to CMD on macOs)",
         )?;
-        s.same_line(None);
+        s.same_line([8, 0]);
         s.next_width(200);
         s.advanced_slider(
             "Advanced Slider",
@@ -256,18 +256,18 @@ impl AppState for Gui {
         s.tab_bar(
             "Tab Bar",
             &["Basic", "Fields & Sliders", "Selectables"],
-            |tab: &str, s: &mut PixState| {
+            |tab: usize, s: &mut PixState| {
                 match tab {
-                    "Basic" => {
+                    0 => {
                         self.basic_widgets(s)?;
                         self.tooltip_widgets(s)?;
                         self.text_widgets(s)?;
                     }
-                    "Fields & Sliders" => {
+                    1 => {
                         self.text_field_widgets(s)?;
                         self.drag_and_slider_widgets(s)?;
                     }
-                    "Selectables" => self.select_widgets(s)?,
+                    2 => self.select_widgets(s)?,
                     _ => (),
                 }
                 Ok(())
@@ -293,7 +293,7 @@ fn main() -> PixResult<()> {
         .with_title("GUI Demo")
         .with_frame_rate()
         .with_font(fonts::NOTO, 14)
-        .vsync_enabled()
+        // .vsync_enabled()
         .build()?;
     let mut app = Gui::new();
     engine.run(&mut app)

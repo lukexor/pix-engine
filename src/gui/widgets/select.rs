@@ -178,7 +178,9 @@ impl PixState {
                 } else {
                     s.next_width(dst.width() as u32);
                 }
-                s.select_list(format!("#{}", label), selected, items, displayed_count)?;
+                s.push_id(id.wrapping_add(texture_id as u64));
+                s.select_list("", selected, items, displayed_count)?;
+                s.pop_id();
                 Ok(())
             })?;
             s.ui.clear_mouse_offset();

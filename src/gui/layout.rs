@@ -4,6 +4,7 @@
 //!
 //! - [PixState::same_line]
 //! - [PixState::next_width]
+//! - [PixState::tab_bar]
 //! - [PixState::spacing]
 //! - [PixState::indent]
 //! - [PixState::separator]
@@ -31,6 +32,17 @@
 //!     if s.button("Button")? {
 //!         // was clicked
 //!     }
+//!
+//!     s.tab_bar(
+//!         "Tab bar",
+//!         &["Tab 1", "Tab 2"],
+//!         |tab: usize, s: &mut PixState| {
+//!             match tab {
+//!                 0 => s.text("Tab 1 Content")?,
+//!                 1 => s.text("Tab 2 Content")?,
+//!             }
+//!         }
+//!     )?;
 //!     Ok(())
 //! }
 //! # }
@@ -99,11 +111,42 @@ impl PixState {
     /// closure that is passed the current tab and [`&mut PixState`][PixState] which you can use to draw all the
     /// standard drawing primitives and change any drawing settings. Settings changed inside the
     /// closure will not persist, similar to [PixState::with_texture].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { checkbox: bool, text_field: String };
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.tab_bar(
+    ///         "Tab bar",
+    ///         &["Tab 1", "Tab 2"],
+    ///         |tab: usize, s: &mut PixState| {
+    ///             match tab {
+    ///                 0 => {
+    ///                     s.text("Tab 1")?;
+    ///                     s.separator();
+    ///                     s.text("Some Content")?;
+    ///                 }
+    ///                 1 => {
+    ///                     s.next_width(200);
+    ///                     if s.button("Click me")? {
+    ///                         // was clicked
+    ///                     }
+    ///                 }
+    ///             }
+    ///         }
+    ///     )?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
     pub fn tab_bar<S, I, F>(&mut self, label: S, tabs: &[I], f: F) -> PixResult<()>
     where
         S: AsRef<str>,
         I: AsRef<str>,
-        F: FnOnce(&str, &mut PixState) -> PixResult<()>,
+        F: FnOnce(usize, &mut PixState) -> PixResult<()>,
     {
         let label = label.as_ref();
 
@@ -195,7 +238,7 @@ impl PixState {
         s.pop();
         s.advance_cursor([0, 0, 0, fpad.y()]);
 
-        f(tabs[s.ui.current_tab(tab_id)].as_ref(), s)?;
+        f(s.ui.current_tab(tab_id), s)?;
 
         Ok(())
     }
