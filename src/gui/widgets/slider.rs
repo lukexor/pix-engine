@@ -141,7 +141,7 @@ impl PixState {
                 return Ok(changed);
             }
         }
-        *value = clamp(s.ui.parse_text_edit(id, *value)?, min, max);
+        let mut new_value = clamp(s.ui.parse_text_edit(id, *value)?, min, max);
 
         s.push();
         s.ui.push_cursor();
@@ -193,7 +193,6 @@ impl PixState {
         s.pop();
 
         // Process drag
-        let mut new_value = *value;
         if active {
             if s.keymod_down(MOD_CTRL) {
                 // Process keyboard input
@@ -310,7 +309,7 @@ impl PixState {
             } else {
                 s.next_width(width);
                 let mut text = s.ui.text_edit(id, value.to_string());
-                let changed = s.advanced_text_field(
+                s.advanced_text_field(
                     label,
                     "",
                     &mut text,
@@ -321,10 +320,10 @@ impl PixState {
                 if let Some(Key::Return | Key::Escape) = s.ui.key_entered() {
                     s.ui.end_edit();
                 }
-                return Ok(changed);
+                return Ok(false);
             }
         }
-        *value = clamp(s.ui.parse_text_edit(id, *value)?, min, max);
+        let mut new_value = clamp(s.ui.parse_text_edit(id, *value)?, min, max);
 
         s.push();
         s.ui.push_cursor();
@@ -343,9 +342,9 @@ impl PixState {
         // Slider region
         s.stroke(s.muted_color());
         if disabled {
-            s.fill(s.muted_color() / 4);
+            s.fill(s.primary_color() / 2);
         } else {
-            s.fill(s.muted_color() / 2);
+            s.fill(s.primary_color());
         }
         s.rect(slider)?;
 
@@ -373,7 +372,7 @@ impl PixState {
         let thumb_w = thumb_w.min(slider_w);
         let offset = ((val - vmin) / (vmax - vmin)) * (slider_w - thumb_w);
         let x = slider.x() + offset as i32;
-        let thumb = rect![x, slider.y(), thumb_w as i32, slider.height() - 1];
+        let thumb = rect![x, slider.y() + 1, thumb_w as i32, slider.height() - 2];
         s.rect(thumb)?;
 
         s.pop();
@@ -394,7 +393,6 @@ impl PixState {
         s.ui.pop_cursor();
         s.pop();
 
-        let mut new_value = *value;
         if active {
             if s.keymod_down(MOD_CTRL) {
                 // Process keyboard input

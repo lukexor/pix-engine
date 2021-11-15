@@ -92,6 +92,7 @@ pub mod fonts {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'static")))]
 pub struct ThemeBuilder {
+    name: String,
     fonts: ThemeFonts,
     font_sizes: ThemeFontSizes,
     font_styles: ThemeFontStyles,
@@ -133,8 +134,11 @@ pub enum ColorType {
 
 impl ThemeBuilder {
     /// Constructs a default `ThemeBuilder`.
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new<S: Into<String>>(name: S) -> Self {
+        Self {
+            name: name.into(),
+            ..Default::default()
+        }
     }
 
     /// Set font theme values for a given [FontType].
@@ -190,6 +194,7 @@ impl ThemeBuilder {
     /// Convert [ThemeBuilder] to a [Theme] instance.
     pub fn build(&self) -> Theme {
         Theme {
+            name: self.name.clone(),
             fonts: self.fonts.clone(),
             font_sizes: self.font_sizes,
             font_styles: self.font_styles,
@@ -235,6 +240,11 @@ impl Font {
             name: name.into(),
             source: FontSrc::from_file(path),
         }
+    }
+
+    /// Returns the name of the font family.
+    pub fn name(&self) -> &str {
+        self.name.as_ref()
     }
 }
 
@@ -291,7 +301,7 @@ pub(crate) struct ThemeFontSizes {
 impl Default for ThemeFontSizes {
     fn default() -> Self {
         Self {
-            body: 14,
+            body: 12,
             heading: 20,
             monospace: 14,
         }
@@ -399,15 +409,22 @@ impl Default for ThemeStyle {
 /// }
 /// # }
 /// ```
-#[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'static")))]
 pub struct Theme {
+    pub(crate) name: String,
     pub(crate) fonts: ThemeFonts,
     pub(crate) font_sizes: ThemeFontSizes,
     pub(crate) font_styles: ThemeFontStyles,
     pub(crate) colors: ThemeColors,
     pub(crate) style: ThemeStyle,
+}
+
+impl Default for Theme {
+    fn default() -> Self {
+        Self::dark()
+    }
 }
 
 impl Theme {
@@ -417,6 +434,32 @@ impl Theme {
     #[inline]
     pub fn builder() -> ThemeBuilder {
         ThemeBuilder::default()
+    }
+
+    /// Constructs a default `Dark` Theme.
+    #[inline]
+    pub fn dark() -> Theme {
+        Self {
+            name: "Dark".into(),
+            colors: ThemeColors::dark(),
+            fonts: ThemeFonts::default(),
+            font_sizes: ThemeFontSizes::default(),
+            font_styles: ThemeFontStyles::default(),
+            style: ThemeStyle::default(),
+        }
+    }
+
+    /// Constructs a default `Light` Theme.
+    #[inline]
+    pub fn light() -> Theme {
+        Self {
+            name: "Light".into(),
+            colors: ThemeColors::light(),
+            fonts: ThemeFonts::default(),
+            font_sizes: ThemeFontSizes::default(),
+            font_styles: ThemeFontStyles::default(),
+            style: ThemeStyle::default(),
+        }
     }
 }
 
@@ -456,6 +499,9 @@ impl PixState {
     /// # }
     /// ```
     pub fn font_size(&mut self, size: u32) -> PixResult<()> {
+        if self.theme.font_sizes.body != size {
+            self.ui.textures.clear();
+        }
         self.theme.font_sizes.body = size;
         self.renderer.font_size(self.theme.font_sizes.body)
     }
@@ -521,6 +567,9 @@ impl PixState {
     /// # }
     /// ```
     pub fn font_family(&mut self, font: Font) -> PixResult<()> {
+        if self.theme.fonts.body != font {
+            self.ui.textures.clear();
+        }
         self.theme.fonts.body = font;
         self.renderer.font_family(&self.theme.fonts.body)
     }
@@ -579,6 +628,19 @@ impl PixState {
         &self.theme.fonts.monospace
     }
 
+    /// Returns the current theme name.
+    #[inline]
+    pub fn theme(&self) -> &str {
+        &self.theme.name
+    }
+
+    /// Sets a new theme.
+    #[inline]
+    pub fn set_theme(&mut self, theme: Theme) {
+        self.theme = theme;
+        let _ = self.background(self.background_color());
+    }
+
     /// Returns the current theme text color.
     ///
     /// Used as the body text foreground color.
@@ -634,5 +696,17 @@ impl PixState {
     #[inline]
     pub fn muted_color(&self) -> Color {
         self.theme.colors.muted
+    }
+
+    /// Returns the current theme style, which includes padding and offset settings.
+    #[inline]
+    pub fn style(&self) -> ThemeStyle {
+        self.theme.style
+    }
+
+    /// Set the style for the current theme, such as padding and offset settings.
+    #[inline]
+    pub fn set_style(&mut self, style: ThemeStyle) {
+        self.theme.style = style;
     }
 }

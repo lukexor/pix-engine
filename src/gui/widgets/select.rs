@@ -25,7 +25,7 @@ use crate::{gui::scroll::SCROLL_SIZE, prelude::*};
 use std::cmp;
 
 impl PixState {
-    /// Draw a select box the current canvas.
+    /// Draw a select box the current canvas that returns `true` when selection is changed.
     ///
     /// # Example
     ///
@@ -36,7 +36,9 @@ impl PixState {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     let items = ["Item 1", "Item 2", "Item 3"];
     ///     let displayed_count = 4;
-    ///     s.select_box("Select Box", &mut self.select_box, &items, displayed_count)?;
+    ///     if s.select_box("Select Box", &mut self.select_box, &items, displayed_count)? {
+    ///         // selection changed
+    ///     }
     ///     Ok(())
     /// }
     /// # }
@@ -47,7 +49,7 @@ impl PixState {
         selected: &mut usize,
         items: &[I],
         displayed_count: usize,
-    ) -> PixResult<()>
+    ) -> PixResult<bool>
     where
         S: AsRef<str>,
         I: AsRef<str>,
@@ -69,7 +71,7 @@ impl PixState {
                 .take()
                 .unwrap_or_else(|| s.width().unwrap_or(100));
         let (_, h) = s.size_of(items.get(0).map(|i| i.as_ref()).unwrap_or(""))?;
-        let mut select_box = rect![pos, width as i32 - 2 * fpad.x(), h as i32 + 2 * ipad.y()];
+        let mut select_box = rect![pos, width as i32, h as i32 + 2 * ipad.y()];
         let (lwidth, lheight) = s.size_of(label)?;
         if !label.is_empty() {
             let offset = lwidth as i32 + ipad.x();
@@ -144,11 +146,18 @@ impl PixState {
         s.pop();
 
         // Item
+        s.clip(rect![
+            select_box.top_left(),
+            select_box.width() - arrow_box.width(),
+            select_box.height()
+        ])?;
+
         s.no_wrap();
         s.set_cursor_pos([select_box.x() + ipad.x(), select_box.y() + ipad.y()]);
         s.text(&items[*selected])?;
-        s.ui.pop_cursor();
 
+        s.no_clip()?;
+        s.ui.pop_cursor();
         s.pop();
         s.advance_cursor(rect![
             pos,
@@ -157,6 +166,7 @@ impl PixState {
         ]);
 
         // Process input
+        let mut changed = false;
         if focused {
             // Pop select list
             let line_height = font_size + 2 * ipad.y();
@@ -165,7 +175,7 @@ impl PixState {
             let dst = rect![
                 select_box.left(),
                 select_box.bottom(),
-                select_box.width() + 1,
+                select_box.width(),
                 height
             ];
             let texture_id = s.get_or_create_texture(id, None, dst)?;
@@ -179,7 +189,7 @@ impl PixState {
                     s.next_width(dst.width() as u32);
                 }
                 s.push_id(id.wrapping_add(texture_id as u64));
-                s.select_list("", selected, items, displayed_count)?;
+                changed = s.select_list("", selected, items, displayed_count)?;
                 s.pop_id();
                 Ok(())
             })?;
@@ -197,21 +207,24 @@ impl PixState {
         }
         s.ui.handle_events(id);
 
-        Ok(())
+        Ok(changed)
     }
 
-    /// Draw a select list to the current canvas with a scrollable region.
+    /// Draw a select list to the current canvas with a scrollable region that returns `true` when
+    /// selection is changed.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// # struct App { select_box: usize };
+    /// # struct App { select_list: usize };
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     let items = ["Item 1", "Item 2", "Item 3"];
     ///     let displayed_count = 4;
-    ///     s.select_list("Select Box", &mut self.select_box, &items, displayed_count)?;
+    ///     if s.select_list("Select List", &mut self.select_list, &items, displayed_count)? {
+    ///         // Selection  changed
+    ///     }
     ///     Ok(())
     /// }
     /// # }
@@ -222,7 +235,7 @@ impl PixState {
         selected: &mut usize,
         items: &[I],
         displayed_count: usize,
-    ) -> PixResult<()>
+    ) -> PixResult<bool>
     where
         S: AsRef<str>,
         I: AsRef<str>,
@@ -313,7 +326,8 @@ impl PixState {
             border_clip.height() - 2 * fpad.y(),
         ];
 
-        let x = select_list.x() - scroll.x();
+        let original_selected = *selected;
+        let x = select_list.x() + fpad.x() - scroll.x();
         let mut y = content_clip.y() - scroll.y() + (skip_count as i32 * line_height);
         for (i, item) in displayed_items {
             let item_rect = rect!(select_list.x(), y, select_list.width(), line_height);
@@ -331,7 +345,7 @@ impl PixState {
                 s.no_stroke();
                 s.fill(s.highlight_color());
                 s.rect([select_list.x(), y, select_list.width(), line_height])?;
-                if active && s.mouse_down(Mouse::Left) {
+                if active && !s.mouse_down(Mouse::Left) {
                     *selected = i;
                 }
             }
@@ -342,7 +356,7 @@ impl PixState {
             }
             s.pop();
             s.clip(content_clip)?;
-            s.set_cursor_pos([x + ipad.x(), y + ipad.y()]);
+            s.set_cursor_pos([x, y + ipad.y()]);
             s.text(item)?;
             s.clip(border_clip)?;
             y += line_height;
@@ -389,6 +403,6 @@ impl PixState {
         )?;
         s.advance_cursor(rect![pos, rect.width(), rect.bottom() - pos.y()]);
 
-        Ok(())
+        Ok(original_selected != *selected)
     }
 }

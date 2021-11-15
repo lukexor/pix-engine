@@ -26,9 +26,9 @@ impl PixState {
 
         // Calculate rect
         let mut scroll_area = rect![pos, width as i32, height as i32];
+        let (lwidth, lheight) = s.size_of(label)?;
         if !label.is_empty() {
-            let (_, h) = s.size_of(label)?;
-            let offset = h as i32 + ipad.y();
+            let offset = lheight as i32 + ipad.y();
             scroll_area.offset_y(offset);
         }
 
@@ -101,7 +101,7 @@ impl PixState {
         let total_width = max_cursor_pos.x() + s.ui.last_width() + fpad.x();
         let total_height = max_cursor_pos.y();
         let rect = s.scroll(id, scroll_area, total_width, total_height)?;
-        s.advance_cursor(rect![pos, rect.width(), rect.height()]);
+        s.advance_cursor(rect![pos, rect.width().max(lwidth as i32), rect.height()]);
 
         Ok(())
     }

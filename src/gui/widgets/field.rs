@@ -281,8 +281,8 @@ impl PixState {
 
         // Calculate input rect
         let mut input = rect![pos, width as i32, height as i32];
+        let (lwidth, lheight) = s.size_of(label)?;
         if !label.is_empty() {
-            let (_, lheight) = s.size_of(label)?;
             input.offset_y(lheight as i32 + ipad.y());
         }
 
@@ -389,7 +389,11 @@ impl PixState {
 
         // Scrollbars
         let rect = s.scroll(id, input, 0, total_height as i32 + 2 * ipad.y())?;
-        s.advance_cursor(rect![pos, rect.width(), rect.bottom() - pos.y()]);
+        s.advance_cursor(rect![
+            pos,
+            rect.width().max(lwidth as i32),
+            rect.bottom() - pos.y()
+        ]);
 
         Ok(changed)
     }

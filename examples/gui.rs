@@ -1,5 +1,8 @@
 use pix_engine::prelude::*;
 
+const FONTS: [&str; 3] = ["Emulogic", "Noto", "Inconsolata"];
+const THEMES: [&str; 2] = ["Dark", "Light"];
+
 struct Gui {
     disabled: bool,
     button_clicked: bool,
@@ -16,6 +19,13 @@ struct Gui {
     advanced_slider: f32,
     select_box: usize,
     select_list: usize,
+    font_size: u32,
+    font_family: usize,
+    theme: usize,
+    frame_padx: i32,
+    frame_pady: i32,
+    item_padx: i32,
+    item_pady: i32,
 }
 
 impl Gui {
@@ -36,6 +46,13 @@ impl Gui {
             advanced_slider: 0.5,
             select_box: 0,
             select_list: 0,
+            font_size: 14,
+            font_family: 0,
+            theme: 0,
+            frame_padx: 8,
+            frame_pady: 8,
+            item_padx: 8,
+            item_pady: 6,
         }
     }
 
@@ -69,7 +86,7 @@ impl Gui {
         if s.hovered() {
             s.advanced_tooltip(
                 "Advanced Tooltip",
-                rect![s.mouse_pos(), 200, 100],
+                rect![s.mouse_pos(), 300, 100],
                 |s: &mut PixState| {
                     s.background(s.accent_color())?;
                     s.text("Advanced tip")?;
@@ -96,17 +113,15 @@ impl Gui {
         if s.hovered() {
             s.tooltip("Flipped text")?;
         }
-        s.spacing()?;
         s.angle_mode(AngleMode::Degrees);
-        s.text_transformed("Rotated text", 90.0, None, None)?;
-        s.spacing()?;
+        s.text_transformed("Rotated text", 10.0, point![0, 0], None)?;
 
         s.indent()?;
         s.bullet("Bulleted text indented")?;
 
         s.push();
         s.stroke(s.accent_color());
-        s.font_size(20)?;
+        s.font_size(22)?;
         s.stroke_weight(2);
         s.font_style(FontStyle::BOLD | FontStyle::ITALIC);
         s.text("Outlined Bold Italicized Text!")?;
@@ -137,7 +152,7 @@ impl Gui {
         s.help_marker("Filters any non-numeric characters")?;
 
         s.text_area("Text Area", 200, 100, &mut self.text_area)?;
-        s.same_line([-145, 0]);
+        s.same_line(None);
         s.help_marker(
             "CTRL-X, CTRL-C, CTRL-V to use the clipboard.\n\
             ALT-Backspace to delete word.\n\
@@ -145,7 +160,7 @@ impl Gui {
             RETURN to enter newline.\n\
             (CTRL and ALT are mapped to CMD and OPTION on macOs)",
         )?;
-        s.same_line([110, 0]);
+        s.same_line(None);
         s.advanced_text_area(
             "Filtered Text Area w/ hint",
             "type here",
@@ -154,7 +169,7 @@ impl Gui {
             &mut self.advanced_text_area,
             Some(char::is_alphabetic),
         )?;
-        s.same_line([-40, 0]);
+        s.same_line(None);
         s.help_marker("Filters any non-alphabetic characters")?;
 
         Ok(())
@@ -216,7 +231,7 @@ impl Gui {
         ];
         let displayed_count = 4;
 
-        s.next_width(150);
+        s.next_width(200);
         s.select_box("Select Box", &mut self.select_box, &items, displayed_count)?;
 
         s.next_width(300);
@@ -237,6 +252,64 @@ impl Gui {
 
         Ok(())
     }
+
+    fn settings(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.next_width(200);
+        if s.slider("Font Size", &mut self.font_size, 8, 20)? {
+            s.font_size(self.font_size)?;
+        }
+
+        s.next_width(200);
+        if s.select_box("Font Family", &mut self.font_family, &FONTS, FONTS.len())? {
+            let font = match FONTS[self.font_family] {
+                "Emulogic" => fonts::EMULOGIC,
+                "Noto" => fonts::NOTO,
+                "Inconsolata" => fonts::INCONSOLATA,
+                _ => unreachable!("unavailable font family"),
+            };
+            s.font_family(font)?;
+        }
+
+        s.next_width(200);
+        if s.select_box("Theme", &mut self.theme, &THEMES, THEMES.len())? {
+            match THEMES[self.theme] {
+                "Dark" => s.set_theme(Theme::dark()),
+                "Light" => s.set_theme(Theme::light()),
+                _ => unreachable!("unavailable theme"),
+            }
+        }
+
+        s.next_width(200);
+        if s.slider("Frame Padding X", &mut self.frame_padx, 0, 20)? {
+            let mut style = s.style();
+            style.frame_pad.set_x(self.frame_padx);
+            s.set_style(style);
+        }
+
+        s.same_line(None);
+        s.next_width(200);
+        if s.slider("Frame Padding Y", &mut self.frame_pady, 0, 20)? {
+            let mut style = s.style();
+            style.frame_pad.set_y(self.frame_pady);
+            s.set_style(style);
+        }
+
+        s.next_width(200);
+        if s.slider("Item Padding X", &mut self.item_padx, 0, 20)? {
+            let mut style = s.style();
+            style.item_pad.set_x(self.item_padx);
+            s.set_style(style);
+        }
+
+        s.same_line(None);
+        s.next_width(200);
+        if s.slider("Item Padding Y", &mut self.item_pady, 0, 20)? {
+            let mut style = s.style();
+            style.item_pad.set_y(self.item_pady);
+            s.set_style(style);
+        }
+        Ok(())
+    }
 }
 
 impl AppState for Gui {
@@ -246,8 +319,7 @@ impl AppState for Gui {
         }
 
         s.push();
-        s.font_style(FontStyle::BOLD);
-        s.font_size(20)?;
+        s.font_size(self.font_size + 4)?;
         s.text("Widgets")?;
         s.pop();
 
@@ -255,7 +327,7 @@ impl AppState for Gui {
 
         s.tab_bar(
             "Tab Bar",
-            &["Basic", "Fields & Sliders", "Selectables"],
+            &["Basic", "Fields & Sliders", "Selectables", "Settings"],
             |tab: usize, s: &mut PixState| {
                 match tab {
                     0 => {
@@ -268,6 +340,7 @@ impl AppState for Gui {
                         self.drag_and_slider_widgets(s)?;
                     }
                     2 => self.select_widgets(s)?,
+                    3 => self.settings(s)?,
                     _ => (),
                 }
                 Ok(())
@@ -292,8 +365,7 @@ fn main() -> PixResult<()> {
         .with_dimensions(1024, 768)
         .with_title("GUI Demo")
         .with_frame_rate()
-        .with_font(fonts::NOTO, 14)
-        // .vsync_enabled()
+        .vsync_enabled()
         .build()?;
     let mut app = Gui::new();
     engine.run(&mut app)

@@ -682,7 +682,7 @@ impl PixState {
         let rect = rect.into();
         let pos = self.cursor_pos();
         let style = self.theme.style;
-        let padx = style.frame_pad.y();
+        let padx = style.frame_pad.x();
         let pady = style.item_pad.y();
         let offset_x = self.ui.offset_x;
 

@@ -66,12 +66,13 @@ impl PixState {
         let id = s.ui.get_id(&text);
         let pos = s.cursor_pos();
         let style = s.theme.style;
-        let pad = style.frame_pad;
+        let fpad = style.frame_pad;
+        let ipad = style.item_pad;
 
         // Calculate hover area
         let marker = "?";
         let (w, h) = s.size_of(marker)?;
-        let hover = square![pos, h as i32];
+        let hover = rect![pos, w as i32 + 2 * ipad.x(), h as i32 + 2 * ipad.y()];
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, hover);
@@ -92,9 +93,10 @@ impl PixState {
         s.square(hover)?;
 
         // Marker
+        s.rect_mode(RectMode::Center);
         s.no_stroke();
         s.disable();
-        s.set_cursor_pos([pos.x() + w as i32, pos.y()]);
+        s.set_cursor_pos(hover.center());
         s.text(marker)?;
         if !disabled {
             s.no_disable();
@@ -103,15 +105,14 @@ impl PixState {
         // Tooltip
         if focused {
             let (w, h) = s.size_of(text)?;
-            let w = w as i32 + 2 * pad.x();
-            let h = h as i32 + 2 * pad.y();
+            let w = w as i32 + 2 * fpad.x();
+            let h = h as i32 + 2 * fpad.y();
             s.push_id(id);
             s.advanced_tooltip(
                 text,
                 rect![hover.bottom_right() - 10, w, h],
                 |s: &mut PixState| {
                     s.background(s.primary_color())?;
-                    s.rect_mode(RectMode::Corner);
                     s.push();
                     s.stroke(s.muted_color());
                     s.no_fill();
@@ -172,7 +173,6 @@ impl PixState {
         s.push_id(id);
         s.advanced_tooltip(text, rect![s.mouse_pos(), w, h], |s: &mut PixState| {
             s.background(s.primary_color())?;
-            s.rect_mode(RectMode::Corner);
             s.push();
             s.stroke(s.muted_color());
             s.no_fill();
@@ -226,6 +226,8 @@ impl PixState {
         let s = self;
         let id = s.ui.get_id(&label);
         let pad = s.theme.style.frame_pad;
+
+        s.rect_mode(RectMode::Corner);
 
         // Calculate rect
         let mut rect = s.get_rect(rect);

@@ -76,7 +76,7 @@ impl Renderer {
         F: FnOnce(&mut Canvas<Window>) -> PixResult<()>,
     {
         if let Some(texture_id) = self.texture_target {
-            let window = self.windows.iter_mut().find_map(|(_, w)| {
+            let window = self.windows.values_mut().find_map(|w| {
                 match w.textures.contains_key(&texture_id) {
                     true => Some(w),
                     false => None,
@@ -279,7 +279,13 @@ impl Rendering for Renderer {
     /// Set the font size for drawing to the current canvas.
     #[inline]
     fn font_size(&mut self, size: u32) -> PixResult<()> {
-        self.font_size = size as u16;
+        let new_size = size as u16;
+        if self.font_size != new_size {
+            for window in self.windows.values_mut() {
+                window.text_cache.clear();
+            }
+        }
+        self.font_size = new_size;
         self.load_font()?;
         Ok(())
     }
@@ -297,7 +303,13 @@ impl Rendering for Renderer {
     /// Set the font family for drawing to the current canvas.
     #[inline]
     fn font_family(&mut self, font: &Font) -> PixResult<()> {
-        self.current_font = hash(&font.name);
+        let new_font = hash(&font.name);
+        if self.current_font != new_font {
+            for window in self.windows.values_mut() {
+                window.text_cache.clear();
+            }
+        }
+        self.current_font = new_font;
         if !self.font_data.contains(&self.current_font) {
             self.font_data.put(self.current_font, font.clone());
         }
@@ -453,7 +465,7 @@ impl Rendering for Renderer {
                 } else if x1 == x2 {
                     canvas.vline(x1, y1, y2, color)
                 } else {
-                    canvas.line(x1, y1, x2, y2, color)
+                    canvas.aa_line(x1, y1, x2, y2, color)
                 }
             } else {
                 canvas.thick_line(x1, y1, x2, y2, stroke, color)
@@ -512,7 +524,7 @@ impl Rendering for Renderer {
             } else {
                 if let Some(fill) = fill {
                     canvas
-                        .box_(x, y, x + width, y + height, fill)
+                        .box_(x, y, x + width - 1, y + height - 1, fill)
                         .map_err(PixError::Renderer)?;
                 }
                 if let Some(stroke) = stroke {
@@ -592,7 +604,7 @@ impl Rendering for Renderer {
             }
             if let Some(stroke) = stroke {
                 canvas
-                    .ellipse(x, y, rw, rh, stroke)
+                    .aa_ellipse(x, y, rw, rh, stroke)
                     .map_err(PixError::Renderer)?;
             }
             Ok(())
@@ -706,7 +718,7 @@ impl Rendering for Renderer {
     /// Return the current rendered target pixels as an array of bytes.
     fn to_bytes(&mut self) -> PixResult<Vec<u8>> {
         if let Some(texture_id) = self.texture_target {
-            let window = self.windows.iter_mut().find_map(|(_, w)| {
+            let window = self.windows.values_mut().find_map(|w| {
                 match w.textures.contains_key(&texture_id) {
                     true => Some(w),
                     false => None,

@@ -102,9 +102,12 @@ impl PixState {
             let (width, height) = s.size_of(text)?;
             pos.offset([-(width as i32 / 2), -(height as i32 / 2)]);
         };
+        let mut angle_radians = angle;
         if let AngleMode::Radians = s.settings.angle_mode {
             angle = angle.map(|a| a.to_degrees());
-        };
+        } else {
+            angle_radians = angle.map(|a| a.to_radians());
+        }
 
         let fill = s.text_color();
         let stroke = s.settings.stroke;
@@ -132,7 +135,7 @@ impl PixState {
                 let (mut width, mut height) = (0, 0);
                 let mut y = pos.y();
                 for line in text.split('\n') {
-                    let (w, h) = s.renderer.text(
+                    let (mut w, mut h) = s.renderer.text(
                         point![pos.x(), y],
                         line,
                         wrap_width,
@@ -142,6 +145,15 @@ impl PixState {
                         fill,
                         outline,
                     )?;
+                    if let Some(angle_radians) = angle_radians {
+                        if angle_radians != 0.0 {
+                            let (sin, cos) = angle_radians.sin_cos();
+                            let rw = h as Scalar * sin + w as Scalar * cos;
+                            let rh = w as Scalar * sin + h as Scalar * cos;
+                            w = rw as u32;
+                            h = rh as u32;
+                        }
+                    }
                     width += w;
                     height += h;
                     y += h as i32;
@@ -189,9 +201,23 @@ impl PixState {
     where
         S: AsRef<str>,
     {
-        let (bw, bh) = self.text("•")?;
-        self.same_line(None);
-        let (w, h) = self.text_transformed(text, 0.0, None, None)?;
-        Ok((bw + w, bh + h))
+        let s = self;
+        let fpad = s.theme.style.frame_pad;
+        let font_size = s.theme.font_sizes.body;
+        let pos = s.cursor_pos();
+
+        let r = font_size / 6;
+
+        s.push();
+        s.no_stroke();
+        s.fill(s.text_color());
+        s.ellipse_mode(EllipseMode::Corner);
+        s.circle([pos.x(), pos.y() + font_size as i32 / 2, r as i32])?;
+        s.pop();
+
+        s.set_cursor_pos([pos.x() + 2 * r as i32 + 2 * fpad.x(), pos.y()]);
+        let (w, h) = s.text_transformed(text, 0.0, None, None)?;
+
+        Ok((w + r, h))
     }
 }

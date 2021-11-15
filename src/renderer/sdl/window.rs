@@ -277,8 +277,8 @@ impl WindowRenderer for Renderer {
         if let Some(texture_id) = self.texture_target {
             if let Some(texture) = self
                 .windows
-                .iter()
-                .find_map(|(_, w)| w.textures.get(&texture_id))
+                .values()
+                .find_map(|w| w.textures.get(&texture_id))
             {
                 let query = texture.query();
                 Ok((query.width, query.height))
