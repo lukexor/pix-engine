@@ -65,14 +65,11 @@ impl TextureRenderer for Renderer {
 
     /// Delete texture.
     ///
-    /// # Safety
+    /// # Note
     ///
     /// It is up to the caller to ensure that the texture to be destroyed was created with the
-    /// current canvas. Currently, the only way to violate this is by creating a texture and then
-    /// toggling vsync after `PixEngine` initialization. Toggling vsync requires re-creating any
-    /// textures in order to safely destroy them.
-    ///
-    /// Destroying textures created from a dropped canvas is undefined behavior.
+    /// current canvas. Currently, the only way to violate this is by creating a texture using
+    /// [PixState::with_window] and calling a texture method after that window has been closed.
     #[inline]
     fn delete_texture(&mut self, texture_id: TextureId) -> PixResult<()> {
         self.window_canvas_mut()?

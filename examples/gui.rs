@@ -46,7 +46,7 @@ impl Gui {
             advanced_slider: 0.5,
             select_box: 0,
             select_list: 0,
-            font_size: 14,
+            font_size: 12,
             font_family: 0,
             theme: 0,
             frame_padx: 8,
@@ -121,7 +121,7 @@ impl Gui {
 
         s.push();
         s.stroke(s.accent_color());
-        s.font_size(22)?;
+        s.font_size(s.body_font_size() + 6)?;
         s.stroke_weight(2);
         s.font_style(FontStyle::BOLD | FontStyle::ITALIC);
         s.text("Outlined Bold Italicized Text!")?;
@@ -255,12 +255,33 @@ impl Gui {
 
     fn settings(&mut self, s: &mut PixState) -> PixResult<()> {
         s.next_width(200);
-        if s.slider("Font Size", &mut self.font_size, 8, 20)? {
-            s.font_size(self.font_size)?;
-        }
+        s.select_box("Theme", &mut self.theme, &THEMES, THEMES.len())?;
 
         s.next_width(200);
-        if s.select_box("Font Family", &mut self.font_family, &FONTS, FONTS.len())? {
+        s.select_box("Font Family", &mut self.font_family, &FONTS, FONTS.len())?;
+        s.same_line(None);
+        s.next_width(200);
+        s.slider("Font Size", &mut self.font_size, 8, 30)?;
+
+        s.next_width(200);
+        s.slider("Frame Padding X", &mut self.frame_padx, 0, 20)?;
+        s.same_line(None);
+        s.next_width(200);
+        s.slider("Frame Padding Y", &mut self.frame_pady, 0, 20)?;
+
+        s.next_width(200);
+        s.slider("Item Padding X", &mut self.item_padx, 0, 20)?;
+        s.same_line(None);
+        s.next_width(200);
+        s.slider("Item Padding Y", &mut self.item_pady, 0, 20)?;
+
+        s.spacing()?;
+        if s.button("Apply Changes")? {
+            match THEMES[self.theme] {
+                "Dark" => s.set_theme(Theme::dark()),
+                "Light" => s.set_theme(Theme::light()),
+                _ => unreachable!("unavailable theme"),
+            }
             let font = match FONTS[self.font_family] {
                 "Emulogic" => fonts::EMULOGIC,
                 "Noto" => fonts::NOTO,
@@ -268,44 +289,10 @@ impl Gui {
                 _ => unreachable!("unavailable font family"),
             };
             s.font_family(font)?;
-        }
-
-        s.next_width(200);
-        if s.select_box("Theme", &mut self.theme, &THEMES, THEMES.len())? {
-            match THEMES[self.theme] {
-                "Dark" => s.set_theme(Theme::dark()),
-                "Light" => s.set_theme(Theme::light()),
-                _ => unreachable!("unavailable theme"),
-            }
-        }
-
-        s.next_width(200);
-        if s.slider("Frame Padding X", &mut self.frame_padx, 0, 20)? {
+            s.font_size(self.font_size)?;
             let mut style = s.style();
-            style.frame_pad.set_x(self.frame_padx);
-            s.set_style(style);
-        }
-
-        s.same_line(None);
-        s.next_width(200);
-        if s.slider("Frame Padding Y", &mut self.frame_pady, 0, 20)? {
-            let mut style = s.style();
-            style.frame_pad.set_y(self.frame_pady);
-            s.set_style(style);
-        }
-
-        s.next_width(200);
-        if s.slider("Item Padding X", &mut self.item_padx, 0, 20)? {
-            let mut style = s.style();
-            style.item_pad.set_x(self.item_padx);
-            s.set_style(style);
-        }
-
-        s.same_line(None);
-        s.next_width(200);
-        if s.slider("Item Padding Y", &mut self.item_pady, 0, 20)? {
-            let mut style = s.style();
-            style.item_pad.set_y(self.item_pady);
+            style.frame_pad = point![self.frame_padx, self.frame_pady];
+            style.item_pad = point![self.item_padx, self.item_pady];
             s.set_style(style);
         }
         Ok(())
@@ -319,7 +306,7 @@ impl AppState for Gui {
         }
 
         s.push();
-        s.font_size(self.font_size + 4)?;
+        s.font_size(s.body_font_size() + 4)?;
         s.text("Widgets")?;
         s.pop();
 

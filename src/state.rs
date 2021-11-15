@@ -169,6 +169,27 @@ impl PixState {
         self.ui.mouse.is_pressed()
     }
 
+    /// Returns if the [Mouse] was clicked (pressed and released).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     if s.mouse_clicked(Mouse::Left) {
+    ///         s.background(Color::random())?;
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    pub fn mouse_clicked(&self, btn: Mouse) -> bool {
+        self.ui.mouse.was_clicked(btn)
+    }
+
     /// Returns if a specific [Mouse] button is currently being held.
     ///
     /// # Example
@@ -358,18 +379,9 @@ impl PixState {
     /// Handle state updates for this frame.
     #[inline]
     pub(crate) fn on_update(&mut self) -> PixResult<()> {
-        for (_, texture) in &mut self.ui.textures {
-            if texture.visible {
-                self.renderer.texture(
-                    texture.id,
-                    texture.src,
-                    texture.dst,
-                    0.0,
-                    None,
-                    None,
-                    None,
-                )?;
-            }
+        for texture in self.ui.textures.iter_mut().filter(|t| t.visible) {
+            self.renderer
+                .texture(texture.id, texture.src, texture.dst, 0.0, None, None, None)?;
         }
         Ok(())
     }

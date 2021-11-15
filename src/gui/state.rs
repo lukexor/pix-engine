@@ -1,5 +1,6 @@
 //! GUI State.
 
+use super::theme::FontId;
 use crate::{
     gui::{keys::KeyState, mouse::MouseState},
     prelude::*,
@@ -20,21 +21,34 @@ pub(crate) type ElementId = u64;
 const ELEMENT_CACHE_SIZE: usize = 128;
 
 /// UI Texture with source and destination.
-#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Default, Debug, Clone, Eq, PartialEq, Hash)]
 pub(crate) struct Texture {
     pub(crate) id: TextureId,
+    pub(crate) element_id: ElementId,
     pub(crate) src: Option<Rect<i32>>,
     pub(crate) dst: Option<Rect<i32>>,
     pub(crate) visible: bool,
+    pub(crate) font_id: FontId,
+    pub(crate) font_size: u32,
 }
 
 impl Texture {
-    pub(crate) fn new(id: TextureId, src: Option<Rect<i32>>, dst: Option<Rect<i32>>) -> Self {
+    pub(crate) fn new(
+        id: TextureId,
+        element_id: ElementId,
+        src: Option<Rect<i32>>,
+        dst: Option<Rect<i32>>,
+        font_id: FontId,
+        font_size: u32,
+    ) -> Self {
         Self {
             id,
+            element_id,
             src,
             dst,
             visible: true,
+            font_id,
+            font_size,
         }
     }
 }
@@ -59,7 +73,7 @@ pub(crate) struct UiState {
     /// Override for max-width elements.
     pub(crate) next_width: Option<u32>,
     /// UI texture to be drawn over rendered frame, in rendered order.
-    pub(crate) textures: Vec<(ElementId, Texture)>,
+    pub(crate) textures: Vec<Texture>,
     /// Whether UI elements are disabled.
     pub(crate) disabled: bool,
     /// Mouse state for the current frame.
@@ -126,7 +140,7 @@ impl UiState {
     /// Handle state changes this frame after calling [AppState::on_update].
     #[inline]
     pub(crate) fn post_update(&mut self) {
-        for (_, texture) in &mut self.textures {
+        for texture in &mut self.textures {
             texture.visible = false;
         }
 
@@ -416,7 +430,7 @@ impl UiState {
     pub(crate) fn clear_entered(&mut self) {
         self.keys.typed = None;
         self.keys.entered = None;
-        self.mouse.clicked = false;
+        self.mouse.clicked.clear();
         self.mouse.xrel = 0;
         self.mouse.yrel = 0;
     }
@@ -668,7 +682,9 @@ impl PixState {
     #[inline]
     pub fn clicked(&self) -> bool {
         if let Some(rect) = self.ui.last_size {
-            !self.ui.disabled && self.ui.mouse.clicked && rect.contains_point(self.mouse_pos())
+            !self.ui.disabled
+                && self.mouse_clicked(Mouse::Left)
+                && rect.contains_point(self.mouse_pos())
         } else {
             false
         }
@@ -709,16 +725,28 @@ impl PixState {
     where
         R: Into<Option<Rect<i32>>>,
     {
-        if let Some((_, texture)) = self.ui.textures.iter_mut().find(|(i, _)| i == &id) {
+        let font_id = self.body_font().id();
+        let font_size = self.body_font_size();
+        if let Some(texture) = self
+            .ui
+            .textures
+            .iter_mut()
+            .find(|t| t.element_id == id && t.font_id == font_id && t.font_size == font_size)
+        {
             texture.visible = true;
             texture.dst = Some(dst);
             Ok(texture.id)
         } else {
             let texture_id =
                 self.create_texture(dst.width() as u32, dst.height() as u32, PixelFormat::Rgba)?;
-            self.ui
-                .textures
-                .push((id, Texture::new(texture_id, src.into(), Some(dst))));
+            self.ui.textures.push(Texture::new(
+                texture_id,
+                id,
+                src.into(),
+                Some(dst),
+                font_id,
+                font_size,
+            ));
             if self.ui.textures.len() > 2 * ELEMENT_CACHE_SIZE {
                 self.ui.textures.truncate(ELEMENT_CACHE_SIZE);
             }

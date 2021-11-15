@@ -201,7 +201,7 @@ impl PixState {
                 let delta = s.mouse_pos().x() - s.pmouse_pos().x();
                 let mut delta: T = NumCast::from(delta).expect("valid i32 cast");
                 if s.keymod_down(KeyMod::ALT) {
-                    delta /= NumCast::from(100).expect("valid number cast");
+                    delta /= NumCast::from(10).expect("valid number cast");
                 } else if s.keymod_down(KeyMod::SHIFT) {
                     delta *= NumCast::from(10).expect("valid number cast");
                 }

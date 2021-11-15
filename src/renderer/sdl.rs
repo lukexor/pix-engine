@@ -1,6 +1,6 @@
 use self::window::WindowCanvas;
 use crate::{
-    gui::theme::FontSrc,
+    gui::theme::{FontId, FontSrc},
     prelude::*,
     renderer::{RendererSettings, Rendering},
 };
@@ -20,12 +20,7 @@ use sdl2::{
     video::Window,
     EventPump, Sdl,
 };
-use std::{
-    cmp,
-    collections::{hash_map::DefaultHasher, HashMap},
-    fmt,
-    hash::{Hash, Hasher},
-};
+use std::{cmp, collections::HashMap, fmt};
 
 lazy_static! {
     static ref TTF: Sdl2TtfContext = sdl2::ttf::init().expect("sdl2_ttf initialized");
@@ -38,15 +33,6 @@ mod event;
 mod texture;
 mod window;
 
-type HashId = u64;
-
-#[inline]
-fn hash<T: Hash>(t: &T) -> HashId {
-    let mut hasher = DefaultHasher::new();
-    t.hash(&mut hasher);
-    hasher.finish()
-}
-
 /// An SDL [Renderer] implementation.
 pub(crate) struct Renderer {
     context: Sdl,
@@ -57,7 +43,7 @@ pub(crate) struct Renderer {
     settings: RendererSettings,
     cursor: Cursor,
     blend_mode: SdlBlendMode,
-    current_font: HashId,
+    current_font: FontId,
     font_size: u16,
     font_style: SdlFontStyle,
     primary_window_id: WindowId,
@@ -65,8 +51,8 @@ pub(crate) struct Renderer {
     texture_target: Option<TextureId>,
     windows: HashMap<WindowId, WindowCanvas>,
     next_texture_id: usize,
-    font_data: LruCache<HashId, Font>,
-    loaded_fonts: LruCache<(HashId, u16), SdlFont<'static, 'static>>,
+    font_data: LruCache<FontId, Font>,
+    loaded_fonts: LruCache<(FontId, u16), SdlFont<'static, 'static>>,
 }
 
 impl Renderer {
@@ -197,7 +183,7 @@ impl Rendering for Renderer {
         audio_device.resume();
 
         let default_font = Font::default();
-        let current_font = hash(&default_font.name);
+        let current_font = default_font.id();
         let mut font_data = LruCache::new(s.text_cache_size);
         font_data.put(current_font, default_font);
 
@@ -279,13 +265,7 @@ impl Rendering for Renderer {
     /// Set the font size for drawing to the current canvas.
     #[inline]
     fn font_size(&mut self, size: u32) -> PixResult<()> {
-        let new_size = size as u16;
-        if self.font_size != new_size {
-            for window in self.windows.values_mut() {
-                window.text_cache.clear();
-            }
-        }
-        self.font_size = new_size;
+        self.font_size = size as u16;
         self.load_font()?;
         Ok(())
     }
@@ -303,13 +283,7 @@ impl Rendering for Renderer {
     /// Set the font family for drawing to the current canvas.
     #[inline]
     fn font_family(&mut self, font: &Font) -> PixResult<()> {
-        let new_font = hash(&font.name);
-        if self.current_font != new_font {
-            for window in self.windows.values_mut() {
-                window.text_cache.clear();
-            }
-        }
-        self.current_font = new_font;
+        self.current_font = font.id();
         if !self.font_data.contains(&self.current_font) {
             self.font_data.put(self.current_font, font.clone());
         }
@@ -348,6 +322,8 @@ impl Rendering for Renderer {
                 self.loaded_fonts
                     .get_mut(&(self.current_font, self.font_size))
                     .expect("valid font"),
+                self.current_font,
+                self.font_size,
             )?;
             let TextureQuery { width, height, .. } = texture.query();
 

@@ -370,6 +370,7 @@ impl PixEngine {
                             }
                         }
                         if !app.on_mouse_clicked(state, button, point!(x, y))? {
+                            state.ui.pmouse.clicked = mem::take(&mut state.ui.mouse.clicked);
                             state.ui.pmouse.last_clicked =
                                 mem::take(&mut state.ui.mouse.last_clicked);
                             state.ui.mouse.click(button, now);

@@ -188,7 +188,7 @@ impl PixState {
                 } else {
                     s.next_width(dst.width() as u32);
                 }
-                s.push_id(id.wrapping_add(texture_id as u64));
+                s.push_id(id);
                 changed = s.select_list("", selected, items, displayed_count)?;
                 s.pop_id();
                 Ok(())
@@ -198,10 +198,7 @@ impl PixState {
             if let Some(Key::Escape | Key::Return) = s.ui.key_entered() {
                 s.ui.blur();
             }
-            if s.ui.mouse.clicked
-                && !select_box.contains_point(s.mouse_pos())
-                && !dst.contains_point(s.mouse_pos())
-            {
+            if s.mouse_down(Mouse::Left) {
                 s.ui.blur();
             }
         }
@@ -345,8 +342,9 @@ impl PixState {
                 s.no_stroke();
                 s.fill(s.highlight_color());
                 s.rect([select_list.x(), y, select_list.width(), line_height])?;
-                if active && !s.mouse_down(Mouse::Left) {
+                if active {
                     *selected = i;
+                    s.ui.clear_active();
                 }
             }
             if *selected == i {

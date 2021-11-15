@@ -25,7 +25,15 @@ use crate::{prelude::*, renderer::Rendering};
 use serde::{Deserialize, Serialize};
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
-use std::{borrow::Cow, str::FromStr};
+use std::{
+    borrow::Cow,
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+    str::FromStr,
+};
+
+/// A hashed  identifier for internal state management.
+pub(crate) type FontId = u64;
 
 pub mod fonts {
     //! A list of library-provided font families.
@@ -245,6 +253,14 @@ impl Font {
     /// Returns the name of the font family.
     pub fn name(&self) -> &str {
         self.name.as_ref()
+    }
+
+    /// Returns the hashed identifier for this font family.
+    #[inline]
+    pub fn id(&self) -> FontId {
+        let mut hasher = DefaultHasher::new();
+        self.name.hash(&mut hasher);
+        hasher.finish()
     }
 }
 
@@ -499,9 +515,6 @@ impl PixState {
     /// # }
     /// ```
     pub fn font_size(&mut self, size: u32) -> PixResult<()> {
-        if self.theme.font_sizes.body != size {
-            self.ui.textures.clear();
-        }
         self.theme.font_sizes.body = size;
         self.renderer.font_size(self.theme.font_sizes.body)
     }
@@ -567,9 +580,6 @@ impl PixState {
     /// # }
     /// ```
     pub fn font_family(&mut self, font: Font) -> PixResult<()> {
-        if self.theme.fonts.body != font {
-            self.ui.textures.clear();
-        }
         self.theme.fonts.body = font;
         self.renderer.font_family(&self.theme.fonts.body)
     }

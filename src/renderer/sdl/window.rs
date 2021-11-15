@@ -1,4 +1,4 @@
-use super::{hash, texture::RendererTexture, HashId, Renderer};
+use super::{texture::RendererTexture, FontId, Renderer};
 use crate::{
     prelude::{Cursor, Event, SystemCursor},
     renderer::*,
@@ -16,16 +16,39 @@ use sdl2::{
     Sdl,
 };
 use std::{
-    collections::HashMap,
+    collections::{hash_map::DefaultHasher, HashMap},
     fmt::{self, Write},
+    hash::{Hash, Hasher},
 };
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub(super) struct TextCacheKey {
+    pub(super) text_id: FontId,
+    pub(super) font_id: FontId,
+    pub(super) color: Color,
+    pub(super) size: u16,
+}
+
+impl TextCacheKey {
+    pub(super) fn new(text: &str, font_id: FontId, color: Color, size: u16) -> Self {
+        let mut hasher = DefaultHasher::new();
+        text.hash(&mut hasher);
+        let text_id = hasher.finish();
+        Self {
+            text_id,
+            font_id,
+            color,
+            size,
+        }
+    }
+}
 
 pub(super) struct WindowCanvas {
     pub(super) id: WindowId,
     pub(super) canvas: Canvas<Window>,
     pub(super) texture_creator: TextureCreator<WindowContext>,
     pub(super) textures: HashMap<TextureId, RendererTexture>,
-    pub(super) text_cache: LruCache<(Color, HashId), RendererTexture>,
+    pub(super) text_cache: LruCache<TextCacheKey, RendererTexture>,
     pub(super) image_cache: LruCache<*const Image, RendererTexture>,
 }
 
@@ -109,21 +132,24 @@ impl WindowCanvas {
         })
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub(super) fn text_texture_mut<'a>(
-        text_cache: &'a mut LruCache<(Color, HashId), RendererTexture>,
+        text_cache: &'a mut LruCache<TextCacheKey, RendererTexture>,
         texture_creator: &TextureCreator<WindowContext>,
         text: &str,
         wrap_width: Option<u32>,
         fill: Color,
         outline: u8,
         font: &mut SdlFont<'static, 'static>,
+        current_font: FontId,
+        font_size: u16,
     ) -> PixResult<&'a mut RendererTexture> {
         let current_outline = font.get_outline_width();
         if current_outline != outline as u16 {
             font.set_outline_width(outline as u16);
         }
 
-        let key = (fill, hash(&text));
+        let key = TextCacheKey::new(text, current_font, fill, font_size);
         if !text_cache.contains(&key) {
             let surface = if let Some(width) = wrap_width {
                 font.render(text).blended_wrapped(fill, width)

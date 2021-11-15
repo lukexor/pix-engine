@@ -160,13 +160,13 @@ impl PixState {
     ///
     /// # Note
     ///
-    /// Textures are not automatically dropped when they go out of scope. It is the responsibility
-    /// of the caller to manage created textures and call [PixState::delete_texture] when a texture
-    /// resource is no longer needed.
-    ///
-    /// Of special note is creating textures in windows other than the primary window. Failing to
-    /// delete textures prior to window close will leak memory and invalidate those textures. This
-    /// issue will be addressed in the future.
+    /// Textures are automatically dropped when the window they were created in is closed due to an
+    /// implicit lifetime that the texture can not outlive the window it was created for. Calling
+    /// this method will associate the texture to the current `window_target`, which can only be
+    /// changed using the [PixState::with_window] method. It is the responsibility of the caller to
+    /// manage created textures and call [PixState::delete_texture] when a texture resource is no
+    /// longer needed and to ensure that texture methods are not called for a given window after it
+    /// has been closed, otherwise an error will be returned.
     ///
     /// This constraint arises due to lifetime issues with SDL textures, See
     /// <https://github.com/Rust-SDL2/rust-sdl2/issues/1107> for more details.
@@ -199,9 +199,9 @@ impl PixState {
     ///
     /// # Note
     ///
-    /// Currently, it is up to the caller to manage valid textures. Textures become invalid and
-    /// memory is leaked whenever a window associated with a texture is closed prior to the window
-    /// being closed. This issue will be addressed in the future.
+    /// Currently, it is up to the caller to manage valid textures. Textures become invalid
+    /// whenever the `window_target` they were created in has been closed. Calling any texture
+    /// methods with an invalid `TextureId` will result in an error.
     ///
     /// This constraint arises due to lifetime issues with SDL textures, See
     /// <https://github.com/Rust-SDL2/rust-sdl2/issues/1107> for more details.
