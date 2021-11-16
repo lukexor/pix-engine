@@ -114,18 +114,27 @@ impl Gui {
             s.tooltip("Flipped text")?;
         }
         s.angle_mode(AngleMode::Degrees);
-        s.text_transformed("Rotated text", 10.0, point![0, 0], None)?;
+        s.text_transformed("Rotated text", 90.0, point![20, 20], None)?;
 
-        s.indent()?;
-        s.bullet("Bulleted text indented")?;
+        s.font_style(FontStyle::BOLD);
+        s.text("Bolded text")?;
+        s.font_style(FontStyle::ITALIC);
+        s.text("Italicized text")?;
+        s.font_style(FontStyle::UNDERLINE);
+        s.text("Underlined text")?;
+        s.font_style(FontStyle::STRIKETHROUGH);
+        s.text("Strikethrough text")?;
 
+        s.font_style(FontStyle::NORMAL);
         s.push();
         s.stroke(s.accent_color());
-        s.font_size(s.body_font_size() + 6)?;
         s.stroke_weight(2);
-        s.font_style(FontStyle::BOLD | FontStyle::ITALIC);
-        s.text("Outlined Bold Italicized Text!")?;
+        s.text("Outlined text")?;
         s.pop();
+
+        s.indent()?;
+        s.text("Indented text")?;
+        s.bullet("Bullet text")?;
 
         Ok(())
     }
