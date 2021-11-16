@@ -3,7 +3,7 @@ authors = ["Luke Petherbridge <me@lukeworks.tech>"]
 categories = ["game-development", "game-engines", "graphics", "gui", "rendering"]
 description = "A cross-platform graphics/UI engine framework for simple games, visualizations, and graphics demos."
 documentation = "https://docs.rs/pix-engine"
-edition = "2018"
+edition = "2021"
 keywords = ["game-engine", "graphics", "ui", "gui", "rendering"]
 license = "MIT OR Apache-2.0"
 name = "pix-engine"
@@ -60,6 +60,7 @@ opt-level = 2
 
 [profile.release]
 codegen-units = 1
+debug = true
 lto = true
 
 [package.metadata.vcpkg]
