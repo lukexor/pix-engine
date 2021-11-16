@@ -49,7 +49,7 @@ use crate::{
 };
 use environment::Environment;
 use settings::Settings;
-use std::collections::HashSet;
+use std::{collections::HashSet, mem, time::Instant};
 
 pub mod environment;
 pub mod settings;
@@ -392,6 +392,7 @@ impl PixState {
         self.ui.post_update();
     }
 
+    /// Takes a [Rect] and returns a modified [Rect] based on the current [RectMode].
     #[inline]
     pub(crate) fn get_rect<R>(&self, rect: R) -> Rect<i32>
     where
@@ -404,6 +405,7 @@ impl PixState {
         rect
     }
 
+    /// Takes an [Ellipse] and returns a modified [Ellipse] based on the current [EllipseMode].
     #[inline]
     pub(crate) fn get_ellipse<E>(&self, ellipse: E) -> Ellipse<i32>
     where
@@ -414,5 +416,42 @@ impl PixState {
             ellipse.center_on(ellipse.bottom_right());
         }
         ellipse
+    }
+
+    /// Updates the mouse position state this frame.
+    #[inline]
+    pub(crate) fn on_mouse_motion(&mut self, pos: PointI2) {
+        self.ui.pmouse.pos = self.ui.mouse.pos;
+        self.ui.mouse.pos = pos;
+    }
+
+    /// Updates the mouse click state this frame.
+    #[inline]
+    pub(crate) fn on_mouse_click(&mut self, btn: Mouse, time: Instant) {
+        self.ui.pmouse.clicked = mem::take(&mut self.ui.mouse.clicked);
+        self.ui.pmouse.last_clicked = mem::take(&mut self.ui.mouse.last_clicked);
+        self.ui.mouse.click(btn, time);
+    }
+
+    /// Updates the mouse pressed state this frame.
+    #[inline]
+    pub(crate) fn on_mouse_pressed(&mut self, btn: Mouse) {
+        self.ui.pmouse.pressed = mem::take(&mut self.ui.mouse.pressed);
+        self.ui.mouse.press(btn);
+    }
+
+    /// Updates the mouse released state this frame.
+    #[inline]
+    pub(crate) fn on_mouse_released(&mut self, btn: Mouse) {
+        self.ui.pmouse.pressed = mem::take(&mut self.ui.mouse.pressed);
+        self.ui.mouse.release(btn);
+    }
+
+    /// Updates the mouse wheel state this frame.
+    #[inline]
+    pub(crate) fn on_mouse_wheel(&mut self, x: i32, y: i32) {
+        self.ui.pmouse.xrel = self.ui.mouse.xrel;
+        self.ui.pmouse.yrel = self.ui.mouse.yrel;
+        self.ui.mouse.wheel(x, y);
     }
 }

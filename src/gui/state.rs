@@ -144,7 +144,6 @@ impl UiState {
             texture.visible = false;
         }
 
-        self.set_mouse_pos(self.mouse.pos);
         if !self.mouse.is_down(Mouse::Left) {
             self.clear_active();
         } else if !self.has_active() {
@@ -232,13 +231,6 @@ impl UiState {
             pos.offset(-offset);
         }
         pos
-    }
-
-    /// Set the current mouse position.
-    #[inline]
-    pub(crate) fn set_mouse_pos<P: Into<PointI2>>(&mut self, pos: P) {
-        self.pmouse.pos = self.mouse.pos;
-        self.mouse.pos = pos.into();
     }
 
     /// Set a mouse offset for rendering within textures or viewports.

@@ -33,10 +33,7 @@
 //! ```
 
 use crate::{prelude::*, renderer::*};
-use std::{
-    mem,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
@@ -349,16 +346,16 @@ impl PixEngine {
                 Event::MouseMotion { x, y, xrel, yrel } => {
                     let pos = point!(x, y);
                     let rel_pos = point!(xrel, yrel);
-                    state.ui.set_mouse_pos(pos);
                     if state.ui.mouse.is_pressed() {
                         app.on_mouse_dragged(state, pos, rel_pos)?;
                     }
-                    app.on_mouse_motion(state, state.mouse_pos(), rel_pos)?;
+                    if !app.on_mouse_motion(state, pos, rel_pos)? {
+                        state.on_mouse_motion(pos);
+                    }
                 }
                 Event::MouseDown { button, x, y } => {
                     if !app.on_mouse_pressed(state, button, point!(x, y))? {
-                        state.ui.pmouse.pressed = mem::take(&mut state.ui.mouse.pressed);
-                        state.ui.mouse.press(button);
+                        state.on_mouse_pressed(button);
                     }
                 }
                 Event::MouseUp { button, x, y } => {
@@ -370,22 +367,16 @@ impl PixEngine {
                             }
                         }
                         if !app.on_mouse_clicked(state, button, point!(x, y))? {
-                            state.ui.pmouse.clicked = mem::take(&mut state.ui.mouse.clicked);
-                            state.ui.pmouse.last_clicked =
-                                mem::take(&mut state.ui.mouse.last_clicked);
-                            state.ui.mouse.click(button, now);
+                            state.on_mouse_click(button, now);
                         }
                     }
                     if !app.on_mouse_released(state, button, point!(x, y))? {
-                        state.ui.pmouse.pressed = mem::take(&mut state.ui.mouse.pressed);
-                        state.ui.mouse.release(button);
+                        state.on_mouse_released(button);
                     }
                 }
                 Event::MouseWheel { x, y, .. } => {
                     if !app.on_mouse_wheel(state, point!(x, y))? {
-                        state.ui.pmouse.xrel = state.ui.mouse.xrel;
-                        state.ui.pmouse.yrel = state.ui.mouse.yrel;
-                        state.ui.mouse.wheel(x, y);
+                        state.on_mouse_wheel(x, y);
                     }
                 }
                 _ => (),
