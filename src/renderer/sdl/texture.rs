@@ -84,7 +84,7 @@ impl TextureRenderer for Renderer {
     /// Update texture with pixel data.
     #[inline]
     fn update_texture<P: AsRef<[u8]>>(
-        &mut self,
+        &self,
         texture_id: TextureId,
         rect: Option<Rect<i32>>,
         pixels: P,

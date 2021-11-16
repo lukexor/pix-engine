@@ -246,7 +246,7 @@ impl PixState {
     /// # }
     /// ```
     pub fn update_texture<R, P>(
-        &mut self,
+        &self,
         texture_id: TextureId,
         rect: R,
         pixels: P,
@@ -349,7 +349,7 @@ pub(crate) trait TextureRenderer {
 
     /// Update texture with pixel data.
     fn update_texture<P: AsRef<[u8]>>(
-        &mut self,
+        &self,
         texture_id: TextureId,
         rect: Option<Rect<i32>>,
         pixels: P,
