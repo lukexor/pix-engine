@@ -352,7 +352,7 @@ fn main() -> PixResult<()> {
         .with_dimensions(1024, 768)
         .with_title("GUI Demo")
         .with_frame_rate()
-        .vsync_enabled()
+        // .vsync_enabled()
         .build()?;
     let mut app = Gui::new();
     engine.run(&mut app)

@@ -5,7 +5,10 @@ use sdl2::{
     rect::Rect as SdlRect,
     render::{Canvas, Texture as SdlTexture},
 };
-use std::ops::{Deref, DerefMut};
+use std::{
+    cell::RefCell,
+    ops::{Deref, DerefMut},
+};
 
 pub(crate) struct RendererTexture {
     inner: Option<SdlTexture>,
@@ -59,7 +62,7 @@ impl TextureRenderer for Renderer {
             .context("failed to create texture")?;
         window_canvas
             .textures
-            .insert(texture_id, RendererTexture::new(texture));
+            .insert(texture_id, RefCell::new(RendererTexture::new(texture)));
         Ok(texture_id)
     }
 
@@ -87,9 +90,10 @@ impl TextureRenderer for Renderer {
         pixels: P,
         pitch: usize,
     ) -> PixResult<()> {
-        if let Some(texture) = self.window_canvas_mut()?.textures.get_mut(&texture_id) {
+        if let Some(texture) = self.window_canvas()?.textures.get(&texture_id) {
             let rect: Option<SdlRect> = rect.map(|r| r.into());
             Ok(texture
+                .borrow_mut()
                 .update(rect, pixels.as_ref(), pitch)
                 .context("failed to update texture")?)
         } else {
@@ -109,45 +113,21 @@ impl TextureRenderer for Renderer {
         flipped: Option<Flipped>,
         tint: Option<Color>,
     ) -> PixResult<()> {
-        // Hairy bit to get multiple mutable exclusive borrows from our texture hashmap in order to
-        // allow rendering one texture into another
-        // TODO: Clean up
-        let (texture, texture_target) = unsafe {
-            let t1 = self
-                .window_canvas_mut()?
-                .textures
-                .get_mut(&texture_id)
-                .map(|t| {
-                    let t: *mut _ = t;
-                    t
-                });
-            let t2 = if let Some(target) = self.texture_target {
-                self.window_canvas_mut()?
-                    .textures
-                    .get_mut(&target)
-                    .map(|t| {
-                        let t: *mut _ = t;
-                        t
-                    })
-            } else {
-                None
-            };
-            assert_ne!(
-                t1, t2,
-                "texture_id must not be set as the current texture_target"
-            );
-            (t1.map(|t| &mut *t), t2.map(|t| &mut *t))
-        };
-        if let Some(texture) = texture {
-            match tint {
-                Some(tint) => {
-                    let [r, g, b, a] = tint.channels();
-                    texture.set_color_mod(r, g, b);
-                    texture.set_alpha_mod(a);
-                }
-                None => {
-                    texture.set_color_mod(255, 255, 255);
-                    texture.set_alpha_mod(255);
+        let texture_target = self.texture_target;
+        let window_canvas = self.window_canvas_mut()?;
+        if let Some(texture) = window_canvas.textures.get(&texture_id) {
+            {
+                let mut texture = texture.borrow_mut();
+                match tint {
+                    Some(tint) => {
+                        let [r, g, b, a] = tint.channels();
+                        texture.set_color_mod(r, g, b);
+                        texture.set_alpha_mod(a);
+                    }
+                    None => {
+                        texture.set_color_mod(255, 255, 255);
+                        texture.set_alpha_mod(255);
+                    }
                 }
             }
             let src = src.map(|r| r.into());
@@ -155,7 +135,7 @@ impl TextureRenderer for Renderer {
             let update = |canvas: &mut Canvas<_>| -> PixResult<()> {
                 let result = if angle > 0.0 || center.is_some() || flipped.is_some() {
                     canvas.copy_ex(
-                        texture,
+                        &texture.borrow(),
                         src,
                         dst,
                         angle,
@@ -164,21 +144,32 @@ impl TextureRenderer for Renderer {
                         matches!(flipped, Some(Flipped::Vertical | Flipped::Both)),
                     )
                 } else {
-                    canvas.copy(texture, src, dst)
+                    canvas.copy(&texture.borrow(), src, dst)
                 };
                 Ok(result.map_err(PixError::Renderer)?)
             };
-            let canvas = self.canvas_mut()?;
-            if let Some(texture) = texture_target {
-                let mut result = Ok(());
-                canvas
-                    .with_texture_canvas(texture, |canvas| {
-                        result = update(canvas);
-                    })
-                    .with_context(|| format!("failed to update texture target {}", texture_id))?;
-                result
+
+            let mut canvas = &mut window_canvas.canvas;
+            if let Some(target_id) = texture_target {
+                assert_ne!(
+                    texture_id, target_id,
+                    "`texture_id` must not equal the current `texture_target`"
+                );
+                if let Some(texture) = window_canvas.textures.get(&target_id) {
+                    let mut result = Ok(());
+                    canvas
+                        .with_texture_canvas(&mut texture.borrow_mut(), |canvas| {
+                            result = update(canvas);
+                        })
+                        .with_context(|| {
+                            format!("failed to update texture target {}", texture_id)
+                        })?;
+                    result
+                } else {
+                    Err(PixError::InvalidTexture(texture_id).into())
+                }
             } else {
-                update(canvas)
+                update(&mut canvas)
             }
         } else {
             Err(PixError::InvalidTexture(texture_id).into())

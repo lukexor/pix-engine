@@ -69,11 +69,12 @@ impl Renderer {
                 }
             });
             if let Some(window) = window {
-                let texture = window.textures.get_mut(&texture_id).expect("valid texture");
+                // We ensured there's a valid texture above
+                let texture = window.textures.get(&texture_id).unwrap();
                 let mut result = Ok(());
                 window
                     .canvas
-                    .with_texture_canvas(texture, |canvas| {
+                    .with_texture_canvas(&mut texture.borrow_mut(), |canvas| {
                         result = f(canvas);
                     })
                     .with_context(|| format!("failed to update texture target {}", texture_id))?;
@@ -343,11 +344,11 @@ impl Rendering for Renderer {
             };
 
             if let Some(texture_id) = self.texture_target {
-                if let Some(texture) = window.textures.get_mut(&texture_id) {
+                if let Some(texture) = window.textures.get(&texture_id) {
                     let mut result = Ok(());
                     window
                         .canvas
-                        .with_texture_canvas(texture, |canvas| {
+                        .with_texture_canvas(&mut texture.borrow_mut(), |canvas| {
                             result = update(canvas);
                         })
                         .with_context(|| {
@@ -672,11 +673,11 @@ impl Rendering for Renderer {
         };
 
         if let Some(texture_id) = self.texture_target {
-            if let Some(texture) = window.textures.get_mut(&texture_id) {
+            if let Some(texture) = window.textures.get(&texture_id) {
                 let mut result = Ok(());
                 window
                     .canvas
-                    .with_texture_canvas(texture, |canvas| {
+                    .with_texture_canvas(&mut texture.borrow_mut(), |canvas| {
                         result = update(canvas);
                     })
                     .with_context(|| format!("failed to update texture target {}", texture_id))?;
@@ -701,11 +702,12 @@ impl Rendering for Renderer {
                 }
             });
             if let Some(window) = window {
-                let texture = window.textures.get_mut(&texture_id).expect("valid texture");
+                // We ensured there's a valid texture above
+                let texture = window.textures.get(&texture_id).unwrap();
                 let mut result = Ok(vec![]);
                 window
                     .canvas
-                    .with_texture_canvas(texture, |canvas| {
+                    .with_texture_canvas(&mut texture.borrow_mut(), |canvas| {
                         result = canvas.read_pixels(None, SdlPixelFormat::RGBA32);
                     })
                     .with_context(|| format!("failed to read texture target {}", texture_id))?;

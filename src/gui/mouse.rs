@@ -27,7 +27,7 @@ impl MouseState {
     /// Whether a [Mouse] buttons was clicked.
     #[inline]
     pub(crate) fn was_clicked(&self, btn: Mouse) -> bool {
-        !self.clicked.contains(&btn)
+        self.clicked.contains(&btn)
     }
 
     /// Returns if a specific [Mouse] button is currently being held.

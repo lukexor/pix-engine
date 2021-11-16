@@ -16,6 +16,7 @@ use sdl2::{
     Sdl,
 };
 use std::{
+    cell::RefCell,
     collections::{hash_map::DefaultHasher, HashMap},
     fmt::{self, Write},
     hash::{Hash, Hasher},
@@ -47,7 +48,7 @@ pub(super) struct WindowCanvas {
     pub(super) id: WindowId,
     pub(super) canvas: Canvas<Window>,
     pub(super) texture_creator: TextureCreator<WindowContext>,
-    pub(super) textures: HashMap<TextureId, RendererTexture>,
+    pub(super) textures: HashMap<TextureId, RefCell<RendererTexture>>,
     pub(super) text_cache: LruCache<TextCacheKey, RendererTexture>,
     pub(super) image_cache: LruCache<*const Image, RendererTexture>,
 }
@@ -306,7 +307,7 @@ impl WindowRenderer for Renderer {
                 .values()
                 .find_map(|w| w.textures.get(&texture_id))
             {
-                let query = texture.query();
+                let query = texture.borrow().query();
                 Ok((query.width, query.height))
             } else {
                 Err(PixError::InvalidTexture(texture_id).into())
@@ -414,12 +415,12 @@ impl WindowRenderer for Renderer {
                 height,
                 format,
                 ..
-            } = texture.query();
+            } = texture.borrow().query();
             new_window.textures.insert(
                 *texture_id,
-                RendererTexture::new(
+                RefCell::new(RendererTexture::new(
                     new_texture_creator.create_texture_target(format, width, height)?,
-                ),
+                )),
             );
         }
 

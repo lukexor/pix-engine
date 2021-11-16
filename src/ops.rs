@@ -169,21 +169,6 @@ macro_rules! impl_wrapper_traits {
                 }
             }
 
-            impl<T$(, const $N: usize)?> AsRef<$Type<T$(, $N)?>> for [$T; $M] {
-                #[inline]
-                fn as_ref(&self) -> &$Type<T$(, $N)?> {
-                    let ptr: *const [$T; $M] = self;
-                    unsafe { &*(ptr as *const $Type<T$(, $N)?>) }
-                }
-            }
-            impl<T$(, const $N: usize)?> AsMut<$Type<T$(, $N)?>> for [$T; $M] {
-                #[inline]
-                fn as_mut(&mut self) -> &mut $Type<T$(, $N)?> {
-                    let ptr: *mut [$T; $M] = self;
-                    unsafe { &mut *(ptr as *mut $Type<T$(, $N)?>) }
-                }
-            }
-
             impl<T$(, const $N: usize)?> Index<usize> for $Type<T$(, $N)?> {
                 type Output = $T;
                 #[inline]
