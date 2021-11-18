@@ -114,21 +114,22 @@ impl Color {
         Color::from_hex(0xFFFFFF00 ^ hex)
     }
 
-    /// Constructs an opaque blended `Color` over a given background, using an opacity value.
-    pub fn blended<O>(&self, bg: Color, opacity: O) -> Color
+    /// Constructs an opaque `Color` blended over a given background, using an alpha value.
+    pub fn blended<A>(&self, bg: Color, alpha: A) -> Color
     where
-        O: Into<Scalar>,
+        A: Into<Scalar>,
     {
-        let o = opacity.into().clamp(0.0, 1.0);
+        let a = alpha.into().clamp(0.0, 1.0);
         let [v1, v2, v3, _] = bg.levels();
-        let [ov1, ov2, ov3, _] = self.levels();
+        let [bv1, bv2, bv3, _] = self.levels();
 
-        let gamma = 2.2;
-        let blend = |a: Scalar, b: Scalar, alpha: Scalar| {
-            (a.powf(gamma) * (1.0 - alpha) + b.powf(gamma) * alpha).powf(gamma.recip())
-        };
-
-        let levels = clamp_levels([blend(v1, ov1, o), blend(v2, ov2, o), blend(v3, ov3, o), 1.0]);
+        let blended = |bg: Scalar, fg: Scalar, alpha: Scalar| bg * (1.0 - alpha) + fg * alpha;
+        let levels = clamp_levels([
+            blended(v1, bv1, a),
+            blended(v2, bv2, a),
+            blended(v3, bv3, a),
+            1.0,
+        ]);
         let channels = calculate_channels(levels);
         Self {
             mode: self.mode,

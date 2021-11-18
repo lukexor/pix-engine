@@ -82,9 +82,6 @@ impl PixState {
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, select_box);
         let focused = s.ui.try_focus(id);
-        if focused {
-            s.ui.set_expanded(id, true);
-        }
 
         s.push();
         s.ui.push_cursor();
@@ -148,20 +145,24 @@ impl PixState {
             select_box.height()
         ]);
 
-        // Process input
         let mut changed = false;
+
+        let line_height = font_size + 2 * ipad.y();
+        let height = displayed_count as i32 * line_height + 2 * fpad.y();
+        let dst = rect![
+            select_box.left(),
+            select_box.bottom(),
+            select_box.width(),
+            height
+        ];
+        let clicked_outside = s.mouse_down(Mouse::Left)
+            && !select_box.contains_point(s.mouse_pos())
+            && !dst.contains_point(s.mouse_pos());
+
         let expanded = s.ui.expanded(id);
         if expanded {
             // Pop select list
-            let line_height = font_size + 2 * ipad.y();
-            let height = displayed_count as i32 * line_height + 2 * fpad.y();
             let total_height = items.len() as i32 * line_height + 2 * fpad.y();
-            let dst = rect![
-                select_box.left(),
-                select_box.bottom(),
-                select_box.width(),
-                height
-            ];
             let texture_id = s.get_or_create_texture(id, None, dst)?;
 
             s.ui.set_mouse_offset(select_box.bottom_left());
@@ -176,24 +177,22 @@ impl PixState {
                 changed = s.select_list("", selected, items, displayed_count)?;
                 if changed {
                     s.ui.set_expanded(id, false);
-                    s.ui.blur();
                 }
                 s.pop_id();
                 Ok(())
             })?;
             s.ui.clear_mouse_offset();
+        }
 
+        // Process input
+        if focused {
             if let Some(Key::Escape | Key::Return) = s.ui.key_entered() {
-                s.ui.set_expanded(id, false);
-                s.ui.blur();
+                s.ui.set_expanded(id, !expanded);
+                s.ui.clear_entered();
             }
-            if s.mouse_down(Mouse::Left)
-                && !select_box.contains_point(s.mouse_pos())
-                && !dst.contains_point(s.mouse_pos())
-            {
-                s.ui.set_expanded(id, false);
-                s.ui.blur();
-            }
+        }
+        if (expanded && clicked_outside) || s.ui.was_clicked(id) {
+            s.ui.set_expanded(id, !expanded);
         }
         s.ui.handle_events(id);
 

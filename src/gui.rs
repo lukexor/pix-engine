@@ -101,10 +101,9 @@ impl PixState {
         // - Disabled: 38%
         // - Error: 100%
         // Stroke & Fill opacity:
-        // - Default: 12%
-        // - Focused: +12%
-        // - Hovered: +4%
-        // - Active: +8%
+        // - Focused: 12%
+        // - Hovered: 4%
+        // - Active: 8%
 
         let s = self;
         let focused = s.ui.is_focused(id);
@@ -124,40 +123,45 @@ impl PixState {
             Error => (c.error, c.on_error),
             _ => panic!("invalid surface color"),
         };
-        let stroke = if focused {
-            overlay
-        } else if disabled {
-            overlay.blended(bg, 0.18)
+        let branded = matches!(
+            surface_color,
+            Primary | PrimaryVariant | Secondary | SecondaryVariant,
+        );
+
+        let stroke_overlay = if branded {
+            bg.blended(WHITE, 0.60)
         } else {
-            overlay.blended(bg, 0.38)
+            overlay
         };
-        let bg_overlay = match surface_color {
-            Primary | PrimaryVariant | Secondary | SecondaryVariant => WHITE,
-            _ => overlay,
+        let stroke = if focused {
+            stroke_overlay
+        } else if disabled {
+            stroke_overlay.blended(bg, 0.18)
+        } else {
+            stroke_overlay.blended(bg, 0.38)
         };
+
+        let bg_overlay = if branded { WHITE } else { overlay };
         let bg = if focused {
             bg_overlay.blended(bg, 0.12)
         } else if active {
-            bg_overlay.blended(bg, 0.16)
-        } else if disabled {
-            if let Primary | PrimaryVariant | Secondary | SecondaryVariant = surface_color {
-                overlay.blended(bg, 0.38)
-            } else {
-                bg
-            }
-        } else if hovered {
-            bg_overlay.blended(bg, 0.16)
-        } else if let Surface = surface_color {
             bg_overlay.blended(bg, 0.08)
+        } else if hovered {
+            if branded {
+                bg_overlay.blended(bg, 0.12)
+            } else {
+                bg_overlay.blended(bg, 0.04)
+            }
+        } else if branded && disabled {
+            overlay.blended(bg, 0.38)
         } else {
             bg
         };
+
         let fg = if disabled {
             overlay.blended(bg, 0.38)
-        } else if let Background | Surface = surface_color {
-            overlay.blended(bg, 0.87)
         } else {
-            overlay
+            overlay.blended(bg, 0.87)
         };
 
         [stroke, bg, fg]
