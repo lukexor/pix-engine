@@ -75,7 +75,7 @@ impl PixState {
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, button);
-        let focused = s.ui.try_focus(id);
+        s.ui.try_focus(id);
         let disabled = s.ui.disabled;
         let active = s.ui.is_active(id);
 
@@ -84,32 +84,23 @@ impl PixState {
 
         // Render
         s.rect_mode(RectMode::Corner);
-
-        // Button
-        s.push();
-        if focused {
-            s.stroke(s.highlight_color());
-        } else {
-            s.stroke(s.muted_color());
-        }
         if hovered {
             s.frame_cursor(Cursor::hand())?;
-            s.fill(s.highlight_color());
             if active {
                 button.offset([1, 1]);
             }
-        } else if disabled {
-            s.fill(s.primary_color() / 2);
-        } else {
-            s.fill(s.primary_color());
         }
+        let [stroke, bg, fg] = s.widget_colors(id, ColorType::Primary);
+        s.stroke(stroke);
+        s.fill(bg);
         s.rect(button)?;
-        s.pop();
 
         // Button text
         s.rect_mode(RectMode::Center);
         s.clip(button)?;
         s.set_cursor_pos(button.center());
+        s.no_stroke();
+        s.fill(fg);
         s.text(label)?;
         s.no_clip()?;
 
@@ -146,44 +137,34 @@ impl PixState {
         let id = s.ui.get_id(&label);
         let label = label.split('#').next().unwrap_or("");
         let pos = s.cursor_pos();
+        let colors = s.theme.colors;
 
         // Calculate checkbox rect
         let checkbox = square![pos, CHECKBOX_SIZE];
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, checkbox);
-        let focused = s.ui.try_focus(id);
+        s.ui.try_focus(id);
         let disabled = s.ui.disabled;
-        let active = s.ui.is_active(id);
 
         s.push();
-
-        // Render
-        s.rect_mode(RectMode::Corner);
 
         // Checkbox
-        s.push();
-        if focused || active {
-            s.stroke(s.highlight_color());
-        } else {
-            s.stroke(s.muted_color());
-        }
+        s.rect_mode(RectMode::Corner);
         if hovered {
             s.frame_cursor(Cursor::hand())?;
-            s.fill(s.secondary_color());
-        } else if disabled {
-            s.fill(s.primary_color() / 2);
-        } else {
-            s.fill(s.primary_color());
         }
+        let [stroke, bg, fg] = if *checked {
+            s.widget_colors(id, ColorType::Primary)
+        } else {
+            s.widget_colors(id, ColorType::Background)
+        };
+        s.stroke(stroke);
+        s.fill(bg);
         s.rect(checkbox)?;
 
         if *checked {
-            if disabled {
-                s.stroke(s.highlight_color() / 2);
-            } else {
-                s.stroke(s.highlight_color());
-            }
+            s.stroke(fg);
             s.stroke_weight(2);
             let half = CHECKBOX_SIZE / 2;
             let third = CHECKBOX_SIZE / 3;
@@ -200,6 +181,8 @@ impl PixState {
 
         // Label
         s.same_line(None);
+        s.no_stroke();
+        s.fill(colors.on_background());
         s.text(label)?;
 
         // Process input
@@ -241,51 +224,51 @@ impl PixState {
         let id = s.ui.get_id(&label);
         let label = label.split('#').next().unwrap_or("");
         let pos = s.cursor_pos();
+        let colors = s.theme.colors;
 
         // Calculate radio rect
         let radio = circle![pos + RADIO_SIZE, RADIO_SIZE];
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, radio);
-        let focused = s.ui.try_focus(id);
+        s.ui.try_focus(id);
         let disabled = s.ui.disabled;
-        let active = s.ui.is_active(id);
 
         s.push();
 
-        // Render
+        // Checkbox
         s.rect_mode(RectMode::Corner);
         s.ellipse_mode(EllipseMode::Center);
-
-        // Checkbox
-        if focused || active {
-            s.stroke(s.highlight_color());
-        } else {
-            s.stroke(s.muted_color());
-        }
         if hovered {
             s.frame_cursor(Cursor::hand())?;
-            s.fill(s.secondary_color());
-        } else if disabled {
-            s.fill(s.primary_color() / 2);
+        }
+        let is_selected = *selected == index;
+        let [stroke, bg, _] = if is_selected {
+            s.widget_colors(id, ColorType::Primary)
         } else {
-            s.fill(s.primary_color());
+            s.widget_colors(id, ColorType::Background)
+        };
+        if is_selected {
+            s.stroke(bg);
+            s.no_fill();
+        } else {
+            s.stroke(stroke);
+            s.fill(bg);
         }
         s.circle(radio)?;
-        if *selected == index {
-            s.no_stroke();
-            if disabled {
-                s.fill(s.highlight_color() / 2);
-            } else {
-                s.fill(s.highlight_color());
-            }
-            s.circle([radio.x(), radio.y(), radio.radius() - 2])?;
+
+        if is_selected {
+            s.stroke(bg);
+            s.fill(bg);
+            s.circle([radio.x(), radio.y(), radio.radius() - 3])?;
         }
         s.advance_cursor(radio.bounding_rect());
         s.pop();
 
         // Label
         s.same_line(None);
+        s.no_stroke();
+        s.fill(colors.on_background());
         s.text(label)?;
 
         // Process input

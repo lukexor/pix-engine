@@ -4,6 +4,7 @@ use crate::{
     renderer::*,
     window::{Position, WindowId},
 };
+use anyhow::anyhow;
 use anyhow::Context;
 use lru::LruCache;
 use sdl2::{
@@ -232,12 +233,24 @@ impl WindowRenderer for Renderer {
 
     /// Close a window.
     fn close_window(&mut self, id: WindowId) -> PixResult<()> {
-        if id == self.window_target {
-            self.reset_window_target();
+        if self.windows.remove(&id).is_none() {
+            return Err(PixError::InvalidWindow(id).into());
         }
-        self.windows
-            .remove(&id)
-            .map_or(Err(PixError::InvalidWindow(id).into()), |_| Ok(()))
+        if id == self.window_target {
+            if id == self.primary_window_id {
+                if let Some(id) = self.windows.keys().last() {
+                    self.window_target = *id;
+                    self.primary_window_id = self.window_target;
+                } else {
+                    return Err(anyhow!(
+                        "close_window can not be called on the last window, call quit() instead"
+                    ));
+                }
+            } else {
+                self.reset_window_target();
+            }
+        }
+        Ok(())
     }
 
     /// Set the mouse cursor to a predefined symbol or image, or hides cursor if `None`.

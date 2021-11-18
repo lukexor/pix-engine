@@ -265,7 +265,7 @@ impl RayScene {
 
 impl AppState for RayScene {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.background(BLACK)?;
+        s.background(BLACK);
         s.scale(SCALE as f32, SCALE as f32)?;
         s.no_cursor();
 

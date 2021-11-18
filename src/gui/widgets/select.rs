@@ -62,6 +62,7 @@ impl PixState {
         let pos = s.cursor_pos();
         let font_size = s.theme.font_sizes.body as i32;
         let style = s.theme.style;
+        let colors = s.theme.colors;
         let fpad = style.frame_pad;
         let ipad = style.item_pad;
 
@@ -81,16 +82,22 @@ impl PixState {
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, select_box);
         let focused = s.ui.try_focus(id);
-        let disabled = s.ui.disabled;
+        if focused {
+            s.ui.set_expanded(id, true);
+        }
 
         s.push();
         s.ui.push_cursor();
 
-        // Render
+        // Select Box
         s.rect_mode(RectMode::Corner);
 
-        // Label
+        if hovered {
+            s.frame_cursor(Cursor::hand())?;
+        }
         if !label.is_empty() {
+            s.no_stroke();
+            s.fill(colors.on_background());
             s.set_cursor_pos([
                 pos.x(),
                 pos.y() + select_box.height() / 2 - lheight as i32 / 2,
@@ -98,52 +105,26 @@ impl PixState {
             s.text(label)?;
         }
 
-        // Select Box
-        s.push();
-        if focused {
-            s.stroke(s.highlight_color());
-        } else {
-            s.stroke(s.muted_color());
-        }
-        if hovered {
-            s.frame_cursor(Cursor::hand())?;
-            s.fill(s.secondary_color());
-        } else if disabled {
-            s.fill(s.primary_color() / 2);
-        } else {
-            s.fill(s.primary_color());
-        }
-        s.same_line(None);
+        let [stroke, bg, fg] = s.widget_colors(id, ColorType::Background);
+        s.stroke(stroke);
+        s.fill(bg);
         s.rect(select_box)?;
 
         // Arrow
         let [_, y, _, height] = select_box.as_array();
         let arrow_box = square![select_box.right() - height, y, height];
-        s.no_stroke();
-        if hovered || focused {
-            s.fill(s.highlight_color());
-        } else if disabled {
-            s.fill(s.secondary_color() / 2);
-        } else {
-            s.fill(s.secondary_color());
-        }
         s.rect(arrow_box)?;
 
         let third = arrow_box.width() / 3;
         let fourth = arrow_box.width() / 4;
         let [x, y, width, height] = arrow_box.as_array();
         s.no_stroke();
-        if disabled {
-            s.fill(WHITE / 2);
-        } else {
-            s.fill(WHITE);
-        }
+        s.fill(fg);
         s.triangle([
             point![x + fourth, y + third + 2],
             point![(x + width) - fourth, y + third + 2],
             point![x + width / 2, (y + height) - third - 2],
         ])?;
-        s.pop();
 
         // Item
         s.clip(rect![
@@ -154,6 +135,8 @@ impl PixState {
 
         s.no_wrap();
         s.set_cursor_pos([select_box.x() + ipad.x(), select_box.y() + ipad.y()]);
+        s.no_stroke();
+        s.fill(fg);
         s.text(&items[*selected])?;
 
         s.no_clip()?;
@@ -167,7 +150,8 @@ impl PixState {
 
         // Process input
         let mut changed = false;
-        if focused {
+        let expanded = s.ui.expanded(id);
+        if expanded {
             // Pop select list
             let line_height = font_size + 2 * ipad.y();
             let height = displayed_count as i32 * line_height + 2 * fpad.y();
@@ -190,15 +174,24 @@ impl PixState {
                 }
                 s.push_id(id);
                 changed = s.select_list("", selected, items, displayed_count)?;
+                if changed {
+                    s.ui.set_expanded(id, false);
+                    s.ui.blur();
+                }
                 s.pop_id();
                 Ok(())
             })?;
             s.ui.clear_mouse_offset();
 
             if let Some(Key::Escape | Key::Return) = s.ui.key_entered() {
+                s.ui.set_expanded(id, false);
                 s.ui.blur();
             }
-            if s.mouse_down(Mouse::Left) {
+            if s.mouse_down(Mouse::Left)
+                && !select_box.contains_point(s.mouse_pos())
+                && !dst.contains_point(s.mouse_pos())
+            {
+                s.ui.set_expanded(id, false);
                 s.ui.blur();
             }
         }
@@ -245,6 +238,7 @@ impl PixState {
         let pos = s.cursor_pos();
         let font_size = s.theme.font_sizes.body as i32;
         let style = s.theme.style;
+        let colors = s.theme.colors;
         let fpad = style.frame_pad;
         let ipad = style.item_pad;
 
@@ -284,32 +278,22 @@ impl PixState {
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, select_list);
         let focused = s.ui.try_focus(id);
-        let disabled = s.ui.disabled;
         let active = s.ui.is_active(id);
+        let disabled = s.ui.disabled;
 
         s.push();
         s.ui.push_cursor();
 
-        // Render
+        // Select List
         s.rect_mode(RectMode::Corner);
-
-        // Label
+        s.no_stroke();
+        s.fill(colors.on_background());
         s.text(label)?;
 
-        // Select List
-        s.push();
-        if focused {
-            s.stroke(s.highlight_color());
-        } else {
-            s.stroke(s.muted_color());
-        }
-        if disabled {
-            s.fill(s.primary_color() / 2);
-        } else {
-            s.fill(s.primary_color());
-        }
+        let [stroke, bg, fg] = s.widget_colors(id, ColorType::Background);
+        s.stroke(stroke);
+        s.fill(colors.background);
         s.rect(select_list)?;
-        s.pop();
 
         // Items
         let mpos = s.mouse_pos();
@@ -340,7 +324,7 @@ impl PixState {
             if hovered && clickable && item_rect.contains_point(mpos) {
                 s.frame_cursor(Cursor::hand())?;
                 s.no_stroke();
-                s.fill(s.highlight_color());
+                s.fill(bg);
                 s.rect([select_list.x(), y, select_list.width(), line_height])?;
                 if active {
                     *selected = i;
@@ -349,12 +333,22 @@ impl PixState {
             }
             if *selected == i {
                 s.no_stroke();
-                s.fill(s.secondary_color());
+                if disabled {
+                    s.fill(colors.primary.blended(colors.background, 0.38));
+                } else {
+                    s.fill(colors.primary);
+                }
                 s.rect([select_list.x(), y, select_list.width(), line_height])?;
             }
             s.pop();
             s.clip(content_clip)?;
             s.set_cursor_pos([x, y + ipad.y()]);
+            s.no_stroke();
+            if *selected == i {
+                s.fill(colors.on_primary);
+            } else {
+                s.fill(fg);
+            }
             s.text(item)?;
             s.clip(border_clip)?;
             y += line_height;

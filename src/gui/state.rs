@@ -150,9 +150,6 @@ impl UiState {
             // Disable focused state while mouse is down from previous frame
             self.set_active(0);
         }
-        if self.keys.was_entered(Key::Tab) {
-            self.blur();
-        }
         self.clear_entered();
     }
 
@@ -401,12 +398,7 @@ impl UiState {
             true
         } else {
             // Mouse is up, but we're hovered and active so user must have clicked
-            let clicked =
-                !self.mouse.is_down(Mouse::Left) && self.is_hovered(id) && self.is_active(id);
-            if clicked {
-                self.focus(id);
-            }
-            clicked
+            !self.mouse.is_down(Mouse::Left) && self.is_hovered(id) && self.is_active(id)
         }
     }
 
@@ -517,6 +509,32 @@ impl UiState {
             Ok(state.text_edit.parse().unwrap_or(default))
         } else {
             Ok(default)
+        }
+    }
+
+    /// Returns whether the current element is expanded or not.
+    #[inline]
+    pub(crate) fn expanded(&mut self, id: ElementId) -> bool {
+        if let Some(state) = self.elements.get_mut(&id) {
+            state.expanded
+        } else {
+            false
+        }
+    }
+
+    /// Set whether the current element is expanded or not.
+    #[inline]
+    pub(crate) fn set_expanded(&mut self, id: ElementId, expanded: bool) {
+        if let Some(state) = self.elements.get_mut(&id) {
+            state.expanded = expanded;
+        } else {
+            self.elements.put(
+                id,
+                ElementState {
+                    expanded,
+                    ..Default::default()
+                },
+            );
         }
     }
 
@@ -717,8 +735,8 @@ impl PixState {
     where
         R: Into<Option<Rect<i32>>>,
     {
-        let font_id = self.body_font().id();
-        let font_size = self.body_font_size();
+        let font_id = self.theme.fonts.body.id();
+        let font_size = self.theme.font_sizes.body;
         if let Some(texture) = self
             .ui
             .textures
@@ -753,4 +771,5 @@ pub(crate) struct ElementState {
     scroll: VectorI2,
     text_edit: String,
     current_tab: usize,
+    expanded: bool,
 }

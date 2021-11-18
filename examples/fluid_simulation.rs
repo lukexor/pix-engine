@@ -302,7 +302,7 @@ impl App {
 
 impl AppState for App {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.background(BLACK)?;
+        s.background(BLACK);
         s.rect_mode(RectMode::Center);
         s.no_stroke();
         s.cursor(Cursor::hand())?;

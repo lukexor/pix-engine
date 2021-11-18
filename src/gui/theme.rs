@@ -10,11 +10,11 @@
 //! # struct App { checkbox: bool, text_field: String };
 //! # impl AppState for App {
 //! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-//!     s.font_color(CADET_BLUE); // Change theme text color
-//!     s.font_size(14)?; // Change theme body text size
-//!     s.font_style(FontStyle::BOLD); // Change theme body font stylle
+//!     s.fill(CADET_BLUE); // Change text color
+//!     s.font_size(14)?;
+//!     s.font_style(FontStyle::BOLD);
 //!     s.font_family(fonts::INCONSOLATA)?;
-//!     s.fill(s.background_color());
+//!     s.text("Blue, bold, size 14 text in Inconsolata font")?;
 //!     Ok(())
 //! }
 //! # }
@@ -68,7 +68,9 @@ pub mod fonts {
 /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
 /// # }
 /// fn main() -> PixResult<()> {
-///     let dark_colors = ThemeColors::dark();
+///     let mut style = ThemeStyle::default();
+///     style.frame_pad = point!(10, 10);
+///     style.item_pad = point!(5, 5);
 ///     let theme = Theme::builder()
 ///         .with_font(
 ///             FontType::Body,
@@ -82,12 +84,9 @@ pub mod fonts {
 ///             22,
 ///             FontStyle::BOLD | FontStyle::UNDERLINE
 ///         )
-///         .with_color(ColorType::Text, BLACK)
-///         .with_color(ColorType::Background, dark_colors.accent)
-///         .with_style(ThemeStyle {
-///             frame_pad: point!(10, 10),
-///             item_pad: point!(5, 5),
-///          })
+///         .with_color(ColorType::OnBackground, BLACK)
+///         .with_color(ColorType::Background, DARK_GRAY)
+///         .with_style(style)
 ///         .build();
 ///     let mut engine = PixEngine::builder()
 ///         .with_theme(theme)
@@ -124,20 +123,31 @@ pub enum FontType {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum ColorType {
-    /// Body text foreground.
-    Text,
-    /// Body background.
+    /// Background color, used to clear the screen each frame and appears behind scrollable
+    /// content.
     Background,
-    /// Primary brand for linsk, buttons, etc.
+    /// Surface color, used to render surfaces of widgets, cards, sheets, and menus.
+    Surface,
+    /// Primary color displayed most often across widgets.
     Primary,
-    /// Secondary brand for alternative styling.
+    /// Primary variant color, optional.
+    PrimaryVariant,
+    /// Secondary color for accents and distinguishing content, optional.
     Secondary,
-    /// Contrast for emphasis.
-    Accent,
-    /// Background highlighting of text.
-    Highlight,
-    /// Faint for backgrounds, borders, or accents not requiring contrast.
-    Muted,
+    /// Secondary variant color, optional.
+    SecondaryVariant,
+    /// Error highlighting of text and outlines.
+    Error,
+    /// Text and icon color when rendered over the background color.
+    OnBackground,
+    /// Text and icon color when rendered over the surface color.
+    OnSurface,
+    /// Text and icon color when rendered over a primary color.
+    OnPrimary,
+    /// Text and icon color when rendered over a secondary color.
+    OnSecondary,
+    /// Text and icon color when rendered over the error color.
+    OnError,
 }
 
 impl ThemeBuilder {
@@ -179,16 +189,23 @@ impl ThemeBuilder {
     }
 
     /// Set color theme for a given [ColorType].
-    pub fn with_color(&mut self, color_type: ColorType, color: Color) -> &mut Self {
+    pub fn with_color<C: Into<Color>>(&mut self, color_type: ColorType, color: C) -> &mut Self {
+        let color = color.into();
         use ColorType::*;
+        let c = &mut self.colors;
         match color_type {
-            Text => self.colors.text = color,
-            Background => self.colors.background = color,
-            Primary => self.colors.background = color,
-            Secondary => self.colors.secondary = color,
-            Accent => self.colors.accent = color,
-            Highlight => self.colors.highlight = color,
-            Muted => self.colors.muted = color,
+            Background => c.background = color,
+            Surface => c.surface = color,
+            Primary => c.primary = color,
+            PrimaryVariant => c.primary_variant = color,
+            Secondary => c.secondary = color,
+            SecondaryVariant => c.secondary_variant = color,
+            Error => c.error = color,
+            OnBackground => c.on_background = color,
+            OnSurface => c.on_surface = color,
+            OnPrimary => c.on_primary = color,
+            OnSecondary => c.on_secondary = color,
+            OnError => c.on_error = color,
         }
         self
     }
@@ -216,6 +233,7 @@ impl ThemeBuilder {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'static")))]
+#[non_exhaustive]
 pub struct Font {
     /// Family name of the font.
     pub(crate) name: Cow<'static, str>,
@@ -289,10 +307,14 @@ impl FontSrc {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'static")))]
-pub(crate) struct ThemeFonts {
-    pub(crate) body: Font,
-    pub(crate) heading: Font,
-    pub(crate) monospace: Font,
+#[non_exhaustive]
+pub struct ThemeFonts {
+    /// Body font.
+    pub body: Font,
+    /// Heading font.
+    pub heading: Font,
+    /// Monospace font.
+    pub monospace: Font,
 }
 
 impl Default for ThemeFonts {
@@ -308,10 +330,14 @@ impl Default for ThemeFonts {
 /// A set of font sizes for body, heading, and monospace text.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub(crate) struct ThemeFontSizes {
-    pub(crate) body: u32,
-    pub(crate) heading: u32,
-    pub(crate) monospace: u32,
+#[non_exhaustive]
+pub struct ThemeFontSizes {
+    /// Body font size.
+    pub body: u32,
+    /// Heading font size.
+    pub heading: u32,
+    /// Monospace font size.
+    pub monospace: u32,
 }
 
 impl Default for ThemeFontSizes {
@@ -327,58 +353,101 @@ impl Default for ThemeFontSizes {
 /// A set of [FontStyle]s for body, heading, and monospace text.
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub(crate) struct ThemeFontStyles {
-    pub(crate) body: FontStyle,
-    pub(crate) heading: FontStyle,
-    pub(crate) monospace: FontStyle,
+#[non_exhaustive]
+pub struct ThemeFontStyles {
+    /// Body style.
+    pub body: FontStyle,
+    /// Heading style.
+    pub heading: FontStyle,
+    /// Monospace style.
+    pub monospace: FontStyle,
 }
 
 /// A set of [Color]s for theming UI elements.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[non_exhaustive]
 pub struct ThemeColors {
-    /// Body text foreground color.
-    pub text: Color,
-    /// Window/frame background color, used to clear the screen each frame.
+    /// Background color, used to clear the screen each frame and appears behind scrollable
+    /// content.
     pub background: Color,
-    /// Primary brand color for links, buttons, etc.
+    /// Surface color, used to render surfaces of widgets, cards, sheets, and menus.
+    pub surface: Color,
+    /// Primary color displayed most often across widgets.
     pub primary: Color,
-    /// Secondary brand color for alternative styling.
+    /// Primary variant color.
+    pub primary_variant: Color,
+    /// Secondary color for accents and distinguishing content, optional.
     pub secondary: Color,
-    /// A contrast color for emphasis.
-    pub accent: Color,
-    /// A background color for highlighting text or focusing widgets.
-    pub highlight: Color,
-    /// A faint color for backgrounds, borders, and accents that do not require high contrast with
-    /// the background.
-    pub muted: Color,
+    /// Secondary variant color, optional.
+    pub secondary_variant: Color,
+    /// Error highlighting of text and outlines.
+    pub error: Color,
+    /// Text and icon color when rendered over the background color.
+    pub on_background: Color,
+    /// Text and icon color when rendered over the surface color.
+    pub on_surface: Color,
+    /// Text and icon color when rendered over a primary color.
+    pub on_primary: Color,
+    /// Text and icon color when rendered over a secondary color.
+    pub on_secondary: Color,
+    /// Text and icon color when rendered over the error color.
+    pub on_error: Color,
 }
 
 impl ThemeColors {
     /// A dark color theme.
     pub fn dark() -> Self {
         Self {
-            text: color!(0xf4),
-            background: Color::from_str("#151617").unwrap(),
-            primary: Color::from_str("#0f2a3f").unwrap(),
-            secondary: Color::from_str("#2b4455").unwrap(),
-            accent: Color::from_str("#c78654").unwrap(),
-            highlight: Color::from_str("#236d7a").unwrap(),
-            muted: Color::from_str("#20394f").unwrap(),
+            background: Color::from_str("#121212").unwrap(),
+            surface: Color::from_str("#121212").unwrap(),
+            primary: Color::from_str("#bb86fc").unwrap(),
+            primary_variant: Color::from_str("#3700b3").unwrap(),
+            secondary: Color::from_str("#03dac6").unwrap(),
+            secondary_variant: Color::from_str("#03dac6").unwrap(),
+            error: Color::from_str("#cf6679").unwrap(),
+            on_background: WHITE,
+            on_surface: WHITE,
+            on_primary: BLACK,
+            on_secondary: BLACK,
+            on_error: BLACK,
         }
     }
 
     /// A light color theme.
     pub fn light() -> Self {
         Self {
-            text: Color::from_str("#272736").unwrap(),
-            background: Color::from_str("#fffefe").unwrap(),
-            primary: Color::from_str("#d0e3e6").unwrap(),
-            secondary: Color::from_str("#8bacc9").unwrap(),
-            accent: Color::from_str("#d8c072").unwrap(),
-            highlight: Color::from_str("#5c94b1").unwrap(),
-            muted: Color::from_str("#7b7995").unwrap(),
+            background: Color::from_str("#fff").unwrap(),
+            surface: Color::from_str("#fff").unwrap(),
+            primary: Color::from_str("#6200ee").unwrap(),
+            primary_variant: Color::from_str("#3700b3").unwrap(),
+            secondary: Color::from_str("#03dac6").unwrap(),
+            secondary_variant: Color::from_str("#018786").unwrap(),
+            error: Color::from_str("#b00020").unwrap(),
+            on_background: BLACK,
+            on_surface: BLACK,
+            on_primary: WHITE,
+            on_secondary: WHITE,
+            on_error: WHITE,
         }
+    }
+
+    /// Return the OnBackground color.
+    #[inline]
+    pub fn on_background(&self) -> Color {
+        self.on_background.blended(self.background, 0.87)
+    }
+
+    /// Return the OnSurface color.
+    #[inline]
+    pub fn on_surface(&self) -> Color {
+        self.on_surface.blended(self.surface, 0.87)
+    }
+
+    /// Return the Disabled color.
+    #[inline]
+    pub fn disabled(&self) -> Color {
+        self.on_background.blended(self.background, 0.38)
     }
 }
 
@@ -391,6 +460,7 @@ impl Default for ThemeColors {
 /// A set of styles for sizing, padding, borders, etc for theming UI elements.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[non_exhaustive]
 pub struct ThemeStyle {
     /// Padding between the edge of frames/windows and UI widgets.
     pub frame_pad: PointI2,
@@ -418,9 +488,11 @@ impl Default for ThemeStyle {
 /// # struct App { checkbox: bool, text_field: String };
 /// # impl AppState for App {
 /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-///     s.fill(s.accent_color());
-///     s.font_size(s.heading_font_size())?;
+///     s.fill(CADET_BLUE); // Change font color
+///     s.font_size(16)?;
+///     s.font_style(FontStyle::UNDERLINE);
 ///     s.font_family(Font::from_file("Some font", "./some_font.ttf"))?;
+///     s.text("Blue, underlined, size 16 text in Some Font")?;
 ///     Ok(())
 /// }
 /// # }
@@ -428,13 +500,20 @@ impl Default for ThemeStyle {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'static")))]
+#[non_exhaustive]
 pub struct Theme {
-    pub(crate) name: String,
-    pub(crate) fonts: ThemeFonts,
-    pub(crate) font_sizes: ThemeFontSizes,
-    pub(crate) font_styles: ThemeFontStyles,
-    pub(crate) colors: ThemeColors,
-    pub(crate) style: ThemeStyle,
+    /// The name of this theme.
+    pub name: String,
+    /// The font families used in this theme.
+    pub fonts: ThemeFonts,
+    /// The font sizes used in this theme.
+    pub font_sizes: ThemeFontSizes,
+    /// The font styles used in this theme.
+    pub font_styles: ThemeFontStyles,
+    /// The colors used in this theme.
+    pub colors: ThemeColors,
+    /// The padding, offsets, and other styles used in this theme.
+    pub style: ThemeStyle,
 }
 
 impl Default for Theme {
@@ -480,25 +559,6 @@ impl Theme {
 }
 
 impl PixState {
-    /// Set the font color for drawing to the current canvas.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # struct App;
-    /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.font_color(ALICE_BLUE);
-    ///     s.text("Some blue text")?;
-    ///     Ok(())
-    /// }
-    /// # }
-    /// ```
-    pub fn font_color<C: Into<Color>>(&mut self, color: C) {
-        self.theme.colors.text = color.into();
-    }
-
     /// Set the font size for drawing to the current canvas.
     ///
     /// # Example
@@ -584,139 +644,24 @@ impl PixState {
         self.renderer.font_family(&self.theme.fonts.body)
     }
 
-    /// Returns the current theme body font size.
+    /// Returns the reference to the current theme.
     #[inline]
-    pub fn body_font_size(&self) -> u32 {
-        self.theme.font_sizes.body
+    pub fn theme(&self) -> &Theme {
+        &self.theme
     }
 
-    /// Returns the current theme body font style.
+    /// Returns the a mutable reference to the current theme.
     #[inline]
-    pub fn body_font_style(&self) -> FontStyle {
-        self.theme.font_styles.body
-    }
-
-    /// Returns the current theme body font family.
-    #[inline]
-    pub fn body_font(&self) -> &Font {
-        &self.theme.fonts.body
-    }
-
-    /// Returns the current theme heading font size.
-    #[inline]
-    pub fn heading_font_size(&self) -> u32 {
-        self.theme.font_sizes.heading
-    }
-
-    /// Returns the current theme heading font style.
-    #[inline]
-    pub fn heading_font_style(&self) -> FontStyle {
-        self.theme.font_styles.heading
-    }
-
-    /// Returns the current theme heading font.
-    #[inline]
-    pub fn heading_font(&self) -> &Font {
-        &self.theme.fonts.heading
-    }
-
-    /// Returns the current theme monospace font size.
-    #[inline]
-    pub fn monospace_font_size(&self) -> u32 {
-        self.theme.font_sizes.monospace
-    }
-
-    /// Returns the current theme monospace font style.
-    #[inline]
-    pub fn monospace_font_style(&self) -> FontStyle {
-        self.theme.font_styles.monospace
-    }
-
-    /// Returns the current theme fixed-width font.
-    #[inline]
-    pub fn monospace_font(&self) -> &Font {
-        &self.theme.fonts.monospace
-    }
-
-    /// Returns the current theme name.
-    #[inline]
-    pub fn theme(&self) -> &str {
-        &self.theme.name
+    pub fn theme_mut(&mut self) -> &mut Theme {
+        &mut self.theme
     }
 
     /// Sets a new theme.
     #[inline]
     pub fn set_theme(&mut self, theme: Theme) {
         self.theme = theme;
-        let _ = self.background(self.background_color());
-    }
-
-    /// Returns the current theme text color.
-    ///
-    /// Used as the body text foreground color.
-    #[inline]
-    pub fn text_color(&self) -> Color {
-        self.theme.colors.text
-    }
-
-    /// Returns the current theme background color.
-    ///
-    /// Used as the window/frame background color to clear the screen each frame.
-    #[inline]
-    pub fn background_color(&self) -> Color {
-        self.theme.colors.background
-    }
-
-    /// Returns the current theme primary color.
-    ///
-    /// Used as the primary brand color for links, buttons, etc.
-    #[inline]
-    pub fn primary_color(&self) -> Color {
-        self.theme.colors.primary
-    }
-
-    /// Returns the current theme secondary color.
-    ///
-    /// Used as the secondary brand color for alternative styling.
-    #[inline]
-    pub fn secondary_color(&self) -> Color {
-        self.theme.colors.secondary
-    }
-
-    /// Returns the current theme accent color.
-    ///
-    /// Used as a contrast color for emphasis.
-    #[inline]
-    pub fn accent_color(&self) -> Color {
-        self.theme.colors.accent
-    }
-
-    /// Returns the current theme highlight color.
-    ///
-    /// Used as a background color for highlighting text or focusing widgets.
-    #[inline]
-    pub fn highlight_color(&self) -> Color {
-        self.theme.colors.highlight
-    }
-
-    /// Returns the current theme muted color.
-    ///
-    /// Used as a faint color for backgrounds, borders, and accents that do not require high
-    /// contrast with the background.
-    #[inline]
-    pub fn muted_color(&self) -> Color {
-        self.theme.colors.muted
-    }
-
-    /// Returns the current theme style, which includes padding and offset settings.
-    #[inline]
-    pub fn style(&self) -> ThemeStyle {
-        self.theme.style
-    }
-
-    /// Set the style for the current theme, such as padding and offset settings.
-    #[inline]
-    pub fn set_style(&mut self, style: ThemeStyle) {
-        self.theme.style = style;
+        let colors = self.theme.colors;
+        self.background(colors.background);
+        self.fill(colors.on_background());
     }
 }

@@ -1,9 +1,5 @@
 #![doc = include_str!("../README.md")]
-#![deny(
-    missing_docs,
-    // rustdoc::missing_doc_code_examples,
-    rustdoc::invalid_html_tags
-)]
+#![deny(missing_docs, rustdoc::invalid_html_tags)]
 #![warn(
     unused,
     deprecated_in_future,
@@ -65,7 +61,7 @@ pub mod prelude {
     pub use error::{Error as PixError, Result as PixResult};
     pub use event::{Axis, ControllerButton, Event, Key, KeyEvent, KeyMod, Mouse, WindowEvent};
     pub use graphics::lighting::{Light, LightF3, LightSource};
-    pub use gui::theme::{fonts, Font, Theme, ThemeBuilder};
+    pub use gui::theme::{fonts, ColorType, Font, Theme, ThemeBuilder};
     pub use image::{Image, PixelFormat};
     pub use math::{constants::*, map, random_rng, Float, Num, Scalar};
     pub use shape::{

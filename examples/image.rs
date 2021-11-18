@@ -15,7 +15,6 @@ impl ImageDemo {
 
 impl AppState for ImageDemo {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.background(CADET_BLUE)?;
         s.blend_mode(BlendMode::Blend);
         s.image_mode(ImageMode::Center);
         Ok(())

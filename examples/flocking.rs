@@ -172,7 +172,7 @@ impl App {
 
 impl AppState for App {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.background(51)?;
+        s.background(51);
         Ok(())
     }
 

@@ -99,6 +99,7 @@ impl PixState {
         let pos = s.cursor_pos();
         let font_size = s.theme.font_sizes.body as i32;
         let style = s.theme.style;
+        let colors = s.theme.colors;
         let fpad = style.frame_pad;
         let ipad = style.item_pad;
 
@@ -146,35 +147,23 @@ impl PixState {
         s.push();
         s.ui.push_cursor();
 
-        // Render
-        s.rect_mode(RectMode::Corner);
-
         // Label
+        s.rect_mode(RectMode::Corner);
+        if hovered || active {
+            s.frame_cursor(Cursor::hand())?;
+        }
+
         if !label.is_empty() {
+            s.fill(colors.on_background());
             s.set_cursor_pos([pos.x(), pos.y() + drag.height() / 2 - lheight as i32 / 2]);
             s.text(label)?;
         }
 
-        // Rect
-        s.push();
-        if focused || active {
-            s.stroke(s.highlight_color());
-        } else {
-            s.stroke(s.muted_color());
-        }
-        if active {
-            s.frame_cursor(Cursor::hand())?;
-            s.fill(s.highlight_color());
-        } else if disabled {
-            s.fill(s.primary_color() / 2);
-        } else if hovered {
-            s.frame_cursor(Cursor::hand())?;
-            s.fill(s.secondary_color());
-        } else {
-            s.fill(s.primary_color());
-        }
+        // Drag region
+        let [stroke, bg, fg] = s.widget_colors(id, ColorType::Primary);
+        s.stroke(stroke);
+        s.fill(bg);
         s.rect(drag)?;
-        s.pop();
 
         // Value
         let text = if let Some(formatter) = formatter {
@@ -187,6 +176,8 @@ impl PixState {
         let x = center.x() - vw as i32 / 2;
         let y = center.y() - vh as i32 / 2;
         s.set_cursor_pos([x, y]);
+        s.no_stroke();
+        s.fill(fg);
         s.text(&text)?;
 
         s.ui.pop_cursor();
@@ -281,6 +272,7 @@ impl PixState {
         let pos = s.cursor_pos();
         let font_size = s.theme.font_sizes.body as i32;
         let style = s.theme.style;
+        let colors = s.theme.colors;
         let fpad = style.frame_pad;
         let ipad = style.item_pad;
 
@@ -328,38 +320,27 @@ impl PixState {
         s.push();
         s.ui.push_cursor();
 
-        // Render
-        s.rect_mode(RectMode::Corner);
-
         // Label
+        s.rect_mode(RectMode::Corner);
+        if hovered | active {
+            s.frame_cursor(Cursor::hand())?;
+        }
+
         if !label.is_empty() {
+            s.fill(colors.on_background());
             s.set_cursor_pos([pos.x(), pos.y() + slider.height() / 2 - lheight as i32 / 2]);
             s.text(label)?;
         }
 
-        s.push();
-
         // Slider region
-        s.stroke(s.muted_color());
-        if disabled {
-            s.fill(s.primary_color() / 2);
-        } else {
-            s.fill(s.primary_color());
-        }
+        let [stroke, bg, fg] = s.widget_colors(id, ColorType::Primary);
+        s.stroke(stroke);
+        s.fill(bg);
         s.rect(slider)?;
 
         // Scroll thumb
-        if hovered {
-            s.frame_cursor(Cursor::hand())?;
-        }
         s.no_stroke();
-        if hovered || active || focused {
-            s.fill(s.highlight_color());
-        } else if disabled {
-            s.fill(s.muted_color() / 2);
-        } else {
-            s.fill(s.muted_color());
-        }
+        s.fill(fg.blended(bg, 0.60));
         let slider_w = slider.width() as Scalar;
         let vmin: Scalar = NumCast::from(min).expect("valid number cast");
         let vmax: Scalar = NumCast::from(max).expect("valid number cast");
@@ -372,10 +353,13 @@ impl PixState {
         let thumb_w = thumb_w.min(slider_w);
         let offset = ((val - vmin) / (vmax - vmin)) * (slider_w - thumb_w);
         let x = slider.x() + offset as i32;
-        let thumb = rect![x, slider.y() + 1, thumb_w as i32, slider.height() - 2];
+        let thumb = rect![
+            x + 1,
+            slider.y() + 1,
+            thumb_w as i32 - 2,
+            slider.height() - 2
+        ];
         s.rect(thumb)?;
-
-        s.pop();
 
         // Value
         let text = if let Some(formatter) = formatter {
@@ -388,6 +372,8 @@ impl PixState {
         let x = center.x() - vw as i32 / 2;
         let y = center.y() - vh as i32 / 2;
         s.set_cursor_pos([x, y]);
+        s.no_stroke();
+        s.fill(fg);
         s.text(&text)?;
 
         s.ui.pop_cursor();

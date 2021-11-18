@@ -197,12 +197,12 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn background<C>(&mut self, color: C) -> PixResult<()>
+    pub fn background<C>(&mut self, color: C)
     where
         C: Into<Color>,
     {
         self.settings.background = color.into();
-        self.clear()
+        let _ = self.clear(); // If this errors, something is very wrong
     }
 
     /// Sets the [Color] value used to fill shapes drawn on the canvas.

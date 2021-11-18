@@ -125,7 +125,7 @@ impl Stream {
             } else {
                 self.color
             };
-            s.font_color(color);
+            s.fill(color);
             s.font_size(self.size)?;
             glyph.draw(s, self.x, y)?;
         }
@@ -168,7 +168,7 @@ impl AppState for Matrix {
         s.no_cursor();
         s.set_window_dimensions(s.display_dimensions()?)?;
         self.init(s.dimensions()?);
-        s.background(BG_COLOR)?;
+        s.background(BG_COLOR);
         s.font_style(FontStyle::BOLD);
         s.fullscreen(true)?;
         Ok(())

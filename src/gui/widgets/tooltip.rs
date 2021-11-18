@@ -27,7 +27,6 @@
 //!             rect![s.mouse_pos(), 200, 100],
 //!             |s: &mut PixState| {
 //!                 s.background(CADET_BLUE);
-//!                 s.font_color(BLACK);
 //!                 s.bullet("Advanced tooltip")?;
 //!                 Ok(())
 //!             }
@@ -82,21 +81,19 @@ impl PixState {
         s.push();
         s.ui.push_cursor();
 
-        // Render
+        // Marker outline
         s.rect_mode(RectMode::Corner);
-        s.no_fill();
-        if focused {
-            s.stroke(s.highlight_color());
-        } else {
-            s.stroke(s.text_color() / 2);
-        }
+        let [stroke, bg, fg] = s.widget_colors(id, ColorType::Background);
+        s.disable();
+        s.stroke(stroke);
+        s.fill(bg);
         s.square(hover)?;
 
         // Marker
         s.rect_mode(RectMode::Center);
-        s.no_stroke();
-        s.disable();
         s.set_cursor_pos(hover.center());
+        s.no_stroke();
+        s.fill(fg);
         s.text(marker)?;
         if !disabled {
             s.no_disable();
@@ -112,12 +109,15 @@ impl PixState {
                 text,
                 rect![hover.bottom_right() - 10, w, h],
                 |s: &mut PixState| {
-                    s.background(s.primary_color())?;
-                    s.push();
-                    s.stroke(s.muted_color());
+                    let [stroke, bg, fg] = s.widget_colors(id, ColorType::Surface);
+                    s.background(bg);
+
+                    s.stroke(stroke);
                     s.no_fill();
-                    s.rect([0, 0, w - 1, h - 1])?;
-                    s.pop();
+                    s.rect([0, 0, w, h])?;
+
+                    s.no_stroke();
+                    s.fill(fg);
                     s.text(text)?;
                     Ok(())
                 },
@@ -172,12 +172,15 @@ impl PixState {
         // Render
         s.push_id(id);
         s.advanced_tooltip(text, rect![s.mouse_pos(), w, h], |s: &mut PixState| {
-            s.background(s.primary_color())?;
-            s.push();
-            s.stroke(s.muted_color());
+            let [stroke, bg, fg] = s.widget_colors(id, ColorType::Surface);
+            s.background(bg);
+
+            s.stroke(stroke);
             s.no_fill();
-            s.rect([0, 0, w - 1, h - 1])?;
-            s.pop();
+            s.rect([0, 0, w, h])?;
+
+            s.no_stroke();
+            s.fill(fg);
             s.text(text)?;
             Ok(())
         })?;
@@ -205,7 +208,6 @@ impl PixState {
     ///             rect![s.mouse_pos(), 200, 100],
     ///             |s: &mut PixState| {
     ///                 s.background(CADET_BLUE);
-    ///                 s.font_color(BLACK);
     ///                 s.bullet("Advanced tooltip")?;
     ///                 Ok(())
     ///             },

@@ -499,6 +499,7 @@ impl Rendering for Renderer {
                         .map_err(PixError::Renderer)?;
                 }
             } else {
+                // EXPL: SDL2_gfx renders this 1px bigger than it should.
                 if let Some(fill) = fill {
                     canvas
                         .box_(x, y, x + width - 1, y + height - 1, fill)

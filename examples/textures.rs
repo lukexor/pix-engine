@@ -15,8 +15,6 @@ impl Textures {
 
 impl AppState for Textures {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.background(BLACK)?;
-
         // One texture for each quadrant of the screen
         for i in 0..4 {
             let texture_id = s.create_texture(WIDTH / 2, HEIGHT / 2, None)?;
@@ -25,14 +23,14 @@ impl AppState for Textures {
             s.with_texture(texture_id, |s: &mut PixState| -> PixResult<()> {
                 let (w, h) = s.dimensions()?;
                 let center = point!(w / 2, h / 2);
-                s.background(Color::random())?;
+                s.background(Color::random());
 
                 let color = Color::random();
                 s.fill(color);
                 s.no_stroke();
                 s.rect([10, 10, w as i32 - 20, h as i32 - 20])?;
 
-                s.font_color(color.inverted());
+                s.fill(color.inverted());
                 s.rect_mode(RectMode::Center);
                 s.set_cursor_pos(center.as_::<i32>());
                 s.text(format!("Quadrant {}", i))?;

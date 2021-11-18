@@ -12,8 +12,7 @@ impl WindowDemo {
 
 impl AppState for WindowDemo {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.background(GRAY)?;
-        s.font_color(WHITE);
+        s.fill(WHITE);
         s.text("Window 1")?;
 
         if s.button("Open Window")? {
@@ -36,8 +35,8 @@ impl AppState for WindowDemo {
 
         for &(window_id, color) in &self.windows {
             s.with_window(window_id, |s: &mut PixState| {
-                s.background(color)?;
-                s.font_color(color.inverted());
+                s.background(color);
+                s.fill(color.inverted());
                 s.text(format!("Window {}", window_id))?;
                 Ok(())
             })?;

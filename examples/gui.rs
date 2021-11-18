@@ -88,7 +88,9 @@ impl Gui {
                 "Advanced Tooltip",
                 rect![s.mouse_pos(), 300, 100],
                 |s: &mut PixState| {
-                    s.background(s.accent_color())?;
+                    let colors = s.theme().colors;
+                    s.background(colors.secondary);
+                    s.fill(colors.on_secondary);
                     s.text("Advanced tip")?;
                     s.separator()?;
                     s.text("Draw all the things!")?;
@@ -127,7 +129,8 @@ impl Gui {
 
         s.font_style(FontStyle::NORMAL);
         s.push();
-        s.stroke(s.accent_color());
+        let colors = s.theme().colors;
+        s.stroke(colors.secondary);
         s.stroke_weight(2);
         s.text("Outlined text")?;
         s.pop();
@@ -299,10 +302,9 @@ impl Gui {
             };
             s.font_family(font)?;
             s.font_size(self.font_size)?;
-            let mut style = s.style();
+            let mut style = s.theme_mut().style;
             style.frame_pad = point![self.frame_padx, self.frame_pady];
             style.item_pad = point![self.item_padx, self.item_pady];
-            s.set_style(style);
         }
         Ok(())
     }
@@ -315,7 +317,7 @@ impl AppState for Gui {
         }
 
         s.push();
-        s.font_size(s.body_font_size() + 4)?;
+        s.font_size(s.theme().font_sizes.body + 4)?;
         s.text("Widgets")?;
         s.pop();
 

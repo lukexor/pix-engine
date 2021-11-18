@@ -149,7 +149,7 @@ impl TextureRenderer for Renderer {
                 Ok(result.map_err(PixError::Renderer)?)
             };
 
-            let mut canvas = &mut window_canvas.canvas;
+            let canvas = &mut window_canvas.canvas;
             if let Some(target_id) = texture_target {
                 assert_ne!(
                     texture_id, target_id,
@@ -169,7 +169,7 @@ impl TextureRenderer for Renderer {
                     Err(PixError::InvalidTexture(texture_id).into())
                 }
             } else {
-                update(&mut canvas)
+                update(canvas)
             }
         } else {
             Err(PixError::InvalidTexture(texture_id).into())

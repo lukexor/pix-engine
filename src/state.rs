@@ -31,7 +31,7 @@
 //! # struct App { checkbox: bool, text_field: String };
 //! # impl AppState for App {
 //! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-//!     s.fill(s.accent_color());
+//!     s.fill(s.theme().colors.primary);
 //!     s.rect([100, 0, 100, 100])?;
 //!     if s.button("Click me")? {
 //!         s.text("I was clicked!");
@@ -158,7 +158,7 @@ impl PixState {
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     if s.mouse_pressed() {
-    ///         s.background(Color::random())?;
+    ///         s.background(Color::random());
     ///     }
     ///     Ok(())
     /// }
@@ -179,7 +179,7 @@ impl PixState {
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     if s.mouse_clicked(Mouse::Left) {
-    ///         s.background(Color::random())?;
+    ///         s.background(Color::random());
     ///     }
     ///     Ok(())
     /// }
@@ -200,7 +200,7 @@ impl PixState {
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     if s.mouse_down(Mouse::Left) {
-    ///         s.background(Color::random())?;
+    ///         s.background(Color::random());
     ///     }
     ///     Ok(())
     /// }
@@ -224,7 +224,7 @@ impl PixState {
     ///     if s.mouse_buttons().contains(&Mouse::Left)
     ///        && s.mouse_buttons().contains(&Mouse::Right)
     ///     {
-    ///         s.background(Color::random())?;
+    ///         s.background(Color::random());
     ///     }
     ///     Ok(())
     /// }
@@ -245,7 +245,7 @@ impl PixState {
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     if s.key_pressed() {
-    ///         s.background(Color::random())?;
+    ///         s.background(Color::random());
     ///     }
     ///     Ok(())
     /// }
@@ -266,7 +266,7 @@ impl PixState {
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     if s.key_down(Key::Space) {
-    ///         s.background(Color::random())?;
+    ///         s.background(Color::random());
     ///     }
     ///     Ok(())
     /// }
@@ -287,7 +287,7 @@ impl PixState {
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     if s.keys().contains(&Key::Space) && s.keys().contains(&Key::Up) {
-    ///         s.background(Color::random())?;
+    ///         s.background(Color::random());
     ///     }
     ///     Ok(())
     /// }
@@ -308,7 +308,7 @@ impl PixState {
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     if s.keymod_down(KeyMod::CTRL) && s.key_down(Key::Space) {
-    ///         s.background(Color::random())?;
+    ///         s.background(Color::random());
     ///     }
     ///     Ok(())
     /// }
@@ -332,7 +332,7 @@ impl PixState {
     ///         && s.keymods().contains(&KeyMod::CTRL)
     ///         && s.key_down(Key::Space)
     ///     {
-    ///         s.background(Color::random())?;
+    ///         s.background(Color::random());
     ///     }
     ///     Ok(())
     /// }
@@ -358,7 +358,7 @@ impl PixState {
             ui: UiState::default(),
             settings: Settings {
                 background: theme.colors.background,
-                fill: Some(theme.colors.text),
+                fill: Some(theme.colors.on_background()),
                 show_frame_rate,
                 ..Default::default()
             },

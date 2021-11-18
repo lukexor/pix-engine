@@ -21,6 +21,7 @@ impl PixState {
         let label = label.split('#').next().unwrap_or("");
         let pos = s.cursor_pos();
         let style = s.theme.style;
+        let colors = s.theme.colors;
         let fpad = style.frame_pad;
         let ipad = style.item_pad;
 
@@ -33,20 +34,19 @@ impl PixState {
         }
 
         // Check hover/active/keyboard focus
-        let _hovered = s.ui.try_hover(id, scroll_area);
-        let focused = s.ui.try_focus(id);
-        let disabled = s.ui.disabled;
-        let active = s.ui.is_active(id);
+        s.ui.try_hover(id, scroll_area);
+        s.ui.try_focus(id);
 
         s.push();
 
-        // Render
-        s.rect_mode(RectMode::Corner);
-
         // Label
+        s.rect_mode(RectMode::Corner);
+        s.no_stroke();
+        s.fill(colors.on_background());
         s.text(label)?;
 
         // Scroll area
+        let [stroke, _, fg] = s.widget_colors(id, ColorType::Background);
         let scroll = s.ui.scroll(id);
         let texture_id = s.get_or_create_texture(id, None, scroll_area)?;
         s.ui.set_mouse_offset(scroll_area.top_left());
@@ -58,36 +58,24 @@ impl PixState {
         let right = scroll_area.width() - fpad.x();
         let bottom = scroll_area.height() - fpad.y();
         s.with_texture(texture_id, |s: &mut PixState| {
-            s.push();
-            if disabled {
-                s.background(s.primary_color() / 2)?;
-            } else {
-                s.background(s.primary_color())?;
-            }
-            s.rect_mode(RectMode::Corner);
-            if focused || active {
-                s.stroke(s.highlight_color());
-            } else {
-                s.stroke(s.muted_color());
-            }
-            s.no_fill();
-            s.rect([0, 0, scroll_area.width(), scroll_area.height()])?;
-            s.pop();
+            s.background(colors.background);
 
             s.set_cursor_pos(s.cursor_pos() - scroll);
+            s.no_stroke();
+            s.fill(fg);
             f(s)?;
             max_cursor_pos = s.cursor_pos() + scroll;
 
             // Since clip doesn't work texture targets, we fake it
-            if disabled {
-                s.fill(s.primary_color() / 2);
-            } else {
-                s.fill(s.primary_color());
-            }
-            s.rect([0, 0, fpad.x() - 1, h])?;
-            s.rect([0, 0, w, fpad.y()])?;
-            s.rect([right, 0, fpad.x(), h])?;
-            s.rect([0, bottom, w, fpad.y()])?;
+            s.fill(colors.background);
+            s.rect([0, 0, w, fpad.y()])?; // Top
+            s.rect([0, 0, fpad.x(), h])?; // Left
+            s.rect([right, 0, fpad.x(), h])?; // Right
+            s.rect([0, bottom, w, fpad.y()])?; // Bottom
+
+            s.stroke(stroke);
+            s.no_fill();
+            s.rect([0, 0, w, h])?;
             Ok(())
         })?;
         s.ui.clear_cursor_offset();
@@ -207,11 +195,11 @@ impl PixState {
 
         let s = self;
         let id = s.ui.get_id(&rect);
+        let colors = s.theme.colors;
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, rect);
         let focused = s.ui.try_focus(id);
-        let disabled = s.ui.disabled;
         let active = s.ui.is_active(id);
 
         s.push();
@@ -220,21 +208,16 @@ impl PixState {
         *value = (*value).clamp(0, max);
 
         // Scroll region
-        s.no_stroke();
-        s.fill(s.background_color());
-        s.rect(rect)?;
-
-        // Scroll thumb
         if hovered {
             s.frame_cursor(Cursor::hand())?;
         }
-        if hovered || active || focused {
-            s.fill(s.highlight_color());
-        } else if disabled {
-            s.fill(s.muted_color() / 2);
-        } else {
-            s.fill(s.muted_color());
-        }
+
+        let [_, bg, _] = s.widget_colors(id, ColorType::Secondary);
+        s.no_stroke();
+        s.fill(colors.on_secondary);
+        s.rect(rect)?;
+
+        // Scroll thumb
         let thumb_w = match dir {
             Horizontal => {
                 let w = rect.width() as f32;
@@ -251,6 +234,7 @@ impl PixState {
                 h.max(THUMB_MIN).min(h)
             }
         };
+        s.fill(bg);
         match dir {
             Horizontal => {
                 let thumb_x = ((rect.width() - thumb_w) * *value) / max;

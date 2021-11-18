@@ -23,7 +23,7 @@
 //!     let texture_id1 = s.create_texture(500, 600, PixelFormat::Rgb)?;
 //!     // Does not actually render to the current canvas
 //!     s.with_texture(texture_id1, |s: &mut PixState| -> PixResult<()> {
-//!         s.background(Color::random())?;
+//!         s.background(Color::random());
 //!         s.text("Rendered texture!")?;
 //!         Ok(())
 //!     })?;
@@ -67,7 +67,7 @@ impl PixState {
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.with_texture(self.texture_id, |s: &mut PixState| -> PixResult<()> {
-    ///         s.background(Color::random())?;
+    ///         s.background(Color::random());
     ///         s.text("Rendered texture!")?;
     ///         Ok(())
     ///     })?;
@@ -103,7 +103,7 @@ impl PixState {
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.with_texture(self.texture_id, |s: &mut PixState| -> PixResult<()> {
-    ///         s.background(Color::random())?;
+    ///         s.background(Color::random());
     ///         s.text("Rendered texture!")?;
     ///         Ok(())
     ///     })?;
@@ -274,7 +274,7 @@ impl PixState {
     /// fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     self.texture_id = s.create_texture(500, 600, None)?;
     ///     s.with_texture(self.texture_id, |s: &mut PixState| -> PixResult<()> {
-    ///         s.background(Color::random())?;
+    ///         s.background(Color::random());
     ///         s.text("Rendered texture!")?;
     ///         Ok(())
     ///     })?;
@@ -313,7 +313,7 @@ impl PixState {
     ///     if let Key::S = event.key {
     ///         let texture_id = s.create_texture(200, 200, None)?;
     ///         s.with_texture(texture_id, |s: &mut PixState| -> PixResult<()> {
-    ///             s.background(Color::random())?;
+    ///             s.background(Color::random());
     ///             s.text("Rendered texture!")?;
     ///             Ok(())
     ///         })?;

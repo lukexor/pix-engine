@@ -101,6 +101,7 @@ impl PixState {
         let pos = s.cursor_pos();
         let font_size = s.theme.font_sizes.body as i32;
         let style = s.theme.style;
+        let colors = s.theme.colors;
         let fpad = style.frame_pad;
         let ipad = style.item_pad;
 
@@ -119,38 +120,28 @@ impl PixState {
         let hovered = s.ui.try_hover(id, input);
         let focused = s.ui.try_focus(id);
         let disabled = s.ui.disabled;
-        let active = s.ui.is_active(id);
 
         s.push();
         s.ui.push_cursor();
 
-        // Render
-        s.rect_mode(RectMode::Corner);
-
         // Label
+        s.rect_mode(RectMode::Corner);
+        if hovered {
+            s.frame_cursor(Cursor::ibeam())?;
+        }
+
         if !label.is_empty() {
+            s.no_stroke();
+            s.fill(colors.on_background());
             s.set_cursor_pos([pos.x(), pos.y() + input.height() / 2 - lheight as i32 / 2]);
             s.text(label)?;
         }
 
         // Input
-        s.push();
-        if focused || active {
-            s.stroke(s.highlight_color());
-        } else {
-            s.stroke(s.muted_color());
-        }
-        if hovered {
-            s.frame_cursor(Cursor::ibeam())?;
-            s.fill(s.secondary_color());
-        } else if disabled {
-            s.fill(s.primary_color() / 2);
-        } else {
-            s.fill(s.primary_color());
-        }
-        s.same_line(None);
+        let [stroke, bg, fg] = s.widget_colors(id, ColorType::Background);
+        s.stroke(stroke);
+        s.fill(bg);
         s.rect(input)?;
-        s.pop();
 
         // Text
         let (vw, vh) = s.size_of(&value)?;
@@ -168,6 +159,8 @@ impl PixState {
         s.no_wrap();
         s.set_cursor_pos([x, y]);
         s.clip(input)?;
+        s.no_stroke();
+        s.fill(fg);
         if value.is_empty() {
             s.disable();
             s.text(&hint)?;
@@ -277,6 +270,7 @@ impl PixState {
         let label = label.split('#').next().unwrap_or("");
         let pos = s.cursor_pos();
         let style = s.theme.style;
+        let colors = s.theme.colors;
         let ipad = style.item_pad;
 
         // Calculate input rect
@@ -290,34 +284,24 @@ impl PixState {
         let hovered = s.ui.try_hover(id, input);
         let focused = s.ui.try_focus(id);
         let disabled = s.ui.disabled;
-        let active = s.ui.is_active(id);
 
         s.push();
         s.ui.push_cursor();
 
-        // Render
-        s.rect_mode(RectMode::Corner);
-
         // Label
+        s.rect_mode(RectMode::Corner);
+        if hovered {
+            s.frame_cursor(Cursor::ibeam())?;
+        }
+        s.no_stroke();
+        s.fill(colors.on_background());
         s.text(label)?;
 
         // Input
-        s.push();
-        if focused || active {
-            s.stroke(s.highlight_color());
-        } else {
-            s.stroke(s.muted_color());
-        }
-        if hovered {
-            s.frame_cursor(Cursor::ibeam())?;
-            s.fill(s.secondary_color());
-        } else if disabled {
-            s.fill(s.primary_color() / 2);
-        } else {
-            s.fill(s.primary_color());
-        }
+        let [stroke, bg, fg] = s.widget_colors(id, ColorType::Background);
+        s.stroke(stroke);
+        s.fill(bg);
         s.rect(input)?;
-        s.pop();
 
         // Text
         let scroll = s.ui.scroll(id);
@@ -326,6 +310,8 @@ impl PixState {
         text_pos.offset(ipad - scroll);
         s.set_cursor_pos(text_pos);
         s.clip(input)?;
+        s.no_stroke();
+        s.fill(fg);
         let blink_cursor = focused && s.elapsed() as usize >> 9 & 1 > 0;
         // TODO: total width here always maxes out at wrap_width when words can't wrap
         let (_, mut total_height) = if value.is_empty() {

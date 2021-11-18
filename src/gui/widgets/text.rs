@@ -96,6 +96,16 @@ impl PixState {
         let flipped = flipped.into();
 
         let s = self;
+        let fill = if let Some(fill) = s.settings.fill {
+            fill
+        } else {
+            return Ok((0, 0));
+        };
+        let stroke = s.settings.stroke;
+        let stroke_weight = s.settings.stroke_weight;
+        let wrap_width = s.settings.wrap_width;
+        let colors = s.theme.colors;
+
         let disabled = s.ui.disabled;
         let mut pos = s.cursor_pos();
         if let RectMode::Center = s.settings.rect_mode {
@@ -109,28 +119,28 @@ impl PixState {
             angle_radians = angle.map(|a| a.to_radians());
         }
 
-        let fill = s.text_color();
-        let stroke = s.settings.stroke;
-        let stroke_weight = s.settings.stroke_weight;
-        let wrap_width = s.settings.wrap_width;
-        let mut render_text = |color: Color, outline: u8| -> PixResult<(u32, u32)> {
+        let mut render_text = |mut color: Color, outline: u8| -> PixResult<(u32, u32)> {
             s.push();
 
             // Make sure to offset the text if an outline was drawn
             if stroke.is_some() && stroke_weight > 0 && outline == 0 {
                 pos += stroke_weight as i32;
             }
-
             if disabled {
-                s.fill(color / 2);
-            } else {
-                s.fill(color);
+                color = color.blended(colors.background, 0.38);
             }
 
-            let fill = s.settings.fill;
             let (w, h) = if wrap_width.is_some() {
-                s.renderer
-                    .text(pos, text, wrap_width, angle, center, flipped, fill, outline)?
+                s.renderer.text(
+                    pos,
+                    text,
+                    wrap_width,
+                    angle,
+                    center,
+                    flipped,
+                    Some(color),
+                    outline,
+                )?
             } else {
                 let (mut width, mut height) = (0, 0);
                 let mut y = pos.y();
@@ -142,7 +152,7 @@ impl PixState {
                         angle,
                         center,
                         flipped,
-                        fill,
+                        Some(color),
                         outline,
                     )?;
                     if let Some(angle_radians) = angle_radians {
@@ -209,8 +219,6 @@ impl PixState {
         let r = font_size / 6;
 
         s.push();
-        s.no_stroke();
-        s.fill(s.text_color());
         s.ellipse_mode(EllipseMode::Corner);
         s.circle([pos.x(), pos.y() + font_size as i32 / 2, r as i32])?;
         s.pop();

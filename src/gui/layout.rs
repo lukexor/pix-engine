@@ -38,9 +38,15 @@
 //!         &["Tab 1", "Tab 2"],
 //!         |tab: usize, s: &mut PixState| {
 //!             match tab {
-//!                 0 => s.text("Tab 1 Content")?,
-//!                 1 => s.text("Tab 2 Content")?,
+//!                 0 => {
+//!                     s.text("Tab 1 Content")?;
+//!                 },
+//!                 1 => {
+//!                     s.text("Tab 2 Content")?;
+//!                 },
+//!                 _ => (),
 //!             }
+//!             Ok(())
 //!         }
 //!     )?;
 //!     Ok(())
@@ -135,7 +141,9 @@ impl PixState {
     ///                         // was clicked
     ///                     }
     ///                 }
+    ///                 _ => (),
     ///             }
+    ///             Ok(())
     ///         }
     ///     )?;
     ///     Ok(())
@@ -152,6 +160,7 @@ impl PixState {
 
         let s = self;
         let tab_id = s.ui.get_id(&label);
+        let colors = s.theme.colors;
         let fpad = s.theme.style.frame_pad;
         let ipad = s.theme.style.item_pad;
 
@@ -162,6 +171,7 @@ impl PixState {
             let tab_label = tab_label.as_ref();
             let id = s.ui.get_id(&tab_label);
             let pos = s.cursor_pos();
+            let colors = s.theme.colors;
 
             // Calculate tab size
             let (width, height) = s.size_of(tab_label)?;
@@ -183,38 +193,34 @@ impl PixState {
 
             // Render
             s.rect_mode(RectMode::Corner);
-
-            s.push();
-            if focused {
-                s.stroke(s.highlight_color());
-            } else {
-                s.stroke(s.muted_color());
-            }
             if hovered {
                 s.frame_cursor(Cursor::hand())?;
-                s.fill(s.highlight_color());
                 if active {
                     tab.offset([1, 1]);
                 }
-            } else if disabled {
-                s.fill(s.primary_color() / 2);
-            } else if i == s.ui.current_tab(tab_id) {
-                s.fill(s.highlight_color());
-            } else {
-                s.fill(s.primary_color());
             }
-            let radius = 8;
-            s.clip([tab.x(), tab.y(), tab.width() + 1, tab.height()])?;
-            s.rounded_rect(
-                rect![tab.top_left(), tab.width(), tab.height() + radius],
-                radius,
-            )?;
-            s.pop();
+            let [_, fg, bg] = s.widget_colors(id, ColorType::SecondaryVariant);
+            s.no_stroke();
+            if hovered {
+                s.fill(fg.blended(colors.background, 0.04));
+            } else {
+                s.fill(colors.background);
+            }
+            s.rect(tab)?;
 
             // Tab text
             s.rect_mode(RectMode::Center);
             s.clip(tab)?;
             s.set_cursor_pos(tab.center());
+            s.no_stroke();
+            let is_active_tab = i == s.ui.current_tab(tab_id);
+            if is_active_tab {
+                s.fill(colors.secondary_variant);
+            } else if hovered | focused {
+                s.fill(fg);
+            } else {
+                s.fill(colors.secondary_variant.blended(bg, 0.60));
+            }
             s.text(tab_label)?;
             s.no_clip()?;
 
@@ -232,7 +238,7 @@ impl PixState {
         let pos = s.cursor_pos();
         let fpad = s.theme.style.frame_pad;
         s.push();
-        s.stroke(s.primary_color());
+        s.stroke(colors.disabled());
         let y = pos.y() - ipad.y();
         s.line(line_![fpad.x(), y, s.width()? as i32 - ipad.x(), y])?;
         s.pop();
@@ -311,13 +317,14 @@ impl PixState {
         // TODO: Add s.layout(Direction) method
         let s = self;
         let pos = s.cursor_pos();
+        let colors = s.theme.colors;
         let pad = s.theme.style.frame_pad;
         let height = s.theme.font_sizes.body as i32;
         let y = pos.y() + height / 2;
 
         s.push();
 
-        s.stroke(s.primary_color());
+        s.stroke(colors.disabled());
         s.line(line_![pad.x(), y, s.width()? as i32 - pad.x(), y])?;
 
         s.pop();
