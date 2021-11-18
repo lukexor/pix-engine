@@ -219,7 +219,7 @@ impl PixState {
             } else if hovered | focused {
                 s.fill(fg);
             } else {
-                s.fill(colors.secondary_variant.blended(bg, 0.38));
+                s.fill(colors.secondary_variant.blended(bg, 0.60));
             }
             s.text(tab_label)?;
             s.no_clip()?;
