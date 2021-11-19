@@ -167,6 +167,7 @@ impl PixState {
 
             s.ui.set_mouse_offset(select_box.bottom_left());
             s.with_texture(texture_id, |s: &mut PixState| {
+                s.clear()?;
                 s.set_cursor_pos([0, 0]);
                 if total_height > height {
                     s.next_width((dst.width() - SCROLL_SIZE) as u32);
@@ -305,6 +306,12 @@ impl PixState {
             border_clip.width() - 2 * fpad.x(),
             border_clip.height() - 2 * fpad.y(),
         ];
+        let item_clip = rect![
+            select_list.x() + 1,
+            content_clip.y(),
+            select_list.width() - 2,
+            content_clip.height(),
+        ];
 
         let original_selected = *selected;
         let x = select_list.x() + fpad.x() - scroll.x();
@@ -314,20 +321,14 @@ impl PixState {
             let clickable =
                 item_rect.bottom() > content_clip.y() || item_rect.top() < select_list.height();
             s.push();
-            s.clip([
-                select_list.x() + 1,
-                content_clip.y(),
-                select_list.width() - 2,
-                content_clip.height(),
-            ])?;
+            s.clip(item_clip)?;
             if hovered && clickable && item_rect.contains_point(mpos) {
                 s.frame_cursor(Cursor::hand())?;
                 s.no_stroke();
                 s.fill(bg);
-                s.rect([select_list.x(), y, select_list.width(), line_height])?;
-                if active {
+                s.rect([item_clip.x(), y, item_clip.width(), line_height])?;
+                if active && s.mouse_clicked(Mouse::Left) {
                     *selected = i;
-                    s.ui.clear_active();
                 }
             }
             if *selected == i {
@@ -337,7 +338,7 @@ impl PixState {
                 } else {
                     s.fill(colors.primary);
                 }
-                s.rect([select_list.x(), y, select_list.width(), line_height])?;
+                s.rect([item_clip.x(), y, item_clip.width(), line_height])?;
             }
             s.pop();
             s.clip(content_clip)?;

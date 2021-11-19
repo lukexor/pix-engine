@@ -130,7 +130,7 @@ impl Gui {
         s.font_style(FontStyle::NORMAL);
         s.push();
         let colors = s.theme().colors;
-        s.stroke(colors.secondary);
+        s.stroke(colors.secondary_variant);
         s.stroke_weight(2);
         s.text("Outlined text")?;
         s.pop();

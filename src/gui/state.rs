@@ -672,7 +672,7 @@ impl PixState {
         }
     }
 
-    /// Returns whether the last item drawn is hovered with the mouse.
+    /// Returns whether the last item drawn was clicked with the left mouse button.
     ///
     /// # Example
     ///

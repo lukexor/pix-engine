@@ -199,8 +199,12 @@ impl PixState {
                     tab.offset([1, 1]);
                 }
             }
-            let [_, fg, bg] = s.widget_colors(id, ColorType::SecondaryVariant);
-            s.no_stroke();
+            let [stroke, fg, bg] = s.widget_colors(id, ColorType::SecondaryVariant);
+            if focused {
+                s.stroke(stroke);
+            } else {
+                s.no_stroke();
+            }
             if hovered {
                 s.fill(fg.blended(colors.background, 0.04));
             } else {
