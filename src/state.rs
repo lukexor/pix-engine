@@ -31,7 +31,7 @@
 //! # struct App { checkbox: bool, text_field: String };
 //! # impl AppState for App {
 //! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-//!     s.fill(s.theme().colors.primary);
+//!     s.fill(s.theme.colors.primary);
 //!     s.rect([100, 0, 100, 100])?;
 //!     if s.button("Click me")? {
 //!         s.text("I was clicked!");
@@ -63,7 +63,8 @@ pub struct PixState {
     pub(crate) ui: UiState,
     pub(crate) settings: Settings,
     pub(crate) setting_stack: Vec<(Settings, Theme)>,
-    pub(crate) theme: Theme,
+    /// The current UI theme.
+    pub theme: Theme,
 }
 
 impl PixState {

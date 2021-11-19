@@ -643,25 +643,4 @@ impl PixState {
         self.theme.fonts.body = font;
         self.renderer.font_family(&self.theme.fonts.body)
     }
-
-    /// Returns the reference to the current theme.
-    #[inline]
-    pub fn theme(&self) -> &Theme {
-        &self.theme
-    }
-
-    /// Returns the a mutable reference to the current theme.
-    #[inline]
-    pub fn theme_mut(&mut self) -> &mut Theme {
-        &mut self.theme
-    }
-
-    /// Sets a new theme.
-    #[inline]
-    pub fn set_theme(&mut self, theme: Theme) {
-        self.theme = theme;
-        let colors = self.theme.colors;
-        self.background(colors.background);
-        self.fill(colors.on_background());
-    }
 }
