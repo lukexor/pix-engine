@@ -144,7 +144,7 @@ impl MazeApp {
             self.solve_maze()?;
         }
         s.push();
-        s.fill(s.theme.colors.secondary);
+        s.fill(s.theme().colors.secondary);
         let rate = s.target_frame_rate().unwrap_or(60);
         s.same_line([10, -5]);
         s.text(format!(

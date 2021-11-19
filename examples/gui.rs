@@ -88,7 +88,7 @@ impl Gui {
                 "Advanced Tooltip",
                 rect![s.mouse_pos(), 300, 100],
                 |s: &mut PixState| {
-                    let colors = s.theme.colors;
+                    let colors = s.theme().colors;
                     s.background(colors.secondary);
                     s.fill(colors.on_secondary);
                     s.text("Advanced tip")?;
@@ -129,7 +129,7 @@ impl Gui {
 
         s.font_style(FontStyle::NORMAL);
         s.push();
-        let colors = s.theme.colors;
+        let colors = s.theme().colors;
         s.stroke(colors.secondary);
         s.stroke_weight(2);
         s.text("Outlined text")?;
@@ -290,8 +290,8 @@ impl Gui {
         s.spacing()?;
         if s.button("Apply Changes")? {
             match THEMES[self.theme] {
-                "Dark" => s.theme = Theme::dark(),
-                "Light" => s.theme = Theme::light(),
+                "Dark" => s.set_theme(Theme::dark()),
+                "Light" => s.set_theme(Theme::light()),
                 _ => unreachable!("unavailable theme"),
             }
             let font = match FONTS[self.font_family] {
@@ -302,8 +302,9 @@ impl Gui {
             };
             s.font_family(font)?;
             s.font_size(self.font_size)?;
-            s.theme.style.frame_pad = point![self.frame_padx, self.frame_pady];
-            s.theme.style.item_pad = point![self.item_padx, self.item_pady];
+            let mut style = s.theme_mut().style;
+            style.frame_pad = point![self.frame_padx, self.frame_pady];
+            style.item_pad = point![self.item_padx, self.item_pady];
         }
         Ok(())
     }
@@ -316,7 +317,7 @@ impl AppState for Gui {
         }
 
         s.push();
-        s.font_size(s.theme.font_sizes.body + 4)?;
+        s.font_size(s.theme().font_sizes.body + 4)?;
         s.text("Widgets")?;
         s.pop();
 
