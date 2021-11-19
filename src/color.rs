@@ -501,7 +501,6 @@ impl Color {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// # #[allow(unused_variables)]
     /// let c = Color::random();
     /// // `c.channels()` will return something like:
     /// // [207, 12, 217, 255]
@@ -517,7 +516,6 @@ impl Color {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// # #[allow(unused_variables)]
     /// let c = Color::random_alpha();
     /// // `c.channels()` will return something like:
     /// // [132, 159, 233, 76]

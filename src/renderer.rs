@@ -131,7 +131,7 @@ pub(crate) trait Rendering: Sized {
     fn point(&mut self, p: PointI2, color: Color) -> PixResult<()>;
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, line: LineI2, stroke: u8, color: Color) -> PixResult<()>;
+    fn line(&mut self, line: LineI2, width: u8, color: Color) -> PixResult<()>;
 
     /// Draw a triangle to the current canvas.
     fn triangle(&mut self, tri: TriI2, fill: Option<Color>, stroke: Option<Color>)

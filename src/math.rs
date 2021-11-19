@@ -112,12 +112,11 @@ where
 /// let n = noise([2.0, 1.5, 3.0]);
 /// assert!(n >= 0.0 && n < 1.0);
 /// ```
-#[allow(clippy::many_single_char_names)]
-pub fn noise<V, const N: usize>(v: V) -> Scalar
+pub fn noise<V, const N: usize>(vector: V) -> Scalar
 where
     V: Into<Vector<Scalar, N>>,
 {
-    let v = v.into();
+    let v = vector.into();
 
     let values = v.as_array();
     let x = values.get(0).unwrap_or(&0.0).abs();

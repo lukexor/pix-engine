@@ -432,11 +432,11 @@ impl Rendering for Renderer {
     }
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, line: LineI2, stroke: u8, color: Color) -> PixResult<()> {
+    fn line(&mut self, line: LineI2, width: u8, color: Color) -> PixResult<()> {
         self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
             let [x1, y1] = line.start().map(|v| v as i16);
             let [x2, y2] = line.end().map(|v| v as i16);
-            let result = if stroke == 1 {
+            let result = if width == 1 {
                 if y1 == y2 {
                     canvas.hline(x1, x2, y1, color)
                 } else if x1 == x2 {
@@ -445,7 +445,7 @@ impl Rendering for Renderer {
                     canvas.aa_line(x1, y1, x2, y2, color)
                 }
             } else {
-                canvas.thick_line(x1, y1, x2, y2, stroke, color)
+                canvas.thick_line(x1, y1, x2, y2, width, color)
             };
             Ok(result.map_err(PixError::Renderer)?)
         })

@@ -282,13 +282,12 @@ impl Image {
 
     /// Returns the `Image` pixel data as a [`Vec<Color>`].
     #[inline]
-    #[allow(clippy::many_single_char_names)]
     pub fn into_pixels(self) -> Vec<Color> {
         self.data
             .chunks(self.format.channels())
             .map(|slice| match *slice {
-                [r, g, b] => Color::rgb(r, g, b),
-                [r, g, b, a] => Color::rgba(r, g, b, a),
+                [red, green, blue] => Color::rgb(red, green, blue),
+                [red, green, blue, alpha] => Color::rgba(red, green, blue, alpha),
                 _ => panic!("invalid number of color channels"),
             })
             .collect()
@@ -296,13 +295,12 @@ impl Image {
 
     /// Returns the color value at the given `(x, y)` position.
     #[inline]
-    #[allow(clippy::many_single_char_names)]
     pub fn get_pixel(&self, x: u32, y: u32) -> Color {
         let idx = self.idx(x, y);
         let channels = self.format.channels();
         match self.data[idx..idx + channels] {
-            [r, g, b] => Color::rgb(r, g, b),
-            [r, g, b, a] => Color::rgba(r, g, b, a),
+            [red, green, blue] => Color::rgb(red, green, blue),
+            [red, green, blue, alpha] => Color::rgba(red, green, blue, alpha),
             _ => panic!("invalid number of color channels"),
         }
     }

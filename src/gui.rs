@@ -39,10 +39,12 @@ pub(crate) mod mouse;
 pub(crate) mod scroll;
 pub(crate) mod state;
 
+/// Platform-specific control modifier key. `CTRL` on most platforms.
 #[cfg(not(target_os = "macos"))]
-pub(crate) const MOD_CTRL: KeyMod = KeyMod::CTRL;
+pub const MOD_CTRL: KeyMod = KeyMod::CTRL;
+/// Platform-specific control modifier key. `Command` on macOS.
 #[cfg(target_os = "macos")]
-pub(crate) const MOD_CTRL: KeyMod = KeyMod::GUI;
+pub const MOD_CTRL: KeyMod = KeyMod::GUI;
 
 /// Scroll direction.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]

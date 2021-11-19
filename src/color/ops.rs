@@ -24,18 +24,16 @@ use std::{
 };
 
 impl LowerHex for Color {
-    #[allow(clippy::many_single_char_names)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let [r, g, b, a] = self.channels();
-        write!(f, "#{:x}{:x}{:x}{:x}", r, g, b, a)
+        let [red, green, blue, alpha] = self.channels();
+        write!(f, "#{:x}{:x}{:x}{:x}", red, green, blue, alpha)
     }
 }
 
 impl UpperHex for Color {
-    #[allow(clippy::many_single_char_names)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let [r, g, b, a] = self.channels();
-        write!(f, "#{:X}{:X}{:X}{:X}", r, g, b, a)
+        let [red, green, blue, alpha] = self.channels();
+        write!(f, "#{:X}{:X}{:X}{:X}", red, green, blue, alpha)
     }
 }
 
