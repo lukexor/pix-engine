@@ -68,7 +68,7 @@ fn test_run_engine_start() -> PixResult<()> {
     eng.run(&mut app)?;
     assert_eq!(app.start_count, 1, "on_start was called");
     assert_eq!(app.update_count, 0, "on_update was not called");
-    assert_eq!(app.stop_count, 0, "on_stop was not called");
+    assert_eq!(app.stop_count, 1, "on_stop was called");
     Ok(())
 }
 
