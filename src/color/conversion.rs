@@ -2,12 +2,12 @@
 //!
 //! Provides methods for converting [Color]s:
 //!
-//! - [Color::from_str]: Parse from a hexadecimal string (e.g. "#FF0", or "#00FF00").
-//! - [Color::from_slice]: Parse from an RGB/A slice (e.g. [0, 125, 0] or [255, 255, 0, 125]).
-//! - [Color::from_hex]: Parse from a `u32` RGBA hexadecimal value (e.g. 0x00FF00FF).
-//! - [Color::as_hex]: Convert back to a `u32` RGBA hexadecimal value.
-//! - [Color::inverted]: Invert the RGB colors channel-wise, ignoring the alpha channel.
-//! - [Color::lerp]: Linear interpolate between two colors, channel-wise, including the alpha
+//! - [`Color::from_str`]: Parse from a hexadecimal string (e.g. "#FF0", or "#00FF00").
+//! - [`Color::from_slice`]: Parse from an RGB/A slice (e.g. [0, 125, 0] or [255, 255, 0, 125]).
+//! - [`Color::from_hex`]: Parse from a `u32` RGBA hexadecimal value (e.g. 0x00FF00FF).
+//! - [`Color::as_hex`]: Convert back to a `u32` RGBA hexadecimal value.
+//! - [`Color::inverted`]: Invert the RGB colors channel-wise, ignoring the alpha channel.
+//! - [`Color::lerp`]: Linear interpolate between two colors, channel-wise, including the alpha
 //!   channel.
 //!
 //! Examples
@@ -37,10 +37,7 @@
 //! # Ok::<(), PixError>(())
 //! ```
 
-use super::{
-    Color,
-    ColorMode::{self, *},
-};
+use super::Mode::{Hsb, Hsl, Rgb};
 use crate::prelude::*;
 use std::{convert::TryFrom, result, str::FromStr};
 
@@ -109,13 +106,14 @@ impl Color {
     /// let c = Color::from_hex(0xF0FF00FF);
     /// assert_eq!(c.inverted().as_hex(), 0x0F00FFFF);
     /// ```
-    pub fn inverted(&self) -> Color {
+    #[inline]
+    pub fn inverted(&self) -> Self {
         let hex = self.as_hex();
-        Color::from_hex(0xFFFFFF00 ^ hex)
+        Self::from_hex(0xFFFF_FF00 ^ hex)
     }
 
     /// Constructs an opaque `Color` blended over a given background, using an alpha value.
-    pub fn blended<A>(&self, bg: Color, alpha: A) -> Color
+    pub fn blended<A>(&self, bg: Color, alpha: A) -> Self
     where
         A: Into<Scalar>,
     {
@@ -123,7 +121,7 @@ impl Color {
         let [v1, v2, v3, _] = bg.levels();
         let [bv1, bv2, bv3, _] = self.levels();
 
-        let blended = |bg: Scalar, fg: Scalar, alpha: Scalar| bg * (1.0 - alpha) + fg * alpha;
+        let blended = |bg: Scalar, fg: Scalar, alpha: Scalar| bg.mul_add(1.0 - alpha, fg * alpha);
         let levels = clamp_levels([
             blended(v1, bv1, a),
             blended(v2, bv2, a),
@@ -159,7 +157,7 @@ impl Color {
     where
         A: Into<Scalar>,
     {
-        let lerp = |start, stop, amt| amt * (stop - start) + start;
+        let lerp = |start: Scalar, stop: Scalar, amt: Scalar| amt.mul_add(stop - start, start);
 
         let amt = amt.into().clamp(0.0, 1.0);
         let [v1, v2, v3, a] = self.levels();
@@ -241,12 +239,11 @@ impl TryFrom<&str> for Color {
     }
 }
 
-/// Return the max value for each [ColorMode].
+/// Return the max value for each [`ColorMode`].
 pub(crate) const fn maxes(mode: ColorMode) -> [Scalar; 4] {
     match mode {
         Rgb => [255.0; 4],
-        Hsb => [360.0, 100.0, 100.0, 1.0],
-        Hsl => [360.0, 100.0, 100.0, 1.0],
+        Hsb | Hsl => [360.0, 100.0, 100.0, 1.0],
     }
 }
 
@@ -260,7 +257,7 @@ pub(crate) fn clamp_levels(levels: [Scalar; 4]) -> [Scalar; 4] {
     ]
 }
 
-/// Converts levels from one [ColorMode] to another.
+/// Converts levels from one [`ColorMode`] to another.
 pub(crate) fn convert_levels(levels: [Scalar; 4], from: ColorMode, to: ColorMode) -> [Scalar; 4] {
     match (from, to) {
         (Hsb, Rgb) => hsb_to_rgb(levels),
@@ -341,7 +338,7 @@ pub(crate) fn hsb_to_rgb([h, s, b, a]: [Scalar; 4]) -> [Scalar; 4] {
         [b, b, b, a]
     } else {
         let h = h * 6.0;
-        let sector = h.floor() as usize;
+        let sector = h.floor().clamp(0.0, 2160.0) as usize;
         let tint1 = b * (1.0 - s);
         let tint2 = b * (1.0 - s * (h - sector as Scalar));
         let tint3 = b * (1.0 - s * (1.0 + sector as Scalar - h));
@@ -376,19 +373,21 @@ pub(crate) fn hsl_to_rgb([h, s, l, a]: [Scalar; 4]) -> [Scalar; 4] {
             l + s - l * s
         };
         let zest = 2.0 * l - b;
-        let hzb_to_rgb = |mut h, z, b| -> Scalar {
-            if h < 0.0 {
-                h += 6.0;
+        let hzb_to_rgb = |h: Scalar, z: Scalar, b: Scalar| -> Scalar {
+            let h = if h < 0.0 {
+                h + 6.0
             } else if h >= 6.0 {
-                h -= 6.0;
-            }
+                h - 6.0
+            } else {
+                h
+            };
             match h {
                 // Red to yellow (increasing green)
-                _ if h < 1.0 => z + (b - z) * h,
+                _ if h < 1.0 => (b - z).mul_add(h, z),
                 // Yellow to cyan (greatest green)
                 _ if h < 3.0 => b,
                 // Cyan to blue (decreasing green)
-                _ if h < 4.0 => z + (b - z) * (4.0 - h),
+                _ if h < 4.0 => (b - z).mul_add(4.0 - h, z),
                 // Blue to red (least green)
                 _ => z,
             }
@@ -431,10 +430,10 @@ pub(crate) fn calculate_channels(levels: [Scalar; 4]) -> [u8; 4] {
     let [r, g, b, a] = levels;
     let [r_max, g_max, b_max, a_max] = maxes(Rgb);
     [
-        (r * r_max).round() as u8,
-        (g * g_max).round() as u8,
-        (b * b_max).round() as u8,
-        (a * a_max).round() as u8,
+        (r * r_max).round().clamp(0.0, 255.0) as u8,
+        (g * g_max).round().clamp(0.0, 255.0) as u8,
+        (b * b_max).round().clamp(0.0, 255.0) as u8,
+        (a * a_max).round().clamp(0.0, 255.0) as u8,
     ]
 }
 

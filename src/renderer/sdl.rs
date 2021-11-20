@@ -3,6 +3,7 @@ use crate::{
     gui::theme::{FontId, FontSrc},
     prelude::*,
     renderer::{RendererSettings, Rendering},
+    shape::{LineI2, PointI2, QuadI2, TriI2},
 };
 use anyhow::Context;
 use lazy_static::lazy_static;
@@ -63,9 +64,10 @@ impl Renderer {
     {
         if let Some(texture_id) = self.texture_target {
             let window = self.windows.values_mut().find_map(|w| {
-                match w.textures.contains_key(&texture_id) {
-                    true => Some(w),
-                    false => None,
+                if w.textures.contains_key(&texture_id) {
+                    Some(w)
+                } else {
+                    None
                 }
             });
             if let Some(window) = window {
@@ -91,29 +93,30 @@ impl Renderer {
     /// loaded.
     fn load_font(&mut self) -> PixResult<bool> {
         let key = (self.current_font, self.font_size);
-        if !self.loaded_fonts.contains(&key) {
-            let font_data = self
-                .font_data
-                .get(&self.current_font)
-                .expect("valid loaded font");
-            let loaded_font = match font_data.source {
-                FontSrc::Bytes(bytes) => {
-                    let rwops = RWops::from_bytes(bytes).map_err(PixError::Renderer)?;
-                    TTF.load_font_from_rwops(rwops, self.font_size)
-                        .map_err(PixError::Renderer)?
-                }
-                FontSrc::Path(ref path) => TTF
-                    .load_font(path, self.font_size)
-                    .map_err(PixError::Renderer)?,
-            };
-            self.loaded_fonts.put(key, loaded_font);
-            Ok(true)
-        } else {
-            Ok(false)
+        if self.loaded_fonts.contains(&key) {
+            return Ok(false);
         }
+
+        let font_data = self
+            .font_data
+            .get(&self.current_font)
+            .expect("valid loaded font");
+        let loaded_font = match font_data.source {
+            FontSrc::Bytes(bytes) => {
+                let rwops = RWops::from_bytes(bytes).map_err(PixError::Renderer)?;
+                TTF.load_font_from_rwops(rwops, self.font_size)
+                    .map_err(PixError::Renderer)?
+            }
+            FontSrc::Path(ref path) => TTF
+                .load_font(path, self.font_size)
+                .map_err(PixError::Renderer)?,
+        };
+        self.loaded_fonts.put(key, loaded_font);
+        Ok(true)
     }
 
     /// Returns the current SDL font.
+    #[inline]
     fn font_mut(&mut self) -> &mut SdlFont<'static, 'static> {
         self.loaded_fonts
             .get_mut(&(self.current_font, self.font_size))
@@ -121,6 +124,7 @@ impl Renderer {
     }
 
     /// Returns the current window canvas, holding the canvas and texture creators for a window.
+    #[inline]
     fn window_canvas(&self) -> PixResult<&WindowCanvas> {
         Ok(self
             .windows
@@ -129,6 +133,7 @@ impl Renderer {
     }
 
     /// Returns the current window canvas, holding the canvas and texture creators for a window.
+    #[inline]
     fn window_canvas_mut(&mut self) -> PixResult<&mut WindowCanvas> {
         Ok(self
             .windows
@@ -137,28 +142,32 @@ impl Renderer {
     }
 
     /// Returns the current SDL canvas.
+    #[inline]
     fn canvas(&self) -> PixResult<&Canvas<Window>> {
         Ok(&self.window_canvas()?.canvas)
     }
 
     /// Returns the current SDL canvas.
+    #[inline]
     fn canvas_mut(&mut self) -> PixResult<&mut Canvas<Window>> {
         Ok(&mut self.window_canvas_mut()?.canvas)
     }
 
     /// Returns the current SDL window.
+    #[inline]
     fn window(&self) -> PixResult<&Window> {
         Ok(self.window_canvas()?.canvas.window())
     }
 
     /// Returns the current SDL window.
+    #[inline]
     fn window_mut(&mut self) -> PixResult<&mut Window> {
         Ok(self.window_canvas_mut()?.canvas.window_mut())
     }
 }
 
 impl Rendering for Renderer {
-    /// Initializes the Sdl2Renderer using the given settings and opens a new window.
+    /// Initializes the `Sdl2Renderer` using the given settings and opens a new window.
     fn new(s: RendererSettings) -> PixResult<Self> {
         let context = sdl2::init().map_err(PixError::Renderer)?;
         let event_pump = context.event_pump().map_err(PixError::Renderer)?;
@@ -365,17 +374,18 @@ impl Rendering for Renderer {
             Ok((width, height))
         } else {
             let font = self.font_mut();
-            let surface = if let Some(width) = wrap_width {
-                font.render(text).blended_wrapped(BLACK, width)
-            } else {
-                font.render(text).blended(BLACK)
-            }
-            .context("invalid text")?;
+            let surface = wrap_width
+                .map_or_else(
+                    || font.render(text).blended(Color::BLACK),
+                    |width| font.render(text).blended_wrapped(Color::BLACK, width),
+                )
+                .context("invalid text")?;
             Ok(surface.size())
         }
     }
 
     /// Get clipboard text from the system clipboard.
+    #[inline]
     fn clipboard_text(&self) -> String {
         if let Ok(video) = self.context.video() {
             video.clipboard().clipboard_text().unwrap_or_default()
@@ -385,6 +395,7 @@ impl Rendering for Renderer {
     }
 
     /// Set clipboard text to the system clipboard.
+    #[inline]
     fn set_clipboard_text(&self, value: &str) -> PixResult<()> {
         Ok(self
             .context
@@ -406,7 +417,7 @@ impl Rendering for Renderer {
         if let Some(width) = wrap_width {
             Ok(font
                 .render(text)
-                .blended_wrapped(BLACK, width)
+                .blended_wrapped(Color::BLACK, width)
                 .context("invalid text")?
                 .size())
         } else if text.contains('\n') {
@@ -432,6 +443,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw a line to the current canvas.
+    #[inline]
     fn line(&mut self, line: LineI2, width: u8, color: Color) -> PixResult<()> {
         self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
             let [x1, y1] = line.start().map(|v| v as i16);
@@ -452,6 +464,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw a triangle to the current canvas.
+    #[inline]
     fn triangle(
         &mut self,
         tri: TriI2,
@@ -477,6 +490,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw a rectangle to the current canvas.
+    #[inline]
     fn rect(
         &mut self,
         rect: Rect<i32>,
@@ -516,6 +530,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw a quadrilateral to the current canvas.
+    #[inline]
     fn quad(&mut self, quad: QuadI2, fill: Option<Color>, stroke: Option<Color>) -> PixResult<()> {
         self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
             let [x1, y1] = quad.p1().map(|v| v as i16);
@@ -539,6 +554,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw a polygon to the current canvas.
+    #[inline]
     fn polygon<I>(&mut self, ps: I, fill: Option<Color>, stroke: Option<Color>) -> PixResult<()>
     where
         I: Iterator<Item = PointI2>,
@@ -565,6 +581,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw a ellipse to the current canvas.
+    #[inline]
     fn ellipse(
         &mut self,
         ellipse: Ellipse<i32>,
@@ -590,6 +607,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw an arc to the current canvas.
+    #[inline]
     fn arc(
         &mut self,
         p: PointI2,
@@ -647,7 +665,7 @@ impl Rendering for Renderer {
             .ok_or(PixError::InvalidWindow(self.window_target))?;
         let texture =
             WindowCanvas::image_texture_mut(&mut window.image_cache, &window.texture_creator, img)?;
-        let [r, g, b, a] = tint.map(|t| t.channels()).unwrap_or([255; 4]);
+        let [r, g, b, a] = tint.map_or([255; 4], |t| t.channels());
         texture.set_color_mod(r, g, b);
         texture.set_alpha_mod(a);
         texture.set_blend_mode(self.blend_mode);
@@ -697,9 +715,10 @@ impl Rendering for Renderer {
     fn to_bytes(&mut self) -> PixResult<Vec<u8>> {
         if let Some(texture_id) = self.texture_target {
             let window = self.windows.values_mut().find_map(|w| {
-                match w.textures.contains_key(&texture_id) {
-                    true => Some(w),
-                    false => None,
+                if w.textures.contains_key(&texture_id) {
+                    Some(w)
+                } else {
+                    None
                 }
             });
             if let Some(window) = window {
@@ -726,6 +745,7 @@ impl Rendering for Renderer {
 }
 
 impl fmt::Debug for Renderer {
+    #[doc(hidden)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Renderer")
             .field(
@@ -762,6 +782,8 @@ impl fmt::Debug for Renderer {
  */
 
 impl ToColor for Color {
+    /// Convert [Color] to tuple of `(r, g, b, a)`.
+    #[doc(hidden)]
     fn as_rgba(&self) -> (u8, u8, u8, u8) {
         let [r, g, b, a] = self.channels();
         (r, g, b, a)
@@ -769,7 +791,8 @@ impl ToColor for Color {
 }
 
 impl From<Color> for SdlColor {
-    /// Convert [Color] to [SdlColor].
+    /// Convert [Color] to [`SdlColor`].
+    #[doc(hidden)]
     fn from(color: Color) -> Self {
         let [r, g, b, a] = color.channels();
         Self::RGBA(r, g, b, a)
@@ -777,14 +800,16 @@ impl From<Color> for SdlColor {
 }
 
 impl From<FontStyle> for SdlFontStyle {
-    /// Convert [FontStyle] to [SdlFontStyle].
+    /// Convert [FontStyle] to [`SdlFontStyle`].
+    #[doc(hidden)]
     fn from(style: FontStyle) -> Self {
-        SdlFontStyle::from_bits(style.bits()).expect("valid FontStyle")
+        Self::from_bits(style.bits()).expect("valid FontStyle")
     }
 }
 
 impl From<Rect<i32>> for SdlRect {
-    /// Convert [`Rect<i32>`] to [SdlRect].
+    /// Convert [`Rect<i32>`] to [`SdlRect`].
+    #[doc(hidden)]
     fn from(rect: Rect<i32>) -> Self {
         Self::new(
             rect.x(),
@@ -796,7 +821,8 @@ impl From<Rect<i32>> for SdlRect {
 }
 
 impl From<SdlRect> for Rect<i32> {
-    /// Convert [`Rect<i32>`] to [SdlRect].
+    /// Convert [`Rect<i32>`] to [`SdlRect`].
+    #[doc(hidden)]
     fn from(rect: SdlRect) -> Self {
         Self::new(
             rect.x(),
@@ -808,7 +834,8 @@ impl From<SdlRect> for Rect<i32> {
 }
 
 impl From<&Rect<i32>> for SdlRect {
-    /// Convert &[`Rect<i32>`] to [SdlRect].
+    /// Convert &[`Rect<i32>`] to [`SdlRect`].
+    #[doc(hidden)]
     fn from(rect: &Rect<i32>) -> Self {
         Self::new(
             rect.x(),
@@ -820,39 +847,41 @@ impl From<&Rect<i32>> for SdlRect {
 }
 
 impl From<PointI2> for SdlPoint {
-    /// Convert [PointI2] to [SdlPoint].
+    /// Convert [`PointI2`] to [`SdlPoint`].
+    #[doc(hidden)]
     fn from(p: PointI2) -> Self {
         Self::new(p.x(), p.y())
     }
 }
 
 impl From<&PointI2> for SdlPoint {
-    /// Convert &[PointI2] to [SdlPoint].
+    /// Convert &[`PointI2`] to [`SdlPoint`].
+    #[doc(hidden)]
     fn from(p: &PointI2) -> Self {
         Self::new(p.x(), p.y())
     }
 }
 
 impl From<BlendMode> for SdlBlendMode {
-    /// Convert [BlendMode] to [SdlBlendMode].
+    /// Convert [`BlendMode`] to [`SdlBlendMode`].
+    #[doc(hidden)]
     fn from(mode: BlendMode) -> Self {
-        use BlendMode::*;
         match mode {
-            None => SdlBlendMode::None,
-            Blend => SdlBlendMode::Blend,
-            Add => SdlBlendMode::Add,
-            Mod => SdlBlendMode::Mod,
+            BlendMode::None => Self::None,
+            BlendMode::Blend => Self::Blend,
+            BlendMode::Add => Self::Add,
+            BlendMode::Mod => Self::Mod,
         }
     }
 }
 
 impl From<PixelFormat> for SdlPixelFormat {
-    /// Convert [PixelFormat] to [SdlPixelFormat].
+    /// Convert [`PixelFormat`] to [`SdlPixelFormat`].
+    #[doc(hidden)]
     fn from(format: PixelFormat) -> Self {
-        use PixelFormat::*;
         match format {
-            Rgb => SdlPixelFormat::RGB24,
-            Rgba => SdlPixelFormat::RGBA32,
+            PixelFormat::Rgb => Self::RGB24,
+            PixelFormat::Rgba => Self::RGBA32,
         }
     }
 }

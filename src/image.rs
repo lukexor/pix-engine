@@ -1,6 +1,6 @@
-//! [Image] and [PixelFormat] functions.
+//! [Image] and [`PixelFormat`] functions.
 
-use crate::{prelude::*, renderer::Rendering};
+use crate::{ops::clamp_dimensions, prelude::*, renderer::Rendering};
 use anyhow::Context;
 use png::{BitDepth, ColorType, Decoder};
 #[cfg(feature = "serde")]
@@ -16,8 +16,9 @@ use std::{
 };
 
 /// Format for interpreting bytes when using textures.
-#[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+#[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum PixelFormat {
     /// 8-bit Red, Green, and Blue
@@ -29,32 +30,38 @@ pub enum PixelFormat {
 impl PixelFormat {
     /// Returns the number of channels associated with the format.
     #[inline]
-    pub fn channels(&self) -> usize {
-        use PixelFormat::*;
+    #[must_use]
+    pub const fn channels(&self) -> usize {
         match self {
-            Rgb => 3,
-            Rgba => 4,
+            PixelFormat::Rgb => 3,
+            PixelFormat::Rgba => 4,
         }
     }
 }
 
-impl From<png::ColorType> for PixelFormat {
-    fn from(color_type: png::ColorType) -> Self {
-        use png::ColorType::*;
+/// The error type returned when a checked conversion from [png::ColorType] fails.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[doc(hidden)]
+pub struct TryFromColorTypeError(pub(crate) ());
+
+impl TryFrom<png::ColorType> for PixelFormat {
+    type Error = TryFromColorTypeError;
+    #[doc(hidden)]
+    fn try_from(color_type: png::ColorType) -> Result<Self, Self::Error> {
         match color_type {
-            Rgb => Self::Rgb,
-            Rgba => Self::Rgba,
-            _ => unimplemented!("{:?} is not supported.", color_type),
+            png::ColorType::Rgb => Ok(Self::Rgb),
+            png::ColorType::Rgba => Ok(Self::Rgba),
+            _ => Err(TryFromColorTypeError(())),
         }
     }
 }
 
 impl From<PixelFormat> for png::ColorType {
+    #[doc(hidden)]
     fn from(format: PixelFormat) -> Self {
-        use PixelFormat::*;
         match format {
-            Rgb => Self::Rgb,
-            Rgba => Self::Rgba,
+            PixelFormat::Rgb => Self::Rgb,
+            PixelFormat::Rgba => Self::Rgba,
         }
     }
 }
@@ -67,6 +74,7 @@ impl Default for PixelFormat {
 
 /// An `Image` representing a buffer of pixel color values.
 #[derive(Default, Clone)]
+#[must_use]
 pub struct Image {
     /// `Image` width.
     width: u32,
@@ -105,6 +113,11 @@ impl Image {
     }
 
     /// Constructs an `Image` from a [u8] [prim@slice] representing RGB/A values.
+    ///
+    /// # Errors
+    ///
+    /// If the bytes length doesn't match the image dimensions and [`PixelFormat`] provided, then
+    /// an error is returned.
     #[inline]
     pub fn from_bytes<B: AsRef<[u8]>>(
         width: u32,
@@ -126,6 +139,11 @@ impl Image {
     }
 
     /// Constructs an `Image` from a [Color] [prim@slice] representing RGBA values.
+    ///
+    /// # Errors
+    ///
+    /// If the pixels length doesn't match the image dimensions and [`PixelFormat`] provided, then
+    /// an error is returned.
     #[inline]
     pub fn from_pixels<P: AsRef<[Color]>>(
         width: u32,
@@ -144,8 +162,8 @@ impl Image {
             .into());
         }
         let bytes: Vec<u8> = match format {
-            PixelFormat::Rgb => pixels.iter().map(|c| c.rgb_channels()).flatten().collect(),
-            PixelFormat::Rgba => pixels.iter().map(|c| c.rgba_channels()).flatten().collect(),
+            PixelFormat::Rgb => pixels.iter().flat_map(Color::rgb_channels).collect(),
+            PixelFormat::Rgba => pixels.iter().flat_map(Color::rgba_channels).collect(),
         };
         Ok(Self::from_vec(width, height, bytes, format))
     }
@@ -162,16 +180,25 @@ impl Image {
     }
 
     /// Constructs an `Image` from a [png] file.
+    ///
+    /// # Errors
+    ///
+    /// If the file format is not supported or extension is not `.png`, then an error is returned.
     pub fn from_file<P: AsRef<Path>>(path: P) -> PixResult<Self> {
         let path = path.as_ref();
         let ext = path.extension();
         if ext != Some(OsStr::new("png")) {
-            return Err(PixError::UnsupportedFileType(ext.map(|e| e.to_os_string())).into());
+            return Err(PixError::UnsupportedFileType(ext.map(OsStr::to_os_string)).into());
         }
         Self::from_read(File::open(&path)?)
     }
 
     /// Constructs an `Image` from a [png] reader.
+    ///
+    /// # Errors
+    ///
+    /// If the file format is not supported or there is an [`io::Error`] reading the file then an
+    /// error is returned.
     pub fn from_read<R: io::Read>(read: R) -> PixResult<Self> {
         let png_file = BufReader::new(read);
         let png = Decoder::new(png_file);
@@ -187,50 +214,65 @@ impl Image {
         let info = reader
             .next_frame(&mut buf)
             .context("failed to read png data frame")?;
-        if info.bit_depth != BitDepth::Eight
-            || !matches!(info.color_type, ColorType::Rgb | ColorType::Rgba)
-        {
+        let bit_depth = info.bit_depth;
+        let color_type = info.color_type;
+        if bit_depth != BitDepth::Eight || !matches!(color_type, ColorType::Rgb | ColorType::Rgba) {
             return Err(PixError::UnsupportedImageFormat {
-                bit_depth: info.bit_depth,
-                color_type: info.color_type,
+                bit_depth,
+                color_type,
             }
             .into());
         }
 
         let data = &buf[..info.buffer_size()];
-        let format = info.color_type.into();
+        let format = info
+            .color_type
+            .try_into()
+            .map_err(|_| PixError::UnsupportedImageFormat {
+                bit_depth,
+                color_type,
+            })?;
         Self::from_bytes(info.width, info.height, &data, format)
     }
 
     /// Returns the `Image` width.
     #[inline]
-    pub fn width(&self) -> u32 {
+    #[must_use]
+    pub const fn width(&self) -> u32 {
         self.width
     }
 
     /// Returns the `Image` height.
     #[inline]
-    pub fn height(&self) -> u32 {
+    #[must_use]
+    pub const fn height(&self) -> u32 {
         self.height
     }
 
     /// Returns the `Image` dimensions as `(width, height)`.
     #[inline]
-    pub fn dimensions(&self) -> (u32, u32) {
+    #[must_use]
+    pub const fn dimensions(&self) -> (u32, u32) {
         (self.width, self.height)
     }
 
     /// Returns the `pitch` of the image data which is the number of bytes in a row of pixel data,
     /// including padding between lines.
     #[inline]
-    pub fn pitch(&self) -> usize {
+    #[must_use]
+    pub const fn pitch(&self) -> usize {
         self.width() as usize * self.format.channels()
     }
 
     /// Returns the `Image` bounding [Rect] positioned at `(0, 0)`.
+    ///
+    /// The width and height of the returned rectangle are clamped to ensure that size does not
+    /// exceed [`i32::MAX`]. This could result in unexpected behavior with drawing routines if the
+    /// image size is larger than this.
     #[inline]
     pub fn bounding_rect(&self) -> Rect<i32> {
-        rect![0, 0, self.width as i32, self.height as i32]
+        let (width, height) = clamp_dimensions(self.width, self.height);
+        rect![0, 0, width, height]
     }
 
     /// Returns the `Image` bounding [Rect] positioned at `offset`.
@@ -239,13 +281,15 @@ impl Image {
     where
         P: Into<PointI2>,
     {
-        rect![offset.into(), self.width as i32, self.height as i32]
+        let (width, height) = clamp_dimensions(self.width, self.height);
+        rect![offset.into(), width, height]
     }
 
     /// Returns the center position as [Point].
     #[inline]
     pub fn center(&self) -> PointI2 {
-        point!(self.width() as i32 / 2, self.height() as i32 / 2)
+        let (width, height) = clamp_dimensions(self.width, self.height);
+        point!(width / 2, height / 2)
     }
 
     /// Returns the `Image` pixel data as an iterator of [u8].
@@ -256,12 +300,14 @@ impl Image {
 
     /// Returns the `Image` pixel data as a [u8] [prim@slice].
     #[inline]
+    #[must_use]
     pub fn as_bytes(&self) -> &[u8] {
         &self.data
     }
 
     /// Returns the `Image` pixel data as a mutable [u8] [prim@slice].
     #[inline]
+    #[must_use]
     pub fn as_mut_bytes(&mut self) -> &mut [u8] {
         &mut self.data
     }
@@ -270,6 +316,7 @@ impl Image {
     ///
     /// This consumes the `Image`, so we do not need to copy its contents.
     #[inline]
+    #[must_use]
     pub fn into_bytes(self) -> Vec<u8> {
         self.data
     }
@@ -281,7 +328,12 @@ impl Image {
     }
 
     /// Returns the `Image` pixel data as a [`Vec<Color>`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if the image has an invalid sequence of bytes given it's [`PixelFormat`].
     #[inline]
+    #[must_use]
     pub fn into_pixels(self) -> Vec<Color> {
         self.data
             .chunks(self.format.channels())
@@ -294,13 +346,18 @@ impl Image {
     }
 
     /// Returns the color value at the given `(x, y)` position.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the image has an invalid sequence of bytes given it's [`PixelFormat`], or the `(x,
+    /// y`) index is out of range.
     #[inline]
     pub fn get_pixel(&self, x: u32, y: u32) -> Color {
         let idx = self.idx(x, y);
         let channels = self.format.channels();
-        match self.data[idx..idx + channels] {
-            [red, green, blue] => Color::rgb(red, green, blue),
-            [red, green, blue, alpha] => Color::rgba(red, green, blue, alpha),
+        match self.data.get(idx..idx + channels) {
+            Some([red, green, blue]) => Color::rgb(*red, *green, *blue),
+            Some([red, green, blue, alpha]) => Color::rgba(*red, *green, *blue, *alpha),
             _ => panic!("invalid number of color channels"),
         }
     }
@@ -322,11 +379,33 @@ impl Image {
 
     /// Returns the `Image` pixel format.
     #[inline]
-    pub fn format(&self) -> PixelFormat {
+    pub const fn format(&self) -> PixelFormat {
         self.format
     }
 
     /// Save the `Image` to a [png] file.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for any of the following:
+    ///     - An [`io::Error`] occurs attempting to create the [png] file.
+    ///     - A [`png::EncodingError`] occurs attempting to write image bytes.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { image: Image };
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    ///     if let Key::S = event.key {
+    ///         self.image.save("test_image.png")?;
+    ///     }
+    ///     Ok(false)
+    /// }
+    /// # }
+    /// ```
     pub fn save<P>(&self, path: P) -> PixResult<()>
     where
         P: AsRef<Path>,
@@ -346,14 +425,19 @@ impl Image {
 }
 
 impl Image {
+    /// Helper function to get the byte array index based on `(x, y)`.
     #[inline]
-    fn idx(&self, x: u32, y: u32) -> usize {
+    const fn idx(&self, x: u32, y: u32) -> usize {
         self.format.channels() * (y * self.width + x) as usize
     }
 }
 
 impl PixState {
     /// Draw an [Image] to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
     ///
     /// # Example
     ///
@@ -379,8 +463,12 @@ impl PixState {
 
     /// Draw a transformed [Image] to the current canvas resized to the target `rect`, optionally
     /// rotated by an `angle` about the `center` point or `flipped`. `angle` can be in either
-    /// radians or degrees based on [AngleMode]. [PixState::image_tint] can optionally add a tint
+    /// radians or degrees based on [`AngleMode`]. [`PixState::image_tint`] can optionally add a tint
     /// color to the rendered image.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
     ///
     /// # Example
     ///
@@ -450,9 +538,10 @@ impl fmt::Debug for Image {
 
 /// An iterator over the bytes of an [Image].
 ///
-/// This struct is created by the [Image::bytes] method.
+/// This struct is created by the [`Image::bytes`] method.
 /// See its documentation for more.
 #[derive(Debug, Clone)]
+#[must_use]
 pub struct Bytes<'a>(Copied<slice::Iter<'a, u8>>);
 
 impl Iterator for Bytes<'_> {
@@ -465,9 +554,10 @@ impl Iterator for Bytes<'_> {
 
 /// An iterator over the [Color] pixels of an [Image].
 ///
-/// This struct is created by the [Image::pixels] method.
+/// This struct is created by the [`Image::pixels`] method.
 /// See its documentation for more.
 #[derive(Debug, Clone)]
+#[must_use]
 pub struct Pixels<'a>(usize, Copied<slice::Iter<'a, u8>>);
 
 impl Iterator for Pixels<'_> {

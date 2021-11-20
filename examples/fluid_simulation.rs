@@ -2,10 +2,11 @@ use pix_engine::prelude::*;
 use rayon::prelude::*;
 
 const WIDTH: u32 = 350;
-const HEIGHT: u32 = 350;
+const HEIGHT: u32 = 150;
 
 const N: usize = WIDTH as usize;
 const NLEN: usize = N - 1;
+const NHEIGHT: usize = HEIGHT as usize;
 const N_SCALAR: Scalar = N as Scalar;
 
 const XVEL: Scalar = 1.8; // Velocity of fluid
@@ -55,7 +56,7 @@ fn project(
         .enumerate()
         .for_each(|(i, (div, tmp))| {
             let (x, y) = get_xy(i);
-            if (1..NLEN).contains(&x) && (1..NLEN).contains(&y) {
+            if (1..NLEN).contains(&x) && (1..NHEIGHT).contains(&y) {
                 *div = -0.5
                     * (velx[get_idx(x + 1, y)] - velx[get_idx(x - 1, y)] + vely[get_idx(x, y + 1)]
                         - vely[get_idx(x, y - 1)])
@@ -71,7 +72,7 @@ fn project(
         .enumerate()
         .for_each(|(i, (velx, vely))| {
             let (x, y) = get_xy(i);
-            if (1..NLEN).contains(&x) && (1..NLEN).contains(&y) {
+            if (1..NLEN).contains(&x) && (1..NHEIGHT).contains(&y) {
                 *velx -= 0.5 * (p[get_idx(x + 1, y)] - p[get_idx(x - 1, y)]) * N_SCALAR;
                 *vely -= 0.5 * (p[get_idx(x, y + 1)] - p[get_idx(x, y - 1)]) * N_SCALAR;
             }
@@ -81,7 +82,7 @@ fn project(
 fn advect(b: usize, d: &mut [Scalar], d0: &[Scalar], velx: &[Scalar], vely: &[Scalar]) {
     d.par_iter_mut().enumerate().for_each(|(i, d)| {
         let (x, y) = get_xy(i);
-        if (1..NLEN).contains(&x) && (1..NLEN).contains(&y) {
+        if (1..NLEN).contains(&x) && (1..NHEIGHT).contains(&y) {
             let mut x = x as Scalar - (DT * N_SCALAR * velx[i]);
             let mut y = y as Scalar - (DT * N_SCALAR * vely[i]);
 
@@ -128,7 +129,7 @@ fn linear_solve(
     let c_recip = c.recip();
     tmp.par_iter_mut().enumerate().for_each(|(i, tmp)| {
         let (x, y) = get_xy(i);
-        if (1..NLEN).contains(&x) && (1..NLEN).contains(&y) {
+        if (1..NLEN).contains(&x) && (1..NHEIGHT).contains(&y) {
             *tmp = (xs0[i]
                 + a * (xs[get_idx(x + 1, y)]
                     + xs[get_idx(x - 1, y)]
@@ -143,6 +144,10 @@ fn linear_solve(
 
 fn set_bounds(b: usize, xs: &mut [Scalar]) {
     for i in 1..NLEN {
+        let (_, y) = get_xy(i);
+        if y > NHEIGHT {
+            break;
+        }
         // Top and bottom
         if b == 2 {
             xs[get_idx(i, 0)] = -xs[get_idx(i, 1)];
@@ -211,21 +216,19 @@ impl Fluid {
     #[allow(clippy::many_single_char_names)]
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         self.step();
-        for i in 0..N * N {
+        for i in 0..N * NHEIGHT {
             let (x, y) = get_xy(i);
-            if (15..WIDTH as usize - 15).contains(&x) && (15..HEIGHT as usize - 15).contains(&y) {
-                // Draw density
-                let d = self.density[i];
-                let m = d / 100.0;
-                let f = m * d;
-                if f > 10.0 {
-                    s.fill(rgb!(
-                        (f / 2.0).floor() as u8,
-                        (f / 6.0).floor() as u8,
-                        (f / 16.0).floor() as u8,
-                    ));
-                    s.square([x as i32, y as i32, 1])?;
-                }
+            // Draw density
+            let d = self.density[i];
+            let m = d / 100.0;
+            let f = m * d;
+            if f > 10.0 {
+                s.fill(rgb!(
+                    (f / 2.0).floor() as u8,
+                    (f / 6.0).floor() as u8,
+                    (f / 16.0).floor() as u8,
+                ));
+                s.square([x as i32, y as i32, 1])?;
             }
         }
         Ok(())
@@ -270,13 +273,13 @@ impl App {
             let xmin = random!(-10, -5);
             let xmax = random!(5, 10);
             for i in xmin..xmax {
-                let ymin = random!(-22, 0);
+                let ymin = random!(-16, 0);
                 for j in ymin..0 {
                     let idx = get_idx(
                         (self.xs[k] + i as Scalar).floor() as usize,
                         (self.ys[k] + j as Scalar).floor() as usize,
                     );
-                    self.fluid.add_density(idx, random!(5.0, 20.0));
+                    self.fluid.add_density(idx, random!(10.0, 40.0));
                     let velx = random!(-XVEL / 2.0, XVEL / 2.0);
                     let vely = random!(-0.05, 0.01);
                     self.fluid.add_velocity(idx, velx, vely);
@@ -302,15 +305,15 @@ impl App {
 
 impl AppState for App {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.background(BLACK);
+        s.background(Color::BLACK);
         s.rect_mode(RectMode::Center);
         s.no_stroke();
         s.cursor(Cursor::hand())?;
-        s.clip([15, 15, WIDTH as i32 - 30, HEIGHT as i32 - 30])?;
+        s.clip([0, 0, WIDTH as i32, HEIGHT as i32 - 10])?;
 
         for i in 0..COUNT {
             self.xs[i] = (i * SPACING) as Scalar;
-            self.ys[i] = N as Scalar;
+            self.ys[i] = HEIGHT as Scalar;
         }
 
         Ok(())
@@ -337,6 +340,7 @@ impl AppState for App {
 }
 
 pub fn main() -> PixResult<()> {
+    println!("Renders more smoothly using `--release` and `--features opengl`.");
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .scale(2.0, 2.0)

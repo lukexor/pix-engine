@@ -5,7 +5,7 @@
 //!
 //! # Examples
 //!
-//! You can create a [Quad] using [Quad::new]:
+//! You can create a [Quad] using [`Quad::new`]:
 //!
 //! ```
 //! use pix_engine::prelude::*;
@@ -38,6 +38,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 /// [module-level documentation]: crate::shape::quad
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[repr(transparent)]
+#[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
 pub struct Quad<T, const N: usize>(pub(crate) [Point<T, N>; 4]);
@@ -293,7 +294,7 @@ impl<T: Copy, const N: usize> Quad<T, N> {
 }
 
 impl Draw for QuadI2 {
-    /// Draw `Quad` to the current [PixState] canvas.
+    /// Draw `Quad` to the current [`PixState`] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.quad(*self)
     }
@@ -301,7 +302,7 @@ impl Draw for QuadI2 {
 
 #[cfg(test)]
 mod tests {
-    use crate::prelude::*;
+    use crate::{prelude::*, shape::LineF2};
 
     macro_rules! assert_approx_eq {
         ($i1:expr, $i2:expr) => {

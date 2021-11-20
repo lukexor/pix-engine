@@ -1,7 +1,7 @@
 //! `Audio` functions.
 //!
-//! Enables queuing audio samples using the [PixState] instance in your application implementing
-//! [AppState] by calling [PixState::enqueue_audio].
+//! Enables queuing audio samples using the [`PixState`] instance in your application implementing
+//! [`AppState`] by calling [`PixState::enqueue_audio`].
 //!
 //! # Example
 //!
@@ -19,7 +19,7 @@
 //! # }
 //! ```
 //!
-//! [AppState]: crate::prelude::AppState
+//! [`AppState`]: crate::prelude::AppState
 
 use crate::prelude::PixState;
 
@@ -31,7 +31,7 @@ pub(crate) trait AudioRenderer {
 
 impl PixState {
     /// Add samples to the audio buffer queue.
-    /// ```no_run
+    /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {

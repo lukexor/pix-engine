@@ -1,6 +1,9 @@
 //! Graphics renderer functions.
 
-use crate::prelude::*;
+use crate::{
+    prelude::*,
+    shape::{LineI2, PointI2, QuadI2, TriI2},
+};
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
 

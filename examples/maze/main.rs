@@ -126,7 +126,7 @@ impl MazeApp {
         }
         let h = HEIGHT as i32;
         s.set_cursor_pos([10, h - 45]);
-        s.fill(WHITE);
+        s.fill(Color::WHITE);
         s.no_stroke();
         if s.button("Create")? {
             self.start_create_maze();

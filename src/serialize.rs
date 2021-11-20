@@ -43,6 +43,8 @@ pub mod arrays {
     }
 
     /// Serialize a const generic array.
+    #[inline]
+    #[doc(hidden)]
     pub fn serialize<S: Serializer, T: Serialize, const N: usize>(
         data: &[T; N],
         ser: S,
@@ -55,6 +57,8 @@ pub mod arrays {
     }
 
     /// Deserialize a const generic array.
+    #[inline]
+    #[doc(hidden)]
     pub fn deserialize<'de, D, T, const N: usize>(deserializer: D) -> Result<[T; N], D::Error>
     where
         D: Deserializer<'de>,

@@ -2,7 +2,7 @@
 //!
 //! # Examples
 //!
-//! You can create a [Triangle][Tri] using [Tri::new]:
+//! You can create a [Triangle][Tri] using [`Tri::new`]:
 //!
 //! ```
 //! use pix_engine::prelude::*;
@@ -27,6 +27,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 /// [module-level documentation]: crate::shape::triangle
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[repr(transparent)]
+#[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
 pub struct Tri<T, const N: usize>(pub(crate) [Point<T, N>; 3]);
@@ -239,7 +240,7 @@ impl<T: Copy, const N: usize> Tri<T, N> {
 }
 
 impl Draw for TriI2 {
-    /// Draw `Triangle` to the current [PixState] canvas.
+    /// Draw `Triangle` to the current [`PixState`] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.triangle(*self)
     }

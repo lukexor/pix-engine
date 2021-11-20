@@ -9,16 +9,15 @@ use rand::{self, distributions::uniform::SampleUniform, Rng};
 use std::ops::{AddAssign, Range};
 
 /// Default math constants.
-pub mod constants {
-    #[cfg(target_pointer_width = "32")]
-    pub use std::f32::consts::*;
-    #[cfg(target_pointer_width = "64")]
-    pub use std::f64::consts::*;
-}
+#[cfg(target_pointer_width = "32")]
+pub use std::f32::consts::*;
+#[cfg(target_pointer_width = "64")]
+pub use std::f64::consts::*;
 
 /// Default Scalar for floating point math.
 #[cfg(target_pointer_width = "32")]
 pub type Scalar = f32;
+
 /// Default Scalar for floating point math.
 #[cfg(target_pointer_width = "64")]
 pub type Scalar = f64;
@@ -45,7 +44,7 @@ const PERLIN_SIZE: usize = 4095;
 lazy_static! {
     static ref PERLIN: Vec<Scalar> = {
         let mut perlin = Vec::with_capacity(PERLIN_SIZE + 1);
-        for _ in 0..PERLIN_SIZE + 1 {
+        for _ in 0..=PERLIN_SIZE {
             perlin.push(random(1.0));
         }
         perlin
@@ -137,7 +136,7 @@ where
 
     let (mut n1, mut n2, mut n3);
 
-    let scaled_cosine = |i: Scalar| 0.5 * (1.0 - (i - constants::PI).cos());
+    let scaled_cosine = |i: Scalar| 0.5 * (1.0 - (i - PI).cos());
 
     let perlin_octaves = 4; // default to medium smooth
     let perlin_amp_falloff = 0.5; // 50% reduction/octave
@@ -287,7 +286,7 @@ where
     let start2 = start2.into();
     let end2 = end2.into();
     let value = value.into();
-    let new_val = (value - start1) / (end1 - start1) * (end2 - start2) + start2;
+    let new_val = ((value - start1) / (end1 - start1)).mul_add(end2 - start2, start2);
     NumCast::from(new_val.clamp(start2, end2)).unwrap_or(default)
 }
 

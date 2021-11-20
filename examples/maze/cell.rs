@@ -68,7 +68,7 @@ impl Cell {
         s.no_stroke();
         s.rect(self.rect)?;
         s.no_fill();
-        s.stroke(WHITE);
+        s.stroke(Color::WHITE);
         let top_left = self.rect.top_left();
         let top_right = self.rect.top_right();
         let bottom_left = self.rect.bottom_left();

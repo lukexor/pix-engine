@@ -1,5 +1,5 @@
 use super::Renderer;
-use crate::renderer::*;
+use crate::{prelude::*, renderer::TextureRenderer};
 use anyhow::Context;
 use sdl2::{
     rect::Rect as SdlRect,
@@ -15,7 +15,7 @@ pub(crate) struct RendererTexture {
 }
 
 impl RendererTexture {
-    pub(crate) fn new(texture: SdlTexture) -> Self {
+    pub(crate) const fn new(texture: SdlTexture) -> Self {
         Self {
             inner: Some(texture),
         }
@@ -60,19 +60,20 @@ impl TextureRenderer for Renderer {
             .texture_creator
             .create_texture_target(format.map(|f| f.into()), width, height)
             .context("failed to create texture")?;
+        let teture_id = TextureId(texture_id);
         window_canvas
             .textures
-            .insert(texture_id, RefCell::new(RendererTexture::new(texture)));
-        Ok(texture_id)
+            .insert(teture_id, RefCell::new(RendererTexture::new(texture)));
+        Ok(teture_id)
     }
 
     /// Delete texture.
     ///
     /// # Note
     ///
-    /// It is up to the caller to ensure that the texture to be destroyed was created with the
+    /// It is up to the caller to ensure that the texture to be dropped was created with the
     /// current canvas. Currently, the only way to violate this is by creating a texture using
-    /// [PixState::with_window] and calling a texture method after that window has been closed.
+    /// [`PixState::with_window`] and calling a texture method after that window has been closed.
     #[inline]
     fn delete_texture(&mut self, texture_id: TextureId) -> PixResult<()> {
         self.window_canvas_mut()?
@@ -84,13 +85,22 @@ impl TextureRenderer for Renderer {
     /// Update texture with pixel data.
     #[inline]
     fn update_texture<P: AsRef<[u8]>>(
-        &self,
+        &mut self,
         texture_id: TextureId,
         rect: Option<Rect<i32>>,
         pixels: P,
         pitch: usize,
     ) -> PixResult<()> {
-        if let Some(texture) = self.window_canvas()?.textures.get(&texture_id) {
+        let window = self.windows.values().find_map(|w| {
+            if w.textures.contains_key(&texture_id) {
+                Some(w)
+            } else {
+                None
+            }
+        });
+        if let Some(window) = window {
+            // We ensured there's a valid texture above
+            let texture = window.textures.get(&texture_id).unwrap();
             let rect: Option<SdlRect> = rect.map(|r| r.into());
             Ok(texture
                 .borrow_mut()
@@ -113,21 +123,32 @@ impl TextureRenderer for Renderer {
         flipped: Option<Flipped>,
         tint: Option<Color>,
     ) -> PixResult<()> {
-        let texture_target = self.texture_target;
-        let window_canvas = self.window_canvas_mut()?;
-        if let Some(texture) = window_canvas.textures.get(&texture_id) {
+        assert_ne!(
+            Some(texture_id),
+            self.texture_target,
+            "`texture_id` must not equal the current `texture_target`"
+        );
+
+        let target_texture = self.texture_target;
+        let window = self.windows.values_mut().find_map(|w| {
+            if w.textures.contains_key(&texture_id) {
+                Some(w)
+            } else {
+                None
+            }
+        });
+        if let Some(window) = window {
+            // We ensured there's a valid texture above
+            let texture = window.textures.get(&texture_id).unwrap();
             {
                 let mut texture = texture.borrow_mut();
-                match tint {
-                    Some(tint) => {
-                        let [r, g, b, a] = tint.channels();
-                        texture.set_color_mod(r, g, b);
-                        texture.set_alpha_mod(a);
-                    }
-                    None => {
-                        texture.set_color_mod(255, 255, 255);
-                        texture.set_alpha_mod(255);
-                    }
+                if let Some(tint) = tint {
+                    let [r, g, b, a] = tint.channels();
+                    texture.set_color_mod(r, g, b);
+                    texture.set_alpha_mod(a);
+                } else {
+                    texture.set_color_mod(255, 255, 255);
+                    texture.set_alpha_mod(255);
                 }
             }
             let src = src.map(|r| r.into());
@@ -149,15 +170,11 @@ impl TextureRenderer for Renderer {
                 Ok(result.map_err(PixError::Renderer)?)
             };
 
-            let canvas = &mut window_canvas.canvas;
-            if let Some(target_id) = texture_target {
-                assert_ne!(
-                    texture_id, target_id,
-                    "`texture_id` must not equal the current `texture_target`"
-                );
-                if let Some(texture) = window_canvas.textures.get(&target_id) {
+            if let Some(texture_id) = target_texture {
+                if let Some(texture) = window.textures.get(&texture_id) {
                     let mut result = Ok(());
-                    canvas
+                    window
+                        .canvas
                         .with_texture_canvas(&mut texture.borrow_mut(), |canvas| {
                             result = update(canvas);
                         })
@@ -169,7 +186,7 @@ impl TextureRenderer for Renderer {
                     Err(PixError::InvalidTexture(texture_id).into())
                 }
             } else {
-                update(canvas)
+                update(&mut window.canvas)
             }
         } else {
             Err(PixError::InvalidTexture(texture_id).into())

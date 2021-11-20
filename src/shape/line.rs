@@ -2,7 +2,7 @@
 //!
 //! # Examples
 //!
-//! You can create a [Line] using [Line::new]:
+//! You can create a [Line] using [`Line::new`]:
 //!
 //! ```
 //! use pix_engine::prelude::*;
@@ -29,6 +29,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 /// [module-level documentation]: crate::shape::line
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[repr(transparent)]
+#[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
 pub struct Line<T, const N: usize>(pub(crate) [Point<T, N>; 2]);
@@ -89,7 +90,7 @@ impl<T, const N: usize> Line<T, N> {
     /// let line = Line::new(p1, p2);
     ///
     /// // 3D
-    /// let line: LineI3 = Line::new([10, 20, 5], [30, 10, 5]);
+    /// let line: Line<i32, 3> = Line::new([10, 20, 5], [30, 10, 5]);
     /// ```
     pub fn new<P1, P2>(start: P1, end: P2) -> Self
     where
@@ -252,7 +253,7 @@ impl<T: Float> Intersects<T, 2> for Line<T, 2> {
 }
 
 impl Draw for LineI2 {
-    /// Draw `Line` to the current [PixState] canvas.
+    /// Draw `Line` to the current [`PixState`] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.line(*self)
     }

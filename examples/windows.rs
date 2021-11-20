@@ -12,7 +12,7 @@ impl WindowDemo {
 
 impl AppState for WindowDemo {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.fill(WHITE);
+        s.fill(Color::WHITE);
         s.text("Window 1")?;
 
         if s.button("Open Window")? {

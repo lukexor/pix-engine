@@ -31,7 +31,7 @@ impl KeyState {
         matches!(self.entered, Some(k) if k == key)
     }
 
-    /// Returns if a specific [KeyMod] is currently being held.
+    /// Returns if a specific [`KeyMod`] is currently being held.
     #[inline]
     pub(crate) fn mod_down(&self, keymod: KeyMod) -> bool {
         self.mods_pressed.contains(&keymod)

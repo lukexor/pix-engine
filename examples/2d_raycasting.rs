@@ -1,4 +1,4 @@
-use pix_engine::prelude::*;
+use pix_engine::{prelude::*, shape::PointF2, vector::VectorF2};
 
 const WIDTH: u32 = 1000;
 const HEIGHT: u32 = 800;
@@ -242,7 +242,7 @@ impl RayScene {
 
         self.calc_visibility_polygons(mouse);
 
-        s.fill(WHITE);
+        s.fill(Color::WHITE);
         s.no_stroke();
         if !self.polygons.is_empty() {
             for i in 0..self.polygons.len() - 1 {
@@ -256,7 +256,7 @@ impl RayScene {
             s.triangle([mouse, p1, p2])?;
         }
 
-        s.fill(BLACK);
+        s.fill(Color::BLACK);
         s.no_stroke();
         s.circle([mouse.x(), mouse.y(), 2])?;
         Ok(())
@@ -265,7 +265,7 @@ impl RayScene {
 
 impl AppState for RayScene {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.background(BLACK);
+        s.background(Color::BLACK);
         s.scale(SCALE as f32, SCALE as f32)?;
         s.no_cursor();
 
@@ -315,7 +315,7 @@ impl AppState for RayScene {
             s.no_clip()?;
         }
 
-        s.fill(BLUE);
+        s.fill(Color::BLUE);
         let mut in_cell = None;
         for cell in self.cells.iter().filter(|c| c.exists) {
             let sq = square![cell.pos, BLOCK_SIZE as i32];
@@ -333,7 +333,7 @@ impl AppState for RayScene {
 
         if let Some(cell) = in_cell {
             s.square([cell.pos.x(), cell.pos.y(), BLOCK_SIZE as i32])?;
-            s.fill(YELLOW);
+            s.fill(Color::YELLOW);
             s.circle([mouse.x(), mouse.y(), 2])?;
         }
 

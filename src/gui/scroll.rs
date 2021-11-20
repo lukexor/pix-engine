@@ -1,7 +1,7 @@
 //! UI scrollbar rendering functions.
 
 use super::{state::ElementId, Direction};
-use crate::prelude::*;
+use crate::{ops::clamp_size, prelude::*};
 
 pub(crate) const THUMB_MIN: i32 = 10;
 pub(crate) const SCROLL_SIZE: i32 = 12;
@@ -9,6 +9,10 @@ pub(crate) const SCROLL_SPEED: i32 = 3;
 
 impl PixState {
     /// Draw a scrollable region to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
     pub fn scroll_area<S, F>(&mut self, label: S, width: u32, height: u32, f: F) -> PixResult<()>
     where
         S: AsRef<str>,
@@ -20,21 +24,21 @@ impl PixState {
         let id = s.ui.get_id(&label);
         let label = label.split('#').next().unwrap_or("");
         let pos = s.cursor_pos();
-        let style = s.theme.style;
+        let spacing = s.theme.spacing;
         let colors = s.theme.colors;
-        let fpad = style.frame_pad;
-        let ipad = style.item_pad;
+        let fpad = spacing.frame_pad;
+        let ipad = spacing.item_pad;
 
         // Calculate rect
-        let mut scroll_area = rect![pos, width as i32, height as i32];
-        let (lwidth, lheight) = s.size_of(label)?;
+        let mut scroll_area = rect![pos, clamp_size(width), clamp_size(height)];
+        let (label_width, label_height) = s.size_of(label)?;
         if !label.is_empty() {
-            let offset = lheight as i32 + ipad.y();
+            let offset = clamp_size(label_height) + ipad.y();
             scroll_area.offset_y(offset);
         }
 
         // Check hover/active/keyboard focus
-        s.ui.try_hover(id, scroll_area);
+        s.ui.try_hover(id, &scroll_area);
         s.ui.try_focus(id);
 
         s.push();
@@ -89,7 +93,11 @@ impl PixState {
         let total_width = max_cursor_pos.x() + s.ui.last_width() + fpad.x();
         let total_height = max_cursor_pos.y();
         let rect = s.scroll(id, scroll_area, total_width, total_height)?;
-        s.advance_cursor(rect![pos, rect.width().max(lwidth as i32), rect.height()]);
+        s.advance_cursor(rect![
+            pos,
+            rect.width().max(clamp_size(label_width)),
+            rect.height()
+        ]);
 
         Ok(())
     }
@@ -184,6 +192,7 @@ impl PixState {
         Ok(rect)
     }
 
+    /// Helper to render either a vertical or a horizontal scroll bar.
     fn scrollbar(
         &mut self,
         rect: Rect<i32>,
@@ -191,14 +200,14 @@ impl PixState {
         value: &mut i32,
         dir: Direction,
     ) -> PixResult<bool> {
-        use Direction::*;
+        use Direction::{Horizontal, Vertical};
 
         let s = self;
         let id = s.ui.get_id(&rect);
         let colors = s.theme.colors;
 
         // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, rect);
+        let hovered = s.ui.try_hover(id, &rect);
         let focused = s.ui.try_focus(id);
         let active = s.ui.is_active(id);
 
@@ -209,7 +218,7 @@ impl PixState {
 
         // Scroll region
         if hovered {
-            s.frame_cursor(Cursor::hand())?;
+            s.frame_cursor(&Cursor::hand())?;
         }
 
         let [_, bg, _] = s.widget_colors(id, ColorType::Secondary);
@@ -238,11 +247,11 @@ impl PixState {
         match dir {
             Horizontal => {
                 let thumb_x = ((rect.width() - thumb_w) * *value) / max;
-                s.rect([rect.x() + thumb_x, rect.y(), thumb_w, thumb_h])?
+                s.rect([rect.x() + thumb_x, rect.y(), thumb_w, thumb_h])?;
             }
             Vertical => {
                 let thumb_y = ((rect.height() - thumb_h) * *value) / max;
-                s.rect([rect.x(), rect.y() + thumb_y, thumb_w, thumb_h])?
+                s.rect([rect.x(), rect.y() + thumb_y, thumb_w, thumb_h])?;
             }
         }
 
@@ -287,11 +296,11 @@ impl PixState {
         }
         s.ui.handle_events(id);
 
-        if new_value != *value {
+        if new_value == *value {
+            Ok(false)
+        } else {
             *value = new_value.clamp(0, max);
             Ok(true)
-        } else {
-            Ok(false)
         }
     }
 }

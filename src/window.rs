@@ -1,12 +1,16 @@
 //! `Window` functions.
 
-use crate::{prelude::*, renderer::RendererSettings};
+use crate::{ops::clamp_dimensions, prelude::*, renderer::RendererSettings};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::{
+    fmt,
+    ops::{Deref, DerefMut},
+    path::PathBuf,
+};
 
 /// Represents a possible screen position.
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Position {
     /// A positioned `(x, y)` coordinate.
@@ -22,7 +26,27 @@ impl Default for Position {
 }
 
 /// Window Identifier.
-pub type WindowId = usize;
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct WindowId(pub(crate) u32);
+
+impl fmt::Display for WindowId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl Deref for WindowId {
+    type Target = u32;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for WindowId {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
 
 /// A window cursor indicating the position of the mouse.
 #[non_exhaustive]
@@ -45,27 +69,36 @@ impl Default for Cursor {
 
 impl Cursor {
     /// Constructs a `Cursor` from a file path.
+    #[inline]
     pub fn new<P: Into<PathBuf>>(path: P, x: i32, y: i32) -> Self {
         Self::Image(path.into(), (x, y))
     }
 
     /// Constructs a `Cursor` with `SystemCursor::Arrow`.
-    pub fn arrow() -> Self {
+    #[inline]
+    #[must_use]
+    pub const fn arrow() -> Self {
         Self::System(SystemCursor::Arrow)
     }
 
     /// Constructs a `Cursor` with `SystemCursor::IBeam`.
-    pub fn ibeam() -> Self {
+    #[inline]
+    #[must_use]
+    pub const fn ibeam() -> Self {
         Self::System(SystemCursor::IBeam)
     }
 
     /// Constructs a `Cursor` with `SystemCursor::No`.
-    pub fn no() -> Self {
+    #[inline]
+    #[must_use]
+    pub const fn no() -> Self {
         Self::System(SystemCursor::No)
     }
 
     /// Constructs a `Cursor` with `SystemCursor::Hand`.
-    pub fn hand() -> Self {
+    #[inline]
+    #[must_use]
+    pub const fn hand() -> Self {
         Self::System(SystemCursor::Hand)
     }
 }
@@ -173,7 +206,36 @@ pub(crate) trait WindowRenderer {
     fn hide(&mut self) -> PixResult<()>;
 }
 
-/// WindowBuilder
+/// Opens a new window by providing several window configuration functions.
+///
+/// In addition to the primary window created for you when calling [`PixEngine::run`], you can open
+/// additional windows with various configurations and render to them using the
+/// [`PixState::with_window`] method.
+///
+/// # Example
+///
+/// ```
+/// # use pix_engine::prelude::*;
+/// # struct App { windows: Vec<WindowId> };
+/// # impl AppState for App {
+/// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+/// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+///     if let Key::O = event.key {
+///         let window_id = s.window()
+///             .with_title("New Window")
+///             .with_dimensions(800, 600)
+///             .position(10, 10)
+///             .resizable()
+///             .borderless()
+///             .build()?;
+///         self.windows.push(window_id);
+///         return Ok(true);
+///     }
+///     Ok(false)
+/// }
+/// # }
+/// ```
+#[must_use]
 #[derive(Debug)]
 pub struct WindowBuilder<'a> {
     state: &'a mut PixState,
@@ -181,7 +243,8 @@ pub struct WindowBuilder<'a> {
 }
 
 impl<'a> WindowBuilder<'a> {
-    /// Creates a new WindowBuilder instance.
+    /// Creates a new `WindowBuilder` instance.
+    #[inline]
     pub fn new(s: &'a mut PixState) -> Self {
         let vsync = s.renderer.vsync();
         Self {
@@ -194,6 +257,7 @@ impl<'a> WindowBuilder<'a> {
     }
 
     /// Set window dimensions.
+    #[inline]
     pub fn with_dimensions(&mut self, width: u32, height: u32) -> &mut Self {
         self.settings.width = width;
         self.settings.height = height;
@@ -201,12 +265,14 @@ impl<'a> WindowBuilder<'a> {
     }
 
     /// Set a window title.
+    #[inline]
     pub fn with_title<S: Into<String>>(&mut self, title: S) -> &mut Self {
         self.settings.title = title.into();
         self
     }
 
     /// Position the window at the given `(x, y)` coordinates of the display.
+    #[inline]
     pub fn position(&mut self, x: i32, y: i32) -> &mut Self {
         self.settings.x = Position::Positioned(x);
         self.settings.y = Position::Positioned(y);
@@ -214,6 +280,7 @@ impl<'a> WindowBuilder<'a> {
     }
 
     /// Position the window in the center of the display.
+    #[inline]
     pub fn position_centered(&mut self) -> &mut Self {
         self.settings.x = Position::Centered;
         self.settings.y = Position::Centered;
@@ -221,17 +288,20 @@ impl<'a> WindowBuilder<'a> {
     }
 
     /// Start window in fullscreen mode.
+    #[inline]
     pub fn fullscreen(&mut self) -> &mut Self {
         self.settings.fullscreen = true;
         self
     }
 
     /// Allow window resizing.
+    #[inline]
     pub fn resizable(&mut self) -> &mut Self {
         self.settings.resizable = true;
         self
     }
 
+    #[inline]
     /// Removes the window decoration.
     pub fn borderless(&mut self) -> &mut Self {
         self.settings.borderless = true;
@@ -239,6 +309,7 @@ impl<'a> WindowBuilder<'a> {
     }
 
     /// Scales the window.
+    #[inline]
     pub fn scale(&mut self, x: f32, y: f32) -> &mut Self {
         self.settings.scale_x = x;
         self.settings.scale_y = y;
@@ -247,6 +318,7 @@ impl<'a> WindowBuilder<'a> {
 
     /// Set a window icon.
     #[cfg(not(target_arch = "wasm32"))]
+    #[inline]
     pub fn icon<P>(&mut self, path: P) -> &mut Self
     where
         P: Into<PathBuf>,
@@ -255,9 +327,15 @@ impl<'a> WindowBuilder<'a> {
         self
     }
 
-    /// Create a new window from the WindowBuilder and return its id.
+    /// Create a new window from the `WindowBuilder` and return its id.
     ///
-    /// Returns Err if any options provided are invalid.
+    /// # Errors
+    ///
+    /// If the renderer fails to create a new window, then an error is returned.
+    ///
+    /// Possible errors include the title containing a `nul` character, the position or dimensions
+    /// being invalid values or overlowing and an internal renderer error such as running out of
+    /// memory or a software driver issue.
     pub fn build(&mut self) -> PixResult<WindowId> {
         self.state.renderer.create_window(&self.settings)
     }
@@ -265,16 +343,24 @@ impl<'a> WindowBuilder<'a> {
 
 impl PixState {
     /// Get the current window target ID.
+    #[inline]
+    #[must_use]
     pub fn window_id(&self) -> WindowId {
         self.renderer.window_id()
     }
 
-    /// Create a new [WindowBuilder].
+    /// Create a new [`WindowBuilder`].
+    #[inline]
     pub fn window(&mut self) -> WindowBuilder<'_> {
         WindowBuilder::new(self)
     }
 
     /// Close a window.
+    ///
+    /// # Errors
+    ///
+    /// If the window has already been closed or is invalid, then an error is returned.
+    #[inline]
     pub fn close_window(&mut self, id: WindowId) -> PixResult<()> {
         if self.renderer.window_count() == 1 {
             self.quit();
@@ -284,118 +370,223 @@ impl PixState {
     }
 
     /// The dimensions of the current render target as `(width, height)`.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
     pub fn dimensions(&self) -> PixResult<(u32, u32)> {
         self.renderer.dimensions()
     }
 
     /// The dimensions of the current window as `(width, height)`.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
     pub fn window_dimensions(&self) -> PixResult<(u32, u32)> {
         self.renderer.window_dimensions()
     }
 
     /// Set the dimensions of the current window from `(width, height)`.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
     pub fn set_window_dimensions(&mut self, dimensions: (u32, u32)) -> PixResult<()> {
         self.renderer.set_window_dimensions(dimensions)
     }
 
     /// Returns the rendering viewport of the current render target.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
     pub fn viewport(&mut self) -> PixResult<Rect<i32>> {
         self.renderer.viewport()
     }
 
     /// Set the rendering viewport of the current render target.
-    pub fn set_viewport<R: Into<Rect<i32>>>(&mut self, rect: R) -> PixResult<()> {
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
+    pub fn set_viewport<R>(&mut self, rect: R) -> PixResult<()>
+    where
+        R: Into<Rect<i32>>,
+    {
         self.renderer.set_viewport(Some(rect.into()))
     }
 
     /// Clears the rendering viewport of the current render target back to the entire target.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
     pub fn clear_viewport(&mut self) -> PixResult<()> {
         self.renderer.set_viewport(None)
     }
 
     /// The width of the current render target.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
     pub fn width(&self) -> PixResult<u32> {
         let (width, _) = self.dimensions()?;
         Ok(width)
     }
 
     /// The width of the current window.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
     pub fn window_width(&self) -> PixResult<u32> {
         let (width, _) = self.window_dimensions()?;
         Ok(width)
     }
 
     /// Set the width of the current window.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
     pub fn set_window_width(&mut self, width: u32) -> PixResult<()> {
         let (_, height) = self.window_dimensions()?;
         self.renderer.set_window_dimensions((width, height))
     }
 
     /// The height of the current render target.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
     pub fn height(&self) -> PixResult<u32> {
         let (_, height) = self.dimensions()?;
         Ok(height)
     }
 
     /// The height of the current window.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
     pub fn window_height(&self) -> PixResult<u32> {
         let (_, height) = self.window_dimensions()?;
         Ok(height)
     }
 
     /// Set the height of the current window.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
     pub fn set_window_height(&mut self, height: u32) -> PixResult<()> {
         let (width, _) = self.window_dimensions()?;
         self.renderer.set_window_dimensions((width, height))
     }
 
     /// The center [Point] of the current render target.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
     pub fn center(&self) -> PixResult<PointI2> {
-        let (w, h) = self.dimensions()?;
-        Ok(point![w as i32 / 2, h as i32 / 2])
+        let (width, height) = self.dimensions()?;
+        let (width, height) = clamp_dimensions(width, height);
+        Ok(point![width / 2, height / 2])
     }
 
     /// The center [Point] of the current window.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
     pub fn window_center(&self) -> PixResult<PointI2> {
-        let (w, h) = self.window_dimensions()?;
-        Ok(point![w as i32 / 2, h as i32 / 2])
+        let (width, height) = self.window_dimensions()?;
+        let (width, height) = clamp_dimensions(width, height);
+        Ok(point![width / 2, height / 2])
     }
 
     /// The dimensions of the primary display as `(width, height)`.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
     pub fn display_dimensions(&self) -> PixResult<(u32, u32)> {
         self.renderer.display_dimensions()
     }
 
     /// The width of the primary display.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
     pub fn display_width(&self) -> PixResult<u32> {
         let (width, _) = self.display_dimensions()?;
         Ok(width)
     }
 
     /// The height of the primary display.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
     pub fn display_height(&self) -> PixResult<u32> {
         let (_, height) = self.display_dimensions()?;
         Ok(height)
     }
 
     /// Show the current window target.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
     pub fn show_window(&mut self) -> PixResult<()> {
         self.renderer.show()
     }
 
     /// Hide the current window target.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
     pub fn hide_window(&mut self) -> PixResult<()> {
         self.renderer.hide()
     }
 
     /// Target a `Window` for drawing operations.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, or the rendering function fails, then an error
+    /// is returned.
     pub fn with_window<F>(&mut self, id: WindowId, f: F) -> PixResult<()>
     where
         F: FnOnce(&mut PixState) -> PixResult<()>,
     {
         self.push();
         self.ui.push_cursor();
-        self.set_cursor_pos(self.theme.style.frame_pad);
+        self.set_cursor_pos(self.theme.spacing.frame_pad);
 
         self.renderer.set_window_target(id)?;
         let result = f(self);

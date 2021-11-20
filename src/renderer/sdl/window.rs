@@ -1,10 +1,10 @@
 use super::{texture::RendererTexture, FontId, Renderer};
 use crate::{
-    prelude::{Cursor, Event, SystemCursor},
-    renderer::*,
+    prelude::*,
+    renderer::{RendererSettings, WindowRenderer},
     window::{Position, WindowId},
 };
-use anyhow::anyhow;
+use anyhow::bail;
 use anyhow::Context;
 use lru::LruCache;
 use sdl2::{
@@ -104,7 +104,7 @@ impl WindowCanvas {
 
         let window = window_builder.build().context("failed to build window")?;
 
-        let window_id = window.id() as usize;
+        let window_id = WindowId(window.id());
         let mut canvas_builder = window.into_canvas().accelerated().target_texture();
         if s.vsync {
             canvas_builder = canvas_builder.present_vsync();
@@ -147,18 +147,19 @@ impl WindowCanvas {
         font_size: u16,
     ) -> PixResult<&'a mut RendererTexture> {
         let current_outline = font.get_outline_width();
-        if current_outline != outline as u16 {
-            font.set_outline_width(outline as u16);
+        let outline = u16::from(outline);
+        if current_outline != outline {
+            font.set_outline_width(outline);
         }
 
         let key = TextCacheKey::new(text, current_font, fill, font_size);
         if !text_cache.contains(&key) {
-            let surface = if let Some(width) = wrap_width {
-                font.render(text).blended_wrapped(fill, width)
-            } else {
-                font.render(text).blended(fill)
-            }
-            .context("invalid text")?;
+            let surface = wrap_width
+                .map_or_else(
+                    || font.render(text).blended(fill),
+                    |width| font.render(text).blended_wrapped(fill, width),
+                )
+                .context("invalid text")?;
             text_cache.put(
                 key,
                 RendererTexture::new(
@@ -195,6 +196,7 @@ impl WindowCanvas {
 }
 
 impl fmt::Debug for WindowCanvas {
+    #[doc(hidden)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let canvas = &self.canvas;
         f.debug_struct("WindowCanvas")
@@ -242,9 +244,7 @@ impl WindowRenderer for Renderer {
                     self.window_target = *id;
                     self.primary_window_id = self.window_target;
                 } else {
-                    return Err(anyhow!(
-                        "close_window can not be called on the last window, call quit() instead"
-                    ));
+                    bail!("close_window can not be called on the last window, call quit() instead");
                 }
             } else {
                 self.reset_window_target();
@@ -314,20 +314,21 @@ impl WindowRenderer for Renderer {
     /// Dimensions of the current render target as `(width, height)`.
     #[inline]
     fn dimensions(&self) -> PixResult<(u32, u32)> {
-        if let Some(texture_id) = self.texture_target {
-            if let Some(texture) = self
-                .windows
-                .values()
-                .find_map(|w| w.textures.get(&texture_id))
-            {
-                let query = texture.borrow().query();
-                Ok((query.width, query.height))
-            } else {
-                Err(PixError::InvalidTexture(texture_id).into())
-            }
-        } else {
-            self.window_dimensions()
-        }
+        self.texture_target.map_or_else(
+            || self.window_dimensions(),
+            |texture_id| {
+                self.windows
+                    .values()
+                    .find_map(|w| w.textures.get(&texture_id))
+                    .map_or_else(
+                        || Err(PixError::InvalidTexture(texture_id).into()),
+                        |texture| {
+                            let query = texture.borrow().query();
+                            Ok((query.width, query.height))
+                        },
+                    )
+            },
+        )
     }
 
     /// Dimensions of the current window target as `(width, height)`.
@@ -353,11 +354,13 @@ impl WindowRenderer for Renderer {
     }
 
     /// Returns the rendering viewport of the current render target.
+    #[inline]
     fn viewport(&self) -> PixResult<Rect<i32>> {
         Ok(self.canvas()?.viewport().into())
     }
 
     /// Set the rendering viewport of the current render target.
+    #[inline]
     fn set_viewport(&mut self, rect: Option<Rect<i32>>) -> PixResult<()> {
         self.canvas_mut()?.set_viewport(rect.map(|r| r.into()));
         Ok(())
@@ -378,14 +381,14 @@ impl WindowRenderer for Renderer {
     /// Returns whether the application is fullscreen or not.
     #[inline]
     fn fullscreen(&self) -> PixResult<bool> {
-        use FullscreenType::*;
+        use FullscreenType::{Desktop, True};
         Ok(matches!(self.window()?.fullscreen_state(), True | Desktop))
     }
 
     /// Set the application to fullscreen or not.
     #[inline]
     fn set_fullscreen(&mut self, val: bool) -> PixResult<()> {
-        use FullscreenType::*;
+        use FullscreenType::{Off, True};
         let fullscreen_type = if val { True } else { Off };
         Ok(self
             .window_mut()?
@@ -457,7 +460,7 @@ impl WindowRenderer for Renderer {
     /// Reset main window as the target for drawing operations.
     #[inline]
     fn reset_window_target(&mut self) {
-        self.window_target = self.primary_window_id
+        self.window_target = self.primary_window_id;
     }
 
     /// Show the current window target.
@@ -478,21 +481,21 @@ impl WindowRenderer for Renderer {
 impl Renderer {}
 
 impl From<SystemCursor> for SdlSystemCursor {
+    #[doc(hidden)]
     fn from(cursor: SystemCursor) -> Self {
-        use SdlSystemCursor::*;
         match cursor {
-            SystemCursor::Arrow => Arrow,
-            SystemCursor::IBeam => IBeam,
-            SystemCursor::Wait => Wait,
-            SystemCursor::Crosshair => Crosshair,
-            SystemCursor::WaitArrow => WaitArrow,
-            SystemCursor::SizeNWSE => SizeNWSE,
-            SystemCursor::SizeNESW => SizeNESW,
-            SystemCursor::SizeWE => SizeWE,
-            SystemCursor::SizeNS => SizeNS,
-            SystemCursor::SizeAll => SizeAll,
-            SystemCursor::No => No,
-            SystemCursor::Hand => Hand,
+            SystemCursor::Arrow => Self::Arrow,
+            SystemCursor::IBeam => Self::IBeam,
+            SystemCursor::Wait => Self::Wait,
+            SystemCursor::Crosshair => Self::Crosshair,
+            SystemCursor::WaitArrow => Self::WaitArrow,
+            SystemCursor::SizeNWSE => Self::SizeNWSE,
+            SystemCursor::SizeNESW => Self::SizeNESW,
+            SystemCursor::SizeWE => Self::SizeWE,
+            SystemCursor::SizeNS => Self::SizeNS,
+            SystemCursor::SizeAll => Self::SizeAll,
+            SystemCursor::No => Self::No,
+            SystemCursor::Hand => Self::Hand,
         }
     }
 }

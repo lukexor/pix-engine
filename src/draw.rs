@@ -2,10 +2,10 @@
 //!
 //! Provides a [Draw] trait as well standard draw methods.
 //!
-//! Provided [PixState] methods:
+//! Provided [`PixState`] methods:
 //!
-//! - [PixState::clear]: Clear the render target to the current background [Color].
-//! - [PixState::save_canvas]: Save the current render target out to a [png] file.
+//! - [`PixState::clear`]: Clear the render target to the current background [Color].
+//! - [`PixState::save_canvas`]: Save the current render target out to a [png] file.
 //!
 //! # Example
 //!
@@ -14,11 +14,11 @@
 //! # struct App;
 //! # impl AppState for App {
 //! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-//!     s.background(ALICE_BLUE);
+//!     s.background(Color::ALICE_BLUE);
 //!     s.clear();
 //!     let rect = rect![0, 0, 100, 100];
-//!     s.fill(RED);
-//!     s.stroke(BLACK);
+//!     s.fill(Color::RED);
+//!     s.stroke(Color::BLACK);
 //!     s.rect(rect)?;
 //!     Ok(())
 //! }
@@ -32,7 +32,11 @@ use std::{fs::File, io::BufWriter, path::Path};
 
 /// Trait for objects that can be drawn to the screen.
 pub trait Draw {
-    /// Draw object to the current [PixState] canvas.
+    /// Draw object to the current [`PixState`] canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
     ///
     /// # Example
     ///
@@ -53,7 +57,11 @@ pub trait Draw {
 }
 
 impl PixState {
-    /// Clears the render target to the current background [Color] set by [PixState::background].
+    /// Clears the render target to the current background [Color] set by [`PixState::background`].
+    ///
+    /// # Errors
+    ///
+    /// If the current render target is closed or dropped, then an error is returned.
     ///
     /// # Example
     ///
@@ -62,7 +70,7 @@ impl PixState {
     /// # struct App;
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.background(CADET_BLUE);
+    ///     s.background(Color::CADET_BLUE);
     ///     s.clear();
     ///     Ok(())
     /// }
@@ -76,6 +84,16 @@ impl PixState {
 
     /// Save a portion `src` of the currently rendered target to a [png] file. Passing `None` for
     /// `src` saves the entire target.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for any of the following:
+    ///     - The current render target is closed or dropped.
+    ///     - The renderer fails to read pixels from the current window target.
+    ///     - An [`io::Error`] occurs attempting to create the [png] file.
+    ///     - A [`png::EncodingError`] occurs attempting to write image bytes.
+    ///
+    /// [`io::Error`]: std::io::Error
     ///
     /// # Example
     ///

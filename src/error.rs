@@ -4,14 +4,10 @@ use crate::prelude::*;
 use std::{ffi::OsString, io};
 use thiserror::Error;
 
-/// The result type for [PixEngine] operations.
-///
-/// [PixEngine]: crate::prelude::PixEngine
+/// The result type for [`PixEngine`] operations.
 pub type Result<T> = anyhow::Result<T, anyhow::Error>;
 
-/// The error type for [PixEngine] operations.
-///
-/// [PixEngine]: crate::prelude::PixEngine
+/// The error type for [`PixEngine`] operations.
 #[non_exhaustive]
 #[derive(Debug, Error)]
 pub enum Error {
@@ -28,7 +24,7 @@ pub enum Error {
     /// Invalid [Color] slice. Slice length is not in the range `1..=4`.
     #[error("invalid color slice")]
     InvalidColorSlice,
-    /// Invalid [Image]. `Image` data does not match it's dimensions based on [PixelFormat].
+    /// Invalid [Image]. `Image` data does not match it's dimensions based on [`PixelFormat`].
     #[error(
         "invalid image {{ width: {width}, height: {height}, size: {size}, format: {format:?} }}"
     )]

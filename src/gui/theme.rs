@@ -10,10 +10,10 @@
 //! # struct App { checkbox: bool, text_field: String };
 //! # impl AppState for App {
 //! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-//!     s.fill(CADET_BLUE); // Change text color
+//!     s.fill(Color::CADET_BLUE); // Change text color
 //!     s.font_size(14)?;
 //!     s.font_style(FontStyle::BOLD);
-//!     s.font_family(fonts::INCONSOLATA)?;
+//!     s.font_family(Font::INCONSOLATA)?;
 //!     s.text("Blue, bold, size 14 text in Inconsolata font")?;
 //!     Ok(())
 //! }
@@ -35,27 +35,6 @@ use std::{
 /// A hashed  identifier for internal state management.
 pub(crate) type FontId = u64;
 
-pub mod fonts {
-    //! A list of library-provided font families.
-
-    use super::Font;
-
-    const NOTO_TTF: &[u8] = include_bytes!("../../assets/noto_sans_regular.ttf");
-    const EMULOGIC_TTF: &[u8] = include_bytes!("../../assets/emulogic.ttf");
-    const INCONSOLATA_TTF: &[u8] = include_bytes!("../../assets/inconsolata_bold.ttf");
-
-    /// [Noto Sans Regular](https://fonts.google.com/noto/specimen/Noto+Sans) - an open-source used
-    /// by Linux and Google.
-    pub const NOTO: Font = Font::from_bytes("Noto", NOTO_TTF);
-
-    /// Emulogic - a bold, retro gaming pixel font by Freaky Fonts.
-    pub const EMULOGIC: Font = Font::from_bytes("Emulogic", EMULOGIC_TTF);
-
-    /// [Inconsolata](https://fonts.google.com/specimen/Inconsolata) - an open-source monospace
-    /// font designed for source code and terminals.
-    pub const INCONSOLATA: Font = Font::from_bytes("Inconsolata", INCONSOLATA_TTF);
-}
-
 /// A builder to generate custom [Theme]s.
 ///
 /// # Example
@@ -68,7 +47,7 @@ pub mod fonts {
 /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
 /// # }
 /// fn main() -> PixResult<()> {
-///     let mut style = ThemeStyle::default();
+///     let mut style = Spacing::default();
 ///     style.frame_pad = point!(10, 10);
 ///     style.item_pad = point!(5, 5);
 ///     let theme = Theme::builder()
@@ -80,12 +59,12 @@ pub mod fonts {
 ///         )
 ///         .with_font(
 ///             FontType::Heading,
-///             fonts::NOTO,
+///             Font::NOTO,
 ///             22,
 ///             FontStyle::BOLD | FontStyle::UNDERLINE
 ///         )
-///         .with_color(ColorType::OnBackground, BLACK)
-///         .with_color(ColorType::Background, DARK_GRAY)
+///         .with_color(ColorType::OnBackground, Color::BLACK)
+///         .with_color(ColorType::Background, Color::DARK_GRAY)
 ///         .with_style(style)
 ///         .build();
 ///     let mut engine = PixEngine::builder()
@@ -96,15 +75,16 @@ pub mod fonts {
 /// }
 /// ```
 #[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
+#[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'static")))]
-pub struct ThemeBuilder {
+pub struct Builder {
     name: String,
-    fonts: ThemeFonts,
-    font_sizes: ThemeFontSizes,
-    font_styles: ThemeFontStyles,
-    colors: ThemeColors,
-    style: ThemeStyle,
+    fonts: Fonts,
+    sizes: FontSizes,
+    styles: FontStyles,
+    colors: Colors,
+    spacing: Spacing,
 }
 
 /// Represents a given font-themed section in a UI.
@@ -150,16 +130,16 @@ pub enum ColorType {
     OnError,
 }
 
-impl ThemeBuilder {
-    /// Constructs a default `ThemeBuilder`.
+impl Builder {
+    /// Constructs a default [Theme] `Builder`.
     pub fn new<S: Into<String>>(name: S) -> Self {
         Self {
             name: name.into(),
-            ..Default::default()
+            ..Self::default()
         }
     }
 
-    /// Set font theme values for a given [FontType].
+    /// Set font theme values for a given [`FontType`].
     pub fn with_font(
         &mut self,
         font_type: FontType,
@@ -167,73 +147,71 @@ impl ThemeBuilder {
         size: u32,
         style: FontStyle,
     ) -> &mut Self {
-        use FontType::*;
         match font_type {
-            Body => {
+            FontType::Body => {
                 self.fonts.body = font;
-                self.font_sizes.body = size;
-                self.font_styles.body = style;
+                self.sizes.body = size;
+                self.styles.body = style;
             }
-            Heading => {
+            FontType::Heading => {
                 self.fonts.heading = font;
-                self.font_sizes.heading = size;
-                self.font_styles.heading = style;
+                self.sizes.heading = size;
+                self.styles.heading = style;
             }
-            Monospace => {
+            FontType::Monospace => {
                 self.fonts.monospace = font;
-                self.font_sizes.monospace = size;
-                self.font_styles.monospace = style;
+                self.sizes.monospace = size;
+                self.styles.monospace = style;
             }
         }
         self
     }
 
-    /// Set color theme for a given [ColorType].
+    /// Set color theme for a given [`ColorType`].
     pub fn with_color<C: Into<Color>>(&mut self, color_type: ColorType, color: C) -> &mut Self {
         let color = color.into();
-        use ColorType::*;
         let c = &mut self.colors;
         match color_type {
-            Background => c.background = color,
-            Surface => c.surface = color,
-            Primary => c.primary = color,
-            PrimaryVariant => c.primary_variant = color,
-            Secondary => c.secondary = color,
-            SecondaryVariant => c.secondary_variant = color,
-            Error => c.error = color,
-            OnBackground => c.on_background = color,
-            OnSurface => c.on_surface = color,
-            OnPrimary => c.on_primary = color,
-            OnSecondary => c.on_secondary = color,
-            OnError => c.on_error = color,
+            ColorType::Background => c.background = color,
+            ColorType::Surface => c.surface = color,
+            ColorType::Primary => c.primary = color,
+            ColorType::PrimaryVariant => c.primary_variant = color,
+            ColorType::Secondary => c.secondary = color,
+            ColorType::SecondaryVariant => c.secondary_variant = color,
+            ColorType::Error => c.error = color,
+            ColorType::OnBackground => c.on_background = color,
+            ColorType::OnSurface => c.on_surface = color,
+            ColorType::OnPrimary => c.on_primary = color,
+            ColorType::OnSecondary => c.on_secondary = color,
+            ColorType::OnError => c.on_error = color,
         }
         self
     }
 
     /// Set element padding space.
-    pub fn with_style(&mut self, style: ThemeStyle) -> &mut Self {
-        self.style = style;
+    pub fn with_style(&mut self, style: Spacing) -> &mut Self {
+        self.spacing = style;
         self
     }
 
-    /// Convert [ThemeBuilder] to a [Theme] instance.
+    /// Convert `Builder` into a [Theme] instance.
     pub fn build(&self) -> Theme {
         Theme {
             name: self.name.clone(),
             fonts: self.fonts.clone(),
-            font_sizes: self.font_sizes,
-            font_styles: self.font_styles,
+            sizes: self.sizes,
+            styles: self.styles,
             colors: self.colors,
-            style: self.style,
+            spacing: self.spacing,
         }
     }
 }
 
 /// Represents a font family name along with the font glyph source.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'static")))]
-#[non_exhaustive]
 pub struct Font {
     /// Family name of the font.
     pub(crate) name: Cow<'static, str>,
@@ -243,12 +221,28 @@ pub struct Font {
 
 impl Default for Font {
     fn default() -> Self {
-        fonts::EMULOGIC
+        Self::EMULOGIC
     }
 }
 
 impl Font {
+    const NOTO_TTF: &'static [u8] = include_bytes!("../../assets/noto_sans_regular.ttf");
+    const EMULOGIC_TTF: &'static [u8] = include_bytes!("../../assets/emulogic.ttf");
+    const INCONSOLATA_TTF: &'static [u8] = include_bytes!("../../assets/inconsolata_bold.ttf");
+
+    /// [Noto Sans Regular](https://fonts.google.com/noto/specimen/Noto+Sans) - an open-source used
+    /// by Linux and Google.
+    pub const NOTO: Self = Self::from_bytes("Noto", Self::NOTO_TTF);
+
+    /// Emulogic - a bold, retro gaming pixel font by Freaky Fonts.
+    pub const EMULOGIC: Self = Self::from_bytes("Emulogic", Self::EMULOGIC_TTF);
+
+    /// [Inconsolata](https://fonts.google.com/specimen/Inconsolata) - an open-source monospace
+    /// font designed for source code and terminals.
+    pub const INCONSOLATA: Self = Self::from_bytes("Inconsolata", Self::INCONSOLATA_TTF);
+
     /// Constructs a new `Font` instance from a static byte array.
+    #[inline]
     pub const fn from_bytes(name: &'static str, bytes: &'static [u8]) -> Self {
         Self {
             name: Cow::Borrowed(name),
@@ -257,6 +251,7 @@ impl Font {
     }
 
     /// Constructs a new `Font` instance from a file.
+    #[inline]
     pub fn from_file<S, P>(name: S, path: P) -> Self
     where
         S: Into<Cow<'static, str>>,
@@ -269,12 +264,15 @@ impl Font {
     }
 
     /// Returns the name of the font family.
+    #[inline]
+    #[must_use]
     pub fn name(&self) -> &str {
         self.name.as_ref()
     }
 
     /// Returns the hashed identifier for this font family.
     #[inline]
+    #[must_use]
     pub fn id(&self) -> FontId {
         let mut hasher = DefaultHasher::new();
         self.name.hash(&mut hasher);
@@ -308,7 +306,7 @@ impl FontSrc {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'static")))]
 #[non_exhaustive]
-pub struct ThemeFonts {
+pub struct Fonts {
     /// Body font.
     pub body: Font,
     /// Heading font.
@@ -317,12 +315,12 @@ pub struct ThemeFonts {
     pub monospace: Font,
 }
 
-impl Default for ThemeFonts {
+impl Default for Fonts {
     fn default() -> Self {
         Self {
-            body: fonts::EMULOGIC,
-            heading: fonts::EMULOGIC,
-            monospace: fonts::INCONSOLATA,
+            body: Font::EMULOGIC,
+            heading: Font::EMULOGIC,
+            monospace: Font::INCONSOLATA,
         }
     }
 }
@@ -331,7 +329,7 @@ impl Default for ThemeFonts {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[non_exhaustive]
-pub struct ThemeFontSizes {
+pub struct FontSizes {
     /// Body font size.
     pub body: u32,
     /// Heading font size.
@@ -340,7 +338,7 @@ pub struct ThemeFontSizes {
     pub monospace: u32,
 }
 
-impl Default for ThemeFontSizes {
+impl Default for FontSizes {
     fn default() -> Self {
         Self {
             body: 12,
@@ -350,11 +348,12 @@ impl Default for ThemeFontSizes {
     }
 }
 
-/// A set of [FontStyle]s for body, heading, and monospace text.
+/// A set of [`FontStyle`]s for body, heading, and monospace text.
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[non_exhaustive]
-pub struct ThemeFontStyles {
+#[must_use]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct FontStyles {
     /// Body style.
     pub body: FontStyle,
     /// Heading style.
@@ -365,9 +364,10 @@ pub struct ThemeFontStyles {
 
 /// A set of [Color]s for theming UI elements.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[non_exhaustive]
-pub struct ThemeColors {
+#[must_use]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Colors {
     /// Background color, used to clear the screen each frame and appears behind scrollable
     /// content.
     pub background: Color,
@@ -395,7 +395,7 @@ pub struct ThemeColors {
     pub on_error: Color,
 }
 
-impl ThemeColors {
+impl Colors {
     /// A dark color theme.
     pub fn dark() -> Self {
         Self {
@@ -406,11 +406,11 @@ impl ThemeColors {
             secondary: Color::from_str("#0c95bf").unwrap(),
             secondary_variant: Color::from_str("#43d3ff").unwrap(),
             error: Color::from_str("#cf6679").unwrap(),
-            on_background: WHITE,
-            on_surface: WHITE,
-            on_primary: BLACK,
-            on_secondary: BLACK,
-            on_error: BLACK,
+            on_background: Color::WHITE,
+            on_surface: Color::WHITE,
+            on_primary: Color::BLACK,
+            on_secondary: Color::BLACK,
+            on_error: Color::BLACK,
         }
     }
 
@@ -424,34 +424,34 @@ impl ThemeColors {
             secondary: Color::from_str("#79000e").unwrap(),
             secondary_variant: Color::from_str("#b64d58").unwrap(),
             error: Color::from_str("#b00020").unwrap(),
-            on_background: BLACK,
-            on_surface: BLACK,
-            on_primary: WHITE,
-            on_secondary: WHITE,
-            on_error: WHITE,
+            on_background: Color::BLACK,
+            on_surface: Color::BLACK,
+            on_primary: Color::WHITE,
+            on_secondary: Color::WHITE,
+            on_error: Color::WHITE,
         }
     }
 
-    /// Return the OnBackground color.
+    /// Return the on background overlay color.
     #[inline]
     pub fn on_background(&self) -> Color {
         self.on_background.blended(self.background, 0.87)
     }
 
-    /// Return the OnSurface color.
+    /// Return the on surface overlay color.
     #[inline]
     pub fn on_surface(&self) -> Color {
         self.on_surface.blended(self.surface, 0.87)
     }
 
-    /// Return the Disabled color.
+    /// Return the disabled color.
     #[inline]
     pub fn disabled(&self) -> Color {
         self.on_background.blended(self.background, 0.38)
     }
 }
 
-impl Default for ThemeColors {
+impl Default for Colors {
     fn default() -> Self {
         Self::dark()
     }
@@ -459,16 +459,17 @@ impl Default for ThemeColors {
 
 /// A set of styles for sizing, padding, borders, etc for theming UI elements.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[non_exhaustive]
-pub struct ThemeStyle {
+#[must_use]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct Spacing {
     /// Padding between the edge of frames/windows and UI widgets.
     pub frame_pad: PointI2,
     /// Padding between UI widgets.
     pub item_pad: PointI2,
 }
 
-impl Default for ThemeStyle {
+impl Default for Spacing {
     fn default() -> Self {
         Self {
             frame_pad: point![8, 8],
@@ -479,7 +480,7 @@ impl Default for ThemeStyle {
 
 /// A UI `Theme` containing font families, sizes, styles, and colors.
 ///
-/// See [ThemeBuilder] examples for building a custom theme.
+/// See the [Builder] examples for building a custom theme.
 ///
 /// # Example
 ///
@@ -488,7 +489,7 @@ impl Default for ThemeStyle {
 /// # struct App { checkbox: bool, text_field: String };
 /// # impl AppState for App {
 /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-///     s.fill(CADET_BLUE); // Change font color
+///     s.fill(Color::CADET_BLUE); // Change font color
 ///     s.font_size(16)?;
 ///     s.font_style(FontStyle::UNDERLINE);
 ///     s.font_family(Font::from_file("Some font", "./some_font.ttf"))?;
@@ -498,22 +499,23 @@ impl Default for ThemeStyle {
 /// # }
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[non_exhaustive]
+#[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'static")))]
-#[non_exhaustive]
 pub struct Theme {
     /// The name of this theme.
     pub name: String,
     /// The font families used in this theme.
-    pub fonts: ThemeFonts,
+    pub fonts: Fonts,
     /// The font sizes used in this theme.
-    pub font_sizes: ThemeFontSizes,
+    pub sizes: FontSizes,
     /// The font styles used in this theme.
-    pub font_styles: ThemeFontStyles,
+    pub styles: FontStyles,
     /// The colors used in this theme.
-    pub colors: ThemeColors,
+    pub colors: Colors,
     /// The padding, offsets, and other styles used in this theme.
-    pub style: ThemeStyle,
+    pub spacing: Spacing,
 }
 
 impl Default for Theme {
@@ -523,43 +525,48 @@ impl Default for Theme {
 }
 
 impl Theme {
-    /// Constructs a default [ThemeBuilder] which can build a `Theme` instance.
+    /// Constructs a default [Builder] which can build a `Theme` instance.
     ///
-    /// See [ThemeBuilder] for examples.
+    /// See [Builder] for examples.
     #[inline]
-    pub fn builder() -> ThemeBuilder {
-        ThemeBuilder::default()
+    pub fn builder() -> Builder {
+        Builder::default()
     }
 
-    /// Constructs a default `Dark` Theme.
+    /// Constructs a default dark `Theme`.
     #[inline]
-    pub fn dark() -> Theme {
+    pub fn dark() -> Self {
         Self {
             name: "Dark".into(),
-            colors: ThemeColors::dark(),
-            fonts: ThemeFonts::default(),
-            font_sizes: ThemeFontSizes::default(),
-            font_styles: ThemeFontStyles::default(),
-            style: ThemeStyle::default(),
+            colors: Colors::dark(),
+            fonts: Fonts::default(),
+            sizes: FontSizes::default(),
+            styles: FontStyles::default(),
+            spacing: Spacing::default(),
         }
     }
 
-    /// Constructs a default `Light` Theme.
+    /// Constructs a default light `Theme`.
     #[inline]
-    pub fn light() -> Theme {
+    pub fn light() -> Self {
         Self {
             name: "Light".into(),
-            colors: ThemeColors::light(),
-            fonts: ThemeFonts::default(),
-            font_sizes: ThemeFontSizes::default(),
-            font_styles: ThemeFontStyles::default(),
-            style: ThemeStyle::default(),
+            colors: Colors::light(),
+            fonts: Fonts::default(),
+            sizes: FontSizes::default(),
+            styles: FontStyles::default(),
+            spacing: Spacing::default(),
         }
     }
 }
 
 impl PixState {
     /// Set the font size for drawing to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to load the given font size from the currently loaded font data, then
+    /// an error is returned.
     ///
     /// # Example
     ///
@@ -574,12 +581,17 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn font_size(&mut self, size: u32) -> PixResult<()> {
-        self.theme.font_sizes.body = size;
-        self.renderer.font_size(self.theme.font_sizes.body)
+        self.theme.sizes.body = size;
+        self.renderer.font_size(self.theme.sizes.body)
     }
 
     /// Return the dimensions of given text for drawing to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to load the current font, then an error is returned.
     ///
     /// # Example
     ///
@@ -597,12 +609,17 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn size_of<S: AsRef<str>>(&mut self, text: S) -> PixResult<(u32, u32)> {
         self.renderer
             .size_of(text.as_ref(), self.settings.wrap_width)
     }
 
     /// Set the font style for drawing to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to load the current font, then an error is returned.
     ///
     /// # Example
     ///
@@ -617,12 +634,18 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn font_style(&mut self, style: FontStyle) {
-        self.theme.font_styles.body = style;
+        self.theme.styles.body = style;
         self.renderer.font_style(style);
     }
 
     /// Set the font family for drawing to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to load the given font size from the currently loaded font data, then
+    /// an error is returned.
     ///
     /// # Example
     ///
@@ -631,7 +654,7 @@ impl PixState {
     /// # struct App;
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.font_family(fonts::NOTO)?;
+    ///     s.font_family(Font::NOTO)?;
     ///     s.text("Some NOTO family text")?;
     ///     s.font_family(Font::from_file("Custom font", "./custom_font.ttf"))?;
     ///     s.text("Some custom family text")?;
@@ -639,6 +662,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn font_family(&mut self, font: Font) -> PixResult<()> {
         self.theme.fonts.body = font;
         self.renderer.font_family(&self.theme.fonts.body)
@@ -646,7 +670,7 @@ impl PixState {
 
     /// Returns the reference to the current theme.
     #[inline]
-    pub fn theme(&self) -> &Theme {
+    pub const fn theme(&self) -> &Theme {
         &self.theme
     }
 

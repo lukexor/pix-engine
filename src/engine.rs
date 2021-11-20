@@ -1,10 +1,10 @@
-//! [PixEngine] functions.
+//! [`PixEngine`] functions.
 //!
 //! This is the core module of the `pix-engine` crate and is responsible for building and running
 //! any application using it.
 //!
-//! [PixEngineBuilder] allows you to customize various engine features and, once built, can
-//! [run][PixEngine::run] your application which must implement [AppState::on_update].
+//! [`Builder`] allows you to customize various engine features and, once built, can
+//! [run][`PixEngine::run`] your application which must implement [`AppState::on_update`].
 //!
 //!
 //!
@@ -32,13 +32,16 @@
 //! }
 //! ```
 
-use crate::{prelude::*, renderer::*};
+use crate::{
+    prelude::*,
+    renderer::{RendererSettings, WindowRenderer},
+};
 use std::time::{Duration, Instant};
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
 
-/// Builds a [PixEngine] instance by providing several configration functions.
+/// Builds a [`PixEngine`] instance by providing several configration functions.
 ///
 /// # Example
 ///
@@ -62,13 +65,13 @@ use std::path::PathBuf;
 /// ```
 #[must_use]
 #[derive(Default, Debug)]
-pub struct PixEngineBuilder {
+pub struct Builder {
     settings: RendererSettings,
     theme: Theme,
 }
 
-impl PixEngineBuilder {
-    /// Constructs a `PixEngineBuilder`.
+impl Builder {
+    /// Constructs a `Builder`.
     pub fn new() -> Self {
         Self::default()
     }
@@ -85,7 +88,7 @@ impl PixEngineBuilder {
     /// Set font for text rendering.
     pub fn with_font(&mut self, font: Font, size: u32) -> &mut Self {
         self.theme.fonts.body = font;
-        self.theme.font_sizes.body = size;
+        self.theme.sizes.body = size;
         self
     }
 
@@ -145,7 +148,9 @@ impl PixEngineBuilder {
         self
     }
 
-    /// Enable VSync.
+    /// Set the window to synchronize frame rate to the screens refresh rate ([`VSync`]).
+    ///
+    /// [`VSync`]: https://en.wikipedia.org/wiki/Screen_tearing#Vertical_synchronization
     pub fn vsync_enabled(&mut self) -> &mut Self {
         self.settings.vsync = true;
         self
@@ -182,7 +187,7 @@ impl PixEngineBuilder {
     }
 
     /// Set a target frame rate to render at, controls how often
-    /// [on_update](crate::prelude::AppState::on_update) is called.
+    /// [`AppState::on_update`] is called.
     pub fn target_frame_rate(&mut self, rate: usize) -> &mut Self {
         self.settings.target_frame_rate = Some(rate);
         self
@@ -202,7 +207,15 @@ impl PixEngineBuilder {
         self
     }
 
-    /// Convert [PixEngineBuilder] to a [PixEngine] instance.
+    /// Convert [Builder] to a [`PixEngine`] instance.
+    ///
+    /// # Errors
+    ///
+    /// If the engine fails to create a new renderer, then an error is returned.
+    ///
+    /// Possible errors include the title containing a `nul` character, the position or dimensions
+    /// being invalid values or overlowing and an internal renderer error such as running out of
+    /// memory or a software driver issue.
     pub fn build(&self) -> PixResult<PixEngine> {
         Ok(PixEngine {
             state: PixState::new(self.settings.clone(), self.theme.clone())?,
@@ -218,16 +231,21 @@ pub struct PixEngine {
 }
 
 impl PixEngine {
-    /// Constructs a default [PixEngineBuilder] which can build a `PixEngine` instance.
+    /// Constructs a default [Builder] which can build a `PixEngine` instance.
     ///
-    /// See [PixEngineBuilder] for examples.
-    pub fn builder() -> PixEngineBuilder {
-        PixEngineBuilder::default()
+    /// See [Builder] for examples.
+    pub fn builder() -> Builder {
+        Builder::default()
     }
 
     /// Starts the `PixEngine` application and begins executing the frame loop on a given
-    /// application which must implement [AppState]. The only required method of which is
-    /// [AppState::on_update].
+    /// application which must implement [`AppState`]. The only required method of which is
+    /// [`AppState::on_update`].
+    ///
+    /// # Errors
+    ///
+    /// Any error in the entire library can propagate here and terminate the program. See the
+    /// [error](crate::error) module for details. Also see [`AppState::on_stop`].
     ///
     /// # Example
     ///
@@ -252,19 +270,19 @@ impl PixEngine {
         self.handle_events(app)?;
 
         self.state.clear()?;
-        app.on_start(&mut self.state)?;
-        if self.state.should_quit() {
-            return Ok(());
+        let on_start = app.on_start(&mut self.state);
+        if on_start.is_err() || self.state.should_quit() {
+            return app.on_stop(&mut self.state).and(on_start);
         }
         self.state.present();
 
         // on_stop loop enables on_stop to prevent application close if necessary
         'on_stop: loop {
             // running loop continues until an event or on_update returns false or errors
-            'running: loop {
+            let result = 'running: loop {
                 self.handle_events(app)?;
                 if self.state.should_quit() {
-                    break 'running;
+                    break 'running Ok(());
                 }
 
                 let now = Instant::now();
@@ -275,21 +293,24 @@ impl PixEngine {
                     if self.state.is_running() {
                         self.state.clear()?;
                         self.state.pre_update();
-                        app.on_update(&mut self.state)?;
+                        let on_update = app.on_update(&mut self.state);
+                        if on_update.is_err() {
+                            self.state.quit();
+                            break 'running on_update;
+                        }
                         self.state.on_update()?;
                         self.state.post_update();
                         self.state.present();
                         self.state.increment_frame(now, time_since_last)?;
                     }
                 }
-            }
+            };
 
-            app.on_stop(&mut self.state)?;
+            let on_stop = app.on_stop(&mut self.state);
             if self.state.should_quit() {
-                break 'on_stop;
+                break 'on_stop on_stop.and(result);
             }
         }
-        Ok(())
     }
 }
 
@@ -309,12 +330,12 @@ impl PixEngine {
                     window_id,
                     win_event,
                 } => {
-                    let id = window_id as WindowId;
-                    app.on_window_event(state, id, win_event)?;
+                    let window_id = WindowId(window_id);
+                    app.on_window_event(state, window_id, win_event)?;
                     match win_event {
-                        WindowEvent::FocusGained => state.focus_window(Some(id)),
+                        WindowEvent::FocusGained => state.focus_window(Some(window_id)),
                         WindowEvent::FocusLost => state.focus_window(None),
-                        WindowEvent::Close => state.close_window(id)?,
+                        WindowEvent::Close => state.close_window(window_id)?,
                         _ => (),
                     }
                 }

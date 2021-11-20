@@ -1,4 +1,4 @@
-use pix_engine::prelude::*;
+use pix_engine::{prelude::*, shape::PointF2, vector::VectorF2};
 
 const WIDTH: u32 = 1000;
 const HEIGHT: u32 = 800;
@@ -54,8 +54,8 @@ impl Boid {
     }
 
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
-        s.stroke(SKY_BLUE);
-        s.fill(SKY_BLUE);
+        s.stroke(Color::SKY_BLUE);
+        s.fill(Color::SKY_BLUE);
         s.wireframe(
             BOID_MODEL,
             self.pos.round().as_::<i32>(),

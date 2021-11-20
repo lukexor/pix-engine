@@ -2,15 +2,15 @@
 //!
 //! Each [Vector] represents a N-dimensional [Euclidean] (or geometric) vector with a magnitude
 //! and a direction. The [Vector] `struct`, however, contains N values for each dimensional
-//! coordinate. The magnitude and direction are retrieved with the [Vector::mag] and
-//! [Vector::heading] methods.
+//! coordinate. The magnitude and direction are retrieved with the [`Vector::mag`] and
+//! [`Vector::heading`] methods.
 //!
 //! Some example uses of a [Vector] include modeling a position, velocity, or acceleration of an
 //! object or particle in 2D or 3D space.
 //!
 //! # Examples
 //!
-//! You can create a [Vector] using [Vector::new]:
+//! You can create a [Vector] using [`Vector::new`]:
 //!
 //! ```
 //! # use pix_engine::prelude::*;
@@ -20,7 +20,7 @@
 //!
 //! ```
 //! # use pix_engine::prelude::*;
-//! let v: VectorF3 = vector!(); // vector at the origin (0, 0, 0) with no direction or magnitude
+//! let v: Vector<f64, 3> = vector!(); // vector at the origin (0, 0, 0) with no direction or magnitude
 //! assert_eq!(v.as_array(), [0.0, 0.0, 0.0]);
 //!
 //! let v = vector!(5.0); // 1D vector on the x-axis with magnitude 5
@@ -33,25 +33,24 @@
 //! assert_eq!(v.as_array(), [-1.5, 3.0, 2.2]);
 //! ```
 //!
-//! You can also create random `Vector`s using [Vector::random] which create unit vectors with
+//! You can also create random `Vector`s using [`Vector::random`] which create unit vectors with
 //! magnitudes in the range `-1.0..=1.0`.
 //!
 //! ```
 //! use pix_engine::prelude::*;
-//! use pix_engine::vector::VectorF1;
 //!
-//! let v: VectorF1 = Vector::random();
+//! let v: Vector<f64, 1> = Vector::random();
 //! // `v.as_array()` will return something like:
 //! // [-0.9993116191591512, 0.03709835324533284, 0.0]
 //! assert!(v.x() >= -1.0 && v.x() <= 1.0);
 //!
-//! let v: VectorF2 = Vector::random();
+//! let v: Vector<f64, 2> = Vector::random();
 //! // `v.as_array()` will return something like:
 //! // [-0.9993116191591512, 0.03709835324533284, 0.0]
 //! assert!(v.x() >= -1.0 && v.x() <= 1.0);
 //! assert!(v.y() >= -1.0 && v.y() <= 1.0);
 //!
-//! let v: VectorF3 = Vector::random();
+//! let v: Vector<f64, 3> = Vector::random();
 //! // `v.as_array()` will return something like:
 //! // [-0.40038099206441835, 0.8985763512414204, 0.17959844705110184]
 //! assert!(v.x() >= -1.0 && v.x() <= 1.0);
@@ -68,7 +67,7 @@ use num_traits::Signed;
 use rand::distributions::uniform::SampleUniform;
 #[cfg(feature = "serde")]
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use std::{fmt, ops::*};
+use std::{cmp, fmt, ops::MulAssign};
 
 /// A [Euclidean] `Vector` in N-dimensional space.
 ///
@@ -93,6 +92,7 @@ use std::{fmt, ops::*};
 /// [module-level documentation]: mod@crate::vector
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
+#[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
 pub struct Vector<T, const N: usize>(
@@ -123,7 +123,7 @@ pub type VectorF3 = Vector<Scalar, 3>;
 ///
 /// ```
 /// # use pix_engine::prelude::*;
-/// let v: VectorF3 = vector!();
+/// let v: Vector<f64, 3> = vector!();
 /// assert_eq!(v.as_array(), [0.0, 0.0, 0.0]);
 ///
 /// let v = vector!(1.0);
@@ -178,7 +178,7 @@ impl<T, const N: usize> Vector<T, N> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v: VectorF3 = Vector::origin();
+    /// let v: Vector<f64, 3> = Vector::origin();
     /// assert_eq!(v.as_array(), [0.0, 0.0, 0.0]);
     /// ```
     #[inline]
@@ -221,7 +221,7 @@ impl<T: Num + Float> Vector<T, 2> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// use pix_engine::math::constants::FRAC_PI_2;
+    /// use pix_engine::math::FRAC_PI_2;
     /// let v1 = Vector::new([10.0, 20.0]);
     /// let v2 = Vector::rotated(v1, FRAC_PI_2);
     /// assert!(v2.approx_eq(vector![-20.0, 10.0], 1e-4));
@@ -236,12 +236,13 @@ impl<T: Num + Float> Vector<T, 2> {
     }
 
     /// Constructs a 2D unit `Vector` in the XY plane from a given angle. Angle is given as
-    /// radians and is unaffected by [AngleMode](crate::prelude::AngleMode).
+    /// radians and is unaffected by [`AngleMode`].
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
+    /// use pix_engine::math::FRAC_PI_4;
     /// let v = Vector::from_angle(FRAC_PI_4, 15.0);
     /// assert!(v.approx_eq(vector!(10.6066, 10.6066), 1e-4));
     /// ```
@@ -265,13 +266,13 @@ impl<T: Num + Float> Vector<T, 2> {
     }
 
     /// Rotate a 2D `Vector` by an angle in radians, magnitude remains the same. Unaffected by
-    /// [AngleMode](crate::prelude::AngleMode).
+    /// [`AngleMode`].
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// use pix_engine::math::constants::FRAC_PI_2;
+    /// use pix_engine::math::FRAC_PI_2;
     /// let mut v = vector!(10.0, 20.0);
     /// v.rotate(FRAC_PI_2);
     /// assert!(v.approx_eq(vector![-20.0, 10.0], 1e-4));
@@ -298,7 +299,10 @@ impl<T: Num + Float> Vector<T, 3> {
     /// let cross = v1.cross(v2);
     /// assert_eq!(cross.as_array(), [0.0, 0.0, 0.0]);
     /// ```
-    pub fn cross<V: Into<Vector<T, 3>>>(&self, v: V) -> Self {
+    pub fn cross<V>(&self, v: V) -> Self
+    where
+        V: Into<Vector<T, 3>>,
+    {
         let v = v.into();
         Self::new([
             self.y() * v.z() - self.z() * v.y(),
@@ -318,7 +322,10 @@ impl<T: Num + Float> Vector<T, 3> {
     /// let angle = v1.angle_between(v2);
     /// assert_eq!(angle, std::f64::consts::FRAC_PI_2);
     /// ```
-    pub fn angle_between<V: Into<Vector<T, 3>>>(&self, v: V) -> T {
+    pub fn angle_between<V>(&self, v: V) -> T
+    where
+        V: Into<Vector<T, 3>>,
+    {
         let v = v.into();
         // This should range from -1.0 to 1.0, inclusive but could possibly land outside this range
         // due to floating-point rounding, so we'll need to clamp it to the correct range.
@@ -527,14 +534,14 @@ impl<T: Num, const N: usize> Vector<T, N> {
     /// assert_eq!(v.as_array(), [4.0, -1.0, 1.5]);
     /// ```
     #[inline]
-    pub fn offset<U, const M: usize>(&mut self, offsets: [U; M])
+    pub fn offset<V, const M: usize>(&mut self, offsets: V)
     where
-        T: AddAssign<U>,
-        U: Copy,
+        V: Into<Vector<T, M>>,
     {
-        assert!(N >= M);
-        for i in 0..M {
-            self[i] += offsets[i]
+        let offsets = offsets.into();
+        let len = cmp::min(N, M);
+        for i in 0..len {
+            self[i] += offsets[i];
         }
     }
 
@@ -619,7 +626,7 @@ impl<T: Num, const N: usize> Vector<T, N> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let v: VectorF3 = Vector::random();
+    /// let v: Vector<f64, 3> = Vector::random();
     /// assert!(v.x() > -1.0 && v.x() < 1.0);
     /// assert!(v.y() > -1.0 && v.y() < 1.0);
     /// assert!(v.z() > -1.0 && v.z() < 1.0);
@@ -637,7 +644,7 @@ impl<T: Num, const N: usize> Vector<T, N> {
         for coord in &mut coords {
             *coord = random!(T::one());
         }
-        Vector::new(coords)
+        Self::new(coords)
     }
 }
 
@@ -715,7 +722,7 @@ impl<T: Num + Float, const N: usize> Vector<T, N> {
     pub fn mag_sq(&self) -> T {
         let mut sum = T::zero();
         for i in 0..N {
-            sum += self[i] * self[i]
+            sum += self[i] * self[i];
         }
         sum
     }
@@ -731,11 +738,14 @@ impl<T: Num + Float, const N: usize> Vector<T, N> {
     /// let dot_product = v1.dot(v2);
     /// assert_eq!(dot_product, 20.0);
     /// ```
-    pub fn dot<V: Into<Vector<T, N>>>(&self, v: V) -> T {
+    pub fn dot<V>(&self, v: V) -> T
+    where
+        V: Into<Vector<T, N>>,
+    {
         let v = v.into();
         let mut sum = T::zero();
         for i in 0..N {
-            sum += self[i] * v[i]
+            sum += self[i] * v[i];
         }
         sum
     }
@@ -752,7 +762,10 @@ impl<T: Num + Float, const N: usize> Vector<T, N> {
     /// assert_eq!(v.x(), -4.0);
     /// assert_eq!(v.y(), 6.0);
     /// ```
-    pub fn reflect<V: Into<Vector<T, N>>>(&mut self, normal: V) {
+    pub fn reflect<V>(&mut self, normal: V)
+    where
+        V: Into<Vector<T, N>>,
+    {
         let normal = Self::normalized(normal);
         *self = normal * ((T::one() + T::one()) * self.dot(normal)) - *self;
     }
@@ -784,7 +797,10 @@ impl<T: Num + Float, const N: usize> Vector<T, N> {
     /// let abs_difference: f64 = (dist - std::f64::consts::SQRT_2).abs();
     /// assert!(abs_difference <= 1e-4);
     /// ```
-    pub fn dist<V: Into<Vector<T, N>>>(&self, v: V) -> T {
+    pub fn dist<V>(&self, v: V) -> T
+    where
+        V: Into<Vector<T, N>>,
+    {
         (*self - v.into()).mag()
     }
 
@@ -836,7 +852,10 @@ impl<T: Num + Float, const N: usize> Vector<T, N> {
     /// let v3 = v1.lerp(v2, 0.5);
     /// assert_eq!(v3.as_array(), [2.0, 2.0, 0.0]);
     /// ```
-    pub fn lerp<V: Into<Vector<T, N>>>(&self, v: V, amt: T) -> Self {
+    pub fn lerp<V>(&self, v: V, amt: T) -> Self
+    where
+        V: Into<Vector<T, N>>,
+    {
         let v = v.into();
         let lerp = |start, stop, amt| amt * (stop - start) + start;
         let amt = num_traits::clamp(amt, T::zero(), T::one());
@@ -857,7 +876,10 @@ impl<T: Num + Float, const N: usize> Vector<T, N> {
     /// let v2 = vector!(10.0001, 20.0, 2.0);
     /// assert!(v1.approx_eq(v2, 1e-3));
     /// ```
-    pub fn approx_eq<V: Into<Vector<T, N>>>(&self, other: V, epsilon: T) -> bool {
+    pub fn approx_eq<V>(&self, other: V, epsilon: T) -> bool
+    where
+        V: Into<Vector<T, N>>,
+    {
         let other = other.into();
         let mut approx_eq = true;
         for i in 0..N {

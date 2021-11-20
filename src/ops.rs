@@ -1,6 +1,4 @@
-//! Common [PixEngine] trait implementations for types.
-//!
-//! [PixEngine]: crate::prelude::PixEngine
+//! Common [`PixEngine`] trait implementations for types.
 
 use crate::prelude::*;
 use lru::LruCache;
@@ -10,8 +8,21 @@ use std::{
     borrow::Borrow,
     hash::{BuildHasher, Hash},
     iter::{FromIterator, Product, Sum},
-    ops::*,
+    ops::{
+        Add, AddAssign, Deref, DerefMut, Div, DivAssign, FnMut, Index, IndexMut, Mul, MulAssign,
+        Neg, Sub, SubAssign,
+    },
 };
+
+#[inline]
+pub(crate) fn clamp_size(val: u32) -> i32 {
+    val.clamp(0, i32::MAX as u32 / 2) as i32
+}
+
+#[inline]
+pub(crate) fn clamp_dimensions(width: u32, height: u32) -> (i32, i32) {
+    (clamp_size(width), clamp_size(height))
+}
 
 /// Helper macro to create From conversion traits for arrays into generic shape types.
 macro_rules! impl_from_array {
@@ -53,6 +64,7 @@ impl_from_array!(Line<T, N> => [Point<T, N>; 2]);
 impl_from_array!(Tri<T, N> => [Point<T, N>; 3]);
 impl_from_array!(Quad<T, N> => [Point<T, N>; 4]);
 
+/// Implement an `as_` methods for types for lossy conversions using the `as` operator.
 macro_rules! impl_as {
     ($($Type:ident<T$(, $N:ident)?>),*) => {$(
         impl<T$(, const $N: usize)?> $Type<T$(, $N)?> {
@@ -64,7 +76,7 @@ macro_rules! impl_as {
                 U: 'static + Copy,
                 T: AsPrimitive<U>
             {
-                $Type(self.map(|v| v.as_()))
+                $Type(self.map(AsPrimitive::as_))
             }
         }
     )*};
@@ -79,7 +91,7 @@ macro_rules! impl_as {
                 U: 'static + Copy,
                 T: AsPrimitive<U>
             {
-                $Type(self.map(|p| $U(p.map(|v| v.as_()))))
+                $Type(self.map(|p| $U(p.map(AsPrimitive::as_))))
             }
         }
     )*};
@@ -88,6 +100,8 @@ macro_rules! impl_as {
 impl_as!(Point<T, N>, Vector<T, N>, Ellipse<T>, Rect<T>, Sphere<T>);
 impl_as!(Line<T, N>, Tri<T, N>, Quad<T, N> from Point);
 
+/// Helper functions for types that contain floats giving similar element-size methods as [f32] and
+/// [f64].
 macro_rules! impl_float_conversion {
     ($($Type:ident<T$(, $N:ident)?>),*) => {$(
         impl<T: Float$(, const $N: usize)?> $Type<T$(, $N)?> {
@@ -95,19 +109,19 @@ macro_rules! impl_float_conversion {
                 " with the nearest integers to the numbers. Round half-way cases away from 0.0.")]
             #[inline]
             pub fn round(&self) -> Self {
-                Self(self.map(|v| v.round()))
+                Self(self.map(num_traits::Float::round))
             }
             #[doc = concat!("Returns ", stringify!($Type<T$(, $N)?>),
                 " with the largest integers less than or equal to the numbers.")]
             #[inline]
             pub fn floor(&self) -> Self {
-                Self(self.map(|v| v.floor()))
+                Self(self.map(num_traits::Float::floor))
             }
             #[doc = concat!("Returns ", stringify!($Type<T$(, $N)?>),
                 " with the smallest integers greater than or equal to the numbers.")]
             #[inline]
             pub fn ceil(&self) -> Self {
-                Self(self.map(|v| v.ceil()))
+                Self(self.map(num_traits::Float::ceil))
             }
         }
     )*};
@@ -117,19 +131,19 @@ macro_rules! impl_float_conversion {
                 " with the nearest integers to the numbers. Round half-way cases away from 0.0.")]
             #[inline]
             pub fn round(&self) -> Self {
-                Self(self.map(|p| $U(p.map(|v| v.round()))))
+                Self(self.map(|p| $U(p.map(num_traits::Float::round))))
             }
             #[doc = concat!("Returns ", stringify!($Type<T$(, $N)?>),
                 "with the largest integers less than or equal to the numbers.")]
             #[inline]
             pub fn floor(&self) -> Self {
-                Self(self.map(|p| $U(p.map(|v| v.floor()))))
+                Self(self.map(|p| $U(p.map(num_traits::Float::floor))))
             }
             #[doc = concat!("Returns ", stringify!($Type<T$(, $N)?>),
                 " with the smallest integers greater than or equal to the numbers.")]
             #[inline]
             pub fn ceil(&self) -> Self {
-                Self(self.map(|p| $U(p.map(|v| v.ceil()))))
+                Self(self.map(|p| $U(p.map(num_traits::Float::ceil))))
             }
         }
     )*};
@@ -212,8 +226,8 @@ impl_wrapper_traits!(Line<T, N> => [Point<T, N>; 2]);
 impl_wrapper_traits!(Tri<T, N> => [Point<T, N>; 3]);
 impl_wrapper_traits!(Quad<T, N> => [Point<T, N>; 4]);
 
-// Required because of orphan rule: Cannot implement foreign traits on foreign generic types, thus
-// we use concrete primitive types.
+/// Multiply `T` * `Type<T, N>` = `Type<T, N>`. Required because of orphan rule: Cannot implement
+/// foreign traits on foreign generic types, thus we use concrete primitive types.
 macro_rules! impl_primitive_mul {
     ($Type:ident => $($target:ty),*) => {
         $(

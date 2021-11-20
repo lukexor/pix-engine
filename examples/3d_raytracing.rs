@@ -1,4 +1,4 @@
-use pix_engine::prelude::*;
+use pix_engine::{graphics::lighting::LightF3, prelude::*, shape::PointF3, vector::VectorF3};
 
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 800;
@@ -47,25 +47,25 @@ impl App {
         let spheres = [
             SphereObj {
                 sphere: sphere!([0.0, -1.0, 3.0], 1.0),
-                color: RED,
+                color: Color::RED,
                 specular: Some(500),
                 reflective: 0.2,
             },
             SphereObj {
                 sphere: sphere!([2.0, 0.0, 4.0], 1.0),
-                color: BLUE,
+                color: Color::BLUE,
                 specular: Some(500),
                 reflective: 0.3,
             },
             SphereObj {
                 sphere: sphere!([-2.0, 0.0, 4.0], 1.0),
-                color: GREEN,
+                color: Color::GREEN,
                 specular: Some(10),
                 reflective: 0.4,
             },
             SphereObj {
                 sphere: sphere!([0.0, -1001.0, 0.0], 1000.0),
-                color: YELLOW,
+                color: Color::YELLOW,
                 specular: Some(1000),
                 reflective: 0.5,
             },
@@ -184,7 +184,7 @@ impl App {
 
             local_color * (1.0 - r) + reflected_color * r
         } else {
-            BLACK
+            Color::BLACK
         }
     }
 
@@ -214,7 +214,7 @@ impl App {
 
 impl AppState for App {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.fill(BLACK);
+        s.fill(Color::BLACK);
         let half_w = s.width()? as i32 / 2;
         let half_h = s.height()? as i32 / 2;
         for x in -half_w..=half_w {

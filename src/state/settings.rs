@@ -1,55 +1,58 @@
-//! Settings methods for the [PixEngine].
+//! Settings methods for the [`PixEngine`].
 //!
 //! Methods for reading and setting various engine configuration values.
 //!
 //! Provided types:
 //!
-//! - [DrawMode]: Determines how `(x, y)` coordinates are used for rendering.
-//! - [RectMode]: Alias for `DrawMode`.
-//! - [EllipseMode]: Alias for `DrawMode`.
-//! - [ImageMode]: Alias for `DrawMode`.
-//! - [ArcMode]: Determines how arcs are rendered.
-//! - [BlendMode]: Determines how images and textures are blended.
-//! - [AngleMode]: Determines how angles are interpreted.
-//! - [FontStyle]: Determines how text is rendered.
+//! - [`DrawMode`]: Determines how `(x, y)` coordinates are used for rendering.
+//! - [`RectMode`]: Alias for `DrawMode`.
+//! - [`EllipseMode`]: Alias for `DrawMode`.
+//! - [`ImageMode`]: Alias for `DrawMode`.
+//! - [`ArcMode`]: Determines how arcs are rendered.
+//! - [`BlendMode`]: Determines how images and textures are blended.
+//! - [`AngleMode`]: Determines how angles are interpreted.
+//! - [`FontStyle`]: Determines how text is rendered.
 //!
-//! Provided [PixState] methods:
+//! Provided [`PixState`] methods:
 //!
-//! - [PixState::background]: Sets the [Color] used by [PixState::clear] to clear the canvas.
-//! - [PixState::fill]: Sets the [Color] used to fill shapes.
-//! - [PixState::no_fill]: Clears the [Color] used to fill shapes.
-//! - [PixState::stroke]: Sets the [Color] used to stroke shapes and text.
-//! - [PixState::no_stroke]: Clears the [Color] used to stroke shapes and text.
-//! - [PixState::stroke_weight]: Sets the stroke line thickness for lines and text.
-//! - [PixState::wrap]: Sets the wrap width for rendering text.
-//! - [PixState::no_wrap]: Clears the wrap width for rendering text.
-//! - [PixState::clip]: Sets a clip rectangle for rendering.
-//! - [PixState::no_clip]: Clears the clip rectangle for rendering.
-//! - [PixState::fullscreen]: Sets fullscreen mode to enabled or disabled.
-//! - [PixState::toggle_fullscreen]: Toggles fullscreen.
-//! - [PixState::vsync]: Sets vertical sync mode to enabled or disabled.
-//! - [PixState::toggle_vsync]: Toggles vertical sync.
-//! - [PixState::cursor]: Set a custom window cursor.
-//! - [PixState::no_cursor]: Hide the window cursor.
-//! - [PixState::running]: Whether the render loop is running (calling [AppState::on_update]).
-//! - [PixState::run]: Enable the render loop.
-//! - [PixState::no_run]: Disable the render loop.
-//! - [PixState::show_frame_rate]: Display the average frame rate in the title bar.
-//! - [PixState::target_frame_rate]: Return the current targeted frame rate.
-//! - [PixState::frame_rate]: Set a targeted frame rate.
-//! - [PixState::clear_frame_rate]: Clears the targeted frame rate.
-//! - [PixState::scale]: Scale the current canvas.
-//! - [PixState::rect_mode]: Change the [RectMode] for rendering rectangles.
-//! - [PixState::ellipse_mode]: Change the [EllipseMode] for rendering ellipses.
-//! - [PixState::image_mode]: Change the [ImageMode] for rendering images.
-//! - [PixState::image_tint]: Set or clear a [Color] used to tint [Image]s.
-//! - [PixState::arc_mode]: Change the [ArcMode] for rendering arcs.
-//! - [PixState::angle_mode]: Change the [AngleMode] for angle interpretation.
-//! - [PixState::blend_mode]: Change the [BlendMode] for rendering images and textures.
-//! - [PixState::push]: Push a copy of all the current settings to a stack.
-//! - [PixState::pop]: Pop the previously pushed settings off the stack, restoring them.
+//! - [`PixState::background`]: Sets the [Color] used by [`PixState::clear`] to clear the canvas.
+//! - [`PixState::fill`]: Sets the [Color] used to fill shapes.
+//! - [`PixState::no_fill`]: Clears the [Color] used to fill shapes.
+//! - [`PixState::stroke`]: Sets the [Color] used to stroke shapes and text.
+//! - [`PixState::no_stroke`]: Clears the [Color] used to stroke shapes and text.
+//! - [`PixState::stroke_weight`]: Sets the stroke line thickness for lines and text.
+//! - [`PixState::wrap`]: Sets the wrap width for rendering text.
+//! - [`PixState::no_wrap`]: Clears the wrap width for rendering text.
+//! - [`PixState::clip`]: Sets a clip rectangle for rendering.
+//! - [`PixState::no_clip`]: Clears the clip rectangle for rendering.
+//! - [`PixState::fullscreen`]: Sets fullscreen mode to enabled or disabled.
+//! - [`PixState::toggle_fullscreen`]: Toggles fullscreen.
+//! - [`PixState::vsync`]: Sets vertical sync mode to enabled or disabled.
+//! - [`PixState::toggle_vsync`]: Toggles vertical sync.
+//! - [`PixState::cursor`]: Set a custom window cursor.
+//! - [`PixState::no_cursor`]: Hide the window cursor.
+//! - [`PixState::running`]: Whether the render loop is running (calling [`AppState::on_update`]).
+//! - [`PixState::run`]: Enable the render loop.
+//! - [`PixState::no_run`]: Disable the render loop.
+//! - [`PixState::show_frame_rate`]: Display the average frame rate in the title bar.
+//! - [`PixState::target_frame_rate`]: Return the current targeted frame rate.
+//! - [`PixState::frame_rate`]: Set a targeted frame rate.
+//! - [`PixState::clear_frame_rate`]: Clears the targeted frame rate.
+//! - [`PixState::scale`]: Scale the current canvas.
+//! - [`PixState::rect_mode`]: Change the [`RectMode`] for rendering rectangles.
+//! - [`PixState::ellipse_mode`]: Change the [`EllipseMode`] for rendering ellipses.
+//! - [`PixState::image_mode`]: Change the [`ImageMode`] for rendering images.
+//! - [`PixState::image_tint`]: Set or clear a [Color] used to tint [Image]s.
+//! - [`PixState::arc_mode`]: Change the [`ArcMode`] for rendering arcs.
+//! - [`PixState::angle_mode`]: Change the [`AngleMode`] for angle interpretation.
+//! - [`PixState::blend_mode`]: Change the [`BlendMode`] for rendering images and textures.
+//! - [`PixState::push`]: Push a copy of all the current settings to a stack.
+//! - [`PixState::pop`]: Pop the previously pushed settings off the stack, restoring them.
 
-use crate::{prelude::*, renderer::*};
+use crate::{
+    prelude::*,
+    renderer::{Rendering, WindowRenderer},
+};
 use bitflags::bitflags;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -158,8 +161,8 @@ pub(crate) struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            background: BLACK,
-            fill: Some(WHITE),
+            background: Color::BLACK,
+            fill: Some(Color::WHITE),
             stroke: None,
             stroke_weight: 1,
             wrap_width: None,
@@ -191,18 +194,19 @@ impl PixState {
     /// # struct App;
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.background(ALICE_BLUE);
+    ///     s.background(Color::ALICE_BLUE);
     ///     s.clear();
     ///     Ok(())
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn background<C>(&mut self, color: C)
     where
         C: Into<Color>,
     {
         self.settings.background = color.into();
-        let _ = self.clear(); // If this errors, something is very wrong
+        let _result = self.clear(); // If this errors, something is very wrong
     }
 
     /// Sets the [Color] value used to fill shapes drawn on the canvas.
@@ -214,12 +218,13 @@ impl PixState {
     /// # struct App;
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.fill(ALICE_BLUE);
+    ///     s.fill(Color::ALICE_BLUE);
     ///     s.rect([0, 0, 100, 100])?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn fill<C>(&mut self, color: C)
     where
         C: Into<Color>,
@@ -236,7 +241,7 @@ impl PixState {
     /// # struct App;
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.stroke(BLACK);
+    ///     s.stroke(Color::BLACK);
     ///     s.no_fill();
     ///     // Draws a black outlined rectangle, with the background showing through
     ///     s.rect([0, 0, 100, 100])?;
@@ -244,6 +249,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn no_fill(&mut self) {
         self.settings.fill = None;
     }
@@ -257,12 +263,13 @@ impl PixState {
     /// # struct App;
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.stroke(BLACK);
+    ///     s.stroke(Color::BLACK);
     ///     s.rect([0, 0, 100, 100])?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn stroke<C>(&mut self, color: C)
     where
         C: Into<Color>,
@@ -279,7 +286,7 @@ impl PixState {
     /// # struct App;
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.fill(BLUE);
+    ///     s.fill(Color::BLUE);
     ///     s.no_stroke();
     ///     // Shows a solid blue rectangle with no outline
     ///     s.rect([0, 0, 100, 100])?;
@@ -287,6 +294,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn no_stroke(&mut self) {
         self.settings.stroke = None;
     }
@@ -300,7 +308,7 @@ impl PixState {
     /// # struct App;
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.stroke(BLUE);
+    ///     s.stroke(Color::BLUE);
     ///     s.stroke_weight(2);
     ///     // Shows a 2-pixel wide diagonal line
     ///     s.line(line_![0, 0, 100, 100])?;
@@ -308,6 +316,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn stroke_weight(&mut self, weight: u8) {
         self.settings.stroke_weight = weight;
     }
@@ -334,6 +343,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn wrap(&mut self, width: u32) {
         self.settings.wrap_width = Some(width);
     }
@@ -356,11 +366,16 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn no_wrap(&mut self) {
         self.settings.wrap_width = None;
     }
 
     /// Sets the clip [Rect] used by the renderer to draw to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the current render target is closed or dropped, then an error is returned.
     ///
     /// # Example
     ///
@@ -376,6 +391,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn clip<R>(&mut self, rect: R) -> PixResult<()>
     where
         R: Into<Rect<i32>>,
@@ -385,6 +401,10 @@ impl PixState {
     }
 
     /// Clears the clip [Rect] used by the renderer to draw to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the current render target is closed or dropped, then an error is returned.
     ///
     /// # Example
     ///
@@ -403,12 +423,18 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn no_clip(&mut self) -> PixResult<()> {
         self.settings.clip = None;
         self.renderer.clip(None)
     }
 
     /// Set the application to fullscreen or not.
+    ///
+    /// # Errors
+    ///
+    /// If the current render target is closed or dropped or the renderer fails to set
+    /// fullscreen, then an error is returned.
     ///
     /// # Example
     ///
@@ -426,11 +452,17 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn fullscreen(&mut self, val: bool) -> PixResult<()> {
         self.renderer.set_fullscreen(val)
     }
 
     /// Toggle fullscreen.
+    ///
+    /// # Errors
+    ///
+    /// If the current render target is closed or dropped or the renderer fails to toggle
+    /// fullscreen, then an error is returned.
     ///
     /// # Example
     ///
@@ -448,12 +480,20 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn toggle_fullscreen(&mut self) -> PixResult<()> {
         let is_fullscreen = self.renderer.fullscreen()?;
         self.renderer.set_fullscreen(!is_fullscreen)
     }
 
-    /// Set the window to synchronize frame rate to the screens refresh rate (Vertical Sync).
+    /// Set the window to synchronize frame rate to the screens refresh rate ([`VSync`]).
+    ///
+    /// [`VSync`]: https://en.wikipedia.org/wiki/Screen_tearing#Vertical_synchronization
+    ///
+    /// # Errors
+    ///
+    /// If the current render target is closed or dropped or the renderer fails to set
+    /// vsync, then an error is returned.
     ///
     /// # Example
     ///
@@ -471,11 +511,19 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn vsync(&mut self, val: bool) -> PixResult<()> {
         self.renderer.set_vsync(val)
     }
 
-    /// Toggle synchronizing frame rate to the screens refresh rate (Vertical Sync).
+    /// Toggle synchronizing frame rate to the screens refresh rate ([`VSync`]).
+    ///
+    /// [`VSync`]: https://en.wikipedia.org/wiki/Screen_tearing#Vertical_synchronization
+    ///
+    /// # Errors
+    ///
+    /// If the current render target is closed or dropped or the renderer fails to toggle
+    /// vsync, then an error is returned.
     ///
     /// # Example
     ///
@@ -493,12 +541,18 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn toggle_vsync(&mut self) -> PixResult<()> {
         let vsync_enabled = self.renderer.vsync();
         self.renderer.set_vsync(vsync_enabled)
     }
 
     /// Set the mouse cursor to a predefined symbol or image.
+    ///
+    /// # Errors
+    ///
+    /// If the rendere fails to set the cursor or load it from an image file, then an error is
+    /// returned.
     ///
     /// # Example
     ///
@@ -517,6 +571,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn cursor(&mut self, cursor: Cursor) -> PixResult<()> {
         self.settings.cursor = Some(cursor);
         self.renderer.cursor(self.settings.cursor.as_ref())
@@ -539,10 +594,11 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn no_cursor(&mut self) {
         self.settings.cursor = None;
         // SAFETY: Setting to NONE to hide cursor can't error.
-        self.renderer.cursor(None).expect("hiding cursor");
+        let _cant_fail = self.renderer.cursor(None);
     }
 
     /// Whether the render loop is running or not.
@@ -568,6 +624,8 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
+    #[must_use]
     pub fn running(&mut self) -> bool {
         self.settings.running
     }
@@ -595,11 +653,12 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn run(&mut self) {
         self.settings.running = true;
     }
 
-    /// Pause the render loop by no longer calling [AppState::on_update] every frame.
+    /// Pause the render loop by no longer calling [`AppState::on_update`] every frame.
     ///
     /// # Example
     ///
@@ -622,6 +681,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn no_run(&mut self) {
         self.settings.running = false;
     }
@@ -644,6 +704,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn show_frame_rate(&mut self, show: bool) {
         self.settings.show_frame_rate = show;
     }
@@ -668,11 +729,12 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
+    #[must_use]
     pub fn target_frame_rate(&mut self) -> Option<usize> {
         self.settings.target_frame_rate
     }
 
-    /// Set a target frame rate to render at, controls how often [AppState::on_update] is called.
+    /// Set a target frame rate to render at, controls how often [`AppState::on_update`] is called.
     ///
     /// # Example
     ///
@@ -688,11 +750,12 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn frame_rate(&mut self, rate: usize) {
         self.settings.target_frame_rate = Some(rate);
     }
 
-    /// Remove target frame rate and call [AppState::on_update] as often as possible.
+    /// Remove target frame rate and call [`AppState::on_update`] as often as possible.
     ///
     /// # Example
     ///
@@ -711,11 +774,17 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn clear_frame_rate(&mut self) {
         self.settings.target_frame_rate = None;
     }
 
     /// Set the rendering scale of the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the current render target is closed or dropped, or `(x, y`) contain invalid values,
+    /// then an error is returned.
     ///
     /// # Example
     ///
@@ -733,6 +802,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn scale(&mut self, x: f32, y: f32) -> PixResult<()> {
         let mut s = &mut self.settings;
         s.scale_x = x;
@@ -757,6 +827,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn rect_mode(&mut self, mode: RectMode) {
         self.settings.rect_mode = mode;
     }
@@ -777,6 +848,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn ellipse_mode(&mut self, mode: EllipseMode) {
         self.settings.ellipse_mode = mode;
     }
@@ -797,6 +869,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn image_mode(&mut self, mode: ImageMode) {
         self.settings.image_mode = mode;
     }
@@ -810,13 +883,14 @@ impl PixState {
     /// # struct App;
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.image_tint(RED);
+    ///     s.image_tint(Color::RED);
     ///     // Draw image tinted red
     ///     s.image(&Image::from_file("./some_image.png")?, [0, 0])?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn image_tint<C>(&mut self, tint: C)
     where
         C: Into<Option<Color>>,
@@ -843,11 +917,12 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn arc_mode(&mut self, mode: ArcMode) {
         self.settings.arc_mode = mode;
     }
 
-    /// Change the way angles are interprted for matrix transformations.
+    /// Change the way angles are interpreted for rotation and matrix transformations.
     ///
     /// # Example
     ///
@@ -864,6 +939,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn angle_mode(&mut self, mode: AngleMode) {
         self.settings.angle_mode = mode;
     }
@@ -884,6 +960,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn blend_mode(&mut self, mode: BlendMode) {
         self.settings.blend_mode = mode;
         self.renderer.blend_mode(mode);
@@ -898,13 +975,13 @@ impl PixState {
     /// # struct App;
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.fill(BLUE);
-    ///     s.stroke(WHITE);
+    ///     s.fill(Color::BLUE);
+    ///     s.stroke(Color::WHITE);
     ///
     ///     s.push(); // Save settings
     ///
-    ///     s.fill(RED);
-    ///     s.stroke(BLACK);
+    ///     s.fill(Color::RED);
+    ///     s.stroke(Color::BLACK);
     ///     s.rect([0, 0, 100, 100])?;
     ///
     ///     s.pop(); // Restore settings
@@ -914,6 +991,7 @@ impl PixState {
     ///     Ok(())
     /// }
     /// # }
+    #[inline]
     pub fn push(&mut self) {
         self.setting_stack
             .push((self.settings.clone(), self.theme.clone()));
@@ -929,13 +1007,13 @@ impl PixState {
     /// # struct App;
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.fill(BLUE);
-    ///     s.stroke(WHITE);
+    ///     s.fill(Color::BLUE);
+    ///     s.stroke(Color::WHITE);
     ///
     ///     s.push(); // Save settings
     ///
-    ///     s.fill(RED);
-    ///     s.stroke(BLACK);
+    ///     s.fill(Color::RED);
+    ///     s.stroke(Color::BLACK);
     ///     s.rect([0, 0, 100, 100])?;
     ///
     ///     s.pop(); // Restore settings
@@ -945,6 +1023,7 @@ impl PixState {
     ///     Ok(())
     /// }
     /// # }
+    #[inline]
     pub fn pop(&mut self) {
         if let Some((settings, theme)) = self.setting_stack.pop() {
             self.settings = settings;
@@ -957,9 +1036,9 @@ impl PixState {
         self.renderer.clip(s.clip).expect("valid clip setting");
         // Excluding restoring cursor - as it's used for mouse hover.
         self.renderer
-            .font_size(t.font_sizes.body)
+            .font_size(t.sizes.body)
             .expect("valid font size");
-        self.renderer.font_style(t.font_styles.body);
+        self.renderer.font_style(t.styles.body);
         self.renderer
             .font_family(&t.fonts.body)
             .expect("valid font family");
@@ -972,8 +1051,8 @@ impl PixState {
     ///
     /// Cursor will get reset to the current setting next frame.
     #[inline]
-    pub(crate) fn frame_cursor(&mut self, cursor: Cursor) -> PixResult<()> {
-        self.renderer.cursor(Some(&cursor))
+    pub(crate) fn frame_cursor(&mut self, cursor: &Cursor) -> PixResult<()> {
+        self.renderer.cursor(Some(cursor))
     }
 
     /// Get the target delta time between frames.
@@ -981,7 +1060,6 @@ impl PixState {
     pub(crate) fn target_delta_time(&self) -> Duration {
         self.settings
             .target_frame_rate
-            .map(|rate| Duration::from_secs(rate as u64))
-            .unwrap_or_else(Duration::default)
+            .map_or_else(Duration::default, |rate| Duration::from_secs(rate as u64))
     }
 }

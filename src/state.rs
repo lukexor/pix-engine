@@ -1,28 +1,29 @@
-//! [PixState] methods for the [PixEngine] and [AppState].
+//! [`PixState`] methods for the [`PixEngine`] and [`AppState`].
 //!
 //! `PixState` is the global engine state and API for any application using `pix-engine`. A mutable
-//! reference is passed to most [AppState] methods and allows you to modify settings, query engine
+//! reference is passed to most [`AppState`] methods and allows you to modify settings, query engine
 //! and input state, as well as drawing to the current render target.
 //!
-//! The most common use of `PixState` is in the [AppState::on_update] method.
+//! The most common use of `PixState` is in the [`AppState::on_update`] method.
 //!
-//! See the [Getting Started](crate#getting-started) section and the [PixState] page for the list
+//! See the [Getting Started](crate#getting-started) section and the [`PixState`] page for the list
 //! of available methods.
 //!
-//! Provided [PixState] methods:
+//! Provided [`PixState`] methods:
 //!
-//! - [PixState::title]: Current window title.
-//! - [PixState::set_title]: Set new window title.
-//! - [PixState::mouse_pos]: [Mouse] position this frame.
-//! - [PixState::pmouse_pos]: [Mouse] position previous frame.
-//! - [PixState::mouse_pressed]: Whether any [Mouse] button was pressed this frame.
-//! - [PixState::mouse_down]: Whether a given [Mouse] button was pressed this frame.
-//! - [PixState::mouse_buttons]: A [HashSet] of [Mouse] buttons pressed this frame.
-//! - [PixState::key_pressed]: Whether a given [Key] was pressed this frame.
-//! - [PixState::key_down]: Whether a given [Key] was pressed this frame.
-//! - [PixState::keys]: Whether any [Key] was pressed this frame.
-//! - [PixState::keymod_down]: Whether a given [key modifier][KeyMod] was pressed this frame.
-//! - [PixState::keymods]: A [HashSet] of [key modifiers][KeyMod] pressed this frame.
+//! - [`PixState::title`]: Current window title.
+//! - [`PixState::set_title`]: Set new window title.
+//! - [`PixState::mouse_pos`]: [Mouse] position this frame.
+//! - [`PixState::pmouse_pos`]: [Mouse] position previous frame.
+//! - [`PixState::mouse_pressed`]: Whether any [Mouse] button was pressed this frame.
+//! - [`PixState::mouse_clicked`]: Whether a given [Mouse] button was clicked this frame.
+//! - [`PixState::mouse_down`]: Whether a given [Mouse] button was pressed this frame.
+//! - [`PixState::mouse_buttons`]: A [`HashSet`] of [Mouse] buttons pressed this frame.
+//! - [`PixState::key_pressed`]: Whether a given [Key] was pressed this frame.
+//! - [`PixState::key_down`]: Whether a given [Key] was pressed this frame.
+//! - [`PixState::keys`]: Whether any [Key] was pressed this frame.
+//! - [`PixState::keymod_down`]: Whether a given [key modifier][`KeyMod`] was pressed this frame.
+//! - [`PixState::keymods`]: A [`HashSet`] of [key modifiers][`KeyMod`] pressed this frame.
 //!
 //! # Example
 //!
@@ -45,6 +46,7 @@ use crate::{
     gui::state::UiState,
     prelude::*,
     renderer::{Renderer, RendererSettings, Rendering, WindowRenderer},
+    shape::PointI2,
     texture::TextureRenderer,
 };
 use environment::Environment;
@@ -54,7 +56,7 @@ use std::{collections::HashSet, mem, time::Instant};
 pub mod environment;
 pub mod settings;
 
-/// Represents all state and methods for updating and interacting with the [PixEngine].
+/// Represents all state and methods for updating and interacting with the [`PixEngine`].
 #[non_exhaustive]
 #[derive(Debug)]
 pub struct PixState {
@@ -82,11 +84,17 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
+    #[must_use]
     pub fn title(&self) -> &str {
         self.renderer.title()
     }
 
     /// Set the current window title.
+    ///
+    /// # Errors
+    ///
+    /// If the current window target is closed or invalid or the string contains a `nul` byte, then
+    /// an error is returned.
     ///
     /// # Example
     ///
@@ -165,6 +173,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
+    #[must_use]
     pub fn mouse_pressed(&self) -> bool {
         self.ui.mouse.is_pressed()
     }
@@ -186,6 +195,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
+    #[must_use]
     pub fn mouse_clicked(&self, btn: Mouse) -> bool {
         self.ui.mouse.was_clicked(btn)
     }
@@ -207,6 +217,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
+    #[must_use]
     pub fn mouse_down(&self, btn: Mouse) -> bool {
         self.ui.mouse.is_down(btn)
     }
@@ -231,7 +242,8 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn mouse_buttons(&self) -> &HashSet<Mouse> {
+    #[must_use]
+    pub const fn mouse_buttons(&self) -> &HashSet<Mouse> {
         &self.ui.mouse.pressed
     }
 
@@ -252,6 +264,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
+    #[must_use]
     pub fn key_pressed(&self) -> bool {
         self.ui.keys.is_pressed()
     }
@@ -273,6 +286,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
+    #[must_use]
     pub fn key_down(&self, key: Key) -> bool {
         self.ui.keys.is_down(key)
     }
@@ -294,11 +308,12 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn keys(&self) -> &HashSet<Key> {
+    #[must_use]
+    pub const fn keys(&self) -> &HashSet<Key> {
         &self.ui.keys.pressed
     }
 
-    /// Returns if a specific [KeyMod] is currently being held.
+    /// Returns if a specific [`KeyMod`] is currently being held.
     ///
     /// # Example
     ///
@@ -315,6 +330,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
+    #[must_use]
     pub fn keymod_down(&self, keymod: KeyMod) -> bool {
         self.ui.keys.mod_down(keymod)
     }
@@ -339,18 +355,19 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn keymods(&self) -> &HashSet<KeyMod> {
+    #[must_use]
+    pub const fn keymods(&self) -> &HashSet<KeyMod> {
         &self.ui.keys.mods_pressed
     }
 }
 
 impl PixState {
-    /// Constructs `PixState` with a given `Renderer`.
+    /// Constructs `PixState` with a given [Renderer].
     #[inline]
     pub(crate) fn new(settings: RendererSettings, theme: Theme) -> PixResult<Self> {
         let show_frame_rate = settings.show_frame_rate;
         let mut renderer = Renderer::new(settings)?;
-        renderer.font_size(theme.font_sizes.body)?;
+        renderer.font_size(theme.sizes.body)?;
         renderer.font_family(&theme.fonts.body)?;
         Ok(Self {
             renderer,
@@ -360,19 +377,19 @@ impl PixState {
                 background: theme.colors.background,
                 fill: Some(theme.colors.on_background()),
                 show_frame_rate,
-                ..Default::default()
+                ..Settings::default()
             },
             setting_stack: Vec::new(),
             theme,
         })
     }
 
-    /// Handle state changes this frame prior to calling [AppState::on_update].
+    /// Handle state changes this frame prior to calling [`AppState::on_update`].
     #[inline]
     pub(crate) fn pre_update(&mut self) {
         // Reset mouse cursor icon to the current setting
         // Ignore any errors, as setting cursor in the first place should have succeeded.
-        let _ = self.renderer.cursor(self.settings.cursor.as_ref());
+        let _ignore_result = self.renderer.cursor(self.settings.cursor.as_ref());
         self.ui.pre_update(&self.theme);
     }
 
@@ -386,13 +403,13 @@ impl PixState {
         Ok(())
     }
 
-    /// Handle state changes this frame after calling [AppState::on_update].
+    /// Handle state changes this frame after calling [`AppState::on_update`].
     #[inline]
     pub(crate) fn post_update(&mut self) {
         self.ui.post_update();
     }
 
-    /// Takes a [Rect] and returns a modified [Rect] based on the current [RectMode].
+    /// Takes a [Rect] and returns a modified [Rect] based on the current [`RectMode`].
     #[inline]
     pub(crate) fn get_rect<R>(&self, rect: R) -> Rect<i32>
     where
@@ -405,7 +422,7 @@ impl PixState {
         rect
     }
 
-    /// Takes an [Ellipse] and returns a modified [Ellipse] based on the current [EllipseMode].
+    /// Takes an [Ellipse] and returns a modified [Ellipse] based on the current [`EllipseMode`].
     #[inline]
     pub(crate) fn get_ellipse<E>(&self, ellipse: E) -> Ellipse<i32>
     where

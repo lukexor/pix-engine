@@ -52,8 +52,8 @@ impl AppState for MyApp {
         // Setup App state. `PixState` contains engine specific state and
         // utility functions for things like getting mouse coordinates,
         // drawing shapes, etc.
-        s.background(220);
-        s.font_family(fonts::NOTO)?;
+        s.background(Color::GRAY);
+        s.font_family(Font::NOTO)?;
         s.font_size(16);
         Ok(())
     }

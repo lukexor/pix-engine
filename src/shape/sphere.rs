@@ -2,7 +2,7 @@
 //!
 //! # Examples
 //!
-//! You can create a [Sphere] using [Sphere::new]:
+//! You can create a [Sphere] using [`Sphere::new`]:
 //!
 //! ```
 //! # use pix_engine::prelude::*;
@@ -31,6 +31,7 @@ use serde::{Deserialize, Serialize};
 /// [module-level documentation]: crate::shape::sphere
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[repr(transparent)]
+#[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Sphere<T = i32>(pub(crate) [T; 4]);
 
@@ -69,19 +70,19 @@ impl<T> Sphere<T> {
 }
 
 impl<T: Copy> Sphere<T> {
-    /// Returns `Sphere` as_array as `[x, y, z, radius]`.
+    /// Returns `Sphere` as `[x, y, z, radius]`.
     #[inline]
     pub fn as_array(&self) -> [T; 4] {
         self.0
     }
 
-    /// Returns `Sphere` as_array as a byte slice `&[x, y, z, radius]`.
+    /// Returns `Sphere` as a byte slice `&[x, y, z, radius]`.
     #[inline]
     pub fn as_bytes(&self) -> &[T; 4] {
         &self.0
     }
 
-    /// Returns `Sphere` as_array as a mutable byte slice `&mut [x, y, z, radius]`.
+    /// Returns `Sphere` as a mutable byte slice `&mut [x, y, z, radius]`.
     #[inline]
     pub fn as_bytes_mut(&mut self) -> &mut [T; 4] {
         &mut self.0

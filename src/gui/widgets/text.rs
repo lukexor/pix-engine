@@ -1,10 +1,10 @@
 //! Text widget rendering methods.
 //!
-//! Provided [PixState] methods:
+//! Provided [`PixState`] methods:
 //!
-//! - [PixState::text]
-//! - [PixState::text_transformed]
-//! - [PixState::bullet]
+//! - [`PixState::text`]
+//! - [`PixState::text_transformed`]
+//! - [`PixState::bullet`]
 //!
 //! # Example
 //!
@@ -24,13 +24,17 @@
 //! # }
 //! ```
 
-use crate::{prelude::*, renderer::Rendering};
+use crate::{ops::clamp_size, prelude::*, renderer::Rendering};
 
 impl PixState {
     /// Draw text to the current canvas.
     ///
     /// Returns the rendered `(width, height)` of the text, including any newlines or text
     /// wrapping.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
     ///
     /// # Example
     ///
@@ -52,15 +56,14 @@ impl PixState {
     }
 
     /// Draw transformed text to the current canvas, optionally rotated about a `center` by `angle`
-    /// or `flipped`. `angle` can be in radians or degrees depending on [AngleMode].
+    /// or `flipped`. `angle` can be in radians or degrees depending on [`AngleMode`].
     ///
     /// Returns the rendered `(width, height)` of the text, including any newlines or text
     /// wrapping.
     ///
-    /// # Note
+    /// # Errors
     ///
-    /// Returned `(width, height)` does not currently account for rotation and will instead return
-    /// the non-rotated size.
+    /// If the renderer fails to draw to the current render target, then an error is returned.
     ///
     /// # Example
     ///
@@ -110,7 +113,7 @@ impl PixState {
         let mut pos = s.cursor_pos();
         if let RectMode::Center = s.settings.rect_mode {
             let (width, height) = s.size_of(text)?;
-            pos.offset([-(width as i32 / 2), -(height as i32 / 2)]);
+            pos.offset([-(clamp_size(width) / 2), -(clamp_size(height) / 2)]);
         };
         let mut angle_radians = angle;
         if let AngleMode::Radians = s.settings.angle_mode {
@@ -124,7 +127,7 @@ impl PixState {
 
             // Make sure to offset the text if an outline was drawn
             if stroke.is_some() && stroke_weight > 0 && outline == 0 {
-                pos += stroke_weight as i32;
+                pos += i32::from(stroke_weight);
             }
             if disabled {
                 color = color.blended(colors.background, 0.38);
@@ -144,8 +147,9 @@ impl PixState {
             } else {
                 let (mut width, mut height) = (0, 0);
                 let mut y = pos.y();
+                let sin_cos = angle_radians.filter(|&r| r != 0.0).map(f64::sin_cos);
                 for line in text.split('\n') {
-                    let (mut w, mut h) = s.renderer.text(
+                    let (mut line_width, mut line_height) = s.renderer.text(
                         point![pos.x(), y],
                         line,
                         wrap_width,
@@ -155,22 +159,22 @@ impl PixState {
                         Some(color),
                         outline,
                     )?;
-                    if let Some(angle_radians) = angle_radians {
-                        if angle_radians != 0.0 {
-                            let (sin, cos) = angle_radians.sin_cos();
-                            let rw = h as Scalar * sin + w as Scalar * cos;
-                            let rh = w as Scalar * sin + h as Scalar * cos;
-                            w = rw as u32;
-                            h = rh as u32;
-                        }
+                    if let Some(sin_cos) = sin_cos {
+                        let (sin, cos) = sin_cos;
+                        let height = line_height as Scalar;
+                        let width = line_width as Scalar;
+                        let rotated_width = (height).mul_add(sin, width * cos);
+                        let rotated_height = (width).mul_add(sin, height * cos);
+                        line_width = rotated_width.round() as u32;
+                        line_height = rotated_height.round() as u32;
                     }
-                    width += w;
-                    height += h;
-                    y += h as i32;
+                    width += line_width;
+                    height += line_height;
+                    y += clamp_size(line_height);
                 }
                 (width, height)
             };
-            let rect = rect![pos, w as i32, h as i32];
+            let rect = rect![pos, clamp_size(w), clamp_size(h)];
 
             // Only advance the cursor if we're not drawing a text outline
             if outline == 0 {
@@ -195,6 +199,10 @@ impl PixState {
     /// Returns the rendered `(width, height)` of the text, including any newlines or text
     /// wrapping.
     ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
+    ///
     /// # Example
     ///
     /// ```
@@ -212,20 +220,20 @@ impl PixState {
         S: AsRef<str>,
     {
         let s = self;
-        let fpad = s.theme.style.frame_pad;
-        let font_size = s.theme.font_sizes.body;
+        let fpad = s.theme.spacing.frame_pad;
+        let font_size = clamp_size(s.theme.sizes.body);
         let pos = s.cursor_pos();
 
         let r = font_size / 6;
 
         s.push();
         s.ellipse_mode(EllipseMode::Corner);
-        s.circle([pos.x(), pos.y() + font_size as i32 / 2, r as i32])?;
+        s.circle([pos.x(), pos.y() + font_size / 2, r])?;
         s.pop();
 
-        s.set_cursor_pos([pos.x() + 2 * r as i32 + 2 * fpad.x(), pos.y()]);
+        s.set_cursor_pos([pos.x() + 2 * r + 2 * fpad.x(), pos.y()]);
         let (w, h) = s.text_transformed(text, 0.0, None, None)?;
 
-        Ok((w + r, h))
+        Ok((w + r as u32, h))
     }
 }

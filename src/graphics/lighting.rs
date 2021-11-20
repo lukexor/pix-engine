@@ -36,16 +36,16 @@ pub type LightF3 = Light<Scalar, 3>;
 
 impl<T, const N: usize> Light<T, N> {
     /// Constructs a new `Light`.
-    pub fn new(source: LightSource<T, N>, intensity: T) -> Self {
+    pub const fn new(source: LightSource<T, N>, intensity: T) -> Self {
         Self { source, intensity }
     }
 
-    /// Constructs a `Light` with `source` as [LightSource::Ambient].
-    pub fn ambient(intensity: T) -> Self {
+    /// Constructs a `Light` with `source` as [`LightSource::Ambient`].
+    pub const fn ambient(intensity: T) -> Self {
         Self::new(LightSource::Ambient, intensity)
     }
 
-    /// Constructs a `Light` with `source` as [LightSource::Point].
+    /// Constructs a `Light` with `source` as [`LightSource::Point`].
     pub fn point<P>(intensity: T, position: P) -> Self
     where
         P: Into<Point<T, N>>,
@@ -53,7 +53,7 @@ impl<T, const N: usize> Light<T, N> {
         Self::new(LightSource::Point(position.into()), intensity)
     }
 
-    /// Constructs a `Light` with source as [LightSource::Direction].
+    /// Constructs a `Light` with source as [`LightSource::Direction`].
     pub fn direction<V>(intensity: T, direction: V) -> Self
     where
         V: Into<Vector<T, N>>,

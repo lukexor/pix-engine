@@ -238,7 +238,7 @@ pub struct KeyEvent {
 }
 
 impl KeyEvent {
-    pub(crate) fn new(key: Key, keymod: KeyMod, pressed: bool, repeat: bool) -> Self {
+    pub(crate) const fn new(key: Key, keymod: KeyMod, pressed: bool, repeat: bool) -> Self {
         Self {
             key,
             keymod,

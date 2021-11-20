@@ -6,7 +6,7 @@ impl AppState for MyApp {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         s.background(220);
         s.no_cursor();
-        s.stroke(BLACK);
+        s.stroke(Color::BLACK);
         Ok(())
     }
 

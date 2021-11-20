@@ -2,7 +2,7 @@
 //!
 //! # Examples
 //!
-//! You can create a [Rect] or square using [Rect::new] or [Rect::square]:
+//! You can create a [Rect] or square using [`Rect::new`] or [`Rect::square`]:
 //!
 //! ```
 //! use pix_engine::prelude::*;
@@ -38,6 +38,7 @@ use serde::{Deserialize, Serialize};
 /// [module-level documentation]: crate::shape::rect
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[repr(transparent)]
+#[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Rect<T = i32>(pub(crate) [T; 4]);
 
@@ -114,7 +115,7 @@ impl<T> Rect<T> {
 }
 
 impl<T: Copy> Rect<T> {
-    /// Returns `Rect` as_array as `[x, y, width, height]`.
+    /// Returns `Rect` as `[x, y, width, height]`.
     ///
     /// # Example
     ///
@@ -128,7 +129,7 @@ impl<T: Copy> Rect<T> {
         self.0
     }
 
-    /// Returns `Rect` as_array as a byte slice `&[x, y, width, height]`.
+    /// Returns `Rect` as a byte slice `&[x, y, width, height]`.
     ///
     /// # Example
     ///
@@ -142,7 +143,7 @@ impl<T: Copy> Rect<T> {
         &self.0
     }
 
-    /// Returns `Rect` as_array as a mutable byte slice `&mut [x, y, width, height]`.
+    /// Returns `Rect` as a mutable byte slice `&mut [x, y, width, height]`.
     ///
     /// # Example
     ///
@@ -276,13 +277,13 @@ impl<T: Num> Rect<T> {
     /// Offsets a rectangle by shifting coordinates by given amount.
     ///
     #[inline]
-    pub fn offset<P>(&mut self, offset: P)
+    pub fn offset<P>(&mut self, offsets: P)
     where
         P: Into<Point<T, 2>>,
     {
-        let offset = offset.into();
+        let offsets = offsets.into();
         for i in 0..=1 {
-            self[i] += offset[i]
+            self[i] += offsets[i];
         }
     }
 
@@ -319,16 +320,16 @@ impl<T: Num> Rect<T> {
     /// Offsets a rectangle's size by shifting coordinates by given amount.
     ///
     #[inline]
-    pub fn offset_size<P>(&mut self, offset: P)
+    pub fn offset_size<P>(&mut self, offsets: P)
     where
         P: Into<Point<T, 2>>,
     {
-        let offset = offset.into();
+        let offsets = offsets.into();
         for i in 0..=1 {
-            self[i] -= offset[i]
+            self[i] -= offsets[i];
         }
         for i in 2..=3 {
-            self[i] += offset[i - 2]
+            self[i] += offsets[i - 2];
         }
     }
 
@@ -481,7 +482,7 @@ impl<T: Float> Intersects<T, 2> for Rect<T> {
             .iter()
             .filter_map(|&p| p)
             .fold(None, |closest, intersection| {
-                let closest_t = closest.map(|c| c.1).unwrap_or_else(T::infinity);
+                let closest_t = closest.map_or_else(T::infinity, |c| c.1);
                 let t = intersection.1;
                 if t < closest_t {
                     Some(intersection)
@@ -507,7 +508,7 @@ impl<T: Float> Intersects<T, 2> for Rect<T> {
 }
 
 impl Draw for Rect<i32> {
-    /// Draw `Rect` to the current [PixState] canvas.
+    /// Draw `Rect` to the current [`PixState`] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.rect(*self)
     }

@@ -20,18 +20,21 @@ pub(crate) struct MouseState {
 impl MouseState {
     /// Whether any [Mouse] buttons are pressed.
     #[inline]
+    #[must_use]
     pub(crate) fn is_pressed(&self) -> bool {
         !self.pressed.is_empty()
     }
 
     /// Whether a [Mouse] buttons was clicked.
     #[inline]
+    #[must_use]
     pub(crate) fn was_clicked(&self, btn: Mouse) -> bool {
         self.clicked.contains(&btn)
     }
 
     /// Returns if a specific [Mouse] button is currently being held.
     #[inline]
+    #[must_use]
     pub(crate) fn is_down(&self, btn: Mouse) -> bool {
         self.pressed.contains(&btn)
     }

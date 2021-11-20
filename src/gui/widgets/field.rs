@@ -1,11 +1,11 @@
 //! Input field widget rendering methods.
 //!
-//! Provided [PixState] methods:
+//! Provided [`PixState`] methods:
 //!
-//! - [PixState::text_field]
-//! - [PixState::advanced_text_field]
-//! - [PixState::text_area]
-//! - [PixState::advanced_text_area]
+//! - [`PixState::text_field`]
+//! - [`PixState::advanced_text_field`]
+//! - [`PixState::text_area`]
+//! - [`PixState::advanced_text_area`]
 //!
 //! # Example
 //!
@@ -36,12 +36,16 @@
 //! # }
 //! ```
 
-use crate::{gui::MOD_CTRL, prelude::*};
+use crate::{gui::MOD_CTRL, ops::clamp_size, prelude::*};
 
 const TEXT_CURSOR: &str = "|";
 
 impl PixState {
     /// Draw a text field to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
     ///
     /// # Example
     ///
@@ -63,6 +67,10 @@ impl PixState {
     }
 
     /// Draw a text field with a placeholder hint to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
     ///
     /// # Example
     ///
@@ -99,25 +107,25 @@ impl PixState {
         let id = s.ui.get_id(&label);
         let label = label.split('#').next().unwrap_or("");
         let pos = s.cursor_pos();
-        let font_size = s.theme.font_sizes.body as i32;
-        let style = s.theme.style;
+        let font_size = clamp_size(s.theme.sizes.body);
+        let spacing = s.theme.spacing;
         let colors = s.theme.colors;
-        let fpad = style.frame_pad;
-        let ipad = style.item_pad;
+        let fpad = spacing.frame_pad;
+        let ipad = spacing.item_pad;
 
         // Calculate input rect
-        let width =
+        let next_width =
             s.ui.next_width
                 .take()
                 .unwrap_or_else(|| s.width().unwrap_or(100) - 2 * fpad.x() as u32);
-        let mut input = rect![pos, width as i32, font_size + 2 * ipad.y()];
-        let (lwidth, lheight) = s.size_of(label)?;
+        let mut input = rect![pos, clamp_size(next_width), font_size + 2 * ipad.y()];
+        let (label_width, label_height) = s.size_of(label)?;
         if !label.is_empty() {
-            input.offset_x(lwidth as i32 + ipad.x());
+            input.offset_x(clamp_size(label_width) + ipad.x());
         }
 
         // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, input);
+        let hovered = s.ui.try_hover(id, &input);
         let focused = s.ui.try_focus(id);
         let disabled = s.ui.disabled;
 
@@ -127,13 +135,16 @@ impl PixState {
         // Label
         s.rect_mode(RectMode::Corner);
         if hovered {
-            s.frame_cursor(Cursor::ibeam())?;
+            s.frame_cursor(&Cursor::ibeam())?;
         }
 
         if !label.is_empty() {
             s.no_stroke();
             s.fill(colors.on_background());
-            s.set_cursor_pos([pos.x(), pos.y() + input.height() / 2 - lheight as i32 / 2]);
+            s.set_cursor_pos([
+                pos.x(),
+                pos.y() + input.height() / 2 - clamp_size(label_height) / 2,
+            ]);
             s.text(label)?;
         }
 
@@ -146,11 +157,11 @@ impl PixState {
         // Text
         let (vw, vh) = s.size_of(&value)?;
         let mut x = input.x() + ipad.x();
-        let y = input.center().y() - vh as i32 / 2;
-        let mut width = vw as i32;
+        let y = input.center().y() - clamp_size(vh) / 2;
+        let mut width = clamp_size(vw);
         if focused {
             let (cw, _) = s.size_of(TEXT_CURSOR)?;
-            width += cw as i32;
+            width += clamp_size(cw);
         }
         if width > input.width() {
             x -= width - input.width();
@@ -172,7 +183,7 @@ impl PixState {
         }
 
         if focused && s.elapsed() as usize >> 9 & 1 > 0 {
-            s.set_cursor_pos([x + vw as i32, y]);
+            s.set_cursor_pos([x + clamp_size(vw), y]);
             s.text(TEXT_CURSOR)?;
         }
 
@@ -181,27 +192,24 @@ impl PixState {
         s.pop();
 
         // Process input
-        let mut changed = false;
-        if focused {
-            changed = s.handle_text_events(value)?;
-            if changed {
-                value.retain(|c| !c.is_control());
-            }
-        }
-        s.ui.handle_events(id);
-
-        if let Some(filter) = filter {
-            if changed {
+        let changed = focused && s.handle_text_events(value)?;
+        if changed {
+            value.retain(|c| !c.is_control());
+            if let Some(filter) = filter {
                 value.retain(filter);
             }
         }
-
+        s.ui.handle_events(id);
         s.advance_cursor(rect![pos, input.right() - pos.x(), input.height()]);
 
         Ok(changed)
     }
 
     /// Draw a text area field to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
     ///
     /// # Example
     ///
@@ -229,6 +237,10 @@ impl PixState {
     }
 
     /// Draw a text area field with a placeholder hint to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
     ///
     /// # Example
     ///
@@ -269,19 +281,19 @@ impl PixState {
         let id = s.ui.get_id(&label);
         let label = label.split('#').next().unwrap_or("");
         let pos = s.cursor_pos();
-        let style = s.theme.style;
+        let spacing = s.theme.spacing;
         let colors = s.theme.colors;
-        let ipad = style.item_pad;
+        let ipad = spacing.item_pad;
 
         // Calculate input rect
-        let mut input = rect![pos, width as i32, height as i32];
-        let (lwidth, lheight) = s.size_of(label)?;
+        let mut input = rect![pos, clamp_size(width), clamp_size(height)];
+        let (label_width, label_height) = s.size_of(label)?;
         if !label.is_empty() {
-            input.offset_y(lheight as i32 + ipad.y());
+            input.offset_y(clamp_size(label_height) + ipad.y());
         }
 
         // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, input);
+        let hovered = s.ui.try_hover(id, &input);
         let focused = s.ui.try_focus(id);
         let disabled = s.ui.disabled;
 
@@ -291,7 +303,7 @@ impl PixState {
         // Label
         s.rect_mode(RectMode::Corner);
         if hovered {
-            s.frame_cursor(Cursor::ibeam())?;
+            s.frame_cursor(&Cursor::ibeam())?;
         }
         s.no_stroke();
         s.fill(colors.on_background());
@@ -314,7 +326,7 @@ impl PixState {
         s.fill(fg);
         let blink_cursor = focused && s.elapsed() as usize >> 9 & 1 > 0;
         // TODO: total width here always maxes out at wrap_width when words can't wrap
-        let (_, mut total_height) = if value.is_empty() {
+        let (_, text_height) = if value.is_empty() {
             s.disable();
             let pos = s.cursor_pos();
             let size = s.text(&hint)?;
@@ -331,53 +343,51 @@ impl PixState {
         } else {
             s.text(&value)?
         };
+        let mut text_height = clamp_size(text_height);
 
         s.no_clip()?;
+        s.ui.pop_cursor();
+        s.pop();
 
         // Process input
-        let mut changed = false;
+        let mut changed = focused && s.handle_text_events(value)?;
         if focused {
-            changed = s.handle_text_events(value)?;
             if let Some(Key::Return) = s.ui.key_entered() {
                 value.push('\n');
                 changed = true;
             }
-            if changed {
-                value.retain(|c| c == '\n' || !c.is_control());
-
-                // Keep cursor within scroll region
-                let mut scroll = s.ui.scroll(id);
-                let (_, vh) = s.size_of(&value)?;
-                let (_, ch) = s.size_of(TEXT_CURSOR)?;
-                total_height = vh;
-                // EXPL: wrapping chops off the trailing newline, so make sure to adjust height
-                if value.ends_with('\n') {
-                    total_height += ch;
-                }
-                if (total_height as i32) < input.height() {
-                    scroll.set_y(0);
-                } else {
-                    scroll.set_y(total_height as i32 + 2 * ipad.y() - input.height());
-                }
-                s.ui.set_scroll(id, scroll);
-            }
         }
+        if changed {
+            value.retain(|c| c == '\n' || !c.is_control());
+            if let Some(filter) = filter {
+                if changed {
+                    value.retain(filter);
+                }
+            }
+
+            // Keep cursor within scroll region
+            let mut scroll = s.ui.scroll(id);
+            let (_, vh) = s.size_of(&value)?;
+            let (_, ch) = s.size_of(TEXT_CURSOR)?;
+            text_height = clamp_size(vh);
+            // EXPL: wrapping chops off the trailing newline, so make sure to adjust height
+            if value.ends_with('\n') {
+                text_height += clamp_size(ch);
+            }
+            if text_height < input.height() {
+                scroll.set_y(0);
+            } else {
+                scroll.set_y(text_height + 2 * ipad.y() - input.height());
+            }
+            s.ui.set_scroll(id, scroll);
+        }
+
         s.ui.handle_events(id);
-
-        s.ui.pop_cursor();
-        s.pop();
-
-        if let Some(filter) = filter {
-            if changed {
-                value.retain(filter);
-            }
-        }
-
         // Scrollbars
-        let rect = s.scroll(id, input, 0, total_height as i32 + 2 * ipad.y())?;
+        let rect = s.scroll(id, input, 0, text_height + 2 * ipad.y())?;
         s.advance_cursor(rect![
             pos,
-            rect.width().max(lwidth as i32),
+            rect.width().max(clamp_size(label_width)),
             rect.bottom() - pos.y()
         ]);
 
@@ -386,6 +396,7 @@ impl PixState {
 }
 
 impl PixState {
+    /// Helper to handle text entry and text shortcuts.
     fn handle_text_events(&mut self, value: &mut String) -> PixResult<bool> {
         let s = self;
         let mut changed = false;

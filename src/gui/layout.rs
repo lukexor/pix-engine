@@ -1,13 +1,13 @@
 //! UI spacing & layout rendering methods.
 //!
-//! Provided [PixState] methods:
+//! Provided [`PixState`] methods:
 //!
-//! - [PixState::same_line]
-//! - [PixState::next_width]
-//! - [PixState::tab_bar]
-//! - [PixState::spacing]
-//! - [PixState::indent]
-//! - [PixState::separator]
+//! - [`PixState::same_line`]
+//! - [`PixState::next_width`]
+//! - [`PixState::tab_bar`]
+//! - [`PixState::spacing`]
+//! - [`PixState::indent`]
+//! - [`PixState::separator`]
 //!
 //! # Example
 //!
@@ -54,7 +54,7 @@
 //! # }
 //! ```
 
-use crate::prelude::*;
+use crate::{ops::clamp_size, prelude::*};
 
 impl PixState {
     /// Reset current UI rendering position back to the previous line with item padding, and
@@ -84,7 +84,7 @@ impl PixState {
     {
         let [x, y] = self.ui.pcursor.as_array();
         let offset = offset.into().unwrap_or([0; 2]);
-        let item_pad = self.theme.style.item_pad;
+        let item_pad = self.theme.spacing.item_pad;
         self.ui
             .set_cursor([x + item_pad.x() + offset[0], y + offset[1]]);
         self.ui.line_height = self.ui.pline_height - offset[1];
@@ -114,9 +114,13 @@ impl PixState {
     }
 
     /// Draw a tabbed view to the current canvas. It accepts a list of tabs to be rendered and a
-    /// closure that is passed the current tab and [`&mut PixState`][PixState] which you can use to draw all the
+    /// closure that is passed the current tab and [`&mut PixState`][`PixState`] which you can use to draw all the
     /// standard drawing primitives and change any drawing settings. Settings changed inside the
-    /// closure will not persist, similar to [PixState::with_texture].
+    /// closure will not persist, similar to [`PixState::with_texture`].
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
     ///
     /// # Example
     ///
@@ -161,8 +165,8 @@ impl PixState {
         let s = self;
         let tab_id = s.ui.get_id(&label);
         let colors = s.theme.colors;
-        let fpad = s.theme.style.frame_pad;
-        let ipad = s.theme.style.item_pad;
+        let fpad = s.theme.spacing.frame_pad;
+        let ipad = s.theme.spacing.item_pad;
 
         for (i, tab_label) in tabs.iter().enumerate() {
             if i > 0 {
@@ -178,12 +182,12 @@ impl PixState {
             let mut tab = rect![
                 pos.x() + fpad.x(),
                 pos.y(),
-                width as i32 + 2 * ipad.x(),
-                height as i32 + 2 * ipad.y()
+                clamp_size(width) + 2 * ipad.x(),
+                clamp_size(height) + 2 * ipad.y()
             ];
 
             // Check hover/active/keyboard focus
-            let hovered = s.ui.try_hover(id, tab);
+            let hovered = s.ui.try_hover(id, &tab);
             let focused = s.ui.try_focus(id);
             let disabled = s.ui.disabled;
             let active = s.ui.is_active(id);
@@ -194,7 +198,7 @@ impl PixState {
             // Render
             s.rect_mode(RectMode::Corner);
             if hovered {
-                s.frame_cursor(Cursor::hand())?;
+                s.frame_cursor(&Cursor::hand())?;
                 if active {
                     tab.offset([1, 1]);
                 }
@@ -240,11 +244,11 @@ impl PixState {
         }
 
         let pos = s.cursor_pos();
-        let fpad = s.theme.style.frame_pad;
+        let fpad = s.theme.spacing.frame_pad;
         s.push();
         s.stroke(colors.disabled());
-        let y = pos.y() - ipad.y();
-        s.line(line_![fpad.x(), y, s.width()? as i32 - ipad.x(), y])?;
+        let y = pos.y() - ipad.y() - 1;
+        s.line(line_![fpad.x(), y, clamp_size(s.width()?) - ipad.x(), y])?;
         s.pop();
         s.advance_cursor([0, 0, 0, fpad.y()]);
 
@@ -256,6 +260,10 @@ impl PixState {
 
 impl PixState {
     /// Draw a newline worth of spacing to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
     ///
     /// # Example
     ///
@@ -274,11 +282,15 @@ impl PixState {
     pub fn spacing(&mut self) -> PixResult<()> {
         let s = self;
         let (_, height) = s.size_of(" ")?;
-        s.advance_cursor([0, 0, 0, height as i32]);
+        s.advance_cursor([0, 0, 0, clamp_size(height)]);
         Ok(())
     }
 
     /// Draw an indent worth of spacing to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
     ///
     /// # Example
     ///
@@ -296,12 +308,16 @@ impl PixState {
     pub fn indent(&mut self) -> PixResult<()> {
         let s = self;
         let (width, height) = s.size_of("    ")?;
-        s.advance_cursor([0, 0, width as i32, height as i32]);
+        s.advance_cursor([0, 0, clamp_size(width), clamp_size(height)]);
         s.same_line(None);
         Ok(())
     }
 
     /// Draw a horizontal or vertical separator to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
     ///
     /// # Example
     ///
@@ -322,14 +338,14 @@ impl PixState {
         let s = self;
         let pos = s.cursor_pos();
         let colors = s.theme.colors;
-        let pad = s.theme.style.frame_pad;
-        let height = s.theme.font_sizes.body as i32;
+        let pad = s.theme.spacing.frame_pad;
+        let height = clamp_size(s.theme.sizes.body);
         let y = pos.y() + height / 2;
 
         s.push();
 
         s.stroke(colors.disabled());
-        s.line(line_![pad.x(), y, s.width()? as i32 - pad.x(), y])?;
+        s.line(line_![pad.x(), y, clamp_size(s.width()?) - pad.x(), y])?;
 
         s.pop();
         s.advance_cursor([0, 0, 0, height]);

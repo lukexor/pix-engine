@@ -48,7 +48,7 @@ impl AppState for Colors {
         }
         self.draw_gradient(s)?;
         s.no_stroke();
-        s.fill(WHITE);
+        s.fill(Color::WHITE);
         s.text("Hue: ")?;
         s.same_line(None);
         s.text(self.h.to_string())?;

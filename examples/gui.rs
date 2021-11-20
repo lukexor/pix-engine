@@ -267,45 +267,53 @@ impl Gui {
 
     fn settings(&mut self, s: &mut PixState) -> PixResult<()> {
         s.next_width(200);
-        s.select_box("Theme", &mut self.theme, &THEMES, THEMES.len())?;
-
-        s.next_width(200);
-        s.select_box("Font Family", &mut self.font_family, &FONTS, FONTS.len())?;
-        s.same_line(None);
-        s.next_width(200);
-        s.slider("Font Size", &mut self.font_size, 8, 30)?;
-
-        s.next_width(200);
-        s.slider("Frame Padding X", &mut self.frame_padx, 0, 20)?;
-        s.same_line(None);
-        s.next_width(200);
-        s.slider("Frame Padding Y", &mut self.frame_pady, 0, 20)?;
-
-        s.next_width(200);
-        s.slider("Item Padding X", &mut self.item_padx, 0, 20)?;
-        s.same_line(None);
-        s.next_width(200);
-        s.slider("Item Padding Y", &mut self.item_pady, 0, 20)?;
-
-        s.spacing()?;
-        if s.button("Apply Changes")? {
+        if s.select_box("Theme", &mut self.theme, &THEMES, THEMES.len())? {
             match THEMES[self.theme] {
                 "Dark" => s.set_theme(Theme::dark()),
                 "Light" => s.set_theme(Theme::light()),
                 _ => unreachable!("unavailable theme"),
             }
+        }
+
+        s.next_width(200);
+        if s.select_box("Font Family", &mut self.font_family, &FONTS, FONTS.len())? {
             let font = match FONTS[self.font_family] {
-                "Emulogic" => fonts::EMULOGIC,
-                "Noto" => fonts::NOTO,
-                "Inconsolata" => fonts::INCONSOLATA,
+                "Emulogic" => Font::EMULOGIC,
+                "Noto" => Font::NOTO,
+                "Inconsolata" => Font::INCONSOLATA,
                 _ => unreachable!("unavailable font family"),
             };
             s.font_family(font)?;
-            s.font_size(self.font_size)?;
-            let mut style = s.theme_mut().style;
-            style.frame_pad = point![self.frame_padx, self.frame_pady];
-            style.item_pad = point![self.item_padx, self.item_pady];
         }
+
+        s.same_line(None);
+        s.next_width(200);
+        s.slider("Font Size", &mut self.font_size, 8, 40)?;
+        s.same_line(None);
+        if s.button("Apply")? {
+            s.font_size(self.font_size)?;
+        }
+
+        s.next_width(200);
+        if s.slider("Frame Padding X", &mut self.frame_padx, 0, 50)? {
+            s.theme_mut().spacing.frame_pad.set_x(self.frame_padx);
+        }
+        s.same_line(None);
+        s.next_width(200);
+        if s.slider("Frame Padding Y", &mut self.frame_pady, 0, 50)? {
+            s.theme_mut().spacing.frame_pad.set_y(self.frame_pady);
+        }
+
+        s.next_width(200);
+        if s.slider("Item Padding X", &mut self.item_padx, 0, 50)? {
+            s.theme_mut().spacing.item_pad.set_x(self.item_padx);
+        }
+        s.same_line(None);
+        s.next_width(200);
+        if s.slider("Item Padding Y", &mut self.item_pady, 0, 50)? {
+            s.theme_mut().spacing.item_pad.set_y(self.item_pady);
+        }
+
         Ok(())
     }
 }
@@ -317,7 +325,7 @@ impl AppState for Gui {
         }
 
         s.push();
-        s.font_size(s.theme().font_sizes.body + 4)?;
+        s.font_size(s.theme().sizes.body + 4)?;
         s.text("Widgets")?;
         s.pop();
 

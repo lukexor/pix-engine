@@ -1,4 +1,9 @@
-use pix_engine::prelude::*;
+use pix_engine::{
+    math::{FRAC_PI_2, PI, TAU},
+    prelude::*,
+    shape::PointF2,
+    vector::VectorF2,
+};
 
 const SHIP_SCALE: Scalar = 4.0;
 const ASTEROID_SIZE: u32 = 64;
@@ -176,8 +181,8 @@ impl Asteroids {
             a.pos += a.vel * elapsed;
             a.pos.wrap([w, h], a.size as Scalar);
             a.angle += 0.5 * elapsed; // Give some twirl
-            s.fill(BLACK);
-            s.stroke(YELLOW);
+            s.fill(Color::BLACK);
+            s.stroke(Color::YELLOW);
             s.wireframe(
                 self.asteroid_model,
                 a.pos.round().as_::<i32>(),
@@ -232,7 +237,7 @@ impl Asteroids {
         self.asteroids.retain(|a| !a.destroyed);
 
         // Draw bullets
-        s.fill(WHITE);
+        s.fill(Color::WHITE);
         s.no_stroke();
         for b in self.bullets.iter() {
             s.circle(Ellipse::from(b))?;
@@ -246,8 +251,8 @@ impl Asteroids {
         let elapsed = s.delta_time() / 1000.0;
         self.ship.pos += self.ship.vel * elapsed;
         self.ship.pos.wrap([w, h], self.ship.size as Scalar);
-        s.fill(BLACK);
-        s.stroke(WHITE);
+        s.fill(Color::BLACK);
+        s.stroke(Color::WHITE);
         s.wireframe(
             SHIP_MODEL,
             self.ship.pos.round().as_::<i32>(),
@@ -259,7 +264,7 @@ impl Asteroids {
     fn draw_gameover(&mut self, s: &mut PixState) -> PixResult<()> {
         let x = self.width as i32 / 2 - 8;
         let y = self.height as i32 / 2 - 100;
-        s.fill(WHITE);
+        s.fill(Color::WHITE);
         s.no_stroke();
         s.font_size(32)?;
         s.rect_mode(RectMode::Center);
@@ -274,12 +279,12 @@ impl Asteroids {
     fn draw_score(&mut self, s: &mut PixState) -> PixResult<()> {
         // Draw Level, Lives, & Score
         s.font_size(16)?;
-        s.fill(WHITE);
+        s.fill(Color::WHITE);
         s.no_stroke();
         s.text(format!("LEVEL: {}  SCORE: {}", self.level, self.score))?;
 
-        s.fill(BLACK);
-        s.stroke(WHITE);
+        s.fill(Color::BLACK);
+        s.stroke(Color::WHITE);
         for i in 0..self.lives {
             s.wireframe(SHIP_MODEL, [12 + (i * 14), 40], -FRAC_PI_2, 2.0)?;
         }
@@ -301,7 +306,7 @@ impl Asteroids {
 
 impl AppState for Asteroids {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.background(BLACK);
+        s.background(Color::BLACK);
         self.spawn_new_ship();
         self.spawn_asteroids();
         Ok(())

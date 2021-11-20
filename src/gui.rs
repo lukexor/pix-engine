@@ -70,11 +70,17 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
+    #[must_use]
     pub fn clipboard_text(&self) -> String {
         self.renderer.clipboard_text()
     }
 
     /// Set clipboard text to the system clipboard.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to retrieve the clipboard text, then an error is returned.
     ///
     /// # Example
     ///
@@ -88,6 +94,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn set_clipboard_text(&self, value: &str) -> PixResult<()> {
         self.renderer.set_clipboard_text(value)
     }
@@ -114,24 +121,26 @@ impl PixState {
         let disabled = s.ui.disabled;
         let c = s.theme.colors;
 
-        use ColorType::*;
         let (bg, overlay) = match surface_color {
-            Background => (c.background, c.on_background),
-            Surface => (c.surface, c.on_surface),
-            Primary => (c.primary, c.on_primary),
-            PrimaryVariant => (c.primary_variant, c.on_primary),
-            Secondary => (c.secondary, c.on_secondary),
-            SecondaryVariant => (c.secondary_variant, c.on_secondary),
-            Error => (c.error, c.on_error),
+            ColorType::Background => (c.background, c.on_background),
+            ColorType::Surface => (c.surface, c.on_surface),
+            ColorType::Primary => (c.primary, c.on_primary),
+            ColorType::PrimaryVariant => (c.primary_variant, c.on_primary),
+            ColorType::Secondary => (c.secondary, c.on_secondary),
+            ColorType::SecondaryVariant => (c.secondary_variant, c.on_secondary),
+            ColorType::Error => (c.error, c.on_error),
             _ => panic!("invalid surface color"),
         };
         let branded = matches!(
             surface_color,
-            Primary | PrimaryVariant | Secondary | SecondaryVariant,
+            ColorType::Primary
+                | ColorType::PrimaryVariant
+                | ColorType::Secondary
+                | ColorType::SecondaryVariant,
         );
 
         let stroke_overlay = if branded {
-            bg.blended(WHITE, 0.60)
+            bg.blended(Color::WHITE, 0.60)
         } else {
             overlay
         };
@@ -143,7 +152,7 @@ impl PixState {
             stroke_overlay.blended(bg, 0.38)
         };
 
-        let bg_overlay = if branded { WHITE } else { overlay };
+        let bg_overlay = if branded { Color::WHITE } else { overlay };
         let bg = if focused {
             bg_overlay.blended(bg, 0.12)
         } else if active {

@@ -1,4 +1,4 @@
-//! Trait for allowing [PixEngine] to drive your application.
+//! Trait for allowing [`PixEngine`] to drive your application.
 //!
 //! # Example
 //!
@@ -13,7 +13,7 @@
 //!         // utility functions for things like getting mouse coordinates,
 //!         // drawing shapes, etc.
 //!         s.background(220);
-//!         s.font_family(fonts::NOTO)?;
+//!         s.font_family(Font::NOTO)?;
 //!         s.font_size(16);
 //!         Ok(())
 //!     }
@@ -48,8 +48,8 @@
 
 use crate::prelude::*;
 
-/// Trait for allowing the [PixEngine] to drive your application and send notification of events,
-/// passing along a [`&mut PixState`](PixState) to allow interacting with the [PixEngine].
+/// Trait for allowing the [`PixEngine`] to drive your application and send notification of events,
+/// passing along a [`&mut PixState`](PixState) to allow interacting with the [`PixEngine`].
 ///
 /// Please see the [module-level documentation] for more examples.
 ///
@@ -57,11 +57,20 @@ use crate::prelude::*;
 /// [module-level documentation]: crate::appstate
 #[allow(unused_variables)]
 pub trait AppState {
-    /// Called once upon engine start when [PixEngine::run] is called.
+    /// Called once upon engine start when [`PixEngine::run`] is called.
     ///
     /// This can be used to set up initial state like creating objects, loading files or [Image]s, or
     /// any additional application state that's either dynamic or relies on runtime values from
-    /// [PixState].
+    /// [`PixState`].
+    ///
+    /// # Errors
+    ///
+    /// Returning an error will immediately exit the application and call [`AppState:: Prefer using
+    /// the more specialized methods where possible, as it allows you to consume them, preventing
+    /// the engine from encountering event-handling collisions.on_stop`].
+    /// [`PixEngine::run`] will return the original error or any error returned from
+    /// [`AppState::on_stop`]. Calling [`PixState::abort_quit`] during [`AppState::on_stop`] has no
+    /// effect.
     ///
     /// # Example
     ///
@@ -72,7 +81,7 @@ pub trait AppState {
     /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
     /// fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.background(220);
-    ///     s.font_family(fonts::NOTO)?;
+    ///     s.font_family(Font::NOTO)?;
     ///     s.font_size(16);
     ///     Ok(())
     /// }
@@ -82,16 +91,27 @@ pub trait AppState {
         Ok(())
     }
 
-    /// Called after [AppState::on_start], every frame based on the [target frame rate].
+    /// Called after [`AppState::on_start`], every frame based on the [target frame rate].
     ///
     /// By default, this is called as often as possible but can be controlled by changing the
     /// [target frame rate]. It will continue to be executed until the application is terminated,
-    /// or [PixState::no_run] is called.
+    /// or [`PixState::no_run`] is called.
     ///
-    /// After [PixState::no_run] is called, you can call [PixState::redraw] or
-    /// [PixState::run_times] to control the execution.
+    /// After [`PixState::no_run`] is called, you can call [`PixState::redraw`] or
+    /// [`PixState::run_times`] to control the execution.
     ///
     /// [target frame rate]: PixState::frame_rate
+    ///
+    /// # Errors
+    ///
+    /// Returning an error will start exiting the application and call [`AppState::on_stop`].
+    /// [`PixEngine::run`] will return the original error or any error returned from
+    /// [`AppState::on_stop`]. Calling [`PixState::abort_quit`] during [`AppState::on_stop`] will
+    /// allow program execution to resume. Care should be taken as this could result in a loop if
+    /// the cause of the original error is not resolved.
+    ///
+    /// Any errors encountered from methods on [`PixState`] can either be handled by the
+    /// implementor, or propagated with the [?] operator.
     ///
     /// # Example
     ///
@@ -113,9 +133,20 @@ pub trait AppState {
     /// ```
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()>;
 
-    /// Called once when the engine detects a close/exit event such as calling [PixState::quit].
+    /// Called when the engine detects a close/exit event such as calling [`PixState::quit`] or if an
+    /// error is returned during program execution by any [`AppState`] methods.
     ///
     /// This can be used to clean up files or resources on appliation quit.
+    ///
+    /// # Errors
+    ///
+    /// Returning an error will immediately exit the application by propagating the error and returning from
+    /// [`PixEngine::run`]. Calling [`PixState::abort_quit`] will allow program execution to
+    /// resume. Care should be taken as this could result in a loop if the cause of the original
+    /// error is not resolved.
+    ///
+    /// Any errors encountered from methods on [`PixState`] can either be handled by the
+    /// implementor, or propagated with the [?] operator.
     ///
     /// # Example
     ///
@@ -134,10 +165,15 @@ pub trait AppState {
         Ok(())
     }
 
-    /// Called each time a [Key] is pressed with the [KeyEvent] indicating which key and modifiers
+    /// Called each time a [`Key`] is pressed with the [`KeyEvent`] indicating which key and modifiers
     /// are pressed as well as whether this is a repeat event where the key is being held down.
     ///
     /// Returning `true` consumes this event, preventing any further event triggering.
+    ///
+    /// # Errors
+    ///
+    /// Returning an error will start exiting the application and call [`AppState::on_stop`]. See
+    /// the `Errors` section in [`AppState::on_update`] for more details.
     ///
     /// # Example
     ///
@@ -161,10 +197,15 @@ pub trait AppState {
         Ok(false)
     }
 
-    /// Called each time a [Key] is pressed with the [KeyEvent] indicating which key and modifiers
+    /// Called each time a [`Key`] is pressed with the [`KeyEvent`] indicating which key and modifiers
     /// are released.
     ///
     /// Returning `true` consumes this event, preventing any further event triggering.
+    ///
+    /// # Errors
+    ///
+    /// Returning an error will start exiting the application and call [`AppState::on_stop`]. See
+    /// the `Errors` section in [`AppState::on_update`] for more details.
     ///
     /// # Example
     ///
@@ -193,6 +234,11 @@ pub trait AppState {
     ///
     /// Returning `true` consumes this event, preventing any further event triggering.
     ///
+    /// # Errors
+    ///
+    /// Returning an error will start exiting the application and call [`AppState::on_stop`]. See
+    /// the `Errors` section in [`AppState::on_update`] for more details.
+    ///
     /// # Example
     ///
     /// ```
@@ -210,12 +256,17 @@ pub trait AppState {
         Ok(false)
     }
 
-    /// Called each time the [Mouse] is moved while any mouse button is being held.
+    /// Called each time the [`Mouse`] is moved while any mouse button is being held.
     ///
-    /// You can inspect which button is being held by calling [PixState::mouse_down] with the desired
-    /// [Mouse] button. See also: [AppState::on_mouse_motion].
+    /// You can inspect which button is being held by calling [`PixState::mouse_down`] with the desired
+    /// [Mouse] button. See also: [`AppState::on_mouse_motion`].
     ///
     /// Returning `true` consumes this event, preventing any further event triggering.
+    ///
+    /// # Errors
+    ///
+    /// Returning an error will start exiting the application and call [`AppState::on_stop`]. See
+    /// the `Errors` section in [`AppState::on_update`] for more details.
     ///
     /// # Example
     ///
@@ -244,9 +295,14 @@ pub trait AppState {
         Ok(false)
     }
 
-    /// Called each time a [Mouse] button is pressed.
+    /// Called each time a [`Mouse`] button is pressed.
     ///
     /// Returning `true` consumes this event, preventing any further event triggering.
+    ///
+    /// # Errors
+    ///
+    /// Returning an error will start exiting the application and call [`AppState::on_stop`]. See
+    /// the `Errors` section in [`AppState::on_update`] for more details.
     ///
     /// # Example
     ///
@@ -274,9 +330,14 @@ pub trait AppState {
         Ok(false)
     }
 
-    /// Called each time a [Mouse] button is released.
+    /// Called each time a [`Mouse`] button is released.
     ///
     /// Returning `true` consumes this event, preventing any further event triggering.
+    ///
+    /// # Errors
+    ///
+    /// Returning an error will start exiting the application and call [`AppState::on_stop`]. See
+    /// the `Errors` section in [`AppState::on_update`] for more details.
     ///
     /// # Example
     ///
@@ -304,9 +365,14 @@ pub trait AppState {
         Ok(false)
     }
 
-    /// Called each time a [Mouse] button is clicked (a press followed by a release).
+    /// Called each time a [`Mouse`] button is clicked (a press followed by a release).
     ///
     /// Returning `true` consumes this event, preventing any further event triggering.
+    ///
+    /// # Errors
+    ///
+    /// Returning an error will start exiting the application and call [`AppState::on_stop`]. See
+    /// the `Errors` section in [`AppState::on_update`] for more details.
     ///
     /// # Example
     ///
@@ -334,9 +400,14 @@ pub trait AppState {
         Ok(false)
     }
 
-    /// Called each time a [Mouse] button is clicked twice within 500ms.
+    /// Called each time a [`Mouse`] button is clicked twice within 500ms.
     ///
     /// Returning `true` consumes this event, preventing any further event triggering.
+    ///
+    /// # Errors
+    ///
+    /// Returning an error will start exiting the application and call [`AppState::on_stop`]. See
+    /// the `Errors` section in [`AppState::on_update`] for more details.
     ///
     /// # Example
     ///
@@ -370,10 +441,15 @@ pub trait AppState {
         Ok(false)
     }
 
-    /// Called each time the [Mouse] is moved with the `(x, y)` screen coordinates and relative
+    /// Called each time the [`Mouse`] is moved with the `(x, y)` screen coordinates and relative
     /// `(xrel, yrel)` positions since last frame.
     ///
     /// Returning `true` consumes this event, preventing any further event triggering.
+    ///
+    /// # Errors
+    ///
+    /// Returning an error will start exiting the application and call [`AppState::on_stop`]. See
+    /// the `Errors` section in [`AppState::on_update`] for more details.
     ///
     /// # Example
     ///
@@ -402,9 +478,14 @@ pub trait AppState {
         Ok(false)
     }
 
-    /// Called each time the [Mouse] wheel is scrolled with the `(x, y)` delta since last frame.
+    /// Called each time the [`Mouse`] wheel is scrolled with the `(x, y)` delta since last frame.
     ///
     /// Returning `true` consumes this event, preventing any further event triggering.
+    ///
+    /// # Errors
+    ///
+    /// Returning an error will start exiting the application and call [`AppState::on_stop`]. See
+    /// the `Errors` section in [`AppState::on_update`] for more details.
     ///
     /// # Example
     ///
@@ -424,6 +505,11 @@ pub trait AppState {
     }
 
     /// Called each time a window event occurs.
+    ///
+    /// # Errors
+    ///
+    /// Returning an error will start exiting the application and call [`AppState::on_stop`]. See
+    /// the `Errors` section in [`AppState::on_update`] for more details.
     ///
     /// # Example
     ///
@@ -459,7 +545,15 @@ pub trait AppState {
         Ok(())
     }
 
-    /// Called for any system or user event.
+    /// Called for any system or user event. This is a catch-all for handling any events not
+    /// covered by other [`AppState`] methods. Prefer using the more specialized methods where
+    /// possible, as it allows you to consume them, preventing the engine from encountering
+    /// event-handling collisions.
+    ///
+    /// # Errors
+    ///
+    /// Returning an error will start exiting the application and call [`AppState::on_stop`]. See
+    /// the `Errors` section in [`AppState::on_update`] for more details.
     ///
     /// # Example
     ///

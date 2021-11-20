@@ -2,7 +2,7 @@
 //!
 //! # Examples
 //!
-//! You can create an [Ellipse] or circle using [Ellipse::new]::new] or [Ellipse::circle]:
+//! You can create an [Ellipse] or circle using [`Ellipse::new`] or [`Ellipse::circle`]:
 //!
 //! ```
 //! use pix_engine::prelude::*;
@@ -38,6 +38,7 @@ use serde::{Deserialize, Serialize};
 /// [module-level documentation]: crate::shape::ellipse
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[repr(transparent)]
+#[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Ellipse<T = i32>(pub(crate) [T; 4]);
 
@@ -288,7 +289,7 @@ impl<T: Num> Ellipse<T> {
     {
         let offset = offset.into();
         for i in 0..=1 {
-            self[i] += offset[i]
+            self[i] += offset[i];
         }
     }
 
@@ -490,7 +491,7 @@ impl<T: Num> Intersects<T, 2> for Ellipse<T> {
 }
 
 impl Draw for Ellipse<i32> {
-    /// Draw `Ellipse` to the current [PixState] canvas.
+    /// Draw `Ellipse` to the current [`PixState`] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.ellipse(*self)
     }
@@ -500,7 +501,7 @@ impl<T: Num> From<[T; 3]> for Ellipse<T> {
     /// Converts `[T; 3]` into `Ellipse<T>`.
     #[inline]
     fn from([x, y, r]: [T; 3]) -> Self {
-        Ellipse::circle(x, y, r)
+        Self::circle(x, y, r)
     }
 }
 
@@ -508,6 +509,6 @@ impl<T: Num> From<&[T; 3]> for Ellipse<T> {
     /// Converts `&[T; 3]` into `Ellipse<T>`.
     #[inline]
     fn from(&[x, y, r]: &[T; 3]) -> Self {
-        Ellipse::circle(x, y, r)
+        Self::circle(x, y, r)
     }
 }

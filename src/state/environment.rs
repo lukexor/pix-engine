@@ -1,22 +1,23 @@
-//! Environment methods for the [PixEngine].
+//! Environment methods for the [`PixEngine`].
 //!
 //! Methods for reading and setting various engine environment values.
 //!
-//! Provided [PixState] methods:
+//! Provided [`PixState`] methods:
 //!
-//! - [PixState::focused]: Whether the current window target has focus.
-//! - [PixState::delta_time]: Time elapsed since last frame in milliseconds.
-//! - [PixState::elapsed]: Time elapsed since application start in milliseconds.
-//! - [PixState::frame_count]: Total number of frames since application start.
-//! - [PixState::redraw]: Run render loop 1 time, calling [AppState::on_update].
-//! - [PixState::run_times]: Run render loop N times, calling [AppState::on_update].
-//! - [PixState::avg_frame_rate]: Average frames per second rendered.
-//! - [PixState::quit]: Trigger application quit.
-//! - [PixState::abort_quit]: Abort application quit.
-//!
-//! [PixEngine]: crate::prelude::PixEngine
+//! - [`PixState::focused`]: Whether the current window target has focus.
+//! - [`PixState::delta_time`]: Time elapsed since last frame in milliseconds.
+//! - [`PixState::elapsed`]: Time elapsed since application start in milliseconds.
+//! - [`PixState::frame_count`]: Total number of frames since application start.
+//! - [`PixState::redraw`]: Run render loop 1 time, calling [`AppState::on_update`].
+//! - [`PixState::run_times`]: Run render loop N times, calling [`AppState::on_update`].
+//! - [`PixState::avg_frame_rate`]: Average frames per second rendered.
+//! - [`PixState::quit`]: Trigger application quit.
+//! - [`PixState::abort_quit`]: Abort application quit.
 
-use crate::{prelude::*, renderer::*};
+use crate::{
+    prelude::*,
+    renderer::{Rendering, WindowRenderer},
+};
 use std::{
     collections::VecDeque,
     time::{Duration, Instant},
@@ -24,7 +25,7 @@ use std::{
 
 const ONE_SECOND: Duration = Duration::from_secs(1);
 
-/// Environment values for [PixState]
+/// Environment values for [`PixState`]
 #[derive(Debug, Clone)]
 pub(crate) struct Environment {
     focused_window: Option<WindowId>,
@@ -75,13 +76,14 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
+    #[must_use]
     pub fn focused(&self) -> bool {
         matches!(self.env.focused_window, Some(id) if id == self.renderer.window_id())
     }
 
     /// The time elapsed since last frame in milliseconds.
     ///
-    /// Value can not exceed [Scalar::MAX].
+    /// Value can not exceed [`Scalar::MAX`].
     ///
     /// # Example
     ///
@@ -97,6 +99,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
+    #[must_use]
     pub fn delta_time(&self) -> Scalar {
         let delta = self.env.delta_time * 1000.0;
         if delta.is_infinite() {
@@ -108,7 +111,7 @@ impl PixState {
 
     /// The time elapsed since application start in milliseconds.
     ///
-    /// Value can not exceed [Scalar::MAX].
+    /// Value can not exceed [`Scalar::MAX`].
     ///
     /// # Example
     ///
@@ -126,6 +129,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
+    #[must_use]
     pub fn elapsed(&self) -> Scalar {
         #[cfg(target_pointer_width = "32")]
         let elapsed = self.env.start.elapsed().as_secs_f32();
@@ -157,14 +161,15 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn frame_count(&self) -> usize {
+    #[must_use]
+    pub const fn frame_count(&self) -> usize {
         self.env.frame_count
     }
 
-    /// Run the render loop 1 time by calling [AppState::on_update].
+    /// Run the render loop 1 time by calling [`AppState::on_update`].
     ///
     /// This can be used to only redraw in response to user actions such as
-    /// [AppState::on_mouse_pressed] or [AppState::on_key_pressed].
+    /// [`AppState::on_mouse_pressed`] or [`AppState::on_key_pressed`].
     ///
     /// # Example
     ///
@@ -188,19 +193,15 @@ impl PixState {
     /// # }
     /// # }
     /// ```
-    ///
-    /// [AppState::on_update]: crate::prelude::AppState::on_update
-    /// [AppState::on_mouse_pressed]: crate::prelude::AppState::on_mouse_pressed
-    /// [AppState::on_key_pressed]: crate::prelude::AppState::on_key_pressed
     #[inline]
     pub fn redraw(&mut self) {
         self.env.run_count = 1;
     }
 
-    /// Run the render loop N times by calling [AppState::on_update].
+    /// Run the render loop N times by calling [`AppState::on_update`].
     ///
     /// This can be used to only redraw in response to user actions such as
-    /// [AppState::on_mouse_pressed] or [AppState::on_key_pressed].
+    /// [`AppState::on_mouse_pressed`] or [`AppState::on_key_pressed`].
     ///
     /// # Example
     ///
@@ -224,10 +225,6 @@ impl PixState {
     /// # }
     /// # }
     /// ```
-    ///
-    /// [AppState::on_update]: crate::prelude::AppState::on_update
-    /// [AppState::on_mouse_pressed]: crate::prelude::AppState::on_mouse_pressed
-    /// [AppState::on_key_pressed]: crate::prelude::AppState::on_key_pressed
     #[inline]
     pub fn run_times(&mut self, n: usize) {
         self.env.run_count = n;
@@ -248,7 +245,8 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn avg_frame_rate(&self) -> usize {
+    #[must_use]
+    pub const fn avg_frame_rate(&self) -> usize {
         self.env.frame_rate
     }
 
@@ -273,7 +271,7 @@ impl PixState {
         self.env.quit = true;
     }
 
-    /// Abort application quit and resume render loop by calling [AppState::on_update].
+    /// Abort application quit and resume render loop by calling [`AppState::on_update`].
     ///
     /// # Example
     ///
@@ -298,11 +296,13 @@ impl PixState {
 }
 
 impl PixState {
+    /// Return the instant the last frame was rendered at.
     #[inline]
-    pub(crate) fn last_frame_time(&self) -> Instant {
+    pub(crate) const fn last_frame_time(&self) -> Instant {
         self.env.last_frame_time
     }
 
+    /// Set the delta time since last frame.
     #[inline]
     pub(crate) fn set_delta_time(&mut self, now: Instant, time_since_last: Duration) {
         #[cfg(target_pointer_width = "32")]
@@ -313,16 +313,20 @@ impl PixState {
         self.env.last_frame_time = now;
     }
 
+    /// Whether the current render loop should be running or not.
     #[inline]
-    pub(crate) fn is_running(&self) -> bool {
+    pub(crate) const fn is_running(&self) -> bool {
         self.settings.running || self.env.run_count > 0
     }
 
+    /// Whether the render loop should quit and terminate the application.
     #[inline]
-    pub(crate) fn should_quit(&self) -> bool {
+    pub(crate) const fn should_quit(&self) -> bool {
         self.env.quit
     }
 
+    /// Increment the internal frame counter. If the `show_frame_rate` option is set, update the
+    /// title at most once every second.
     #[inline]
     pub(crate) fn increment_frame(
         &mut self,
@@ -353,11 +357,13 @@ impl PixState {
         Ok(())
     }
 
+    /// Present all renderer changes since last frame.
     #[inline]
     pub(crate) fn present(&mut self) {
         self.renderer.present();
     }
 
+    /// Focus a given window.
     pub(crate) fn focus_window(&mut self, id: Option<WindowId>) {
         self.env.focused_window = id;
     }

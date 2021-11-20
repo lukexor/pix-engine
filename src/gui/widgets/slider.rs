@@ -1,15 +1,17 @@
 //! Slider and drag widget rendering methods.
 //!
-//! Provided [PixState] methods:
+//! Provided [`PixState`] methods:
 //!
-//! - [PixState::drag]
-//! - [PixState::advanced_drag]
+//! - [`PixState::drag`]
+//! - [`PixState::advanced_drag`]
+//! - [`PixState::slider`]
+//! - [`PixState::advanced_slider`]
 //!
 //! # Example
 //!
 //! ```
 //! # use pix_engine::prelude::*;
-//! # struct App { drag: i32, advanced_drag: f32};
+//! # struct App { drag: i32, advanced_drag: f32, slider: i32, advanced_slider: f32};
 //! # impl AppState for App {
 //! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!     s.drag("Drag", &mut self.drag, 1)?;
@@ -21,6 +23,14 @@
 //!         1.0,
 //!         Some(|val| format!("{:.3}", val).into()),
 //!     )?;
+//!     s.slider("Slider", &mut self.slider, -5, 5)?;
+//!     s.advanced_slider(
+//!         "Advanced Slider",
+//!         &mut self.advanced_slider,
+//!         0.0,
+//!         1.0,
+//!         Some(|val| format!("ratio = {:.3}", val).into()),
+//!     )?;
 //!     Ok(())
 //! }
 //! # }
@@ -28,6 +38,7 @@
 
 use crate::{
     gui::{scroll::THUMB_MIN, MOD_CTRL},
+    ops::clamp_size,
     prelude::*,
 };
 use num_traits::{clamp, Bounded, NumCast};
@@ -35,6 +46,10 @@ use std::{borrow::Cow, error::Error, fmt, str::FromStr};
 
 impl PixState {
     /// Draw a draggable number widget to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
     ///
     /// # Example
     ///
@@ -59,6 +74,10 @@ impl PixState {
     }
 
     /// Draw an advanced draggable number widget to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
     ///
     /// # Example
     /// ```
@@ -97,25 +116,25 @@ impl PixState {
         let id = s.ui.get_id(&label);
         let label = label.split('#').next().unwrap_or("");
         let pos = s.cursor_pos();
-        let font_size = s.theme.font_sizes.body as i32;
-        let style = s.theme.style;
+        let font_size = clamp_size(s.theme.sizes.body);
+        let spacing = s.theme.spacing;
         let colors = s.theme.colors;
-        let fpad = style.frame_pad;
-        let ipad = style.item_pad;
+        let fpad = spacing.frame_pad;
+        let ipad = spacing.item_pad;
 
         // Calculate drag rect
         let width =
             s.ui.next_width
                 .take()
                 .unwrap_or_else(|| s.width().unwrap_or(100) - 2 * fpad.x() as u32);
-        let mut drag = rect![pos, width as i32, font_size + 2 * ipad.y()];
-        let (lwidth, lheight) = s.size_of(label)?;
+        let mut drag = rect![pos, clamp_size(width), font_size + 2 * ipad.y()];
+        let (label_width, label_height) = s.size_of(label)?;
         if !label.is_empty() {
-            drag.offset_x(lwidth as i32 + ipad.x());
+            drag.offset_x(clamp_size(label_width) + ipad.x());
         }
 
         // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, drag);
+        let hovered = s.ui.try_hover(id, &drag);
         let focused = s.ui.try_focus(id);
         let disabled = s.ui.disabled;
         let active = s.ui.is_active(id);
@@ -142,7 +161,7 @@ impl PixState {
                 return Ok(changed);
             }
         }
-        let mut new_value = clamp(s.ui.parse_text_edit(id, *value)?, min, max);
+        let mut new_value = clamp(s.ui.parse_text_edit(id, *value), min, max);
 
         s.push();
         s.ui.push_cursor();
@@ -150,12 +169,15 @@ impl PixState {
         // Label
         s.rect_mode(RectMode::Corner);
         if hovered || active {
-            s.frame_cursor(Cursor::hand())?;
+            s.frame_cursor(&Cursor::hand())?;
         }
 
         if !label.is_empty() {
             s.fill(colors.on_background());
-            s.set_cursor_pos([pos.x(), pos.y() + drag.height() / 2 - lheight as i32 / 2]);
+            s.set_cursor_pos([
+                pos.x(),
+                pos.y() + drag.height() / 2 - clamp_size(label_height) / 2,
+            ]);
             s.text(label)?;
         }
 
@@ -166,15 +188,11 @@ impl PixState {
         s.rect(drag)?;
 
         // Value
-        let text = if let Some(formatter) = formatter {
-            formatter(value)
-        } else {
-            value.to_string().into()
-        };
+        let text = formatter.map_or_else(|| value.to_string().into(), |f| f(value));
         let (vw, vh) = s.size_of(&text)?;
         let center = drag.center();
-        let x = center.x() - vw as i32 / 2;
-        let y = center.y() - vh as i32 / 2;
+        let x = center.x() - clamp_size(vw) / 2;
+        let y = center.y() - clamp_size(vh) / 2;
         s.set_cursor_pos([x, y]);
         s.no_stroke();
         s.fill(fg);
@@ -201,15 +219,19 @@ impl PixState {
         }
         s.ui.handle_events(id);
         s.advance_cursor(rect![pos, drag.right() - pos.x(), drag.height()]);
-        if new_value != *value {
+        if new_value == *value {
+            Ok(false)
+        } else {
             *value = new_value;
             Ok(true)
-        } else {
-            Ok(false)
         }
     }
 
     /// Draw a slider widget to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
     ///
     /// # Example
     ///
@@ -234,6 +256,14 @@ impl PixState {
     }
 
     /// Draw an advanced slider widget to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `value`, `min`, or `max` can not be cast to a floating point value.
     ///
     /// # Example
     /// ```
@@ -270,25 +300,25 @@ impl PixState {
         let id = s.ui.get_id(&label);
         let label = label.split('#').next().unwrap_or("");
         let pos = s.cursor_pos();
-        let font_size = s.theme.font_sizes.body as i32;
-        let style = s.theme.style;
+        let font_size = clamp_size(s.theme.sizes.body);
+        let spacing = s.theme.spacing;
         let colors = s.theme.colors;
-        let fpad = style.frame_pad;
-        let ipad = style.item_pad;
+        let fpad = spacing.frame_pad;
+        let ipad = spacing.item_pad;
 
         // Calculate slider rect
         let width =
             s.ui.next_width
                 .take()
                 .unwrap_or_else(|| s.width().unwrap_or(100) - 2 * fpad.x() as u32);
-        let mut slider = rect![pos, width as i32, font_size + 2 * ipad.y()];
-        let (lwidth, lheight) = s.size_of(label)?;
+        let mut slider = rect![pos, clamp_size(width), font_size + 2 * ipad.y()];
+        let (label_width, label_height) = s.size_of(label)?;
         if !label.is_empty() {
-            slider.offset_x(lwidth as i32 + ipad.x());
+            slider.offset_x(clamp_size(label_width) + ipad.x());
         }
 
         // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, slider);
+        let hovered = s.ui.try_hover(id, &slider);
         let focused = s.ui.try_focus(id);
         let active = s.ui.is_active(id);
 
@@ -315,7 +345,7 @@ impl PixState {
                 return Ok(false);
             }
         }
-        let mut new_value = clamp(s.ui.parse_text_edit(id, *value)?, min, max);
+        let mut new_value = clamp(s.ui.parse_text_edit(id, *value), min, max);
 
         s.push();
         s.ui.push_cursor();
@@ -323,12 +353,15 @@ impl PixState {
         // Label
         s.rect_mode(RectMode::Corner);
         if hovered | active {
-            s.frame_cursor(Cursor::hand())?;
+            s.frame_cursor(&Cursor::hand())?;
         }
 
         if !label.is_empty() {
             s.fill(colors.on_background());
-            s.set_cursor_pos([pos.x(), pos.y() + slider.height() / 2 - lheight as i32 / 2]);
+            s.set_cursor_pos([
+                pos.x(),
+                pos.y() + slider.height() / 2 - clamp_size(label_height) / 2,
+            ]);
             s.text(label)?;
         }
 
@@ -362,15 +395,11 @@ impl PixState {
         s.rect(thumb)?;
 
         // Value
-        let text = if let Some(formatter) = formatter {
-            formatter(value)
-        } else {
-            value.to_string().into()
-        };
+        let text = formatter.map_or_else(|| value.to_string().into(), |f| f(value));
         let (vw, vh) = s.size_of(&text)?;
         let center = slider.center();
-        let x = center.x() - vw as i32 / 2;
-        let y = center.y() - vh as i32 / 2;
+        let x = center.x() - clamp_size(vw) / 2;
+        let y = center.y() - clamp_size(vh) / 2;
         s.set_cursor_pos([x, y]);
         s.no_stroke();
         s.fill(fg);
@@ -387,17 +416,17 @@ impl PixState {
                 // Process mouse input
                 let mx = (s.mouse_pos().x() - slider.x()).clamp(0, slider.width()) as Scalar
                     / slider.width() as Scalar;
-                new_value = NumCast::from(mx * (vmax - vmin) + vmin).unwrap();
+                new_value = NumCast::from(mx.mul_add(vmax - vmin, vmin)).unwrap();
             }
         }
         s.ui.handle_events(id);
         s.advance_cursor(rect![pos, slider.right() - pos.x(), slider.height()]);
 
-        if new_value != *value {
+        if new_value == *value {
+            Ok(false)
+        } else {
             *value = new_value;
             Ok(true)
-        } else {
-            Ok(false)
         }
     }
 }

@@ -4,19 +4,43 @@ use super::theme::FontId;
 use crate::{
     gui::{keys::KeyState, mouse::MouseState},
     prelude::*,
+    shape::PointI2,
+    vector::VectorI2,
 };
 use lru::LruCache;
 use std::{
     cmp,
     collections::hash_map::DefaultHasher,
     error::Error,
+    fmt,
     hash::{Hash, Hasher},
     mem,
+    ops::{Deref, DerefMut},
     str::FromStr,
 };
 
 /// A hashed element identifier for internal state management.
-pub(crate) type ElementId = u64;
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct ElementId(pub u64);
+
+impl fmt::Display for ElementId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl Deref for ElementId {
+    type Target = u64;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for ElementId {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
 
 const ELEMENT_CACHE_SIZE: usize = 128;
 
@@ -33,7 +57,7 @@ pub(crate) struct Texture {
 }
 
 impl Texture {
-    pub(crate) fn new(
+    pub(crate) const fn new(
         id: TextureId,
         element_id: ElementId,
         src: Option<Rect<i32>>,
@@ -129,15 +153,15 @@ impl Default for UiState {
 }
 
 impl UiState {
-    /// Handle state changes this frame prior to calling [AppState::on_update].
+    /// Handle state changes this frame prior to calling [`AppState::on_update`].
     #[inline]
     pub(crate) fn pre_update(&mut self, theme: &Theme) {
         self.clear_hovered();
         self.pcursor = point!();
-        self.cursor = theme.style.frame_pad;
+        self.cursor = theme.spacing.frame_pad;
     }
 
-    /// Handle state changes this frame after calling [AppState::on_update].
+    /// Handle state changes this frame after calling [`AppState::on_update`].
     #[inline]
     pub(crate) fn post_update(&mut self) {
         for texture in &mut self.textures {
@@ -148,7 +172,7 @@ impl UiState {
             self.clear_active();
         } else if !self.has_active() {
             // Disable focused state while mouse is down from previous frame
-            self.set_active(0);
+            self.set_active(ElementId(0));
         }
         self.clear_entered();
     }
@@ -161,12 +185,12 @@ impl UiState {
         if let Some(id) = self.id_stack.last() {
             id.hash(&mut hasher);
         }
-        hasher.finish()
+        ElementId(hasher.finish())
     }
 
     /// Returns the current UI rendering position.
     #[inline]
-    pub(crate) fn cursor(&self) -> PointI2 {
+    pub(crate) const fn cursor(&self) -> PointI2 {
         self.cursor
     }
 
@@ -243,8 +267,8 @@ impl UiState {
     }
 
     /// Whether an element is `active` or not. An element is marked `active` when there is no other
-    /// `active elements, it is marked `hovered` and receives a mouse down event for the
-    /// [Mouse::Left] button. `active` is cleared after every frame.
+    /// `active` elements, it is marked `hovered` and receives a mouse down event for the
+    /// [`Mouse::Left`] button. `active` is cleared after every frame.
     #[inline]
     pub(crate) fn is_active(&self, id: ElementId) -> bool {
         !self.disabled && matches!(self.active, Some(el) if el == id)
@@ -252,7 +276,7 @@ impl UiState {
 
     /// Whether any element is currently `active`.
     #[inline]
-    pub(crate) fn has_active(&self) -> bool {
+    pub(crate) const fn has_active(&self) -> bool {
         self.active.is_some()
     }
 
@@ -269,7 +293,7 @@ impl UiState {
     }
 
     /// Whether an element is `hovered` or not. When an element is considered `hovered` depends on
-    /// the widget, but generally involves checking if the [PixState::mouse_pos] is within the
+    /// the widget, but generally involves checking if the [`PixState::mouse_pos`] is within the
     /// elements bounding area.
     #[inline]
     pub(crate) fn is_hovered(&self, id: ElementId) -> bool {
@@ -278,11 +302,11 @@ impl UiState {
 
     /// Whether any element currently is `hovered`.
     #[inline]
-    pub(crate) fn has_hover(&self) -> bool {
+    pub(crate) const fn has_hover(&self) -> bool {
         self.hovered.is_some()
     }
 
-    /// Set a given element as `hovered` and check for [Mouse::Left] being down to set `active`
+    /// Set a given element as `hovered` and check for [`Mouse::Left`] being down to set `active`
     /// only if there are no other `active` elements. `active` is cleared after every frame.
     #[inline]
     pub(crate) fn hover(&mut self, id: ElementId) {
@@ -302,7 +326,7 @@ impl UiState {
 
     /// Try to capture `hover` if no other element is currently `hovered`.
     #[inline]
-    pub(crate) fn try_hover<S: Contains<i32, 2>>(&mut self, id: ElementId, shape: S) -> bool {
+    pub(crate) fn try_hover<S: Contains<i32, 2>>(&mut self, id: ElementId, shape: &S) -> bool {
         if !self.has_hover() && !self.disabled && shape.contains_point(self.mouse_pos()) {
             self.hover(id);
         }
@@ -318,7 +342,7 @@ impl UiState {
 
     /// Whether any element currently has `focus`.
     #[inline]
-    pub(crate) fn has_focused(&self) -> bool {
+    pub(crate) const fn has_focused(&self) -> bool {
         self.focused.is_some()
     }
 
@@ -384,7 +408,7 @@ impl UiState {
         self.last_focusable = Some(id);
     }
 
-    /// Whether this element was `clicked` this frame. Treats [Key::Return] being pressed while
+    /// Whether this element was `clicked` this frame. Treats [`Key::Return`] being pressed while
     /// focused a a `click`.
     ///
     /// If element is hovered and active, it means it was clicked last frame
@@ -405,7 +429,7 @@ impl UiState {
     /// Return what, if any, [Key] was entered this frame. This is cleared at the end of each
     /// frame.
     #[inline]
-    pub(crate) fn key_entered(&self) -> Option<Key> {
+    pub(crate) const fn key_entered(&self) -> Option<Key> {
         self.keys.entered
     }
 
@@ -424,8 +448,7 @@ impl UiState {
     pub(crate) fn scroll(&mut self, id: ElementId) -> VectorI2 {
         self.elements
             .get(&id)
-            .map(|s| s.scroll)
-            .unwrap_or_else(VectorI2::default)
+            .map_or_else(VectorI2::default, |state| state.scroll)
     }
 
     /// Set the current `scroll` state for this element.
@@ -438,7 +461,7 @@ impl UiState {
                 id,
                 ElementState {
                     scroll,
-                    ..Default::default()
+                    ..ElementState::default()
                 },
             );
         }
@@ -450,11 +473,10 @@ impl UiState {
     where
         S: Into<String>,
     {
-        if let Some(state) = self.elements.get_mut(&id) {
-            mem::take(&mut state.text_edit)
-        } else {
-            initial_text.into()
-        }
+        self.elements.get_mut(&id).map_or_else(
+            || initial_text.into(),
+            |state| mem::take(&mut state.text_edit),
+        )
     }
 
     /// Updates the current `text_edit` state for this element.
@@ -467,7 +489,7 @@ impl UiState {
                 id,
                 ElementState {
                     text_edit,
-                    ..Default::default()
+                    ..ElementState::default()
                 },
             );
         }
@@ -492,7 +514,7 @@ impl UiState {
                 id,
                 ElementState {
                     current_tab: tab,
-                    ..Default::default()
+                    ..ElementState::default()
                 },
             );
         }
@@ -500,26 +522,22 @@ impl UiState {
 
     /// Parses the current `text_edit` state for this element into a given type.
     #[inline]
-    pub(crate) fn parse_text_edit<T>(&mut self, id: ElementId, default: T) -> PixResult<T>
+    pub(crate) fn parse_text_edit<T>(&mut self, id: ElementId, default: T) -> T
     where
-        T: FromStr,
+        T: FromStr + Copy,
         <T as FromStr>::Err: Error + Sync + Send + 'static,
     {
-        if let Some(state) = self.elements.pop(&id) {
-            Ok(state.text_edit.parse().unwrap_or(default))
-        } else {
-            Ok(default)
-        }
+        self.elements
+            .pop(&id)
+            .map_or(default, |state| state.text_edit.parse().unwrap_or(default))
     }
 
     /// Returns whether the current element is expanded or not.
     #[inline]
     pub(crate) fn expanded(&mut self, id: ElementId) -> bool {
-        if let Some(state) = self.elements.get_mut(&id) {
-            state.expanded
-        } else {
-            false
-        }
+        self.elements
+            .get_mut(&id)
+            .map_or(false, |state| state.expanded)
     }
 
     /// Set whether the current element is expanded or not.
@@ -532,7 +550,7 @@ impl UiState {
                 id,
                 ElementState {
                     expanded,
-                    ..Default::default()
+                    ..ElementState::default()
                 },
             );
         }
@@ -621,7 +639,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn cursor_pos(&self) -> PointI2 {
+    pub const fn cursor_pos(&self) -> PointI2 {
         self.ui.cursor()
     }
 
@@ -664,12 +682,11 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
+    #[must_use]
     pub fn hovered(&self) -> bool {
-        if let Some(rect) = self.ui.last_size {
+        self.ui.last_size.map_or(false, |rect| {
             !self.ui.disabled && rect.contains_point(self.mouse_pos())
-        } else {
-            false
-        }
+        })
     }
 
     /// Returns whether the last item drawn was clicked with the left mouse button.
@@ -690,14 +707,13 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
+    #[must_use]
     pub fn clicked(&self) -> bool {
-        if let Some(rect) = self.ui.last_size {
+        self.ui.last_size.map_or(false, |rect| {
             !self.ui.disabled
                 && self.mouse_clicked(Mouse::Left)
                 && rect.contains_point(self.mouse_pos())
-        } else {
-            false
-        }
+        })
     }
 }
 
@@ -707,9 +723,9 @@ impl PixState {
     pub(crate) fn advance_cursor<R: Into<Rect<i32>>>(&mut self, rect: R) {
         let rect = rect.into();
         let pos = self.cursor_pos();
-        let style = self.theme.style;
-        let padx = style.frame_pad.x();
-        let pady = style.item_pad.y();
+        let spacing = self.theme.spacing;
+        let padx = spacing.frame_pad.x();
+        let pady = spacing.item_pad.y();
         let offset_x = self.ui.offset_x;
 
         // Previous cursor ends at the right of this item
@@ -736,7 +752,7 @@ impl PixState {
         R: Into<Option<Rect<i32>>>,
     {
         let font_id = self.theme.fonts.body.id();
-        let font_size = self.theme.font_sizes.body;
+        let font_size = self.theme.sizes.body;
         if let Some(texture) = self
             .ui
             .textures

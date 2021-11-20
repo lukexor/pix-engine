@@ -1,17 +1,17 @@
 //! `Texture` methods.
 //!
-//! Provides texture creation and rendering methods on [PixState].
+//! Provides texture creation and rendering methods on [`PixState`].
 //!
 //! Provided methods:
 //!
-//! - [PixState::texture]: Render a portion of a texture to the current canvas.
-//! - [PixState::texture_transformed]: Render a transformed portion of a texture to the current
+//! - [`PixState::texture`]: Render a portion of a texture to the current canvas.
+//! - [`PixState::texture_transformed`]: Render a transformed portion of a texture to the current
 //!   canvas.
-//! - [PixState::create_texture]: Creates a new texture to render to.
-//! - [PixState::delete_texture]: Delete a texture.
-//! - [PixState::update_texture]: Update texture with [u8] [slice] of pixel data.
-//! - [PixState::with_texture]: Target a texture for rendering.
-//! - [PixState::save_texture]: Save a texture to a [png] file.
+//! - [`PixState::create_texture`]: Creates a new texture to render to.
+//! - [`PixState::delete_texture`]: Delete a texture.
+//! - [`PixState::update_texture`]: Update texture with [u8] [slice] of pixel data.
+//! - [`PixState::with_texture`]: Target a texture for rendering.
+//! - [`PixState::save_texture`]: Save a texture to a [png] file.
 //!
 //! # Example
 //!
@@ -49,15 +49,54 @@
 //! ```
 
 use crate::prelude::*;
-use std::path::Path;
+use std::{
+    fmt,
+    ops::{Deref, DerefMut},
+    path::Path,
+};
 
 /// `Texture` identifier used to reference and target an internally managed texture.
-pub type TextureId = usize;
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct TextureId(pub(crate) usize);
+
+impl fmt::Display for TextureId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl Deref for TextureId {
+    type Target = usize;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for TextureId {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
 
 impl PixState {
     /// Draw a portion `src` of a texture to the current render target translated and resized to
     /// the target `dst`. Passing `None` for `src` renders the entire texture. Passing `None` for
     /// `dst` renders to the maximum size of the render target.
+    ///
+    /// # Note
+    ///
+    /// It's possible to render one texture onto another texture, but currently they both have to
+    /// have been created in the same window. Attempting to render to a texture created with
+    /// another window will result in a [`PixError::InvalidTexture`]. This restriction may be
+    /// lifted in the future.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for any of the following:
+    ///     - The current render target is closed or dropped.
+    ///     - The texture being rendered has been dropped.
+    ///     - The target texture is the same as the texture being rendered.
+    ///     - The renderer fails to draw to the texture.
     ///
     /// # Example
     ///
@@ -90,10 +129,25 @@ impl PixState {
 
     /// Draw a transformed portion `src` of a texture to the current render target translated and
     /// resized to the target `dst`, optionally rotated by an `angle` about a `center` point or
-    /// `flipped`. `angle` can be in either radians or degrees based on [AngleMode]. Passing
+    /// `flipped`. `angle` can be in either radians or degrees based on [`AngleMode`]. Passing
     /// `None` for `src` renders the entire texture. Passing `None` for `dst` renders to the
-    /// maximum size of the render target. [PixState::image_tint] can optionally add a tint color
+    /// maximum size of the render target. [`PixState::image_tint`] can optionally add a tint color
     /// to the rendered texture.
+    ///
+    /// # Note
+    ///
+    /// It's possible to render one texture onto another texture, but currently they both have to
+    /// have been created in the same window. Attempting to render to a texture created with
+    /// another window will result in a [`PixError::InvalidTexture`]. This restriction may be
+    /// lifted in the future.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for any of the following:
+    ///     - The current render target is closed or dropped.
+    ///     - The texture being rendered has been dropped.
+    ///     - The target texture is the same as the texture being rendered.
+    ///     - The renderer fails to draw to the texture.
     ///
     /// # Example
     ///
@@ -155,16 +209,21 @@ impl PixState {
         )
     }
 
-    /// Constructs a `Texture` to render to. Passing `None` for [PixelFormat] will use
-    /// [PixelFormat::default].
+    /// Constructs a `Texture` to render to. Passing `None` for [`PixelFormat`] will use
+    /// [`PixelFormat::default`].
+    ///
+    /// # Errors
+    ///
+    /// If the current window target is closed or invalid, or the texture dimensions are invalid,
+    /// then an error is returned.
     ///
     /// # Note
     ///
     /// Textures are automatically dropped when the window they were created in is closed due to an
     /// implicit lifetime that the texture can not outlive the window it was created for. Calling
     /// this method will associate the texture to the current `window_target`, which can only be
-    /// changed using the [PixState::with_window] method. It is the responsibility of the caller to
-    /// manage created textures and call [PixState::delete_texture] when a texture resource is no
+    /// changed using the [`PixState::with_window`] method. It is the responsibility of the caller to
+    /// manage created textures and call [`PixState::delete_texture`] when a texture resource is no
     /// longer needed and to ensure that texture methods are not called for a given window after it
     /// has been closed, otherwise an error will be returned.
     ///
@@ -196,6 +255,11 @@ impl PixState {
     }
 
     /// Delete a `Texture`.
+    ///
+    /// # Errors
+    ///
+    /// If the current window target is closed or invalid, or the texture has already been dropped,
+    /// then an error is returned.
     ///
     /// # Note
     ///
@@ -229,6 +293,10 @@ impl PixState {
     /// Update the `Texture` with a [u8] [slice] of pixel data. Passing `None` for `rect` updates
     /// the entire texture. `pitch` is the number of bytes in a row of pixels data including
     /// padding between lines.
+    /// # Errors
+    ///
+    /// If the window in which the texture was created is closed, or the renderer fails
+    /// to update to the texture, then an error is returned.
     ///
     /// # Example
     ///
@@ -246,7 +314,7 @@ impl PixState {
     /// # }
     /// ```
     pub fn update_texture<R, P>(
-        &self,
+        &mut self,
         texture_id: TextureId,
         rect: R,
         pixels: P,
@@ -263,6 +331,11 @@ impl PixState {
     }
 
     /// Target a `Texture` for drawing operations.
+    ///
+    /// # Errors
+    ///
+    /// If the window in which the texture was created is closed, or the renderer fails
+    /// to update to the texture, then an error is returned.
     ///
     /// # Example
     ///
@@ -288,7 +361,7 @@ impl PixState {
     {
         self.push();
         self.ui.push_cursor();
-        self.set_cursor_pos(self.theme.style.frame_pad);
+        self.set_cursor_pos(self.theme.spacing.frame_pad);
 
         self.renderer.set_texture_target(texture_id);
         let result = f(self);
@@ -301,6 +374,16 @@ impl PixState {
 
     /// Save a portion `src` of a texture to a [png] file. Passing `None` for `src` saves the
     /// entire texture.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for any of the following:
+    ///     - The window in which the texture was created is closed.
+    ///     - The renderer fails to read pixels from the texture.
+    ///     - An [`io::Error`] occurs attempting to create the [png] file.
+    ///     - A [`png::EncodingError`] occurs attempting to write image bytes.
+    ///
+    /// [`io::Error`]: std::io::Error
     ///
     /// # Example
     ///
@@ -337,6 +420,11 @@ impl PixState {
 /// Trait for texture operations on the underlying `Renderer`.
 pub(crate) trait TextureRenderer {
     /// Create a `Texture` to draw to.
+    ///
+    /// # Errors
+    ///
+    /// If the current window target is closed or invalid, or the texture dimensions are invalid,
+    /// then an error is returned.
     fn create_texture(
         &mut self,
         width: u32,
@@ -345,11 +433,22 @@ pub(crate) trait TextureRenderer {
     ) -> PixResult<TextureId>;
 
     /// Delete a `Texture`.
+    ///
+    /// # Errors
+    ///
+    /// If the current window target is closed or invalid, or the texture has already been dropped,
+    /// then an error is returned.
+    ///
     fn delete_texture(&mut self, texture_id: TextureId) -> PixResult<()>;
 
     /// Update texture with pixel data.
+    ///
+    /// # Errors
+    ///
+    /// If the current window target is closed or invalid, or the renderer fails to update to the
+    /// texture, then an error is returned.
     fn update_texture<P: AsRef<[u8]>>(
-        &self,
+        &mut self,
         texture_id: TextureId,
         rect: Option<Rect<i32>>,
         pixels: P,
@@ -357,6 +456,15 @@ pub(crate) trait TextureRenderer {
     ) -> PixResult<()>;
 
     /// Draw texture to the curent canvas.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for any of the following:
+    ///     - The current render target is closed or dropped.
+    ///     - The texture being rendered has been dropped.
+    ///     - The target texture is the same as the texture being rendered.
+    ///     - The renderer fails to draw to the texture.
+    ///
     #[allow(clippy::too_many_arguments)]
     fn texture(
         &mut self,

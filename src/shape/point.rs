@@ -2,7 +2,7 @@
 //!
 //! # Examples
 //!
-//! You can create a [Point] using [Point::new]:
+//! You can create a [Point] using [`Point::new`]:
 //!
 //! ```
 //! use pix_engine::prelude::*;
@@ -29,7 +29,7 @@ use crate::serialize::arrays;
 use num_traits::Signed;
 #[cfg(feature = "serde")]
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use std::{fmt, ops::*};
+use std::{cmp, fmt, ops::MulAssign};
 
 /// A `Point` in N-dimensional space.
 ///
@@ -38,6 +38,7 @@ use std::{fmt, ops::*};
 /// [module-level documentation]: crate::shape::point
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
+#[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
 pub struct Point<T, const N: usize>(
@@ -355,14 +356,14 @@ impl<T: Num, const N: usize> Point<T, N> {
     /// assert_eq!(p.as_array(), [4, -1, 1]);
     /// ```
     #[inline]
-    pub fn offset<P, const M: usize>(&mut self, offset: P)
+    pub fn offset<P, const M: usize>(&mut self, offsets: P)
     where
         P: Into<Point<T, M>>,
     {
-        let offset = offset.into();
-        assert!(N >= M);
-        for i in 0..M {
-            self[i] += offset[i]
+        let offsets = offsets.into();
+        let len = cmp::min(N, M);
+        for i in 0..len {
+            self[i] += offsets[i];
         }
     }
 
@@ -454,7 +455,10 @@ impl<T: Num + Float, const N: usize> Point<T, N> {
     /// let abs_difference: f64 = (dist - std::f64::consts::SQRT_2).abs();
     /// assert!(abs_difference <= 1e-4);
     /// ```
-    pub fn dist<P: Into<Point<T, N>>>(&self, p: P) -> T {
+    pub fn dist<P>(&self, p: P) -> T
+    where
+        P: Into<Point<T, N>>,
+    {
         (*self - p.into()).mag()
     }
 
@@ -470,7 +474,10 @@ impl<T: Num + Float, const N: usize> Point<T, N> {
     /// let p3 = p1.lerp(p2, 0.5);
     /// assert_eq!(p3.as_array(), [2.0, 2.0, 0.0]);
     /// ```
-    pub fn lerp<P: Into<Point<T, N>>>(&self, p: P, amt: T) -> Self {
+    pub fn lerp<P>(&self, p: P, amt: T) -> Self
+    where
+        P: Into<Point<T, N>>,
+    {
         let p = p.into();
         let lerp = |start, stop, amt| amt * (stop - start) + start;
         let amt = num_traits::clamp(amt, T::zero(), T::one());
@@ -501,7 +508,7 @@ impl<T: Num + Float, const N: usize> Point<T, N> {
 }
 
 impl Draw for PointI2 {
-    /// Draw point to the current [PixState] canvas.
+    /// Draw point to the current [`PixState`] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.point(*self)
     }

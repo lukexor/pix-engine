@@ -1,10 +1,10 @@
 //! UI widget rendering methods.
 //!
-//! Provided [PixState] methods:
+//! Provided [`PixState`] methods:
 //!
-//! - [PixState::button]
-//! - [PixState::checkbox]
-//! - [PixState::radio]
+//! - [`PixState::button`]
+//! - [`PixState::checkbox`]
+//! - [`PixState::radio`]
 //!
 //! # Example
 //!
@@ -39,6 +39,10 @@ const RADIO_SIZE: i32 = 8;
 impl PixState {
     /// Draw a button to the current canvas that returns `true` when clicked.
     ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
+    ///
     /// # Example
     ///
     /// ```
@@ -63,8 +67,8 @@ impl PixState {
         let id = s.ui.get_id(&label);
         let label = label.split('#').next().unwrap_or("");
         let pos = s.cursor_pos();
-        let style = s.theme.style;
-        let pad = style.item_pad;
+        let spacing = s.theme.spacing;
+        let pad = spacing.item_pad;
 
         // Calculate button size
         let (mut width, height) = s.size_of(label)?;
@@ -74,7 +78,7 @@ impl PixState {
         let mut button = rect![pos, width as i32 + 2 * pad.x(), height as i32 + 2 * pad.y()];
 
         // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, button);
+        let hovered = s.ui.try_hover(id, &button);
         s.ui.try_focus(id);
         let disabled = s.ui.disabled;
         let active = s.ui.is_active(id);
@@ -85,7 +89,7 @@ impl PixState {
         // Render
         s.rect_mode(RectMode::Corner);
         if hovered {
-            s.frame_cursor(Cursor::hand())?;
+            s.frame_cursor(&Cursor::hand())?;
             if active {
                 button.offset([1, 1]);
             }
@@ -115,6 +119,10 @@ impl PixState {
 
     /// Draw a checkbox to the current canvas.
     ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
+    ///
     /// # Example
     ///
     /// ```
@@ -143,7 +151,7 @@ impl PixState {
         let checkbox = square![pos, CHECKBOX_SIZE];
 
         // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, checkbox);
+        let hovered = s.ui.try_hover(id, &checkbox);
         s.ui.try_focus(id);
         let disabled = s.ui.disabled;
 
@@ -152,7 +160,7 @@ impl PixState {
         // Checkbox
         s.rect_mode(RectMode::Corner);
         if hovered {
-            s.frame_cursor(Cursor::hand())?;
+            s.frame_cursor(&Cursor::hand())?;
         }
         let [stroke, bg, fg] = if *checked {
             s.widget_colors(id, ColorType::Primary)
@@ -187,18 +195,22 @@ impl PixState {
 
         // Process input
         s.ui.handle_events(id);
-        if !disabled {
+        if disabled {
+            Ok(false)
+        } else {
             let clicked = s.ui.was_clicked(id);
             if clicked {
                 *checked = !(*checked);
             }
             Ok(clicked)
-        } else {
-            Ok(false)
         }
     }
 
     /// Draw a set of radio buttons to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
     ///
     /// # Example
     ///
@@ -230,7 +242,7 @@ impl PixState {
         let radio = circle![pos + RADIO_SIZE, RADIO_SIZE];
 
         // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, radio);
+        let hovered = s.ui.try_hover(id, &radio);
         s.ui.try_focus(id);
         let disabled = s.ui.disabled;
 
@@ -240,7 +252,7 @@ impl PixState {
         s.rect_mode(RectMode::Corner);
         s.ellipse_mode(EllipseMode::Center);
         if hovered {
-            s.frame_cursor(Cursor::hand())?;
+            s.frame_cursor(&Cursor::hand())?;
         }
         let is_selected = *selected == index;
         let [stroke, bg, _] = if is_selected {
@@ -273,14 +285,14 @@ impl PixState {
 
         // Process input
         s.ui.handle_events(id);
-        if !disabled {
+        if disabled {
+            Ok(false)
+        } else {
             let clicked = s.ui.was_clicked(id);
             if clicked {
                 *selected = index;
             }
             Ok(clicked)
-        } else {
-            Ok(false)
         }
     }
 }
