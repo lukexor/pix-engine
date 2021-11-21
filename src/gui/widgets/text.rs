@@ -145,12 +145,18 @@ impl PixState {
                     outline,
                 )?
             } else {
-                let (mut width, mut height) = (0, 0);
+                let mut x = pos.x();
                 let mut y = pos.y();
-                let sin_cos = angle_radians.filter(|&r| r != 0.0).map(f64::sin_cos);
+                let (mut total_width, mut total_height) = (0, 0);
                 for line in text.split('\n') {
-                    let (mut line_width, mut line_height) = s.renderer.text(
-                        point![pos.x(), y],
+                    let (line_width, line_height) = s.renderer.size_of(text, wrap_width)?;
+                    let rect = rect![0, 0, clamp_size(line_width), clamp_size(line_height)];
+                    let bounding_box =
+                        angle_radians.map_or(rect, |angle| rect.rotated(angle, center));
+                    x -= bounding_box.x();
+                    y -= bounding_box.y();
+                    s.renderer.text(
+                        point![x, y],
                         line,
                         wrap_width,
                         angle,
@@ -159,20 +165,11 @@ impl PixState {
                         Some(color),
                         outline,
                     )?;
-                    if let Some(sin_cos) = sin_cos {
-                        let (sin, cos) = sin_cos;
-                        let height = line_height as Scalar;
-                        let width = line_width as Scalar;
-                        let rotated_width = (height).mul_add(sin, width * cos);
-                        let rotated_height = (width).mul_add(sin, height * cos);
-                        line_width = rotated_width.round() as u32;
-                        line_height = rotated_height.round() as u32;
-                    }
-                    width += line_width;
-                    height += line_height;
-                    y += clamp_size(line_height);
+                    total_width += bounding_box.width() as u32;
+                    total_height += bounding_box.height() as u32;
+                    y += bounding_box.height();
                 }
-                (width, height)
+                (total_width, total_height)
             };
             let rect = rect![pos, clamp_size(w), clamp_size(h)];
 

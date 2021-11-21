@@ -27,6 +27,7 @@
 //! ```
 
 use crate::prelude::*;
+use num_traits::{AsPrimitive, Bounded, NumCast};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -429,6 +430,18 @@ impl<T: Num> Rect<T> {
         point!(self.right(), self.bottom())
     }
 
+    /// Returns the four [Point]s that compose this `Rect` as `[top_left, top_right, bottom_right,
+    /// bottom_left]`.
+    #[inline]
+    pub fn points(&self) -> [Point<T, 2>; 4] {
+        [
+            self.top_left(),
+            self.top_right(),
+            self.bottom_right(),
+            self.bottom_left(),
+        ]
+    }
+
     /// Set position centered on a [Point].
     #[inline]
     pub fn center_on<P: Into<Point<T, 2>>>(&mut self, p: P) {
@@ -436,6 +449,43 @@ impl<T: Num> Rect<T> {
         let two = T::one() + T::one();
         self.set_x(p.x() - self.width() / two);
         self.set_y(p.y() - self.height() / two);
+    }
+
+    /// Returns the bounding box for a given rectangle rotated about a `center` by a given
+    /// `angle`. Passing `None` for `center` rotates about the top-left point of the rectangle.
+    #[inline]
+    pub fn rotated(&self, angle: Scalar, center: Option<Point<T, 2>>) -> Self
+    where
+        T: Ord + Bounded + AsPrimitive<Scalar> + NumCast,
+    {
+        if angle == 0.0 {
+            return *self;
+        }
+
+        let sin_cos = angle.sin_cos();
+        // Determine rotated bounding box
+        let [cx, cy]: [Scalar; 2] = center.unwrap_or_else(|| self.center()).as_().as_array();
+        let (sin, cos) = sin_cos;
+        let transformed_points = self.points().map(|p| {
+            let [x, y]: [Scalar; 2] = p.as_().as_array();
+            point![
+                NumCast::from((cx + (x - cx) * cos - (y - cy) * sin).round())
+                    .expect("valid number cast"),
+                NumCast::from((cy + (x - cx).mul_add(sin, (y - cy) * cos)).round())
+                    .expect("valid number cast"),
+            ]
+        });
+        let (min_x, min_y) = transformed_points
+            .iter()
+            .fold((T::max_value(), T::max_value()), |(min_x, min_y), point| {
+                (min_x.min(point.x()), min_y.min(point.y()))
+            });
+        let (max_x, max_y) = transformed_points
+            .iter()
+            .fold((T::min_value(), T::min_value()), |(max_x, max_y), point| {
+                (max_x.max(point.x()), max_y.max(point.y()))
+            });
+        Self::with_points([min_x, min_y], [max_x, max_y])
     }
 }
 
