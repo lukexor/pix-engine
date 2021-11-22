@@ -116,7 +116,7 @@ impl Gui {
             s.tooltip("Flipped text")?;
         }
         s.angle_mode(AngleMode::Degrees);
-        s.text_transformed("Rotated text", 90.0, point![20, 20], None)?;
+        s.text_transformed("Rotated text", 90.0, None, None)?;
 
         s.font_style(FontStyle::BOLD);
         s.text("Bolded text")?;
