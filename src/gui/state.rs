@@ -11,6 +11,7 @@ use lru::LruCache;
 use std::{
     cmp,
     collections::hash_map::DefaultHasher,
+    convert::TryInto,
     error::Error,
     fmt,
     hash::{Hash, Hasher},
@@ -39,6 +40,12 @@ impl Deref for ElementId {
 impl DerefMut for ElementId {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
+    }
+}
+
+impl From<ElementId> for u64 {
+    fn from(id: ElementId) -> Self {
+        *id
     }
 }
 
@@ -93,7 +100,7 @@ pub(crate) struct UiState {
     /// Temporary stack of cursor positions.
     cursor_stack: Vec<(PointI2, PointI2, i32, i32)>,
     /// ID stack to assist with generating unique element IDs.
-    id_stack: Vec<ElementId>,
+    id_stack: Vec<u64>,
     /// Override for max-width elements.
     pub(crate) next_width: Option<u32>,
     /// UI texture to be drawn over rendered frame, in rendered order.
@@ -186,6 +193,12 @@ impl UiState {
             id.hash(&mut hasher);
         }
         ElementId(hasher.finish())
+    }
+
+    /// Helper to strip out any ID-specific patterns from a label.
+    #[inline]
+    pub(crate) fn get_label<'a>(&self, label: &'a str) -> &'a str {
+        label.split("##").next().unwrap_or("")
     }
 
     /// Returns the current UI rendering position.
@@ -568,8 +581,11 @@ impl PixState {
     /// Push a new seed to the UI ID stack. Helps in generating unique widget identifiers that have
     /// the same text label. Pushing a unique ID to the stack will seed the hash of the label.
     #[inline]
-    pub fn push_id(&mut self, id: ElementId) {
-        self.ui.id_stack.push(id);
+    pub fn push_id<I>(&mut self, id: I)
+    where
+        I: TryInto<u64>,
+    {
+        self.ui.id_stack.push(id.try_into().unwrap_or(1));
     }
 
     /// Pop a seed from the UI ID stack.

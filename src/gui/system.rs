@@ -21,10 +21,11 @@
 //!
 //! fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
 //!     match (event.keymod, event.key) {
-//!         (KeyMod::CTRL, Key::C) => s.set_clipboard_text(&self.text_entry),
+//!         (KeyMod::CTRL, Key::C) => s.set_clipboard_text(&self.text_entry)?,
 //!         (KeyMod::CTRL, Key::V) => self.text_entry = s.clipboard_text(),
-//!         _ => Ok(false),
+//!         _ => (),
 //!     }
+//!     Ok(false)
 //! }
 //! # }
 //! ```

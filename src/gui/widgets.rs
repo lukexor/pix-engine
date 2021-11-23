@@ -65,7 +65,7 @@ impl PixState {
 
         let s = self;
         let id = s.ui.get_id(&label);
-        let label = label.split('#').next().unwrap_or("");
+        let label = s.ui.get_label(label);
         let pos = s.cursor_pos();
         let pad = s.theme.spacing.item_pad;
 
@@ -144,7 +144,7 @@ impl PixState {
 
         let s = self;
         let id = s.ui.get_id(&text);
-        let text = text.split('#').next().unwrap_or("");
+        let text = s.ui.get_label(text);
         let pos = s.cursor_pos();
         let pad = s.theme.spacing.item_pad;
 
@@ -217,7 +217,7 @@ impl PixState {
 
         let s = self;
         let id = s.ui.get_id(&label);
-        let label = label.split('#').next().unwrap_or("");
+        let label = s.ui.get_label(label);
         let pos = s.cursor_pos();
         let colors = s.theme.colors;
 
@@ -308,7 +308,7 @@ impl PixState {
 
         let s = self;
         let id = s.ui.get_id(&label);
-        let label = label.split('#').next().unwrap_or("");
+        let label = s.ui.get_label(label);
         let pos = s.cursor_pos();
         let colors = s.theme.colors;
 

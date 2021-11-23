@@ -105,7 +105,7 @@ impl PixState {
 
         let s = self;
         let id = s.ui.get_id(&label);
-        let label = label.split('#').next().unwrap_or("");
+        let label = s.ui.get_label(label);
         let pos = s.cursor_pos();
         let font_size = clamp_size(s.theme.sizes.body);
         let spacing = s.theme.spacing;
@@ -279,7 +279,7 @@ impl PixState {
 
         let s = self;
         let id = s.ui.get_id(&label);
-        let label = label.split('#').next().unwrap_or("");
+        let label = s.ui.get_label(label);
         let pos = s.cursor_pos();
         let spacing = s.theme.spacing;
         let colors = s.theme.colors;

@@ -174,6 +174,7 @@ impl PixState {
             }
             let tab_label = tab_label.as_ref();
             let id = s.ui.get_id(&tab_label);
+            let tab_label = s.ui.get_label(tab_label);
             let pos = s.cursor_pos();
             let colors = s.theme.colors;
 
@@ -197,6 +198,9 @@ impl PixState {
 
             // Render
             s.rect_mode(RectMode::Corner);
+            let mut clip = tab;
+            clip.set_width(clip.width() + 1);
+            s.clip(clip)?;
             if hovered {
                 s.frame_cursor(&Cursor::hand())?;
                 if active {
@@ -204,7 +208,7 @@ impl PixState {
                 }
             }
             let [stroke, fg, bg] = s.widget_colors(id, ColorType::SecondaryVariant);
-            if focused {
+            if active || focused {
                 s.stroke(stroke);
             } else {
                 s.no_stroke();
@@ -215,6 +219,7 @@ impl PixState {
                 s.fill(colors.background);
             }
             s.rect(tab)?;
+            s.no_clip()?;
 
             // Tab text
             s.rect_mode(RectMode::Center);
@@ -252,7 +257,9 @@ impl PixState {
         s.pop();
         s.advance_cursor([0, 0, 0, fpad.y()]);
 
+        s.push_id(tab_id);
         f(s.ui.current_tab(tab_id), s)?;
+        s.pop_id();
 
         Ok(())
     }

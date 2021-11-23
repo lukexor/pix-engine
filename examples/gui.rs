@@ -68,7 +68,7 @@ impl Gui {
         s.text("A")?;
         s.same_line(None);
         if s.link("URL Link")? {
-            s.open_url("https://github.com/lukexor")?;
+            s.open_url("https://github.com/lukexor/pix-engine")?;
         }
         s.same_line(None);
         s.text("in a sentence.")?;

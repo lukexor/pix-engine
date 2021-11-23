@@ -22,7 +22,7 @@ impl PixState {
 
         let s = self;
         let id = s.ui.get_id(&label);
-        let label = label.split('#').next().unwrap_or("");
+        let label = s.ui.get_label(label);
         let pos = s.cursor_pos();
         let spacing = s.theme.spacing;
         let colors = s.theme.colors;
@@ -140,12 +140,15 @@ impl PixState {
             }
 
             let mut scroll_y = new_scroll.y();
+            s.push_id(1);
             let scrolled = s.scrollbar(
+                id,
                 rect![rect.right(), rect.top(), SCROLL_SIZE, rect.height()],
                 ymax,
                 &mut scroll_y,
                 Direction::Vertical,
             )?;
+            s.pop_id();
             if scrolled {
                 new_scroll.set_y(scroll_y);
             }
@@ -172,12 +175,15 @@ impl PixState {
             }
 
             let mut scroll_x = new_scroll.x();
+            s.push_id(2);
             let scrolled = s.scrollbar(
+                id,
                 rect![rect.left(), rect.bottom(), rect.width(), SCROLL_SIZE],
                 xmax,
                 &mut scroll_x,
                 Direction::Horizontal,
             )?;
+            s.pop_id();
             if scrolled {
                 new_scroll.set_x(scroll_x);
             }
@@ -195,6 +201,7 @@ impl PixState {
     /// Helper to render either a vertical or a horizontal scroll bar.
     fn scrollbar(
         &mut self,
+        id: ElementId,
         rect: Rect<i32>,
         max: i32,
         value: &mut i32,
@@ -203,7 +210,7 @@ impl PixState {
         use Direction::{Horizontal, Vertical};
 
         let s = self;
-        let id = s.ui.get_id(&rect);
+        let id = s.ui.get_id(&id);
         let colors = s.theme.colors;
 
         // Check hover/active/keyboard focus
@@ -221,8 +228,12 @@ impl PixState {
             s.frame_cursor(&Cursor::hand())?;
         }
 
-        let [_, bg, _] = s.widget_colors(id, ColorType::Secondary);
-        s.no_stroke();
+        let [stroke, bg, _] = s.widget_colors(id, ColorType::Secondary);
+        if active || focused {
+            s.stroke(stroke);
+        } else {
+            s.no_stroke();
+        }
         s.fill(colors.on_secondary);
         s.rect(rect)?;
 

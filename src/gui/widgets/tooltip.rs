@@ -70,6 +70,7 @@ impl PixState {
 
         let s = self;
         let id = s.ui.get_id(&text);
+        let text = s.ui.get_label(text);
         let pos = s.cursor_pos();
         let spacing = s.theme.spacing;
         let fpad = spacing.frame_pad;
@@ -177,6 +178,7 @@ impl PixState {
 
         let s = self;
         let id = s.ui.get_id(&text);
+        let text = s.ui.get_label(text);
         let spacing = s.theme.spacing;
         let pad = spacing.frame_pad;
 

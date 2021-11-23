@@ -3,6 +3,74 @@
 //! Uses [immediate mode](https://en.wikipedia.org/wiki/Immediate_mode_GUI). See the `gui` example
 //! in the `examples/` folder for a full demo.
 //!
+//! # Note
+//!
+//! Many widgets rely on unique labels or IDs that are consistent across frames for internal state
+//! management. This ID is generally built using the hash of the label combined with any parents
+//! they may be under, for example items rendered under a tab are combined with the tabs label
+//! hash.
+//!
+//! e.g.
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! # fn draw(s: &mut PixState) -> PixResult<()> {
+//! if s.button("Click")? {     // Label = "Click", ID = hash of "Click"
+//!     // Handle click action
+//! }
+//! s.advanced_tooltip(
+//!     "Advanced Tooltip",
+//!     rect![s.mouse_pos(), 300, 100],
+//!     |s: &mut PixState| {
+//!         // Label = "Click", ID = hash of "Click" + "Advanced Tooltip"
+//!         if s.button("Click")? {
+//!             // Handle click action
+//!         }
+//!         Ok(())
+//!     },
+//! )?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! There is an ID stack system in place in addition to a `##` string pattern that can be used to
+//! uniquely identify elements that may require an empty label or conflict with another element.
+//!
+//! If you find that your widget is not properly interacting with user events or maintaining state
+//! correctly, try one of the following methods to ensure the label is unique.
+//!
+//! You can append a unique identifier after your label with `##`. Anything after this pattern
+//! won't be visible to the user:
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! # fn draw(s: &mut PixState) -> PixResult<()> {
+//! if s.button("Click##action1")? {     // Label = "Click", ID = hash of "Click##action1"
+//!     // Handle action 1
+//! }
+//! if s.button("Click##action2")? {     // Label = "Click", ID = hash of "Click##action2"
+//!     // Handle action 2
+//! }
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! You can use [PixState::push_id] and [PixState::pop_id] either by itself, or as part of a loop:
+//!
+//! ```
+//! # use pix_engine::prelude::*;
+//! # fn draw(s: &mut PixState) -> PixResult<()> {
+//! for i in 0..5 {
+//!   s.push_id(i);             // Push i to the ID stack
+//!   if s.button("Click")? {   // Label = "Click",  ID = hash of "Click" + i
+//!     // Handle click action
+//!   }
+//!   s.pop_id();
+//! }
+//! # Ok(())
+//! # }
+//! ```
+//!
 //! # Example
 //!
 //! ```
