@@ -248,7 +248,7 @@ impl PixState {
         s.push();
         s.stroke(colors.disabled());
         let y = pos.y() - ipad.y() - 1;
-        s.line(line_![fpad.x(), y, clamp_size(s.width()?) - ipad.x(), y])?;
+        s.line(line_![fpad.x(), y, clamp_size(s.width()?) - fpad.x(), y])?;
         s.pop();
         s.advance_cursor([0, 0, 0, fpad.y()]);
 

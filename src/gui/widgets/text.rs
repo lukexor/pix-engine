@@ -27,7 +27,7 @@
 use crate::{ops::clamp_size, prelude::*, renderer::Rendering};
 
 impl PixState {
-    /// Draw text to the current canvas.
+    /// Draw body text to the current canvas.
     ///
     /// Returns the rendered `(width, height)` of the text, including any newlines or text
     /// wrapping.
@@ -53,6 +53,76 @@ impl PixState {
         S: AsRef<str>,
     {
         self.text_transformed(text, 0.0, None, None)
+    }
+
+    /// Draw heading text to the current canvas.
+    ///
+    /// Returns the rendered `(width, height)` of the text, including any newlines or text
+    /// wrapping.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { text_field: String, text_area: String};
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.heading("Heading")?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    pub fn heading<S>(&mut self, text: S) -> PixResult<(u32, u32)>
+    where
+        S: AsRef<str>,
+    {
+        let s = self;
+        s.push();
+        s.renderer.font_family(&s.theme.fonts.heading)?;
+        s.renderer.font_size(s.theme.sizes.heading)?;
+        s.renderer.font_style(s.theme.styles.heading);
+        let size = s.text_transformed(text, 0.0, None, None);
+        s.pop();
+        size
+    }
+
+    /// Draw monospace text to the current canvas.
+    ///
+    /// Returns the rendered `(width, height)` of the text, including any newlines or text
+    /// wrapping.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { text_field: String, text_area: String};
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.monospace("Monospace")?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    pub fn monospace<S>(&mut self, text: S) -> PixResult<(u32, u32)>
+    where
+        S: AsRef<str>,
+    {
+        let s = self;
+        s.push();
+        s.renderer.font_family(&s.theme.fonts.monospace)?;
+        s.renderer.font_size(s.theme.sizes.monospace)?;
+        s.renderer.font_style(s.theme.styles.monospace);
+        let size = s.text_transformed(text, 0.0, None, None);
+        s.pop();
+        size
     }
 
     /// Draw transformed text to the current canvas, optionally rotated about a `center` by `angle`

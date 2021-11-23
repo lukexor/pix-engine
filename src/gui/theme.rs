@@ -343,7 +343,7 @@ impl Default for FontSizes {
         Self {
             body: 12,
             heading: 20,
-            monospace: 14,
+            monospace: 16,
         }
     }
 }

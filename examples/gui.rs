@@ -71,7 +71,7 @@ impl Gui {
             s.open_url("https://github.com/lukexor")?;
         }
         s.same_line(None);
-        s.text("in some text.")?;
+        s.text("in a sentence.")?;
 
         s.checkbox("Checkbox", &mut self.checkbox)?;
 
@@ -119,33 +119,36 @@ impl Gui {
     }
 
     fn text_widgets(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.text_transformed("Flipped text", None, None, Flipped::Both)?;
+        s.text_transformed("Flipped", None, None, Flipped::Both)?;
         if s.hovered() {
-            s.tooltip("Flipped text")?;
+            s.tooltip("Flipped")?;
         }
         s.angle_mode(AngleMode::Degrees);
-        s.text_transformed("Rotated text", 90.0, None, None)?;
+        s.text_transformed("Rotated", 30.0, None, None)?;
 
         s.font_style(FontStyle::BOLD);
-        s.text("Bolded text")?;
+        s.text("Bolded")?;
         s.font_style(FontStyle::ITALIC);
-        s.text("Italicized text")?;
+        s.text("Italicized")?;
         s.font_style(FontStyle::UNDERLINE);
-        s.text("Underlined text")?;
+        s.text("Underlined")?;
         s.font_style(FontStyle::STRIKETHROUGH);
-        s.text("Strikethrough text")?;
+        s.text("Strikethrough")?;
 
         s.font_style(FontStyle::NORMAL);
         s.push();
         let colors = s.theme().colors;
         s.stroke(colors.secondary_variant);
         s.stroke_weight(2);
-        s.text("Outlined text")?;
+        s.text("Outlined")?;
         s.pop();
 
+        s.heading("Heading")?;
+        s.monospace("Monospace")?;
+
         s.indent()?;
-        s.text("Indented text")?;
-        s.bullet("Bullet text")?;
+        s.text("Indented")?;
+        s.bullet("Bullet")?;
 
         Ok(())
     }
