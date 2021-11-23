@@ -100,7 +100,7 @@ impl TextureRenderer for Renderer {
         });
         if let Some(window) = window {
             // We ensured there's a valid texture above
-            let texture = window.textures.get(&texture_id).unwrap();
+            let texture = window.textures.get(&texture_id).expect("valid texture");
             let rect: Option<SdlRect> = rect.map(|r| r.into());
             Ok(texture
                 .borrow_mut()
@@ -139,7 +139,7 @@ impl TextureRenderer for Renderer {
         });
         if let Some(window) = window {
             // We ensured there's a valid texture above
-            let texture = window.textures.get(&texture_id).unwrap();
+            let texture = window.textures.get(&texture_id).expect("valid texture");
             {
                 let mut texture = texture.borrow_mut();
                 if let Some(tint) = tint {

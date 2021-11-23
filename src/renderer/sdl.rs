@@ -72,7 +72,7 @@ impl Renderer {
             });
             if let Some(window) = window {
                 // We ensured there's a valid texture above
-                let texture = window.textures.get(&texture_id).unwrap();
+                let texture = window.textures.get(&texture_id).expect("valid texture");
                 let mut result = Ok(());
                 window
                     .canvas
@@ -729,7 +729,7 @@ impl Rendering for Renderer {
             });
             if let Some(window) = window {
                 // We ensured there's a valid texture above
-                let texture = window.textures.get(&texture_id).unwrap();
+                let texture = window.textures.get(&texture_id).expect("valid texture");
                 let mut result = Ok(vec![]);
                 window
                     .canvas

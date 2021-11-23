@@ -416,7 +416,7 @@ impl PixState {
                 // Process mouse input
                 let mx = (s.mouse_pos().x() - slider.x()).clamp(0, slider.width()) as Scalar
                     / slider.width() as Scalar;
-                new_value = NumCast::from(mx.mul_add(vmax - vmin, vmin)).unwrap();
+                new_value = NumCast::from(mx.mul_add(vmax - vmin, vmin)).unwrap_or(*value);
             }
         }
         s.ui.handle_events(id);
