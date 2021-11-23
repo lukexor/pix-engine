@@ -207,14 +207,18 @@ impl PixState {
                 // Process keyboard input
                 s.ui.begin_edit(id);
             } else {
-                let delta = s.mouse_pos().x() - s.pmouse_pos().x();
-                let mut delta: T = NumCast::from(delta).expect("valid i32 cast");
+                let mut mdelta = (s.mouse_pos().x() - s.pmouse_pos().x()) as Scalar;
                 if s.keymod_down(KeyMod::ALT) {
-                    delta /= NumCast::from(10).expect("valid number cast");
+                    mdelta /= 10.0;
                 } else if s.keymod_down(KeyMod::SHIFT) {
-                    delta *= NumCast::from(10).expect("valid number cast");
+                    mdelta *= 10.0;
                 }
-                new_value = clamp(new_value + (delta * speed), min, max);
+                let mut delta = speed * NumCast::from(mdelta).unwrap_or_default();
+                // Handle integer division truncation to ensure at least some minimum drag occurs
+                if mdelta != 0.0 && delta == T::zero() {
+                    delta = T::one() * NumCast::from(mdelta.signum()).unwrap_or_default();
+                }
+                new_value = clamp(new_value + delta, min, max);
             }
         }
         s.ui.handle_events(id);

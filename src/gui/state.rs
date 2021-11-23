@@ -175,6 +175,7 @@ impl UiState {
             texture.visible = false;
         }
 
+        self.pmouse.pos = self.mouse.pos;
         if !self.mouse.is_down(Mouse::Left) {
             self.clear_active();
         } else if !self.has_active() {
