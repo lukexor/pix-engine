@@ -224,7 +224,7 @@ impl Default for Event {
 
 /// A specific [Event] representing a keypress.
 #[non_exhaustive]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct KeyEvent {
     /// Specific key for this event.

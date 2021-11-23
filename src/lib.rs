@@ -1,20 +1,28 @@
 #![doc = include_str!("../README.md")]
-#![deny(missing_docs, rustdoc::invalid_html_tags)]
 #![warn(
-    unused,
-    deprecated_in_future,
-    unreachable_pub,
+    anonymous_parameters,
     bare_trait_objects,
+    deprecated_in_future,
     ellipsis_inclusive_range_patterns,
     future_incompatible,
+    missing_copy_implementations,
     missing_debug_implementations,
+    missing_docs,
     nonstandard_style,
+    rust_2018_compatibility,
     rust_2018_idioms,
+    rust_2021_compatibility,
+    rustdoc::bare_urls,
+    rustdoc::broken_intra_doc_links,
+    rustdoc::invalid_html_tags,
+    rustdoc::invalid_rust_codeblocks,
+    rustdoc::private_intra_doc_links,
+    single_use_lifetimes,
     trivial_casts,
     trivial_numeric_casts,
-    variant_size_differences,
-    rustdoc::broken_intra_doc_links,
-    rustdoc::private_intra_doc_links
+    unreachable_pub,
+    unused,
+    variant_size_differences
 )]
 #![doc(
     html_root_url = "https://docs.rs/pix-engine/0.3.5",
