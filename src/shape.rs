@@ -46,12 +46,19 @@ pub mod sphere;
 #[macro_use]
 pub mod triangle;
 
+#[doc(inline)]
 pub use ellipse::*;
+#[doc(inline)]
 pub use line::*;
+#[doc(inline)]
 pub use point::*;
+#[doc(inline)]
 pub use quad::*;
+#[doc(inline)]
 pub use rect::*;
+#[doc(inline)]
 pub use sphere::*;
+#[doc(inline)]
 pub use triangle::*;
 
 /// Trait for shape containing operations.
