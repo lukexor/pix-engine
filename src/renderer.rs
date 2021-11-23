@@ -112,6 +112,9 @@ pub(crate) trait Rendering: Sized {
     /// Set clipboard text to the system clipboard.
     fn set_clipboard_text(&self, value: &str) -> PixResult<()>;
 
+    /// Open a URL in the default system browser.
+    fn open_url(&self, url: &str) -> PixResult<()>;
+
     /// Draw text to the current canvas. `angle` must be in degrees.
     #[allow(clippy::too_many_arguments)]
     fn text(

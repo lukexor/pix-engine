@@ -406,6 +406,12 @@ impl Rendering for Renderer {
             .map_err(PixError::Renderer)?)
     }
 
+    /// Open a URL in the default system browser.
+    #[inline]
+    fn open_url(&self, url: &str) -> PixResult<()> {
+        sdl2::url::open_url(url).context("invalid url")
+    }
+
     /// Returns the rendered dimensions of the given text using the current font
     /// as `(width, height)`.
     #[inline]

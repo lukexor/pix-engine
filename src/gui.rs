@@ -1,4 +1,4 @@
-//! Graphical User Interface functions.
+//! Graphical User Interface methods.
 //!
 //! Uses [immediate mode](https://en.wikipedia.org/wiki/Immediate_mode_GUI). See the `gui` example
 //! in the `examples/` folder for a full demo.
@@ -28,9 +28,10 @@
 //! ```
 
 use self::state::ElementId;
-use crate::{prelude::*, renderer::Rendering};
+use crate::prelude::*;
 
 pub mod layout;
+pub mod system;
 pub mod theme;
 pub mod widgets;
 
@@ -53,51 +54,6 @@ pub(crate) enum Direction {
     Horizontal,
     /// Vertical.
     Vertical,
-}
-
-impl PixState {
-    /// Get clipboard text from the system clipboard.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # struct App { checkbox: bool, text_field: String };
-    /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     println!("Current clipboard text: {}", s.clipboard_text());
-    ///     Ok(())
-    /// }
-    /// # }
-    /// ```
-    #[inline]
-    #[must_use]
-    pub fn clipboard_text(&self) -> String {
-        self.renderer.clipboard_text()
-    }
-
-    /// Set clipboard text to the system clipboard.
-    ///
-    /// # Errors
-    ///
-    /// If the renderer fails to retrieve the clipboard text, then an error is returned.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # struct App { checkbox: bool, text_field: String };
-    /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.set_clipboard_text("Copied to clipboard!")?;
-    ///     Ok(())
-    /// }
-    /// # }
-    /// ```
-    #[inline]
-    pub fn set_clipboard_text(&self, value: &str) -> PixResult<()> {
-        self.renderer.set_clipboard_text(value)
-    }
 }
 
 impl PixState {

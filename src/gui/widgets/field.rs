@@ -422,12 +422,12 @@ impl PixState {
                     changed = true;
                 }
                 Key::X if s.keymod_down(MOD_CTRL) => {
-                    s.set_clipboard_text(value)?;
+                    s.set_clipboard_text(&value)?;
                     value.clear();
                     changed = true;
                 }
                 Key::C if s.keymod_down(MOD_CTRL) => {
-                    s.set_clipboard_text(value)?;
+                    s.set_clipboard_text(&value)?;
                 }
                 Key::V if s.keymod_down(MOD_CTRL) => {
                     value.push_str(&s.clipboard_text());

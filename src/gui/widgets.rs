@@ -67,8 +67,7 @@ impl PixState {
         let id = s.ui.get_id(&label);
         let label = label.split('#').next().unwrap_or("");
         let pos = s.cursor_pos();
-        let spacing = s.theme.spacing;
-        let pad = spacing.item_pad;
+        let pad = s.theme.spacing.item_pad;
 
         // Calculate button size
         let (mut width, height) = s.size_of(label)?;
@@ -114,6 +113,81 @@ impl PixState {
         // Process input
         s.ui.handle_events(id);
         s.advance_cursor(button);
+        Ok(!disabled && s.ui.was_clicked(id))
+    }
+
+    /// Draw a text link to the current canvas that returns `true` when clicked.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     if s.link("Link")? {
+    ///         // was clicked
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    pub fn link<S>(&mut self, text: S) -> PixResult<bool>
+    where
+        S: AsRef<str>,
+    {
+        let text = text.as_ref();
+
+        let s = self;
+        let id = s.ui.get_id(&text);
+        let text = text.split('#').next().unwrap_or("");
+        let pos = s.cursor_pos();
+        let pad = s.theme.spacing.item_pad;
+
+        // Calculate button size
+        let (width, height) = s.size_of(text)?;
+        let bounding_box = rect![
+            pos - pad / 2,
+            width as i32 + pad.x(),
+            height as i32 + pad.x()
+        ];
+
+        // Check hover/active/keyboard focus
+        let hovered = s.ui.try_hover(id, &bounding_box);
+        let focused = s.ui.try_focus(id);
+        let disabled = s.ui.disabled;
+        let active = s.ui.is_active(id);
+
+        s.push();
+
+        // Render
+        if hovered {
+            s.frame_cursor(&Cursor::hand())?;
+        }
+        let [stroke, bg, fg] = s.widget_colors(id, ColorType::Primary);
+        if focused {
+            s.stroke(stroke);
+            s.no_fill();
+            s.rect(bounding_box)?;
+        }
+
+        // Button text
+        s.no_stroke();
+        if active {
+            s.fill(fg.blended(bg, 0.04));
+        } else {
+            s.fill(bg);
+        }
+        s.text(text)?;
+
+        s.pop();
+
+        // Process input
+        s.ui.handle_events(id);
         Ok(!disabled && s.ui.was_clicked(id))
     }
 

@@ -65,6 +65,14 @@ impl Gui {
             s.text("Clicked!")?;
         }
 
+        s.text("A")?;
+        s.same_line(None);
+        if s.link("URL Link")? {
+            s.open_url("https://github.com/lukexor")?;
+        }
+        s.same_line(None);
+        s.text("in some text.")?;
+
         s.checkbox("Checkbox", &mut self.checkbox)?;
 
         s.radio("Radio 1", &mut self.radio, 0)?;
@@ -288,7 +296,7 @@ impl Gui {
 
         s.same_line(None);
         s.next_width(200);
-        s.slider("Font Size", &mut self.font_size, 8, 40)?;
+        s.slider("Font Size", &mut self.font_size, 8, 25)?;
         s.same_line(None);
         if s.button("Apply")? {
             s.font_size(self.font_size)?;
