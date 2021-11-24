@@ -28,6 +28,7 @@
 use anyhow::Context;
 
 use crate::{prelude::*, renderer::Rendering};
+use log::info;
 use std::{fs::File, io::BufWriter, path::Path};
 
 /// Trait for objects that can be drawn to the screen.
@@ -115,6 +116,7 @@ impl PixState {
         P: AsRef<Path>,
         R: Into<Option<Rect<i32>>>,
     {
+        info!("Saving canvas to {}", path.as_ref().display());
         if let Some(src) = src.into() {
             // Copy current texture target to a texture
             let bytes = self.renderer.to_bytes()?;

@@ -7,6 +7,7 @@ use crate::{
 };
 use anyhow::Context;
 use lazy_static::lazy_static;
+use log::debug;
 use lru::LruCache;
 use sdl2::{
     audio::{AudioQueue, AudioSpecDesired},
@@ -169,6 +170,8 @@ impl Renderer {
 impl Rendering for Renderer {
     /// Initializes the `Sdl2Renderer` using the given settings and opens a new window.
     fn new(s: RendererSettings) -> PixResult<Self> {
+        debug!("Initializing SDLRenderer");
+
         let context = sdl2::init().map_err(PixError::Renderer)?;
         let event_pump = context.event_pump().map_err(PixError::Renderer)?;
 

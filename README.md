@@ -95,6 +95,28 @@ feature flag to statically link them.
 
 ## Crate features
 
+### Logging
+
+This library uses the [log](https://crates.io/crates/log) crate to provide
+various levels of logging. To leverage logging in your application, choose one
+of the supported logger implementations and initialize it in your `main`
+function.
+
+Example using [env_logger](https://crates.io/crates/env_logger):
+
+```rust ignore
+fn main() -> PixResult<()> {
+    env_logger::init();
+
+    let mut engine = PixEngine::builder()
+      .with_dimensions(800, 600)
+      .with_title("MyApp")
+      .build()?;
+    let mut app = MyApp;
+    engine.run(&mut app)
+}
+```
+
 ### Utility features
 
 * **serde** -

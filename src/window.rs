@@ -1,6 +1,7 @@
 //! `Window` functions.
 
 use crate::{ops::clamp_dimensions, prelude::*, renderer::RendererSettings};
+use log::trace;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::{
@@ -584,6 +585,8 @@ impl PixState {
     where
         F: FnOnce(&mut PixState) -> PixResult<()>,
     {
+        trace!("Targeting WindowId: {} for rendering", id);
+
         self.push();
         self.ui.push_cursor();
         self.set_cursor_pos(self.theme.spacing.frame_pad);
@@ -594,6 +597,9 @@ impl PixState {
 
         self.ui.pop_cursor();
         self.pop();
+
+        trace!("Restoring render target");
+
         result
     }
 }

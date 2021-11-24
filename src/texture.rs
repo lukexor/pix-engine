@@ -49,6 +49,7 @@
 //! ```
 
 use crate::prelude::*;
+use log::{info, trace};
 use std::{
     fmt,
     ops::{Deref, DerefMut},
@@ -355,20 +356,25 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn with_texture<F>(&mut self, texture_id: TextureId, f: F) -> PixResult<()>
+    pub fn with_texture<F>(&mut self, id: TextureId, f: F) -> PixResult<()>
     where
         F: FnOnce(&mut PixState) -> PixResult<()>,
     {
+        trace!("Targeting TextureId: {} for rendering", id);
+
         self.push();
         self.ui.push_cursor();
         self.set_cursor_pos(self.theme.spacing.frame_pad);
 
-        self.renderer.set_texture_target(texture_id);
+        self.renderer.set_texture_target(id);
         let result = f(self);
         self.renderer.clear_texture_target();
 
         self.ui.pop_cursor();
         self.pop();
+
+        trace!("Restoring render target");
+
         result
     }
 
@@ -406,12 +412,13 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn save_texture<P, R>(&mut self, texture_id: TextureId, src: R, path: P) -> PixResult<()>
+    pub fn save_texture<P, R>(&mut self, id: TextureId, src: R, path: P) -> PixResult<()>
     where
         P: AsRef<Path>,
         R: Into<Option<Rect<i32>>>,
     {
-        self.with_texture(texture_id, |s: &mut PixState| -> PixResult<()> {
+        info!("Saving TextureId: {} to {}", id, path.as_ref().display());
+        self.with_texture(id, |s: &mut PixState| -> PixResult<()> {
             s.save_canvas(src, path)
         })
     }

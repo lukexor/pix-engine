@@ -36,6 +36,7 @@ use crate::{
     prelude::*,
     renderer::{RendererSettings, WindowRenderer},
 };
+use log::{debug, error, info, trace};
 use std::time::{Duration, Instant};
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -266,12 +267,19 @@ impl PixEngine {
     where
         A: AppState,
     {
+        info!("Starting `PixEngine`...");
+
         // Handle events before on_start to initialize window
         self.handle_events(app)?;
 
+        debug!("Starting with `AppState::on_start`");
         self.state.clear()?;
         let on_start = app.on_start(&mut self.state);
         if on_start.is_err() || self.state.should_quit() {
+            debug!("Quitting during startup with `AppState::on_stop`");
+            if let Err(ref err) = on_start {
+                error!("Error: {}", err);
+            }
             return app.on_stop(&mut self.state).and(on_start);
         }
         self.state.present();
@@ -293,6 +301,7 @@ impl PixEngine {
                     if self.state.is_running() {
                         self.state.clear()?;
                         self.state.pre_update();
+                        trace!("Running `AppState::on_update`");
                         let on_update = app.on_update(&mut self.state);
                         if on_update.is_err() {
                             self.state.quit();
@@ -306,8 +315,10 @@ impl PixEngine {
                 }
             };
 
+            debug!("Quitting with `AppState::on_stop`");
             let on_stop = app.on_stop(&mut self.state);
             if self.state.should_quit() {
+                info!("Qutting `PixEngine`...");
                 break 'on_stop on_stop.and(result);
             }
         }
@@ -323,6 +334,7 @@ impl PixEngine {
     {
         let state = &mut self.state;
         while let Some(event) = state.renderer.poll_event() {
+            trace!("Polling event {:?}", event);
             app.on_event(state, &event)?;
             match event {
                 Event::Quit { .. } | Event::AppTerminating { .. } => state.quit(),
