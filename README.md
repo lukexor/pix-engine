@@ -32,13 +32,14 @@ The current minimum Rust version is `1.56.1`.
 ## Getting Started
 
 Creating an application is as simple as implementing the only required method of
-the `AppState` trait for your application: `AppState::on_update` which gets
-executed as often as possible by default. Within that function you'll have
-access to a mutable `PixState` object which provides several methods for
-modifying settings and drawing to the screen.
+the [`AppState`][AppState] trait for your application:
+[`AppState::on_update`][AppState::on_update] which gets executed as often as
+possible by default. Within that function you'll have access to a mutable
+[`PixState`][PixState] object which provides several methods for modifying
+settings and drawing to the screen.
 
-`AppState` has several additional methods that can be implemented to respond to
-user and system events.
+[`AppState`][AppState] has several additional methods that can be implemented to
+respond to user and system events.
 
 Here's an example application:
 
