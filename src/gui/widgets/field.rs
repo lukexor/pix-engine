@@ -155,21 +155,20 @@ impl PixState {
         s.rect(input)?;
 
         // Text
+        let mut clip = input;
+        clip.offset_x(ipad.x());
+        clip.offset_width(-2 * ipad.x());
         let (vw, vh) = s.size_of(&value)?;
-        let mut x = input.x() + ipad.x();
-        let y = input.center().y() - clamp_size(vh) / 2;
-        let mut width = clamp_size(vw);
-        if focused {
-            let (cw, _) = s.size_of(TEXT_CURSOR)?;
-            width += clamp_size(cw);
-        }
-        if width > input.width() {
-            x -= width - input.width();
+        let (cw, _) = s.size_of(TEXT_CURSOR)?;
+        let width = clamp_size(vw) + clamp_size(cw);
+        let (mut x, y) = (clip.x(), input.center().y() - clamp_size(vh) / 2);
+        if width > clip.width() {
+            x -= width - clip.width();
         }
 
         s.no_wrap();
         s.set_cursor_pos([x, y]);
-        s.clip(input)?;
+        s.clip(clip)?;
         s.no_stroke();
         s.fill(fg);
         if value.is_empty() {
@@ -316,12 +315,15 @@ impl PixState {
         s.rect(input)?;
 
         // Text
+        let mut clip = input;
+        clip.offset_size(-ipad);
         let scroll = s.ui.scroll(id);
-        s.wrap((input.width() - ipad.x()) as u32);
+        s.wrap(clip.width() as u32);
         let mut text_pos = input.top_left();
         text_pos.offset(ipad - scroll);
+
         s.set_cursor_pos(text_pos);
-        s.clip(input)?;
+        s.clip(clip)?;
         s.no_stroke();
         s.fill(fg);
         let blink_cursor = focused && s.elapsed() as usize >> 9 & 1 > 0;
@@ -344,10 +346,6 @@ impl PixState {
             s.text(&value)?
         };
         let mut text_height = clamp_size(text_height);
-
-        s.no_clip()?;
-        s.ui.pop_cursor();
-        s.pop();
 
         // Process input
         let mut changed = focused && s.handle_text_events(value)?;
@@ -374,13 +372,17 @@ impl PixState {
             if value.ends_with('\n') {
                 text_height += clamp_size(ch);
             }
-            if text_height < input.height() {
+            if text_height < clip.height() {
                 scroll.set_y(0);
             } else {
                 scroll.set_y(text_height + 2 * ipad.y() - input.height());
             }
             s.ui.set_scroll(id, scroll);
         }
+
+        s.no_clip()?;
+        s.ui.pop_cursor();
+        s.pop();
 
         s.ui.handle_events(id);
         // Scrollbars

@@ -330,7 +330,7 @@ impl<T: Num> Rect<T> {
             self[i] -= offsets[i];
         }
         for i in 2..=3 {
-            self[i] += offsets[i - 2];
+            self[i] += (T::one() + T::one()) * offsets[i - 2];
         }
     }
 
