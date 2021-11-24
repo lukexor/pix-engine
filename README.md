@@ -32,12 +32,12 @@ The current minimum Rust version is `1.56.1`.
 ## Getting Started
 
 Creating an application is as simple as implementing the only required method of
-the [AppState] trait for your application: [AppState::on_update] which gets
+the [`AppState`] trait for your application: [`AppState::on_update`] which gets
 executed as often as possible by default. Within that function you'll have
-access to a mutable [PixState] object which provides several methods for
+access to a mutable [`PixState`] object which provides several methods for
 modifying settings and drawing to the screen.
 
-[AppState] has several additional methods that can be implemented to respond to
+[`AppState`] has several additional methods that can be implemented to respond to
 user and system events.
 
 Here's an example application:
@@ -86,9 +86,14 @@ fn main() -> PixResult<()> {
 }
 ```
 
+## Screenshots
+
+<img src="https://github.com/lukexor/pix-engine/blob/main/images/asteroids.png?raw=true" width="400">&nbsp;&nbsp;<img src="https://github.com/lukexor/pix-engine/blob/main/images/fluid_simulation.png?raw=true" width="400">
+<img src="https://github.com/lukexor/pix-engine/blob/main/images/2d_raycasting.png?raw=true" width="400">&nbsp;&nbsp;<img src="https://github.com/lukexor/pix-engine/blob/main/images/gui.png?raw=true" width="400">
+
 ## Dependencies
 
-When using the default targets for macOs, linux, or Windows, SDL2 libraries are
+When using the default targets for macOS, Linux, or Windows, SDL2 libraries are
 a required dependency. You can either install them manually using one of the
 methods outlined in the [rust-sdl2][] crate, or you can use the `use-vcpkg`
 feature flag to statically link them.
@@ -130,8 +135,8 @@ fn main() -> PixResult<()> {
   debugging.
 
 * **use-vcpkg** -
-  Enables static linking of the SDL2 libraries which are dependencies for macOs,
-  linux, and Windows targets. Using this feature is the easiest way to get up
+  Enables static linking of the SDL2 libraries which are dependencies for macOS,
+  Linux, and Windows targets. Using this feature is the easiest way to get up
   and running unless you already have SDL2 installed on your system.
 
 ### Renderer features
