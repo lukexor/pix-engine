@@ -132,7 +132,7 @@ impl MazeApp {
             self.start_create_maze();
         }
         s.same_line(None);
-        if s.button(">>#1")? {
+        if s.button(">>##1")? {
             self.create_maze()?;
         }
         s.same_line(None);
@@ -140,7 +140,7 @@ impl MazeApp {
             self.start_solve_maze(Algorithm::AStar)?;
         }
         s.same_line(None);
-        if s.button(">>#2")? {
+        if s.button(">>##2")? {
             self.solve_maze()?;
         }
         s.push();
