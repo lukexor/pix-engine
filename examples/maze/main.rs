@@ -196,7 +196,7 @@ impl AppState for MazeApp {
 pub fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
-        .with_title("Maze Generation")
+        .with_title("Maze Generation & A* Search")
         .with_frame_rate()
         .vsync_enabled()
         .build()?;

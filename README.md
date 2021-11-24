@@ -90,6 +90,7 @@ fn main() -> PixResult<()> {
 
 <img src="https://github.com/lukexor/pix-engine/blob/main/images/asteroids.png?raw=true" width="400">&nbsp;&nbsp;<img src="https://github.com/lukexor/pix-engine/blob/main/images/fluid_simulation.png?raw=true" width="400">
 <img src="https://github.com/lukexor/pix-engine/blob/main/images/2d_raycasting.png?raw=true" width="400">&nbsp;&nbsp;<img src="https://github.com/lukexor/pix-engine/blob/main/images/gui.png?raw=true" width="400">
+<img src="https://github.com/lukexor/pix-engine/blob/main/images/maze.png?raw=true" width="400">&nbsp;&nbsp;<img src="https://github.com/lukexor/pix-engine/blob/main/images/matrix.png?raw=true" width="400">
 
 ## Dependencies
 
