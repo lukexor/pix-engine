@@ -52,7 +52,7 @@ impl PixState {
     where
         S: AsRef<str>,
     {
-        self.text_transformed(text, 0.0, None, None)
+        self.text_transformed(text, None, None, None)
     }
 
     /// Draw heading text to the current canvas.
@@ -85,7 +85,7 @@ impl PixState {
         s.renderer.font_family(&s.theme.fonts.heading)?;
         s.renderer.font_size(s.theme.sizes.heading)?;
         s.renderer.font_style(s.theme.styles.heading);
-        let size = s.text_transformed(text, 0.0, None, None);
+        let size = s.text_transformed(text, None, None, None);
         s.pop();
         size
     }
@@ -120,7 +120,7 @@ impl PixState {
         s.renderer.font_family(&s.theme.fonts.monospace)?;
         s.renderer.font_size(s.theme.sizes.monospace)?;
         s.renderer.font_style(s.theme.styles.monospace);
-        let size = s.text_transformed(text, 0.0, None, None);
+        let size = s.text_transformed(text, None, None, None);
         s.pop();
         size
     }
@@ -219,7 +219,7 @@ impl PixState {
                 let mut y = pos.y();
                 let (mut total_width, mut total_height) = (0, 0);
                 for line in text.split('\n') {
-                    let (line_width, line_height) = s.renderer.size_of(text, wrap_width)?;
+                    let (line_width, line_height) = s.renderer.size_of(line, wrap_width)?;
                     let rect = rect![0, 0, clamp_size(line_width), clamp_size(line_height)];
                     let bounding_box =
                         angle_radians.map_or(rect, |angle| rect.rotated(angle, center));
