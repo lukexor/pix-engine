@@ -469,9 +469,9 @@ impl<T: Num> Rect<T> {
         let transformed_points = self.points().map(|p| {
             let [x, y]: [Scalar; 2] = p.as_().as_array();
             point![
-                NumCast::from((cx + (x - cx) * cos - (y - cy) * sin).round())
+                NumCast::from(((x - cx).mul_add(cos, cx) - (y - cy) * sin).round())
                     .expect("valid number cast"),
-                NumCast::from((cy + (x - cx).mul_add(sin, (y - cy) * cos)).round())
+                NumCast::from(((x - cx).mul_add(sin, cy) + (y - cy) * cos).round())
                     .expect("valid number cast"),
             ]
         });

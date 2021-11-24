@@ -55,7 +55,7 @@
 //! # }
 //! ```
 //!
-//! You can use [PixState::push_id] and [PixState::pop_id] either by itself, or as part of a loop:
+//! You can use [`PixState::push_id`] and [`PixState::pop_id`] either by itself, or as part of a loop:
 //!
 //! ```
 //! # use pix_engine::prelude::*;

@@ -61,14 +61,13 @@ impl Hash for Color {
 impl Add for Color {
     type Output = Self;
     fn add(self, other: Color) -> Self::Output {
-        let [v1, v2, v3, a] = self.levels;
-        let [ov1, ov2, ov3, _] = convert_levels(other.levels, other.mode, self.mode);
+        // TODO: Optimize for RGB and same Mode
+        let [v1, v2, v3, a] = self.levels();
+        let [ov1, ov2, ov3, _] = convert_levels(other.levels(), other.mode, self.mode);
         let levels = clamp_levels([v1 + ov1, v2 + ov2, v3 + ov3, a]);
-        let channels = calculate_channels(levels);
         Self {
             mode: self.mode,
-            levels,
-            channels,
+            channels: calculate_channels(levels),
         }
     }
 }
@@ -87,10 +86,11 @@ impl Add<u8> for Color {
 
 impl AddAssign for Color {
     fn add_assign(&mut self, other: Color) {
-        let [v1, v2, v3, a] = self.levels;
-        let [ov1, ov2, ov3, _] = convert_levels(other.levels, other.mode, self.mode);
-        self.levels = clamp_levels([v1 + ov1, v2 + ov2, v3 + ov3, a]);
-        self.calculate_channels();
+        // TODO: Optimize for RGB and same Mode
+        let [v1, v2, v3, a] = self.levels();
+        let [ov1, ov2, ov3, _] = convert_levels(other.levels(), other.mode, self.mode);
+        let levels = clamp_levels([v1 + ov1, v2 + ov2, v3 + ov3, a]);
+        self.update_channels(levels, self.mode);
     }
 }
 
@@ -109,14 +109,13 @@ impl AddAssign<u8> for Color {
 impl Sub for Color {
     type Output = Self;
     fn sub(self, other: Color) -> Self::Output {
-        let [v1, v2, v3, a] = self.levels;
-        let [ov1, ov2, ov3, _] = convert_levels(other.levels, other.mode, self.mode);
+        // TODO: Optimize for RGB and same Mode
+        let [v1, v2, v3, a] = self.levels();
+        let [ov1, ov2, ov3, _] = convert_levels(other.levels(), other.mode, self.mode);
         let levels = clamp_levels([v1 - ov1, v2 - ov2, v3 - ov3, a]);
-        let channels = calculate_channels(levels);
         Self {
             mode: self.mode,
-            levels,
-            channels,
+            channels: calculate_channels(levels),
         }
     }
 }
@@ -135,10 +134,11 @@ impl Sub<u8> for Color {
 
 impl SubAssign for Color {
     fn sub_assign(&mut self, other: Color) {
-        let [v1, v2, v3, a] = self.levels;
-        let [ov1, ov2, ov3, _] = convert_levels(other.levels, other.mode, self.mode);
-        self.levels = clamp_levels([v1 - ov1, v2 - ov2, v3 - ov3, a]);
-        self.calculate_channels();
+        // TODO: Optimize for RGB and same Mode
+        let [v1, v2, v3, a] = self.levels();
+        let [ov1, ov2, ov3, _] = convert_levels(other.levels(), other.mode, self.mode);
+        let levels = clamp_levels([v1 - ov1, v2 - ov2, v3 - ov3, a]);
+        self.update_channels(levels, self.mode);
     }
 }
 
@@ -168,14 +168,13 @@ macro_rules! impl_ops {
             impl Mul<$target> for Color where $target: Into<Scalar> {
                 type Output = Self;
                 fn mul(self, s: $target) -> Self::Output {
-                    let [v1, v2, v3, a] = self.levels;
+                    // TODO: Optimize for RGB and same Mode
+                    let [v1, v2, v3, a] = self.levels();
                     let s = Scalar::from(s);
                     let levels = clamp_levels([v1 * s, v2 * s, v3 * s, a]);
-                    let channels = calculate_channels(levels);
                     Self {
                         mode: self.mode,
-                        levels,
-                        channels,
+                        channels: calculate_channels(levels),
                     }
                 }
             }
@@ -183,48 +182,48 @@ macro_rules! impl_ops {
             impl Mul<Color> for $target where $target: Into<Scalar> {
                 type Output = Color;
                 fn mul(self, c: Color) -> Self::Output {
+                    // TODO: Optimize for RGB and same Mode
                     let [v1, v2, v3, a] = c.levels();
                     let s = Scalar::from(self);
                     let levels = clamp_levels([v1 * s, v2 * s, v3 * s, a]);
-                    let channels = calculate_channels(levels);
                     Color {
                         mode: c.mode,
-                        levels,
-                        channels,
+                        channels: calculate_channels(levels),
                     }
                 }
             }
 
             impl MulAssign<$target> for Color where $target: Into<Scalar> {
                 fn mul_assign(&mut self, s: $target) {
-                    let [v1, v2, v3, a] = self.levels;
+                    // TODO: Optimize for RGB and same Mode
+                    let [v1, v2, v3, a] = self.levels();
                     let s = Scalar::from(s);
-                    self.levels = clamp_levels([v1 * s, v2 * s, v3 * s, a]);
-                    self.calculate_channels();
+                    let levels = clamp_levels([v1 * s, v2 * s, v3 * s, a]);
+                    self.update_channels(levels, self.mode);
                 }
             }
 
             impl Div<$target> for Color where $target: Into<Scalar> {
                 type Output = Self;
                 fn div(self, s: $target) -> Self::Output {
-                    let [v1, v2, v3, a] = self.levels;
+                    // TODO: Optimize for RGB and same Mode
+                    let [v1, v2, v3, a] = self.levels();
                     let s = Scalar::from(s);
                     let levels = clamp_levels([v1 / s, v2 / s, v3 / s, a]);
-                    let channels = calculate_channels(levels);
                     Self {
                         mode: self.mode,
-                        levels,
-                        channels,
+                        channels: calculate_channels(levels),
                     }
                 }
             }
 
             impl DivAssign<$target> for Color where $target: Into<Scalar> {
                 fn div_assign(&mut self, s: $target) {
-                    let [v1, v2, v3, a] = self.levels;
+                    // TODO: Optimize for RGB and same Mode
+                    let [v1, v2, v3, a] = self.levels();
                     let s = Scalar::from(s);
-                    self.levels = clamp_levels([v1 / s, v2 / s, v3 / s, a]);
-                    self.calculate_channels();
+                    let levels = clamp_levels([v1 / s, v2 / s, v3 / s, a]);
+                    self.update_channels(levels, self.mode);
                 }
             }
         )*
@@ -237,14 +236,13 @@ macro_rules! impl_as_ops {
             impl Mul<$target> for Color {
                 type Output = Self;
                 fn mul(self, s: $target) -> Self::Output {
-                    let [v1, v2, v3, a] = self.levels;
+                    // TODO: Optimize for RGB and same Mode
+                    let [v1, v2, v3, a] = self.levels();
                     let s = s as Scalar;
                     let levels = clamp_levels([v1 * s, v2 * s, v3 * s, a]);
-                    let channels = calculate_channels(levels);
                     Self {
                         mode: self.mode,
-                        levels,
-                        channels,
+                        channels: calculate_channels(levels),
                     }
                 }
             }
@@ -252,48 +250,48 @@ macro_rules! impl_as_ops {
             impl Mul<Color> for $target {
                 type Output = Color;
                 fn mul(self, c: Color) -> Self::Output {
+                    // TODO: Optimize for RGB and same Mode
                     let [v1, v2, v3, a] = c.levels();
                     let s = self as Scalar;
                     let levels = clamp_levels([v1 * s, v2 * s, v3 * s, a]);
-                    let channels = calculate_channels(levels);
                     Color {
                         mode: c.mode,
-                        levels,
-                        channels,
+                        channels: calculate_channels(levels),
                     }
                 }
             }
 
             impl MulAssign<$target> for Color {
                 fn mul_assign(&mut self, s: $target) {
-                    let [v1, v2, v3, a] = self.levels;
+                    // TODO: Optimize for RGB and same Mode
+                    let [v1, v2, v3, a] = self.levels();
                     let s = s as Scalar;
-                    self.levels = clamp_levels([v1 * s, v2 * s, v3 * s, a]);
-                    self.calculate_channels();
+                    let levels = clamp_levels([v1 * s, v2 * s, v3 * s, a]);
+                    self.update_channels(levels, self.mode);
                 }
             }
 
             impl Div<$target> for Color {
                 type Output = Self;
                 fn div(self, s: $target) -> Self::Output {
-                    let [v1, v2, v3, a] = self.levels;
+                    // TODO: Optimize for RGB and same Mode
+                    let [v1, v2, v3, a] = self.levels();
                     let s = s as Scalar;
                     let levels = clamp_levels([v1 / s, v2 / s, v3 / s, a]);
-                    let channels = calculate_channels(levels);
                     Self {
                         mode: self.mode,
-                        levels,
-                        channels,
+                        channels: calculate_channels(levels),
                     }
                 }
             }
 
             impl DivAssign<$target> for Color {
                 fn div_assign(&mut self, s: $target) {
-                    let [v1, v2, v3, a] = self.levels;
+                    // TODO: Optimize for RGB and same Mode
+                    let [v1, v2, v3, a] = self.levels();
                     let s = s as Scalar;
-                    self.levels = clamp_levels([v1 / s, v2 / s, v3 / s, a]);
-                    self.calculate_channels();
+                    let levels = clamp_levels([v1 / s, v2 / s, v3 / s, a]);
+                    self.update_channels(levels, self.mode);
                 }
             }
         )*

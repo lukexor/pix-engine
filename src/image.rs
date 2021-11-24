@@ -162,8 +162,11 @@ impl Image {
             .into());
         }
         let bytes: Vec<u8> = match format {
-            PixelFormat::Rgb => pixels.iter().flat_map(Color::rgb_channels).collect(),
-            PixelFormat::Rgba => pixels.iter().flat_map(Color::rgba_channels).collect(),
+            PixelFormat::Rgb => pixels
+                .iter()
+                .flat_map(|p| [p.red(), p.green(), p.blue()])
+                .collect(),
+            PixelFormat::Rgba => pixels.iter().flat_map(Color::channels).collect(),
         };
         Ok(Self::from_vec(width, height, bytes, format))
     }

@@ -60,11 +60,11 @@ impl TextureRenderer for Renderer {
             .texture_creator
             .create_texture_target(format.map(|f| f.into()), width, height)
             .context("failed to create texture")?;
-        let teture_id = TextureId(texture_id);
+        let texture_id = TextureId(texture_id);
         window_canvas
             .textures
-            .insert(teture_id, RefCell::new(RendererTexture::new(texture)));
-        Ok(teture_id)
+            .insert(texture_id, RefCell::new(RendererTexture::new(texture)));
+        Ok(texture_id)
     }
 
     /// Delete texture.

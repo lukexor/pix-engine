@@ -29,7 +29,6 @@ use std::{
     borrow::Cow,
     collections::hash_map::DefaultHasher,
     hash::{Hash, Hasher},
-    str::FromStr,
 };
 
 /// A hashed  identifier for internal state management.
@@ -399,13 +398,13 @@ impl Colors {
     /// A dark color theme.
     pub fn dark() -> Self {
         Self {
-            background: Color::from_str("#121212").unwrap(),
-            surface: Color::from_str("#121212").unwrap(),
-            primary: Color::from_str("#bf360c").unwrap(),
-            primary_variant: Color::from_str("#ff6f43").unwrap(),
-            secondary: Color::from_str("#0c95bf").unwrap(),
-            secondary_variant: Color::from_str("#43d3ff").unwrap(),
-            error: Color::from_str("#cf6679").unwrap(),
+            background: Color::from_hex(0x121212),
+            surface: Color::from_hex(0x121212),
+            primary: Color::from_hex(0xbf360c),
+            primary_variant: Color::from_hex(0xff6f43),
+            secondary: Color::from_hex(0x0c95bf),
+            secondary_variant: Color::from_hex(0x43d3ff),
+            error: Color::from_hex(0xcf6679),
             on_background: Color::WHITE,
             on_surface: Color::WHITE,
             on_primary: Color::BLACK,
@@ -417,13 +416,13 @@ impl Colors {
     /// A light color theme.
     pub fn light() -> Self {
         Self {
-            background: Color::from_str("#fff").unwrap(),
-            surface: Color::from_str("#fff").unwrap(),
-            primary: Color::from_str("#00796b").unwrap(),
-            primary_variant: Color::from_str("#4db6ac").unwrap(),
-            secondary: Color::from_str("#79000e").unwrap(),
-            secondary_variant: Color::from_str("#b64d58").unwrap(),
-            error: Color::from_str("#b00020").unwrap(),
+            background: Color::from_hex(0xffffff),
+            surface: Color::from_hex(0xffffff),
+            primary: Color::from_hex(0x00796b),
+            primary_variant: Color::from_hex(0x4db6ac),
+            secondary: Color::from_hex(0x79000e),
+            secondary_variant: Color::from_hex(0xb64d58),
+            error: Color::from_hex(0xb00020),
             on_background: Color::BLACK,
             on_surface: Color::BLACK,
             on_primary: Color::WHITE,
