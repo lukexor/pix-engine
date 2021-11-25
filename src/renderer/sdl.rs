@@ -116,7 +116,15 @@ impl Renderer {
         Ok(true)
     }
 
-    /// Returns the current SDL font.
+    /// Returns a reference to the current SDL font.
+    #[inline]
+    fn font(&self) -> &SdlFont<'static, 'static> {
+        self.loaded_fonts
+            .peek(&(self.current_font, self.font_size))
+            .expect("valid font")
+    }
+
+    /// Returns a mutable reference the current SDL font.
     #[inline]
     fn font_mut(&mut self) -> &mut SdlFont<'static, 'static> {
         self.loaded_fonts
@@ -418,8 +426,8 @@ impl Rendering for Renderer {
     /// Returns the rendered dimensions of the given text using the current font
     /// as `(width, height)`.
     #[inline]
-    fn size_of(&mut self, text: &str, wrap_width: Option<u32>) -> PixResult<(u32, u32)> {
-        let font = self.font_mut();
+    fn size_of(&self, text: &str, wrap_width: Option<u32>) -> PixResult<(u32, u32)> {
+        let font = self.font();
         if text.is_empty() {
             return Ok(font.size_of("").unwrap_or_default());
         }

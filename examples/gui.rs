@@ -61,7 +61,7 @@ impl Gui {
             self.button_clicked = !self.button_clicked;
         }
         if self.button_clicked {
-            s.same_line([0, 8]);
+            s.same_line([0, s.theme().spacing.item_pad.y()]);
             s.text("Clicked!")?;
         }
 

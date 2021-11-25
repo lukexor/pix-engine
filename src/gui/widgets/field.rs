@@ -114,15 +114,16 @@ impl PixState {
         let ipad = spacing.item_pad;
 
         // Calculate input rect
-        let next_width =
+        let width =
             s.ui.next_width
                 .take()
-                .unwrap_or_else(|| s.width().unwrap_or(100) - 2 * fpad.x() as u32);
-        let mut input = rect![pos, clamp_size(next_width), font_size + 2 * ipad.y()];
-        let (label_width, label_height) = s.size_of(label)?;
+                .unwrap_or_else(|| s.width().map_or(100, |w| w - 2 * fpad.x() as u32));
+        let (label_width, label_height) = s.text_size(label)?;
+        let [mut x, y] = pos.as_array();
         if !label.is_empty() {
-            input.offset_x(clamp_size(label_width) + ipad.x());
+            x += label_width + ipad.x();
         }
+        let input = rect![x, y, clamp_size(width), font_size + 2 * ipad.y()];
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, &input);
@@ -133,35 +134,29 @@ impl PixState {
         s.ui.push_cursor();
 
         // Label
-        s.rect_mode(RectMode::Corner);
-        if hovered {
-            s.frame_cursor(&Cursor::ibeam())?;
-        }
-
         if !label.is_empty() {
             s.no_stroke();
             s.fill(colors.on_background());
-            s.set_cursor_pos([
-                pos.x(),
-                pos.y() + input.height() / 2 - clamp_size(label_height) / 2,
-            ]);
+            s.set_cursor_pos([pos.x(), pos.y() + input.height() / 2 - label_height / 2]);
             s.text(label)?;
         }
 
         // Input
+        s.rect_mode(RectMode::Corner);
+        if hovered {
+            s.frame_cursor(&Cursor::ibeam())?;
+        }
         let [stroke, bg, fg] = s.widget_colors(id, ColorType::Background);
         s.stroke(stroke);
         s.fill(bg);
         s.rect(input)?;
 
         // Text
-        let mut clip = input;
-        clip.offset_x(ipad.x());
-        clip.offset_width(-2 * ipad.x());
-        let (vw, vh) = s.size_of(&value)?;
-        let (cw, _) = s.size_of(TEXT_CURSOR)?;
-        let width = clamp_size(vw) + clamp_size(cw);
-        let (mut x, y) = (clip.x(), input.center().y() - clamp_size(vh) / 2);
+        let clip = input.shrink(ipad);
+        let (value_width, value_height) = s.text_size(value)?;
+        let (cursor_width, _) = s.text_size(TEXT_CURSOR)?;
+        let width = value_width + cursor_width;
+        let (mut x, y) = (clip.x(), input.center().y() - value_height / 2);
         if width > clip.width() {
             x -= width - clip.width();
         }
@@ -182,7 +177,7 @@ impl PixState {
         }
 
         if focused && s.elapsed() as usize >> 9 & 1 > 0 {
-            s.set_cursor_pos([x + clamp_size(vw), y]);
+            s.set_cursor_pos([x + value_width, y]);
             s.text(TEXT_CURSOR)?;
         }
 
@@ -285,11 +280,12 @@ impl PixState {
         let ipad = spacing.item_pad;
 
         // Calculate input rect
-        let mut input = rect![pos, clamp_size(width), clamp_size(height)];
-        let (label_width, label_height) = s.size_of(label)?;
+        let (label_width, label_height) = s.text_size(label)?;
+        let [x, mut y] = pos.as_array();
         if !label.is_empty() {
-            input.offset_y(clamp_size(label_height) + ipad.y());
+            y += label_height + ipad.y();
         }
+        let input = rect![x, y, clamp_size(width), clamp_size(height)];
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, &input);
@@ -300,23 +296,22 @@ impl PixState {
         s.ui.push_cursor();
 
         // Label
-        s.rect_mode(RectMode::Corner);
-        if hovered {
-            s.frame_cursor(&Cursor::ibeam())?;
-        }
         s.no_stroke();
         s.fill(colors.on_background());
         s.text(label)?;
 
         // Input
+        s.rect_mode(RectMode::Corner);
+        if hovered {
+            s.frame_cursor(&Cursor::ibeam())?;
+        }
         let [stroke, bg, fg] = s.widget_colors(id, ColorType::Background);
         s.stroke(stroke);
         s.fill(bg);
         s.rect(input)?;
 
         // Text
-        let mut clip = input;
-        clip.offset_size(-ipad);
+        let clip = input.shrink(ipad);
         let scroll = s.ui.scroll(id);
         s.wrap(clip.width() as u32);
         let mut text_pos = input.top_left();
@@ -365,12 +360,12 @@ impl PixState {
 
             // Keep cursor within scroll region
             let mut scroll = s.ui.scroll(id);
-            let (_, vh) = s.size_of(&value)?;
-            let (_, ch) = s.size_of(TEXT_CURSOR)?;
-            text_height = clamp_size(vh);
+            let (_, vh) = s.text_size(value)?;
+            let (_, ch) = s.text_size(TEXT_CURSOR)?;
+            text_height = vh;
             // EXPL: wrapping chops off the trailing newline, so make sure to adjust height
             if value.ends_with('\n') {
-                text_height += clamp_size(ch);
+                text_height += ch;
             }
             if text_height < clip.height() {
                 scroll.set_y(0);
@@ -389,7 +384,7 @@ impl PixState {
         let rect = s.scroll(id, input, 0, text_height + 2 * ipad.y())?;
         s.advance_cursor(rect![
             pos,
-            rect.width().max(clamp_size(label_width)),
+            rect.width().max(label_width),
             rect.bottom() - pos.y()
         ]);
 

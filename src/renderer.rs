@@ -131,7 +131,7 @@ pub(crate) trait Rendering: Sized {
 
     /// Returns the rendered dimensions of the given text using the current font
     /// as `(width, height)`.
-    fn size_of(&mut self, text: &str, wrap_width: Option<u32>) -> PixResult<(u32, u32)>;
+    fn size_of(&self, text: &str, wrap_width: Option<u32>) -> PixResult<(u32, u32)>;
 
     /// Draw a pixel to the current canvas.
     fn point(&mut self, p: PointI2, color: Color) -> PixResult<()>;

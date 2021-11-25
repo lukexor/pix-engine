@@ -179,13 +179,10 @@ impl PixState {
             let colors = s.theme.colors;
 
             // Calculate tab size
-            let (width, height) = s.size_of(tab_label)?;
-            let mut tab = rect![
-                pos.x() + fpad.x(),
-                pos.y(),
-                clamp_size(width) + 2 * ipad.x(),
-                clamp_size(height) + 2 * ipad.y()
-            ];
+            let (width, height) = s.text_size(tab_label)?;
+            let tab = rect![pos, width, height]
+                .offset([fpad.x(), 0])
+                .offset_size(ipad);
 
             // Check hover/active/keyboard focus
             let hovered = s.ui.try_hover(id, &tab);
@@ -203,9 +200,6 @@ impl PixState {
             s.clip(clip)?;
             if hovered {
                 s.frame_cursor(&Cursor::hand())?;
-                if active {
-                    tab.offset([1, 1]);
-                }
             }
             let [stroke, fg, bg] = s.widget_colors(id, ColorType::SecondaryVariant);
             if active || focused {
@@ -218,7 +212,11 @@ impl PixState {
             } else {
                 s.fill(colors.background);
             }
-            s.rect(tab)?;
+            if active {
+                s.rect(tab.offset([1, 1]))?;
+            } else {
+                s.rect(tab)?;
+            }
             s.no_clip()?;
 
             // Tab text
@@ -288,8 +286,8 @@ impl PixState {
     /// ```
     pub fn spacing(&mut self) -> PixResult<()> {
         let s = self;
-        let (_, height) = s.size_of(" ")?;
-        s.advance_cursor([0, 0, 0, clamp_size(height)]);
+        let (_, height) = s.text_size(" ")?;
+        s.advance_cursor([0, 0, 0, height]);
         Ok(())
     }
 
@@ -314,8 +312,8 @@ impl PixState {
     /// ```
     pub fn indent(&mut self) -> PixResult<()> {
         let s = self;
-        let (width, height) = s.size_of("    ")?;
-        s.advance_cursor([0, 0, clamp_size(width), clamp_size(height)]);
+        let (width, height) = s.text_size("    ")?;
+        s.advance_cursor([0, 0, width, height]);
         s.same_line(None);
         Ok(())
     }

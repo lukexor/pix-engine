@@ -609,7 +609,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn size_of<S: AsRef<str>>(&mut self, text: S) -> PixResult<(u32, u32)> {
+    pub fn size_of<S: AsRef<str>>(&self, text: S) -> PixResult<(u32, u32)> {
         self.renderer
             .size_of(text.as_ref(), self.settings.wrap_width)
     }

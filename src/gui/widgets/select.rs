@@ -92,21 +92,14 @@ impl PixState {
         let ipad = spacing.item_pad;
 
         // Calculate rect
-        let width =
-            s.ui.next_width
-                .take()
-                .unwrap_or_else(|| s.width().unwrap_or(100));
-        let (_, item_height) = s.size_of(items.get(0).map_or("", AsRef::as_ref))?;
-        let mut select_box = rect![
-            pos,
-            clamp_size(width),
-            clamp_size(item_height) + 2 * ipad.y()
-        ];
-        let (label_width, label_height) = s.size_of(label)?;
+        let (width, item_height) = s.text_size(items.get(0).map_or("", AsRef::as_ref))?;
+        let width = s.ui.next_width.take().map(clamp_size).unwrap_or(width);
+        let (label_width, label_height) = s.text_size(label)?;
+        let [mut x, y] = pos.as_array();
         if !label.is_empty() {
-            let offset = clamp_size(label_width) + ipad.x();
-            select_box.offset_x(offset);
+            x += label_width + ipad.x();
         }
+        let select_box = rect![x, y, width, item_height].offset_size(2 * ipad);
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, &select_box);
@@ -115,22 +108,22 @@ impl PixState {
         s.push();
         s.ui.push_cursor();
 
-        // Select Box
-        s.rect_mode(RectMode::Corner);
-
-        if hovered {
-            s.frame_cursor(&Cursor::hand())?;
-        }
+        // Label
         if !label.is_empty() {
             s.no_stroke();
             s.fill(colors.on_background());
             s.set_cursor_pos([
                 pos.x(),
-                pos.y() + select_box.height() / 2 - clamp_size(label_height) / 2,
+                pos.y() + select_box.height() / 2 - label_height / 2,
             ]);
             s.text(label)?;
         }
 
+        // Select Box
+        s.rect_mode(RectMode::Corner);
+        if hovered {
+            s.frame_cursor(&Cursor::hand())?;
+        }
         let [stroke, bg, fg] = s.widget_colors(id, ColorType::Background);
         s.stroke(stroke);
         s.fill(bg);
@@ -160,7 +153,7 @@ impl PixState {
         ])?;
 
         s.no_wrap();
-        s.set_cursor_pos([select_box.x() + ipad.x(), select_box.y() + ipad.y()]);
+        s.set_cursor_pos(select_box.top_left() + ipad);
         s.no_stroke();
         s.fill(fg);
         s.text(&items[*selected])?;
@@ -176,8 +169,7 @@ impl PixState {
 
         let line_height = font_size + 2 * ipad.y();
         let expanded_list = rect![
-            select_box.left(),
-            select_box.bottom(),
+            select_box.bottom_left(),
             select_box.width(),
             displayed_count as i32 * line_height + 2 * fpad.y(),
         ];
@@ -260,20 +252,23 @@ impl PixState {
         let ipad = spacing.item_pad;
 
         // Calculate rect
+        let (label_width, label_height) = s.text_size(label)?;
         let width =
             s.ui.next_width
                 .take()
-                .unwrap_or_else(|| s.width().unwrap_or(100));
-        let mut select_list = rect![
-            pos,
-            clamp_size(width),
-            displayed_count as i32 * (font_size + 2 * ipad.y()) + 2 * fpad.y()
-        ];
+                .map(clamp_size)
+                .unwrap_or(label_width);
+        let [x, mut y] = pos.as_array();
         if !label.is_empty() {
-            let (_, h) = s.size_of(label)?;
-            let offset = clamp_size(h) + ipad.y();
-            select_list.offset_y(offset);
+            y += label_height + ipad.y();
         }
+        let line_height = font_size + 2 * ipad.y();
+        let select_list = rect![
+            x,
+            y,
+            width,
+            displayed_count as i32 * line_height + 2 * fpad.y()
+        ];
 
         // Check hover/active/keyboard focus
         let focused = s.ui.try_focus(id);
@@ -327,9 +322,9 @@ impl PixState {
         // Scrollbars
         let total_height = items.len() as i32 * line_height;
         let total_width = items.iter().fold(0, |max_width, item| {
-            let (w, _) = s.size_of(item).unwrap_or((0, 0));
-            cmp::max(clamp_size(w), max_width)
-        }) + 2 * fpad.x();
+            let (w, _) = s.text_size(item.as_ref()).unwrap_or((0, 0));
+            cmp::max(w, max_width)
+        });
 
         let rect = s.scroll(
             id,
@@ -428,14 +423,9 @@ impl PixState {
         // Items
         let mpos = s.mouse_pos();
 
-        let mut border_clip = select_list;
-        border_clip.offset_size([-1, -1]);
+        let border_clip = select_list.shrink([1, 1]);
         s.clip(border_clip)?;
-        let content_clip = rect![
-            border_clip.top_left() + fpad,
-            border_clip.width() - 2 * fpad.x(),
-            border_clip.height() - 2 * fpad.y(),
-        ];
+        let content_clip = border_clip.shrink(fpad);
         let item_clip = rect![
             select_list.x() + 1,
             content_clip.y(),

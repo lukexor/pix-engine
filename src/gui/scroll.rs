@@ -30,12 +30,12 @@ impl PixState {
         let ipad = spacing.item_pad;
 
         // Calculate rect
-        let mut scroll_area = rect![pos, clamp_size(width), clamp_size(height)];
-        let (label_width, label_height) = s.size_of(label)?;
+        let [x, mut y] = pos.as_array();
+        let (label_width, label_height) = s.text_size(label)?;
         if !label.is_empty() {
-            let offset = clamp_size(label_height) + ipad.y();
-            scroll_area.offset_y(offset);
+            y += label_height + ipad.y();
         }
+        let scroll_area = rect![x, y, clamp_size(width), clamp_size(height)];
 
         // Check hover/active/keyboard focus
         s.ui.try_hover(id, &scroll_area);
@@ -44,12 +44,14 @@ impl PixState {
         s.push();
 
         // Label
-        s.rect_mode(RectMode::Corner);
-        s.no_stroke();
-        s.fill(colors.on_background());
-        s.text(label)?;
+        if !label.is_empty() {
+            s.no_stroke();
+            s.fill(colors.on_background());
+            s.text(label)?;
+        }
 
         // Scroll area
+        s.rect_mode(RectMode::Corner);
         let [stroke, _, fg] = s.widget_colors(id, ColorType::Background);
         let scroll = s.ui.scroll(id);
         let texture_id = s.get_or_create_texture(id, None, scroll_area)?;
@@ -57,8 +59,8 @@ impl PixState {
         s.ui.set_cursor_offset_x(-scroll.x());
         let mut max_cursor_pos = s.cursor_pos();
 
-        let w = scroll_area.width();
-        let h = scroll_area.height();
+        let scroll_width = scroll_area.width();
+        let scroll_height = scroll_area.height();
         let right = scroll_area.width() - fpad.x();
         let bottom = scroll_area.height() - fpad.y();
         s.with_texture(texture_id, |s: &mut PixState| {
@@ -72,14 +74,14 @@ impl PixState {
 
             // Since clip doesn't work texture targets, we fake it
             s.fill(colors.background);
-            s.rect([0, 0, w, fpad.y()])?; // Top
-            s.rect([0, 0, fpad.x(), h])?; // Left
-            s.rect([right, 0, fpad.x(), h])?; // Right
-            s.rect([0, bottom, w, fpad.y()])?; // Bottom
+            s.rect([0, 0, scroll_width, fpad.y()])?; // Top
+            s.rect([0, 0, fpad.x(), scroll_height])?; // Left
+            s.rect([right, 0, fpad.x(), scroll_height])?; // Right
+            s.rect([0, bottom, scroll_width, fpad.y()])?; // Bottom
 
             s.stroke(stroke);
             s.no_fill();
-            s.rect([0, 0, w, h])?;
+            s.rect([0, 0, scroll_width, scroll_height])?;
             Ok(())
         })?;
         s.ui.clear_cursor_offset();
@@ -93,11 +95,7 @@ impl PixState {
         let total_width = max_cursor_pos.x() + s.ui.last_width() + fpad.x();
         let total_height = max_cursor_pos.y();
         let rect = s.scroll(id, scroll_area, total_width, total_height)?;
-        s.advance_cursor(rect![
-            pos,
-            rect.width().max(clamp_size(label_width)),
-            rect.height()
-        ]);
+        s.advance_cursor(rect![pos, rect.width().max(label_width), rect.height()]);
 
         Ok(())
     }
@@ -108,7 +106,7 @@ impl PixState {
     pub(crate) fn scroll(
         &mut self,
         id: ElementId,
-        mut rect: Rect<i32>,
+        rect: Rect<i32>,
         width: i32,
         height: i32,
     ) -> PixResult<Rect<i32>> {
@@ -193,9 +191,7 @@ impl PixState {
             s.ui.set_scroll(id, new_scroll);
         }
 
-        rect.offset_width(SCROLL_SIZE);
-        rect.offset_height(SCROLL_SIZE);
-        Ok(rect)
+        Ok(rect.offset_size([SCROLL_SIZE, SCROLL_SIZE]))
     }
 
     /// Helper to render either a vertical or a horizontal scroll bar.

@@ -257,19 +257,18 @@ impl PixState {
         s.rect_mode(RectMode::Corner);
 
         // Calculate rect
-        let mut rect = s.get_rect(rect);
-        rect.offset([15, 15]);
+        let mut rect = s.get_rect(rect).offset([15, 15]);
 
         // Ensure rect stays inside window
         let (win_width, win_height) = s.window_dimensions()?;
         let (win_width, win_height) = clamp_dimensions(win_width, win_height);
         if rect.right() > win_width {
             let offset = (rect.right() - win_width) + pad.x();
-            rect.offset_x(-offset);
+            rect = rect.offset([-offset, 0]);
         }
         if rect.bottom() > win_height {
             let offset = (rect.bottom() - win_height) + pad.y();
-            rect.offset_y(-offset);
+            rect = rect.offset([-offset, 0]);
             let mpos = s.mouse_pos();
             if rect.contains_point(mpos) {
                 rect.set_bottom(mpos.y() - pad.y());

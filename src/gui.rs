@@ -96,7 +96,7 @@
 //! ```
 
 use self::state::ElementId;
-use crate::prelude::*;
+use crate::{ops::clamp_dimensions, prelude::*};
 
 pub mod layout;
 pub mod system;
@@ -200,5 +200,11 @@ impl PixState {
         };
 
         [stroke, bg, fg]
+    }
+
+    #[inline]
+    pub(crate) fn text_size(&self, text: &str) -> PixResult<(i32, i32)> {
+        let (w, h) = self.size_of(text)?;
+        Ok(clamp_dimensions(w, h))
     }
 }

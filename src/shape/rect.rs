@@ -30,6 +30,7 @@ use crate::prelude::*;
 use num_traits::{AsPrimitive, Bounded, NumCast};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+use std::ops::{Add, Sub};
 
 /// A `Rectangle` positioned at `(x, y)` with `width` and `height`. A square is a `Rectangle` where
 /// `width` and `height` are equal.
@@ -275,63 +276,84 @@ impl<T: Num> Rect<T> {
         Self::new(p.x() - offset, p.y() - offset, size, size)
     }
 
-    /// Offsets a rectangle by shifting coordinates by given amount.
-    ///
-    #[inline]
-    pub fn offset<P>(&mut self, offsets: P)
-    where
-        P: Into<Point<T, 2>>,
-    {
-        let offsets = offsets.into();
-        for i in 0..=1 {
-            self[i] += offsets[i];
-        }
-    }
-
-    /// Offsets the `x-coordinate` of the rectangle by a given amount.
-    #[inline]
-    pub fn offset_x(&mut self, offset: T) {
-        self.0[0] += offset;
-    }
-
-    /// Offsets the `y-coordinate` of the rectangle by a given amount.
-    #[inline]
-    pub fn offset_y(&mut self, offset: T) {
-        self.0[1] += offset;
-    }
-
-    /// Offsets the `width` of the rectangle by a given amount.
-    #[inline]
-    pub fn offset_width(&mut self, offset: T) {
-        self.0[2] += offset;
-    }
-
-    /// Offsets the `height` of the rectangle by a given amount.
-    #[inline]
-    pub fn offset_height(&mut self, offset: T) {
-        self.0[3] += offset;
-    }
-
     /// Returns the `size` of the rectangle as a `Point`.
     #[inline]
     pub fn size(&self) -> Point<T, 2> {
         point!(self.width(), self.height())
     }
 
-    /// Offsets a rectangle's size by shifting coordinates by given amount.
-    ///
+    /// Reposition the the rectangle.
     #[inline]
-    pub fn offset_size<P>(&mut self, offsets: P)
+    pub fn reposition(&self, x: T, y: T) -> Self {
+        Self::new(x, y, self.width(), self.height())
+    }
+
+    /// Resize the the rectangle.
+    #[inline]
+    pub fn resize(&self, width: T, height: T) -> Self {
+        Self::new(self.x(), self.y(), width, height)
+    }
+
+    /// Offsets a rectangle by shifting coordinates by given amount.
+    #[inline]
+    pub fn offset<P>(&self, offsets: P) -> Self
     where
         P: Into<Point<T, 2>>,
     {
         let offsets = offsets.into();
+        let mut rect = *self;
         for i in 0..=1 {
-            self[i] -= offsets[i];
+            rect[i] += offsets[i];
+        }
+        rect
+    }
+
+    /// Offsets a rectangle's size by shifting coordinates by given amount.
+    #[inline]
+    pub fn offset_size<P>(&self, offsets: P) -> Self
+    where
+        P: Into<Point<T, 2>>,
+    {
+        let offsets = offsets.into();
+        let mut rect = *self;
+        for i in 2..=3 {
+            rect[i] += offsets[i - 2];
+        }
+        rect
+    }
+
+    /// Grows a rectangle by a given size.
+    #[inline]
+    pub fn grow<P>(&self, offsets: P) -> Self
+    where
+        P: Into<Point<T, 2>>,
+    {
+        let offsets = offsets.into();
+        let mut rect = *self;
+        for i in 0..=1 {
+            rect[i] -= offsets[i];
         }
         for i in 2..=3 {
-            self[i] += (T::one() + T::one()) * offsets[i - 2];
+            rect[i] += (T::one() + T::one()) * offsets[i - 2];
         }
+        rect
+    }
+
+    /// Shrinks a rectangle by a given size.
+    #[inline]
+    pub fn shrink<P>(&self, offsets: P) -> Self
+    where
+        P: Into<Point<T, 2>>,
+    {
+        let offsets = offsets.into();
+        let mut rect = *self;
+        for i in 0..=1 {
+            rect[i] += offsets[i];
+        }
+        for i in 2..=3 {
+            rect[i] -= (T::one() + T::one()) * offsets[i - 2];
+        }
+        rect
     }
 
     /// Returns `Rect` as a [Vec].
@@ -577,5 +599,19 @@ impl<T: Copy> From<&[T; 3]> for Rect<T> {
     #[inline]
     fn from(&[x, y, s]: &[T; 3]) -> Self {
         Self([x, y, s, s])
+    }
+}
+
+impl Add<PointI2> for Rect {
+    type Output = Self;
+    fn add(self, p: PointI2) -> Self::Output {
+        self.offset(p)
+    }
+}
+
+impl Sub<PointI2> for Rect {
+    type Output = Self;
+    fn sub(self, p: PointI2) -> Self::Output {
+        self.offset(-p)
     }
 }

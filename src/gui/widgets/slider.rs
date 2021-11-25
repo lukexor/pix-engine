@@ -126,12 +126,13 @@ impl PixState {
         let width =
             s.ui.next_width
                 .take()
-                .unwrap_or_else(|| s.width().unwrap_or(100) - 2 * fpad.x() as u32);
-        let mut drag = rect![pos, clamp_size(width), font_size + 2 * ipad.y()];
-        let (label_width, label_height) = s.size_of(label)?;
+                .unwrap_or_else(|| s.width().map_or(100, |w| w - 2 * fpad.x() as u32));
+        let (label_width, label_height) = s.text_size(label)?;
+        let [mut x, y] = pos.as_array();
         if !label.is_empty() {
-            drag.offset_x(clamp_size(label_width) + ipad.x());
+            x += label_width + ipad.x();
         }
+        let drag = rect![x, y, clamp_size(width), font_size + 2 * ipad.y()];
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, &drag);
@@ -167,21 +168,17 @@ impl PixState {
         s.ui.push_cursor();
 
         // Label
-        s.rect_mode(RectMode::Corner);
-        if hovered || active {
-            s.frame_cursor(&Cursor::hand())?;
-        }
-
         if !label.is_empty() {
             s.fill(colors.on_background());
-            s.set_cursor_pos([
-                pos.x(),
-                pos.y() + drag.height() / 2 - clamp_size(label_height) / 2,
-            ]);
+            s.set_cursor_pos([pos.x(), pos.y() + drag.height() / 2 - label_height / 2]);
             s.text(label)?;
         }
 
         // Drag region
+        s.rect_mode(RectMode::Corner);
+        if hovered || active {
+            s.frame_cursor(&Cursor::hand())?;
+        }
         let [stroke, bg, fg] = s.widget_colors(id, ColorType::Primary);
         s.stroke(stroke);
         s.fill(bg);
@@ -189,11 +186,9 @@ impl PixState {
 
         // Value
         let text = formatter.map_or_else(|| value.to_string().into(), |f| f(value));
-        let (vw, vh) = s.size_of(&text)?;
-        let center = drag.center();
-        let x = center.x() - clamp_size(vw) / 2;
-        let y = center.y() - clamp_size(vh) / 2;
-        s.set_cursor_pos([x, y]);
+        let (vw, vh) = s.text_size(&text)?;
+        let center = drag.center() - point![vw, vh] / 2;
+        s.set_cursor_pos(center);
         s.no_stroke();
         s.fill(fg);
         s.text(&text)?;
@@ -314,12 +309,13 @@ impl PixState {
         let width =
             s.ui.next_width
                 .take()
-                .unwrap_or_else(|| s.width().unwrap_or(100) - 2 * fpad.x() as u32);
-        let mut slider = rect![pos, clamp_size(width), font_size + 2 * ipad.y()];
-        let (label_width, label_height) = s.size_of(label)?;
+                .unwrap_or_else(|| s.width().map_or(100, |w| w - 2 * fpad.x() as u32));
+        let (label_width, label_height) = s.text_size(label)?;
+        let [mut x, y] = pos.as_array();
         if !label.is_empty() {
-            slider.offset_x(clamp_size(label_width) + ipad.x());
+            x += label_width + ipad.x();
         }
+        let slider = rect![x, y, clamp_size(width), font_size + 2 * ipad.y()];
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, &slider);
@@ -355,21 +351,17 @@ impl PixState {
         s.ui.push_cursor();
 
         // Label
-        s.rect_mode(RectMode::Corner);
-        if hovered | active {
-            s.frame_cursor(&Cursor::hand())?;
-        }
-
         if !label.is_empty() {
             s.fill(colors.on_background());
-            s.set_cursor_pos([
-                pos.x(),
-                pos.y() + slider.height() / 2 - clamp_size(label_height) / 2,
-            ]);
+            s.set_cursor_pos([pos.x(), pos.y() + slider.height() / 2 - label_height / 2]);
             s.text(label)?;
         }
 
         // Slider region
+        s.rect_mode(RectMode::Corner);
+        if hovered | active {
+            s.frame_cursor(&Cursor::hand())?;
+        }
         let [stroke, bg, fg] = s.widget_colors(id, ColorType::Primary);
         s.stroke(stroke);
         s.fill(bg);
@@ -400,11 +392,9 @@ impl PixState {
 
         // Value
         let text = formatter.map_or_else(|| value.to_string().into(), |f| f(value));
-        let (vw, vh) = s.size_of(&text)?;
-        let center = slider.center();
-        let x = center.x() - clamp_size(vw) / 2;
-        let y = center.y() - clamp_size(vh) / 2;
-        s.set_cursor_pos([x, y]);
+        let (vw, vh) = s.text_size(&text)?;
+        let center = slider.center() - point![vw, vh] / 2;
+        s.set_cursor_pos(center);
         s.no_stroke();
         s.fill(fg);
         s.text(&text)?;

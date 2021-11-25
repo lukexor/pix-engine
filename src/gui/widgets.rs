@@ -25,7 +25,7 @@
 //! # }
 //! ```
 
-use crate::prelude::*;
+use crate::{ops::clamp_size, prelude::*};
 
 pub mod field;
 pub mod select;
@@ -70,11 +70,9 @@ impl PixState {
         let pad = s.theme.spacing.item_pad;
 
         // Calculate button size
-        let (mut width, height) = s.size_of(label)?;
-        if let Some(next_width) = s.ui.next_width {
-            width = next_width;
-        }
-        let mut button = rect![pos, width as i32 + 2 * pad.x(), height as i32 + 2 * pad.y()];
+        let (width, height) = s.text_size(label)?;
+        let width = s.ui.next_width.take().map(clamp_size).unwrap_or(width);
+        let button = rect![pos, width, height].offset_size(2 * pad);
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, &button);
@@ -89,14 +87,15 @@ impl PixState {
         s.rect_mode(RectMode::Corner);
         if hovered {
             s.frame_cursor(&Cursor::hand())?;
-            if active {
-                button.offset([1, 1]);
-            }
         }
         let [stroke, bg, fg] = s.widget_colors(id, ColorType::Primary);
         s.stroke(stroke);
         s.fill(bg);
-        s.rect(button)?;
+        if active {
+            s.rect(button.offset([1, 1]))?;
+        } else {
+            s.rect(button)?;
+        }
 
         // Button text
         s.rect_mode(RectMode::Center);
@@ -149,12 +148,8 @@ impl PixState {
         let pad = s.theme.spacing.item_pad;
 
         // Calculate button size
-        let (width, height) = s.size_of(text)?;
-        let bounding_box = rect![
-            pos - pad / 2,
-            width as i32 + pad.x(),
-            height as i32 + pad.x()
-        ];
+        let (width, height) = s.text_size(text)?;
+        let bounding_box = rect![pos, width, height].grow(pad / 2);
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, &bounding_box);
