@@ -5,6 +5,8 @@
 //! - [`PixState::text`]
 //! - [`PixState::text_transformed`]
 //! - [`PixState::bullet`]
+//! - [`PixState::collapsing_tree`]
+//! - [`PixState::collapsing_header`]
 //!
 //! # Example
 //!
@@ -24,7 +26,7 @@
 //! # }
 //! ```
 
-use crate::{ops::clamp_size, prelude::*, renderer::Rendering};
+use crate::{gui::Direction, ops::clamp_size, prelude::*, renderer::Rendering};
 
 impl PixState {
     /// Draw body text to the current canvas.
@@ -83,7 +85,7 @@ impl PixState {
         let s = self;
         s.push();
         s.renderer.font_family(&s.theme.fonts.heading)?;
-        s.renderer.font_size(s.theme.sizes.heading)?;
+        s.renderer.font_size(s.theme.font_size + 6)?;
         s.renderer.font_style(s.theme.styles.heading);
         let size = s.text_transformed(text, None, None, None);
         s.pop();
@@ -118,7 +120,7 @@ impl PixState {
         let s = self;
         s.push();
         s.renderer.font_family(&s.theme.fonts.monospace)?;
-        s.renderer.font_size(s.theme.sizes.monospace)?;
+        s.renderer.font_size(s.theme.font_size)?;
         s.renderer.font_style(s.theme.styles.monospace);
         let size = s.text_transformed(text, None, None, None);
         s.pop();
@@ -287,20 +289,202 @@ impl PixState {
         S: AsRef<str>,
     {
         let s = self;
-        let fpad = s.theme.spacing.frame_pad;
-        let font_size = clamp_size(s.theme.sizes.body);
+        let ipad = s.theme.spacing.item_pad;
+        let font_size = clamp_size(s.theme.font_size);
         let pos = s.cursor_pos();
 
-        let r = font_size / 6;
+        let r = font_size / 5;
 
         s.push();
         s.ellipse_mode(EllipseMode::Corner);
         s.circle([pos.x(), pos.y() + font_size / 2, r])?;
         s.pop();
 
-        s.set_cursor_pos([pos.x() + 2 * r + 2 * fpad.x(), pos.y()]);
+        s.set_cursor_pos([pos.x() + 2 * r + 2 * ipad.x(), pos.y()]);
         let (w, h) = s.text_transformed(text, 0.0, None, None)?;
 
         Ok((w + r as u32, h))
+    }
+
+    /// Draw a colalpsing text tree to the current canvas which returns true when the bullet is not
+    /// collapsed.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
+    pub fn collapsing_tree<S, F>(&mut self, text: S, f: F) -> PixResult<bool>
+    where
+        S: AsRef<str>,
+        F: FnOnce(&mut PixState) -> PixResult<()>,
+    {
+        let text = text.as_ref();
+
+        let s = self;
+        let id = s.ui.get_id(&text);
+        let font_size = clamp_size(s.theme.font_size);
+        let pos = s.cursor_pos();
+        let fpad = s.theme.spacing.frame_pad;
+        let ipad = s.theme.spacing.item_pad;
+        let expanded = s.ui.expanded(id);
+        let arrow_width = font_size / 2;
+
+        // Calculate hover size
+        let (width, height) = s.text_size(text)?;
+        let cursor_offset = s.ui.cursor_offset();
+        let width = s.ui.next_width.take().unwrap_or_else(|| {
+            s.width().unwrap_or(width as u32) - cursor_offset.x() as u32 - 2 * fpad.x() as u32
+        });
+
+        let hover = rect![pos, clamp_size(width), height + 2 * fpad.y()];
+        let hovered = s.ui.try_hover(id, &hover);
+        let focused = s.ui.try_focus(id);
+        let active = s.ui.is_active(id);
+
+        s.push();
+
+        // Hover/Focused Rect
+        let [stroke, bg, fg] = if hovered {
+            s.widget_colors(id, ColorType::Secondary)
+        } else {
+            s.widget_colors(id, ColorType::Background)
+        };
+
+        if active || focused {
+            s.stroke(stroke);
+        } else {
+            s.no_stroke();
+        }
+        if hovered {
+            s.frame_cursor(&Cursor::hand())?;
+            s.fill(bg);
+        } else {
+            s.no_fill();
+        }
+        s.rect(hover)?;
+
+        // Arrow
+        s.no_stroke();
+        s.fill(fg);
+        if expanded {
+            s.arrow(hover.top_left() + fpad, Direction::Down, 1.0)?;
+        } else {
+            s.arrow(hover.top_left() + fpad, Direction::Right, 1.0)?;
+        }
+
+        // Text
+        let bullet_offset = arrow_width + 3 * ipad.x();
+        s.set_cursor_pos([hover.x() + bullet_offset, hover.y() + fpad.y()]);
+        s.text_transformed(text, 0.0, None, None)?;
+
+        s.pop();
+
+        // Process input
+        if hovered && s.ui.was_clicked(id) {
+            s.ui.set_expanded(id, !expanded);
+        }
+        if focused {
+            if let Some(Key::Return) = s.ui.key_entered() {
+                s.ui.set_expanded(id, !expanded);
+            }
+        }
+        s.ui.handle_events(id);
+
+        s.advance_cursor(rect![s.cursor_pos(), hover.width(), ipad.y() / 2]);
+
+        if expanded {
+            let (indent_width, _) = s.text_size("    ")?;
+            s.ui.inc_cursor_offset([indent_width, 0]);
+            f(s)?;
+            s.ui.dec_cursor_offset();
+        }
+
+        Ok(expanded)
+    }
+
+    /// Draw a collapsing header to the current canvas which returns true when the tree is not
+    /// collapsed.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
+    pub fn collapsing_header<S, F>(&mut self, text: S, f: F) -> PixResult<bool>
+    where
+        S: AsRef<str>,
+        F: FnOnce(&mut PixState) -> PixResult<()>,
+    {
+        let text = text.as_ref();
+
+        let s = self;
+        let id = s.ui.get_id(&text);
+        let font_size = clamp_size(s.theme.font_size);
+        let pos = s.cursor_pos();
+        let fpad = s.theme.spacing.frame_pad;
+        let ipad = s.theme.spacing.item_pad;
+        let expanded = s.ui.expanded(id);
+        let arrow_width = font_size / 2;
+
+        // Calculate hover size
+        let (width, height) = s.text_size(text)?;
+        let cursor_offset = s.ui.cursor_offset();
+        let width = s.ui.next_width.take().unwrap_or_else(|| {
+            s.width().unwrap_or(width as u32) - cursor_offset.x() as u32 - 2 * fpad.x() as u32
+        });
+
+        let hover = rect![pos, clamp_size(width), height + 2 * fpad.y()];
+        let hovered = s.ui.try_hover(id, &hover);
+        let focused = s.ui.try_focus(id);
+        let active = s.ui.is_active(id);
+
+        s.push();
+
+        let [stroke, bg, fg] = s.widget_colors(id, ColorType::Secondary);
+        if active || focused {
+            s.stroke(stroke);
+        } else {
+            s.no_stroke();
+        }
+        if hovered {
+            s.frame_cursor(&Cursor::hand())?;
+        }
+        s.fill(bg);
+        s.rect(hover)?;
+
+        // Arrow
+        s.no_stroke();
+        s.fill(fg);
+        if expanded {
+            s.arrow(hover.top_left() + fpad, Direction::Down, 1.0)?;
+        } else {
+            s.arrow(hover.top_left() + fpad, Direction::Right, 1.0)?;
+        }
+
+        // Text
+        let bullet_offset = arrow_width + 3 * ipad.x();
+        s.set_cursor_pos([hover.x() + bullet_offset, hover.y() + fpad.y()]);
+        s.text_transformed(text, 0.0, None, None)?;
+
+        s.pop();
+
+        // Process input
+        if hovered && s.ui.was_clicked(id) {
+            s.ui.set_expanded(id, !expanded);
+        }
+        if focused {
+            if let Some(Key::Return) = s.ui.key_entered() {
+                s.ui.set_expanded(id, !expanded);
+            }
+        }
+        s.ui.handle_events(id);
+
+        s.advance_cursor(rect![s.cursor_pos(), hover.width(), ipad.y() / 2]);
+
+        if expanded {
+            let (indent_width, _) = s.text_size("    ")?;
+            s.ui.inc_cursor_offset([indent_width, 0]);
+            f(s)?;
+            s.ui.dec_cursor_offset();
+        }
+
+        Ok(expanded)
     }
 }

@@ -1036,7 +1036,7 @@ impl PixState {
         self.renderer.clip(s.clip).expect("valid clip setting");
         // Excluding restoring cursor - as it's used for mouse hover.
         self.renderer
-            .font_size(t.sizes.body)
+            .font_size(t.font_size)
             .expect("valid font size");
         self.renderer.font_style(t.styles.body);
         self.renderer

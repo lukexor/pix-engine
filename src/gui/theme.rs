@@ -50,16 +50,15 @@ pub(crate) type FontId = u64;
 ///     style.frame_pad = point!(10, 10);
 ///     style.item_pad = point!(5, 5);
 ///     let theme = Theme::builder()
+///         .with_font_size(16)
 ///         .with_font(
 ///             FontType::Body,
 ///             Font::from_file("Some font", "./some_font.ttf"),
-///             16,
 ///             FontStyle::ITALIC,
 ///         )
 ///         .with_font(
 ///             FontType::Heading,
 ///             Font::NOTO,
-///             22,
 ///             FontStyle::BOLD | FontStyle::UNDERLINE
 ///         )
 ///         .with_color(ColorType::OnBackground, Color::BLACK)
@@ -80,7 +79,7 @@ pub(crate) type FontId = u64;
 pub struct Builder {
     name: String,
     fonts: Fonts,
-    sizes: FontSizes,
+    size: u32,
     styles: FontStyles,
     colors: Colors,
     spacing: Spacing,
@@ -138,28 +137,25 @@ impl Builder {
         }
     }
 
+    /// Set font size.
+    pub fn with_font_size(&mut self, size: u32) -> &mut Self {
+        self.size = size;
+        self
+    }
+
     /// Set font theme values for a given [`FontType`].
-    pub fn with_font(
-        &mut self,
-        font_type: FontType,
-        font: Font,
-        size: u32,
-        style: FontStyle,
-    ) -> &mut Self {
+    pub fn with_font(&mut self, font_type: FontType, font: Font, style: FontStyle) -> &mut Self {
         match font_type {
             FontType::Body => {
                 self.fonts.body = font;
-                self.sizes.body = size;
                 self.styles.body = style;
             }
             FontType::Heading => {
                 self.fonts.heading = font;
-                self.sizes.heading = size;
                 self.styles.heading = style;
             }
             FontType::Monospace => {
                 self.fonts.monospace = font;
-                self.sizes.monospace = size;
                 self.styles.monospace = style;
             }
         }
@@ -198,7 +194,7 @@ impl Builder {
         Theme {
             name: self.name.clone(),
             fonts: self.fonts.clone(),
-            sizes: self.sizes,
+            font_size: self.size,
             styles: self.styles,
             colors: self.colors,
             spacing: self.spacing,
@@ -320,29 +316,6 @@ impl Default for Fonts {
             body: Font::EMULOGIC,
             heading: Font::EMULOGIC,
             monospace: Font::INCONSOLATA,
-        }
-    }
-}
-
-/// A set of font sizes for body, heading, and monospace text.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[non_exhaustive]
-pub struct FontSizes {
-    /// Body font size.
-    pub body: u32,
-    /// Heading font size.
-    pub heading: u32,
-    /// Monospace font size.
-    pub monospace: u32,
-}
-
-impl Default for FontSizes {
-    fn default() -> Self {
-        Self {
-            body: 12,
-            heading: 20,
-            monospace: 16,
         }
     }
 }
@@ -507,8 +480,8 @@ pub struct Theme {
     pub name: String,
     /// The font families used in this theme.
     pub fonts: Fonts,
-    /// The font sizes used in this theme.
-    pub sizes: FontSizes,
+    /// The font sizs used in this theme.
+    pub font_size: u32,
     /// The font styles used in this theme.
     pub styles: FontStyles,
     /// The colors used in this theme.
@@ -539,7 +512,7 @@ impl Theme {
             name: "Dark".into(),
             colors: Colors::dark(),
             fonts: Fonts::default(),
-            sizes: FontSizes::default(),
+            font_size: 12,
             styles: FontStyles::default(),
             spacing: Spacing::default(),
         }
@@ -552,7 +525,7 @@ impl Theme {
             name: "Light".into(),
             colors: Colors::light(),
             fonts: Fonts::default(),
-            sizes: FontSizes::default(),
+            font_size: 12,
             styles: FontStyles::default(),
             spacing: Spacing::default(),
         }
@@ -582,8 +555,8 @@ impl PixState {
     /// ```
     #[inline]
     pub fn font_size(&mut self, size: u32) -> PixResult<()> {
-        self.theme.sizes.body = size;
-        self.renderer.font_size(self.theme.sizes.body)
+        self.theme.font_size = size;
+        self.renderer.font_size(self.theme.font_size)
     }
 
     /// Return the dimensions of given text for drawing to the current canvas.

@@ -115,13 +115,17 @@ pub const MOD_CTRL: KeyMod = KeyMod::CTRL;
 #[cfg(target_os = "macos")]
 pub const MOD_CTRL: KeyMod = KeyMod::GUI;
 
-/// Scroll direction.
+/// Coordinate Direction.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum Direction {
-    /// Horizontal.
-    Horizontal,
-    /// Vertical.
-    Vertical,
+pub enum Direction {
+    /// Up.
+    Up,
+    /// Down.
+    Down,
+    /// Left.
+    Left,
+    /// Right.
+    Right,
 }
 
 impl PixState {

@@ -87,9 +87,14 @@ impl Builder {
     }
 
     /// Set font for text rendering.
-    pub fn with_font(&mut self, font: Font, size: u32) -> &mut Self {
+    pub fn with_font(&mut self, font: Font) -> &mut Self {
         self.theme.fonts.body = font;
-        self.theme.sizes.body = size;
+        self
+    }
+
+    /// Set font size for text rendering.
+    pub fn with_font_size(&mut self, size: u32) -> &mut Self {
+        self.theme.font_size = size;
         self
     }
 

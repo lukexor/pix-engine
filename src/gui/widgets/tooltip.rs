@@ -276,7 +276,7 @@ impl PixState {
         }
 
         let texture_id = s.get_or_create_texture(id, None, rect)?;
-        s.ui.set_mouse_offset(rect.top_left());
+        s.ui.offset_mouse(rect.top_left());
         s.with_texture(texture_id, f)?;
         s.ui.clear_mouse_offset();
 

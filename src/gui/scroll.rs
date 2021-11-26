@@ -1,11 +1,20 @@
 //! UI scrollbar rendering functions.
 
-use super::{state::ElementId, Direction};
+use super::state::ElementId;
 use crate::{ops::clamp_size, prelude::*};
 
 pub(crate) const THUMB_MIN: i32 = 10;
 pub(crate) const SCROLL_SIZE: i32 = 12;
 pub(crate) const SCROLL_SPEED: i32 = 3;
+
+/// Scroll direction.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub(crate) enum ScrollDirection {
+    /// Horizontal.
+    Horizontal,
+    /// Vertical.
+    Vertical,
+}
 
 impl PixState {
     /// Draw a scrollable region to the current canvas.
@@ -42,6 +51,7 @@ impl PixState {
         s.ui.try_focus(id);
 
         s.push();
+        s.ui.push_cursor();
 
         // Label
         if !label.is_empty() {
@@ -55,8 +65,8 @@ impl PixState {
         let [stroke, _, fg] = s.widget_colors(id, ColorType::Background);
         let scroll = s.ui.scroll(id);
         let texture_id = s.get_or_create_texture(id, None, scroll_area)?;
-        s.ui.set_mouse_offset(scroll_area.top_left());
-        s.ui.set_cursor_offset_x(-scroll.x());
+        s.ui.offset_mouse(scroll_area.top_left());
+        s.ui.inc_cursor_offset([-scroll.x(), 0]);
         let mut max_cursor_pos = s.cursor_pos();
 
         let scroll_width = scroll_area.width();
@@ -84,9 +94,10 @@ impl PixState {
             s.rect([0, 0, scroll_width, scroll_height])?;
             Ok(())
         })?;
-        s.ui.clear_cursor_offset();
+        s.ui.dec_cursor_offset();
         s.ui.clear_mouse_offset();
 
+        s.ui.pop_cursor();
         s.pop();
 
         s.ui.handle_events(id);
@@ -95,7 +106,11 @@ impl PixState {
         let total_width = max_cursor_pos.x() + s.ui.last_width() + fpad.x();
         let total_height = max_cursor_pos.y();
         let rect = s.scroll(id, scroll_area, total_width, total_height)?;
-        s.advance_cursor(rect![pos, rect.width().max(label_width), rect.height()]);
+        s.advance_cursor(rect![
+            pos,
+            rect.width().max(label_width),
+            rect.bottom() - pos.y()
+        ]);
 
         Ok(())
     }
@@ -144,7 +159,7 @@ impl PixState {
                 rect![rect.right(), rect.top(), SCROLL_SIZE, rect.height()],
                 ymax,
                 &mut scroll_y,
-                Direction::Vertical,
+                ScrollDirection::Vertical,
             )?;
             s.pop_id();
             if scrolled {
@@ -179,7 +194,7 @@ impl PixState {
                 rect![rect.left(), rect.bottom(), rect.width(), SCROLL_SIZE],
                 xmax,
                 &mut scroll_x,
-                Direction::Horizontal,
+                ScrollDirection::Horizontal,
             )?;
             s.pop_id();
             if scrolled {
@@ -201,9 +216,9 @@ impl PixState {
         rect: Rect<i32>,
         max: i32,
         value: &mut i32,
-        dir: Direction,
+        dir: ScrollDirection,
     ) -> PixResult<bool> {
-        use Direction::{Horizontal, Vertical};
+        use ScrollDirection::{Horizontal, Vertical};
 
         let s = self;
         let id = s.ui.get_id(&id);

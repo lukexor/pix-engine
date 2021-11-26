@@ -90,15 +90,17 @@ pub(crate) struct UiState {
     /// Current global render position, in window coordinates.
     cursor: PointI2,
     /// Previous global render position, in window coordinates.
-    pub(crate) pcursor: PointI2,
-    /// X offset for global render position, in window coordinates.
-    offset_x: i32,
+    pcursor: PointI2,
+    /// Offset for global render position, in window coordinates.
+    cursor_offset: PointI2,
     /// Current line height.
     pub(crate) line_height: i32,
     /// Previous line height.
     pub(crate) pline_height: i32,
     /// Temporary stack of cursor positions.
     cursor_stack: Vec<(PointI2, PointI2, i32, i32)>,
+    /// Temporary stack of cursor offset.
+    offset_stack: Vec<PointI2>,
     /// ID stack to assist with generating unique element IDs.
     id_stack: Vec<u64>,
     /// Override for max-width elements.
@@ -134,12 +136,13 @@ pub(crate) struct UiState {
 impl Default for UiState {
     fn default() -> Self {
         Self {
-            cursor: point!(),
-            pcursor: point!(),
-            offset_x: 0,
+            cursor: point![],
+            pcursor: point![],
+            cursor_offset: point![],
             line_height: 0,
             pline_height: 0,
             cursor_stack: vec![],
+            offset_stack: vec![],
             id_stack: vec![],
             next_width: None,
             textures: vec![],
@@ -214,16 +217,36 @@ impl UiState {
         self.cursor = cursor.into();
     }
 
-    /// Set the x offset for the current UI rendering position.
+    /// Returns the previous UI rendering position.
     #[inline]
-    pub(crate) fn set_cursor_offset_x(&mut self, x: i32) {
-        self.offset_x = x;
+    pub(crate) const fn pcursor(&self) -> PointI2 {
+        self.pcursor
     }
 
-    /// Clears the x offset for the current UI rendering position.
+    /// Returns the current offset for the current UI rendering position.
     #[inline]
-    pub(crate) fn clear_cursor_offset(&mut self) {
-        self.offset_x = 0;
+    pub(crate) fn cursor_offset(&self) -> PointI2 {
+        self.cursor_offset
+    }
+
+    /// Set an offset for the current UI rendering position.
+    #[inline]
+    pub(crate) fn inc_cursor_offset<P>(&mut self, p: P)
+    where
+        P: Into<PointI2>,
+    {
+        let p = p.into();
+        self.offset_stack.push(p);
+        self.cursor_offset += p;
+        self.cursor += p;
+    }
+
+    /// Restore any offsets for the current UI rendering position.
+    #[inline]
+    pub(crate) fn dec_cursor_offset(&mut self) {
+        let offset = self.offset_stack.pop().unwrap_or_default();
+        self.cursor_offset -= offset;
+        self.cursor -= offset;
     }
 
     /// Push a new UI rendering position to the stack.
@@ -240,12 +263,12 @@ impl UiState {
     /// Pop a new UI rendering position from the stack.
     #[inline]
     pub(crate) fn pop_cursor(&mut self) {
-        if let Some((pcursor, cursor, pline_height, line_height)) = self.cursor_stack.pop() {
-            self.pcursor = pcursor;
-            self.cursor = cursor;
-            self.pline_height = pline_height;
-            self.line_height = line_height;
-        }
+        let (pcursor, cursor, pline_height, line_height) =
+            self.cursor_stack.pop().unwrap_or_default();
+        self.pcursor = pcursor;
+        self.cursor = cursor;
+        self.pline_height = pline_height;
+        self.line_height = line_height;
     }
 
     /// Returns the current mouse position coordinates as `(x, y)`.
@@ -270,7 +293,7 @@ impl UiState {
 
     /// Set a mouse offset for rendering within textures or viewports.
     #[inline]
-    pub(crate) fn set_mouse_offset<P: Into<PointI2>>(&mut self, offset: P) {
+    pub(crate) fn offset_mouse<P: Into<PointI2>>(&mut self, offset: P) {
         self.mouse_offset = Some(offset.into());
     }
 
@@ -743,7 +766,7 @@ impl PixState {
         let spacing = self.theme.spacing;
         let padx = spacing.frame_pad.x();
         let pady = spacing.item_pad.y();
-        let offset_x = self.ui.offset_x;
+        let [offset_x, offset_y] = self.ui.cursor_offset.as_array();
 
         // Previous cursor ends at the right of this item
         self.ui.pcursor = point![pos.x() + rect.width(), pos.y()];
@@ -751,7 +774,7 @@ impl PixState {
         // Move cursor to the next line with padding, choosing the maximum of the next line or the
         // previous y value to account for variable line heights when using `same_line`.
         let line_height = cmp::max(self.ui.line_height, rect.height());
-        self.ui.cursor = point![padx + offset_x, pos.y() + line_height + pady];
+        self.ui.cursor = point![padx + offset_x, pos.y() + line_height + pady + offset_y];
         self.ui.pline_height = line_height;
         self.ui.line_height = 0;
         self.ui.last_size = Some(rect);
@@ -769,7 +792,7 @@ impl PixState {
         R: Into<Option<Rect<i32>>>,
     {
         let font_id = self.theme.fonts.body.id();
-        let font_size = self.theme.sizes.body;
+        let font_size = self.theme.font_size;
         if let Some(texture) = self
             .ui
             .textures

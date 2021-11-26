@@ -25,7 +25,7 @@
 //! # }
 //! ```
 
-use crate::{ops::clamp_size, prelude::*};
+use crate::{gui::Direction, ops::clamp_size, prelude::*, shape::PointF2};
 
 pub mod field;
 pub mod select;
@@ -363,5 +363,49 @@ impl PixState {
             }
             Ok(clicked)
         }
+    }
+
+    /// Render an arrow aligned with the current font size.
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
+    pub fn arrow<P, S>(&mut self, pos: P, direction: Direction, scale: S) -> PixResult<()>
+    where
+        P: Into<PointI2>,
+        S: Into<Scalar>,
+    {
+        let pos: PointF2 = pos.into().as_();
+        let scale = scale.into();
+
+        let s = self;
+        let font_size = clamp_size(s.theme.font_size);
+
+        let height = font_size as Scalar;
+        let mut ratio = height * 0.4 * scale;
+        let center = pos + point![height * 0.5, height * 0.5 * scale];
+
+        if let Direction::Up | Direction::Left = direction {
+            ratio = -ratio;
+        }
+        let (p1, p2, p3) = match direction {
+            Direction::Up | Direction::Down => (
+                point![0.0, 0.75],
+                point![-0.866, -0.75],
+                point![0.866, -0.75],
+            ),
+            Direction::Left | Direction::Right => (
+                point![0.75, 0.0],
+                point![-0.75, 0.866],
+                point![-0.75, -0.866],
+            ),
+        };
+
+        s.triangle([
+            (center + p1 * ratio).round().as_(),
+            (center + p2 * ratio).round().as_(),
+            (center + p3 * ratio).round().as_(),
+        ])?;
+
+        Ok(())
     }
 }

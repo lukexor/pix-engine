@@ -241,7 +241,7 @@ impl Gui {
         Ok(())
     }
 
-    fn select_widgets(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn select_and_tree_widgets(&mut self, s: &mut PixState) -> PixResult<()> {
         let items = [
             "Bulbasaur",
             "Charmander",
@@ -254,9 +254,15 @@ impl Gui {
         ];
         let displayed_count = 4;
 
-        s.next_width(200);
-        s.select_box("Select Box", &mut self.select_box, &items, displayed_count)?;
+        // Scroll area
+        s.scroll_area("Scroll Area", 300, 200, |s: &mut PixState| {
+            for i in 0..10 {
+                s.text(format!("{}: Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam", i))?;
+            }
+            Ok(())
+        })?;
 
+        s.same_line(None);
         s.next_width(300);
         s.select_list(
             "Select List",
@@ -265,11 +271,23 @@ impl Gui {
             displayed_count,
         )?;
 
-        // Scroll area
-        s.scroll_area("Scroll Area", 300, 200, |s: &mut PixState| {
-            for i in 0..10 {
-                s.text(format!("{}: Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam", i))?;
+        s.same_line(None);
+        s.next_width(200);
+        s.select_box("Select Box", &mut self.select_box, &items, displayed_count)?;
+
+        s.collapsing_tree("Basic tree", |s: &mut PixState| {
+            for i in 0..3 {
+                s.collapsing_tree(format!("Child {}", i), |s: &mut PixState| {
+                    s.text("Some text")?;
+                    Ok(())
+                })?;
             }
+            Ok(())
+        })?;
+        s.collapsing_header("Collapsing Header", |s: &mut PixState| {
+            s.next_width(300);
+            let items = ["Item 1", "Item 2", "Item 3", "Item 4"];
+            s.select_list("Some list", &mut self.select_list, &items, 3)?;
             Ok(())
         })?;
 
@@ -336,15 +354,19 @@ impl AppState for Gui {
         }
 
         s.push();
-        s.font_size(s.theme().sizes.body + 4)?;
-        s.text("Widgets")?;
+        s.heading("Widgets")?;
         s.pop();
 
         s.spacing()?;
 
         s.tab_bar(
             "Tab Bar",
-            &["Basic", "Fields & Sliders", "Selectables", "Settings"],
+            &[
+                "Basic",
+                "Fields & Sliders",
+                "Selects & Collapsables",
+                "Settings",
+            ],
             |tab: usize, s: &mut PixState| {
                 match tab {
                     0 => {
@@ -356,7 +378,7 @@ impl AppState for Gui {
                         self.text_field_widgets(s)?;
                         self.drag_and_slider_widgets(s)?;
                     }
-                    2 => self.select_widgets(s)?,
+                    2 => self.select_and_tree_widgets(s)?,
                     3 => self.settings(s)?,
                     _ => (),
                 }

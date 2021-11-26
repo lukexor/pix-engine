@@ -367,7 +367,7 @@ impl PixState {
     pub(crate) fn new(settings: RendererSettings, theme: Theme) -> PixResult<Self> {
         let show_frame_rate = settings.show_frame_rate;
         let mut renderer = Renderer::new(settings)?;
-        renderer.font_size(theme.sizes.body)?;
+        renderer.font_size(theme.font_size)?;
         renderer.font_family(&theme.fonts.body)?;
         Ok(Self {
             renderer,

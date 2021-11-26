@@ -82,7 +82,7 @@ impl PixState {
     where
         O: Into<Option<[i32; 2]>>,
     {
-        let [x, y] = self.ui.pcursor.as_array();
+        let [x, y] = self.ui.pcursor().as_array();
         let offset = offset.into().unwrap_or([0; 2]);
         let item_pad = self.theme.spacing.item_pad;
         self.ui
@@ -182,7 +182,7 @@ impl PixState {
             let (width, height) = s.text_size(tab_label)?;
             let tab = rect![pos, width, height]
                 .offset([fpad.x(), 0])
-                .offset_size(ipad);
+                .offset_size(2 * ipad);
 
             // Check hover/active/keyboard focus
             let hovered = s.ui.try_hover(id, &tab);
@@ -195,8 +195,7 @@ impl PixState {
 
             // Render
             s.rect_mode(RectMode::Corner);
-            let mut clip = tab;
-            clip.set_width(clip.width() + 1);
+            let clip = tab.offset_size([1, 0]);
             s.clip(clip)?;
             if hovered {
                 s.frame_cursor(&Cursor::hand())?;
@@ -344,7 +343,7 @@ impl PixState {
         let pos = s.cursor_pos();
         let colors = s.theme.colors;
         let pad = s.theme.spacing.frame_pad;
-        let height = clamp_size(s.theme.sizes.body);
+        let height = clamp_size(s.theme.font_size);
         let y = pos.y() + height / 2;
 
         s.push();

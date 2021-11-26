@@ -22,7 +22,7 @@
 //! ```
 
 use crate::{
-    gui::{scroll::SCROLL_SIZE, state::ElementId},
+    gui::{scroll::SCROLL_SIZE, state::ElementId, Direction},
     ops::clamp_size,
     prelude::*,
 };
@@ -85,7 +85,7 @@ impl PixState {
         let id = s.ui.get_id(&label);
         let label = s.ui.get_label(label);
         let pos = s.cursor_pos();
-        let font_size = clamp_size(s.theme.sizes.body);
+        let font_size = clamp_size(s.theme.font_size);
         let spacing = s.theme.spacing;
         let colors = s.theme.colors;
         let fpad = spacing.frame_pad;
@@ -99,7 +99,7 @@ impl PixState {
         if !label.is_empty() {
             x += label_width + ipad.x();
         }
-        let select_box = rect![x, y, width, item_height].offset_size(2 * ipad);
+        let select_box = rect![x, y, width, item_height].offset_size(2 * fpad);
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, &select_box);
@@ -130,20 +130,22 @@ impl PixState {
         s.rect(select_box)?;
 
         // Arrow
-        let [_, y, _, height] = select_box.as_array();
-        let arrow_box = square![select_box.right() - height, y, height];
+        let arrow_width = font_size + 2 * fpad.y();
+        let arrow_x = cmp::max(select_box.left(), select_box.right() - arrow_width);
+
+        let [_, select_y, _, select_height] = select_box.as_array();
+        let arrow_box = rect![arrow_x, select_y, arrow_width, select_height];
         s.rect(arrow_box)?;
 
-        let third = arrow_box.width() / 3;
-        let fourth = arrow_box.width() / 4;
-        let [x, y, width, height] = arrow_box.as_array();
-        s.no_stroke();
-        s.fill(fg);
-        s.triangle([
-            point![x + fourth, y + third + 2],
-            point![(x + width) - fourth, y + third + 2],
-            point![x + width / 2, (y + height) - third - 2],
-        ])?;
+        if arrow_x + arrow_width - fpad.x() <= select_box.right() {
+            s.no_stroke();
+            s.fill(fg);
+            s.arrow(
+                [arrow_x + fpad.y(), select_y + fpad.y()],
+                Direction::Down,
+                1.0,
+            )?;
+        }
 
         // Item
         s.clip(rect![
@@ -153,7 +155,7 @@ impl PixState {
         ])?;
 
         s.no_wrap();
-        s.set_cursor_pos(select_box.top_left() + ipad);
+        s.set_cursor_pos(select_box.top_left() + fpad);
         s.no_stroke();
         s.fill(fg);
         s.text(&items[*selected])?;
@@ -245,9 +247,9 @@ impl PixState {
         let id = s.ui.get_id(&label);
         let label = s.ui.get_label(label);
         let pos = s.cursor_pos();
-        let font_size = clamp_size(s.theme.sizes.body);
-        let spacing = s.theme.spacing;
+        let font_size = clamp_size(s.theme.font_size);
         let colors = s.theme.colors;
+        let spacing = s.theme.spacing;
         let fpad = spacing.frame_pad;
         let ipad = spacing.item_pad;
 
@@ -332,7 +334,11 @@ impl PixState {
             total_width + 2 * fpad.x(),
             total_height + 2 * fpad.y(),
         )?;
-        s.advance_cursor(rect![pos, rect.width(), rect.bottom() - pos.y()]);
+        s.advance_cursor(rect![
+            pos,
+            rect.width().max(label_width),
+            rect.bottom() - pos.y()
+        ]);
 
         Ok(original_selected != *selected)
     }
@@ -352,7 +358,7 @@ impl PixState {
         I: AsRef<str>,
     {
         let s = self;
-        let font_size = clamp_size(s.theme.sizes.body);
+        let font_size = clamp_size(s.theme.font_size);
         let spacing = s.theme.spacing;
         let fpad = spacing.frame_pad;
         let ipad = spacing.item_pad;
@@ -366,7 +372,7 @@ impl PixState {
             let total_height = items.len() as i32 * line_height + 2 * fpad.y();
             let texture_id = s.get_or_create_texture(id, None, size)?;
 
-            s.ui.set_mouse_offset(size.top_left());
+            s.ui.offset_mouse(size.top_left());
             let mut changed = false;
             s.with_texture(texture_id, |s: &mut PixState| {
                 s.clear()?;
@@ -404,7 +410,7 @@ impl PixState {
         I: AsRef<str>,
     {
         let s = self;
-        let font_size = clamp_size(s.theme.sizes.body);
+        let font_size = clamp_size(s.theme.font_size);
         let spacing = s.theme.spacing;
         let colors = s.theme.colors;
         let fpad = spacing.frame_pad;
