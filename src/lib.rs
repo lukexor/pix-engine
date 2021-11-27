@@ -80,7 +80,6 @@ pub mod prelude {
         PixState,
     };
     pub use texture::TextureId;
-    #[cfg(not(target_arch = "wasm32"))]
     pub use transform::Flipped;
     pub use vector::Vector;
     pub use window::{Cursor, Position, SystemCursor, WindowBuilder, WindowId};

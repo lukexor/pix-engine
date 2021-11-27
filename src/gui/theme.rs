@@ -246,6 +246,7 @@ impl Font {
     }
 
     /// Constructs a new `Font` instance from a file.
+    #[cfg(not(target_arch = "wasm32"))]
     #[inline]
     pub fn from_file<S, P>(name: S, path: P) -> Self
     where
@@ -291,6 +292,7 @@ impl FontSrc {
         Self::Bytes(bytes)
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub(crate) fn from_file<P: Into<PathBuf>>(path: P) -> Self {
         Self::Path(path.into())
     }

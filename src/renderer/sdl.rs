@@ -177,6 +177,7 @@ impl Renderer {
 
 impl Rendering for Renderer {
     /// Initializes the `Sdl2Renderer` using the given settings and opens a new window.
+    #[inline]
     fn new(s: RendererSettings) -> PixResult<Self> {
         debug!("Initializing SDLRenderer");
 
@@ -313,6 +314,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw text to the current canvas.
+    #[inline]
     fn text(
         &mut self,
         pos: PointI2,
@@ -666,6 +668,7 @@ impl Rendering for Renderer {
     }
 
     /// Draw an image to the current canvas, optionally rotated about a `center`, flipped or tinted
+    #[inline]
     fn image(
         &mut self,
         img: &Image,
@@ -729,6 +732,7 @@ impl Rendering for Renderer {
     }
 
     /// Return the current rendered target pixels as an array of bytes.
+    #[inline]
     fn to_bytes(&mut self) -> PixResult<Vec<u8>> {
         if let Some(texture_id) = self.texture_target {
             let window = self.windows.values_mut().find_map(|w| {

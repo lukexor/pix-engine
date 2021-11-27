@@ -4,10 +4,11 @@ use crate::{ops::clamp_dimensions, prelude::*, renderer::RendererSettings};
 use log::trace;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+#[cfg(not(target_arch = "wasm32"))]
+use std::path::PathBuf;
 use std::{
     fmt,
     ops::{Deref, DerefMut},
-    path::PathBuf,
 };
 
 /// Represents a possible screen position.
@@ -71,6 +72,7 @@ impl Default for Cursor {
 impl Cursor {
     /// Constructs a `Cursor` from a file path.
     #[inline]
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn new<P: Into<PathBuf>>(path: P, x: i32, y: i32) -> Self {
         Self::Image(path.into(), (x, y))
     }

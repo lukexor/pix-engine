@@ -212,6 +212,7 @@ impl TextureRenderer for Renderer {
     }
 
     /// Returns whether a texture is set as the target for drawing operations.
+    #[inline]
     fn has_texture_target(&self) -> bool {
         self.texture_target.is_some()
     }

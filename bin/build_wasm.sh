@@ -1,3 +1,3 @@
 #!/bin/sh
 
-wasm-pack build
+wasm-pack build --dev
