@@ -144,7 +144,7 @@ impl PixState {
 
         // Process input
         s.ui.handle_events(id);
-        s.advance_cursor(rect![pos, hover.right() - pos.x(), hover.height()]);
+        s.advance_cursor([hover.right() - pos.x(), hover.height()]);
 
         Ok(())
     }

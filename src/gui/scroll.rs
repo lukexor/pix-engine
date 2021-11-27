@@ -66,7 +66,7 @@ impl PixState {
         let scroll = s.ui.scroll(id);
         let texture_id = s.get_or_create_texture(id, None, scroll_area)?;
         s.ui.offset_mouse(scroll_area.top_left());
-        s.ui.inc_cursor_offset([-scroll.x(), 0]);
+        s.ui.inc_column_offset(-scroll.x());
         let mut max_cursor_pos = s.cursor_pos();
 
         let scroll_width = scroll_area.width();
@@ -94,7 +94,7 @@ impl PixState {
             s.rect([0, 0, scroll_width, scroll_height])?;
             Ok(())
         })?;
-        s.ui.dec_cursor_offset();
+        s.ui.dec_column_offset();
         s.ui.clear_mouse_offset();
 
         s.ui.pop_cursor();
@@ -106,11 +106,7 @@ impl PixState {
         let total_width = max_cursor_pos.x() + s.ui.last_width() + fpad.x();
         let total_height = max_cursor_pos.y();
         let rect = s.scroll(id, scroll_area, total_width, total_height)?;
-        s.advance_cursor(rect![
-            pos,
-            rect.width().max(label_width),
-            rect.bottom() - pos.y()
-        ]);
+        s.advance_cursor([rect.width().max(label_width), rect.bottom() - pos.y()]);
 
         Ok(())
     }
@@ -301,7 +297,7 @@ impl PixState {
                 Horizontal => s.ui.mouse.xrel,
                 Vertical => s.ui.mouse.yrel,
             };
-            new_value -= SCROLL_SPEED * offset;
+            new_value += SCROLL_SPEED * offset;
         }
         // Process mouse input
         if active {

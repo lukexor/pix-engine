@@ -119,20 +119,18 @@ impl PixState {
         let font_size = clamp_size(s.theme.font_size);
         let spacing = s.theme.spacing;
         let colors = s.theme.colors;
-        let fpad = spacing.frame_pad;
         let ipad = spacing.item_pad;
 
         // Calculate drag rect
         let width =
             s.ui.next_width
-                .take()
-                .unwrap_or_else(|| s.width().map_or(100, |w| w - 2 * fpad.x() as u32));
+                .unwrap_or_else(|| s.ui_width().unwrap_or(100));
         let (label_width, label_height) = s.text_size(label)?;
         let [mut x, y] = pos.as_array();
         if !label.is_empty() {
             x += label_width + ipad.x();
         }
-        let drag = rect![x, y, clamp_size(width), font_size + 2 * ipad.y()];
+        let drag = rect![x, y, width, font_size + 2 * ipad.y()];
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, &drag);
@@ -146,7 +144,7 @@ impl PixState {
             if !focused || disabled {
                 s.ui.end_edit();
             } else {
-                s.next_width(width);
+                s.ui.next_width = Some(width);
                 let mut text = s.ui.text_edit(id, value.to_string());
                 let changed = s.advanced_text_field(
                     label,
@@ -217,7 +215,7 @@ impl PixState {
             }
         }
         s.ui.handle_events(id);
-        s.advance_cursor(rect![pos, drag.right() - pos.x(), drag.height()]);
+        s.advance_cursor([drag.right() - pos.x(), drag.height()]);
         if new_value == *value {
             Ok(false)
         } else {
@@ -302,20 +300,19 @@ impl PixState {
         let font_size = clamp_size(s.theme.font_size);
         let spacing = s.theme.spacing;
         let colors = s.theme.colors;
-        let fpad = spacing.frame_pad;
         let ipad = spacing.item_pad;
 
         // Calculate slider rect
         let width =
             s.ui.next_width
                 .take()
-                .unwrap_or_else(|| s.width().map_or(100, |w| w - 2 * fpad.x() as u32));
+                .unwrap_or_else(|| s.ui_width().unwrap_or(100));
         let (label_width, label_height) = s.text_size(label)?;
         let [mut x, y] = pos.as_array();
         if !label.is_empty() {
             x += label_width + ipad.x();
         }
-        let slider = rect![x, y, clamp_size(width), font_size + 2 * ipad.y()];
+        let slider = rect![x, y, width, font_size + 2 * ipad.y()];
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, &slider);
@@ -329,7 +326,7 @@ impl PixState {
             if !focused || disabled {
                 s.ui.end_edit();
             } else {
-                s.next_width(width);
+                s.ui.next_width = Some(width);
                 let mut text = s.ui.text_edit(id, value.to_string());
                 s.advanced_text_field(
                     label,
@@ -414,7 +411,7 @@ impl PixState {
             }
         }
         s.ui.handle_events(id);
-        s.advance_cursor(rect![pos, slider.right() - pos.x(), slider.height()]);
+        s.advance_cursor([slider.right() - pos.x(), slider.height()]);
 
         if new_value == *value {
             Ok(false)

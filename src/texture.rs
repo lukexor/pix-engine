@@ -493,6 +493,9 @@ pub(crate) trait TextureRenderer {
     /// Clear texture as the target for drawing operations.
     fn clear_texture_target(&mut self);
 
+    /// Returns whether a texture is set as the target for drawing operations.
+    fn has_texture_target(&self) -> bool;
+
     /// Clear internal texture cache.
     fn clear_texture_cache(&mut self);
 }

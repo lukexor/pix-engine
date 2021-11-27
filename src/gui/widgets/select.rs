@@ -92,8 +92,8 @@ impl PixState {
         let ipad = spacing.item_pad;
 
         // Calculate rect
-        let (width, item_height) = s.text_size(items.get(0).map_or("", AsRef::as_ref))?;
-        let width = s.ui.next_width.take().map(clamp_size).unwrap_or(width);
+        let (item_width, item_height) = s.text_size(items.get(0).map_or("", AsRef::as_ref))?;
+        let width = s.ui.next_width.take().unwrap_or(item_width);
         let (label_width, label_height) = s.text_size(label)?;
         let [mut x, y] = pos.as_array();
         if !label.is_empty() {
@@ -163,11 +163,7 @@ impl PixState {
         s.no_clip()?;
         s.ui.pop_cursor();
         s.pop();
-        s.advance_cursor(rect![
-            pos,
-            select_box.right() - pos.x(),
-            select_box.height()
-        ]);
+        s.advance_cursor([select_box.right() - pos.x(), select_box.height()]);
 
         let line_height = font_size + 2 * ipad.y();
         let expanded_list = rect![
@@ -255,11 +251,7 @@ impl PixState {
 
         // Calculate rect
         let (label_width, label_height) = s.text_size(label)?;
-        let width =
-            s.ui.next_width
-                .take()
-                .map(clamp_size)
-                .unwrap_or(label_width);
+        let width = s.ui.next_width.take().unwrap_or(label_width);
         let [x, mut y] = pos.as_array();
         if !label.is_empty() {
             y += label_height + ipad.y();
@@ -334,11 +326,7 @@ impl PixState {
             total_width + 2 * fpad.x(),
             total_height + 2 * fpad.y(),
         )?;
-        s.advance_cursor(rect![
-            pos,
-            rect.width().max(label_width),
-            rect.bottom() - pos.y()
-        ]);
+        s.advance_cursor([rect.width().max(label_width), rect.bottom() - pos.y()]);
 
         Ok(original_selected != *selected)
     }

@@ -96,7 +96,10 @@
 //! ```
 
 use self::state::ElementId;
-use crate::{ops::clamp_dimensions, prelude::*};
+use crate::{
+    ops::{clamp_dimensions, clamp_size},
+    prelude::*,
+};
 
 pub mod layout;
 pub mod system;
@@ -206,9 +209,17 @@ impl PixState {
         [stroke, bg, fg]
     }
 
+    /// Return the size of text, clamped to i32.
     #[inline]
     pub(crate) fn text_size(&self, text: &str) -> PixResult<(i32, i32)> {
         let (w, h) = self.size_of(text)?;
         Ok(clamp_dimensions(w, h))
+    }
+
+    /// Return usable UI width clamped to i32.
+    #[inline]
+    pub(crate) fn ui_width(&self) -> PixResult<i32> {
+        let fpad = self.theme.spacing.frame_pad;
+        Ok(clamp_size(self.width()?) - 2 * fpad.x())
     }
 }

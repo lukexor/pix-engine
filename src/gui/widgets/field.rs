@@ -110,20 +110,19 @@ impl PixState {
         let font_size = clamp_size(s.theme.font_size);
         let spacing = s.theme.spacing;
         let colors = s.theme.colors;
-        let fpad = spacing.frame_pad;
         let ipad = spacing.item_pad;
 
         // Calculate input rect
         let width =
             s.ui.next_width
                 .take()
-                .unwrap_or_else(|| s.width().map_or(100, |w| w - 2 * fpad.x() as u32));
+                .unwrap_or_else(|| s.ui_width().unwrap_or(100));
         let (label_width, label_height) = s.text_size(label)?;
         let [mut x, y] = pos.as_array();
         if !label.is_empty() {
             x += label_width + ipad.x();
         }
-        let input = rect![x, y, clamp_size(width), font_size + 2 * ipad.y()];
+        let input = rect![x, y, width, font_size + 2 * ipad.y()];
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, &input);
@@ -152,7 +151,7 @@ impl PixState {
         s.rect(input)?;
 
         // Text
-        let clip = input.shrink(ipad);
+        let clip = input.shrink(ipad - 1);
         let (value_width, value_height) = s.text_size(value)?;
         let (cursor_width, _) = s.text_size(TEXT_CURSOR)?;
         let width = value_width + cursor_width;
@@ -194,7 +193,7 @@ impl PixState {
             }
         }
         s.ui.handle_events(id);
-        s.advance_cursor(rect![pos, input.right() - pos.x(), input.height()]);
+        s.advance_cursor([input.right() - pos.x(), input.height()]);
 
         Ok(changed)
     }
@@ -382,11 +381,7 @@ impl PixState {
         s.ui.handle_events(id);
         // Scrollbars
         let rect = s.scroll(id, input, 0, text_height + 2 * ipad.y())?;
-        s.advance_cursor(rect![
-            pos,
-            rect.width().max(label_width),
-            rect.bottom() - pos.y()
-        ]);
+        s.advance_cursor([rect.width().max(label_width), rect.bottom() - pos.y()]);
 
         Ok(changed)
     }

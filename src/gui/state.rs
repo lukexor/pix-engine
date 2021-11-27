@@ -9,7 +9,6 @@ use crate::{
 };
 use lru::LruCache;
 use std::{
-    cmp,
     collections::hash_map::DefaultHasher,
     convert::TryInto,
     error::Error,
@@ -92,7 +91,7 @@ pub(crate) struct UiState {
     /// Previous global render position, in window coordinates.
     pcursor: PointI2,
     /// Offset for global render position, in window coordinates.
-    cursor_offset: PointI2,
+    column_offset: i32,
     /// Current line height.
     pub(crate) line_height: i32,
     /// Previous line height.
@@ -100,11 +99,11 @@ pub(crate) struct UiState {
     /// Temporary stack of cursor positions.
     cursor_stack: Vec<(PointI2, PointI2, i32, i32)>,
     /// Temporary stack of cursor offset.
-    offset_stack: Vec<PointI2>,
+    offset_stack: Vec<i32>,
     /// ID stack to assist with generating unique element IDs.
     id_stack: Vec<u64>,
     /// Override for max-width elements.
-    pub(crate) next_width: Option<u32>,
+    pub(crate) next_width: Option<i32>,
     /// UI texture to be drawn over rendered frame, in rendered order.
     pub(crate) textures: Vec<Texture>,
     /// Whether UI elements are disabled.
@@ -138,7 +137,7 @@ impl Default for UiState {
         Self {
             cursor: point![],
             pcursor: point![],
-            cursor_offset: point![],
+            column_offset: 0,
             line_height: 0,
             pline_height: 0,
             cursor_stack: vec![],
@@ -167,8 +166,10 @@ impl UiState {
     #[inline]
     pub(crate) fn pre_update(&mut self, theme: &Theme) {
         self.clear_hovered();
-        self.pcursor = point!();
+
+        self.pcursor = point![];
         self.cursor = theme.spacing.frame_pad;
+        self.column_offset = 0;
     }
 
     /// Handle state changes this frame after calling [`AppState::on_update`].
@@ -225,28 +226,24 @@ impl UiState {
 
     /// Returns the current offset for the current UI rendering position.
     #[inline]
-    pub(crate) fn cursor_offset(&self) -> PointI2 {
-        self.cursor_offset
+    pub(crate) fn column_offset(&self) -> i32 {
+        self.column_offset
     }
 
     /// Set an offset for the current UI rendering position.
     #[inline]
-    pub(crate) fn inc_cursor_offset<P>(&mut self, p: P)
-    where
-        P: Into<PointI2>,
-    {
-        let p = p.into();
-        self.offset_stack.push(p);
-        self.cursor_offset += p;
-        self.cursor += p;
+    pub(crate) fn inc_column_offset(&mut self, offset: i32) {
+        self.offset_stack.push(offset);
+        self.cursor.offset_x(offset);
+        self.column_offset += offset;
     }
 
     /// Restore any offsets for the current UI rendering position.
     #[inline]
-    pub(crate) fn dec_cursor_offset(&mut self) {
+    pub(crate) fn dec_column_offset(&mut self) {
         let offset = self.offset_stack.pop().unwrap_or_default();
-        self.cursor_offset -= offset;
-        self.cursor -= offset;
+        self.cursor.offset_x(-offset);
+        self.column_offset -= offset;
     }
 
     /// Push a new UI rendering position to the stack.
@@ -482,9 +479,9 @@ impl UiState {
 
     /// Returns the current `scroll` state for this element.
     #[inline]
-    pub(crate) fn scroll(&mut self, id: ElementId) -> VectorI2 {
+    pub(crate) fn scroll(&self, id: ElementId) -> VectorI2 {
         self.elements
-            .get(&id)
+            .peek(&id)
             .map_or_else(VectorI2::default, |state| state.scroll)
     }
 
@@ -760,24 +757,24 @@ impl PixState {
 impl PixState {
     /// Advance the current UI cursor position for an element.
     #[inline]
-    pub(crate) fn advance_cursor<R: Into<Rect<i32>>>(&mut self, rect: R) {
-        let rect = rect.into();
-        let pos = self.cursor_pos();
+    pub(crate) fn advance_cursor<S: Into<PointI2>>(&mut self, size: S) {
+        let size = size.into();
+        let pos = self.ui.cursor;
         let spacing = self.theme.spacing;
         let padx = spacing.frame_pad.x();
         let pady = spacing.item_pad.y();
-        let [offset_x, offset_y] = self.ui.cursor_offset.as_array();
+        let offset_x = self.ui.column_offset;
 
         // Previous cursor ends at the right of this item
-        self.ui.pcursor = point![pos.x() + rect.width(), pos.y()];
+        self.ui.pcursor = point![pos.x() + size.x(), pos.y()];
 
         // Move cursor to the next line with padding, choosing the maximum of the next line or the
         // previous y value to account for variable line heights when using `same_line`.
-        let line_height = cmp::max(self.ui.line_height, rect.height());
-        self.ui.cursor = point![padx + offset_x, pos.y() + line_height + pady + offset_y];
+        let line_height = self.ui.line_height.max(size.y());
+        self.ui.cursor = point![padx + offset_x, pos.y() + line_height + pady];
         self.ui.pline_height = line_height;
         self.ui.line_height = 0;
-        self.ui.last_size = Some(rect);
+        self.ui.last_size = Some(rect![self.ui.cursor, size.x(), size.y()]);
     }
 
     /// Get or create a UI texture to render to

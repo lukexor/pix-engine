@@ -110,7 +110,7 @@ impl PixState {
     /// ```
     #[inline]
     pub fn next_width(&mut self, width: u32) {
-        self.ui.next_width = Some(width);
+        self.ui.next_width = Some(clamp_size(width));
     }
 
     /// Draw a tabbed view to the current canvas. It accepts a list of tabs to be rendered and a
@@ -180,9 +180,7 @@ impl PixState {
 
             // Calculate tab size
             let (width, height) = s.text_size(tab_label)?;
-            let tab = rect![pos, width, height]
-                .offset([fpad.x(), 0])
-                .offset_size(2 * ipad);
+            let tab = rect![pos + fpad.x(), width, height].offset_size(2 * ipad);
 
             // Check hover/active/keyboard focus
             let hovered = s.ui.try_hover(id, &tab);
@@ -239,7 +237,7 @@ impl PixState {
 
             // Process input
             s.ui.handle_events(id);
-            s.advance_cursor(tab);
+            s.advance_cursor(tab.size());
             if !disabled && s.ui.was_clicked(id) {
                 s.ui.set_current_tab(tab_id, i);
             }
@@ -249,10 +247,11 @@ impl PixState {
         let fpad = s.theme.spacing.frame_pad;
         s.push();
         s.stroke(colors.disabled());
-        let y = pos.y() - ipad.y() - 1;
-        s.line(line_![fpad.x(), y, clamp_size(s.width()?) - fpad.x(), y])?;
+        let y = pos.y() + 1;
+        let line_width = s.ui_width()? - fpad.x();
+        s.line(line_![fpad.x(), y, line_width, y])?;
         s.pop();
-        s.advance_cursor([0, 0, 0, fpad.y()]);
+        s.advance_cursor([line_width, fpad.y()]);
 
         s.push_id(tab_id);
         f(s.ui.current_tab(tab_id), s)?;
@@ -285,8 +284,9 @@ impl PixState {
     /// ```
     pub fn spacing(&mut self) -> PixResult<()> {
         let s = self;
+        let width = s.ui_width()?;
         let (_, height) = s.text_size(" ")?;
-        s.advance_cursor([0, 0, 0, height]);
+        s.advance_cursor([width, height]);
         Ok(())
     }
 
@@ -312,7 +312,7 @@ impl PixState {
     pub fn indent(&mut self) -> PixResult<()> {
         let s = self;
         let (width, height) = s.text_size("    ")?;
-        s.advance_cursor([0, 0, width, height]);
+        s.advance_cursor([width, height]);
         s.same_line(None);
         Ok(())
     }
@@ -349,10 +349,11 @@ impl PixState {
         s.push();
 
         s.stroke(colors.disabled());
-        s.line(line_![pad.x(), y, clamp_size(s.width()?) - pad.x(), y])?;
+        let width = s.ui_width()?;
+        s.line(line_![pad.x(), y, width, y])?;
 
         s.pop();
-        s.advance_cursor([0, 0, 0, height]);
+        s.advance_cursor([width, height]);
 
         Ok(())
     }

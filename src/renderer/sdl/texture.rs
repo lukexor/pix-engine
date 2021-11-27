@@ -211,6 +211,11 @@ impl TextureRenderer for Renderer {
         self.texture_target = None;
     }
 
+    /// Returns whether a texture is set as the target for drawing operations.
+    fn has_texture_target(&self) -> bool {
+        self.texture_target.is_some()
+    }
+
     /// Clear internal texture cache.
     #[inline]
     fn clear_texture_cache(&mut self) {

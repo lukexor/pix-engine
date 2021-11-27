@@ -70,9 +70,9 @@ impl PixState {
         let pad = s.theme.spacing.item_pad;
 
         // Calculate button size
-        let (width, height) = s.text_size(label)?;
-        let width = s.ui.next_width.take().map(clamp_size).unwrap_or(width);
-        let button = rect![pos, width, height].offset_size(2 * pad);
+        let (label_width, label_height) = s.text_size(label)?;
+        let width = s.ui.next_width.take().unwrap_or(label_width);
+        let button = rect![pos, width, label_height].offset_size(2 * pad);
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, &button);
@@ -111,7 +111,7 @@ impl PixState {
 
         // Process input
         s.ui.handle_events(id);
-        s.advance_cursor(button);
+        s.advance_cursor(button.size());
         Ok(!disabled && s.ui.was_clicked(id))
     }
 
@@ -253,7 +253,7 @@ impl PixState {
             s.line([start, mid])?;
             s.line([mid, end])?;
         }
-        s.advance_cursor(checkbox);
+        s.advance_cursor(checkbox.size());
         s.pop();
 
         // Label
@@ -343,7 +343,7 @@ impl PixState {
             s.fill(bg);
             s.circle([radio.x(), radio.y(), radio.radius() - 3])?;
         }
-        s.advance_cursor(radio.bounding_rect());
+        s.advance_cursor(radio.bounding_rect().size());
         s.pop();
 
         // Label

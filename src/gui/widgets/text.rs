@@ -247,7 +247,7 @@ impl PixState {
 
             // Only advance the cursor if we're not drawing a text outline
             if outline == 0 {
-                s.advance_cursor(rect);
+                s.advance_cursor(rect.size());
             }
 
             s.pop();
@@ -330,12 +330,13 @@ impl PixState {
 
         // Calculate hover size
         let (width, height) = s.text_size(text)?;
-        let cursor_offset = s.ui.cursor_offset();
-        let width = s.ui.next_width.take().unwrap_or_else(|| {
-            s.width().unwrap_or(width as u32) - cursor_offset.x() as u32 - 2 * fpad.x() as u32
-        });
+        let column_offset = s.ui.column_offset();
+        let width =
+            s.ui.next_width
+                .take()
+                .unwrap_or_else(|| s.ui_width().unwrap_or(width));
 
-        let hover = rect![pos, clamp_size(width), height + 2 * fpad.y()];
+        let hover = rect![pos, width - column_offset, height + 2 * fpad.y()];
         let hovered = s.ui.try_hover(id, &hover);
         let focused = s.ui.try_focus(id);
         let active = s.ui.is_active(id);
@@ -389,13 +390,13 @@ impl PixState {
         }
         s.ui.handle_events(id);
 
-        s.advance_cursor(rect![s.cursor_pos(), hover.width(), ipad.y() / 2]);
+        s.advance_cursor([hover.width(), ipad.y() / 2]);
 
         if expanded {
             let (indent_width, _) = s.text_size("    ")?;
-            s.ui.inc_cursor_offset([indent_width, 0]);
+            s.ui.inc_column_offset(indent_width);
             f(s)?;
-            s.ui.dec_cursor_offset();
+            s.ui.dec_column_offset();
         }
 
         Ok(expanded)
@@ -425,12 +426,13 @@ impl PixState {
 
         // Calculate hover size
         let (width, height) = s.text_size(text)?;
-        let cursor_offset = s.ui.cursor_offset();
-        let width = s.ui.next_width.take().unwrap_or_else(|| {
-            s.width().unwrap_or(width as u32) - cursor_offset.x() as u32 - 2 * fpad.x() as u32
-        });
+        let column_offset = s.ui.column_offset();
+        let width =
+            s.ui.next_width
+                .take()
+                .unwrap_or_else(|| s.ui_width().unwrap_or(width));
 
-        let hover = rect![pos, clamp_size(width), height + 2 * fpad.y()];
+        let hover = rect![pos, width - column_offset, height + 2 * fpad.y()];
         let hovered = s.ui.try_hover(id, &hover);
         let focused = s.ui.try_focus(id);
         let active = s.ui.is_active(id);
@@ -476,13 +478,13 @@ impl PixState {
         }
         s.ui.handle_events(id);
 
-        s.advance_cursor(rect![s.cursor_pos(), hover.width(), ipad.y() / 2]);
+        s.advance_cursor([hover.width(), ipad.y() / 2]);
 
         if expanded {
             let (indent_width, _) = s.text_size("    ")?;
-            s.ui.inc_cursor_offset([indent_width, 0]);
+            s.ui.inc_column_offset(indent_width);
             f(s)?;
-            s.ui.dec_cursor_offset();
+            s.ui.dec_column_offset();
         }
 
         Ok(expanded)
