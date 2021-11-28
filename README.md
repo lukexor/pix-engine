@@ -62,17 +62,18 @@ impl AppState for MyApp {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         // Main render loop. Called as often as possible, or based on `target frame rate`.
         if s.mouse_pressed() {
-            s.fill(0);
+            s.fill(0); // Set fill color to a minimum grayscale of 0 (or black, #000).
         } else {
-            s.fill(255);
+            s.fill(255); // Set fill color to a minimum grayscale of 255 (or white, #fff).
         }
         let m = s.mouse_pos();
+        // Draw circle with fill color at mouse position with radius 80.
         s.circle([m.x(), m.y(), 80])?;
         Ok(())
     }
 
     fn on_stop(&mut self, s: &mut PixState) -> PixResult<()> {
-        // Teardown any state or resources before exiting.
+        // Teardown any state or resources before exiting such as deleting temporary files.
         Ok(())
     }
 }
@@ -81,6 +82,8 @@ fn main() -> PixResult<()> {
     let mut engine = PixEngine::builder()
       .with_dimensions(800, 600)
       .with_title("MyApp")
+      .with_frame_rate()
+      .resizable()
       .build()?;
     let mut app = MyApp;
     engine.run(&mut app)
@@ -89,9 +92,9 @@ fn main() -> PixResult<()> {
 
 ## Screenshots
 
-<img src="https://github.com/lukexor/pix-engine/blob/main/images/asteroids.png?raw=true" width="400">&nbsp;&nbsp;<img src="https://github.com/lukexor/pix-engine/blob/main/images/fluid_simulation.png?raw=true" width="400">
-<img src="https://github.com/lukexor/pix-engine/blob/main/images/2d_raycasting.png?raw=true" width="400">&nbsp;&nbsp;<img src="https://github.com/lukexor/pix-engine/blob/main/images/gui.png?raw=true" width="400">
-<img src="https://github.com/lukexor/pix-engine/blob/main/images/maze.png?raw=true" width="400">&nbsp;&nbsp;<img src="https://github.com/lukexor/pix-engine/blob/main/images/matrix.png?raw=true" width="400">
+<img alt="Asteroids" src="https://github.com/lukexor/pix-engine/blob/main/images/asteroids.png?raw=true" width="400">&nbsp;&nbsp;<img alt="Fluid Simulation" src="https://github.com/lukexor/pix-engine/blob/main/images/fluid_simulation.png?raw=true" width="500">
+<img alt="2D Raycasting" src="https://github.com/lukexor/pix-engine/blob/main/images/2d_raycasting.png?raw=true" width="400">&nbsp;&nbsp;<img alt="UI Widgets" src="https://github.com/lukexor/pix-engine/blob/main/images/gui.png?raw=true" width="500">
+<img alt="Maze Generation & A* Search" src="https://github.com/lukexor/pix-engine/blob/main/images/maze.png?raw=true" width="400">&nbsp;&nbsp;<img alt="Matrix Rain" src="https://github.com/lukexor/pix-engine/blob/main/images/matrix.png?raw=true" width="500">
 
 ## Dependencies
 
