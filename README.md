@@ -92,9 +92,9 @@ fn main() -> PixResult<()> {
 
 ## Screenshots
 
-<img alt="Asteroids" src="https://github.com/lukexor/pix-engine/blob/main/images/asteroids.png?raw=true" width="400">&nbsp;&nbsp;<img alt="Fluid Simulation" src="https://github.com/lukexor/pix-engine/blob/main/images/fluid_simulation.png?raw=true" width="500">
-<img alt="2D Raycasting" src="https://github.com/lukexor/pix-engine/blob/main/images/2d_raycasting.png?raw=true" width="400">&nbsp;&nbsp;<img alt="UI Widgets" src="https://github.com/lukexor/pix-engine/blob/main/images/gui.png?raw=true" width="500">
-<img alt="Maze Generation & A* Search" src="https://github.com/lukexor/pix-engine/blob/main/images/maze.png?raw=true" width="400">&nbsp;&nbsp;<img alt="Matrix Rain" src="https://github.com/lukexor/pix-engine/blob/main/images/matrix.png?raw=true" width="500">
+<img alt="Asteroids" src="https://github.com/lukexor/pix-engine/blob/main/images/asteroids.png?raw=true" width="400">&nbsp;&nbsp;<img alt="Fluid Simulation" src="https://github.com/lukexor/pix-engine/blob/main/images/fluid_simulation.png?raw=true" width="400">
+<img alt="2D Raycasting" src="https://github.com/lukexor/pix-engine/blob/main/images/2d_raycasting.png?raw=true" width="400">&nbsp;&nbsp;<img alt="UI Widgets" src="https://github.com/lukexor/pix-engine/blob/main/images/gui.png?raw=true" width="400">
+<img alt="Maze Generation & A* Search" src="https://github.com/lukexor/pix-engine/blob/main/images/maze.png?raw=true" width="400">&nbsp;&nbsp;<img alt="Matrix Rain" src="https://github.com/lukexor/pix-engine/blob/main/images/matrix.png?raw=true" width="400">
 
 ## Dependencies
 
