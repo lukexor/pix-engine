@@ -2,6 +2,146 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2021-11-27
+
+### Added
+
+#### Core
+
+- `log` facade added for logging support.
+- Added methods to `PixEngineBuilder` to control cache sizes.
+- Added `PixState::elapsed` method which returns the total elasped time since
+  application start.
+- A lot of documentation, examples, and README images.
+
+#### UI
+
+- Added `Theme` and `ThemeBuiilder` structs to customize UI theming for colors,
+  fonts, sizes, styles and spacing. `PixEngineBuilder` updated with theme
+  customizing methods. Default is a dark theme.
+- Added several new UI widget rendering methods and a new `gui` example demoing
+  their usage.
+- `Cursor::no` method added.
+
+#### Window
+
+- `PixState` methods for getting and setting window dimensions changed to return
+  a result instead of panicking and will return the dimensions for the current
+  window target instead of only the primary window.
+- `PixState::save_canvas` and `PixState::save_texture` methods.
+
+#### Drawing
+
+- `Color::from_hex_alpha` and `Color::as_hex_alpha` added that take/return RGBA
+   values.
+- `Color::blended` method added.
+- `PixState::set_viewport` and `PixState::clear_viewport` methods added to
+  control the rendering viewport.
+
+#### Shapes
+
+- `Rect::resized` and `Rect::resize_by` methods added.
+- Added various `offset` methods to shapes.
+- `Ellipse::diameter` method for circular ellipses.
+- `Ellipse::bounding_rect` method.
+- `Point::dist` method.
+- `Serialize` and `Deserialize` added for shapes with const generics when the
+  `serde` feature is enabled.
+
+### Changed
+
+#### Core
+
+- Several types changed to `must_use`.
+- Several optimizations and performance improvements regarding caching and
+  memory management.
+
+#### UI
+
+- `PixEngineBuilder::with_font` updated to take anything that can be turned into
+  a `Font` struct which includes a path as before, but can now also take static
+  font data loaded from `include_bytes!` for example.
+- `PixState::text` updated to return the bounding box of rendered text.
+- Added `PixState::wrap_width` and `PixState::no_wrap` methods to control text
+  wrap width.
+
+#### Drawing
+
+- Many `Color` methods made `const`.
+- `Color::set_levels` method added.
+- Changed shapes to use anti-aliasing where possible by default.
+- Added `PixState::stroke_weight` method to draw thick lines.
+
+#### Shapes
+
+- Fixed radius handling in a circle `Ellipse`.
+- `Line::new`, `Tri::new`, and `Quad::new` updated to support different types
+  for each point parameter.
+- `Line`, `Tri`, and `Quad` macros updated to have better type inference.
+
+### Breaking
+
+### Core
+
+- `core` module removed and all included modules moved up a level.
+- `PixResult` changed to return `anyhow::Error`, which can include a backtrace
+  on nightly. Many other types of errors returned now all return the same
+  `PixResult` struct.
+- `AppState` methods that handle events changed to return a `bool` indicating
+  whether the event is to be consumed or not, and thus skipping any additional
+  handling the engine may have for said event.
+- `pix_engine::prelude::*` cleaned up by removing several type aliases which can
+  be imported from `pix_engine::shape`.
+- Removed `PixEngineBuilder::asset_dir` method in favor of including assets
+  required by the library in the binary.
+- `PixEngineBuilder::build` now returns a `PixResult` if any of the build
+  settings are invalid.
+- `math::constants::*` moved into `math`.
+
+#### UI
+
+- `PixEngineBuilder::with_font` changed to not take `size` as a parameter. Added
+  an additional `PixEngineBuilder::with_font_size` method.
+- `PixState::primary_window_id` removed.
+
+#### Drawing
+
+- `Color::new`, `Color::new_alpha`, `Color::rgb`, and `Color::rgba` changed to
+  take `u8` RGB/A values. Affects `rgb!` and `color!` macros. RGBA setter
+  methods also updated to take `u8`.
+- `Color::levels` made non-const instead computing levels at run-time as needed.
+- `Color::from_raw` renamed to `Color::from_levels` and removed `unsafe`.
+- `Color::from_hex` and `Color::as_hex` changed to take/return RGB
+  values with the top `u32` bits being `0x00`. `Color::from_hex_alpha` and
+  `Color::as_hex_alpha` added that take/return RGBA values.
+- `Color::rgb_channels` and `Color::rgba_channels` removed in favor of
+  `Color::channels`.
+- Color constants moved from the prelude to constants on
+  `Color`. e.g. `Color::RED`.
+- `PixState::polygon` and `PixState::wireframe` changed to take a type that can
+  be converted into `IntoIterator<Item = Into<PointI2>>`.
+- All shape drawing methods have more strict requirements that types can be
+  converted into `i32`.
+- All shape drawing methods with floating point representations have had
+  `floor`, `ceil`, `round` and `trunc` methods added.
+
+#### Textures
+
+- `Texture` struct removed in favor of `TextureId`. All methods for getting or
+  updating textures now take a `TextureId` instead.
+- Removed `unsafe` from `PixState::delete_texture`. Now it will simply return a
+  `PixResult` if the `TextureId` is invalid.
+
+#### Shapes
+
+- All shapes had their `values` method changed to `as_array` and `set_values`
+  method removed in favor of `as_bytes_mut`.
+- All shapes now have `as_bytes` and `as_bytes_mut` methods.
+- Removed `Button` struct and changed `PixState::button` API to just return a
+  `bool` if the button was clicked or not instead of having a `clicked`
+  method. Use `PixState::hovered` method to check if the previously rendered
+  item was hovered.
+
 ## [0.4.2] - 2021-09-02
 
 ### Added
