@@ -98,8 +98,8 @@ fn main() -> PixResult<()> {
 
 ## Dependencies
 
-When using the default targets for macOS, Linux, or Windows, SDL2 libraries are
-a required dependency. You can either install them manually using one of the
+When using the default target for macOS, Linux, or Windows, [SDL2][] libraries
+are a required dependency. You can either install them manually using one of the
 methods outlined in the [rust-sdl2][] crate, or you can use the `use-vcpkg`
 feature flag to statically link them.
 
@@ -107,10 +107,9 @@ feature flag to statically link them.
 
 ### Logging
 
-This library uses the [log](https://crates.io/crates/log) crate to provide
-various levels of logging. To leverage logging in your application, choose one
-of the supported logger implementations and initialize it in your `main`
-function.
+This library uses the [log](https://crates.io/crates/log) crate. To leverage
+logging in your application, choose one of the supported logger implementations
+and initialize it in your `main` function.
 
 Example using [env_logger](https://crates.io/crates/env_logger):
 
@@ -130,19 +129,18 @@ fn main() -> PixResult<()> {
 ### Utility features
 
 * **serde** -
-  Enables Serialize/Deserialize implementations for most enums/structs. `serde`
-  support for const generics is still pending, so many structs are not
-  serializable just yet.
+  Adds [serde][] `Serialize`/`Deserialize` implementations for all
+  enums/structs.
 
 * **backtrace** -
-  Enables the `backtrace` feature for `anyhow`, which allows printing backtraces
-  based on environment variables outlined in [std::backtrace][]. Useful for
-  debugging.
+  Enables the `backtrace` feature for [anyhow][], which allows printing
+  backtraces based on environment variables outlined in
+  [std::backtrace][]. Useful for debugging.
 
 * **use-vcpkg** -
-  Enables static linking of the SDL2 libraries which are dependencies for macOS,
-  Linux, and Windows targets. Using this feature is the easiest way to get up
-  and running unless you already have SDL2 installed on your system.
+  Enables static linking of the [SDL2][] libraries which are dependencies for
+  macOS, Linux, and Windows targets. Using this feature is the easiest way to
+  get up and running unless you already have `SDL2` installed on your system.
 
 ### Renderer features
 
@@ -196,6 +194,8 @@ implementation and evolution of this crate:
 [AppState]: crate::prelude::AppState
 [AppState::on_update]: crate::prelude::AppState::on_update
 [PixState]: crate::prelude::PixState
+[serde]: https://crates.io/crates/serde
+[anyhow]: https://crates.io/crates/anyhow
 [std::backtrace]: https://doc.rust-lang.org/std/backtrace/index.html#environment-variables
 [github issue tracker]: https://github.com/lukexor/pix-engine/issues
 [LICENSE-APACHE]: http://www.apache.org/licenses/LICENSE-2.0
