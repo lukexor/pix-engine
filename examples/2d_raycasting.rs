@@ -376,6 +376,7 @@ fn main() -> PixResult<()> {
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("2D Raycasting")
         .with_frame_rate()
+        .icon(Image::from_read(LIGHT)?)
         .build()?;
     let mut app = RayScene::new();
     engine.run(&mut app)

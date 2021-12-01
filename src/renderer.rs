@@ -1,11 +1,10 @@
 //! Graphics renderer functions.
 
 use crate::{
+    image::Icon,
     prelude::*,
     shape::{LineI2, PointI2, QuadI2, TriI2},
 };
-#[cfg(not(target_arch = "wasm32"))]
-use std::path::PathBuf;
 
 pub(crate) use crate::{texture::TextureRenderer, window::WindowRenderer};
 
@@ -26,8 +25,7 @@ const DEFAULT_SAMPLE_RATE: i32 = 44_100; // in Hz
 #[derive(Debug, Clone)]
 pub(crate) struct RendererSettings {
     pub(crate) title: String,
-    #[cfg(not(target_arch = "wasm32"))]
-    pub(crate) icon: Option<PathBuf>,
+    pub(crate) icon: Option<Icon>,
     pub(crate) x: Position,
     pub(crate) y: Position,
     pub(crate) width: u32,

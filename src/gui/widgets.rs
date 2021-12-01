@@ -67,12 +67,12 @@ impl PixState {
         let id = s.ui.get_id(&label);
         let label = s.ui.get_label(label);
         let pos = s.cursor_pos();
-        let pad = s.theme.spacing.item_pad;
+        let fpad = s.theme.spacing.frame_pad;
 
         // Calculate button size
         let (label_width, label_height) = s.text_size(label)?;
         let width = s.ui.next_width.take().unwrap_or(label_width);
-        let button = rect![pos, width, label_height].offset_size(2 * pad);
+        let button = rect![pos, width, label_height].offset_size(2 * fpad);
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, &button);

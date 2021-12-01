@@ -33,14 +33,12 @@
 //! ```
 
 use crate::{
+    image::Icon,
     prelude::*,
     renderer::{RendererSettings, WindowRenderer},
 };
 use log::{debug, error, info, trace};
 use std::time::{Duration, Instant};
-
-#[cfg(not(target_arch = "wasm32"))]
-use std::path::PathBuf;
 
 /// Builds a [`PixEngine`] instance by providing several configration functions.
 ///
@@ -106,11 +104,11 @@ impl Builder {
 
     /// Set a window icon.
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn icon<P>(&mut self, path: P) -> &mut Self
+    pub fn icon<I>(&mut self, icon: I) -> &mut Self
     where
-        P: Into<PathBuf>,
+        I: Into<Icon>,
     {
-        self.settings.icon = Some(path.into());
+        self.settings.icon = Some(icon.into());
         self
     }
 

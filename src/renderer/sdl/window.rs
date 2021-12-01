@@ -1,5 +1,6 @@
 use super::{texture::RendererTexture, FontId, Renderer};
 use crate::{
+    image::Icon,
     prelude::*,
     renderer::{RendererSettings, WindowRenderer},
     window::{Position, WindowId},
@@ -55,7 +56,7 @@ pub(super) struct WindowCanvas {
 }
 
 impl WindowCanvas {
-    pub(super) fn new(context: &Sdl, s: &RendererSettings) -> PixResult<Self> {
+    pub(super) fn new(context: &Sdl, s: &mut RendererSettings) -> PixResult<Self> {
         let video_subsys = context.video().map_err(PixError::Renderer)?;
 
         // TODO: more testing - macOS performance seems low with default "metal" renderer
@@ -117,8 +118,19 @@ impl WindowCanvas {
             .set_scale(s.scale_x, s.scale_y)
             .map_err(PixError::Renderer)?;
 
-        if let Some(icon) = &s.icon {
-            let surface = Surface::from_file(icon).map_err(PixError::Renderer)?;
+        if let Some(ref mut icon) = s.icon {
+            let surface = match icon {
+                Icon::Image(ref mut img) => {
+                    let width = img.width();
+                    let height = img.height();
+                    let pitch = img.pitch() as u32;
+                    let format = img.format().into();
+                    let bytes = img.as_mut_bytes();
+                    Surface::from_data(bytes, width, height, pitch, format)
+                        .map_err(PixError::Renderer)?
+                }
+                Icon::Path(ref path) => Surface::from_file(path).map_err(PixError::Renderer)?,
+            };
             canvas.window_mut().set_icon(surface);
         }
 
@@ -226,7 +238,7 @@ impl WindowRenderer for Renderer {
     }
 
     /// Create a new window.
-    fn create_window(&mut self, s: &RendererSettings) -> PixResult<WindowId> {
+    fn create_window(&mut self, s: &mut RendererSettings) -> PixResult<WindowId> {
         let window_canvas = WindowCanvas::new(&self.context, s)?;
         let window_id = window_canvas.id;
         self.windows.insert(window_id, window_canvas);
@@ -421,7 +433,7 @@ impl WindowRenderer for Renderer {
             FullscreenType::True | FullscreenType::Desktop
         );
 
-        let mut new_window = WindowCanvas::new(&self.context, &self.settings)?;
+        let mut new_window = WindowCanvas::new(&self.context, &mut self.settings)?;
         let new_texture_creator = new_window.canvas.texture_creator();
 
         let previous_window_id = self.window_target;

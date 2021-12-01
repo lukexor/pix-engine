@@ -11,7 +11,7 @@ use std::{
     fs::File,
     io::{self, BufReader, BufWriter},
     iter::Copied,
-    path::Path,
+    path::{Path, PathBuf},
     slice,
 };
 
@@ -579,5 +579,27 @@ impl Iterator for Pixels<'_> {
             }
             _ => panic!("invalid number of color channels"),
         }
+    }
+}
+
+/// Represents an image icon source.
+#[derive(Debug, Clone)]
+pub enum Icon {
+    /// An icon image.
+    Image(Image),
+    #[cfg(not(target_arch = "wasm32"))]
+    /// A path to an icon image.
+    Path(PathBuf),
+}
+
+impl<T: Into<PathBuf>> From<T> for Icon {
+    fn from(value: T) -> Self {
+        Self::Path(value.into())
+    }
+}
+
+impl From<Image> for Icon {
+    fn from(img: Image) -> Self {
+        Self::Image(img)
     }
 }

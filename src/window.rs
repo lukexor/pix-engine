@@ -1,6 +1,6 @@
 //! `Window` functions.
 
-use crate::{ops::clamp_dimensions, prelude::*, renderer::RendererSettings};
+use crate::{image::Icon, ops::clamp_dimensions, prelude::*, renderer::RendererSettings};
 use log::trace;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -146,7 +146,7 @@ pub(crate) trait WindowRenderer {
     fn window_id(&self) -> WindowId;
 
     /// Create a new window.
-    fn create_window(&mut self, s: &RendererSettings) -> PixResult<WindowId>;
+    fn create_window(&mut self, s: &mut RendererSettings) -> PixResult<WindowId>;
 
     /// Close a window.
     fn close_window(&mut self, id: WindowId) -> PixResult<()>;
@@ -320,13 +320,12 @@ impl<'a> WindowBuilder<'a> {
     }
 
     /// Set a window icon.
-    #[cfg(not(target_arch = "wasm32"))]
     #[inline]
-    pub fn icon<P>(&mut self, path: P) -> &mut Self
+    pub fn icon<I>(&mut self, icon: I) -> &mut Self
     where
-        P: Into<PathBuf>,
+        I: Into<Icon>,
     {
-        self.settings.icon = Some(path.into());
+        self.settings.icon = Some(icon.into());
         self
     }
 
@@ -340,7 +339,7 @@ impl<'a> WindowBuilder<'a> {
     /// being invalid values or overlowing and an internal renderer error such as running out of
     /// memory or a software driver issue.
     pub fn build(&mut self) -> PixResult<WindowId> {
-        self.state.renderer.create_window(&self.settings)
+        self.state.renderer.create_window(&mut self.settings)
     }
 }
 

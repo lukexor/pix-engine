@@ -178,14 +178,14 @@ impl Renderer {
 impl Rendering for Renderer {
     /// Initializes the `Sdl2Renderer` using the given settings and opens a new window.
     #[inline]
-    fn new(s: RendererSettings) -> PixResult<Self> {
+    fn new(mut s: RendererSettings) -> PixResult<Self> {
         debug!("Initializing SDLRenderer");
 
         let context = sdl2::init().map_err(PixError::Renderer)?;
         let event_pump = context.event_pump().map_err(PixError::Renderer)?;
 
         let title = s.title.clone();
-        let primary_window = WindowCanvas::new(&context, &s)?;
+        let primary_window = WindowCanvas::new(&context, &mut s)?;
         let cursor = Cursor::from_system(SystemCursor::Arrow).map_err(PixError::Renderer)?;
         cursor.set();
         let window_target = primary_window.id;

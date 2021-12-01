@@ -6,15 +6,13 @@ on:
   pull_request:
     branches: [ main ]
   workflow_dispatch:
-  release:
-    types: [created, edited]
 
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: "-Dwarnings"
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
