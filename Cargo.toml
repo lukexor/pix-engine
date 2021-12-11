@@ -57,7 +57,8 @@ console_error_panic_hook = "0.1.6"
 [target."cfg(target_arch = \"wasm32\")".dev-dependencies]
 wasm-bindgen-test = "0.3.24"
 
-[profile.dev]
+[profile.dev-opt]
+inherits = "dev"
 opt-level = 2
 
 [profile.release]

@@ -67,7 +67,10 @@ pub mod prelude {
     pub use draw::Draw;
     pub use engine::PixEngine;
     pub use error::{Error as PixError, Result as PixResult};
-    pub use event::{Axis, ControllerButton, Event, Key, KeyEvent, KeyMod, Mouse, WindowEvent};
+    pub use event::{
+        Axis, ControllerButton, ControllerEvent, ControllerId, ControllerUpdate, Event, HatState,
+        Key, KeyEvent, KeyMod, Mouse, WindowEvent,
+    };
     pub use graphics::lighting::{Light, LightSource};
     pub use gui::theme::{self, ColorType, Font, Theme};
     pub use image::{Image, PixelFormat};

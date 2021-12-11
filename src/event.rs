@@ -3,6 +3,10 @@
 use bitflags::bitflags;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+use std::{
+    fmt,
+    ops::{Deref, DerefMut},
+};
 
 /// System or User `Event`.
 #[non_exhaustive]
@@ -87,6 +91,15 @@ pub enum Event {
         axis_idx: u8,
         /// Relative value of axis motion.
         value: i16,
+    },
+    /// User joystick hat movement event.
+    JoyHatMotion {
+        /// Specific attached joystick identifier.
+        joy_id: u32,
+        /// Specific joystick hat being moved.
+        hat_idx: u8,
+        /// Hat state.
+        state: HatState,
     },
     /// User joystick ball movement event.
     JoyBallMotion {
@@ -212,6 +225,20 @@ pub enum Event {
         /// Amount of finger pressure being applied during press.
         pressure: f32,
     },
+    /// Audio device connected event.
+    AudioDeviceAdded {
+        /// Specific audio device identifier.
+        device_id: u32,
+        /// Whether this device is a capture device or not.
+        iscapture: bool,
+    },
+    /// Audio device disconnected event.
+    AudioDeviceRemoved {
+        /// Specific audio device identifier.
+        device_id: u32,
+        /// Whether this device is a capture device or not.
+        iscapture: bool,
+    },
     /// An unknown/unsupported event.
     Unknown,
 }
@@ -231,18 +258,15 @@ pub struct KeyEvent {
     pub key: Key,
     /// Key modifiers being held upon press, e.g. Shift or Ctrl, etc.
     pub keymod: KeyMod,
-    /// Whether this is a pressed or released event.
-    pub pressed: bool,
     /// Whether this is a key-repeat event.
     pub repeat: bool,
 }
 
 impl KeyEvent {
-    pub(crate) const fn new(key: Key, keymod: KeyMod, pressed: bool, repeat: bool) -> Self {
+    pub(crate) const fn new(key: Key, keymod: KeyMod, repeat: bool) -> Self {
         Self {
             key,
             keymod,
-            pressed,
             repeat,
         }
     }
@@ -255,6 +279,8 @@ impl KeyEvent {
 pub enum WindowEvent {
     /// Window is being shown.
     Shown,
+    /// Window is being exposed.
+    Exposed,
     /// Window is being hidden.
     Hidden,
     /// Window moved to new position `(x, y)`
@@ -350,7 +376,7 @@ impl Default for Key {
     }
 }
 
-/// A Joystick axis
+/// A Joystick axis.
 #[non_exhaustive]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -374,6 +400,36 @@ pub enum Axis {
 impl Default for Axis {
     fn default() -> Self {
         Self::Unknown
+    }
+}
+
+/// A Joystick hat state.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum HatState {
+    /// Left+Up state.
+    LeftUp,
+    /// Left state.
+    Left,
+    /// Left+Down state.
+    LeftDown,
+    /// Up state.
+    Up,
+    /// Centered state.
+    Centered,
+    /// Down state.
+    Down,
+    /// Right+Up state.
+    RightUp,
+    /// Right state.
+    Right,
+    /// Right+Down state.
+    RightDown,
+}
+
+impl Default for HatState {
+    fn default() -> Self {
+        Self::Centered
     }
 }
 
@@ -435,5 +491,61 @@ pub enum ControllerButton {
 impl Default for ControllerButton {
     fn default() -> Self {
         Self::Unknown
+    }
+}
+
+/// `Controller` identifier used to reference attached controllers.
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct ControllerId(pub(crate) u32);
+
+impl fmt::Display for ControllerId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl Deref for ControllerId {
+    type Target = u32;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for ControllerId {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+/// `Controller` update event.
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum ControllerUpdate {
+    /// A controller was attached.
+    Added,
+    /// A controller was unattached.
+    Removed,
+    /// A controller has been remapped.
+    Remapped,
+}
+
+/// A specific [Event] representing a controller button press.
+#[non_exhaustive]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct ControllerEvent {
+    /// The Identifier for this controller.
+    pub controller_id: ControllerId,
+    /// Specific button for this event.
+    pub button: ControllerButton,
+}
+
+impl ControllerEvent {
+    pub(crate) const fn new(controller_id: u32, button: ControllerButton) -> Self {
+        Self {
+            controller_id: ControllerId(controller_id),
+            button,
+        }
     }
 }

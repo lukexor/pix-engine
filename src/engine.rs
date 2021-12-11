@@ -35,7 +35,7 @@
 use crate::{
     image::Icon,
     prelude::*,
-    renderer::{RendererSettings, WindowRenderer},
+    renderer::{RendererSettings, Rendering, WindowRenderer},
 };
 use log::{debug, error, info, trace};
 use std::time::{Duration, Instant};
@@ -63,10 +63,21 @@ use std::time::{Duration, Instant};
 /// }
 /// ```
 #[must_use]
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct Builder {
     settings: RendererSettings,
     theme: Theme,
+    joystick_deadzone: i32,
+}
+
+impl Default for Builder {
+    fn default() -> Self {
+        Self {
+            settings: RendererSettings::default(),
+            theme: Theme::default(),
+            joystick_deadzone: 8000,
+        }
+    }
 }
 
 impl Builder {
@@ -172,6 +183,12 @@ impl Builder {
         self
     }
 
+    /// Alter the joystick axis deadzone.
+    pub fn with_deadzone(&mut self, value: i32) -> &mut Self {
+        self.joystick_deadzone = value;
+        self
+    }
+
     /// Enables high-DPI on displays that support it.
     pub fn allow_highdpi(&mut self) -> &mut Self {
         self.settings.allow_highdpi = true;
@@ -223,6 +240,7 @@ impl Builder {
     pub fn build(&self) -> PixResult<PixEngine> {
         Ok(PixEngine {
             state: PixState::new(self.settings.clone(), self.theme.clone())?,
+            joystick_deadzone: self.joystick_deadzone,
         })
     }
 }
@@ -232,6 +250,7 @@ impl Builder {
 #[derive(Debug)]
 pub struct PixEngine {
     state: PixState,
+    joystick_deadzone: i32,
 }
 
 impl PixEngine {
@@ -337,7 +356,15 @@ impl PixEngine {
     {
         let state = &mut self.state;
         while let Some(event) = state.renderer.poll_event() {
-            trace!("Polling event {:?}", event);
+            // Demote noisy events to trace
+            if let Event::ControllerAxisMotion { .. }
+            | Event::JoyAxisMotion { .. }
+            | Event::MouseMotion { .. } = event
+            {
+                trace!("Polling event {:?}", event);
+            } else {
+                debug!("Polling event {:?}", event);
+            }
             app.on_event(state, &event)?;
             match event {
                 Event::Quit { .. } | Event::AppTerminating { .. } => state.quit(),
@@ -359,7 +386,7 @@ impl PixEngine {
                     keymod,
                     repeat,
                 } => {
-                    let evt = KeyEvent::new(key, keymod, true, repeat);
+                    let evt = KeyEvent::new(key, keymod, repeat);
                     if !app.on_key_pressed(state, evt)? {
                         state.ui.keys.press(key, keymod);
                     }
@@ -369,10 +396,61 @@ impl PixEngine {
                     keymod,
                     repeat,
                 } => {
-                    let evt = KeyEvent::new(key, keymod, false, repeat);
+                    let evt = KeyEvent::new(key, keymod, repeat);
                     if !app.on_key_released(state, evt)? {
                         state.ui.keys.release(key, keymod);
                     }
+                }
+                Event::ControllerDown {
+                    controller_id,
+                    button,
+                } => {
+                    let evt = ControllerEvent::new(controller_id, button);
+                    app.on_controller_pressed(state, evt)?;
+                }
+                Event::ControllerUp {
+                    controller_id,
+                    button,
+                } => {
+                    let evt = ControllerEvent::new(controller_id, button);
+                    app.on_controller_released(state, evt)?;
+                }
+                Event::ControllerAxisMotion {
+                    controller_id,
+                    axis,
+                    value,
+                } => {
+                    let value = i32::from(value);
+                    let value =
+                        if (-self.joystick_deadzone..self.joystick_deadzone).contains(&value) {
+                            0
+                        } else {
+                            value
+                        };
+                    let id = ControllerId(controller_id);
+                    app.on_controller_axis_motion(state, id, axis, value)?;
+                }
+                Event::ControllerAdded { controller_id } => {
+                    let id = ControllerId(controller_id);
+                    if !app.on_controller_update(state, id, ControllerUpdate::Added)? {
+                        state.renderer.open_controller(id)?;
+                    }
+                }
+                Event::JoyDeviceAdded { joy_id } => {
+                    let id = ControllerId(joy_id);
+                    if !app.on_controller_update(state, id, ControllerUpdate::Added)? {
+                        state.renderer.open_controller(id)?;
+                    }
+                }
+                Event::ControllerRemoved { controller_id } => {
+                    let id = ControllerId(controller_id);
+                    if !app.on_controller_update(state, id, ControllerUpdate::Removed)? {
+                        state.renderer.close_controller(id);
+                    }
+                }
+                Event::ControllerRemapped { controller_id } => {
+                    let id = ControllerId(controller_id);
+                    app.on_controller_update(state, id, ControllerUpdate::Remapped)?;
                 }
                 Event::TextInput { text, .. } => {
                     if !app.on_key_typed(state, &text)? {

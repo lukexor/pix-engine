@@ -7,10 +7,11 @@ use crate::{
 };
 use anyhow::Context;
 use lazy_static::lazy_static;
-use log::debug;
+use log::{debug, warn};
 use lru::LruCache;
 use sdl2::{
     audio::{AudioQueue, AudioSpecDesired},
+    controller::GameController,
     gfx::primitives::{DrawRenderer, ToColor},
     image::{InitFlag, Sdl2ImageContext},
     mouse::{Cursor, SystemCursor},
@@ -20,7 +21,7 @@ use sdl2::{
     rwops::RWops,
     ttf::{Font as SdlFont, FontStyle as SdlFontStyle, Sdl2TtfContext},
     video::Window,
-    EventPump, Sdl,
+    EventPump, GameControllerSubsystem, Sdl,
 };
 use std::{cmp, collections::HashMap, fmt};
 
@@ -40,6 +41,8 @@ pub(crate) struct Renderer {
     context: Sdl,
     event_pump: EventPump,
     audio_device: AudioQueue<f32>,
+    controller_subsys: GameControllerSubsystem,
+    controllers: HashMap<ControllerId, GameController>,
     title: String,
     fps: usize,
     settings: RendererSettings,
@@ -203,6 +206,7 @@ impl Rendering for Renderer {
             .open_queue(None, &desired_spec)
             .map_err(PixError::Renderer)?;
         audio_device.resume();
+        let controller_subsys = context.game_controller().map_err(PixError::Renderer)?;
 
         let default_font = Font::default();
         let current_font = default_font.id();
@@ -214,6 +218,8 @@ impl Rendering for Renderer {
             context,
             event_pump,
             audio_device,
+            controller_subsys,
+            controllers: HashMap::new(),
             settings: s,
             title,
             fps: 0,
@@ -762,6 +768,23 @@ impl Rendering for Renderer {
                 .read_pixels(None, SdlPixelFormat::RGBA32)
                 .map_err(PixError::Renderer)?)
         }
+    }
+
+    /// Connect a controller with the given joystick index to start receiving events.
+    fn open_controller(&mut self, controller_id: ControllerId) -> PixResult<()> {
+        let joystick_index = *controller_id;
+        if self.controller_subsys.is_game_controller(joystick_index) {
+            self.controllers
+                .insert(controller_id, self.controller_subsys.open(joystick_index)?);
+        } else {
+            warn!("Joystick {} is not a game controller. Generic joysticks are currently unsupported.", joystick_index);
+        }
+        Ok(())
+    }
+
+    /// Disconnect a controller with the given joystick index to stop receiving events.
+    fn close_controller(&mut self, controller_id: ControllerId) {
+        self.controllers.remove(&controller_id);
     }
 }
 

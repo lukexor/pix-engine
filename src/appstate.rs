@@ -295,6 +295,194 @@ pub trait AppState {
         Ok(false)
     }
 
+    /// Called each time a [`ControllerButton`] is pressed with the [`ControllerEvent`] indicating
+    /// which button is pressed.
+    ///
+    /// Returning `true` consumes this event, preventing any further event triggering.
+    ///
+    /// # Errors
+    ///
+    /// Returning an error will start exiting the application and call [`AppState::on_stop`]. See
+    /// the `Errors` section in [`AppState::on_update`] for more details.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl App { fn pause(&mut self) {} }
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_controller_pressed(&mut self, s: &mut PixState, event: ControllerEvent) -> PixResult<bool> {
+    ///     match event.button {
+    ///         ControllerButton::Start => {
+    ///             self.pause();
+    ///             Ok(true)
+    ///         },
+    ///         _ => Ok(false),
+    ///     }
+    /// }
+    /// # }
+    /// ```
+    fn on_controller_pressed(
+        &mut self,
+        s: &mut PixState,
+        event: ControllerEvent,
+    ) -> PixResult<bool> {
+        Ok(false)
+    }
+
+    /// Called each time a [`ControllerButton`] is pressed with the [`ControllerEvent`] indicating
+    /// which key and modifiers are released.
+    ///
+    /// Returning `true` consumes this event, preventing any further event triggering.
+    ///
+    /// # Errors
+    ///
+    /// Returning an error will start exiting the application and call [`AppState::on_stop`]. See
+    /// the `Errors` section in [`AppState::on_update`] for more details.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl App { fn fire_bullet(&mut self, s: &mut PixState) {} }
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_controller_released(&mut self, s: &mut PixState, event: ControllerEvent) -> PixResult<bool> {
+    ///     match event.button {
+    ///         ControllerButton::X => {
+    ///             self.fire_bullet(s);
+    ///             Ok(true)
+    ///         }
+    ///         _ => Ok(false),
+    ///     }
+    /// }
+    /// # }
+    /// ```
+    fn on_controller_released(
+        &mut self,
+        s: &mut PixState,
+        event: ControllerEvent,
+    ) -> PixResult<bool> {
+        Ok(false)
+    }
+
+    /// Called each time a `Controller` `Axis` is moved with the delta since last frame.
+    ///
+    /// Returning `true` consumes this event, preventing any further event triggering.
+    ///
+    /// # Errors
+    ///
+    /// Returning an error will start exiting the application and call [`AppState::on_stop`]. See
+    /// the `Errors` section in [`AppState::on_update`] for more details.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App { player1: ControllerId }
+    /// # impl App {
+    /// #   fn move_right(&self) {}
+    /// #   fn move_left(&self) {}
+    /// #   fn move_up(&self) {}
+    /// #   fn move_down(&self) {}
+    /// # }
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_controller_axis_motion(
+    ///     &mut self,
+    ///     s: &mut PixState,
+    ///     controller_id: ControllerId,
+    ///     axis: Axis,
+    ///     value: i32,
+    /// ) -> PixResult<bool> {
+    ///     if controller_id == self.player1 {
+    ///         match axis {
+    ///             Axis::LeftX => {
+    ///                 if value > 0 {
+    ///                     self.move_right();
+    ///                 } else if value < 0 {
+    ///                     self.move_left();
+    ///                 }
+    ///                 Ok(true)
+    ///             }
+    ///             Axis::LeftY => {
+    ///                 if value > 0 {
+    ///                     self.move_up();
+    ///                 } else if value < 0 {
+    ///                     self.move_down();
+    ///                 }
+    ///                 Ok(true)
+    ///             }
+    ///             _ => Ok(false)
+    ///         }
+    ///     } else {
+    ///         Ok(false)
+    ///     }
+    /// }
+    /// # }
+    /// ```
+    fn on_controller_axis_motion(
+        &mut self,
+        s: &mut PixState,
+        controller_id: ControllerId,
+        axis: Axis,
+        value: i32,
+    ) -> PixResult<bool> {
+        Ok(false)
+    }
+
+    /// Called each time a `Controller` is added, removed, or remapped.
+    ///
+    /// Returning `true` consumes this event, preventing any further event triggering.
+    ///
+    /// # Errors
+    ///
+    /// Returning an error will start exiting the application and call [`AppState::on_stop`]. See
+    /// the `Errors` section in [`AppState::on_update`] for more details.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl App {
+    /// # fn add_gamepad(&mut self, _: ControllerId) {}
+    /// # fn remove_gamepad(&mut self, _: ControllerId) {}
+    /// # }
+    /// # impl AppState for App {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_controller_update(
+    ///     &mut self,
+    ///     s: &mut PixState,
+    ///     controller_id: ControllerId,
+    ///     update: ControllerUpdate,
+    /// ) -> PixResult<bool> {
+    ///     match update {
+    ///         ControllerUpdate::Added => {
+    ///             self.add_gamepad(controller_id);
+    ///             Ok(true)
+    ///         }
+    ///         ControllerUpdate::Removed => {
+    ///             self.remove_gamepad(controller_id);
+    ///             Ok(true)
+    ///         }
+    ///         _ => Ok(false),
+    ///     }
+    /// }
+    /// # }
+    /// ```
+    fn on_controller_update(
+        &mut self,
+        s: &mut PixState,
+        controller_id: ControllerId,
+        update: ControllerUpdate,
+    ) -> PixResult<bool> {
+        Ok(false)
+    }
+
     /// Called each time a [`Mouse`] button is pressed.
     ///
     /// Returning `true` consumes this event, preventing any further event triggering.

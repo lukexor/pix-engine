@@ -18,9 +18,6 @@ pub(crate) mod wasm;
 #[cfg(target_arch = "wasm32")]
 pub(crate) use wasm::Renderer;
 
-/// Default audio sample rate.
-const DEFAULT_SAMPLE_RATE: i32 = 44_100; // in Hz
-
 /// Settings used to set up the renderer.
 #[derive(Debug, Clone)]
 pub(crate) struct RendererSettings {
@@ -57,7 +54,7 @@ impl Default for RendererSettings {
             height: 480,
             scale_x: 1.0,
             scale_y: 1.0,
-            audio_sample_rate: DEFAULT_SAMPLE_RATE,
+            audio_sample_rate: 44100,
             fullscreen: false,
             vsync: false,
             resizable: false,
@@ -195,4 +192,10 @@ pub(crate) trait Rendering: Sized {
 
     /// Return the current rendered target pixels as an array of bytes.
     fn to_bytes(&mut self) -> PixResult<Vec<u8>>;
+
+    /// Connect a controller with the given joystick index to start receiving events.
+    fn open_controller(&mut self, controller_id: ControllerId) -> PixResult<()>;
+
+    /// Disconnect a controller with the given joystick index to stop receiving events.
+    fn close_controller(&mut self, controller_id: ControllerId);
 }

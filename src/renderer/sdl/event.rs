@@ -1,7 +1,9 @@
-use crate::prelude::{Axis, ControllerButton, Event, Key, KeyMod, Mouse, WindowEvent};
+use crate::prelude::*;
+use log::warn;
 use sdl2::{
     controller::{Axis as SdlAxis, Button as SdlButton},
     event::{Event as SdlEvent, WindowEvent as SdlWindowEvent},
+    joystick::HatState as SdlHatState,
     keyboard::{Keycode as SdlKeycode, Mod as SdlMod},
     mouse::MouseButton as SdlMouseButton,
 };
@@ -68,6 +70,16 @@ impl From<SdlEvent> for Event {
                 joy_id: which,
                 axis_idx,
                 value,
+            },
+            SdlEvent::JoyHatMotion {
+                which,
+                hat_idx,
+                state,
+                ..
+            } => Self::JoyHatMotion {
+                joy_id: which,
+                hat_idx,
+                state: state.into(),
             },
             SdlEvent::JoyBallMotion {
                 which,
@@ -173,7 +185,22 @@ impl From<SdlEvent> for Event {
                 dy,
                 pressure,
             },
-            _ => Self::Unknown,
+            SdlEvent::AudioDeviceAdded {
+                which, iscapture, ..
+            } => Self::AudioDeviceAdded {
+                device_id: which,
+                iscapture,
+            },
+            SdlEvent::AudioDeviceRemoved {
+                which, iscapture, ..
+            } => Self::AudioDeviceRemoved {
+                device_id: which,
+                iscapture,
+            },
+            evt => {
+                warn!("Unknown SDL `Event`: {:?}", evt);
+                Self::Unknown
+            }
         }
     }
 }
@@ -196,7 +223,10 @@ impl From<SdlWindowEvent> for WindowEvent {
             SdlWindowEvent::FocusGained => Self::FocusGained,
             SdlWindowEvent::FocusLost => Self::FocusLost,
             SdlWindowEvent::Close => Self::Close,
-            _ => Self::Unknown,
+            evt => {
+                warn!("Unknown SDL `WindowEvent`: {:?}", evt);
+                Self::Unknown
+            }
         }
     }
 }
@@ -309,7 +339,10 @@ impl From<SdlKeycode> for Key {
             SdlKeycode::RShift => Self::RShift,
             SdlKeycode::RAlt => Self::RAlt,
             SdlKeycode::RGui => Self::RGui,
-            _ => Self::Unknown,
+            keycode => {
+                warn!("Unknown SDL `Keycode`: {:?}", keycode);
+                Self::Unknown
+            }
         }
     }
 }
@@ -341,7 +374,10 @@ impl From<SdlMouseButton> for Mouse {
             SdlMouseButton::Left => Self::Left,
             SdlMouseButton::Middle => Self::Middle,
             SdlMouseButton::Right => Self::Right,
-            _ => Self::Unknown,
+            btn => {
+                warn!("Unknown SDL `MouseButton`: {:?}", btn);
+                Self::Unknown
+            }
         }
     }
 }
@@ -385,6 +421,23 @@ impl From<SdlAxis> for Axis {
             SdlAxis::RightY => Self::RightY,
             SdlAxis::TriggerLeft => Self::TriggerLeft,
             SdlAxis::TriggerRight => Self::TriggerRight,
+        }
+    }
+}
+
+impl From<SdlHatState> for HatState {
+    #[doc(hidden)]
+    fn from(hat: SdlHatState) -> Self {
+        match hat {
+            SdlHatState::LeftUp => Self::LeftUp,
+            SdlHatState::Left => Self::Left,
+            SdlHatState::LeftDown => Self::LeftDown,
+            SdlHatState::Up => Self::Up,
+            SdlHatState::Centered => Self::Centered,
+            SdlHatState::Down => Self::Down,
+            SdlHatState::RightUp => Self::RightUp,
+            SdlHatState::Right => Self::Right,
+            SdlHatState::RightDown => Self::RightDown,
         }
     }
 }
