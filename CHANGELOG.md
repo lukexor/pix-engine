@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.1] - 2021-12-13
+
+### Added
+
+- Basic gamepad controller support and a new event: `JoyHatMotion`.
+- `PixEngineBuider::with_deadzone` which alters the default gamepad axis
+  deadzone.
+- `AppState::on_controller_pressed`, `AppState::on_controller_released`,
+  `AppState::on_controller_axis_motion`, `AppState::on_controller_update`.
+- More supported events: `AudioDeviceAdded`, `AudioDeviceRemoved`,
+  `WindowEvent::Exposed`, `Key::Kp*` events for Keypad support.
+- Warning logs for unsupported events.
+
+### Changed
+
+#### Core
+
+- `PixEngineBuilder::icon` and `WindowBuilder::icon` now take an
+  `Into<Icon>` parameter that can converted into either a `PathBuf` or an
+  `Image` which allows loading an icon from a file, or a static or dynamic
+  image.
+
+#### UI
+
+- Various UI padding now use frame padding instead of item padding.
+
+### Breaking
+
+- Changed `Unknown` event variants to `Unsupported` to better reflect that some
+  events are known, but are not supported by this library.
+
 ## [0.5.0] - 2021-11-27
 
 ### Added
@@ -81,7 +112,7 @@ All notable changes to this project will be documented in this file.
 
 ### Breaking
 
-### Core
+#### Core
 
 - `core` module removed and all included modules moved up a level.
 - `PixResult` changed to return `anyhow::Error`, which can include a backtrace
