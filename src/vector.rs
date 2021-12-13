@@ -67,7 +67,7 @@ use num_traits::Signed;
 use rand::distributions::uniform::SampleUniform;
 #[cfg(feature = "serde")]
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use std::{cmp, fmt, ops::MulAssign};
+use std::{fmt, ops::MulAssign};
 
 /// A [Euclidean] `Vector` in N-dimensional space.
 ///
@@ -539,9 +539,8 @@ impl<T: Num, const N: usize> Vector<T, N> {
         V: Into<Vector<T, M>>,
     {
         let offsets = offsets.into();
-        let len = cmp::min(N, M);
-        for i in 0..len {
-            self[i] += offsets[i];
+        for (v, o) in self.iter_mut().zip(offsets) {
+            *v += o;
         }
     }
 
@@ -611,11 +610,12 @@ impl<T: Num, const N: usize> Vector<T, N> {
     where
         T: Signed,
     {
-        for i in 0..N {
-            if self[i] > wrap[i] + size {
-                self[i] = -size;
-            } else if self[i] < -size {
-                self[i] = wrap[i] + size;
+        for (v, w) in self.iter_mut().zip(wrap) {
+            let w = w + size;
+            if *v > w {
+                *v = -size;
+            } else if *v < -size {
+                *v = w;
             }
         }
     }
@@ -721,8 +721,8 @@ impl<T: Num + Float, const N: usize> Vector<T, N> {
     /// ```
     pub fn mag_sq(&self) -> T {
         let mut sum = T::zero();
-        for i in 0..N {
-            sum += self[i] * self[i];
+        for &v in self.iter() {
+            sum += v * v;
         }
         sum
     }
@@ -738,14 +738,14 @@ impl<T: Num + Float, const N: usize> Vector<T, N> {
     /// let dot_product = v1.dot(v2);
     /// assert_eq!(dot_product, 20.0);
     /// ```
-    pub fn dot<V>(&self, v: V) -> T
+    pub fn dot<V>(&self, o: V) -> T
     where
         V: Into<Vector<T, N>>,
     {
-        let v = v.into();
+        let o = o.into();
         let mut sum = T::zero();
-        for i in 0..N {
-            sum += self[i] * v[i];
+        for (&v, o) in self.iter().zip(o) {
+            sum += v * o;
         }
         sum
     }
@@ -852,16 +852,16 @@ impl<T: Num + Float, const N: usize> Vector<T, N> {
     /// let v3 = v1.lerp(v2, 0.5);
     /// assert_eq!(v3.as_array(), [2.0, 2.0, 0.0]);
     /// ```
-    pub fn lerp<V>(&self, v: V, amt: T) -> Self
+    pub fn lerp<V>(&self, o: V, amt: T) -> Self
     where
         V: Into<Vector<T, N>>,
     {
-        let v = v.into();
+        let o = o.into();
         let lerp = |start, stop, amt| amt * (stop - start) + start;
         let amt = num_traits::clamp(amt, T::zero(), T::one());
         let mut coords = [T::zero(); N];
-        for i in 0..N {
-            coords[i] = lerp(self[i], v[i], amt);
+        for ((c, &v), o) in coords.iter_mut().zip(self.iter()).zip(o) {
+            *c = lerp(v, o, amt);
         }
         Self::new(coords)
     }
@@ -882,8 +882,8 @@ impl<T: Num + Float, const N: usize> Vector<T, N> {
     {
         let other = other.into();
         let mut approx_eq = true;
-        for i in 0..N {
-            approx_eq &= (self[i] - other[i]).abs() < epsilon;
+        for (&v, o) in self.iter().zip(other) {
+            approx_eq &= (v - o).abs() < epsilon;
         }
         approx_eq
     }

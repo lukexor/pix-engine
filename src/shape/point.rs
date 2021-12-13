@@ -29,7 +29,7 @@ use crate::serialize::arrays;
 use num_traits::Signed;
 #[cfg(feature = "serde")]
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use std::{cmp, fmt, ops::MulAssign};
+use std::{fmt, ops::MulAssign};
 
 /// A `Point` in N-dimensional space.
 ///
@@ -361,9 +361,8 @@ impl<T: Num, const N: usize> Point<T, N> {
         P: Into<Point<T, M>>,
     {
         let offsets = offsets.into();
-        let len = cmp::min(N, M);
-        for i in 0..len {
-            self[i] += offsets[i];
+        for (v, o) in self.iter_mut().zip(offsets) {
+            *v += o;
         }
     }
 
@@ -432,11 +431,12 @@ impl<T: Num, const N: usize> Point<T, N> {
     where
         T: Signed,
     {
-        for i in 0..N {
-            if self[i] > wrap[i] + size {
-                self[i] = -size;
-            } else if self[i] < -size {
-                self[i] = wrap[i] + size;
+        for (v, w) in self.iter_mut().zip(wrap) {
+            let w = w + size;
+            if *v > w {
+                *v = -size;
+            } else if *v < -size {
+                *v = w;
             }
         }
     }
@@ -474,16 +474,16 @@ impl<T: Num + Float, const N: usize> Point<T, N> {
     /// let p3 = p1.lerp(p2, 0.5);
     /// assert_eq!(p3.as_array(), [2.0, 2.0, 0.0]);
     /// ```
-    pub fn lerp<P>(&self, p: P, amt: T) -> Self
+    pub fn lerp<P>(&self, o: P, amt: T) -> Self
     where
         P: Into<Point<T, N>>,
     {
-        let p = p.into();
+        let o = o.into();
         let lerp = |start, stop, amt| amt * (stop - start) + start;
         let amt = num_traits::clamp(amt, T::zero(), T::one());
         let mut coords = [T::zero(); N];
-        for i in 0..N {
-            coords[i] = lerp(self[i], p[i], amt);
+        for ((c, &v), o) in coords.iter_mut().zip(self.iter()).zip(o) {
+            *c = lerp(v, o, amt);
         }
         Self::new(coords)
     }
@@ -500,8 +500,8 @@ impl<T: Num + Float, const N: usize> Point<T, N> {
     /// ```
     pub fn approx_eq(&self, other: Point<T, N>, epsilon: T) -> bool {
         let mut approx_eq = true;
-        for i in 0..N {
-            approx_eq &= (self[i] - other[i]).abs() < epsilon;
+        for (&v, o) in self.iter().zip(other) {
+            approx_eq &= (v - o).abs() < epsilon;
         }
         approx_eq
     }

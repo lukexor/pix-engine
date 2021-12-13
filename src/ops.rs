@@ -202,7 +202,7 @@ macro_rules! impl_wrapper_traits {
                 type IntoIter = IntoIter<Self::Item, $M>;
                 #[inline]
                 fn into_iter(self) -> Self::IntoIter {
-                    Self::IntoIter::new(self.0)
+                    self.0.into_iter()
                 }
             }
             impl <T: Default$(, const $N: usize)?> FromIterator<$T> for $Type<T$(, $N)?> {
@@ -253,8 +253,8 @@ macro_rules! impl_num_assign_op {
             U: Num,
         {
             fn $func(&mut self, val: U) {
-                for i in 0..N {
-                    self[i] $op val;
+                for v in self.iter_mut() {
+                    *v $op val;
                 }
             }
         }
@@ -262,8 +262,8 @@ macro_rules! impl_num_assign_op {
     ($OpTrait:ident, $func:ident, $Lhs:ty, $op:tt, $Rhs:ty = $Output:ty) => {
         impl<T: Num, const N: usize> $OpTrait<$Rhs> for $Lhs {
             fn $func(&mut self, other: $Rhs) {
-                for i in 0..N {
-                    self[i] $op other[i];
+                for (v, o) in self.iter_mut().zip(other) {
+                    *v $op o;
                 }
             }
         }
@@ -315,8 +315,8 @@ macro_rules! impl_num_op {
             type Output = Self;
             fn $func(self, val: U) -> Self::Output {
                 let mut t = <$Type>::default();
-                for i in 0..N {
-                    t[i] = self[i] $op val;
+                for (v, s) in t.iter_mut().zip(self) {
+                    *v = s $op val;
                 }
                 t
             }
@@ -341,8 +341,8 @@ macro_rules! impl_num_op {
                 type Output = Self;
                 fn neg(self) -> Self::Output {
                     let mut t = <$Type>::default();
-                    for i in 0..N {
-                        t[i] = self[i].neg();
+                    for (v, s) in t.iter_mut().zip(self) {
+                        *v = s.neg();
                     }
                     t
                 }
@@ -358,8 +358,8 @@ macro_rules! impl_num_op {
             type Output = $Output;
             fn $func(self, other: $Rhs) -> Self::Output {
                 let mut t = <$Output>::default();
-                for i in 0..N {
-                    t[i] = self[i] $op other[i];
+                for ((v, s), o) in t.iter_mut().zip(self).zip(other) {
+                    *v = s $op o;
                 }
                 t
             }

@@ -283,13 +283,13 @@ impl<T: Num> Ellipse<T> {
     /// Offsets an ellipse by shifting coordinates by given amount.
     ///
     #[inline]
-    pub fn offset<P>(&mut self, offset: P)
+    pub fn offset<P>(&mut self, offsets: P)
     where
         P: Into<Point<T, 2>>,
     {
-        let offset = offset.into();
-        for i in 0..=1 {
-            self[i] += offset[i];
+        let offsets = offsets.into();
+        for (v, o) in self.iter_mut().take(2).zip(offsets) {
+            *v += o;
         }
     }
 
