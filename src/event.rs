@@ -240,12 +240,12 @@ pub enum Event {
         iscapture: bool,
     },
     /// An unknown/unsupported event.
-    Unhandled,
+    Unsupported,
 }
 
 impl Default for Event {
     fn default() -> Self {
-        Self::Unhandled
+        Self::Unsupported
     }
 }
 
@@ -306,12 +306,12 @@ pub enum WindowEvent {
     /// Window closed.
     Close,
     /// An unknown/unsupported window event.
-    Unhandled,
+    Unsupported,
 }
 
 impl Default for WindowEvent {
     fn default() -> Self {
-        Self::Unhandled
+        Self::Unsupported
     }
 }
 
@@ -327,12 +327,12 @@ pub enum Mouse {
     /// Right mouse button.
     Right,
     /// An unknown/unsupported mouse button.
-    Unhandled,
+    Unsupported,
 }
 
 impl Default for Mouse {
     fn default() -> Self {
-        Self::Unhandled
+        Self::Unsupported
     }
 }
 
@@ -369,12 +369,12 @@ pub enum Key {
     F7, F8, F9, F10, F11, F12, PrintScreen, ScrollLock, Pause, Insert, Home, PageUp, End, PageDown,
     Right, Left, Down, Up, NumLock, KpDivide, KpMultiply, KpMinus, KpPlus, KpEnter, Kp1, Kp2, Kp3,
     Kp4, Kp5, Kp6, Kp7, Kp8, Kp9, Kp0, KpPeriod, KpEquals, KpComma, LCtrl, LShift, LAlt, LGui,
-    RCtrl, RShift, RAlt, RGui, Unhandled
+    RCtrl, RShift, RAlt, RGui, Unsupported
 }
 
 impl Default for Key {
     fn default() -> Self {
-        Self::Unhandled
+        Self::Unsupported
     }
 }
 
@@ -396,12 +396,12 @@ pub enum Axis {
     /// Right trigger switch.
     TriggerRight,
     /// An unknown/unsupported axis.
-    Unhandled,
+    Unsupported,
 }
 
 impl Default for Axis {
     fn default() -> Self {
-        Self::Unhandled
+        Self::Unsupported
     }
 }
 
@@ -487,12 +487,12 @@ pub enum ControllerButton {
     /// PS4/PS5 touchpad button
     Touchpad,
     /// An unknown/unsupported button
-    Unhandled,
+    Unsupported,
 }
 
 impl Default for ControllerButton {
     fn default() -> Self {
-        Self::Unhandled
+        Self::Unsupported
     }
 }
 

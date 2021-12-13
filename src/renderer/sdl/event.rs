@@ -198,8 +198,8 @@ impl From<SdlEvent> for Event {
                 iscapture,
             },
             evt => {
-                warn!("Unhandled SDL `Event`: {:?}", evt);
-                Self::Unhandled
+                warn!("Unsupported SDL `Event`: {:?}", evt);
+                Self::Unsupported
             }
         }
     }
@@ -224,8 +224,8 @@ impl From<SdlWindowEvent> for WindowEvent {
             SdlWindowEvent::FocusLost => Self::FocusLost,
             SdlWindowEvent::Close => Self::Close,
             evt => {
-                warn!("Unhandled SDL `WindowEvent`: {:?}", evt);
-                Self::Unhandled
+                warn!("Unsupported SDL `WindowEvent`: {:?}", evt);
+                Self::Unsupported
             }
         }
     }
@@ -358,8 +358,8 @@ impl From<SdlKeycode> for Key {
             SdlKeycode::RAlt => Self::RAlt,
             SdlKeycode::RGui => Self::RGui,
             keycode => {
-                warn!("Unhandled SDL `Keycode`: {:?}", keycode);
-                Self::Unhandled
+                warn!("Unsupported SDL `Keycode`: {:?}", keycode);
+                Self::Unsupported
             }
         }
     }
@@ -393,8 +393,8 @@ impl From<SdlMouseButton> for Mouse {
             SdlMouseButton::Middle => Self::Middle,
             SdlMouseButton::Right => Self::Right,
             btn => {
-                warn!("Unhandled SDL `MouseButton`: {:?}", btn);
-                Self::Unhandled
+                warn!("Unsupported SDL `MouseButton`: {:?}", btn);
+                Self::Unsupported
             }
         }
     }
