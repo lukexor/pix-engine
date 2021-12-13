@@ -366,6 +366,7 @@ impl PixState {
     #[inline]
     pub(crate) fn new(settings: RendererSettings, theme: Theme) -> PixResult<Self> {
         let show_frame_rate = settings.show_frame_rate;
+        let target_frame_rate = settings.target_frame_rate;
         let mut renderer = Renderer::new(settings)?;
         renderer.font_size(theme.font_size)?;
         renderer.font_family(&theme.fonts.body)?;
@@ -377,6 +378,7 @@ impl PixState {
                 background: theme.colors.background,
                 fill: Some(theme.colors.on_background()),
                 show_frame_rate,
+                target_frame_rate,
                 ..Settings::default()
             },
             setting_stack: Vec::new(),

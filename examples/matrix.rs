@@ -216,7 +216,7 @@ fn main() -> PixResult<()> {
         .position(0, 0)
         .with_title("The Matrix")
         .with_frame_rate()
-        .vsync_enabled()
+        .target_frame_rate(60)
         .with_font(Font::from_bytes("Sunray", FONT_DATA))
         .with_font_size(Glyph::SIZE)
         .build()?;

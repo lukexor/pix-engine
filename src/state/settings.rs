@@ -1060,6 +1060,8 @@ impl PixState {
     pub(crate) fn target_delta_time(&self) -> Duration {
         self.settings
             .target_frame_rate
-            .map_or_else(Duration::default, |rate| Duration::from_secs(rate as u64))
+            .map_or_else(Duration::default, |rate| {
+                Duration::from_secs(1) / rate as u32
+            })
     }
 }

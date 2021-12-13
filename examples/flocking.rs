@@ -199,7 +199,7 @@ pub fn main() -> PixResult<()> {
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("Flocking")
         .with_frame_rate()
-        .vsync_enabled()
+        .target_frame_rate(60)
         .build()?;
     let mut app = App::new();
     engine.run(&mut app)

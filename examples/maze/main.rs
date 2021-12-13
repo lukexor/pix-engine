@@ -177,7 +177,6 @@ impl AppState for MazeApp {
     fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
         let frame_rate = s.target_frame_rate().unwrap_or(60);
         match event.key {
-            Key::V => s.toggle_vsync()?,
             Key::Up if frame_rate >= 60 => {
                 s.clear_frame_rate();
             }
@@ -198,7 +197,7 @@ pub fn main() -> PixResult<()> {
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("Maze Generation & A* Search")
         .with_frame_rate()
-        .vsync_enabled()
+        .target_frame_rate(60)
         .build()?;
     let mut app = MazeApp::new(COLS, ROWS);
     engine.run(&mut app)
