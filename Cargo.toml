@@ -13,7 +13,7 @@ version = "0.5.0"
 exclude = ["/images"]
 
 [package.metadata]
-msrv = "1.56.1"
+msrv = "1.57.0"
 
 [package.metadata.docs.rs]
 features = ["serde"]
