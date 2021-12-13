@@ -198,8 +198,8 @@ impl From<SdlEvent> for Event {
                 iscapture,
             },
             evt => {
-                warn!("Unknown SDL `Event`: {:?}", evt);
-                Self::Unknown
+                warn!("Unhandled SDL `Event`: {:?}", evt);
+                Self::Unhandled
             }
         }
     }
@@ -224,8 +224,8 @@ impl From<SdlWindowEvent> for WindowEvent {
             SdlWindowEvent::FocusLost => Self::FocusLost,
             SdlWindowEvent::Close => Self::Close,
             evt => {
-                warn!("Unknown SDL `WindowEvent`: {:?}", evt);
-                Self::Unknown
+                warn!("Unhandled SDL `WindowEvent`: {:?}", evt);
+                Self::Unhandled
             }
         }
     }
@@ -331,6 +331,24 @@ impl From<SdlKeycode> for Key {
             SdlKeycode::Down => Self::Down,
             SdlKeycode::Up => Self::Up,
             SdlKeycode::NumLockClear => Self::NumLock,
+            SdlKeycode::KpDivide => Self::KpDivide,
+            SdlKeycode::KpMultiply => Self::KpMultiply,
+            SdlKeycode::KpMinus => Self::KpMinus,
+            SdlKeycode::KpPlus => Self::KpPlus,
+            SdlKeycode::KpEnter => Self::KpEnter,
+            SdlKeycode::Kp1 => Self::Kp1,
+            SdlKeycode::Kp2 => Self::Kp2,
+            SdlKeycode::Kp3 => Self::Kp3,
+            SdlKeycode::Kp4 => Self::Kp4,
+            SdlKeycode::Kp5 => Self::Kp5,
+            SdlKeycode::Kp6 => Self::Kp6,
+            SdlKeycode::Kp7 => Self::Kp7,
+            SdlKeycode::Kp8 => Self::Kp8,
+            SdlKeycode::Kp9 => Self::Kp9,
+            SdlKeycode::Kp0 => Self::Kp0,
+            SdlKeycode::KpPeriod => Self::KpPeriod,
+            SdlKeycode::KpEquals => Self::KpEquals,
+            SdlKeycode::KpComma => Self::KpComma,
             SdlKeycode::LCtrl => Self::LCtrl,
             SdlKeycode::LShift => Self::LShift,
             SdlKeycode::LAlt => Self::LAlt,
@@ -340,8 +358,8 @@ impl From<SdlKeycode> for Key {
             SdlKeycode::RAlt => Self::RAlt,
             SdlKeycode::RGui => Self::RGui,
             keycode => {
-                warn!("Unknown SDL `Keycode`: {:?}", keycode);
-                Self::Unknown
+                warn!("Unhandled SDL `Keycode`: {:?}", keycode);
+                Self::Unhandled
             }
         }
     }
@@ -375,8 +393,8 @@ impl From<SdlMouseButton> for Mouse {
             SdlMouseButton::Middle => Self::Middle,
             SdlMouseButton::Right => Self::Right,
             btn => {
-                warn!("Unknown SDL `MouseButton`: {:?}", btn);
-                Self::Unknown
+                warn!("Unhandled SDL `MouseButton`: {:?}", btn);
+                Self::Unhandled
             }
         }
     }
