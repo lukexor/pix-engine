@@ -1,0 +1,6 @@
+Classical _Melancholy Piano_Loop
+4barrelcarb
+source https://freesound.org/people/4barrelcarb/sounds/612052/
+[CC] license.
+
+This is a raw conversion of the original WAVE format.

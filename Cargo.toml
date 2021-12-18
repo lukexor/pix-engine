@@ -10,7 +10,7 @@ name = "pix-engine"
 repository = "https://github.com/lukexor/pix-engine.git"
 resolver = "2"
 version = "0.5.2"
-exclude = ["/images"]
+exclude = ["/images", "/audio"]
 
 [package.metadata]
 msrv = "1.57.0"

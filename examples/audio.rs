@@ -1,5 +1,6 @@
 use pix_engine::{math, prelude::*};
 use rand::{thread_rng, Rng};
+use std::path::PathBuf;
 
 const FRAC_2_PI: f32 = math::FRAC_2_PI as f32;
 const PI: f32 = math::PI as f32;
@@ -11,16 +12,18 @@ struct AudioDemo {
     sample_rate: f32,
     sample_count: usize,
     samples: Vec<f32>,
+    raw_file: PathBuf,
 }
 
 impl AudioDemo {
-    fn new() -> Self {
+    fn new(raw_file: PathBuf) -> Self {
         Self {
             volume: 0.2,
             frequency: 440.0, // A4 note
             sample_rate: 48_000.0,
             sample_count: 4 * 48_000,
             samples: vec![],
+            raw_file,
         }
     }
 
@@ -95,24 +98,52 @@ impl AppState for AudioDemo {
         s.slider("Frequency", &mut self.frequency, 20.0, 1000.0)?;
 
         if s.button("Sine Wave")? {
+            s.clear_audio();
             self.samples = self.gen_sine_wave();
             s.enqueue_audio(&self.samples);
+            s.resume_audio();
         }
         if s.button("Square Wave")? {
+            s.clear_audio();
             self.samples = self.gen_square_wave();
             s.enqueue_audio(&self.samples);
+            s.resume_audio();
         }
         if s.button("Triangle Wave")? {
+            s.clear_audio();
             self.samples = self.gen_triangle_wave();
             s.enqueue_audio(&self.samples);
+            s.resume_audio();
         }
         if s.button("Saw Wave")? {
+            s.clear_audio();
             self.samples = self.gen_saw_wave();
+            s.resume_audio();
             s.enqueue_audio(&self.samples);
         }
         if s.button("Noise")? {
+            s.clear_audio();
             self.samples = self.gen_noise();
             s.enqueue_audio(&self.samples);
+            s.resume_audio();
+        }
+
+        if s.button(format!(
+            "Raw: {}",
+            self.raw_file
+                .file_name()
+                .map_or_else(Default::default, |s| s.to_string_lossy())
+        ))? {
+            s.clear_audio();
+            let bytes = include_bytes!("../audio/melancholy.raw");
+            self.samples = Vec::with_capacity(bytes.len() / 4);
+            for b in bytes.chunks(4) {
+                self.samples.push(f32::from_bits(u32::from_le_bytes(
+                    b[0..4].try_into().unwrap(),
+                )));
+            }
+            s.enqueue_audio(&self.samples);
+            s.resume_audio();
         }
 
         if !self.samples.is_empty() {
@@ -138,11 +169,15 @@ impl AppState for AudioDemo {
 }
 
 fn main() -> PixResult<()> {
+    let raw_file = match std::env::args().nth(1) {
+        None => PathBuf::from("./audio/melancholy.raw"),
+        Some(s) => PathBuf::from(s),
+    };
     let mut engine = PixEngine::builder()
         .with_dimensions(1024, 768)
         .with_title("Audio Demo")
         .with_frame_rate()
         .build()?;
-    let mut app = AudioDemo::new();
+    let mut app = AudioDemo::new(raw_file);
     engine.run(&mut app)
 }

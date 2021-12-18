@@ -205,7 +205,6 @@ impl Rendering for Renderer {
         let audio_device = audio_sub
             .open_queue(None, &desired_spec)
             .map_err(PixError::Renderer)?;
-        audio_device.resume();
         let controller_subsys = context.game_controller().map_err(PixError::Renderer)?;
 
         let default_font = Font::default();

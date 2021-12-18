@@ -57,6 +57,11 @@ impl PixState {
         self.renderer.enqueue_audio(samples.as_ref());
     }
 
+    /// Clear audio samples from the audio buffer queue.
+    pub fn clear_audio(&mut self) {
+        self.renderer.clear_audio();
+    }
+
     /// Return the status of the current audio device.
     ///
     /// # Example
@@ -141,6 +146,9 @@ impl PixState {
 pub(crate) trait AudioRenderer {
     /// Add audio samples to the audio buffer queue.
     fn enqueue_audio(&mut self, samples: &[f32]);
+
+    /// Clear audio samples from the audio buffer queue.
+    fn clear_audio(&mut self);
 
     /// Return the status of the current audio device.
     fn audio_status(&self) -> AudioStatus;

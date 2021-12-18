@@ -14,6 +14,12 @@ impl AudioRenderer for Renderer {
         self.audio_device.queue(samples);
     }
 
+    /// Clear audio samples from the audio buffer queue.
+    #[inline]
+    fn clear_audio(&mut self) {
+        self.audio_device.clear();
+    }
+
     /// Return the status of the current audio device.
     #[inline]
     fn audio_status(&self) -> AudioStatus {
