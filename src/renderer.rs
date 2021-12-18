@@ -54,7 +54,7 @@ impl Default for RendererSettings {
             height: 480,
             scale_x: 1.0,
             scale_y: 1.0,
-            audio_sample_rate: 44100,
+            audio_sample_rate: 48_000,
             fullscreen: false,
             vsync: false,
             resizable: false,

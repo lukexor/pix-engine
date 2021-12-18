@@ -7,10 +7,15 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Engine loop sleeps remainder of target frame rate to reduce CPU usage.
+- Default audio sample rate to 48,000 Hz.
 
 ### Added
 
 - Fixed mapping of `WindowEvent::Exposed`
+- Raw audio sample example
+- `AudioStatus` enum for representing the playback status of the audio device.
+- `PixState::audio_status` and `PixState::audio_sample_rate` methods.
+- `PixState::resume_audio` and `PixState::pause_audio` methods.
 
 ## [0.5.2] - 2021-12-13
 

@@ -63,6 +63,7 @@ pub mod prelude {
     use super::*;
 
     pub use appstate::AppState;
+    pub use audio::AudioStatus;
     pub use color::{Color, Mode as ColorMode};
     pub use draw::Draw;
     pub use engine::PixEngine;

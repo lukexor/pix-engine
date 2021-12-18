@@ -199,7 +199,7 @@ impl Rendering for Renderer {
         let audio_sub = context.audio().map_err(PixError::Renderer)?;
         let desired_spec = AudioSpecDesired {
             freq: Some(s.audio_sample_rate),
-            channels: Some(1),
+            channels: Some(2),
             samples: None,
         };
         let audio_device = audio_sub
