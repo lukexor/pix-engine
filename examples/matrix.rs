@@ -3,6 +3,8 @@ use pix_engine::prelude::*;
 
 const DEFAULT_WIDTH: u32 = 960;
 const DEFAULT_HEIGHT: u32 = 600;
+const DEFAULT_FONT_SIZE: u32 = 20;
+const DEFAULT_GLYPH_SPACING: u32 = 12;
 const BG_COLOR: [u8; 4] = [0, 0, 0, 255];
 const FONT_DATA: &[u8] = include_bytes!("gn_koharuiro_sunray.ttf");
 
@@ -24,9 +26,6 @@ struct Glyph {
 }
 
 impl Glyph {
-    const SIZE: u32 = 24;
-    const HEIGHT: u32 = 15;
-    const WIDTH: u32 = 15;
     const COLOR: [u8; 3] = [60, 255, 70];
     const HIGHLIGHT: [u8; 3] = [190, 255, 200];
     const MORPH_PROB: usize = 1;
@@ -59,16 +58,16 @@ struct Stream {
     height: u32,
     highlight: bool,
     glyphs: Vec<Glyph>,
-    size: u32,
+    glyph_size: u32,
     color: Color,
-    speed: i32,
+    speed: Scalar,
     spawned: bool,
 }
 
 impl Stream {
-    const SPEED_RANGE: (i32, i32) = (2, 9);
+    const SPEED_RANGE: (Scalar, Scalar) = (0.15, 0.5);
     const HEIGHT_RANGE: (usize, usize) = (1, 25);
-    const START_RANGE: (i32, i32) = (-500, -100);
+    const START_RANGE: (i32, i32) = (-2000, -500);
     const SPAWN_RANGE: (i32, i32) = (-200, -50);
     const HIGHLIGHT_PROB: usize = 30;
 
@@ -79,9 +78,9 @@ impl Stream {
             height: 0,
             highlight: false,
             glyphs: vec![],
-            size: Glyph::SIZE,
+            glyph_size: DEFAULT_GLYPH_SPACING,
             color: Glyph::COLOR.into(),
-            speed: 0,
+            speed: 0.0,
             spawned: false,
         };
         stream.randomize();
@@ -96,8 +95,8 @@ impl Stream {
         stream
     }
 
-    fn should_spawn(&self) -> bool {
-        let height_threshold = 10 * random!(Self::HEIGHT_RANGE.0, Self::HEIGHT_RANGE.1);
+    fn should_spawn(&self, height: u32) -> bool {
+        let height_threshold = random!(height / 5, height / 4);
         !self.spawned && (self.y - self.height as i32) > height_threshold as i32
     }
 
@@ -109,7 +108,7 @@ impl Stream {
         }
 
         let count = random!(Self::HEIGHT_RANGE.0, Self::HEIGHT_RANGE.1);
-        self.height = count as u32 * Glyph::HEIGHT;
+        self.height = count as u32 * self.glyph_size;
         self.glyphs = Vec::with_capacity(count);
         for _ in 0..count {
             self.glyphs.push(Glyph::new());
@@ -117,16 +116,18 @@ impl Stream {
     }
 
     fn draw(&mut self, s: &mut PixState) -> PixResult<()> {
-        self.y += self.speed;
+        self.y += (self.speed * s.delta_time()).round() as i32;
         for (i, glyph) in self.glyphs.iter_mut().enumerate() {
-            let y = self.y - (i as i32 * (Glyph::HEIGHT as i32));
+            let y = self.y - (i as i32 * self.glyph_size as i32);
+            if y < 0 - self.glyph_size as i32 || y > s.height()? as i32 {
+                continue;
+            }
             let color = if i == 0 && self.highlight {
                 Glyph::HIGHLIGHT.into()
             } else {
                 self.color
             };
             s.fill(color);
-            s.font_size(self.size)?;
             glyph.draw(s, self.x, y)?;
         }
         Ok(())
@@ -138,6 +139,7 @@ struct Matrix {
     new_streams: Vec<Stream>,
     width: u32,
     height: u32,
+    glyph_spacing: u32,
 }
 
 impl Matrix {
@@ -147,41 +149,45 @@ impl Matrix {
             new_streams: vec![],
             width: DEFAULT_WIDTH,
             height: DEFAULT_HEIGHT,
+            glyph_spacing: DEFAULT_GLYPH_SPACING,
         }
     }
 
     fn init(&mut self, (width, height): (u32, u32)) {
         self.width = width;
         self.height = height;
-        let count = (self.width / Glyph::WIDTH) as usize;
+        let count = (self.width / self.glyph_spacing) as usize;
         self.streams = Vec::with_capacity(count);
         let mut x = 0;
         for _ in 0..count {
             self.streams.push(Stream::new(x));
-            x += Glyph::WIDTH as i32;
+            x += DEFAULT_GLYPH_SPACING as i32;
         }
     }
 }
 
 impl AppState for Matrix {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.no_cursor();
+        s.background(BG_COLOR);
         s.set_window_dimensions(s.display_dimensions()?)?;
         self.init(s.dimensions()?);
-        s.background(BG_COLOR);
+        s.no_cursor();
         s.font_style(FontStyle::BOLD);
         s.fullscreen(true)?;
         Ok(())
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        if s.elapsed() < 1500.0 {
+            return Ok(());
+        }
         self.new_streams.clear();
         let height = self.height;
         self.streams
             .retain(|stream| stream.y < (height + stream.height) as i32);
         for stream in &mut self.streams {
             stream.draw(s)?;
-            if stream.should_spawn() {
+            if stream.should_spawn(self.height) {
                 self.new_streams.push(stream.spawn());
             }
         }
@@ -216,9 +222,9 @@ fn main() -> PixResult<()> {
         .position(0, 0)
         .with_title("The Matrix")
         .with_frame_rate()
-        .target_frame_rate(60)
+        .target_frame_rate(30)
         .with_font(Font::from_bytes("Sunray", FONT_DATA))
-        .with_font_size(Glyph::SIZE)
+        .with_font_size(DEFAULT_FONT_SIZE)
         .build()?;
     let mut app = Matrix::new();
     engine.run(&mut app)
