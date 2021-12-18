@@ -1,6 +1,10 @@
 use pix_engine::{math, prelude::*};
 use rand::{thread_rng, Rng};
-use std::path::PathBuf;
+use std::{
+    fs::File,
+    io::{BufReader, Read},
+    path::PathBuf,
+};
 
 const FRAC_2_PI: f32 = math::FRAC_2_PI as f32;
 const PI: f32 = math::PI as f32;
@@ -135,8 +139,9 @@ impl AppState for AudioDemo {
                 .map_or_else(Default::default, |s| s.to_string_lossy())
         ))? {
             s.clear_audio();
-            let bytes = include_bytes!("../audio/melancholy.raw");
-            self.samples = Vec::with_capacity(bytes.len() / 4);
+            let file = File::open(&self.raw_file)?;
+            let mut bytes = vec![];
+            BufReader::new(file).read_to_end(&mut bytes)?;
             for b in bytes.chunks(4) {
                 self.samples.push(f32::from_bits(u32::from_le_bytes(
                     b[0..4].try_into().unwrap(),
