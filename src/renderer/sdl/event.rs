@@ -210,6 +210,7 @@ impl From<SdlWindowEvent> for WindowEvent {
     fn from(win_event: SdlWindowEvent) -> Self {
         match win_event {
             SdlWindowEvent::Shown => Self::Shown,
+            SdlWindowEvent::Exposed => Self::Exposed,
             SdlWindowEvent::Hidden => Self::Hidden,
             SdlWindowEvent::Moved(x, y) => Self::Moved(x, y),
             SdlWindowEvent::Resized(w, h) | SdlWindowEvent::SizeChanged(w, h) => {

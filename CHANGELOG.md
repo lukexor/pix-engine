@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- Fixed mapping of `WindowEvent::Exposed`
+
 ## [0.5.2] - 2021-12-13
 
 ### Changed
