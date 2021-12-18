@@ -38,7 +38,10 @@ use crate::{
     renderer::{RendererSettings, Rendering, WindowRenderer},
 };
 use log::{debug, error, info, trace};
-use std::time::{Duration, Instant};
+use std::{
+    thread,
+    time::{Duration, Instant},
+};
 
 /// Builds a [`PixEngine`] instance by providing several configration functions.
 ///
@@ -334,6 +337,12 @@ impl PixEngine {
                         self.state.present();
                         self.state.increment_frame(now, time_since_last)?;
                     }
+                }
+
+                let time_to_next_frame = now + target_delta_time;
+                let now = Instant::now();
+                if time_to_next_frame > now {
+                    thread::sleep(time_to_next_frame - now);
                 }
             };
 

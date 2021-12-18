@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- Engine loop sleeps remainder of target frame rate to reduce CPU usage.
+
 ### Added
 
 - Fixed mapping of `WindowEvent::Exposed`

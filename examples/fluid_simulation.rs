@@ -14,7 +14,7 @@ const XVEL: Scalar = 1.8; // Velocity of fluid
 const SPACING: usize = 20;
 const COUNT: usize = N / SPACING + 1;
 
-const DT: Scalar = 0.003; // Delta time modifier
+const DT: Scalar = 0.004; // Delta time modifier
 const DIFF: Scalar = 0.000018; // Diffusion
 const VISC: Scalar = 0.00000001; // Viscosity
 
@@ -346,7 +346,7 @@ pub fn main() -> PixResult<()> {
         .scale(2.0, 2.0)
         .with_title("Fluid Simulation")
         .with_frame_rate()
-        .target_frame_rate(60)
+        .target_frame_rate(30)
         .build()?;
     let mut app = App::new();
     engine.run(&mut app)

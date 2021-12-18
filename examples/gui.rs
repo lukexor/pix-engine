@@ -353,10 +353,7 @@ impl AppState for Gui {
             s.disable();
         }
 
-        s.push();
         s.heading("Widgets")?;
-        s.pop();
-
         s.spacing()?;
 
         s.tab_bar(
