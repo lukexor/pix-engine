@@ -11,10 +11,10 @@ use lru::LruCache;
 use sdl2::{
     image::LoadSurface,
     mouse::{Cursor as SdlCursor, SystemCursor as SdlSystemCursor},
-    render::{Canvas, TextureCreator, TextureQuery},
+    render::{Canvas, TextureQuery},
     surface::Surface,
     ttf::Font as SdlFont,
-    video::{FullscreenType, Window, WindowContext},
+    video::{FullscreenType, Window},
     Sdl,
 };
 use std::{
@@ -49,7 +49,6 @@ impl TextCacheKey {
 pub(super) struct WindowCanvas {
     pub(super) id: WindowId,
     pub(super) canvas: Canvas<Window>,
-    pub(super) texture_creator: TextureCreator<WindowContext>,
     pub(super) textures: HashMap<TextureId, RefCell<RendererTexture>>,
     pub(super) text_cache: LruCache<TextCacheKey, RendererTexture>,
     pub(super) image_cache: LruCache<*const Image, RendererTexture>,
@@ -134,12 +133,9 @@ impl WindowCanvas {
             canvas.window_mut().set_icon(surface);
         }
 
-        let texture_creator = canvas.texture_creator();
-
         Ok(Self {
             id: window_id,
             canvas,
-            texture_creator,
             textures: HashMap::new(),
             text_cache: LruCache::new(s.text_cache_size),
             image_cache: LruCache::new(s.texture_cache_size),
@@ -149,7 +145,7 @@ impl WindowCanvas {
     #[allow(clippy::too_many_arguments)]
     pub(super) fn text_texture_mut<'a>(
         text_cache: &'a mut LruCache<TextCacheKey, RendererTexture>,
-        texture_creator: &TextureCreator<WindowContext>,
+        canvas: &Canvas<Window>,
         text: &str,
         wrap_width: Option<u32>,
         fill: Color,
@@ -175,8 +171,8 @@ impl WindowCanvas {
             text_cache.put(
                 key,
                 RendererTexture::new(
-                    surface
-                        .as_texture(texture_creator)
+                    canvas
+                        .create_texture_from_surface(surface)
                         .context("failed to create text surface")?,
                 ),
             );
@@ -188,7 +184,7 @@ impl WindowCanvas {
 
     pub(super) fn image_texture_mut<'a>(
         image_cache: &'a mut LruCache<*const Image, RendererTexture>,
-        texture_creator: &TextureCreator<WindowContext>,
+        canvas: &Canvas<Window>,
         img: &Image,
     ) -> PixResult<&'a mut RendererTexture> {
         let key: *const Image = img;
@@ -196,7 +192,7 @@ impl WindowCanvas {
             image_cache.put(
                 key,
                 RendererTexture::new(
-                    texture_creator
+                    canvas
                         .create_texture_static(Some(img.format().into()), img.width(), img.height())
                         .context("failed to create image texture")?,
                 ),
@@ -434,7 +430,6 @@ impl WindowRenderer for Renderer {
         );
 
         let mut new_window = WindowCanvas::new(&self.context, &mut self.settings)?;
-        let new_texture_creator = new_window.canvas.texture_creator();
 
         let previous_window_id = self.window_target;
         for (texture_id, texture) in &window_canvas.textures {
@@ -447,7 +442,9 @@ impl WindowRenderer for Renderer {
             new_window.textures.insert(
                 *texture_id,
                 RefCell::new(RendererTexture::new(
-                    new_texture_creator.create_texture_target(format, width, height)?,
+                    new_window
+                        .canvas
+                        .create_texture_target(format, width, height)?,
                 )),
             );
         }

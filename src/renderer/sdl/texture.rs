@@ -39,7 +39,7 @@ impl Drop for RendererTexture {
     fn drop(&mut self) {
         let texture = self.inner.take().expect("texture has been dropped");
         // SAFETY: A RendererTexture can only exist inside of a WindowCanvas, which contains the
-        // TextureCreator that created this texture, therefore it's safe to destroy.
+        // Canvas that created this texture, therefore it's safe to destroy.
         unsafe { texture.destroy() };
     }
 }
@@ -57,7 +57,7 @@ impl TextureRenderer for Renderer {
         self.next_texture_id += 1;
         let window_canvas = self.window_canvas_mut()?;
         let texture = window_canvas
-            .texture_creator
+            .canvas
             .create_texture_target(format.map(|f| f.into()), width, height)
             .context("failed to create texture")?;
         let texture_id = TextureId(texture_id);

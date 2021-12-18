@@ -342,7 +342,7 @@ impl Rendering for Renderer {
                 .ok_or(PixError::InvalidWindow(self.window_target))?;
             let texture = WindowCanvas::text_texture_mut(
                 &mut window.text_cache,
-                &window.texture_creator,
+                &window.canvas,
                 text,
                 wrap_width,
                 fill,
@@ -689,7 +689,7 @@ impl Rendering for Renderer {
             .get_mut(&self.window_target)
             .ok_or(PixError::InvalidWindow(self.window_target))?;
         let texture =
-            WindowCanvas::image_texture_mut(&mut window.image_cache, &window.texture_creator, img)?;
+            WindowCanvas::image_texture_mut(&mut window.image_cache, &window.canvas, img)?;
         let [r, g, b, a] = tint.map_or([255; 4], |t| t.channels());
         texture.set_color_mod(r, g, b);
         texture.set_alpha_mod(a);
