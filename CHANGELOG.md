@@ -11,11 +11,16 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Fixed mapping of `WindowEvent::Exposed`
-- Raw audio sample example
+- Fixed mapping of `WindowEvent::Exposed`.
+- Raw audio sample example.
 - `AudioStatus` enum for representing the playback status of the audio device.
 - `PixState::audio_status` and `PixState::audio_sample_rate` methods.
 - `PixState::resume_audio` and `PixState::pause_audio` methods.
+
+### Breaking
+
+- Disabled audio playback by default on startup. To queue and play audio you must first call
+  `PixState::resume_audio`.
 
 ## [0.5.2] - 2021-12-13
 

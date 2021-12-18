@@ -7,6 +7,7 @@ use crate::{
 };
 use anyhow::bail;
 use anyhow::Context;
+use log::debug;
 use lru::LruCache;
 use sdl2::{
     image::LoadSurface,
@@ -110,6 +111,7 @@ impl WindowCanvas {
             canvas_builder = canvas_builder.present_vsync();
         }
         let mut canvas = canvas_builder.build().context("failed to build canvas")?;
+        debug!("Using SDL Renderer `{}`", canvas.info().name);
         canvas
             .set_logical_size(win_width, win_height)
             .context("invalid logical canvas size")?;
