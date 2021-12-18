@@ -16,6 +16,8 @@ All notable changes to this project will be documented in this file.
 - `AudioStatus` enum for representing the playback status of the audio device.
 - `PixState::audio_status` and `PixState::audio_sample_rate` methods.
 - `PixState::resume_audio` and `PixState::pause_audio` methods.
+- `PixEngineBuilder::audio_channels` to choose the number of audio channels to
+  play to. Defaults to `1` for mono.
 
 ### Breaking
 

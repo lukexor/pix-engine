@@ -160,6 +160,12 @@ impl Builder {
         self
     }
 
+    /// Set number of audio channels.
+    pub fn audio_channels(&mut self, channels: u8) -> &mut Self {
+        self.settings.audio_channels = channels;
+        self
+    }
+
     /// Start window in fullscreen mode.
     pub fn fullscreen(&mut self) -> &mut Self {
         self.settings.fullscreen = true;
@@ -368,7 +374,10 @@ impl PixEngine {
             // Demote noisy events to trace
             if let Event::ControllerAxisMotion { .. }
             | Event::JoyAxisMotion { .. }
-            | Event::MouseMotion { .. } = event
+            | Event::MouseMotion { .. }
+            | Event::MouseWheel { .. }
+            | Event::KeyDown { repeat: true, .. }
+            | Event::KeyUp { repeat: true, .. } = event
             {
                 trace!("Polling event {:?}", event);
             } else {

@@ -199,12 +199,13 @@ impl Rendering for Renderer {
         let audio_sub = context.audio().map_err(PixError::Renderer)?;
         let desired_spec = AudioSpecDesired {
             freq: Some(s.audio_sample_rate),
-            channels: Some(2),
+            channels: Some(1),
             samples: None,
         };
         let audio_device = audio_sub
             .open_queue(None, &desired_spec)
             .map_err(PixError::Renderer)?;
+        debug!("Loaded AudioDevice: {:?}", audio_device.spec());
         let controller_subsys = context.game_controller().map_err(PixError::Renderer)?;
 
         let default_font = Font::default();
