@@ -25,7 +25,7 @@
     variant_size_differences
 )]
 #![doc(
-    html_root_url = "https://docs.rs/pix-engine/0.3.5",
+    html_root_url = "https://docs.rs/pix-engine/latest",
     html_favicon_url = "",
     html_logo_url = ""
 )]
