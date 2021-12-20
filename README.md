@@ -93,12 +93,12 @@ fn main() -> PixResult<()> {
 ## Screenshots
 
 <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between">
-    <div style="flex: 0 50%; padding: 10px; min-width: 300px"><img alt="Asteroids" src="https://github.com/lukexor/pix-engine/blob/main/images/asteroids.png?raw=true"></div>
-    <div style="flex: 0 50%; padding: 10px; min-width: 300px"><img alt="Fluid Simulation" src="https://github.com/lukexor/pix-engine/blob/main/images/fluid_simulation.png?raw=true"></div>
-    <div style="flex: 0 50%; padding: 10px; min-width: 300px"><img alt="2D Raycasting" src="https://github.com/lukexor/pix-engine/blob/main/images/2d_raycasting.png?raw=true"></div>
-    <div style="flex: 0 50%; padding: 10px; min-width: 300px"><img alt="UI Widgets" src="https://github.com/lukexor/pix-engine/blob/main/images/gui.png?raw=true"></div>
-    <div style="flex: 0 50%; padding: 10px; min-width: 300px"><img alt="Maze Generation & A* Search" src="https://github.com/lukexor/pix-engine/blob/main/images/maze.png?raw=true"></div>
-    <div style="flex: 0 50%; padding: 10px; min-width: 300px"><img alt="Matrix Rain" src="https://github.com/lukexor/pix-engine/blob/main/images/matrix.png?raw=true"></div>
+    <div style="flex: 0 50%; padding: 10px; min-width: 300px"><img width="100%" alt="Asteroids" src="https://github.com/lukexor/pix-engine/blob/main/images/asteroids.png?raw=true"></div>
+    <div style="flex: 0 50%; padding: 10px; min-width: 300px"><img width="100%" alt="Fluid Simulation" src="https://github.com/lukexor/pix-engine/blob/main/images/fluid_simulation.png?raw=true"></div>
+    <div style="flex: 0 50%; padding: 10px; min-width: 300px"><img width="100%" alt="2D Raycasting" src="https://github.com/lukexor/pix-engine/blob/main/images/2d_raycasting.png?raw=true"></div>
+    <div style="flex: 0 50%; padding: 10px; min-width: 300px"><img width="100%" alt="UI Widgets" src="https://github.com/lukexor/pix-engine/blob/main/images/gui.png?raw=true"></div>
+    <div style="flex: 0 50%; padding: 10px; min-width: 300px"><img width="100%" alt="Maze Generation & A* Search" src="https://github.com/lukexor/pix-engine/blob/main/images/maze.png?raw=true"></div>
+    <div style="flex: 0 50%; padding: 10px; min-width: 300px"><img width="100%" alt="Matrix Rain" src="https://github.com/lukexor/pix-engine/blob/main/images/matrix.png?raw=true"></div>
 </div>
 
 ## Dependencies
