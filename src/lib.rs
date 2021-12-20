@@ -1,7 +1,7 @@
 #![doc = include_str!("../README.md")]
 // TODO: Remove following once https://github.com/rust-lang/rust-clippy/pull/8146
 // lands in nightly and is truly fixed
-#![allow(clippy::return_self_not_must_use)]
+#![allow(unknown_lints, clippy::return_self_not_must_use)]
 #![warn(
     anonymous_parameters,
     bare_trait_objects,
