@@ -1,16 +1,13 @@
 //! Common [`PixEngine`] trait implementations for types.
 
 use crate::prelude::*;
-use lru::LruCache;
 use num_traits::AsPrimitive;
 use std::{
     array::IntoIter,
-    borrow::Borrow,
-    hash::{BuildHasher, Hash},
     iter::{FromIterator, Product, Sum},
     ops::{
-        Add, AddAssign, Deref, DerefMut, Div, DivAssign, FnMut, Index, IndexMut, Mul, MulAssign,
-        Neg, Sub, SubAssign,
+        Add, AddAssign, Deref, DerefMut, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub,
+        SubAssign,
     },
 };
 
@@ -376,32 +373,6 @@ impl_num_op!(Sub, sub, Point<T, N>, -, Point<T, N> = Vector<T, N>);
 impl_num_op!(Sub, sub, Point<T, N>, -, Vector<T, N> = Point<T, N>);
 impl_num_op!(Sub, sub, Vector<T, N>, -, Point<T, N> = Point<T, N>);
 impl_num_op!(Sub, sub, Vector<T, N>, -, Vector<T, N> = Vector<T, N>);
-
-pub(crate) trait LruCacheExt<K, Q, V> {
-    fn retain<F>(&mut self, f: F)
-    where
-        F: FnMut(&K, &mut V) -> bool;
-}
-
-impl<K, Q, V, S> LruCacheExt<K, Q, V> for LruCache<K, V, S>
-where
-    K: Eq + Hash + Borrow<Q>,
-    Q: Eq + Hash,
-    S: BuildHasher,
-{
-    fn retain<F>(&mut self, mut f: F)
-    where
-        F: FnMut(&K, &mut V) -> bool,
-    {
-        // Here we only use `iter` as a temporary, preventing use-after-free
-        for item in self.iter_mut() {
-            let (key, value) = item;
-            if !f(key, value) {
-                self.pop(key);
-            }
-        }
-    }
-}
 
 #[cfg(test)]
 mod tests {
