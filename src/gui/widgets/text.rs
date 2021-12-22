@@ -321,6 +321,7 @@ impl PixState {
 
         let s = self;
         let id = s.ui.get_id(&text);
+        let text = s.ui.get_label(text);
         let font_size = clamp_size(s.theme.font_size);
         let pos = s.cursor_pos();
         let fpad = s.theme.spacing.frame_pad;
@@ -417,6 +418,7 @@ impl PixState {
 
         let s = self;
         let id = s.ui.get_id(&text);
+        let text = s.ui.get_label(text);
         let font_size = clamp_size(s.theme.font_size);
         let pos = s.cursor_pos();
         let fpad = s.theme.spacing.frame_pad;

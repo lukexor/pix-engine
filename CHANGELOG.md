@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 
 - Engine loop sleeps remainder of target frame rate to reduce CPU usage.
 - Default audio sample rate to 48,000 Hz.
+- Fixed `ThemeBuilder` to default to "dark" theme.
+- Changed radio and checkboxes to scale based on `font_size`.
 
 ### Added
 
@@ -18,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - `PixState::resume_audio` and `PixState::pause_audio` methods.
 - `PixEngineBuilder::audio_channels` to choose the number of audio channels to
   play to. Defaults to `1` for mono.
+- `SpacingBuilder` struct to construct custom theme spacing easier.
 
 ### Breaking
 

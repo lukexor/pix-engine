@@ -31,7 +31,7 @@ use std::{
     hash::{Hash, Hasher},
 };
 
-/// A hashed  identifier for internal state management.
+/// A hashed identifier for internal state management.
 pub(crate) type FontId = u64;
 
 /// A builder to generate custom [Theme]s.
@@ -46,9 +46,6 @@ pub(crate) type FontId = u64;
 /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
 /// # }
 /// fn main() -> PixResult<()> {
-///     let mut style = Spacing::default();
-///     style.frame_pad = point!(10, 10);
-///     style.item_pad = point!(5, 5);
 ///     let theme = Theme::builder()
 ///         .with_font_size(16)
 ///         .with_font(
@@ -63,7 +60,12 @@ pub(crate) type FontId = u64;
 ///         )
 ///         .with_color(ColorType::OnBackground, Color::BLACK)
 ///         .with_color(ColorType::Background, Color::DARK_GRAY)
-///         .with_style(style)
+///         .with_spacing(
+///             Spacing::builder()
+///                 .frame_pad(10, 10)
+///                 .item_pad(5, 5)
+///                 .build()
+///         )
 ///         .build();
 ///     let mut engine = PixEngine::builder()
 ///         .with_theme(theme)
@@ -72,7 +74,7 @@ pub(crate) type FontId = u64;
 ///     engine.run(&mut app)
 /// }
 /// ```
-#[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'static")))]
@@ -83,6 +85,20 @@ pub struct Builder {
     styles: FontStyles,
     colors: Colors,
     spacing: Spacing,
+}
+
+impl Default for Builder {
+    fn default() -> Self {
+        let theme = Theme::default();
+        Self {
+            name: theme.name,
+            fonts: theme.fonts,
+            size: theme.font_size,
+            styles: theme.styles,
+            colors: theme.colors,
+            spacing: theme.spacing,
+        }
+    }
 }
 
 /// Represents a given font-themed section in a UI.
@@ -184,8 +200,8 @@ impl Builder {
     }
 
     /// Set element padding space.
-    pub fn with_style(&mut self, style: Spacing) -> &mut Self {
-        self.spacing = style;
+    pub fn with_spacing(&mut self, spacing: Spacing) -> &mut Self {
+        self.spacing = spacing;
         self
     }
 
@@ -431,9 +447,50 @@ impl Default for Colors {
     }
 }
 
-/// A set of styles for sizing, padding, borders, etc for theming UI elements.
+/// Builds a [Spacing] instance by customizing various space and padding settings.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[non_exhaustive]
+#[must_use]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct SpacingBuilder {
+    frame_pad: PointI2,
+    item_pad: PointI2,
+}
+
+impl Default for SpacingBuilder {
+    fn default() -> Self {
+        let spacing = Spacing::default();
+        Self {
+            frame_pad: spacing.frame_pad,
+            item_pad: spacing.item_pad,
+        }
+    }
+}
+
+impl SpacingBuilder {
+    /// Set padding between the edge of frames/windows and UI widgets.
+    pub fn frame_pad(&mut self, x: i32, y: i32) -> &mut Self {
+        self.frame_pad = point!(x, y);
+        self
+    }
+
+    /// Set padding between UI widgets.
+    pub fn item_pad(&mut self, x: i32, y: i32) -> &mut Self {
+        self.item_pad = point!(x, y);
+        self
+    }
+
+    /// Convert `SpacingBuilder` into a [Spacing] instance.
+    pub fn build(&self) -> Spacing {
+        Spacing {
+            frame_pad: self.frame_pad,
+            item_pad: self.item_pad,
+        }
+    }
+}
+
+/// A set of styles for sizing, padding, borders, etc for theming UI elements.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Spacing {
@@ -449,6 +506,15 @@ impl Default for Spacing {
             frame_pad: point![8, 8],
             item_pad: point![8, 6],
         }
+    }
+}
+
+impl Spacing {
+    /// Constructs a default [SpacingBuilder] which can build a `Spacing` instance.
+    ///
+    /// See [SpacingBuilder] for examples.
+    pub fn builder() -> SpacingBuilder {
+        SpacingBuilder::default()
     }
 }
 
@@ -482,7 +548,7 @@ pub struct Theme {
     pub name: String,
     /// The font families used in this theme.
     pub fonts: Fonts,
-    /// The font sizs used in this theme.
+    /// The body font size used in this theme.
     pub font_size: u32,
     /// The font styles used in this theme.
     pub styles: FontStyles,

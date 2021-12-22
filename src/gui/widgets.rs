@@ -33,9 +33,6 @@ pub mod slider;
 pub mod text;
 pub mod tooltip;
 
-const CHECKBOX_SIZE: i32 = 16;
-const RADIO_SIZE: i32 = 8;
-
 impl PixState {
     /// Draw a button to the current canvas that returns `true` when clicked.
     ///
@@ -214,10 +211,12 @@ impl PixState {
         let id = s.ui.get_id(&label);
         let label = s.ui.get_label(label);
         let pos = s.cursor_pos();
+        let ipad = s.theme.spacing.item_pad;
+        let checkbox_size = clamp_size(s.theme.font_size) + ipad.y();
         let colors = s.theme.colors;
 
         // Calculate checkbox rect
-        let checkbox = square![pos, CHECKBOX_SIZE];
+        let checkbox = square![pos, checkbox_size];
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, &checkbox);
@@ -243,8 +242,8 @@ impl PixState {
         if *checked {
             s.stroke(fg);
             s.stroke_weight(2);
-            let half = CHECKBOX_SIZE / 2;
-            let third = CHECKBOX_SIZE / 3;
+            let half = checkbox_size / 2;
+            let third = checkbox_size / 3;
             let x = checkbox.left() + half - 1;
             let y = checkbox.bottom() - third;
             let start = point![x - third + 2, y - third + 2];
@@ -305,10 +304,12 @@ impl PixState {
         let id = s.ui.get_id(&label);
         let label = s.ui.get_label(label);
         let pos = s.cursor_pos();
+        let ipad = s.theme.spacing.item_pad;
+        let radio_size = clamp_size(s.theme.font_size) / 2 + ipad.y() / 3;
         let colors = s.theme.colors;
 
         // Calculate radio rect
-        let radio = circle![pos + RADIO_SIZE, RADIO_SIZE];
+        let radio = circle![pos + radio_size, radio_size];
 
         // Check hover/active/keyboard focus
         let hovered = s.ui.try_hover(id, &radio);

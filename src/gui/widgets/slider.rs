@@ -124,6 +124,7 @@ impl PixState {
         // Calculate drag rect
         let width =
             s.ui.next_width
+                .take()
                 .unwrap_or_else(|| s.ui_width().unwrap_or(100));
         let (label_width, label_height) = s.text_size(label)?;
         let [mut x, y] = pos.as_array();
