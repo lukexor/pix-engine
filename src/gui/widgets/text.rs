@@ -306,7 +306,71 @@ impl PixState {
         Ok((w + r as u32, h))
     }
 
-    /// Draw a colalpsing text tree to the current canvas which returns true when the bullet is not
+    /// Draw a text menu to the current canvas which returns true when clicked.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
+    pub fn menu<S>(&mut self, text: S) -> PixResult<bool>
+    where
+        S: AsRef<str>,
+    {
+        let text = text.as_ref();
+
+        let s = self;
+        let id = s.ui.get_id(&text);
+        let text = s.ui.get_label(text);
+        let pos = s.cursor_pos();
+        let fpad = s.theme.spacing.frame_pad;
+
+        // Calculate hover size
+        let (width, height) = s.text_size(text)?;
+        let width = s.ui.next_width.take().unwrap_or(width + 2 * fpad.x());
+
+        let hover = rect![pos, width, height + 2 * fpad.y()];
+        let hovered = s.ui.try_hover(id, &hover);
+        let focused = s.ui.try_focus(id);
+        let active = s.ui.is_active(id);
+
+        s.push();
+        s.ui.push_cursor();
+
+        // Hover/Focused Rect
+        let [stroke, bg, fg] = if hovered {
+            s.widget_colors(id, ColorType::Secondary)
+        } else {
+            s.widget_colors(id, ColorType::Background)
+        };
+
+        if active || focused {
+            s.stroke(stroke);
+        } else {
+            s.no_stroke();
+        }
+        if hovered {
+            s.frame_cursor(&Cursor::hand())?;
+            s.fill(bg);
+        } else {
+            s.no_fill();
+        }
+        s.rect(hover)?;
+
+        // Text
+        s.no_stroke();
+        s.fill(fg);
+        s.set_cursor_pos([hover.x() + fpad.x(), hover.y() + fpad.y()]);
+        s.text_transformed(text, 0.0, None, None)?;
+
+        s.ui.pop_cursor();
+        s.pop();
+
+        // Process input
+        s.ui.handle_events(id);
+        s.advance_cursor(hover.size());
+        Ok(!s.ui.disabled && s.ui.was_clicked(id))
+    }
+
+    /// Draw a collapsing text tree to the current canvas which returns true when the bullet is not
     /// collapsed.
     ///
     /// # Errors

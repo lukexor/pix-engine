@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 - `PixEngineBuilder::audio_channels` to choose the number of audio channels to
   play to. Defaults to `1` for mono.
 - `SpacingBuilder` struct to construct custom theme spacing easier.
+- `PixState::menu` method that renders a clickable menu item with hover state.
 
 ### Breaking
 
