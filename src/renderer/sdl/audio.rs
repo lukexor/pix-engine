@@ -1,17 +1,20 @@
 use super::Renderer;
 use crate::audio::{AudioRenderer, AudioStatus};
+use log::warn;
 use sdl2::audio::AudioStatus as SdlAudioStatus;
+
+// ~1.5 minutes of audio @ 48,000 HZ.
+const MAX_QUEUE_SIZE: u32 = 1 << 22;
 
 impl AudioRenderer for Renderer {
     /// Add audio samples to the audio buffer queue.
     #[inline]
     fn enqueue_audio(&mut self, samples: &[f32]) {
-        // Don't let queue overflow
-        let sample_rate = self.audio_device.spec().freq as u32;
-        while self.audio_device.size() > sample_rate {
-            std::thread::sleep(std::time::Duration::from_millis(10));
+        if self.audio_device.size() <= MAX_QUEUE_SIZE {
+            self.audio_device.queue(samples);
+        } else {
+            warn!("Reached max audio queue size: {}. Did you forget to call `PixState::resume_audio`?", MAX_QUEUE_SIZE);
         }
-        self.audio_device.queue(samples);
     }
 
     /// Clear audio samples from the audio buffer queue.

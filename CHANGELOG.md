@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Changed
+
+- Removed sleeping when audio queue got too full in favor of a maximum buffer
+  size with a warning indicating `resume_audio` was not called.
+
 ## [0.5.3] - 2021-12-21
 
 ### Changed
