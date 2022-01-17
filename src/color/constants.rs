@@ -159,7 +159,7 @@ impl Color {
     pub const TEAL: Self = Self::rgb(0x0, 0x80, 0x80);
     pub const THISTLE: Self = Self::rgb(0xD8, 0xBF, 0xD8);
     pub const TOMATO: Self = Self::rgb(0xFF, 0x63, 0x47);
-    pub const TRANSPARENT: Self = Self::rgb(0x0, 0x0, 0x0);
+    pub const TRANSPARENT: Self = Self::rgba(0x0, 0x0, 0x0, 0x0);
     pub const TURQUOISE: Self = Self::rgb(0x40, 0xE0, 0xD0);
     pub const VIOLET: Self = Self::rgb(0xEE, 0x82, 0xEE);
     pub const WHEAT: Self = Self::rgb(0xF5, 0xDE, 0xB3);
