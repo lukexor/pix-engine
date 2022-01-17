@@ -482,4 +482,22 @@ impl PixState {
         self.ui.pmouse.yrel = self.ui.mouse.yrel;
         self.ui.mouse.wheel(x, y);
     }
+
+    /// Polls for events from the underlying renderer.
+    #[inline]
+    pub fn poll_event(&mut self) -> Option<Event> {
+        self.renderer.poll_event()
+    }
+
+    /// Open a controller with a given ID to start handling events.
+    #[inline]
+    pub fn open_controller(&mut self, id: ControllerId) -> PixResult<()> {
+        self.renderer.open_controller(id)
+    }
+
+    /// Close a controller with a given ID to stop handling events.
+    #[inline]
+    pub fn close_controller(&mut self, id: ControllerId) {
+        self.renderer.close_controller(id);
+    }
 }

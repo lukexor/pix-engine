@@ -32,11 +32,7 @@
 //! }
 //! ```
 
-use crate::{
-    image::Icon,
-    prelude::*,
-    renderer::{RendererSettings, Rendering, WindowRenderer},
-};
+use crate::{image::Icon, prelude::*, renderer::RendererSettings};
 use log::{debug, error, info, trace};
 use std::{
     thread,
@@ -370,7 +366,7 @@ impl PixEngine {
         A: AppState,
     {
         let state = &mut self.state;
-        while let Some(event) = state.renderer.poll_event() {
+        while let Some(event) = state.poll_event() {
             // Demote noisy events to trace
             if let Event::ControllerAxisMotion { .. }
             | Event::JoyAxisMotion { .. }
@@ -451,19 +447,19 @@ impl PixEngine {
                 Event::ControllerAdded { controller_id } => {
                     let id = ControllerId(controller_id);
                     if !app.on_controller_update(state, id, ControllerUpdate::Added)? {
-                        state.renderer.open_controller(id)?;
+                        state.open_controller(id)?;
                     }
                 }
                 Event::JoyDeviceAdded { joy_id } => {
                     let id = ControllerId(joy_id);
                     if !app.on_controller_update(state, id, ControllerUpdate::Added)? {
-                        state.renderer.open_controller(id)?;
+                        state.open_controller(id)?;
                     }
                 }
                 Event::ControllerRemoved { controller_id } => {
                     let id = ControllerId(controller_id);
                     if !app.on_controller_update(state, id, ControllerUpdate::Removed)? {
-                        state.renderer.close_controller(id);
+                        state.close_controller(id);
                     }
                 }
                 Event::ControllerRemapped { controller_id } => {

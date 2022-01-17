@@ -23,6 +23,10 @@ All notable changes to this project will be documented in this file.
 - Changed audio queue to not sleep if too full and instead warn (and eventually
   panic) if queue gets too full to avoid system contention.
 
+### Breaking
+
+- Made `WindowBuilder::new` crate-visible only. Prefer `PixState::window`.
+
 ## [0.5.3] - 2021-12-21
 
 ### Added

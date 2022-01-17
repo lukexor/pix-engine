@@ -1,6 +1,11 @@
 //! `Window` functions.
 
-use crate::{image::Icon, ops::clamp_dimensions, prelude::*, renderer::RendererSettings};
+use crate::{
+    image::Icon,
+    ops::clamp_dimensions,
+    prelude::*,
+    renderer::{Renderer, RendererSettings},
+};
 use log::trace;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -241,17 +246,17 @@ pub(crate) trait WindowRenderer {
 #[must_use]
 #[derive(Debug)]
 pub struct WindowBuilder<'a> {
-    state: &'a mut PixState,
+    renderer: &'a mut Renderer,
     settings: RendererSettings,
 }
 
 impl<'a> WindowBuilder<'a> {
     /// Creates a new `WindowBuilder` instance.
     #[inline]
-    pub fn new(s: &'a mut PixState) -> Self {
-        let vsync = s.renderer.vsync();
+    pub(crate) fn new(renderer: &'a mut Renderer) -> Self {
+        let vsync = renderer.vsync();
         Self {
-            state: s,
+            renderer,
             settings: RendererSettings {
                 vsync,
                 ..RendererSettings::default()
@@ -339,7 +344,7 @@ impl<'a> WindowBuilder<'a> {
     /// being invalid values or overlowing and an internal renderer error such as running out of
     /// memory or a software driver issue.
     pub fn build(&mut self) -> PixResult<WindowId> {
-        self.state.renderer.create_window(&mut self.settings)
+        self.renderer.create_window(&mut self.settings)
     }
 }
 
@@ -354,7 +359,7 @@ impl PixState {
     /// Create a new [`WindowBuilder`].
     #[inline]
     pub fn window(&mut self) -> WindowBuilder<'_> {
-        WindowBuilder::new(self)
+        WindowBuilder::new(&mut self.renderer)
     }
 
     /// Close a window.
