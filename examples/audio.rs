@@ -139,6 +139,7 @@ impl AppState for AudioDemo {
                 .map_or_else(Default::default, |s| s.to_string_lossy())
         ))? {
             s.clear_audio();
+            self.samples.clear();
             let file = File::open(&self.raw_file)?;
             let mut bytes = vec![];
             BufReader::new(file).read_to_end(&mut bytes)?;
