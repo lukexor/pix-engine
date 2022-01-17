@@ -4,16 +4,22 @@ use log::warn;
 use sdl2::audio::AudioStatus as SdlAudioStatus;
 
 // ~1.5 minutes of audio @ 48,000 HZ.
-const MAX_QUEUE_SIZE: u32 = 1 << 22;
+const WARN_QUEUE_SIZE: u32 = 1 << 22;
+// ~11.5  minutes of audio @ 48,000 HZ.
+const MAX_QUEUE_SIZE: u32 = 1 << 25;
 
 impl AudioRenderer for Renderer {
     /// Add audio samples to the audio buffer queue.
     #[inline]
     fn enqueue_audio(&mut self, samples: &[f32]) {
-        if self.audio_device.size() <= MAX_QUEUE_SIZE {
+        let size = self.audio_device.size();
+        if size <= MAX_QUEUE_SIZE {
+            if size >= WARN_QUEUE_SIZE {
+                warn!("Audio queue size is increasing: {}. Did you forget to call `PixState::resume_audio`?", size);
+            }
             self.audio_device.queue(samples);
         } else {
-            warn!("Reached max audio queue size: {}. Did you forget to call `PixState::resume_audio`?", MAX_QUEUE_SIZE);
+            panic!("Reached max audio queue size: {}. Did you forget to call `PixState::resume_audio`?", MAX_QUEUE_SIZE);
         }
     }
 
