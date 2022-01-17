@@ -11,6 +11,24 @@
 [Downloads]: https://img.shields.io/crates/d/pix-engine?style=plastic
 [License]: https://img.shields.io/crates/l/pix-engine?style=plastic
 
+## Table of Contents
+
+ - [Summary](#summary)
+ - [Minimum Supported Rust Version](#minimum-supported-rust-version)
+ - [Screenshots](#screenshots)
+ - [Getting Started](#getting-started)
+    - [Installing Dependencies](#installing-dependencies)
+    - [Creating Your Application](#creating-your-application)
+ - [Crate Features](#crate-features)
+    - [Logging](#logging)
+    - [Utility Features](#utility-features)
+    - [Renderer Features](#renderer-features)
+ - [Known Issues](#known-issues)
+ - [License](#license)
+ - [Contribution](#contribution)
+ - [Contact](#contact)
+ - [Credits](#credits)
+
 ## Summary
 
 `pix_engine` is a cross-platform graphics & UI library for simple games,
@@ -25,23 +43,126 @@ It is intended to be more than just a toy library, however, and can be used to
 drive real applications. The [Tetanes][] [NES][] emulator, for example uses
 `pix_engine` for rendering, window and event handling.
 
+Some examples of things you can create with `pix-engine`:
+
+- 2D ray casting of scenes or objects.
+- 2D games like Asteroids, Tetris, Pong, or platformers including sound effects,
+  music and UI elements.
+- User interfaces for basic applications or configuration.
+- Algorithm visualizations for sorting, searching, or particle simulations.
+- Image viewing and editing.
+- Visual art.
+
 ## Minimum Supported Rust Version
 
 The current minimum Rust version is `1.57.0`.
 
+## Screenshots
+
+<img width="48%" alt="Asteroids" src="https://raw.githubusercontent.com/lukexor/pix-engine/main/images/asteroids.png">&nbsp;&nbsp;<img width="48%" alt="Maze Generation & A* Search" src="https://raw.githubusercontent.com/lukexor/pix-engine/main/images/maze.png">
+<img width="48%" alt="2D Raycasting" src="https://raw.githubusercontent.com/lukexor/pix-engine/main/images/2d_raycasting.png">&nbsp;&nbsp;<img width="48%" alt="UI Widgets" src="https://raw.githubusercontent.com/lukexor/pix-engine/main/images/gui.png">
+<img width="48%" alt="Fluid Simulation" src="https://raw.githubusercontent.com/lukexor/pix-engine/main/images/fluid_simulation.png">&nbsp;&nbsp;<img width="48%" alt="Matrix Rain" src="https://raw.githubusercontent.com/lukexor/pix-engine/main/images/matrix.png">
+
 ## Getting Started
 
-Creating an application is as simple as implementing the only required method of
-the [`AppState`][AppState] trait for your application:
-[`AppState::on_update`][AppState::on_update] which gets executed as often as
-possible by default. Within that function you'll have access to a mutable
+### Installing Dependencies
+
+First and foremost you'll need [Rust][] installed! Follow the latest directions
+at <https://www.rust-lang.org/learn/get-started>.
+
+When building or running applications for a desktop target such as `macOS`,
+`Linux`, or `Windows` and not a [Web-Assembly][WASM] target, you must install
+[SDL2][] libraries.
+
+There are several options for installing `SDL2`, but these are the most common:
+
+- Install via [homebrew][] for `macOS`, a package management tool like `apt` for
+  `Linux` or `MSVC` for `Windows`.
+- [vcpkg][] which will download and install the dependencies for you.
+
+For more details and installation options see the [rust-sdl2][] documentation.
+
+#### macOS with homebrew
+
+```sh
+brew install sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
+```
+
+#### Linux
+
+*Ubuntu*:
+
+```sh
+sudo apt-get install libsdl2-dev libsdl2-gfx-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
+```
+
+*Fedora*:
+
+```sh
+sudo dnf install SDL2-devel SDL2_gfx-devel SDL2_image-devel SDL2_mixer-devel SDL2_ttf-devel
+```
+
+*Arch*:
+
+```sh
+sudo pacman -S sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
+```
+
+#### Windows (MSVC)
+
+1. Download `MSVC` development libraries from <http://www.libsdl.org/> (`SDL2-devel-2.0.XX-VC.zip`).
+2. Unzip `SDL2-devel-2.0.XX-VC.zip` into a folder.
+3. Copy library files from `SDL2-2.0.XX\lib\x64\` to
+   `C:\Users\{Username}\.rustup\toolchains\{current
+   toolchain}\lib\rustlib\{current toolchain}\lib` where `current toolchain` is
+   likely `stable-x86_64-pc-windows-msvc`.
+    - *Note*: If you don't use `rustup`, See [rust-sdl2][] for more info on
+      Windows installation.
+4. Copy `SDL2.dll` from `SDL2-2.0.XX\lib\x64\` to your `cargo` project next to
+   `Cargo.toml`.
+
+#### macOS, Linux and Windows with vcpkg
+
+[vcpkg][] can download and install the correct versions for you, but requires
+some setup.
+
+Add the following to your `Cargo.toml`:
+
+```toml
+[dependencies]
+pix-engine = { version = "0.5.3", features = ["use-vcpkg"] }
+
+[package.metadata.vcpkg]
+dependencies = ["sdl2", "sdl2-image[libjpeg-turbo,tiff,libwebp]", "sdl2-ttf", "sdl2-gfx", "sdl2-mixer"]
+git = "https://github.com/microsoft/vcpkg"
+rev = "261c458af6e3eed5d099144aff95d2b5035f656b"
+
+[package.metadata.vcpkg.target]
+x86_64-pc-windows-msvc = { triplet = "x64-windows-static-md" }
+```
+
+Then build your project like this:
+
+```sh
+cargo install cargo-vcpkg
+cargo vcpkg build
+cargo build
+```
+
+### Creating Your Application
+
+Creating a visual or interactive application using `pix-engine` requires
+implementing only a single method of the [`AppState`][AppState] trait for your
+application: [`AppState::on_update`][AppState::on_update] which gets executed as
+often as possible. Within that function you'll have access to a mutable
 [`PixState`][PixState] object which provides several methods for modifying
 settings and drawing to the screen.
 
-[`AppState`][AppState] has several additional methods that can be implemented to
-respond to user and system events.
+[`AppState`][AppState] provides additional methods that can be implemented to
+respond to user events and handle application startup and teardown.
 
-Here's an example application:
+Here's an example application which simply draws a circle following the mouse
+and renders it white or black depending if the mouse is held down or not:
 
 ```rust no_run
 use pix_engine::prelude::*;
@@ -49,31 +170,44 @@ use pix_engine::prelude::*;
 struct MyApp;
 
 impl AppState for MyApp {
+    // Set up application state and initial settings. `PixState` contains
+    // engine specific state and utility methods for actions like getting mouse
+    // coordinates, drawing shapes, etc. (Optional)
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        // Setup App state. `PixState` contains engine specific state and
-        // utility functions for things like getting mouse coordinates,
-        // drawing shapes, etc.
+        // Set the background to GRAY and clear the screen.
         s.background(Color::GRAY);
+
+        // Change the font family to NOTO and size to 16 instead of using the
+        // defaults.
         s.font_family(Font::NOTO)?;
         s.font_size(16);
+
+        // Returning `Err` instead of `Ok` would indicate initialization failed,
+        // and that the application should terminate immediately.
         Ok(())
     }
 
+    // Main update/render loop. Called as often as possible unless
+    // `target_frame_rate` was set with a value. (Required)
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        // Main render loop. Called as often as possible, or based on `target frame rate`.
+        // Set fill color to black if mouse is pressed, otherwise wite.
         if s.mouse_pressed() {
-            s.fill(0); // Set fill color to a minimum grayscale of 0 (or black, #000).
+            s.fill(0);
         } else {
-            s.fill(255); // Set fill color to a minimum grayscale of 255 (or white, #fff).
+            s.fill(255);
         }
+
+        // Draw a circle with fill color at the mouse position with a radius of
+        // 80.
         let m = s.mouse_pos();
-        // Draw circle with fill color at mouse position with radius 80.
         s.circle([m.x(), m.y(), 80])?;
+
         Ok(())
     }
 
+    // Clean up any state or resources before exiting such as deleting temporary
+    // files or saving game state. (Optional)
     fn on_stop(&mut self, s: &mut PixState) -> PixResult<()> {
-        // Teardown any state or resources before exiting such as deleting temporary files.
         Ok(())
     }
 }
@@ -90,33 +224,15 @@ fn main() -> PixResult<()> {
 }
 ```
 
-## Screenshots
-
-<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between">
-    <div style="flex: 0 50%; padding: 10px; min-width: 300px"><img width="100%" alt="Asteroids" src="https://github.com/lukexor/pix-engine/blob/main/images/asteroids.png?raw=true"></div>
-    <div style="flex: 0 50%; padding: 10px; min-width: 300px"><img width="100%" alt="Fluid Simulation" src="https://github.com/lukexor/pix-engine/blob/main/images/fluid_simulation.png?raw=true"></div>
-    <div style="flex: 0 50%; padding: 10px; min-width: 300px"><img width="100%" alt="2D Raycasting" src="https://github.com/lukexor/pix-engine/blob/main/images/2d_raycasting.png?raw=true"></div>
-    <div style="flex: 0 50%; padding: 10px; min-width: 300px"><img width="100%" alt="UI Widgets" src="https://github.com/lukexor/pix-engine/blob/main/images/gui.png?raw=true"></div>
-    <div style="flex: 0 50%; padding: 10px; min-width: 300px"><img width="100%" alt="Maze Generation & A* Search" src="https://github.com/lukexor/pix-engine/blob/main/images/maze.png?raw=true"></div>
-    <div style="flex: 0 50%; padding: 10px; min-width: 300px"><img width="100%" alt="Matrix Rain" src="https://github.com/lukexor/pix-engine/blob/main/images/matrix.png?raw=true"></div>
-</div>
-
-## Dependencies
-
-When using the default target for macOS, Linux, or Windows, [SDL2][] libraries
-are a required dependency. You can either install them manually using one of the
-methods outlined in the [rust-sdl2][] crate, or you can use the `use-vcpkg`
-feature flag to statically link them.
-
-## Crate features
+## Crate Features
 
 ### Logging
 
-This library uses the [log](https://crates.io/crates/log) crate. To leverage
+This library uses the [log][] crate. To leverage
 logging in your application, choose one of the supported logger implementations
 and initialize it in your `main` function.
 
-Example using [env_logger](https://crates.io/crates/env_logger):
+Example using [env_logger][]:
 
 ```rust ignore
 fn main() -> PixResult<()> {
@@ -131,7 +247,7 @@ fn main() -> PixResult<()> {
 }
 ```
 
-### Utility features
+### Utility Features
 
 * **serde** -
   Adds [serde][] `Serialize`/`Deserialize` implementations for all
@@ -147,7 +263,7 @@ fn main() -> PixResult<()> {
   macOS, Linux, and Windows targets. Using this feature is the easiest way to
   get up and running unless you already have `SDL2` installed on your system.
 
-### Renderer features
+### Renderer Features
 
 * **opengl** -
   Forces `sdl2` to use `opengl` as its renderer. This feature is disabled by
@@ -192,7 +308,11 @@ implementation and evolution of this crate:
 
 [Rust]: https://www.rust-lang.org/
 [SDL2]: https://crates.io/crates/sdl2/
+[homebrew]: https://brew.sh/
+[vcpkg]: https://github.com/microsoft/vcpkg
 [rust-sdl2]: https://github.com/Rust-SDL2/rust-sdl2#sdl20-development-libraries
+[log]: https://crates.io/crates/log
+[env_logger]: https://crates.io/crates/env_logger
 [WASM]: https://www.rust-lang.org/what/wasm
 [Tetanes]: https://crates.io/crates/tetanes
 [NES]: https://en.wikipedia.org/wiki/Nintendo_Entertainment_System
