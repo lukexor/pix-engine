@@ -142,14 +142,10 @@ impl TextureRenderer for Renderer {
             let texture = window.textures.get(&texture_id).expect("valid texture");
             {
                 let mut texture = texture.borrow_mut();
-                if let Some(tint) = tint {
-                    let [r, g, b, a] = tint.channels();
-                    texture.set_color_mod(r, g, b);
-                    texture.set_alpha_mod(a);
-                } else {
-                    texture.set_color_mod(255, 255, 255);
-                    texture.set_alpha_mod(255);
-                }
+                let [r, g, b, a] = tint.map_or([255; 4], |t| t.channels());
+                texture.set_color_mod(r, g, b);
+                texture.set_alpha_mod(a);
+                texture.set_blend_mode(self.blend_mode);
             }
             let src = src.map(|r| r.into());
             let dst = dst.map(|r| r.into());
