@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 
 - Added `PixState::smooth` and `PixState::no_smooth` to toggle anti-alias
   drawing of shapes.
+- Added `PixState::day`, `PixState::month`, `PixState::year`, `PixState::hour`,
+  `PixState::minute`, and `PixState::second` methods.
 
 ### Changed
 

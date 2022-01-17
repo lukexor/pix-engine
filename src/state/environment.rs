@@ -13,11 +13,18 @@
 //! - [`PixState::avg_frame_rate`]: Average frames per second rendered.
 //! - [`PixState::quit`]: Trigger application quit.
 //! - [`PixState::abort_quit`]: Abort application quit.
+//! - [`PixState::day`]: Return the current day between 1-31.
+//! - [`PixState::month`]: Return the current month between 1-12.
+//! - [`PixState::year`]: Return the current year as an integer.
+//! - [`PixState::hour`]: Return the current hour between 0-23.
+//! - [`PixState::minute`]: Return the current minute between 0-59.
+//! - [`PixState::second`]: Return the current second between 0-59.
 
 use crate::{
     prelude::*,
     renderer::{Rendering, WindowRenderer},
 };
+use chrono::prelude::*;
 use std::{
     collections::VecDeque,
     time::{Duration, Instant},
@@ -292,6 +299,42 @@ impl PixState {
     #[inline]
     pub fn abort_quit(&mut self) {
         self.env.quit = false;
+    }
+
+    /// Return the current day between 1-31.
+    #[inline]
+    pub fn day() -> u32 {
+        Local::now().day()
+    }
+
+    /// Return the current month between 1-12.
+    #[inline]
+    pub fn month() -> u32 {
+        Local::now().month()
+    }
+
+    /// Return the current year as an integer.
+    #[inline]
+    pub fn year() -> i32 {
+        Local::now().year()
+    }
+
+    /// Return the current hour between 0-23.
+    #[inline]
+    pub fn hour() -> u32 {
+        Local::now().hour()
+    }
+
+    /// Return the current minute between 0-59.
+    #[inline]
+    pub fn minute() -> u32 {
+        Local::now().minute()
+    }
+
+    /// Return the current second between 0-59.
+    #[inline]
+    pub fn second() -> u32 {
+        Local::now().second()
     }
 }
 
