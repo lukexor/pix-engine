@@ -4,19 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+
 ### Changed
 
 - Removed sleeping when audio queue got too full in favor of a maximum buffer
   size with a warning indicating `resume_audio` was not called.
+- Updated `README` with better installation steps and a Table of Contents.
+- Moved `rayon` to a `dev-dependency`.
+- Added a `logging` example.
+- Fixed `Color::TRANSPARENT` to have `0` alpha channel.
+- Removed allowing `clippy::return_self_not_must_use` (Issue #9).
+- Changed audio queue to not sleep if too full and instead warn (and eventually
+  panic) if queue gets too full to avoid system contention.
 
 ## [0.5.3] - 2021-12-21
-
-### Changed
-
-- Engine loop sleeps remainder of target frame rate to reduce CPU usage.
-- Default audio sample rate to 48,000 Hz.
-- Fixed `ThemeBuilder` to default to "dark" theme.
-- Changed radio and checkboxes to scale based on `font_size`.
 
 ### Added
 
@@ -29,6 +32,13 @@ All notable changes to this project will be documented in this file.
   play to. Defaults to `1` for mono.
 - `SpacingBuilder` struct to construct custom theme spacing easier.
 - `PixState::menu` method that renders a clickable menu item with hover state.
+
+### Changed
+
+- Engine loop sleeps remainder of target frame rate to reduce CPU usage.
+- Default audio sample rate to 48,000 Hz.
+- Fixed `ThemeBuilder` to default to "dark" theme.
+- Changed radio and checkboxes to scale based on `font_size`.
 
 ### Breaking
 
