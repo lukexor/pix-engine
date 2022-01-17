@@ -213,9 +213,8 @@ impl From<SdlWindowEvent> for WindowEvent {
             SdlWindowEvent::Exposed => Self::Exposed,
             SdlWindowEvent::Hidden => Self::Hidden,
             SdlWindowEvent::Moved(x, y) => Self::Moved(x, y),
-            SdlWindowEvent::Resized(w, h) | SdlWindowEvent::SizeChanged(w, h) => {
-                Self::Resized(w, h)
-            }
+            SdlWindowEvent::Resized(w, h) => Self::Resized(w, h),
+            SdlWindowEvent::SizeChanged(w, h) => Self::SizeChanged(w, h),
             SdlWindowEvent::Minimized => Self::Minimized,
             SdlWindowEvent::Maximized => Self::Maximized,
             SdlWindowEvent::Restored => Self::Restored,
