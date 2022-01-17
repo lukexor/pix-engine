@@ -21,6 +21,8 @@
 //! - [`PixState::stroke`]: Sets the [Color] used to stroke shapes and text.
 //! - [`PixState::no_stroke`]: Clears the [Color] used to stroke shapes and text.
 //! - [`PixState::stroke_weight`]: Sets the stroke line thickness for lines and text.
+//! - [`PixState::smooth`]: Enables the anti-alias smoothing option for drawing shapes.
+//! - [`PixState::no_smooth`]: Disables the anti-alias smoothing option for drawing shapes.
 //! - [`PixState::wrap`]: Sets the wrap width for rendering text.
 //! - [`PixState::no_wrap`]: Clears the wrap width for rendering text.
 //! - [`PixState::clip`]: Sets a clip rectangle for rendering.
@@ -141,6 +143,7 @@ pub(crate) struct Settings {
     pub(crate) fill: Option<Color>,
     pub(crate) stroke: Option<Color>,
     pub(crate) stroke_weight: u8,
+    pub(crate) smooth: bool,
     pub(crate) wrap_width: Option<u32>,
     pub(crate) clip: Option<Rect<i32>>,
     pub(crate) running: bool,
@@ -165,6 +168,7 @@ impl Default for Settings {
             fill: Some(Color::WHITE),
             stroke: None,
             stroke_weight: 1,
+            smooth: true,
             wrap_width: None,
             clip: None,
             running: true,
@@ -310,7 +314,7 @@ impl PixState {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.stroke(Color::BLUE);
     ///     s.stroke_weight(2);
-    ///     // Shows a 2-pixel wide diagonal line
+    ///     // Draws a 2-pixel wide diagonal line
     ///     s.line(line_![0, 0, 100, 100])?;
     ///     Ok(())
     /// }
@@ -319,6 +323,49 @@ impl PixState {
     #[inline]
     pub fn stroke_weight(&mut self, weight: u8) {
         self.settings.stroke_weight = weight;
+    }
+
+    /// Enables the anti-alias option used for drawing shapes on the canvas. `smooth` is enabled
+    /// by default. [`no_smooth`][PixState::no_smooth] can be used to disable anti-aliasing.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     // Draws a smooth diagonal line
+    ///     s.line(line_![0, 0, 100, 100])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    pub fn smooth(&mut self) {
+        self.settings.smooth = true;
+    }
+
+    /// Disables the anti-alias option used for drawing shapes on the canvas. `smooth` is enabled
+    /// by default.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     // Draws a non-smooth diagonal line
+    ///     s.no_smooth();
+    ///     s.line(line_![0, 0, 100, 100])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    pub fn no_smooth(&mut self) {
+        self.settings.smooth = false;
     }
 
     /// Sets the wrap width used to draw text on the canvas.

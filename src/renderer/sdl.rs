@@ -469,22 +469,25 @@ impl Rendering for Renderer {
 
     /// Draw a line to the current canvas.
     #[inline]
-    fn line(&mut self, line: LineI2, width: u8, color: Color) -> PixResult<()> {
+    fn line(&mut self, line: LineI2, smooth: bool, width: u8, color: Color) -> PixResult<()> {
         self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
             let [x1, y1] = line.start().map(|v| v as i16);
             let [x2, y2] = line.end().map(|v| v as i16);
-            let result = if width == 1 {
+            if width == 1 {
                 if y1 == y2 {
                     canvas.hline(x1, x2, y1, color)
                 } else if x1 == x2 {
                     canvas.vline(x1, y1, y2, color)
-                } else {
+                } else if smooth {
                     canvas.aa_line(x1, y1, x2, y2, color)
+                } else {
+                    canvas.line(x1, y1, x2, y2, color)
                 }
             } else {
                 canvas.thick_line(x1, y1, x2, y2, width, color)
-            };
-            Ok(result.map_err(PixError::Renderer)?)
+            }
+            .map_err(PixError::Renderer)?;
+            Ok(())
         })
     }
 
@@ -493,6 +496,7 @@ impl Rendering for Renderer {
     fn triangle(
         &mut self,
         tri: TriI2,
+        smooth: bool,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> PixResult<()> {
@@ -506,9 +510,12 @@ impl Rendering for Renderer {
                     .map_err(PixError::Renderer)?;
             }
             if let Some(stroke) = stroke {
-                canvas
-                    .trigon(x1, y1, x2, y2, x3, y3, stroke)
-                    .map_err(PixError::Renderer)?;
+                if smooth {
+                    canvas.aa_trigon(x1, y1, x2, y2, x3, y3, stroke)
+                } else {
+                    canvas.trigon(x1, y1, x2, y2, x3, y3, stroke)
+                }
+                .map_err(PixError::Renderer)?;
             }
             Ok(())
         })
@@ -525,30 +532,22 @@ impl Rendering for Renderer {
     ) -> PixResult<()> {
         self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
             let [x, y, width, height] = rect.map(|v| v as i16);
-            if let Some(radius) = radius {
-                let radius = radius as i16;
-                if let Some(fill) = fill {
-                    canvas
-                        .rounded_box(x, y, x + width, y + height, radius, fill)
-                        .map_err(PixError::Renderer)?;
+            if let Some(fill) = fill {
+                if let Some(radius) = radius {
+                    canvas.rounded_box(x, y, x + width, y + height, radius as i16, fill)
+                } else {
+                    // EXPL: SDL2_gfx renders this 1px bigger than it should.
+                    canvas.box_(x, y, x + width - 1, y + height - 1, fill)
                 }
-                if let Some(stroke) = stroke {
-                    canvas
-                        .rounded_rectangle(x, y, x + width, y + height, radius, stroke)
-                        .map_err(PixError::Renderer)?;
+                .map_err(PixError::Renderer)?;
+            }
+            if let Some(stroke) = stroke {
+                if let Some(radius) = radius {
+                    canvas.rounded_rectangle(x, y, x + width, y + height, radius as i16, stroke)
+                } else {
+                    canvas.rectangle(x, y, x + width, y + height, stroke)
                 }
-            } else {
-                // EXPL: SDL2_gfx renders this 1px bigger than it should.
-                if let Some(fill) = fill {
-                    canvas
-                        .box_(x, y, x + width - 1, y + height - 1, fill)
-                        .map_err(PixError::Renderer)?;
-                }
-                if let Some(stroke) = stroke {
-                    canvas
-                        .rectangle(x, y, x + width, y + height, stroke)
-                        .map_err(PixError::Renderer)?;
-                }
+                .map_err(PixError::Renderer)?;
             }
             Ok(())
         })
@@ -556,7 +555,13 @@ impl Rendering for Renderer {
 
     /// Draw a quadrilateral to the current canvas.
     #[inline]
-    fn quad(&mut self, quad: QuadI2, fill: Option<Color>, stroke: Option<Color>) -> PixResult<()> {
+    fn quad(
+        &mut self,
+        quad: QuadI2,
+        smooth: bool,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> PixResult<()> {
         self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
             let [x1, y1] = quad.p1().map(|v| v as i16);
             let [x2, y2] = quad.p2().map(|v| v as i16);
@@ -570,9 +575,12 @@ impl Rendering for Renderer {
                     .map_err(PixError::Renderer)?;
             }
             if let Some(stroke) = stroke {
-                canvas
-                    .polygon(&vx, &vy, stroke)
-                    .map_err(PixError::Renderer)?;
+                if smooth {
+                    canvas.aa_polygon(&vx, &vy, stroke)
+                } else {
+                    canvas.polygon(&vx, &vy, stroke)
+                }
+                .map_err(PixError::Renderer)?;
             }
             Ok(())
         })
@@ -580,7 +588,13 @@ impl Rendering for Renderer {
 
     /// Draw a polygon to the current canvas.
     #[inline]
-    fn polygon<I>(&mut self, ps: I, fill: Option<Color>, stroke: Option<Color>) -> PixResult<()>
+    fn polygon<I>(
+        &mut self,
+        ps: I,
+        smooth: bool,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> PixResult<()>
     where
         I: Iterator<Item = PointI2>,
     {
@@ -597,9 +611,12 @@ impl Rendering for Renderer {
                     .map_err(PixError::Renderer)?;
             }
             if let Some(stroke) = stroke {
-                canvas
-                    .polygon(&vx, &vy, stroke)
-                    .map_err(PixError::Renderer)?;
+                if smooth {
+                    canvas.aa_polygon(&vx, &vy, stroke)
+                } else {
+                    canvas.polygon(&vx, &vy, stroke)
+                }
+                .map_err(PixError::Renderer)?;
             }
             Ok(())
         })
@@ -610,6 +627,7 @@ impl Rendering for Renderer {
     fn ellipse(
         &mut self,
         ellipse: Ellipse<i32>,
+        smooth: bool,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> PixResult<()> {
@@ -618,14 +636,26 @@ impl Rendering for Renderer {
             let rw = width / 2;
             let rh = height / 2;
             if let Some(fill) = fill {
-                canvas
-                    .filled_ellipse(x, y, rw, rh, fill)
-                    .map_err(PixError::Renderer)?;
+                if width == height {
+                    canvas.filled_circle(x, y, rw, fill)
+                } else {
+                    canvas.filled_ellipse(x, y, rw, rh, fill)
+                }
+                .map_err(PixError::Renderer)?;
             }
             if let Some(stroke) = stroke {
-                canvas
-                    .aa_ellipse(x, y, rw, rh, stroke)
-                    .map_err(PixError::Renderer)?;
+                if width == height {
+                    if smooth {
+                        canvas.aa_circle(x, y, rw, stroke)
+                    } else {
+                        canvas.circle(x, y, rw, stroke)
+                    }
+                } else if smooth {
+                    canvas.aa_ellipse(x, y, rw, rh, stroke)
+                } else {
+                    canvas.ellipse(x, y, rw, rh, stroke)
+                }
+                .map_err(PixError::Renderer)?;
             }
             Ok(())
         })
@@ -706,15 +736,16 @@ impl Rendering for Renderer {
         let update = |canvas: &mut Canvas<_>| -> PixResult<()> {
             let src = src.map(|r| r.into());
             let dst = dst.map(|r| r.into());
-            let result = if angle > 0.0 || center.is_some() || flipped.is_some() {
+            if angle > 0.0 || center.is_some() || flipped.is_some() {
                 let center = center.map(|c| c.into());
                 let horizontal = matches!(flipped, Some(Flipped::Horizontal | Flipped::Both));
                 let vertical = matches!(flipped, Some(Flipped::Vertical | Flipped::Both));
                 canvas.copy_ex(texture, src, dst, angle, center, horizontal, vertical)
             } else {
                 canvas.copy(texture, src, dst)
-            };
-            Ok(result.map_err(PixError::Renderer)?)
+            }
+            .map_err(PixError::Renderer)?;
+            Ok(())
         };
 
         if let Some(texture_id) = self.texture_target {

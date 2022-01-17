@@ -134,11 +134,16 @@ pub(crate) trait Rendering: Sized {
     fn point(&mut self, p: PointI2, color: Color) -> PixResult<()>;
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, line: LineI2, width: u8, color: Color) -> PixResult<()>;
+    fn line(&mut self, line: LineI2, smooth: bool, width: u8, color: Color) -> PixResult<()>;
 
     /// Draw a triangle to the current canvas.
-    fn triangle(&mut self, tri: TriI2, fill: Option<Color>, stroke: Option<Color>)
-        -> PixResult<()>;
+    fn triangle(
+        &mut self,
+        tri: TriI2,
+        smooth: bool,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> PixResult<()>;
 
     /// Draw a rectangle to the current canvas.
     fn rect(
@@ -150,10 +155,22 @@ pub(crate) trait Rendering: Sized {
     ) -> PixResult<()>;
 
     /// Draw a quadrilateral to the current canvas.
-    fn quad(&mut self, quad: QuadI2, fill: Option<Color>, stroke: Option<Color>) -> PixResult<()>;
+    fn quad(
+        &mut self,
+        quad: QuadI2,
+        smooth: bool,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> PixResult<()>;
 
     /// Draw a polygon to the current canvas.
-    fn polygon<I>(&mut self, ps: I, fill: Option<Color>, stroke: Option<Color>) -> PixResult<()>
+    fn polygon<I>(
+        &mut self,
+        ps: I,
+        smooth: bool,
+        fill: Option<Color>,
+        stroke: Option<Color>,
+    ) -> PixResult<()>
     where
         I: Iterator<Item = PointI2>;
 
@@ -161,6 +178,7 @@ pub(crate) trait Rendering: Sized {
     fn ellipse(
         &mut self,
         ellipse: Ellipse<i32>,
+        smooth: bool,
         fill: Option<Color>,
         stroke: Option<Color>,
     ) -> PixResult<()>;

@@ -152,7 +152,8 @@ impl PixState {
     {
         let s = &self.settings;
         if let Some(stroke) = s.stroke {
-            self.renderer.line(line.into(), s.stroke_weight, stroke)?;
+            self.renderer
+                .line(line.into(), s.smooth, s.stroke_weight, stroke)?;
         }
         Ok(())
     }
@@ -183,7 +184,8 @@ impl PixState {
         T: Into<TriI2>,
     {
         let s = &self.settings;
-        self.renderer.triangle(tri.into(), s.fill, s.stroke)
+        self.renderer
+            .triangle(tri.into(), s.smooth, s.fill, s.stroke)
     }
 
     /// Draw a square [Rect] to the current canvas. [`PixState::fill`] and [`PixState::stroke`] control
@@ -339,7 +341,7 @@ impl PixState {
         Q: Into<QuadI2>,
     {
         let s = &self.settings;
-        self.renderer.quad(quad.into(), s.fill, s.stroke)
+        self.renderer.quad(quad.into(), s.smooth, s.fill, s.stroke)
     }
 
     /// Draw a polygon to the current canvas. [`PixState::fill`] and [`PixState::stroke`] control
@@ -369,8 +371,12 @@ impl PixState {
         I: IntoIterator<Item = P>,
     {
         let s = &self.settings;
-        self.renderer
-            .polygon(points.into_iter().map(Into::into), s.fill, s.stroke)
+        self.renderer.polygon(
+            points.into_iter().map(Into::into),
+            s.smooth,
+            s.fill,
+            s.stroke,
+        )
     }
 
     /// Draw a wireframe to the current canvas, translated to a given [Point] and optionally
@@ -495,7 +501,7 @@ impl PixState {
     {
         let s = &self.settings;
         let ellipse = self.get_ellipse(ellipse);
-        self.renderer.ellipse(ellipse, s.fill, s.stroke)
+        self.renderer.ellipse(ellipse, s.smooth, s.fill, s.stroke)
     }
 
     /// Draw an arc of a given `radius` and length defined by `start` and `end` to the current
