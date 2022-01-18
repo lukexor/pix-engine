@@ -196,13 +196,13 @@ impl Rendering for Renderer {
         windows.insert(primary_window.id, primary_window);
 
         // Set up Audio
-        let audio_sub = context.audio().map_err(PixError::Renderer)?;
+        let audio_subsys = context.audio().map_err(PixError::Renderer)?;
         let desired_spec = AudioSpecDesired {
             freq: Some(s.audio_sample_rate),
             channels: Some(1),
             samples: None,
         };
-        let audio_device = audio_sub
+        let audio_device = audio_subsys
             .open_queue(None, &desired_spec)
             .map_err(PixError::Renderer)?;
         debug!("Loaded AudioDevice: {:?}", audio_device.spec());

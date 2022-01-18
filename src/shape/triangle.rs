@@ -245,3 +245,35 @@ impl Draw for TriI2 {
         s.triangle(*self)
     }
 }
+
+impl<T: Copy> From<[T; 6]> for Tri<T, 2> {
+    /// Converts `[T; 6]` into `Tri<T, 2>`.
+    #[inline]
+    fn from([x1, y1, x2, y2, x3, y3]: [T; 6]) -> Self {
+        Self::from_xy(x1, y1, x2, y2, x3, y3)
+    }
+}
+
+impl<T: Copy> From<[T; 9]> for Tri<T, 3> {
+    /// Converts `[T; 9]` into `Tri<T, 3>`.
+    #[inline]
+    fn from([x1, y1, z1, x2, y2, z2, x3, y3, z3]: [T; 9]) -> Self {
+        Self::from_xyz(x1, y1, z1, x2, y2, z2, x3, y3, z3)
+    }
+}
+
+impl<T: Copy> From<[[T; 2]; 3]> for Tri<T, 2> {
+    /// Converts `[[T; 2]; 3]` into `Tri<T, 2>`.
+    #[inline]
+    fn from([[x1, y1], [x2, y2], [x3, y3]]: [[T; 2]; 3]) -> Self {
+        Self::from_xy(x1, y1, x2, y2, x3, y3)
+    }
+}
+
+impl<T: Copy> From<[[T; 3]; 3]> for Tri<T, 3> {
+    /// Converts `[[T; 3]; 3]` into `Tri<T, 3>`.
+    #[inline]
+    fn from([[x1, y1, z1], [x2, y2, z2], [x3, y3, z3]]: [[T; 3]; 3]) -> Self {
+        Self::from_xyz(x1, y1, z1, x2, y2, z2, x3, y3, z3)
+    }
+}

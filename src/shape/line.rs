@@ -274,3 +274,19 @@ impl<T: Copy> From<[T; 6]> for Line<T, 3> {
         Self::from_xyz(x1, y1, z1, x2, y2, z2)
     }
 }
+
+impl<T: Copy> From<[[T; 2]; 2]> for Line<T, 2> {
+    /// Converts `[[T; 2]; 2]` into `Line<T, 2>`.
+    #[inline]
+    fn from([[x1, y1], [x2, y2]]: [[T; 2]; 2]) -> Self {
+        Self::from_xy(x1, y1, x2, y2)
+    }
+}
+
+impl<T: Copy> From<[[T; 3]; 2]> for Line<T, 3> {
+    /// Converts `[[T; 3]; 2]` into `Line<T, 3>`.
+    #[inline]
+    fn from([[x1, y1, z1], [x2, y2, z2]]: [[T; 3]; 2]) -> Self {
+        Self::from_xyz(x1, y1, z1, x2, y2, z2)
+    }
+}

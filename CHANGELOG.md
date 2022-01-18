@@ -10,7 +10,10 @@ All notable changes to this project will be documented in this file.
   drawing of shapes.
 - Added `PixState::day`, `PixState::month`, `PixState::year`, `PixState::hour`,
   `PixState::minute`, and `PixState::second` methods.
-- Added `[T; 4]` and `[T; 6]` array conversions to `Line`.
+- Added `[[T; 2]; 2]`, `[[T; 3]; 2]`, `[T; 4]`, and `[T; 6]` array conversions
+  to `Line`.
+- Added `[[T; 2]; 3]`, `[[T; 3]; 3]`, `[T; 6]`, and `[T; 9]` array conversions
+  to `Tri`.
 
 ### Changed
 
