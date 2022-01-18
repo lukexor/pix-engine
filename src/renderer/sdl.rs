@@ -491,6 +491,28 @@ impl Rendering for Renderer {
         })
     }
 
+    /// Draw a cubic Bezier curve to the current canvas.
+    #[inline]
+    fn bezier<I>(&mut self, ps: I, detail: i32, stroke: Option<Color>) -> PixResult<()>
+    where
+        I: Iterator<Item = PointI2>,
+    {
+        self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
+            let (vx, vy): (Vec<i16>, Vec<i16>) = ps
+                .map(|p| -> (i16, i16) {
+                    let [x, y] = p.map(|v| v as i16);
+                    (x, y)
+                })
+                .unzip();
+            if let Some(stroke) = stroke {
+                canvas
+                    .bezier(&vx, &vy, detail, stroke)
+                    .map_err(PixError::Renderer)?;
+            }
+            Ok(())
+        })
+    }
+
     /// Draw a triangle to the current canvas.
     #[inline]
     fn triangle(

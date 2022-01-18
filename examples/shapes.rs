@@ -20,6 +20,12 @@ impl AppState for Shapes {
         s.stroke(Color::RED);
         s.line([[10, 200], [300, 200]])?;
 
+        s.stroke(Color::LIGHT_YELLOW);
+        s.line([[185, 20], [110, 10]])?;
+        s.line([[190, 90], [115, 80]])?;
+        s.stroke(Color::STEEL_BLUE);
+        s.bezier([[185, 20], [110, 10], [190, 90], [115, 80]])?;
+
         s.stroke(Color::YELLOW);
         s.fill(Color::DARK_BLUE);
         s.triangle([[230, 20], [250, 180], [400, 155]])?;

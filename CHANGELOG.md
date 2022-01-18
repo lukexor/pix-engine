@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - Added `[[T; 2]; 3]`, `[[T; 3]; 3]`, `[T; 6]`, and `[T; 9]` array conversions
   to `Tri`.
 - Added `shapes` example.
+- Added `PixState::bezier` and `PixState::bezier_detail` methods.
 
 ### Changed
 

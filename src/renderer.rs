@@ -136,6 +136,11 @@ pub(crate) trait Rendering: Sized {
     /// Draw a line to the current canvas.
     fn line(&mut self, line: LineI2, smooth: bool, width: u8, color: Color) -> PixResult<()>;
 
+    /// Draw a cubic Bezier curve to the current canvas.
+    fn bezier<I>(&mut self, ps: I, detail: i32, stroke: Option<Color>) -> PixResult<()>
+    where
+        I: Iterator<Item = PointI2>;
+
     /// Draw a triangle to the current canvas.
     fn triangle(
         &mut self,

@@ -158,6 +158,43 @@ impl PixState {
         Ok(())
     }
 
+    /// Draw a cubic Bezier curve to the current canvas. [`PixState::stroke`] controls whether the
+    /// line is drawn or not. [`PixState::bezier_detail`] controls the resolution of the
+    /// curve. [`PixState::fill`] has no effect.
+    ///
+    /// The first and last points are the anchor points of the curve, while the middle points are
+    /// the control points that "pull" the curve towards them.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to draw to the current render target, then an error is returned.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.stroke(Color::RED);
+    ///     s.bezier([[85, 20], [10, 10], [90, 90], [15, 80]])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    pub fn bezier<P, I>(&mut self, points: I) -> PixResult<()>
+    where
+        P: Into<PointI2>,
+        I: IntoIterator<Item = P>,
+    {
+        let s = &self.settings;
+        self.renderer.bezier(
+            points.into_iter().map(Into::into),
+            s.bezier_detail,
+            s.stroke,
+        )
+    }
+
     /// Draw a [Triangle][Tri] to the current canvas. [`PixState::fill`] and [`PixState::stroke`]
     /// control whether the triangle is filled or outlined.
     ///

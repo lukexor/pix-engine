@@ -23,6 +23,7 @@
 //! - [`PixState::stroke_weight`]: Sets the stroke line thickness for lines and text.
 //! - [`PixState::smooth`]: Enables the anti-alias smoothing option for drawing shapes.
 //! - [`PixState::no_smooth`]: Disables the anti-alias smoothing option for drawing shapes.
+//! - [`PixState::bezier_detail`]: Set the resolution at which Bezier curves are dispalyed.
 //! - [`PixState::wrap`]: Sets the wrap width for rendering text.
 //! - [`PixState::no_wrap`]: Clears the wrap width for rendering text.
 //! - [`PixState::clip`]: Sets a clip rectangle for rendering.
@@ -144,6 +145,7 @@ pub(crate) struct Settings {
     pub(crate) stroke: Option<Color>,
     pub(crate) stroke_weight: u8,
     pub(crate) smooth: bool,
+    pub(crate) bezier_detail: i32,
     pub(crate) wrap_width: Option<u32>,
     pub(crate) clip: Option<Rect<i32>>,
     pub(crate) running: bool,
@@ -169,6 +171,7 @@ impl Default for Settings {
             stroke: None,
             stroke_weight: 1,
             smooth: true,
+            bezier_detail: 20,
             wrap_width: None,
             clip: None,
             running: true,
@@ -366,6 +369,27 @@ impl PixState {
     #[inline]
     pub fn no_smooth(&mut self) {
         self.settings.smooth = false;
+    }
+
+    /// Set the resolution at which [`PixState::bezier`] curves are displayed. The default is `20`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.bezier_detail(5);
+    ///     s.stroke(Color::RED);
+    ///     s.bezier([[85, 20], [10, 10], [90, 90], [15, 80]])?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    pub fn bezier_detail(&mut self, detail: i32) {
+        self.settings.bezier_detail = detail;
     }
 
     /// Sets the wrap width used to draw text on the canvas.
