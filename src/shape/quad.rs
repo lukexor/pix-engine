@@ -300,6 +300,38 @@ impl Draw for QuadI2 {
     }
 }
 
+impl<T: Copy> From<[T; 8]> for Quad<T, 2> {
+    /// Converts `[T; 8]` into `Quad<T, 2>`.
+    #[inline]
+    fn from([x1, y1, x2, y2, x3, y3, x4, y4]: [T; 8]) -> Self {
+        Self::from_xy(x1, y1, x2, y2, x3, y3, x4, y4)
+    }
+}
+
+impl<T: Copy> From<[T; 12]> for Quad<T, 3> {
+    /// Converts `[T; 12]` into `Quad<T, 3>`.
+    #[inline]
+    fn from([x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]: [T; 12]) -> Self {
+        Self::from_xyz(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4)
+    }
+}
+
+impl<T: Copy> From<[[T; 2]; 4]> for Quad<T, 2> {
+    /// Converts `[[T; 2]; 4]` into `Quad<T, 2>`.
+    #[inline]
+    fn from([[x1, y1], [x2, y2], [x3, y3], [x4, y4]]: [[T; 2]; 4]) -> Self {
+        Self::from_xy(x1, y1, x2, y2, x3, y3, x4, y4)
+    }
+}
+
+impl<T: Copy> From<[[T; 3]; 4]> for Quad<T, 3> {
+    /// Converts `[[T; 3]; 4]` into `Quad<T, 3>`.
+    #[inline]
+    fn from([[x1, y1, z1], [x2, y2, z2], [x3, y3, z3], [x4, y4, z4]]: [[T; 3]; 4]) -> Self {
+        Self::from_xyz(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{prelude::*, shape::LineF2};

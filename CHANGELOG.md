@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
   to `Line`.
 - Added `[[T; 2]; 3]`, `[[T; 3]; 3]`, `[T; 6]`, and `[T; 9]` array conversions
   to `Tri`.
+- Added `shapes` example.
 
 ### Changed
 
