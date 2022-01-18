@@ -258,3 +258,19 @@ impl Draw for LineI2 {
         s.line(*self)
     }
 }
+
+impl<T: Copy> From<[T; 4]> for Line<T, 2> {
+    /// Converts `[T; 4]` into `Line<T, 2>`.
+    #[inline]
+    fn from([x1, y1, x2, y2]: [T; 4]) -> Self {
+        Self::from_xy(x1, y1, x2, y2)
+    }
+}
+
+impl<T: Copy> From<[T; 6]> for Line<T, 3> {
+    /// Converts `[T; 6]` into `Line<T, 3>`.
+    #[inline]
+    fn from([x1, y1, z1, x2, y2, z2]: [T; 6]) -> Self {
+        Self::from_xyz(x1, y1, z1, x2, y2, z2)
+    }
+}
