@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - Removed allowing `clippy::return_self_not_must_use` (Issue #9).
 - Changed audio queue to not sleep if too full and instead warn (and eventually
   panic) if queue gets too full to avoid system contention.
+- Optimized `Color` addition and subtraction operations.
 
 ### Breaking
 
