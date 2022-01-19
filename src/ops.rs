@@ -202,6 +202,22 @@ macro_rules! impl_wrapper_traits {
                     self.0.into_iter()
                 }
             }
+            impl<'a, T$(, const $N: usize)?> IntoIterator for &'a $Type<T$(, $N)?> {
+                type Item = &'a $T;
+                type IntoIter = std::slice::Iter<'a, $T>;
+                #[inline]
+                fn into_iter(self) -> Self::IntoIter {
+                    self.0.iter()
+                }
+            }
+            impl<'a, T$(, const $N: usize)?> IntoIterator for &'a mut $Type<T$(, $N)?> {
+                type Item = &'a mut $T;
+                type IntoIter = std::slice::IterMut<'a, $T>;
+                #[inline]
+                fn into_iter(self) -> Self::IntoIter {
+                    self.0.iter_mut()
+                }
+            }
             impl <T: Default$(, const $N: usize)?> FromIterator<$T> for $Type<T$(, $N)?> {
                 #[inline]
                 fn from_iter<I>(iter: I) -> Self

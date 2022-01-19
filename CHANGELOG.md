@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
   to `Tri`.
 - Added `shapes` example.
 - Added `PixState::bezier` and `PixState::bezier_detail` methods.
+- Added `IntoIterator` for array-like types for `&T` and `&mut T`.
 
 ### Changed
 
