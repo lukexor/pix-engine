@@ -2,6 +2,8 @@ use pix_engine::prelude::*;
 
 struct Shapes {
     rotation: Scalar,
+    scale: Scalar,
+    scale_latch: bool,
 }
 
 impl AppState for Shapes {
@@ -49,11 +51,19 @@ impl AppState for Shapes {
         s.stroke(Color::CRIMSON);
         s.no_fill();
         self.rotation += 0.001 * s.delta_time();
+        if self.scale_latch {
+            self.scale -= 0.05 * s.delta_time();
+        } else {
+            self.scale += 0.05 * s.delta_time();
+        }
+        if self.scale >= 120.0 || self.scale <= 20.0 {
+            self.scale_latch = !self.scale_latch;
+        }
         s.wireframe(
             [[1.0, 1.0], [0.0, 0.0], [0.0, 1.0], [1.0, 0.0]],
             [650, 160],
             self.rotation,
-            100.0,
+            self.scale,
         )?;
 
         s.ellipse_mode(EllipseMode::Center);
@@ -83,6 +93,10 @@ fn main() -> PixResult<()> {
         .with_title("Shapes")
         .target_frame_rate(60)
         .build()?;
-    let mut app = Shapes { rotation: 0.0 };
+    let mut app = Shapes {
+        rotation: 0.0,
+        scale: 50.0,
+        scale_latch: false,
+    };
     engine.run(&mut app)
 }
