@@ -15,7 +15,7 @@ use std::{
     slice,
 };
 
-/// Format for interpreting bytes when using textures.
+/// Format for interpreting image data.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 #[must_use]
@@ -206,8 +206,7 @@ impl Image {
         let png_file = BufReader::new(read);
         let png = Decoder::new(png_file);
 
-        // TODO: Make this machine-dependent to best match display capabilities for texture
-        // performance
+        // TODO: Make this machine-dependent to best match display capabilities for performance
         // EXPL: Switch RGBA32 (RGBA8888) format to ARGB8888 by swapping alpha
         // EXPL: Expand paletted to RGB and non-8-bit grayscale to 8-bits
         // png.set_transformations(Transformations::SWAP_ALPHA | Transformations::EXPAND);
