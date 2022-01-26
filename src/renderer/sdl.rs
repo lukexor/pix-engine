@@ -31,12 +31,14 @@ lazy_static! {
         sdl2::image::init(InitFlag::PNG | InitFlag::JPG).expect("sdl2_image initialized");
 }
 
+pub(crate) use audio::RendererAudioDevice;
+
 mod audio;
 mod event;
 mod texture;
 mod window;
 
-/// An SDL [Renderer] implementation.
+/// A SDL [Renderer] implementation.
 pub(crate) struct Renderer {
     context: Sdl,
     event_pump: EventPump,

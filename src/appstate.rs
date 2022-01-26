@@ -2,7 +2,7 @@
 //!
 //! # Example
 //!
-//! ```rust no_run
+//! ```no_run
 //! use pix_engine::prelude::*;
 //!
 //! struct MyApp;
@@ -53,7 +53,6 @@ use crate::prelude::*;
 ///
 /// Please see the [module-level documentation] for more examples.
 ///
-/// [PixEngine]: crate::prelude::PixEngine
 /// [module-level documentation]: crate::appstate
 #[allow(unused_variables)]
 pub trait AppState {
@@ -65,9 +64,7 @@ pub trait AppState {
     ///
     /// # Errors
     ///
-    /// Returning an error will immediately exit the application and call [`AppState:: Prefer using
-    /// the more specialized methods where possible, as it allows you to consume them, preventing
-    /// the engine from encountering event-handling collisions.on_stop`].
+    /// Returning an error will immediately exit the application and call [`AppState::on_stop`].
     /// [`PixEngine::run`] will return the original error or any error returned from
     /// [`AppState::on_stop`]. Calling [`PixState::abort_quit`] during [`AppState::on_stop`] has no
     /// effect.

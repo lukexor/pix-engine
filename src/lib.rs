@@ -56,14 +56,12 @@ pub mod renderer;
 pub mod serialize;
 pub mod transform;
 
-mod utils;
-
 /// Exports most commonly used types, traits, and functions.
 pub mod prelude {
     use super::*;
 
     pub use appstate::AppState;
-    pub use audio::AudioStatus;
+    pub use audio::{AudioCallback, AudioDevice, AudioSpec, AudioSpecDesired, AudioStatus};
     pub use color::{Color, Mode as ColorMode};
     pub use draw::Draw;
     pub use engine::PixEngine;

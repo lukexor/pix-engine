@@ -65,6 +65,12 @@ impl Default for Environment {
 }
 
 impl PixState {
+    /// Present all renderer changes since last frame.
+    #[inline]
+    pub fn present(&mut self) {
+        self.renderer.present();
+    }
+
     /// Returns whether the current window target has focus.
     ///
     /// # Example
@@ -398,12 +404,6 @@ impl PixState {
             }
         }
         Ok(())
-    }
-
-    /// Present all renderer changes since last frame.
-    #[inline]
-    pub(crate) fn present(&mut self) {
-        self.renderer.present();
     }
 
     /// Focus a given window.

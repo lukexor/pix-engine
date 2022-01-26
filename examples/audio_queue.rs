@@ -10,7 +10,7 @@ const FRAC_2_PI: f32 = math::FRAC_2_PI as f32;
 const PI: f32 = math::PI as f32;
 const TWO_PI: f32 = 2.0 * PI;
 
-struct AudioDemo {
+struct QueueDemo {
     volume: f32,
     frequency: f32,
     sample_rate: f32,
@@ -19,7 +19,7 @@ struct AudioDemo {
     raw_file: PathBuf,
 }
 
-impl AudioDemo {
+impl QueueDemo {
     fn new(raw_file: PathBuf) -> Self {
         Self {
             volume: 0.2,
@@ -85,7 +85,7 @@ impl AudioDemo {
     }
 }
 
-impl AppState for AudioDemo {
+impl AppState for QueueDemo {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         self.sample_rate = s.audio_sample_rate() as f32;
         self.sample_count = 4 * self.sample_rate as usize;
@@ -181,9 +181,9 @@ fn main() -> PixResult<()> {
     };
     let mut engine = PixEngine::builder()
         .with_dimensions(1024, 768)
-        .with_title("Audio Demo")
+        .with_title("Audio Queue")
         .with_frame_rate()
         .build()?;
-    let mut app = AudioDemo::new(raw_file);
+    let mut app = QueueDemo::new(raw_file);
     engine.run(&mut app)
 }

@@ -115,7 +115,7 @@ impl PixState {
         self.renderer.set_title(title.as_ref())
     }
 
-    /// Returns the current mouse position coordinates as `(x, y)`.
+    /// Returns the current mouse position coordinates this frame as `(x, y)`.
     ///
     /// # Example
     ///
@@ -156,7 +156,7 @@ impl PixState {
         self.ui.pmouse_pos()
     }
 
-    /// Returns if any [Mouse] button is currently being held.
+    /// Returns if any [Mouse] button was pressed this frame.
     ///
     /// # Example
     ///
@@ -178,7 +178,7 @@ impl PixState {
         self.ui.mouse.is_pressed()
     }
 
-    /// Returns if the [Mouse] was clicked (pressed and released).
+    /// Returns if the [Mouse] was clicked (pressed and released) this frame.
     ///
     /// # Example
     ///
@@ -200,7 +200,7 @@ impl PixState {
         self.ui.mouse.was_clicked(btn)
     }
 
-    /// Returns if a specific [Mouse] button is currently being held.
+    /// Returns if a specific [Mouse] button was pressed this frame.
     ///
     /// # Example
     ///
@@ -222,7 +222,7 @@ impl PixState {
         self.ui.mouse.is_down(btn)
     }
 
-    /// Returns the a list of the current mouse buttons being held.
+    /// Returns a list of the current mouse buttons pressed this frame.
     ///
     /// # Example
     ///
@@ -247,7 +247,7 @@ impl PixState {
         &self.ui.mouse.pressed
     }
 
-    /// Returns if any [Key] is currently being held.
+    /// Returns if any [Key] was pressed this frame.
     ///
     /// # Example
     ///
@@ -269,7 +269,7 @@ impl PixState {
         self.ui.keys.is_pressed()
     }
 
-    /// Returns if a specific [Key] is currently being held.
+    /// Returns if a specific [Key] was pressed this frame.
     ///
     /// # Example
     ///
@@ -291,7 +291,7 @@ impl PixState {
         self.ui.keys.is_down(key)
     }
 
-    /// Returns the a list of the current keys being held.
+    /// Returns a list of the current keys pressed this frame.
     ///
     /// # Example
     ///
@@ -313,7 +313,7 @@ impl PixState {
         &self.ui.keys.pressed
     }
 
-    /// Returns if a specific [`KeyMod`] is currently being held.
+    /// Returns if a specific [`KeyMod`] was pressed this frame.
     ///
     /// # Example
     ///
@@ -335,7 +335,7 @@ impl PixState {
         self.ui.keys.mod_down(keymod)
     }
 
-    /// Returns the a list of the current key modifiers being held.
+    /// Returns a list of the current key modifiers pressed this frame.
     ///
     /// # Example
     ///

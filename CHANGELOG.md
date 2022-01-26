@@ -17,6 +17,11 @@ All notable changes to this project will be documented in this file.
 - Added `shapes` example.
 - Added `PixState::bezier` and `PixState::bezier_detail` methods.
 - Added `IntoIterator` for array-like types for `&T` and `&mut T`.
+- Added audio callback and capture support with new types: `AudioSpecDesired`,
+  `AudioSpec`, `AudioDevice`, a new trait: `AudioCallback` and new methods:
+  `PixState::open_playback` and `PixState::open_capture`.
+- Added `PixState::audio_driver` method to return the driver for the Audio Queue.
+- Added `audio_callback` and `audio_capture_and_replay` examples.
 
 ### Changed
 
@@ -30,6 +35,12 @@ All notable changes to this project will be documented in this file.
 - Changed audio queue to not sleep if too full and instead warn (and eventually
   panic) if queue gets too full to avoid system contention.
 - Optimized `Color` addition and subtraction operations.
+- Renamed `audio` example to `audio_queue`.
+- Removed `wasm` checks and dependencies until future Web-Assembly implementation starts in
+  earnest.
+- Made `PixState::present` public so that the current canvas can be updated in the middle of, or
+  outside of `AppState::on_update`.
+- Fixed various documentation errors.
 
 ### Breaking
 

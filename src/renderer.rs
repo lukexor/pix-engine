@@ -10,13 +10,9 @@ pub(crate) use crate::{texture::TextureRenderer, window::WindowRenderer};
 
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) mod sdl;
+
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) use sdl::Renderer;
-
-#[cfg(target_arch = "wasm32")]
-pub(crate) mod wasm;
-#[cfg(target_arch = "wasm32")]
-pub(crate) use wasm::Renderer;
 
 /// Settings used to set up the renderer.
 #[derive(Debug, Clone)]
@@ -47,7 +43,6 @@ impl Default for RendererSettings {
     fn default() -> Self {
         Self {
             title: String::new(),
-            #[cfg(not(target_arch = "wasm32"))]
             icon: None,
             x: Position::default(),
             y: Position::default(),

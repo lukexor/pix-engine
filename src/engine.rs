@@ -113,7 +113,6 @@ impl Builder {
     }
 
     /// Set a window icon.
-    #[cfg(not(target_arch = "wasm32"))]
     pub fn icon<I>(&mut self, icon: I) -> &mut Self
     where
         I: Into<Icon>,
