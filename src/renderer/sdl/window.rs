@@ -205,8 +205,8 @@ impl WindowCanvas {
     }
 }
 
+#[doc(hidden)]
 impl fmt::Debug for WindowCanvas {
-    #[doc(hidden)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let canvas = &self.canvas;
         f.debug_struct("WindowCanvas")
@@ -489,10 +489,8 @@ impl WindowRenderer for Renderer {
     }
 }
 
-impl Renderer {}
-
+#[doc(hidden)]
 impl From<SystemCursor> for SdlSystemCursor {
-    #[doc(hidden)]
     fn from(cursor: SystemCursor) -> Self {
         match cursor {
             SystemCursor::Arrow => Self::Arrow,

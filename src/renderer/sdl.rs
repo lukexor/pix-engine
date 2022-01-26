@@ -880,35 +880,35 @@ impl fmt::Debug for Renderer {
  * Type Conversions
  */
 
+#[doc(hidden)]
 impl ToColor for Color {
     /// Convert [Color] to tuple of `(r, g, b, a)`.
-    #[doc(hidden)]
     fn as_rgba(&self) -> (u8, u8, u8, u8) {
         let [r, g, b, a] = self.channels();
         (r, g, b, a)
     }
 }
 
+#[doc(hidden)]
 impl From<Color> for SdlColor {
     /// Convert [Color] to [`SdlColor`].
-    #[doc(hidden)]
     fn from(color: Color) -> Self {
         let [r, g, b, a] = color.channels();
         Self::RGBA(r, g, b, a)
     }
 }
 
+#[doc(hidden)]
 impl From<FontStyle> for SdlFontStyle {
     /// Convert [FontStyle] to [`SdlFontStyle`].
-    #[doc(hidden)]
     fn from(style: FontStyle) -> Self {
         Self::from_bits(style.bits()).expect("valid FontStyle")
     }
 }
 
+#[doc(hidden)]
 impl From<Rect<i32>> for SdlRect {
     /// Convert [`Rect<i32>`] to [`SdlRect`].
-    #[doc(hidden)]
     fn from(rect: Rect<i32>) -> Self {
         Self::new(
             rect.x(),
@@ -919,9 +919,9 @@ impl From<Rect<i32>> for SdlRect {
     }
 }
 
+#[doc(hidden)]
 impl From<SdlRect> for Rect<i32> {
     /// Convert [`Rect<i32>`] to [`SdlRect`].
-    #[doc(hidden)]
     fn from(rect: SdlRect) -> Self {
         Self::new(
             rect.x(),
@@ -932,9 +932,9 @@ impl From<SdlRect> for Rect<i32> {
     }
 }
 
+#[doc(hidden)]
 impl From<&Rect<i32>> for SdlRect {
     /// Convert &[`Rect<i32>`] to [`SdlRect`].
-    #[doc(hidden)]
     fn from(rect: &Rect<i32>) -> Self {
         Self::new(
             rect.x(),
@@ -945,25 +945,25 @@ impl From<&Rect<i32>> for SdlRect {
     }
 }
 
+#[doc(hidden)]
 impl From<PointI2> for SdlPoint {
     /// Convert [`PointI2`] to [`SdlPoint`].
-    #[doc(hidden)]
     fn from(p: PointI2) -> Self {
         Self::new(p.x(), p.y())
     }
 }
 
+#[doc(hidden)]
 impl From<&PointI2> for SdlPoint {
     /// Convert &[`PointI2`] to [`SdlPoint`].
-    #[doc(hidden)]
     fn from(p: &PointI2) -> Self {
         Self::new(p.x(), p.y())
     }
 }
 
+#[doc(hidden)]
 impl From<BlendMode> for SdlBlendMode {
     /// Convert [`BlendMode`] to [`SdlBlendMode`].
-    #[doc(hidden)]
     fn from(mode: BlendMode) -> Self {
         match mode {
             BlendMode::None => Self::None,
@@ -974,9 +974,9 @@ impl From<BlendMode> for SdlBlendMode {
     }
 }
 
+#[doc(hidden)]
 impl From<PixelFormat> for SdlPixelFormat {
     /// Convert [`PixelFormat`] to [`SdlPixelFormat`].
-    #[doc(hidden)]
     fn from(format: PixelFormat) -> Self {
         match format {
             PixelFormat::Rgb => Self::RGB24,

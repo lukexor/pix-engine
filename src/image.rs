@@ -44,9 +44,9 @@ impl PixelFormat {
 #[doc(hidden)]
 pub struct TryFromColorTypeError(pub(crate) ());
 
+#[doc(hidden)]
 impl TryFrom<png::ColorType> for PixelFormat {
     type Error = TryFromColorTypeError;
-    #[doc(hidden)]
     fn try_from(color_type: png::ColorType) -> Result<Self, Self::Error> {
         match color_type {
             png::ColorType::Rgb => Ok(Self::Rgb),
@@ -56,8 +56,8 @@ impl TryFrom<png::ColorType> for PixelFormat {
     }
 }
 
+#[doc(hidden)]
 impl From<PixelFormat> for png::ColorType {
-    #[doc(hidden)]
     fn from(format: PixelFormat) -> Self {
         match format {
             PixelFormat::Rgb => Self::Rgb,

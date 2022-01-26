@@ -8,8 +8,8 @@ use sdl2::{
     mouse::MouseButton as SdlMouseButton,
 };
 
+#[doc(hidden)]
 impl From<SdlEvent> for Event {
-    #[doc(hidden)]
     fn from(event: SdlEvent) -> Self {
         match event {
             SdlEvent::Quit { .. } => Self::Quit,
@@ -205,8 +205,8 @@ impl From<SdlEvent> for Event {
     }
 }
 
+#[doc(hidden)]
 impl From<SdlWindowEvent> for WindowEvent {
-    #[doc(hidden)]
     fn from(win_event: SdlWindowEvent) -> Self {
         match win_event {
             SdlWindowEvent::Shown => Self::Shown,
@@ -231,8 +231,8 @@ impl From<SdlWindowEvent> for WindowEvent {
     }
 }
 
+#[doc(hidden)]
 impl From<SdlKeycode> for Key {
-    #[doc(hidden)]
     fn from(keycode: SdlKeycode) -> Self {
         match keycode {
             SdlKeycode::Backspace => Self::Backspace,
@@ -365,8 +365,8 @@ impl From<SdlKeycode> for Key {
     }
 }
 
+#[doc(hidden)]
 impl From<SdlMod> for KeyMod {
-    #[doc(hidden)]
     fn from(keymod: SdlMod) -> Self {
         let mut result = Self::NONE;
         if keymod.contains(SdlMod::LSHIFTMOD) || keymod.contains(SdlMod::RSHIFTMOD) {
@@ -385,8 +385,8 @@ impl From<SdlMod> for KeyMod {
     }
 }
 
+#[doc(hidden)]
 impl From<SdlMouseButton> for Mouse {
-    #[doc(hidden)]
     fn from(button: SdlMouseButton) -> Self {
         match button {
             SdlMouseButton::Left => Self::Left,
@@ -400,8 +400,8 @@ impl From<SdlMouseButton> for Mouse {
     }
 }
 
+#[doc(hidden)]
 impl From<SdlButton> for ControllerButton {
-    #[doc(hidden)]
     fn from(button: SdlButton) -> Self {
         match button {
             SdlButton::A => Self::A,
@@ -429,8 +429,8 @@ impl From<SdlButton> for ControllerButton {
     }
 }
 
+#[doc(hidden)]
 impl From<SdlAxis> for Axis {
-    #[doc(hidden)]
     fn from(axis: SdlAxis) -> Self {
         match axis {
             SdlAxis::LeftX => Self::LeftX,
@@ -443,8 +443,8 @@ impl From<SdlAxis> for Axis {
     }
 }
 
+#[doc(hidden)]
 impl From<SdlHatState> for HatState {
-    #[doc(hidden)]
     fn from(hat: SdlHatState) -> Self {
         match hat {
             SdlHatState::LeftUp => Self::LeftUp,

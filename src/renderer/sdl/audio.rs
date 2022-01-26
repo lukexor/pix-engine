@@ -117,6 +117,7 @@ impl AudioRenderer for Renderer {
     }
 }
 
+#[doc(hidden)]
 impl<CB: AudioCallback> SdlAudioCallback for DeviceCallback<CB> {
     type Channel = f32;
     fn callback(&mut self, out: &mut [Self::Channel]) {
@@ -124,13 +125,17 @@ impl<CB: AudioCallback> SdlAudioCallback for DeviceCallback<CB> {
     }
 }
 
+#[doc(hidden)]
 impl<CB: AudioCallback> From<SdlAudioDevice<DeviceCallback<CB>>> for AudioDevice<CB> {
+    /// Convert [`<SdlAudioDevice<DeviceCallback<CB>>>`] to [`AudioDevice<CB>`].
     fn from(device: SdlAudioDevice<DeviceCallback<CB>>) -> Self {
         Self::new(device)
     }
 }
 
+#[doc(hidden)]
 impl From<SdlAudioSpecDesired> for AudioSpecDesired {
+    /// Convert [`SdlAudioSpecDesired`] to [`AudioSpecDesired`].
     fn from(spec: SdlAudioSpecDesired) -> Self {
         Self {
             freq: spec.freq,
@@ -140,7 +145,9 @@ impl From<SdlAudioSpecDesired> for AudioSpecDesired {
     }
 }
 
+#[doc(hidden)]
 impl From<&AudioSpecDesired> for SdlAudioSpecDesired {
+    /// Convert [`&AudioSpecDesired`] to [`SdlAudioSpecDesired`].
     fn from(spec: &AudioSpecDesired) -> Self {
         Self {
             freq: spec.freq,
@@ -150,7 +157,9 @@ impl From<&AudioSpecDesired> for SdlAudioSpecDesired {
     }
 }
 
+#[doc(hidden)]
 impl From<SdlAudioSpec> for AudioSpec {
+    /// Convert [`SdlAudioSpec`] to [`AudioSpec`].
     fn from(spec: SdlAudioSpec) -> Self {
         Self {
             freq: spec.freq,
@@ -162,7 +171,9 @@ impl From<SdlAudioSpec> for AudioSpec {
     }
 }
 
+#[doc(hidden)]
 impl From<SdlAudioStatus> for AudioStatus {
+    /// Convert [`SdlAudioStatus`] to [`AudioStatus`].
     fn from(status: SdlAudioStatus) -> Self {
         match status {
             SdlAudioStatus::Stopped => Self::Stopped,
