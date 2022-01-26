@@ -309,36 +309,42 @@ impl PixState {
 
     /// Return the current day between 1-31.
     #[inline]
+    #[must_use]
     pub fn day() -> u32 {
         Local::now().day()
     }
 
     /// Return the current month between 1-12.
     #[inline]
+    #[must_use]
     pub fn month() -> u32 {
         Local::now().month()
     }
 
     /// Return the current year as an integer.
     #[inline]
+    #[must_use]
     pub fn year() -> i32 {
         Local::now().year()
     }
 
     /// Return the current hour between 0-23.
     #[inline]
+    #[must_use]
     pub fn hour() -> u32 {
         Local::now().hour()
     }
 
     /// Return the current minute between 0-59.
     #[inline]
+    #[must_use]
     pub fn minute() -> u32 {
         Local::now().minute()
     }
 
     /// Return the current second between 0-59.
     #[inline]
+    #[must_use]
     pub fn second() -> u32 {
         Local::now().second()
     }

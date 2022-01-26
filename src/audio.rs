@@ -285,26 +285,34 @@ pub struct AudioDevice<CB: AudioCallback> {
 
 impl<CB: AudioCallback> AudioDevice<CB> {
     /// Return the status of this audio callback device.
+    #[inline]
+    #[must_use]
     pub fn audio_status(&self) -> AudioStatus {
         self.inner.status().into()
     }
 
     /// Return the current driver of this audio callback device.
+    #[inline]
+    #[must_use]
     pub fn audio_driver(&self) -> &'static str {
         self.inner.subsystem().current_audio_driver()
     }
 
     /// Returns the sample rate for this audio callback device.
+    #[inline]
+    #[must_use]
     pub fn audio_sample_rate(&self) -> i32 {
         self.inner.spec().freq
     }
 
     /// Resumes playback of this audio callback device.
+    #[inline]
     pub fn resume(&self) {
         self.inner.resume();
     }
 
     /// Pause playback of this audio callback device.
+    #[inline]
     pub fn pause(&self) {
         self.inner.resume();
     }
@@ -349,11 +357,13 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn enqueue_audio<S: AsRef<[f32]>>(&mut self, samples: S) {
         self.renderer.enqueue_audio(samples.as_ref());
     }
 
     /// Clear audio samples from the current audio buffer queue.
+    #[inline]
     pub fn clear_audio(&mut self) {
         self.renderer.clear_audio();
     }
@@ -380,16 +390,22 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
+    #[must_use]
     pub fn audio_status(&self) -> AudioStatus {
         self.renderer.audio_status()
     }
 
     /// Return the current driver of this audio callback device.
+    #[inline]
+    #[must_use]
     pub fn audio_driver(&self) -> &'static str {
         self.renderer.audio_driver()
     }
 
     /// Returns the sample rate for the current audio queue device.
+    #[inline]
+    #[must_use]
     pub fn audio_sample_rate(&self) -> i32 {
         self.renderer.audio_sample_rate()
     }
@@ -414,6 +430,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn resume_audio(&mut self) {
         self.renderer.resume_audio();
     }
@@ -438,14 +455,19 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    #[inline]
     pub fn pause_audio(&mut self) {
         self.renderer.pause_audio();
     }
 
     /// Opens and returns an audio callback device for playback.
     ///
-    /// Call [resume](`AudioDevice::resume`) to start playback and [pause](`AudioDevice::pause`) to
-    /// stop playback.
+    /// The audio device starts out `paused`. Call [resume](`AudioDevice::resume`) to start
+    /// playback and [pause](`AudioDevice::pause`) to stop playback.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to open an audio device, then an error is returned.
     ///
     /// # Example
     ///
@@ -503,6 +525,7 @@ impl PixState {
     /// }
     /// ```
     #[allow(single_use_lifetimes)]
+    #[inline]
     pub fn open_playback<'a, CB, F, D>(
         &self,
         device: D,
@@ -520,8 +543,12 @@ impl PixState {
 
     /// Opens and returns an audio capture device for recording.
     ///
-    /// Call [resume](`AudioDevice::resume`) to start recording and [pause](`AudioDevice::pause`)
-    /// to stop recording.
+    /// The audio device starts out `paused`. Call [resume](`AudioDevice::resume`) to start
+    /// recording and [pause](`AudioDevice::pause`) to stop recording.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to open an audio device, then an error is returned.
     ///
     /// # Example
     ///
@@ -597,6 +624,7 @@ impl PixState {
     /// }
     /// ```
     #[allow(single_use_lifetimes)]
+    #[inline]
     pub fn open_capture<'a, CB, F, D>(
         &self,
         device: D,

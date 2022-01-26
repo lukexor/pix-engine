@@ -462,7 +462,7 @@ impl PixState {
         let s = &self.settings;
         let pos = pos.into();
         let mut angle = angle.into().unwrap_or(0.0);
-        if let AngleMode::Degrees = s.angle_mode {
+        if s.angle_mode == AngleMode::Degrees {
             angle = angle.to_radians();
         };
         let scale = scale.into().unwrap_or(1.0);

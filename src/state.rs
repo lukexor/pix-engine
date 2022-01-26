@@ -427,7 +427,7 @@ impl PixState {
         R: Into<Rect<i32>>,
     {
         let mut rect = rect.into();
-        if let RectMode::Center = self.settings.rect_mode {
+        if self.settings.rect_mode == RectMode::Center {
             rect.center_on(rect.top_left());
         }
         rect
@@ -440,7 +440,7 @@ impl PixState {
         E: Into<Ellipse<i32>>,
     {
         let mut ellipse = ellipse.into();
-        if let RectMode::Corner = self.settings.ellipse_mode {
+        if self.settings.ellipse_mode == RectMode::Corner {
             ellipse.center_on(ellipse.bottom_right());
         }
         ellipse
@@ -490,6 +490,11 @@ impl PixState {
     }
 
     /// Open a controller with a given ID to start handling events.
+    ///
+    /// # Errors
+    ///
+    /// If the `ControllerId` is invalid or the renderer fails to open the controller, then an
+    /// error is returned.
     #[inline]
     pub fn open_controller(&mut self, id: ControllerId) -> PixResult<()> {
         self.renderer.open_controller(id)

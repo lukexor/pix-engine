@@ -493,7 +493,7 @@ impl<T: Num> Rect<T> {
             point![
                 NumCast::from(((x - cx).mul_add(cos, cx) - (y - cy) * sin).round())
                     .expect("valid number cast"),
-                NumCast::from(((x - cx).mul_add(sin, cy) + (y - cy) * cos).round())
+                NumCast::from(((y - cy).mul_add(cos, (x - cx).mul_add(sin, cy))).round())
                     .expect("valid number cast"),
             ]
         });

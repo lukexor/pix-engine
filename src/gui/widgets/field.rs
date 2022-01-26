@@ -342,19 +342,18 @@ impl PixState {
         let mut text_height = clamp_size(text_height);
 
         // Process input
-        let mut changed = focused && s.handle_text_events(value)?;
-        if focused {
-            if let Some(Key::Return) = s.ui.key_entered() {
+        let changed = focused && {
+            if s.ui.key_entered() == Some(Key::Return) {
                 value.push('\n');
-                changed = true;
+                true
+            } else {
+                s.handle_text_events(value)?
             }
-        }
+        };
         if changed {
             value.retain(|c| c == '\n' || !c.is_control());
             if let Some(filter) = filter {
-                if changed {
-                    value.retain(filter);
-                }
+                value.retain(filter);
             }
 
             // Keep cursor within scroll region
@@ -400,7 +399,7 @@ impl PixState {
                     } else if s.keymod_down(KeyMod::ALT) {
                         // If last char is whitespace, remove it so we find the next previous
                         // word
-                        if let Some(true) = value.chars().last().map(char::is_whitespace) {
+                        if value.chars().last().map(char::is_whitespace) == Some(true) {
                             value.pop();
                         }
                         if let Some(idx) = value.rfind(char::is_whitespace) {

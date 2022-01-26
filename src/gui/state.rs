@@ -191,6 +191,7 @@ impl UiState {
 
     /// Helper function to hash element labels.
     #[inline]
+    #[must_use]
     pub(crate) fn get_id<T: Hash>(&self, t: &T) -> ElementId {
         let mut hasher = DefaultHasher::new();
         t.hash(&mut hasher);
@@ -202,6 +203,9 @@ impl UiState {
 
     /// Helper to strip out any ID-specific patterns from a label.
     #[inline]
+    #[must_use]
+    // FIXME: In the future labels will require internal state.
+    #[allow(clippy::unused_self)]
     pub(crate) fn get_label<'a>(&self, label: &'a str) -> &'a str {
         label.split("##").next().unwrap_or("")
     }
@@ -226,7 +230,7 @@ impl UiState {
 
     /// Returns the current offset for the current UI rendering position.
     #[inline]
-    pub(crate) fn column_offset(&self) -> i32 {
+    pub(crate) const fn column_offset(&self) -> i32 {
         self.column_offset
     }
 
@@ -304,12 +308,14 @@ impl UiState {
     /// `active` elements, it is marked `hovered` and receives a mouse down event for the
     /// [`Mouse::Left`] button. `active` is cleared after every frame.
     #[inline]
+    #[must_use]
     pub(crate) fn is_active(&self, id: ElementId) -> bool {
         !self.disabled && matches!(self.active, Some(el) if el == id)
     }
 
     /// Whether any element is currently `active`.
     #[inline]
+    #[must_use]
     pub(crate) const fn has_active(&self) -> bool {
         self.active.is_some()
     }
@@ -330,12 +336,14 @@ impl UiState {
     /// the widget, but generally involves checking if the [`PixState::mouse_pos`] is within the
     /// elements bounding area.
     #[inline]
+    #[must_use]
     pub(crate) fn is_hovered(&self, id: ElementId) -> bool {
         matches!(self.hovered, Some(el) if el == id)
     }
 
     /// Whether any element currently is `hovered`.
     #[inline]
+    #[must_use]
     pub(crate) const fn has_hover(&self) -> bool {
         self.hovered.is_some()
     }
@@ -370,12 +378,14 @@ impl UiState {
     /// Whether an element is `focused` or not. An element is `focused` when it captures it via
     /// tab-cycling, or if it is clicked.
     #[inline]
+    #[must_use]
     pub(crate) fn is_focused(&self, id: ElementId) -> bool {
         !self.disabled && matches!(self.focused, Some(el) if el == id)
     }
 
     /// Whether any element currently has `focus`.
     #[inline]
+    #[must_use]
     pub(crate) const fn has_focused(&self) -> bool {
         self.focused.is_some()
     }
@@ -404,6 +414,7 @@ impl UiState {
 
     /// Whether an element is being edited or not.
     #[inline]
+    #[must_use]
     pub(crate) fn is_editing(&self, id: ElementId) -> bool {
         !self.disabled && matches!(self.editing, Some(el) if el == id)
     }
@@ -449,6 +460,7 @@ impl UiState {
     /// If mouse isn't down this frame, it means mouse was both clicked and released above an
     /// element
     #[inline]
+    #[must_use]
     pub(crate) fn was_clicked(&mut self, id: ElementId) -> bool {
         // Enter simulates a click
         if self.is_focused(id) && self.keys.was_entered(Key::Return) {
@@ -463,6 +475,7 @@ impl UiState {
     /// Return what, if any, [Key] was entered this frame. This is cleared at the end of each
     /// frame.
     #[inline]
+    #[must_use]
     pub(crate) const fn key_entered(&self) -> Option<Key> {
         self.keys.entered
     }
@@ -503,6 +516,7 @@ impl UiState {
 
     /// Returns the current `text_edit` state for this element.
     #[inline]
+    #[must_use]
     pub(crate) fn text_edit<S>(&mut self, id: ElementId, initial_text: S) -> String
     where
         S: Into<String>,
@@ -531,6 +545,7 @@ impl UiState {
 
     /// Returns the currently selected tab state for this element.
     #[inline]
+    #[must_use]
     pub(crate) fn current_tab(&mut self, id: ElementId) -> usize {
         self.elements
             .get(&id)
@@ -556,6 +571,7 @@ impl UiState {
 
     /// Parses the current `text_edit` state for this element into a given type.
     #[inline]
+    #[must_use]
     pub(crate) fn parse_text_edit<T>(&mut self, id: ElementId, default: T) -> T
     where
         T: FromStr + Copy,
@@ -568,6 +584,7 @@ impl UiState {
 
     /// Returns whether the current element is expanded or not.
     #[inline]
+    #[must_use]
     pub(crate) fn expanded(&mut self, id: ElementId) -> bool {
         self.elements
             .get_mut(&id)
@@ -593,6 +610,7 @@ impl UiState {
     /// Returns the width of the last rendered UI element, or 0 if there is no last rendered
     /// element.
     #[inline]
+    #[must_use]
     pub(crate) fn last_width(&self) -> i32 {
         self.last_size.map(|s| s.width()).unwrap_or_default()
     }

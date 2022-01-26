@@ -196,7 +196,7 @@ impl PixState {
         F: Into<Option<Flipped>>,
     {
         let s = &self.settings;
-        if let AngleMode::Radians = s.angle_mode {
+        if s.angle_mode == AngleMode::Radians {
             angle = angle.to_degrees();
         };
         self.renderer.texture(

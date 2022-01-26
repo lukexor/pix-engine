@@ -114,7 +114,7 @@ impl AddAssign for Color {
 
 impl AddAssign<u8> for Color {
     fn add_assign(&mut self, val: u8) {
-        for v in self.channels.iter_mut() {
+        for v in &mut self.channels {
             *v = v.saturating_add(val);
         }
     }

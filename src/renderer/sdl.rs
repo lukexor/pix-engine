@@ -265,7 +265,7 @@ impl Rendering for Renderer {
     #[inline]
     fn clip(&mut self, rect: Option<Rect<i32>>) -> PixResult<()> {
         self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
-            canvas.set_clip_rect(rect.map(|rect| rect.into()));
+            canvas.set_clip_rect(rect.map(Into::into));
             Ok(())
         })
     }
@@ -363,7 +363,7 @@ impl Rendering for Renderer {
                 let dst = Some(SdlRect::new(pos.x(), pos.y(), width, height));
                 let result = if angle.is_some() || center.is_some() || flipped.is_some() {
                     let angle = angle.unwrap_or(0.0);
-                    let center = center.map(|c| c.into());
+                    let center = center.map(Into::into);
                     let horizontal = matches!(flipped, Some(Flipped::Horizontal | Flipped::Both));
                     let vertical = matches!(flipped, Some(Flipped::Vertical | Flipped::Both));
                     canvas.copy_ex(texture, src, dst, angle, center, horizontal, vertical)
@@ -557,21 +557,27 @@ impl Rendering for Renderer {
         self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
             let [x, y, width, height] = rect.map(|v| v as i16);
             if let Some(fill) = fill {
-                if let Some(radius) = radius {
-                    canvas.rounded_box(x, y, x + width, y + height, radius as i16, fill)
-                } else {
-                    // EXPL: SDL2_gfx renders this 1px bigger than it should.
-                    canvas.box_(x, y, x + width - 1, y + height - 1, fill)
-                }
-                .map_err(PixError::Renderer)?;
+                radius
+                    .map_or_else(
+                        // EXPL: SDL2_gfx renders this 1px bigger than it should.
+                        || canvas.box_(x, y, x + width - 1, y + height - 1, fill),
+                        |radius| {
+                            let radius = radius as i16;
+                            canvas.rounded_box(x, y, x + width, y + height, radius, fill)
+                        },
+                    )
+                    .map_err(PixError::Renderer)?;
             }
             if let Some(stroke) = stroke {
-                if let Some(radius) = radius {
-                    canvas.rounded_rectangle(x, y, x + width, y + height, radius as i16, stroke)
-                } else {
-                    canvas.rectangle(x, y, x + width, y + height, stroke)
-                }
-                .map_err(PixError::Renderer)?;
+                radius
+                    .map_or_else(
+                        || canvas.rectangle(x, y, x + width, y + height, stroke),
+                        |radius| {
+                            let radius = radius as i16;
+                            canvas.rounded_rectangle(x, y, x + width, y + height, radius, stroke)
+                        },
+                    )
+                    .map_err(PixError::Renderer)?;
             }
             Ok(())
         })
@@ -758,10 +764,10 @@ impl Rendering for Renderer {
             .context("failed to update image texture")?;
 
         let update = |canvas: &mut Canvas<_>| -> PixResult<()> {
-            let src = src.map(|r| r.into());
-            let dst = dst.map(|r| r.into());
+            let src = src.map(Into::into);
+            let dst = dst.map(Into::into);
             if angle > 0.0 || center.is_some() || flipped.is_some() {
-                let center = center.map(|c| c.into());
+                let center = center.map(Into::into);
                 let horizontal = matches!(flipped, Some(Flipped::Horizontal | Flipped::Both));
                 let vertical = matches!(flipped, Some(Flipped::Vertical | Flipped::Both));
                 canvas.copy_ex(texture, src, dst, angle, center, horizontal, vertical)
@@ -900,7 +906,7 @@ impl From<Color> for SdlColor {
 
 #[doc(hidden)]
 impl From<FontStyle> for SdlFontStyle {
-    /// Convert [FontStyle] to [`SdlFontStyle`].
+    /// Convert [`FontStyle`] to [`SdlFontStyle`].
     fn from(style: FontStyle) -> Self {
         Self::from_bits(style.bits()).expect("valid FontStyle")
     }

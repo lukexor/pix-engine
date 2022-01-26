@@ -130,7 +130,7 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-pix-engine = { version = "0.5.3", features = ["use-vcpkg"] }
+pix-engine = { version = "0.5.4", features = ["vcpkg"] }
 
 [package.metadata.vcpkg]
 dependencies = ["sdl2", "sdl2-image[libjpeg-turbo,tiff,libwebp]", "sdl2-ttf", "sdl2-gfx", "sdl2-mixer"]
@@ -258,7 +258,7 @@ fn main() -> PixResult<()> {
   backtraces based on environment variables outlined in
   [std::backtrace][]. Useful for debugging.
 
-* **use-vcpkg** -
+* **vcpkg** -
   Enables static linking of the [SDL2][] libraries which are dependencies for
   macOS, Linux, and Windows targets. Using this feature is the easiest way to
   get up and running unless you already have `SDL2` installed on your system.

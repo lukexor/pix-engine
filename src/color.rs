@@ -334,7 +334,7 @@ impl Color {
     /// ```
     pub fn with_mode_alpha<T: Into<Scalar>>(mode: Mode, v1: T, v2: T, v3: T, alpha: T) -> Self {
         let [v1, v2, v3, alpha] = [v1.into(), v2.into(), v3.into(), alpha.into()];
-        let channels = if let Rgb = mode {
+        let channels = if mode == Rgb {
             [v1 as u8, v2 as u8, v3 as u8, alpha as u8]
         } else {
             // Normalize channels

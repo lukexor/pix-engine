@@ -24,11 +24,11 @@
 //! let c = Color::from_slice(ColorMode::Rgb, &vals)?;
 //! assert_eq!(c.channels(), [128, 64, 0, 255]);
 //!
-//! let c = Color::from_hex(0xF0FF00FF);
+//! let c = Color::from_hex(0xF0FF_00FF);
 //! assert_eq!(c.channels(), [240, 255, 0, 255]);
 //!
 //! let c = Color::rgba(255, 0, 255, 125);
-//! assert_eq!(c.inverted().as_hex(), 0xFF00FF7D);
+//! assert_eq!(c.inverted().as_hex(), 0xFF00_FF7D);
 //!
 //! let from = rgb!(255, 0, 0);
 //! let to = rgb!(0, 100, 255);
@@ -100,10 +100,10 @@ impl Color {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let c = Color::from_hex_alpha(0xF0FF00FF);
+    /// let c = Color::from_hex_alpha(0xF0FF_00FF);
     /// assert_eq!(c.channels(), [240, 255, 0, 255]);
     ///
-    /// let c = Color::from_hex_alpha(0xF0FF0080);
+    /// let c = Color::from_hex_alpha(0xF0FF_0080);
     /// assert_eq!(c.channels(), [240, 255, 0, 128]);
     /// ```
     #[inline]
@@ -122,9 +122,9 @@ impl Color {
     /// assert_eq!(c.inverted().as_hex(), 0x0F00FF);
     /// ```
     #[inline]
-    pub fn inverted(&self) -> Self {
+    pub const fn inverted(&self) -> Self {
         let hex = self.as_hex();
-        Self::from_hex(0xFFFFFF ^ hex)
+        Self::from_hex(0x00FF_FFFF ^ hex)
     }
 
     /// Constructs an opaque `Color` blended over a given background, using an alpha value.

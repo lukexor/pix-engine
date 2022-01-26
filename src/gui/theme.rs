@@ -387,7 +387,8 @@ pub struct Colors {
 
 impl Colors {
     /// A dark color theme.
-    pub fn dark() -> Self {
+    #[allow(clippy::unreadable_literal)]
+    pub const fn dark() -> Self {
         Self {
             background: Color::from_hex(0x121212),
             surface: Color::from_hex(0x121212),
@@ -405,7 +406,8 @@ impl Colors {
     }
 
     /// A light color theme.
-    pub fn light() -> Self {
+    #[allow(clippy::unreadable_literal)]
+    pub const fn light() -> Self {
         Self {
             background: Color::from_hex(0xffffff),
             surface: Color::from_hex(0xffffff),
@@ -481,7 +483,7 @@ impl SpacingBuilder {
     }
 
     /// Convert `SpacingBuilder` into a [Spacing] instance.
-    pub fn build(&self) -> Spacing {
+    pub const fn build(&self) -> Spacing {
         Spacing {
             frame_pad: self.frame_pad,
             item_pad: self.item_pad,
@@ -510,9 +512,9 @@ impl Default for Spacing {
 }
 
 impl Spacing {
-    /// Constructs a default [SpacingBuilder] which can build a `Spacing` instance.
+    /// Constructs a default [`SpacingBuilder`] which can build a `Spacing` instance.
     ///
-    /// See [SpacingBuilder] for examples.
+    /// See [`SpacingBuilder`] for examples.
     pub fn builder() -> SpacingBuilder {
         SpacingBuilder::default()
     }

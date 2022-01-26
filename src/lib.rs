@@ -58,33 +58,33 @@ pub mod transform;
 
 /// Exports most commonly used types, traits, and functions.
 pub mod prelude {
-    use super::*;
-
-    pub use appstate::AppState;
-    pub use audio::{AudioCallback, AudioDevice, AudioSpec, AudioSpecDesired, AudioStatus};
-    pub use color::{Color, Mode as ColorMode};
-    pub use draw::Draw;
-    pub use engine::PixEngine;
-    pub use error::{Error as PixError, Result as PixResult};
-    pub use event::{
+    pub use super::appstate::AppState;
+    pub use super::audio::{AudioCallback, AudioDevice, AudioSpec, AudioSpecDesired, AudioStatus};
+    pub use super::color::{Color, Mode as ColorMode};
+    pub use super::draw::Draw;
+    pub use super::engine::PixEngine;
+    pub use super::error::{Error as PixError, Result as PixResult};
+    pub use super::event::{
         Axis, ControllerButton, ControllerEvent, ControllerId, ControllerUpdate, Event, HatState,
         Key, KeyEvent, KeyMod, Mouse, WindowEvent,
     };
-    pub use graphics::lighting::{Light, LightSource};
-    pub use gui::theme::{self, ColorType, Font, Theme};
-    pub use image::{Image, PixelFormat};
-    pub use math::{map, random_rng, Float, Num, Scalar};
-    pub use shape::{Contains, Ellipse, Intersects, Line, Point, PointI2, Quad, Rect, Sphere, Tri};
-    pub use state::{
+    pub use super::graphics::lighting::{Light, LightSource};
+    pub use super::gui::theme::{self, ColorType, Font, Theme};
+    pub use super::image::{Image, PixelFormat};
+    pub use super::math::{map, random_rng, Float, Num, Scalar};
+    pub use super::shape::{
+        Contains, Ellipse, Intersects, Line, Point, PointI2, Quad, Rect, Sphere, Tri,
+    };
+    pub use super::state::{
         settings::{
             AngleMode, ArcMode, BlendMode, DrawMode, EllipseMode, FontStyle, ImageMode, RectMode,
         },
         PixState,
     };
-    pub use texture::TextureId;
-    pub use transform::Flipped;
-    pub use vector::Vector;
-    pub use window::{Cursor, Position, SystemCursor, WindowBuilder, WindowId};
+    pub use super::texture::TextureId;
+    pub use super::transform::Flipped;
+    pub use super::vector::Vector;
+    pub use super::window::{Cursor, Position, SystemCursor, WindowBuilder, WindowId};
 
     // Shape macros
     pub use {circle, ellipse, line_, point, quad, rect, sphere, square, tri};

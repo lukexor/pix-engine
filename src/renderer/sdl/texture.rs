@@ -1,10 +1,7 @@
 use super::Renderer;
 use crate::{prelude::*, renderer::TextureRenderer};
 use anyhow::Context;
-use sdl2::{
-    rect::Rect as SdlRect,
-    render::{Canvas, Texture as SdlTexture},
-};
+use sdl2::render::{Canvas, Texture as SdlTexture};
 use std::{
     cell::RefCell,
     ops::{Deref, DerefMut},
@@ -58,7 +55,7 @@ impl TextureRenderer for Renderer {
         let window_canvas = self.window_canvas_mut()?;
         let texture = window_canvas
             .canvas
-            .create_texture_target(format.map(|f| f.into()), width, height)
+            .create_texture_target(format.map(Into::into), width, height)
             .context("failed to create texture")?;
         let texture_id = TextureId(texture_id);
         window_canvas
@@ -101,10 +98,9 @@ impl TextureRenderer for Renderer {
         if let Some(window) = window {
             // We ensured there's a valid texture above
             let texture = window.textures.get(&texture_id).expect("valid texture");
-            let rect: Option<SdlRect> = rect.map(|r| r.into());
             Ok(texture
                 .borrow_mut()
-                .update(rect, pixels.as_ref(), pitch)
+                .update(rect.map(Into::into), pixels.as_ref(), pitch)
                 .context("failed to update texture")?)
         } else {
             Err(PixError::InvalidTexture(texture_id).into())
@@ -147,8 +143,8 @@ impl TextureRenderer for Renderer {
                 texture.set_alpha_mod(a);
                 texture.set_blend_mode(self.blend_mode);
             }
-            let src = src.map(|r| r.into());
-            let dst = dst.map(|r| r.into());
+            let src = src.map(Into::into);
+            let dst = dst.map(Into::into);
             let update = |canvas: &mut Canvas<_>| -> PixResult<()> {
                 let result = if angle > 0.0 || center.is_some() || flipped.is_some() {
                     canvas.copy_ex(
@@ -156,7 +152,7 @@ impl TextureRenderer for Renderer {
                         src,
                         dst,
                         angle,
-                        center.map(|c| c.into()),
+                        center.map(Into::into),
                         matches!(flipped, Some(Flipped::Horizontal | Flipped::Both)),
                         matches!(flipped, Some(Flipped::Vertical | Flipped::Both)),
                     )

@@ -289,7 +289,7 @@ impl WindowRenderer for Renderer {
     /// Returns a single event or None if the event pump is empty.
     #[inline]
     fn poll_event(&mut self) -> Option<Event> {
-        self.event_pump.poll_event().map(|evt| evt.into())
+        self.event_pump.poll_event().map(Into::into)
     }
 
     /// Get the current window title.
@@ -372,7 +372,7 @@ impl WindowRenderer for Renderer {
     /// Set the rendering viewport of the current render target.
     #[inline]
     fn set_viewport(&mut self, rect: Option<Rect<i32>>) -> PixResult<()> {
-        self.canvas_mut()?.set_viewport(rect.map(|r| r.into()));
+        self.canvas_mut()?.set_viewport(rect.map(Into::into));
         Ok(())
     }
 

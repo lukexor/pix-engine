@@ -183,15 +183,15 @@ impl PixState {
 
         let disabled = s.ui.disabled;
         let mut pos = s.cursor_pos();
-        if let RectMode::Center = s.settings.rect_mode {
+        if s.settings.rect_mode == RectMode::Center {
             let (width, height) = s.size_of(text)?;
             pos.offset([-(clamp_size(width) / 2), -(clamp_size(height) / 2)]);
         };
         let mut angle_radians = angle;
-        if let AngleMode::Radians = s.settings.angle_mode {
-            angle = angle.map(|a| a.to_degrees());
+        if s.settings.angle_mode == AngleMode::Radians {
+            angle = angle.map(Scalar::to_degrees);
         } else {
-            angle_radians = angle.map(|a| a.to_radians());
+            angle_radians = angle.map(Scalar::to_radians);
         }
 
         let mut render_text = |mut color: Color, outline: u8| -> PixResult<(u32, u32)> {
@@ -445,13 +445,9 @@ impl PixState {
         s.pop();
 
         // Process input
-        if hovered && s.ui.was_clicked(id) {
+        if (hovered && s.ui.was_clicked(id)) || (focused && s.ui.key_entered() == Some(Key::Return))
+        {
             s.ui.set_expanded(id, !expanded);
-        }
-        if focused {
-            if let Some(Key::Return) = s.ui.key_entered() {
-                s.ui.set_expanded(id, !expanded);
-            }
         }
         s.ui.handle_events(id);
 
@@ -534,13 +530,9 @@ impl PixState {
         s.pop();
 
         // Process input
-        if hovered && s.ui.was_clicked(id) {
+        if (hovered && s.ui.was_clicked(id)) || (focused && s.ui.key_entered() == Some(Key::Return))
+        {
             s.ui.set_expanded(id, !expanded);
-        }
-        if focused {
-            if let Some(Key::Return) = s.ui.key_entered() {
-                s.ui.set_expanded(id, !expanded);
-            }
         }
         s.ui.handle_events(id);
 

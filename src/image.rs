@@ -319,6 +319,8 @@ impl Image {
     /// This consumes the `Image`, so we do not need to copy its contents.
     #[inline]
     #[must_use]
+    // FIXME: https://github.com/rust-lang/rust-clippy/issues/4979
+    #[allow(clippy::missing_const_for_fn)]
     pub fn into_bytes(self) -> Vec<u8> {
         self.data
     }
@@ -508,11 +510,11 @@ impl PixState {
     {
         let s = &self.settings;
         let mut dst = dst.into();
-        if let ImageMode::Center = s.image_mode {
+        if s.image_mode == ImageMode::Center {
             dst = dst.map(|dst| Rect::from_center(dst.top_left(), dst.width(), dst.height()));
         };
         let mut angle = angle.into().unwrap_or(0.0);
-        if let AngleMode::Radians = s.angle_mode {
+        if s.angle_mode == AngleMode::Radians {
             angle = angle.to_degrees();
         };
         self.renderer.image(

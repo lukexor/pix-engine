@@ -53,16 +53,16 @@ jobs:
       run: cargo vcpkg -v build
 
     - name: Build source
-      run: cargo build --all-targets --features "serde use-vcpkg" --verbose
+      run: cargo build --all-targets --features "serde vcpkg" --verbose
 
     - name: Build documentation
-      run: cargo doc --features "serde use-vcpkg" --verbose
+      run: cargo doc --features "serde vcpkg" --verbose
 
     - name: Run unit tests
-      run: cargo test --features "serde use-vcpkg" --verbose
+      run: cargo test --features "serde vcpkg" --verbose
 
     - name: Run integration tests
       # TODO: Fix missing video device on linux and audio API issue on windows
       if: ${{ matrix.os == 'macos-latest' }}
       run: |
-        cargo test run_engine --features "serde use-vcpkg" -- --test-threads=1 --ignored
+        cargo test run_engine --features "serde vcpkg" -- --test-threads=1 --ignored

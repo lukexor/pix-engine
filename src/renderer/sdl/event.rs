@@ -28,7 +28,7 @@ impl From<SdlEvent> for Event {
                 repeat,
                 ..
             } => Self::KeyDown {
-                key: keycode.map(|k| k.into()),
+                key: keycode.map(Into::into),
                 keymod: keymod.into(),
                 repeat,
             },
@@ -38,7 +38,7 @@ impl From<SdlEvent> for Event {
                 repeat,
                 ..
             } => Self::KeyUp {
-                key: keycode.map(|k| k.into()),
+                key: keycode.map(Into::into),
                 keymod: keymod.into(),
                 repeat,
             },
