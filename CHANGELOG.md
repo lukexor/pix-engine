@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Changed
+
+- Improved element focus and blur.
+
 ## [0.5.4] - 2022-01-26
 
 ### Added

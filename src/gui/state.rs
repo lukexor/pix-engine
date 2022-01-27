@@ -23,6 +23,10 @@ use std::{
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct ElementId(pub u64);
 
+impl ElementId {
+    const NONE: Self = ElementId(0);
+}
+
 impl fmt::Display for ElementId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
@@ -153,7 +157,7 @@ impl Default for UiState {
             elements: LruCache::new(ELEMENT_CACHE_SIZE),
             active: None,
             hovered: None,
-            focused: None,
+            focused: Some(ElementId::NONE),
             editing: None,
             last_focusable: None,
             last_size: None,
@@ -409,7 +413,7 @@ impl UiState {
     /// Clears the current `focused` element.
     #[inline]
     pub(crate) fn blur(&mut self) {
-        self.focused = None;
+        self.focused = Some(ElementId::NONE);
     }
 
     /// Whether an element is being edited or not.
@@ -434,21 +438,31 @@ impl UiState {
     /// Handles global element inputs for `focused` checks.
     #[inline]
     pub(crate) fn handle_events(&mut self, id: ElementId) {
-        // Tab-focus cycling
-        // If element is focused when Tab pressed, clear it so the next element can capture focus.
-        // If SHIFT was held, re-focus the last element rendered
-        // Clear keys, so next element doesn't trigger tab logic
-        if self.is_focused(id) && self.keys.was_entered(Key::Tab) {
-            self.blur();
-            if self.keys.mod_down(KeyMod::SHIFT) {
-                self.focused = self.last_focusable;
+        if self.keys.was_entered(Key::Tab) {
+            // Tab-focus cycling
+            // If element is focused when Tab pressed, clear it so the next element can capture focus.
+            // If SHIFT was held, re-focus the last element rendered
+            // Clear keys, so next element doesn't trigger tab logic
+            let no_focus = self.focused == Some(ElementId::NONE);
+            let focused = self.is_focused(id);
+            if no_focus || focused {
+                if self.keys.mod_down(KeyMod::SHIFT) {
+                    self.focused = self.last_focusable;
+                    self.clear_entered();
+                } else if focused {
+                    self.focused = None;
+                    self.clear_entered();
+                } else if no_focus {
+                    self.focused = Some(id);
+                    self.clear_entered();
+                }
             }
-            self.clear_entered();
-        }
-        // Click focusing
-        let clicked = !self.mouse.is_down(Mouse::Left) && self.is_hovered(id) && self.is_active(id);
-        if clicked {
+        } else if !self.mouse.is_down(Mouse::Left) && self.is_active(id) && self.is_hovered(id) {
+            // Click focusing on release
             self.focus(id);
+        } else if self.mouse.is_down(Mouse::Left) && !(self.is_active(id) || self.is_hovered(id)) {
+            // Click outside to blur
+            self.blur()
         }
         self.last_focusable = Some(id);
     }

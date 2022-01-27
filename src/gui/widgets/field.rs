@@ -185,7 +185,12 @@ impl PixState {
         s.pop();
 
         // Process input
-        let changed = focused && s.handle_text_events(value)?;
+        let changed = focused && {
+            if let Some(Key::Return | Key::Escape) = s.ui.key_entered() {
+                s.ui.blur();
+            }
+            s.handle_text_events(value)?
+        };
         if changed {
             value.retain(|c| !c.is_control());
             if let Some(filter) = filter {
@@ -343,11 +348,16 @@ impl PixState {
 
         // Process input
         let changed = focused && {
-            if s.ui.key_entered() == Some(Key::Return) {
-                value.push('\n');
-                true
-            } else {
-                s.handle_text_events(value)?
+            match s.ui.key_entered() {
+                Some(Key::Return) => {
+                    value.push('\n');
+                    true
+                }
+                Some(Key::Escape) => {
+                    s.ui.blur();
+                    false
+                }
+                _ => s.handle_text_events(value)?,
             }
         };
         if changed {
