@@ -792,7 +792,7 @@ impl PixState {
         self.ui.cursor = point![padx + offset_x, pos.y() + line_height + pady];
         self.ui.pline_height = line_height;
         self.ui.line_height = 0;
-        self.ui.last_size = Some(rect![self.ui.cursor, size.x(), size.y()]);
+        self.ui.last_size = Some(rect![pos, size.x(), size.y()]);
     }
 
     /// Get or create a UI texture to render to

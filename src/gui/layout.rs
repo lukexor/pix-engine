@@ -180,7 +180,7 @@ impl PixState {
 
             // Calculate tab size
             let (width, height) = s.text_size(tab_label)?;
-            let tab = rect![pos + fpad.x(), width, height].offset_size(2 * ipad);
+            let tab = rect![pos + fpad, width, height].offset_size(2 * ipad);
 
             // Check hover/active/keyboard focus
             let hovered = s.ui.try_hover(id, &tab);
@@ -247,8 +247,8 @@ impl PixState {
         let fpad = s.theme.spacing.frame_pad;
         s.push();
         s.stroke(colors.disabled());
-        let y = pos.y() + 1;
-        let line_width = s.ui_width()? - fpad.x();
+        let y = pos.y() + fpad.y() + 1;
+        let line_width = s.ui_width()?;
         s.line(line_![fpad.x(), y, line_width, y])?;
         s.pop();
         s.advance_cursor([line_width, fpad.y()]);

@@ -268,7 +268,7 @@ impl PixState {
         }
         if rect.bottom() > win_height {
             let offset = (rect.bottom() - win_height) + pad.y();
-            rect = rect.offset([-offset, 0]);
+            rect = rect.offset([0, -offset]);
             let mpos = s.mouse_pos();
             if rect.contains_point(mpos) {
                 rect.set_bottom(mpos.y() - pad.y());

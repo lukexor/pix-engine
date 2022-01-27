@@ -26,7 +26,6 @@ use crate::{
     ops::clamp_size,
     prelude::*,
 };
-use anyhow::bail;
 use std::cmp;
 
 /// The maximum number of select elements that can be displayed at once.
@@ -63,7 +62,7 @@ impl PixState {
         label: S,
         selected: &mut usize,
         items: &[I],
-        displayed_count: usize,
+        mut displayed_count: usize,
     ) -> PixResult<bool>
     where
         S: AsRef<str>,
@@ -72,13 +71,10 @@ impl PixState {
         let label = label.as_ref();
 
         if displayed_count > MAX_DISPLAYED {
-            bail!("displayed_count exceeds maximum of: {}", MAX_DISPLAYED);
-        } else if *selected > items.len() {
-            bail!(
-                "selected out of bounds: the len is {} but the value is {}",
-                items.len(),
-                *selected
-            );
+            displayed_count = MAX_DISPLAYED;
+        }
+        if *selected >= items.len() {
+            *selected = items.len() - 1;
         }
 
         let s = self;
@@ -140,10 +136,14 @@ impl PixState {
         if arrow_x + arrow_width - fpad.x() <= select_box.right() {
             s.no_stroke();
             s.fill(fg);
+            s.clip(arrow_box)?;
             s.arrow(
-                [arrow_x + fpad.y(), select_y + fpad.y()],
+                [
+                    arrow_x + fpad.y(),
+                    select_y + arrow_box.height() / 2 - arrow_width / 4,
+                ],
                 Direction::Down,
-                1.0,
+                fpad.y() as Scalar / 8.0,
             )?;
         }
 
@@ -221,7 +221,7 @@ impl PixState {
         label: S,
         selected: &mut usize,
         items: &[I],
-        displayed_count: usize,
+        mut displayed_count: usize,
     ) -> PixResult<bool>
     where
         S: AsRef<str>,
@@ -230,13 +230,10 @@ impl PixState {
         let label = label.as_ref();
 
         if displayed_count > MAX_DISPLAYED {
-            bail!("displayed_count exceeds maximum of: {}", MAX_DISPLAYED);
-        } else if *selected > items.len() {
-            bail!(
-                "selected out of bounds: the len is {} but the value is {}",
-                items.len(),
-                *selected
-            );
+            displayed_count = MAX_DISPLAYED;
+        }
+        if *selected >= items.len() {
+            *selected = items.len() - 1;
         }
 
         let s = self;

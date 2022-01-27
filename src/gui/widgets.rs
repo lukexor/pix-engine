@@ -367,6 +367,7 @@ impl PixState {
     }
 
     /// Render an arrow aligned with the current font size.
+    ///
     /// # Errors
     ///
     /// If the renderer fails to draw to the current render target, then an error is returned.

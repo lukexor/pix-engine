@@ -194,73 +194,71 @@ impl PixState {
             angle_radians = angle.map(Scalar::to_radians);
         }
 
-        let mut render_text = |mut color: Color, outline: u8| -> PixResult<(u32, u32)> {
-            s.push();
+        let mut render_text =
+            |pos: PointI2, mut color: Color, outline: u8| -> PixResult<Rect<i32>> {
+                s.push();
 
-            // Make sure to offset the text if an outline was drawn
-            if stroke.is_some() && stroke_weight > 0 && outline == 0 {
-                pos += i32::from(stroke_weight);
-            }
-            if disabled {
-                color = color.blended(colors.background, 0.38);
-            }
-
-            let (w, h) = if wrap_width.is_some() {
-                s.renderer.text(
-                    pos,
-                    text,
-                    wrap_width,
-                    angle,
-                    center,
-                    flipped,
-                    Some(color),
-                    outline,
-                )?
-            } else {
-                let mut x = pos.x();
-                let mut y = pos.y();
-                let (mut total_width, mut total_height) = (0, 0);
-                for line in text.split('\n') {
-                    let (line_width, line_height) = s.renderer.size_of(line, wrap_width)?;
-                    let rect = rect![0, 0, clamp_size(line_width), clamp_size(line_height)];
-                    let bounding_box =
-                        angle_radians.map_or(rect, |angle| rect.rotated(angle, center));
-                    x -= bounding_box.x();
-                    y -= bounding_box.y();
+                if disabled {
+                    color = color.blended(colors.background, 0.38);
+                }
+                let (w, h) = if wrap_width.is_some() {
                     s.renderer.text(
-                        point![x, y],
-                        line,
+                        pos,
+                        text,
                         wrap_width,
                         angle,
                         center,
                         flipped,
                         Some(color),
                         outline,
-                    )?;
-                    total_width += bounding_box.width() as u32;
-                    total_height += bounding_box.height() as u32;
-                    y += bounding_box.height();
-                }
-                (total_width, total_height)
+                    )?
+                } else {
+                    let mut x = pos.x();
+                    let mut y = pos.y();
+                    let (mut total_width, mut total_height) = (0, 0);
+                    for line in text.split('\n') {
+                        let (line_width, line_height) = s.renderer.size_of(line, wrap_width)?;
+                        let rect = rect![0, 0, clamp_size(line_width), clamp_size(line_height)];
+                        let bounding_box =
+                            angle_radians.map_or(rect, |angle| rect.rotated(angle, center));
+                        x -= bounding_box.x();
+                        y -= bounding_box.y();
+                        s.renderer.text(
+                            point![x, y],
+                            line,
+                            wrap_width,
+                            angle,
+                            center,
+                            flipped,
+                            Some(color),
+                            outline,
+                        )?;
+                        total_width += bounding_box.width() as u32;
+                        total_height += bounding_box.height() as u32;
+                        y += bounding_box.height();
+                    }
+                    (total_width, total_height)
+                };
+                let rect = rect![pos, clamp_size(w), clamp_size(h)];
+
+                s.pop();
+                Ok(rect)
             };
-            let rect = rect![pos, clamp_size(w), clamp_size(h)];
 
-            // Only advance the cursor if we're not drawing a text outline
-            if outline == 0 {
-                s.advance_cursor(rect.size());
+        let rect = {
+            let stroke_rect = match stroke {
+                Some(stroke) if stroke_weight > 0 => Some(render_text(pos, stroke, stroke_weight)?),
+                _ => None,
+            };
+            if stroke_rect.is_some() {
+                pos += i32::from(stroke_weight);
             }
-
-            s.pop();
-            Ok((w, h))
+            let text_rect = render_text(pos, fill, 0)?;
+            stroke_rect.unwrap_or(text_rect)
         };
+        s.advance_cursor(rect.size());
 
-        let stroke_size = match stroke {
-            Some(stroke) if stroke_weight > 0 => Some(render_text(stroke, stroke_weight)?),
-            _ => None,
-        };
-        let size = render_text(fill, 0)?;
-
-        Ok(stroke_size.unwrap_or(size))
+        Ok((rect.width() as u32, rect.height() as u32))
     }
 
     /// Draw bulleted text to the current canvas.

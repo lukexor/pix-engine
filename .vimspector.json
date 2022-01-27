@@ -5,8 +5,10 @@
       "configuration": {
         "type": "lldb",
         "request": "launch",
-        "sourceLanguages": ["rust"],
-        "program": "${workspaceRoot}/target/debug/examples/windows",
+        "sourceLanguages": [
+          "rust"
+        ],
+        "program": "${workspaceRoot}/target/debug/examples/gui",
         "MIMode": "gdb",
         "setupCommands": [
           {

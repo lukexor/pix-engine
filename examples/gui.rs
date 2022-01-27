@@ -19,6 +19,7 @@ struct Gui {
     advanced_slider: f32,
     select_box: usize,
     select_list: usize,
+    collapsing_header_list: usize,
     font_size: u32,
     font_family: usize,
     theme: usize,
@@ -46,6 +47,7 @@ impl Gui {
             advanced_slider: 0.5,
             select_box: 0,
             select_list: 0,
+            collapsing_header_list: 0,
             font_size: 12,
             font_family: 0,
             theme: 0,
@@ -287,7 +289,7 @@ impl Gui {
         s.collapsing_header("Collapsing Header", |s: &mut PixState| {
             s.next_width(300);
             let items = ["Item 1", "Item 2", "Item 3", "Item 4"];
-            s.select_list("Some list", &mut self.select_list, &items, 3)?;
+            s.select_list("Some list", &mut self.collapsing_header_list, &items, 3)?;
             Ok(())
         })?;
 
