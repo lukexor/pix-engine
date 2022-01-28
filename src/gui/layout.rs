@@ -13,7 +13,7 @@
 //!
 //! ```
 //! # use pix_engine::prelude::*;
-//! # struct App { checkbox: bool, text_field: String };
+//! # struct App { checkbox: bool, text_field: String, selected: &'static str };
 //! # impl AppState for App {
 //! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!     s.text("Text")?;
@@ -36,12 +36,13 @@
 //!     s.tab_bar(
 //!         "Tab bar",
 //!         &["Tab 1", "Tab 2"],
-//!         |tab: usize, s: &mut PixState| {
+//!         &mut self.selected,
+//!         |tab: &&str, s: &mut PixState| {
 //!             match tab {
-//!                 0 => {
+//!                 &"Tab 1" => {
 //!                     s.text("Tab 1 Content")?;
 //!                 },
-//!                 1 => {
+//!                 &"Tab 2" => {
 //!                     s.text("Tab 2 Content")?;
 //!                 },
 //!                 _ => (),
@@ -113,10 +114,11 @@ impl PixState {
         self.ui.next_width = Some(clamp_size(width));
     }
 
-    /// Draw a tabbed view to the current canvas. It accepts a list of tabs to be rendered and a
-    /// closure that is passed the current tab and [`&mut PixState`][`PixState`] which you can use to draw all the
-    /// standard drawing primitives and change any drawing settings. Settings changed inside the
-    /// closure will not persist, similar to [`PixState::with_texture`].
+    /// Draw a tabbed view to the current canvas. It accepts a list of tabs to be rendered, which
+    /// one is selected and a closure that is passed the current tab and [`&mut
+    /// PixState`][`PixState`] which you can use to draw all the standard drawing primitives and
+    /// change any drawing settings. Settings changed inside the closure will not persist, similar
+    /// to [`PixState::with_texture`]. Returns `true` if a tab selection was changed.
     ///
     /// # Errors
     ///
@@ -126,20 +128,21 @@ impl PixState {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// # struct App { checkbox: bool, text_field: String };
+    /// # struct App { selected: &'static str };
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.tab_bar(
     ///         "Tab bar",
     ///         &["Tab 1", "Tab 2"],
-    ///         |tab: usize, s: &mut PixState| {
+    ///         &mut self.selected,
+    ///         |tab: &&str, s: &mut PixState| {
     ///             match tab {
-    ///                 0 => {
+    ///                 &"Tab 1" => {
     ///                     s.text("Tab 1")?;
     ///                     s.separator();
     ///                     s.text("Some Content")?;
     ///                 }
-    ///                 1 => {
+    ///                 &"Tab 2" => {
     ///                     s.next_width(200);
     ///                     if s.button("Click me")? {
     ///                         // was clicked
@@ -154,11 +157,17 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn tab_bar<S, I, F>(&mut self, label: S, tabs: &[I], f: F) -> PixResult<()>
+    pub fn tab_bar<S, I, F>(
+        &mut self,
+        label: S,
+        tabs: &[I],
+        selected: &mut I,
+        f: F,
+    ) -> PixResult<bool>
     where
         S: AsRef<str>,
-        I: AsRef<str>,
-        F: FnOnce(usize, &mut PixState) -> PixResult<()>,
+        I: AsRef<str> + Copy,
+        F: FnOnce(&I, &mut PixState) -> PixResult<()>,
     {
         let label = label.as_ref();
 
@@ -168,11 +177,12 @@ impl PixState {
         let fpad = s.theme.spacing.frame_pad;
         let ipad = s.theme.spacing.item_pad;
 
-        for (i, tab_label) in tabs.iter().enumerate() {
+        let mut changed = false;
+        for (i, tab) in tabs.iter().enumerate() {
             if i > 0 {
                 s.same_line(None);
             }
-            let tab_label = tab_label.as_ref();
+            let tab_label = tab.as_ref();
             let id = s.ui.get_id(&tab_label);
             let tab_label = s.ui.get_label(tab_label);
             let pos = s.cursor_pos();
@@ -180,10 +190,10 @@ impl PixState {
 
             // Calculate tab size
             let (width, height) = s.text_size(tab_label)?;
-            let tab = rect![pos + fpad, width, height].offset_size(2 * ipad);
+            let tab_rect = rect![pos + fpad, width, height].offset_size(2 * ipad);
 
             // Check hover/active/keyboard focus
-            let hovered = s.ui.try_hover(id, &tab);
+            let hovered = s.ui.try_hover(id, &tab_rect);
             let focused = s.ui.try_focus(id);
             let disabled = s.ui.disabled;
             let active = s.ui.is_active(id);
@@ -193,7 +203,7 @@ impl PixState {
 
             // Render
             s.rect_mode(RectMode::Corner);
-            let clip = tab.offset_size([1, 0]);
+            let clip = tab_rect.offset_size([1, 0]);
             s.clip(clip)?;
             if hovered {
                 s.frame_cursor(&Cursor::hand())?;
@@ -210,18 +220,18 @@ impl PixState {
                 s.fill(colors.background);
             }
             if active {
-                s.rect(tab.offset([1, 1]))?;
+                s.rect(tab_rect.offset([1, 1]))?;
             } else {
-                s.rect(tab)?;
+                s.rect(tab_rect)?;
             }
             s.no_clip()?;
 
             // Tab text
             s.rect_mode(RectMode::Center);
-            s.clip(tab)?;
-            s.set_cursor_pos(tab.center());
+            s.clip(tab_rect)?;
+            s.set_cursor_pos(tab_rect.center());
             s.no_stroke();
-            let is_active_tab = i == s.ui.current_tab(tab_id);
+            let is_active_tab = tab_label == selected.as_ref();
             if is_active_tab {
                 s.fill(colors.secondary_variant);
             } else if hovered | focused {
@@ -237,9 +247,10 @@ impl PixState {
 
             // Process input
             s.ui.handle_events(id);
-            s.advance_cursor(tab.size());
+            s.advance_cursor(tab_rect.size());
             if !disabled && s.ui.was_clicked(id) {
-                s.ui.set_current_tab(tab_id, i);
+                changed = true;
+                *selected = *tab;
             }
         }
 
@@ -253,11 +264,13 @@ impl PixState {
         s.pop();
         s.advance_cursor([line_width, fpad.y()]);
 
+        s.spacing()?;
+
         s.push_id(tab_id);
-        f(s.ui.current_tab(tab_id), s)?;
+        f(selected, s)?;
         s.pop_id();
 
-        Ok(())
+        Ok(changed)
     }
 }
 

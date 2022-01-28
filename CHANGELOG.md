@@ -27,6 +27,12 @@ All notable changes to this project will be documented in this file.
 - Blur focus by clicking outside on UI elements and by pressing escape/enter in
   input fields.
 
+### Breaking
+
+- Altered `PixState::tab_bar` to take a `selected` parameter to control the
+  initial selected tab and altered the callback to take a generic type instead
+  of a `usize`.
+
 ## [0.5.4] - 2022-01-26
 
 ### Added

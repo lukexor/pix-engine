@@ -3,8 +3,28 @@ use pix_engine::prelude::*;
 const FONTS: [&str; 3] = ["Emulogic", "Noto", "Inconsolata"];
 const THEMES: [&str; 2] = ["Dark", "Light"];
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+enum Category {
+    Basic,
+    FieldsSliders,
+    SelectsCollapsables,
+    Settings,
+}
+
+impl AsRef<str> for Category {
+    fn as_ref(&self) -> &str {
+        match self {
+            Self::Basic => "Basic",
+            Self::FieldsSliders => "Fields/Sliders",
+            Self::SelectsCollapsables => "Selects/Collapsables",
+            Self::Settings => "Settings",
+        }
+    }
+}
+
 struct Gui {
     disabled: bool,
+    selected_category: Category,
     button_clicked: bool,
     text_clicked: bool,
     checkbox: bool,
@@ -33,6 +53,7 @@ impl Gui {
     fn new() -> Self {
         Self {
             disabled: false,
+            selected_category: Category::Basic,
             button_clicked: false,
             text_clicked: false,
             checkbox: true,
@@ -358,32 +379,34 @@ impl AppState for Gui {
         s.heading("Widgets")?;
         s.spacing()?;
 
+        let mut selected = self.selected_category;
         s.tab_bar(
             "Tab Bar",
             &[
-                "Basic",
-                "Fields & Sliders",
-                "Selects & Collapsables",
-                "Settings",
+                Category::Basic,
+                Category::FieldsSliders,
+                Category::SelectsCollapsables,
+                Category::Settings,
             ],
-            |tab: usize, s: &mut PixState| {
+            &mut selected,
+            |tab: &Category, s: &mut PixState| {
                 match tab {
-                    0 => {
+                    Category::Basic => {
                         self.basic_widgets(s)?;
                         self.tooltip_widgets(s)?;
                         self.text_widgets(s)?;
                     }
-                    1 => {
+                    Category::FieldsSliders => {
                         self.text_field_widgets(s)?;
                         self.drag_and_slider_widgets(s)?;
                     }
-                    2 => self.select_and_tree_widgets(s)?,
-                    3 => self.settings(s)?,
-                    _ => (),
+                    Category::SelectsCollapsables => self.select_and_tree_widgets(s)?,
+                    Category::Settings => self.settings(s)?,
                 }
                 Ok(())
             },
         )?;
+        self.selected_category = selected;
 
         s.separator()?;
 

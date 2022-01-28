@@ -559,32 +559,6 @@ impl UiState {
         }
     }
 
-    /// Returns the currently selected tab state for this element.
-    #[inline]
-    #[must_use]
-    pub(crate) fn current_tab(&mut self, id: ElementId) -> usize {
-        self.elements
-            .get(&id)
-            .map(|s| s.current_tab)
-            .unwrap_or_default()
-    }
-
-    /// Updates the currently selected tab state for this element.
-    #[inline]
-    pub(crate) fn set_current_tab(&mut self, id: ElementId, tab: usize) {
-        if let Some(state) = self.elements.get_mut(&id) {
-            state.current_tab = tab;
-        } else {
-            self.elements.put(
-                id,
-                ElementState {
-                    current_tab: tab,
-                    ..ElementState::default()
-                },
-            );
-        }
-    }
-
     /// Parses the current `text_edit` state for this element into a given type.
     #[inline]
     #[must_use]
