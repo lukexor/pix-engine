@@ -3,7 +3,7 @@
 use crate::prelude::*;
 use std::{
     collections::{HashMap, HashSet},
-    time::Instant,
+    time::{Duration, Instant},
 };
 
 /// Keep track of mouse position and clicks between frames.
@@ -15,6 +15,7 @@ pub(crate) struct MouseState {
     pub(crate) pressed: HashSet<Mouse>,
     pub(crate) clicked: HashSet<Mouse>,
     pub(crate) last_clicked: HashMap<Mouse, Instant>,
+    pub(crate) last_dbl_clicked: HashMap<Mouse, Instant>,
 }
 
 impl MouseState {
@@ -30,6 +31,18 @@ impl MouseState {
     #[must_use]
     pub(crate) fn was_clicked(&self, btn: Mouse) -> bool {
         self.clicked.contains(&btn)
+    }
+
+    /// Whether a [Mouse] buttons was double clicked.
+    #[inline]
+    #[must_use]
+    pub(crate) fn was_dbl_clicked(&self, btn: Mouse) -> bool {
+        match (self.last_dbl_clicked(btn), self.last_clicked(btn)) {
+            (Some(dbl), Some(clicked)) => {
+                dbl >= clicked && (*dbl - *clicked) < Duration::from_millis(500)
+            }
+            _ => false,
+        }
     }
 
     /// Returns if a specific [Mouse] button is currently being held.
@@ -65,9 +78,21 @@ impl MouseState {
         self.last_clicked.insert(btn, time);
     }
 
+    /// Store last time a [Mouse] button was double clicked.
+    #[inline]
+    pub(crate) fn dbl_click(&mut self, btn: Mouse, time: Instant) {
+        self.last_dbl_clicked.insert(btn, time);
+    }
+
     /// Returns last time a [Mouse] button was clicked.
     #[inline]
     pub(crate) fn last_clicked(&self, btn: Mouse) -> Option<&Instant> {
         self.last_clicked.get(&btn)
+    }
+
+    /// Returns last time a [Mouse] button was double-clicked.
+    #[inline]
+    pub(crate) fn last_dbl_clicked(&self, btn: Mouse) -> Option<&Instant> {
+        self.last_dbl_clicked.get(&btn)
     }
 }

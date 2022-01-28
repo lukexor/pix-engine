@@ -784,6 +784,34 @@ impl PixState {
                 && rect.contains_point(self.mouse_pos())
         })
     }
+
+    /// Returns whether the last item drawn was double-clicked with the left mouse button.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.text("Hover me")?;
+    ///     if s.dbl_clicked() {
+    ///         println!("I was double clicked!");
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    #[must_use]
+    pub fn dbl_clicked(&self) -> bool {
+        self.ui.last_size.map_or(false, |rect| {
+            !self.ui.disabled
+                && self.mouse_clicked(Mouse::Left)
+                && self.mouse_dbl_clicked(Mouse::Left)
+                && rect.contains_point(self.mouse_pos())
+        })
+    }
 }
 
 impl PixState {

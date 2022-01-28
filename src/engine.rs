@@ -489,8 +489,10 @@ impl PixEngine {
                     if state.ui.mouse.is_down(button) {
                         let now = Instant::now();
                         if let Some(clicked) = state.ui.mouse.last_clicked(button) {
-                            if now - *clicked < Duration::from_millis(500) {
-                                app.on_mouse_dbl_clicked(state, button, point!(x, y))?;
+                            if now - *clicked < Duration::from_millis(500)
+                                && !app.on_mouse_dbl_clicked(state, button, point!(x, y))?
+                            {
+                                state.on_mouse_dbl_click(button, now);
                             }
                         }
                         if !app.on_mouse_clicked(state, button, point!(x, y))? {

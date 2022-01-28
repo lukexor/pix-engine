@@ -200,6 +200,28 @@ impl PixState {
         self.ui.mouse.was_clicked(btn)
     }
 
+    /// Returns if the [Mouse] was double clicked (pressed and released) this frame.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     if s.mouse_dbl_clicked(Mouse::Left) {
+    ///         s.background(Color::random());
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    #[must_use]
+    pub fn mouse_dbl_clicked(&self, btn: Mouse) -> bool {
+        self.ui.mouse.was_dbl_clicked(btn)
+    }
+
     /// Returns if a specific [Mouse] button was pressed this frame.
     ///
     /// # Example
@@ -459,6 +481,13 @@ impl PixState {
         self.ui.pmouse.clicked = mem::take(&mut self.ui.mouse.clicked);
         self.ui.pmouse.last_clicked = mem::take(&mut self.ui.mouse.last_clicked);
         self.ui.mouse.click(btn, time);
+    }
+
+    /// Updates the mouse double click state this frame.
+    #[inline]
+    pub(crate) fn on_mouse_dbl_click(&mut self, btn: Mouse, time: Instant) {
+        self.ui.pmouse.last_dbl_clicked = mem::take(&mut self.ui.mouse.last_dbl_clicked);
+        self.ui.mouse.dbl_click(btn, time);
     }
 
     /// Updates the mouse pressed state this frame.
