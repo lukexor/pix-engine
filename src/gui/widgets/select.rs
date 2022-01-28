@@ -22,7 +22,7 @@
 //! ```
 
 use crate::{
-    gui::{scroll::SCROLL_SIZE, state::ElementId, Direction},
+    gui::{state::ElementId, Direction},
     ops::clamp_size,
     prelude::*,
 };
@@ -363,7 +363,7 @@ impl PixState {
                 s.clear()?;
                 s.set_cursor_pos([0, 0]);
                 if total_height > height {
-                    s.next_width((size.width() - SCROLL_SIZE) as u32);
+                    s.next_width((size.width() - spacing.scroll_size) as u32);
                 } else {
                     s.next_width(size.width() as u32);
                 }

@@ -457,6 +457,7 @@ impl Default for Colors {
 pub struct SpacingBuilder {
     frame_pad: PointI2,
     item_pad: PointI2,
+    scroll_size: i32,
 }
 
 impl Default for SpacingBuilder {
@@ -465,6 +466,7 @@ impl Default for SpacingBuilder {
         Self {
             frame_pad: spacing.frame_pad,
             item_pad: spacing.item_pad,
+            scroll_size: spacing.scroll_size,
         }
     }
 }
@@ -482,11 +484,18 @@ impl SpacingBuilder {
         self
     }
 
+    /// Set scroll bar size in UI widgets.
+    pub fn scroll_size(&mut self, size: i32) -> &mut Self {
+        self.scroll_size = size;
+        self
+    }
+
     /// Convert `SpacingBuilder` into a [Spacing] instance.
     pub const fn build(&self) -> Spacing {
         Spacing {
             frame_pad: self.frame_pad,
             item_pad: self.item_pad,
+            scroll_size: self.scroll_size,
         }
     }
 }
@@ -500,6 +509,8 @@ pub struct Spacing {
     pub frame_pad: PointI2,
     /// Padding between UI widgets.
     pub item_pad: PointI2,
+    /// Scroll bar size in UI widgets.
+    pub scroll_size: i32,
 }
 
 impl Default for Spacing {
@@ -507,6 +518,7 @@ impl Default for Spacing {
         Self {
             frame_pad: point![8, 8],
             item_pad: point![8, 6],
+            scroll_size: 12,
         }
     }
 }

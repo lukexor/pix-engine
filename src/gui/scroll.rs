@@ -4,7 +4,6 @@ use super::state::ElementId;
 use crate::{ops::clamp_size, prelude::*};
 
 pub(crate) const THUMB_MIN: i32 = 10;
-pub(crate) const SCROLL_SIZE: i32 = 12;
 pub(crate) const SCROLL_SPEED: i32 = 3;
 
 /// Scroll direction.
@@ -122,6 +121,7 @@ impl PixState {
         height: i32,
     ) -> PixResult<Rect<i32>> {
         let s = self;
+        let scroll_size = s.theme.spacing.scroll_size;
 
         let scroll = s.ui.scroll(id);
         let xmax = width - rect.width();
@@ -152,7 +152,7 @@ impl PixState {
             s.push_id(1);
             let scrolled = s.scrollbar(
                 id,
-                rect![rect.right(), rect.top(), SCROLL_SIZE, rect.height()],
+                rect![rect.right(), rect.top(), scroll_size, rect.height()],
                 ymax,
                 &mut scroll_y,
                 ScrollDirection::Vertical,
@@ -187,7 +187,7 @@ impl PixState {
             s.push_id(2);
             let scrolled = s.scrollbar(
                 id,
-                rect![rect.left(), rect.bottom(), rect.width(), SCROLL_SIZE],
+                rect![rect.left(), rect.bottom(), rect.width(), scroll_size],
                 xmax,
                 &mut scroll_x,
                 ScrollDirection::Horizontal,
@@ -202,7 +202,7 @@ impl PixState {
             s.ui.set_scroll(id, new_scroll);
         }
 
-        Ok(rect.offset_size([SCROLL_SIZE, SCROLL_SIZE]))
+        Ok(rect.offset_size([scroll_size, scroll_size]))
     }
 
     /// Helper to render either a vertical or a horizontal scroll bar.
