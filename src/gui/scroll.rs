@@ -54,8 +54,6 @@ impl PixState {
 
         // Label
         if !label.is_empty() {
-            s.no_stroke();
-            s.fill(colors.on_background());
             s.text(label)?;
         }
 

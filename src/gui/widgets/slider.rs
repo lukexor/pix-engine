@@ -118,7 +118,6 @@ impl PixState {
         let pos = s.cursor_pos();
         let font_size = clamp_size(s.theme.font_size);
         let spacing = s.theme.spacing;
-        let colors = s.theme.colors;
         let ipad = spacing.item_pad;
 
         // Calculate drag rect
@@ -168,7 +167,6 @@ impl PixState {
 
         // Label
         if !label.is_empty() {
-            s.fill(colors.on_background());
             s.set_cursor_pos([pos.x(), pos.y() + drag.height() / 2 - label_height / 2]);
             s.text(label)?;
         }
@@ -300,7 +298,6 @@ impl PixState {
         let pos = s.cursor_pos();
         let font_size = clamp_size(s.theme.font_size);
         let spacing = s.theme.spacing;
-        let colors = s.theme.colors;
         let ipad = spacing.item_pad;
 
         // Calculate slider rect
@@ -350,7 +347,6 @@ impl PixState {
 
         // Label
         if !label.is_empty() {
-            s.fill(colors.on_background());
             s.set_cursor_pos([pos.x(), pos.y() + slider.height() / 2 - label_height / 2]);
             s.text(label)?;
         }

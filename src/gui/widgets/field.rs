@@ -109,7 +109,6 @@ impl PixState {
         let pos = s.cursor_pos();
         let font_size = clamp_size(s.theme.font_size);
         let spacing = s.theme.spacing;
-        let colors = s.theme.colors;
         let ipad = spacing.item_pad;
 
         // Calculate input rect
@@ -134,8 +133,6 @@ impl PixState {
 
         // Label
         if !label.is_empty() {
-            s.no_stroke();
-            s.fill(colors.on_background());
             s.set_cursor_pos([pos.x(), pos.y() + input.height() / 2 - label_height / 2]);
             s.text(label)?;
         }
@@ -280,7 +277,6 @@ impl PixState {
         let label = s.ui.get_label(label);
         let pos = s.cursor_pos();
         let spacing = s.theme.spacing;
-        let colors = s.theme.colors;
         let ipad = spacing.item_pad;
 
         // Calculate input rect
@@ -300,8 +296,6 @@ impl PixState {
         s.ui.push_cursor();
 
         // Label
-        s.no_stroke();
-        s.fill(colors.on_background());
         s.text(label)?;
 
         // Input

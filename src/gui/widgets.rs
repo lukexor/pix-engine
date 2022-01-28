@@ -213,7 +213,6 @@ impl PixState {
         let pos = s.cursor_pos();
         let ipad = s.theme.spacing.item_pad;
         let checkbox_size = clamp_size(s.theme.font_size) + ipad.y();
-        let colors = s.theme.colors;
 
         // Calculate checkbox rect
         let checkbox = square![pos, checkbox_size];
@@ -257,8 +256,6 @@ impl PixState {
 
         // Label
         s.same_line(None);
-        s.no_stroke();
-        s.fill(colors.on_background());
         s.text(label)?;
 
         // Process input
@@ -306,7 +303,6 @@ impl PixState {
         let pos = s.cursor_pos();
         let ipad = s.theme.spacing.item_pad;
         let radio_size = clamp_size(s.theme.font_size) / 2 + ipad.y() / 3;
-        let colors = s.theme.colors;
 
         // Calculate radio rect
         let radio = circle![pos + radio_size, radio_size];
@@ -349,8 +345,6 @@ impl PixState {
 
         // Label
         s.same_line(None);
-        s.no_stroke();
-        s.fill(colors.on_background());
         s.text(label)?;
 
         // Process input

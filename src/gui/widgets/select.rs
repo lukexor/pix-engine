@@ -83,7 +83,6 @@ impl PixState {
         let pos = s.cursor_pos();
         let font_size = clamp_size(s.theme.font_size);
         let spacing = s.theme.spacing;
-        let colors = s.theme.colors;
         let fpad = spacing.frame_pad;
         let ipad = spacing.item_pad;
 
@@ -106,8 +105,6 @@ impl PixState {
 
         // Label
         if !label.is_empty() {
-            s.no_stroke();
-            s.fill(colors.on_background());
             s.set_cursor_pos([
                 pos.x(),
                 pos.y() + select_box.height() / 2 - label_height / 2,
@@ -241,7 +238,6 @@ impl PixState {
         let label = s.ui.get_label(label);
         let pos = s.cursor_pos();
         let font_size = clamp_size(s.theme.font_size);
-        let colors = s.theme.colors;
         let spacing = s.theme.spacing;
         let fpad = spacing.frame_pad;
         let ipad = spacing.item_pad;
@@ -269,8 +265,6 @@ impl PixState {
 
         // Select List
         s.rect_mode(RectMode::Corner);
-        s.no_stroke();
-        s.fill(colors.on_background());
         s.text(label)?;
 
         let original_selected = *selected;
