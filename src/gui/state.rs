@@ -400,11 +400,11 @@ impl UiState {
         self.focused = Some(id);
     }
 
-    /// Try to capture `focus` if no other element is currently `focued`. This supports tab-cycling
+    /// Try to capture `focus` if no other element is currently `focused`. This supports tab-cycling
     /// through elements with the keyboard.
     #[inline]
     pub(crate) fn try_focus(&mut self, id: ElementId) -> bool {
-        if !self.has_focused() {
+        if !self.disabled && !self.has_focused() {
             self.focus(id);
         }
         self.is_focused(id)
