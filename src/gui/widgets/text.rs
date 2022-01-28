@@ -120,7 +120,7 @@ impl PixState {
         let s = self;
         s.push();
         s.renderer.font_family(&s.theme.fonts.monospace)?;
-        s.renderer.font_size(s.theme.font_size)?;
+        s.renderer.font_size(s.theme.font_size + 2)?;
         s.renderer.font_style(s.theme.styles.monospace);
         let size = s.text_transformed(text, None, None, None);
         s.pop();
@@ -295,10 +295,10 @@ impl PixState {
 
         s.push();
         s.ellipse_mode(EllipseMode::Corner);
-        s.circle([pos.x(), pos.y() + font_size / 2, r])?;
+        s.circle([pos.x() + ipad.x(), pos.y() + font_size / 2, r])?;
         s.pop();
 
-        s.set_cursor_pos([pos.x() + 2 * r + 2 * ipad.x(), pos.y()]);
+        s.set_cursor_pos([pos.x() + ipad.x() + 2 * r + 2 * ipad.x(), pos.y()]);
         let (w, h) = s.text_transformed(text, 0.0, None, None)?;
 
         Ok((w + r as u32, h))
@@ -537,10 +537,7 @@ impl PixState {
         s.advance_cursor([hover.width(), ipad.y() / 2]);
 
         if expanded {
-            let (indent_width, _) = s.text_size("    ")?;
-            s.ui.inc_column_offset(indent_width);
             f(s)?;
-            s.ui.dec_column_offset();
         }
 
         Ok(expanded)
