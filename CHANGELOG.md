@@ -4,9 +4,28 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- Added `PixState::ui_width` and `PoixState::ui_height` methods take into
+  account remaining screen space with regards to current UI rendering position
+  and frame padding.
+- Added configurable `scroll_size` to the UI theme for the width of rendered
+  scrollbars.
+- Added `PixState::mouse_dbl_clicked` method indicating mouse was double clicked
+  last frame.
+- Added `PixState::dbl_clicked` method indicating mouse was double clicked on
+  the previous UI widget drawn.
+
 ### Changed
 
 - Improved element focus and blur.
+- Fixed widgets to properly render the label with the current `fill` color.
+- Increased the relative font size of `PixState::monospace`.
+- Fixed `PixState::bullet` to be more indented.
+- Removed indent of children under `PixState::collapsing_header`.
+- Fixed UI elements being able to take focus if disabled.
+- Blur focus by clicking outside on UI elements and by pressing escape/enter in
+  input fields.
 
 ## [0.5.4] - 2022-01-26
 

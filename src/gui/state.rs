@@ -438,13 +438,15 @@ impl UiState {
     /// Handles global element inputs for `focused` checks.
     #[inline]
     pub(crate) fn handle_events(&mut self, id: ElementId) {
+        let active = self.is_active(id);
+        let hovered = self.is_hovered(id);
+        let focused = self.is_focused(id);
         if self.keys.was_entered(Key::Tab) {
             // Tab-focus cycling
             // If element is focused when Tab pressed, clear it so the next element can capture focus.
             // If SHIFT was held, re-focus the last element rendered
             // Clear keys, so next element doesn't trigger tab logic
             let no_focus = self.focused == Some(ElementId::NONE);
-            let focused = self.is_focused(id);
             if no_focus || focused {
                 if self.keys.mod_down(KeyMod::SHIFT) {
                     self.focused = self.last_focusable;
@@ -457,12 +459,12 @@ impl UiState {
                     self.clear_entered();
                 }
             }
-        } else if !self.mouse.is_down(Mouse::Left) && self.is_active(id) && self.is_hovered(id) {
+        } else if !self.mouse.is_down(Mouse::Left) && active && hovered {
             // Click focusing on release
             self.focus(id);
-        } else if self.mouse.is_down(Mouse::Left) && !(self.is_active(id) || self.is_hovered(id)) {
-            // Click outside to blur
-            self.blur()
+        } else if focused && self.mouse.is_down(Mouse::Left) && !active && !hovered {
+            // Blur on outside click
+            self.blur();
         }
         self.last_focusable = Some(id);
     }
