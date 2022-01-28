@@ -132,6 +132,24 @@ pub enum Direction {
 }
 
 impl PixState {
+    /// Return usable UI width given the current UI cursor position and padding clamped to i32.
+    #[inline]
+    pub fn ui_width(&self) -> PixResult<i32> {
+        let pos = self.cursor_pos();
+        let fpad = self.theme.spacing.frame_pad;
+        Ok(clamp_size(self.width()?) - pos.x() - fpad.x())
+    }
+
+    /// Return usable UI height given the current UI cursor position and padding clamped to i32.
+    #[inline]
+    pub fn ui_height(&self) -> PixResult<i32> {
+        let pos = self.cursor_pos();
+        let fpad = self.theme.spacing.frame_pad;
+        Ok(clamp_size(self.height()?) - pos.y() - fpad.y())
+    }
+}
+
+impl PixState {
     /// Set and return default colors based on widget state for the given surface type.
     #[inline]
     pub(crate) fn widget_colors(&mut self, id: ElementId, surface_color: ColorType) -> [Color; 3] {
@@ -214,12 +232,5 @@ impl PixState {
     pub(crate) fn text_size(&self, text: &str) -> PixResult<(i32, i32)> {
         let (w, h) = self.size_of(text)?;
         Ok(clamp_dimensions(w, h))
-    }
-
-    /// Return usable UI width clamped to i32.
-    #[inline]
-    pub(crate) fn ui_width(&self) -> PixResult<i32> {
-        let fpad = self.theme.spacing.frame_pad;
-        Ok(clamp_size(self.width()?) - 2 * fpad.x())
     }
 }
