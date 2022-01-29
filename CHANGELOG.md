@@ -26,6 +26,7 @@ All notable changes to this project will be documented in this file.
 - Fixed UI elements being able to take focus if disabled.
 - Blur focus by clicking outside on UI elements and by pressing escape/enter in
   input fields.
+- Fixed Tab size
 
 ### Breaking
 

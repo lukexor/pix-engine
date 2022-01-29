@@ -180,7 +180,7 @@ impl PixState {
         let mut changed = false;
         for (i, tab) in tabs.iter().enumerate() {
             if i > 0 {
-                s.same_line(None);
+                s.same_line([-ipad.x() + 1, 0]);
             }
             let tab_label = tab.as_ref();
             let id = s.ui.get_id(&tab_label);
@@ -190,7 +190,7 @@ impl PixState {
 
             // Calculate tab size
             let (width, height) = s.text_size(tab_label)?;
-            let tab_rect = rect![pos + fpad, width, height].offset_size(2 * ipad);
+            let tab_rect = rect![pos + fpad, width, height].offset_size(4 * ipad);
 
             // Check hover/active/keyboard focus
             let hovered = s.ui.try_hover(id, &tab_rect);
@@ -203,7 +203,7 @@ impl PixState {
 
             // Render
             s.rect_mode(RectMode::Corner);
-            let clip = tab_rect.offset_size([1, 0]);
+            let clip = tab_rect.offset_size([1, 1]);
             s.clip(clip)?;
             if hovered {
                 s.frame_cursor(&Cursor::hand())?;
