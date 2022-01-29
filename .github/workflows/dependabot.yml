@@ -1,0 +1,12 @@
+version: 1
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    assignees: "lukexor"
+  - package-ecosystem: "cargo"
+    directroy: "/"
+    schedule:
+      interval: "daily"
+    assignees: "lukexor"
