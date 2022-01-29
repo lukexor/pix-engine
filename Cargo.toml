@@ -54,9 +54,10 @@ vcpkg = ["sdl2/static-link", "sdl2/use-vcpkg"]
 [target."cfg(not(target_arch = \"wasm32\"))".dependencies]
 sdl2 = { version = "0.35.0", default_features = false, features = ["gfx", "image", "mixer", "ttf", "unsafe_textures"] }
 
-[profile.dev-opt]
-inherits = "dev"
-opt-level = 2
+# FIXME: Disabled until dependabot is updated
+# [profile.dev-opt]
+# inherits = "dev"
+# opt-level = 2
 
 [profile.release]
 codegen-units = 1
