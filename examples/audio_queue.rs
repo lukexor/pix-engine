@@ -89,6 +89,7 @@ impl AppState for QueueDemo {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         self.sample_rate = s.audio_sample_rate() as f32;
         self.sample_count = 4 * self.sample_rate as usize;
+        s.resume_audio();
         Ok(())
     }
 
@@ -104,32 +105,27 @@ impl AppState for QueueDemo {
         if s.button("Sine Wave")? {
             s.clear_audio();
             self.samples = self.gen_sine_wave();
-            s.enqueue_audio(&self.samples);
-            s.resume_audio();
+            s.enqueue_audio(&self.samples)?;
         }
         if s.button("Square Wave")? {
             s.clear_audio();
             self.samples = self.gen_square_wave();
-            s.enqueue_audio(&self.samples);
-            s.resume_audio();
+            s.enqueue_audio(&self.samples)?;
         }
         if s.button("Triangle Wave")? {
             s.clear_audio();
             self.samples = self.gen_triangle_wave();
-            s.enqueue_audio(&self.samples);
-            s.resume_audio();
+            s.enqueue_audio(&self.samples)?;
         }
         if s.button("Saw Wave")? {
             s.clear_audio();
             self.samples = self.gen_saw_wave();
-            s.resume_audio();
-            s.enqueue_audio(&self.samples);
+            s.enqueue_audio(&self.samples)?;
         }
         if s.button("Noise")? {
             s.clear_audio();
             self.samples = self.gen_noise();
-            s.enqueue_audio(&self.samples);
-            s.resume_audio();
+            s.enqueue_audio(&self.samples)?;
         }
 
         if s.button(format!(
@@ -148,8 +144,7 @@ impl AppState for QueueDemo {
                     b[0..4].try_into().unwrap(),
                 )));
             }
-            s.enqueue_audio(&self.samples);
-            s.resume_audio();
+            s.enqueue_audio(&self.samples)?;
         }
 
         if !self.samples.is_empty() {
