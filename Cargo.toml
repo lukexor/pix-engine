@@ -56,6 +56,7 @@ sdl2 = { version = "0.35.0", default_features = false, features = ["gfx", "image
 
 # Reasonable performance for development
 [profile.dev-opt]
+inherts = "dev"
 opt-level = 2
 
 [profile.release]
