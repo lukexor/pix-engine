@@ -240,7 +240,7 @@ impl UiState {
 
     /// Set an offset for the current UI rendering position.
     #[inline]
-    pub(crate) fn inc_column_offset(&mut self, offset: i32) {
+    pub(crate) fn set_column_offset(&mut self, offset: i32) {
         self.offset_stack.push(offset);
         self.cursor.offset_x(offset);
         self.column_offset += offset;
@@ -248,7 +248,7 @@ impl UiState {
 
     /// Restore any offsets for the current UI rendering position.
     #[inline]
-    pub(crate) fn dec_column_offset(&mut self) {
+    pub(crate) fn reset_column_offset(&mut self) {
         let offset = self.offset_stack.pop().unwrap_or_default();
         self.cursor.offset_x(-offset);
         self.column_offset -= offset;
@@ -707,6 +707,20 @@ impl PixState {
     #[inline]
     pub fn set_cursor_pos<P: Into<PointI2>>(&mut self, cursor: P) {
         self.ui.set_cursor(cursor.into());
+    }
+
+    /// Set the current UI rendering position column offset.
+    ///
+    #[inline]
+    pub fn set_column_offset(&mut self, offset: i32) {
+        self.ui.set_column_offset(offset);
+    }
+
+    /// Clears the current UI rendering position column offset.
+    ///
+    #[inline]
+    pub fn reset_column_offset(&mut self) {
+        self.ui.reset_column_offset();
     }
 
     /// Returns whether the last item drawn is hovered with the mouse.

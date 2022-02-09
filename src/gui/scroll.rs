@@ -63,7 +63,7 @@ impl PixState {
         let scroll = s.ui.scroll(id);
         let texture_id = s.get_or_create_texture(id, None, scroll_area)?;
         s.ui.offset_mouse(scroll_area.top_left());
-        s.ui.inc_column_offset(-scroll.x());
+        s.ui.set_column_offset(-scroll.x());
         let mut max_cursor_pos = s.cursor_pos();
 
         let scroll_width = scroll_area.width();
@@ -91,7 +91,7 @@ impl PixState {
             s.rect([0, 0, scroll_width, scroll_height])?;
             Ok(())
         })?;
-        s.ui.dec_column_offset();
+        s.ui.reset_column_offset();
         s.ui.clear_mouse_offset();
 
         s.ui.pop_cursor();

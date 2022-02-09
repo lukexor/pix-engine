@@ -453,9 +453,9 @@ impl PixState {
 
         if expanded {
             let (indent_width, _) = s.text_size("    ")?;
-            s.ui.inc_column_offset(indent_width);
+            s.ui.set_column_offset(indent_width);
             f(s)?;
-            s.ui.dec_column_offset();
+            s.ui.reset_column_offset();
         }
 
         Ok(expanded)

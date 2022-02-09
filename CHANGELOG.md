@@ -15,6 +15,8 @@ All notable changes to this project will be documented in this file.
   last frame.
 - Added `PixState::dbl_clicked` method indicating mouse was double clicked on
   the previous UI widget drawn.
+- Added `PixState::set_column_offset` and `PixState::reset_column_offset` to
+  allow controlling the x-offset position when rendering UI elements.
 
 ### Changed
 
