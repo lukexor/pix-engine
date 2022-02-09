@@ -36,6 +36,8 @@ All notable changes to this project will be documented in this file.
 - Altered `PixState::tab_bar` to take a `selected` parameter to control the
   initial selected tab and altered the callback to take a generic type instead
   of a `usize`.
+- `PixState::enqueue_audio` now returns a `PixResult` in the event the audio device fails, or the
+  max queue size is reached.
 
 ## [0.5.4] - 2022-01-26
 

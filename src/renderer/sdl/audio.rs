@@ -3,6 +3,7 @@ use crate::{
     audio::{AudioRenderer, DeviceCallback},
     prelude::*,
 };
+use anyhow::anyhow;
 use log::warn;
 use sdl2::audio::{
     AudioCallback as SdlAudioCallback, AudioDevice as SdlAudioDevice, AudioSpec as SdlAudioSpec,
@@ -20,15 +21,18 @@ pub(crate) type RendererAudioDevice<CB> = SdlAudioDevice<CB>;
 impl AudioRenderer for Renderer {
     /// Add audio samples to the audio buffer queue.
     #[inline]
-    fn enqueue_audio(&mut self, samples: &[f32]) {
+    fn enqueue_audio(&mut self, samples: &[f32]) -> PixResult<()> {
         let size = self.audio_device.size();
         if size <= MAX_QUEUE_SIZE {
             if size >= WARN_QUEUE_SIZE {
                 warn!("Audio queue size is increasing: {}. Did you forget to call `PixState::resume_audio`?", size);
             }
-            self.audio_device.queue(samples);
+            self.audio_device
+                .queue_audio(samples)
+                .map_err(PixError::Renderer)?;
+            Ok(())
         } else {
-            panic!("Reached max audio queue size: {}. Did you forget to call `PixState::resume_audio`?", MAX_QUEUE_SIZE);
+            Err(anyhow!("Reached max audio queue size: {}. Did you forget to call `PixState::resume_audio`?", MAX_QUEUE_SIZE))
         }
     }
 

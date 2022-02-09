@@ -33,7 +33,7 @@
 //!             samples.push(if s <= 0.0 { -volume } else { volume });
 //!         }
 //!         // Add samples to audio queue for playback
-//!         s.enqueue_audio(&samples);
+//!         s.enqueue_audio(&samples)?;
 //!         Ok(())
 //!     }
 //! }
@@ -334,6 +334,11 @@ impl<CB: AudioCallback> fmt::Debug for AudioDevice<CB> {
 impl PixState {
     /// Add samples to the current audio buffer queue.
     ///
+    /// # Errors
+    ///
+    /// If the audio device fails to queue samples, or if the audio buffer max size is reached,
+    /// then an error is returned.
+    ///
     /// # Example
     ///
     /// ```
@@ -352,14 +357,14 @@ impl PixState {
     ///         samples.push(if s <= 0.0 { -volume } else { volume });
     ///     }
     ///     // Add samples to audio queue for playback
-    ///     s.enqueue_audio(&samples);
+    ///     s.enqueue_audio(&samples)?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
     #[inline]
-    pub fn enqueue_audio<S: AsRef<[f32]>>(&mut self, samples: S) {
-        self.renderer.enqueue_audio(samples.as_ref());
+    pub fn enqueue_audio<S: AsRef<[f32]>>(&mut self, samples: S) -> PixResult<()> {
+        self.renderer.enqueue_audio(samples.as_ref())
     }
 
     /// Clear audio samples from the current audio buffer queue.
@@ -649,7 +654,7 @@ pub(crate) struct DeviceCallback<CB: AudioCallback> {
 /// Trait representing audio support.
 pub(crate) trait AudioRenderer {
     /// Add audio samples to the current audio buffer queue.
-    fn enqueue_audio(&mut self, samples: &[f32]);
+    fn enqueue_audio(&mut self, samples: &[f32]) -> PixResult<()>;
 
     /// Clear audio samples from the current audio buffer queue.
     fn clear_audio(&mut self);
