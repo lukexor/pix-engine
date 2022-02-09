@@ -5,8 +5,7 @@ use crate::{
     renderer::{RendererSettings, WindowRenderer},
     window::{Position, WindowId},
 };
-use anyhow::bail;
-use anyhow::Context;
+use anyhow::{bail, Context};
 use log::debug;
 use lru::LruCache;
 use sdl2::{

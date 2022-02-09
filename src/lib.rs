@@ -69,7 +69,7 @@ pub mod prelude {
         Key, KeyEvent, KeyMod, Mouse, WindowEvent,
     };
     pub use super::graphics::lighting::{Light, LightSource};
-    pub use super::gui::theme::{self, ColorType, Font, Theme};
+    pub use super::gui::theme::{self, Builder as ThemeBuilder, ColorType, Font, Theme};
     pub use super::image::{Image, PixelFormat};
     pub use super::math::{map, random_rng, Float, Num, Scalar};
     pub use super::shape::{
