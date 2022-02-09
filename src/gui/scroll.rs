@@ -101,7 +101,7 @@ impl PixState {
 
         // Scrollbars
         let total_width = max_cursor_pos.x() + s.ui.last_width() + fpad.x();
-        let total_height = max_cursor_pos.y();
+        let total_height = max_cursor_pos.y() + fpad.y();
         let rect = s.scroll(id, scroll_area, total_width, total_height)?;
         s.advance_cursor([rect.width().max(label_width), rect.bottom() - pos.y()]);
 
