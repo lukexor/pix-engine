@@ -254,7 +254,7 @@ impl PixState {
             x,
             y,
             width,
-            displayed_count as i32 * line_height + 2 * fpad.y()
+            displayed_count as i32 * line_height + 2 * fpad.y() + 2
         ];
 
         // Check hover/active/keyboard focus
@@ -294,7 +294,7 @@ impl PixState {
                         new_scroll.set_y(sel_y);
                     } else if sel_y + line_height > scroll.y() + height {
                         // Snap scroll to bottom of the window
-                        new_scroll.set_y(sel_y - (height - line_height));
+                        new_scroll.set_y((sel_y + line_height) - (height - font_size - ipad.y()));
                     }
                     if new_scroll != scroll {
                         s.ui.set_scroll(id, new_scroll);
@@ -305,7 +305,7 @@ impl PixState {
         s.ui.handle_events(id);
 
         // Scrollbars
-        let total_height = items.len() as i32 * line_height;
+        let total_height = items.len() as i32 * line_height + 2;
         let total_width = items.iter().fold(0, |max_width, item| {
             let (w, _) = s.text_size(item.as_ref()).unwrap_or((0, 0));
             cmp::max(w, max_width)

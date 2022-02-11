@@ -30,6 +30,7 @@ All notable changes to this project will be documented in this file.
 - Blur focus by clicking outside on UI elements and by pressing escape/enter in
   input fields.
 - Fixed Tab size
+- Fixed select list padding
 
 ### Breaking
 
