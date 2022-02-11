@@ -25,14 +25,14 @@ impl AudioRenderer for Renderer {
         let size = self.audio_device.size();
         if size <= MAX_QUEUE_SIZE {
             if size >= WARN_QUEUE_SIZE {
-                warn!("Audio queue size is increasing: {}. Did you forget to call `PixState::resume_audio`?", size);
+                warn!("Audio queue size is increasing: {}. Did you forget to call `PixState::resume_audio`? Audio Device Status: {:?}", size, self.audio_device.status());
             }
             self.audio_device
                 .queue_audio(samples)
                 .map_err(PixError::Renderer)?;
             Ok(())
         } else {
-            Err(anyhow!("Reached max audio queue size: {}. Did you forget to call `PixState::resume_audio`?", MAX_QUEUE_SIZE))
+            Err(anyhow!("Reached max audio queue size: {}. Did you forget to call `PixState::resume_audio`? Audio Device Status: {:?}", MAX_QUEUE_SIZE, self.audio_device.status()))
         }
     }
 
