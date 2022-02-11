@@ -17,6 +17,7 @@
 //! # use pix_engine::prelude::*;
 //! use std::str::FromStr;
 //!
+//! # fn main() -> PixResult<()> {
 //! let c = Color::from_str("#F0F5BF")?;
 //! assert_eq!(c.channels(), [240, 245, 191, 255]);
 //!
@@ -34,7 +35,8 @@
 //! let to = rgb!(0, 100, 255);
 //! let lerped = from.lerp(to, 0.5);
 //! assert_eq!(lerped.channels(), [128, 50, 128, 255]);
-//! # Ok::<(), PixError>(())
+//! # Ok(())
+//! # }
 //! ```
 
 use super::Mode::{Hsb, Hsl, Rgb};
@@ -54,6 +56,7 @@ impl Color {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
+    /// # fn main() -> PixResult<()> {
     /// let vals: Vec<f64> = vec![128.0, 64.0, 0.0];
     /// let c = Color::from_slice(ColorMode::Rgb, &vals)?; // RGB Vec
     /// assert_eq!(c.channels(), [128, 64, 0, 255]);
@@ -61,7 +64,8 @@ impl Color {
     /// let vals: [f64; 4] = [128.0, 64.0, 0.0, 128.0];
     /// let c = Color::from_slice(ColorMode::Rgb, &vals[..])?; // RGBA slice
     /// assert_eq!(c.channels(), [128, 64, 0, 128]);
-    /// # Ok::<(), PixError>(())
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn from_slice<T, S>(mode: ColorMode, slice: S) -> PixResult<Self>
     where
@@ -199,6 +203,7 @@ impl FromStr for Color {
     /// # use pix_engine::prelude::*;
     /// use std::str::FromStr;
     ///
+    /// # fn main() -> PixResult<()> {
     /// let c = Color::from_str("#F0F")?; // 3-digit Hex string
     /// assert_eq!(c.channels(), [255, 0, 255, 255]);
     ///
@@ -210,7 +215,8 @@ impl FromStr for Color {
     ///
     /// let c = Color::from_str("#F0F5BF5F")?; // 8-digit Hex string
     /// assert_eq!(c.channels(), [240, 245, 191, 95]);
-    /// # Ok::<(), PixError>(())
+    /// # Ok(())
+    /// # }
     /// ```
     fn from_str(string: &str) -> result::Result<Self, Self::Err> {
         if !string.starts_with('#') {
