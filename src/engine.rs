@@ -312,6 +312,7 @@ impl PixEngine {
 
         // on_stop loop enables on_stop to prevent application close if necessary
         'on_stop: loop {
+            trace!("Starting `AppState::on_update` loop.");
             // running loop continues until an event or on_update returns false or errors
             let result = 'running: loop {
                 self.handle_events(app)?;
@@ -327,7 +328,6 @@ impl PixEngine {
                     if self.state.is_running() {
                         self.state.clear()?;
                         self.state.pre_update();
-                        trace!("Running `AppState::on_update`");
                         let on_update = app.on_update(&mut self.state);
                         if on_update.is_err() {
                             self.state.quit();
