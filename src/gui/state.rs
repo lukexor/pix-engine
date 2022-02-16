@@ -810,13 +810,15 @@ impl PixState {
     pub(crate) fn advance_cursor<S: Into<PointI2>>(&mut self, size: S) {
         let size = size.into();
         let pos = self.ui.cursor;
-        let spacing = self.theme.spacing;
-        let padx = spacing.frame_pad.x();
-        let pady = spacing.item_pad.y();
+        let padx = self.theme.spacing.frame_pad.x();
+        let pady = self.theme.spacing.item_pad.y();
         let offset_x = self.ui.column_offset;
 
         // Previous cursor ends at the right of this item
         self.ui.pcursor = point![pos.x() + size.x(), pos.y()];
+        if self.settings.rect_mode == RectMode::Center {
+            self.ui.pcursor.offset(-size / 2);
+        }
 
         // Move cursor to the next line with padding, choosing the maximum of the next line or the
         // previous y value to account for variable line heights when using `same_line`.

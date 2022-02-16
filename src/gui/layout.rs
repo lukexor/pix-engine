@@ -83,12 +83,12 @@ impl PixState {
     where
         O: Into<Option<[i32; 2]>>,
     {
-        let [x, y] = self.ui.pcursor().as_array();
+        let pos = self.ui.pcursor();
         let offset = offset.into().unwrap_or([0; 2]);
         let item_pad = self.theme.spacing.item_pad;
         self.ui
-            .set_cursor([x + item_pad.x() + offset[0], y + offset[1]]);
-        self.ui.line_height = self.ui.pline_height - offset[1];
+            .set_cursor([pos.x() + item_pad.x() + offset[0], pos.y() + offset[1]]);
+        self.ui.line_height = self.ui.pline_height;
     }
 
     /// Change the default width of the next rendered element for elements that typically take up
@@ -173,7 +173,7 @@ impl PixState {
 
         let s = self;
         let tab_id = s.ui.get_id(&label);
-        let colors = s.theme.colors;
+        let font_size = s.theme.font_size;
         let fpad = s.theme.spacing.frame_pad;
         let ipad = s.theme.spacing.item_pad;
 
@@ -181,6 +181,9 @@ impl PixState {
         for (i, tab) in tabs.iter().enumerate() {
             if i > 0 {
                 s.same_line([-ipad.x() + 1, 0]);
+            } else {
+                let pos = s.cursor_pos();
+                s.set_cursor_pos([pos.x() + fpad.x(), pos.y()]);
             }
             let tab_label = tab.as_ref();
             let id = s.ui.get_id(&tab_label);
@@ -190,7 +193,7 @@ impl PixState {
 
             // Calculate tab size
             let (width, height) = s.text_size(tab_label)?;
-            let tab_rect = rect![pos + fpad, width, height].offset_size(4 * ipad);
+            let tab_rect = rect![pos, width, height].offset_size(4 * ipad);
 
             // Check hover/active/keyboard focus
             let hovered = s.ui.try_hover(id, &tab_rect);
@@ -220,6 +223,7 @@ impl PixState {
                 s.fill(colors.background);
             }
             if active {
+                s.clip(tab_rect.offset([1, 0]))?;
                 s.rect(tab_rect.offset([1, 1]))?;
             } else {
                 s.rect(tab_rect)?;
@@ -255,15 +259,8 @@ impl PixState {
         }
 
         let pos = s.cursor_pos();
-        let fpad = s.theme.spacing.frame_pad;
-        s.push();
-        s.stroke(colors.disabled());
-        let y = pos.y() + fpad.y() + 1;
-        let line_width = s.ui_width()?;
-        s.line(line_![fpad.x(), y, line_width, y])?;
-        s.pop();
-        s.advance_cursor([line_width, fpad.y()]);
-
+        s.set_cursor_pos([pos.x(), pos.y() - ipad.y() - font_size as i32 / 2 - 1]);
+        s.separator()?;
         s.spacing()?;
 
         s.push_id(tab_id);

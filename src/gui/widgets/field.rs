@@ -148,7 +148,7 @@ impl PixState {
         s.rect(input)?;
 
         // Text
-        let clip = input.shrink(ipad - 1);
+        let clip = input.shrink(ipad - 2);
         let (value_width, value_height) = s.text_size(value)?;
         let (cursor_width, _) = s.text_size(TEXT_CURSOR)?;
         let width = value_width + cursor_width;

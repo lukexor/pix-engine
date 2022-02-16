@@ -80,7 +80,8 @@ impl PixState {
         let marker = "?";
         let (marker_width, marker_height) = s.size_of(marker)?;
         let hover = rect![
-            pos,
+            pos.x(),
+            pos.y() - ipad.y(),
             clamp_size(marker_width) + 2 * ipad.x(),
             clamp_size(marker_height) + 2 * ipad.y()
         ];
@@ -144,7 +145,7 @@ impl PixState {
 
         // Process input
         s.ui.handle_events(id);
-        s.advance_cursor([hover.right() - pos.x(), hover.height()]);
+        s.advance_cursor([hover.width(), hover.height() - ipad.y()]);
 
         Ok(())
     }
