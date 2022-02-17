@@ -372,6 +372,8 @@ impl Gui {
 
 impl AppState for Gui {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.clear()?;
+
         if self.disabled {
             s.disable();
         }

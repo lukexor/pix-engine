@@ -94,6 +94,8 @@ impl CaptureReplayDemo {
 
 impl AppState for CaptureReplayDemo {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.clear()?;
+
         if self.recording {
             let cursor_pos = s.cursor_pos();
             s.text(format!(

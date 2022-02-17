@@ -177,6 +177,7 @@ impl AppState for App {
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.clear()?;
         let adjustment = self.get_adjustment();
         for (i, boid) in self.flock.iter_mut().enumerate() {
             boid.acc += adjustment[i];

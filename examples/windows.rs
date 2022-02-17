@@ -12,6 +12,8 @@ impl WindowDemo {
 
 impl AppState for WindowDemo {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.clear()?;
+
         s.fill(Color::WHITE);
         s.text("Window 1")?;
 

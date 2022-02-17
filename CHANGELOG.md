@@ -39,6 +39,8 @@ All notable changes to this project will be documented in this file.
   of a `usize`.
 - `PixState::enqueue_audio` now returns a `PixResult` in the event the audio device fails, or the
   max queue size is reached.
+- Removed clearing the screen by default in `AppState::on_update`, leaving it to
+  the application to choose when to clear the screen.
 
 ## [0.5.4] - 2022-01-26
 

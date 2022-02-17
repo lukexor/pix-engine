@@ -295,6 +295,7 @@ impl AppState for RayScene {
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.clear()?;
         let mouse = s.mouse_pos();
 
         if !s.mouse_down(Mouse::Left) {

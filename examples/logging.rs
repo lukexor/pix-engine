@@ -5,6 +5,7 @@ struct LoggingDemo;
 
 impl AppState for LoggingDemo {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.clear()?;
         s.text("Press any key and check the console for log events...")?;
         Ok(())
     }

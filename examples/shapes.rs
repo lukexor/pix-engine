@@ -14,6 +14,8 @@ impl AppState for Shapes {
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.clear()?;
+
         s.stroke(Color::CYAN);
         for x in (10..210).step_by(3) {
             s.point([x, x])?;

@@ -326,7 +326,6 @@ impl PixEngine {
                 if time_since_last >= target_delta_time {
                     self.state.set_delta_time(now, time_since_last);
                     if self.state.is_running() {
-                        self.state.clear()?;
                         self.state.pre_update();
                         let on_update = app.on_update(&mut self.state);
                         if on_update.is_err() {

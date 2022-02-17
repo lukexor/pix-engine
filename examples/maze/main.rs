@@ -165,6 +165,8 @@ impl MazeApp {
 
 impl AppState for MazeApp {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.clear()?;
+
         self.draw(s)?;
         match self.mode {
             MazeMode::Creating => self.step_create_maze()?,

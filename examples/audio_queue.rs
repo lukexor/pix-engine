@@ -94,6 +94,8 @@ impl AppState for QueueDemo {
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.clear()?;
+
         s.heading("Audio Demo")?;
         s.spacing()?;
 

@@ -313,6 +313,7 @@ impl AppState for Asteroids {
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.clear()?;
         if self.gameover {
             return self.draw_gameover(s);
         }

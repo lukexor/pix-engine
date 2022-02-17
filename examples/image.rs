@@ -21,6 +21,7 @@ impl AppState for ImageDemo {
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.clear()?;
         s.image(&self.0, [s.width()? as i32 / 2, s.height()? as i32 / 2])?;
         s.text("<Esc>: Disable Tint")?;
         s.text("<Return>: Random Tint")?;

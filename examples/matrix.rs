@@ -178,6 +178,8 @@ impl AppState for Matrix {
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.clear()?;
+
         if s.elapsed() < 1500.0 {
             return Ok(());
         }

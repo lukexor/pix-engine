@@ -11,6 +11,8 @@ impl AppState for MyApp {
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.clear()?;
+
         // Main render loop. Called as often as possible, or based on `target frame rate`.
         if s.mouse_pressed() {
             s.fill(0);

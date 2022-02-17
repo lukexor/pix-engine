@@ -214,7 +214,6 @@ impl App {
 
 impl AppState for App {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.fill(Color::BLACK);
         let half_w = s.width()? as i32 / 2;
         let half_h = s.height()? as i32 / 2;
         for x in -half_w..=half_w {

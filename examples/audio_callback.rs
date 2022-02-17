@@ -25,6 +25,8 @@ impl AudioCallback for SquareWave {
 
 impl AppState for CallbackDemo {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.clear()?;
+
         let desired_spec = AudioSpecDesired {
             freq: Some(44_100), // 44,100 HZ
             channels: Some(1),  // mono audio
