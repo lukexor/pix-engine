@@ -338,6 +338,7 @@ impl Default for Mouse {
 
 bitflags! {
     /// Key Modifier.
+    #[derive(Default)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "serde", serde(transparent))]
     pub struct KeyMod: u16 {

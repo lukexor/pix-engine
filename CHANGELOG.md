@@ -32,6 +32,8 @@ All notable changes to this project will be documented in this file.
   input fields.
 - Fixed Tab size
 - Fixed select list padding
+- Fixed `PixState::mod_down` to correctly return true when multiple modifiers
+  are pressed.
 
 ### Breaking
 
@@ -43,6 +45,8 @@ All notable changes to this project will be documented in this file.
 - Removed clearing the screen by default in `AppState::on_update`, leaving it to
   the application to choose when to clear the screen.
 - Modified `PixState::focused` to return true whether any active windows have focus.
+- Renamed `PixState::keymods` to `PixState::keymod` which now returns a single
+  `&KeyMod` value instead of a `HashSet<KeyMod>`.
 
 ## [0.5.4] - 2022-01-26
 

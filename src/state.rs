@@ -366,8 +366,7 @@ impl PixState {
     /// # struct App;
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     if s.keymods().contains(&KeyMod::SHIFT)
-    ///         && s.keymods().contains(&KeyMod::CTRL)
+    ///     if s.keymod().intersects(KeyMod::SHIFT | KeyMod::CTRL)
     ///         && s.key_down(Key::Space)
     ///     {
     ///         s.background(Color::random());
@@ -378,8 +377,8 @@ impl PixState {
     /// ```
     #[inline]
     #[must_use]
-    pub const fn keymods(&self) -> &HashSet<KeyMod> {
-        &self.ui.keys.mods_pressed
+    pub const fn keymod(&self) -> &KeyMod {
+        &self.ui.keys.keymod
     }
 }
 

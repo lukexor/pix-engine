@@ -9,7 +9,7 @@ pub(crate) struct KeyState {
     pub(crate) entered: Option<Key>,
     pub(crate) typed: Option<String>,
     pub(crate) pressed: HashSet<Key>,
-    pub(crate) mods_pressed: HashSet<KeyMod>,
+    pub(crate) keymod: KeyMod,
 }
 
 impl KeyState {
@@ -34,7 +34,7 @@ impl KeyState {
     /// Returns if a specific [`KeyMod`] is currently being held.
     #[inline]
     pub(crate) fn mod_down(&self, keymod: KeyMod) -> bool {
-        self.mods_pressed.contains(&keymod)
+        self.keymod.intersects(keymod)
     }
 
     /// Store a pressed [Key].
@@ -42,21 +42,14 @@ impl KeyState {
     pub(crate) fn press(&mut self, key: Key, keymod: KeyMod) {
         self.entered = Some(key);
         self.pressed.insert(key);
-        self.mods_pressed.insert(keymod);
+        self.keymod = keymod;
     }
 
     /// Remove a pressed [Key].
     #[inline]
     pub(crate) fn release(&mut self, key: Key, keymod: KeyMod) {
         self.pressed.remove(&key);
-        self.mods_pressed.remove(&keymod);
-        match key {
-            Key::LCtrl | Key::RCtrl => self.mods_pressed.remove(&KeyMod::CTRL),
-            Key::LAlt | Key::RAlt => self.mods_pressed.remove(&KeyMod::ALT),
-            Key::LGui | Key::RGui => self.mods_pressed.remove(&KeyMod::GUI),
-            Key::LShift | Key::RShift => self.mods_pressed.remove(&KeyMod::SHIFT),
-            _ => false,
-        };
+        self.keymod = keymod;
     }
 
     /// Store a pressed [Key].
