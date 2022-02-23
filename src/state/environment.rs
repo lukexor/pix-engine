@@ -71,7 +71,8 @@ impl PixState {
         self.renderer.present();
     }
 
-    /// Returns whether the current window target has focus.
+    /// Returns whether any active window has focus. To check focus of a specific window, see
+    /// [`PixState::focused_window`].
     ///
     /// # Example
     ///
@@ -91,7 +92,31 @@ impl PixState {
     #[inline]
     #[must_use]
     pub fn focused(&self) -> bool {
-        matches!(self.env.focused_window, Some(id) if id == self.renderer.window_id())
+        self.env.focused_window.is_some()
+    }
+
+    /// Returns whether a given window has focus. To check focus of a any window, see
+    /// [`PixState::focused`].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     if s.focused_window(s.window_id()) {
+    ///         // Update screen only when focused
+    ///         s.rect([0, 0, 100, 100])?;
+    ///     }
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    #[must_use]
+    pub fn focused_window(&self, window_id: WindowId) -> bool {
+        matches!(self.env.focused_window, Some(id) if id == window_id)
     }
 
     /// The time elapsed since last frame in milliseconds.

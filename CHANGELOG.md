@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - Added `PixState::set_column_offset` and `PixState::reset_column_offset` to
   allow controlling the x-offset position when rendering UI elements.
 - Added `ThemeBuilder` to prelude.
+- Added `PixState::focused_window` that takes a `WindowId` to check for focus.
 
 ### Changed
 
@@ -41,6 +42,7 @@ All notable changes to this project will be documented in this file.
   max queue size is reached.
 - Removed clearing the screen by default in `AppState::on_update`, leaving it to
   the application to choose when to clear the screen.
+- Modified `PixState::focused` to return true whether any active windows have focus.
 
 ## [0.5.4] - 2022-01-26
 

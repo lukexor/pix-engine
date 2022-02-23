@@ -385,13 +385,13 @@ impl PixEngine {
                     win_event,
                 } => {
                     let window_id = WindowId(window_id);
-                    app.on_window_event(state, window_id, win_event)?;
                     match win_event {
                         WindowEvent::FocusGained => state.focus_window(Some(window_id)),
                         WindowEvent::FocusLost => state.focus_window(None),
                         WindowEvent::Close => state.close_window(window_id)?,
                         _ => (),
                     }
+                    app.on_window_event(state, window_id, win_event)?;
                 }
                 Event::KeyDown {
                     key: Some(key),
