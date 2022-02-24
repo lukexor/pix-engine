@@ -30,7 +30,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 #[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
-pub struct Tri<T, const N: usize>(pub(crate) [Point<T, N>; 3]);
+pub struct Tri<T = i32, const N: usize = 2>(pub(crate) [Point<T, N>; 3]);
 
 /// A 2D `Triangle` represented by `i32`.
 pub type TriI2 = Tri<i32, 2>;

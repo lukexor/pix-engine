@@ -32,7 +32,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 #[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
-pub struct Line<T, const N: usize>(pub(crate) [Point<T, N>; 2]);
+pub struct Line<T = i32, const N: usize = 2>(pub(crate) [Point<T, N>; 2]);
 
 /// A 2D `Line` represented by `i32`.
 pub type LineI2 = Line<i32, 2>;

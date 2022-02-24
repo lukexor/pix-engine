@@ -34,6 +34,8 @@ All notable changes to this project will be documented in this file.
 - Fixed select list padding
 - Fixed `PixState::mod_down` to correctly return true when multiple modifiers
   are pressed.
+- Default types and dimensions for `Point`, `Vector`, `Line`, `Triangle`,
+  `Quad`, `Light` and `LightSource` are now defined.
 
 ### Breaking
 

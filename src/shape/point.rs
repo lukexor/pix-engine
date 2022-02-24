@@ -41,7 +41,7 @@ use std::{fmt, ops::MulAssign};
 #[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
-pub struct Point<T, const N: usize>(
+pub struct Point<T = i32, const N: usize = 2>(
     #[cfg_attr(feature = "serde", serde(with = "arrays"))] pub(crate) [T; N],
 );
 

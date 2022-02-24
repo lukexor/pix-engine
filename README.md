@@ -53,9 +53,9 @@ Some examples of things you can create with `pix-engine`:
 - Image viewing and editing.
 - Visual art.
 
-## Minimum Supported Rust Version
+## Minimum Supported Rust Version (MSRV)
 
-The current minimum Rust version is `1.57.0`.
+The current minimum Rust version is `1.59.0`.
 
 ## Screenshots
 
