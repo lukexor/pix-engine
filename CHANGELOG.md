@@ -40,6 +40,7 @@ All notable changes to this project will be documented in this file.
   `Quad`, `Light` and `LightSource` are now defined.
 - Changed how `PixState::on_update` handles frame rates and no longer sleeps
   when `vsync` is enabled.
+- Changed vertical scroll direction to be natural.
 
 ### Breaking
 

@@ -129,7 +129,7 @@ impl PixState {
         // Vertical scroll
         if ymax > 0 {
             if s.ui.is_hovered(id) {
-                new_scroll.set_y((scroll.y() + SCROLL_SPEED * s.ui.mouse.yrel).clamp(0, ymax));
+                new_scroll.set_y((scroll.y() + SCROLL_SPEED * -s.ui.mouse.yrel).clamp(0, ymax));
             }
 
             if s.ui.is_focused(id) {
@@ -293,7 +293,7 @@ impl PixState {
         if hovered {
             let offset = match dir {
                 Horizontal => s.ui.mouse.xrel,
-                Vertical => s.ui.mouse.yrel,
+                Vertical => -s.ui.mouse.yrel,
             };
             new_value += SCROLL_SPEED * offset;
         }
