@@ -305,10 +305,9 @@ impl WindowRenderer for Renderer {
     }
 
     #[inline]
-    fn set_fps(&mut self, fps: usize) -> PixResult<()> {
-        self.fps = fps;
+    fn set_fps(&mut self, fps: f32) -> PixResult<()> {
         self.title.clear();
-        write!(self.title, "{} - FPS: {}", &self.settings.title, self.fps)
+        write!(self.title, "{} - FPS: {:.02}", &self.settings.title, fps)
             .context("invalid title")?;
         // Can't use `self.window_mut` here due to needing split borrows
         self.windows

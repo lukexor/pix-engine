@@ -315,33 +315,34 @@ impl PixEngine {
             trace!("Starting `AppState::on_update` loop.");
             // running loop continues until an event or on_update returns false or errors
             let result = 'running: loop {
+                let start_time = Instant::now();
+                let time_since_last = start_time - self.state.last_frame_time();
+                let target_delta_time = self.state.target_delta_time();
+
                 self.handle_events(app)?;
                 if self.state.should_quit() {
                     break 'running Ok(());
                 }
 
-                let now = Instant::now();
-                let time_since_last = now - self.state.last_frame_time();
-                let target_delta_time = self.state.target_delta_time();
-                if time_since_last >= target_delta_time {
-                    self.state.set_delta_time(now, time_since_last);
-                    if self.state.is_running() {
-                        self.state.pre_update();
-                        let on_update = app.on_update(&mut self.state);
-                        if on_update.is_err() {
-                            self.state.quit();
-                            break 'running on_update;
-                        }
-                        self.state.on_update()?;
-                        self.state.post_update();
-                        self.state.present();
-                        self.state.increment_frame(now, time_since_last)?;
+                if self.state.is_running() {
+                    self.state.pre_update();
+                    let on_update = app.on_update(&mut self.state);
+                    if on_update.is_err() {
+                        self.state.quit();
+                        break 'running on_update;
                     }
+                    self.state.on_update()?;
+                    self.state.post_update();
+                    self.state.present();
+                    self.state.set_delta_time(start_time, time_since_last);
+                    self.state.increment_frame(time_since_last)?;
                 }
 
-                let time_to_next_frame = now + target_delta_time;
+                // Accounts for variance in frame rates so we don't sleep too long
+                let epsilon = Duration::from_micros(900);
+                let time_to_next_frame = start_time + target_delta_time - epsilon;
                 let now = Instant::now();
-                if time_to_next_frame > now {
+                if !self.state.vsync_enabled() && time_to_next_frame > now {
                     thread::sleep(time_to_next_frame - now);
                 }
             };

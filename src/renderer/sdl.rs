@@ -46,7 +46,6 @@ pub(crate) struct Renderer {
     controller_subsys: GameControllerSubsystem,
     controllers: HashMap<ControllerId, GameController>,
     title: String,
-    fps: usize,
     settings: RendererSettings,
     cursor: Cursor,
     blend_mode: SdlBlendMode,
@@ -224,7 +223,6 @@ impl Rendering for Renderer {
             controllers: HashMap::new(),
             settings: s,
             title,
-            fps: 0,
             cursor,
             blend_mode: SdlBlendMode::None,
             current_font,
@@ -863,7 +861,6 @@ impl fmt::Debug for Renderer {
                 ),
             )
             .field("title", &self.title)
-            .field("fps", &self.fps)
             .field("settings", &self.settings)
             .field("blend_mode", &self.blend_mode)
             .field(

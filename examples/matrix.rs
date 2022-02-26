@@ -1,5 +1,6 @@
 use lazy_static::lazy_static;
 use pix_engine::prelude::*;
+use std::time::Duration;
 
 const DEFAULT_WIDTH: u32 = 960;
 const DEFAULT_HEIGHT: u32 = 600;
@@ -65,7 +66,7 @@ struct Stream {
 }
 
 impl Stream {
-    const SPEED_RANGE: (Scalar, Scalar) = (0.15, 0.5);
+    const SPEED_RANGE: (Scalar, Scalar) = (150.0, 500.0);
     const HEIGHT_RANGE: (usize, usize) = (1, 25);
     const START_RANGE: (i32, i32) = (-2000, -500);
     const SPAWN_RANGE: (i32, i32) = (-200, -50);
@@ -116,7 +117,7 @@ impl Stream {
     }
 
     fn draw(&mut self, s: &mut PixState) -> PixResult<()> {
-        self.y += (self.speed * s.delta_time()).round() as i32;
+        self.y += (self.speed * s.delta_time().as_secs_f64()) as i32;
         for (i, glyph) in self.glyphs.iter_mut().enumerate() {
             let y = self.y - (i as i32 * self.glyph_size as i32);
             if y < 0 - self.glyph_size as i32 || y > s.height()? as i32 {
@@ -180,7 +181,7 @@ impl AppState for Matrix {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         s.clear()?;
 
-        if s.elapsed() < 1500.0 {
+        if s.elapsed() < Duration::from_secs_f64(1.5) {
             return Ok(());
         }
         self.new_streams.clear();

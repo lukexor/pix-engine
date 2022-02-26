@@ -153,7 +153,7 @@ impl Asteroids {
     }
 
     fn handle_controls(&mut self, s: &mut PixState) {
-        let elapsed = s.delta_time() / 1000.0;
+        let elapsed = s.delta_time().as_secs_f64();
         // Steer
         if s.key_down(Key::Left) {
             self.ship.angle -= 5.0 * elapsed;
@@ -169,7 +169,7 @@ impl Asteroids {
 
     fn draw_asteroids(&mut self, s: &mut PixState) -> PixResult<()> {
         let (w, h) = (self.width as Scalar, self.height as Scalar);
-        let elapsed = s.delta_time() / 1000.0;
+        let elapsed = s.delta_time().as_secs_f64();
         // Draw asteroids
         for a in self.asteroids.iter_mut() {
             // Ship collision
@@ -195,7 +195,7 @@ impl Asteroids {
 
     fn draw_bullets(&mut self, s: &mut PixState) -> PixResult<()> {
         let (w, h) = (self.width as Scalar, self.height as Scalar);
-        let elapsed = s.delta_time() / 1000.0;
+        let elapsed = s.delta_time().as_secs_f64();
         // Update bullet and check collisions
         for b in self.bullets.iter_mut() {
             b.pos += b.vel * elapsed;
@@ -248,7 +248,7 @@ impl Asteroids {
 
     fn draw_ship(&mut self, s: &mut PixState) -> PixResult<()> {
         let (w, h) = (self.width as Scalar, self.height as Scalar);
-        let elapsed = s.delta_time() / 1000.0;
+        let elapsed = s.delta_time().as_secs_f64();
         self.ship.pos += self.ship.vel * elapsed;
         self.ship.pos.wrap([w, h], self.ship.size as Scalar);
         s.fill(Color::BLACK);

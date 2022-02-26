@@ -172,7 +172,7 @@ impl PixState {
             s.text(&value)?;
         }
 
-        if focused && s.elapsed() as usize >> 9 & 1 > 0 {
+        if focused && s.elapsed().as_millis() >> 9 & 1 > 0 {
             s.set_cursor_pos([x + value_width, y]);
             s.text(TEXT_CURSOR)?;
         }
@@ -319,7 +319,7 @@ impl PixState {
         s.clip(clip)?;
         s.no_stroke();
         s.fill(fg);
-        let blink_cursor = focused && s.elapsed() as usize >> 9 & 1 > 0;
+        let blink_cursor = focused && s.elapsed().as_millis() >> 9 & 1 > 0;
         // TODO: total width here always maxes out at wrap_width when words can't wrap
         let (_, text_height) = if value.is_empty() {
             s.disable();

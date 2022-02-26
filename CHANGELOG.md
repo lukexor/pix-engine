@@ -36,6 +36,8 @@ All notable changes to this project will be documented in this file.
   are pressed.
 - Default types and dimensions for `Point`, `Vector`, `Line`, `Triangle`,
   `Quad`, `Light` and `LightSource` are now defined.
+- Changed how `PixState::on_update` handles frame rates and no longer sleeps
+  when `vsync` is enabled.
 
 ### Breaking
 
@@ -49,6 +51,9 @@ All notable changes to this project will be documented in this file.
 - Modified `PixState::focused` to return true whether any active windows have focus.
 - Renamed `PixState::keymods` to `PixState::keymod` which now returns a single
   `&KeyMod` value instead of a `HashSet<KeyMod>`.
+- Changed `PixState::delta_time` and `PixState::elapsed` to return a `Duration`
+  instead of milliseconds.
+- Changed `PixState::avg_frame_rate` to return an `f32` instead of `usize`.
 
 ## [0.5.4] - 2022-01-26
 

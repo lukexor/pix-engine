@@ -169,7 +169,7 @@ pub(crate) trait WindowRenderer {
     fn set_title(&mut self, title: &str) -> PixResult<()>;
 
     /// Set the average frames-per-second rendered.
-    fn set_fps(&mut self, fps: usize) -> PixResult<()>;
+    fn set_fps(&mut self, fps: f32) -> PixResult<()>;
 
     /// Dimensions of the current render target as `(width, height)`.
     fn dimensions(&self) -> PixResult<(u32, u32)>;

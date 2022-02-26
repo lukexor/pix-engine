@@ -5,8 +5,8 @@
 //! Provided [`PixState`] methods:
 //!
 //! - [`PixState::focused`]: Whether the current window target has focus.
-//! - [`PixState::delta_time`]: Time elapsed since last frame in milliseconds.
-//! - [`PixState::elapsed`]: Time elapsed since application start in milliseconds.
+//! - [`PixState::delta_time`]: [Duration] elapsed since last frame.
+//! - [`PixState::elapsed`]: [Duration] elapsed since application start.
 //! - [`PixState::frame_count`]: Total number of frames since application start.
 //! - [`PixState::redraw`]: Run render loop 1 time, calling [`AppState::on_update`].
 //! - [`PixState::run_times`]: Run render loop N times, calling [`AppState::on_update`].
@@ -25,10 +25,7 @@ use crate::{
     renderer::{Rendering, WindowRenderer},
 };
 use chrono::prelude::*;
-use std::{
-    collections::VecDeque,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
 const ONE_SECOND: Duration = Duration::from_secs(1);
 
@@ -36,13 +33,12 @@ const ONE_SECOND: Duration = Duration::from_secs(1);
 #[derive(Debug, Clone)]
 pub(crate) struct Environment {
     focused_window: Option<WindowId>,
-    delta_time: Scalar,
+    delta_time: Duration,
     start: Instant,
-    frame_rate: usize,
+    frame_rate: f32,
     frame_count: usize,
     run_count: usize,
     quit: bool,
-    frames: VecDeque<Instant>,
     last_frame_time: Instant,
     frame_timer: Duration,
 }
@@ -51,15 +47,14 @@ impl Default for Environment {
     fn default() -> Self {
         Self {
             focused_window: None,
-            delta_time: 0.0,
+            delta_time: Duration::default(),
             start: Instant::now(),
-            frame_rate: 0,
+            frame_rate: 0.0,
             frame_count: 0,
             run_count: 0,
             quit: false,
-            frames: VecDeque::with_capacity(128),
             last_frame_time: Instant::now(),
-            frame_timer: Duration::from_secs(1),
+            frame_timer: Duration::default(),
         }
     }
 }
@@ -119,9 +114,7 @@ impl PixState {
         matches!(self.env.focused_window, Some(id) if id == window_id)
     }
 
-    /// The time elapsed since last frame in milliseconds.
-    ///
-    /// Value can not exceed [`Scalar::MAX`].
+    /// The [Duration] elapsed since last frame.
     ///
     /// # Example
     ///
@@ -131,25 +124,18 @@ impl PixState {
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     // Update position based on frame timestep
-    ///     self.position = self.velocity * s.delta_time();
+    ///     self.position = self.velocity * s.delta_time().as_secs_f64();
     ///     Ok(())
     /// }
     /// # }
     /// ```
     #[inline]
     #[must_use]
-    pub fn delta_time(&self) -> Scalar {
-        let delta = self.env.delta_time * 1000.0;
-        if delta.is_infinite() {
-            Scalar::MAX
-        } else {
-            delta
-        }
+    pub fn delta_time(&self) -> Duration {
+        self.env.delta_time
     }
 
-    /// The time elapsed since application start in milliseconds.
-    ///
-    /// Value can not exceed [`Scalar::MAX`].
+    /// The [Duration[ elapsed since application start.
     ///
     /// # Example
     ///
@@ -159,7 +145,7 @@ impl PixState {
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     // Draw a blinking box, indepdendent of frame rate
-    ///     if s.elapsed() as usize >> 9 & 1 > 0 {
+    ///     if s.elapsed().as_millis() >> 9 & 1 > 0 {
     ///         s.rect([0, 0, 10, 10])?;
     ///     }
     ///     Ok(())
@@ -168,17 +154,8 @@ impl PixState {
     /// ```
     #[inline]
     #[must_use]
-    pub fn elapsed(&self) -> Scalar {
-        #[cfg(target_pointer_width = "32")]
-        let elapsed = self.env.start.elapsed().as_secs_f32();
-        #[cfg(target_pointer_width = "64")]
-        let elapsed = self.env.start.elapsed().as_secs_f64();
-        let elapsed = elapsed * 1000.0;
-        if elapsed.is_infinite() {
-            Scalar::MAX
-        } else {
-            elapsed
-        }
+    pub fn elapsed(&self) -> Duration {
+        self.env.start.elapsed()
     }
 
     /// The total number of frames rendered since application start.
@@ -284,7 +261,7 @@ impl PixState {
     /// ```
     #[inline]
     #[must_use]
-    pub const fn avg_frame_rate(&self) -> usize {
+    pub const fn avg_frame_rate(&self) -> f32 {
         self.env.frame_rate
     }
 
@@ -385,11 +362,7 @@ impl PixState {
     /// Set the delta time since last frame.
     #[inline]
     pub(crate) fn set_delta_time(&mut self, now: Instant, time_since_last: Duration) {
-        #[cfg(target_pointer_width = "32")]
-        let delta = time_since_last.as_secs_f32();
-        #[cfg(target_pointer_width = "64")]
-        let delta = time_since_last.as_secs_f64();
-        self.env.delta_time = delta;
+        self.env.delta_time = time_since_last;
         self.env.last_frame_time = now;
     }
 
@@ -408,32 +381,25 @@ impl PixState {
     /// Increment the internal frame counter. If the `show_frame_rate` option is set, update the
     /// title at most once every second.
     #[inline]
-    pub(crate) fn increment_frame(
-        &mut self,
-        now: Instant,
-        time_since_last: Duration,
-    ) -> PixResult<()> {
+    pub(crate) fn increment_frame(&mut self, time_since_last: Duration) -> PixResult<()> {
         let s = &self.settings;
         let mut env = &mut self.env;
+
         if env.run_count > 0 {
             env.run_count -= 1;
         }
         env.frame_count += 1;
 
         if s.running && s.show_frame_rate {
-            let a_second_ago = now - ONE_SECOND;
-            while env.frames.front().map_or(false, |&t| t < a_second_ago) {
-                env.frames.pop_front();
-            }
-            env.frames.push_back(now);
-
             env.frame_timer += time_since_last;
             if env.frame_timer >= ONE_SECOND {
+                env.frame_rate = env.frame_count as f32 / env.frame_timer.as_secs_f32();
                 env.frame_timer -= ONE_SECOND;
-                env.frame_rate = env.frames.len();
+                env.frame_count = 0;
                 self.renderer.set_fps(env.frame_rate)?;
             }
         }
+
         Ok(())
     }
 

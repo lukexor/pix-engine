@@ -1135,4 +1135,10 @@ impl PixState {
                 Duration::from_secs(1) / rate as u32
             })
     }
+
+    /// Get whether VSync is enabled.
+    #[inline]
+    pub(crate) fn vsync_enabled(&self) -> bool {
+        self.renderer.vsync()
+    }
 }

@@ -52,11 +52,12 @@ impl AppState for Shapes {
 
         s.stroke(Color::CRIMSON);
         s.no_fill();
-        self.rotation += 0.001 * s.delta_time();
+        let delta = s.delta_time().as_secs_f64();
+        self.rotation += delta;
         if self.scale_latch {
-            self.scale -= 0.05 * s.delta_time();
+            self.scale -= 50.0 * delta;
         } else {
-            self.scale += 0.05 * s.delta_time();
+            self.scale += 50.0 * delta;
         }
         if self.scale >= 120.0 || self.scale <= 20.0 {
             self.scale_latch = !self.scale_latch;
