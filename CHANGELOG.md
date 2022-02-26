@@ -19,6 +19,8 @@ All notable changes to this project will be documented in this file.
   allow controlling the x-offset position when rendering UI elements.
 - Added `ThemeBuilder` to prelude.
 - Added `PixState::focused_window` that takes a `WindowId` to check for focus.
+- Added `PixState::audio_size` to query the current size of the audio queue
+  device.
 
 ### Changed
 
