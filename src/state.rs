@@ -23,7 +23,7 @@
 //! - [`PixState::key_down`]: Whether a given [Key] was pressed this frame.
 //! - [`PixState::keys`]: Whether any [Key] was pressed this frame.
 //! - [`PixState::keymod_down`]: Whether a given [key modifier][`KeyMod`] was pressed this frame.
-//! - [`PixState::keymods`]: A [`HashSet`] of [key modifiers][`KeyMod`] pressed this frame.
+//! - [`PixState::keymod`]: The [`KeyMod`]s pressed this frame.
 //!
 //! # Example
 //!
