@@ -166,97 +166,23 @@ impl PixState {
         F: Into<Option<Flipped>>,
     {
         let text = text.as_ref();
-        let mut angle = angle.into();
+        let angle = angle.into();
         let center = center.into();
         let flipped = flipped.into();
 
-        let s = self;
-        let fill = if let Some(fill) = s.settings.fill {
-            fill
-        } else {
-            return Ok((0, 0));
-        };
-        let stroke = s.settings.stroke;
-        let stroke_weight = s.settings.stroke_weight;
-        let wrap_width = s.settings.wrap_width;
-        let colors = s.theme.colors;
-
-        let disabled = s.ui.disabled;
-        let mut pos = s.cursor_pos();
-        if s.settings.rect_mode == RectMode::Center {
-            let (width, height) = s.size_of(text)?;
-            pos.offset([-(clamp_size(width) / 2), -(clamp_size(height) / 2)]);
-        };
-        let mut angle_radians = angle;
-        if s.settings.angle_mode == AngleMode::Radians {
-            angle = angle.map(Scalar::to_degrees);
-        } else {
-            angle_radians = angle.map(Scalar::to_radians);
-        }
-
-        let mut render_text =
-            |pos: PointI2, mut color: Color, outline: u8| -> PixResult<Rect<i32>> {
-                s.push();
-
-                if disabled {
-                    color = color.blended(colors.background, 0.38);
-                }
-                let (w, h) = if wrap_width.is_some() {
-                    s.renderer.text(
-                        pos,
-                        text,
-                        wrap_width,
-                        angle,
-                        center,
-                        flipped,
-                        Some(color),
-                        outline,
-                    )?
-                } else {
-                    let mut x = pos.x();
-                    let mut y = pos.y();
-                    let (mut total_width, mut total_height) = (0, 0);
-                    for line in text.split('\n') {
-                        let (line_width, line_height) = s.renderer.size_of(line, wrap_width)?;
-                        let rect = rect![0, 0, clamp_size(line_width), clamp_size(line_height)];
-                        let bounding_box =
-                            angle_radians.map_or(rect, |angle| rect.rotated(angle, center));
-                        x -= bounding_box.x();
-                        y -= bounding_box.y();
-                        s.renderer.text(
-                            point![x, y],
-                            line,
-                            wrap_width,
-                            angle,
-                            center,
-                            flipped,
-                            Some(color),
-                            outline,
-                        )?;
-                        total_width += bounding_box.width() as u32;
-                        total_height += bounding_box.height() as u32;
-                        y += bounding_box.height();
-                    }
-                    (total_width, total_height)
-                };
-                let rect = rect![pos, clamp_size(w), clamp_size(h)];
-
-                s.pop();
-                Ok(rect)
-            };
+        let s = &self.settings;
+        let fill = s.fill.unwrap_or(Color::TRANSPARENT);
 
         let rect = {
-            let stroke_rect = match stroke {
-                Some(stroke) if stroke_weight > 0 => Some(render_text(pos, stroke, stroke_weight)?),
-                _ => None,
+            match (s.stroke, s.stroke_weight) {
+                (Some(stroke), weight) if weight > 0 => {
+                    let _ = self.render_text(text, stroke, weight, angle, center, flipped)?;
+                }
+                _ => (),
             };
-            if stroke_rect.is_some() {
-                pos += i32::from(stroke_weight);
-            }
-            let text_rect = render_text(pos, fill, 0)?;
-            stroke_rect.unwrap_or(text_rect)
+            self.render_text(text, fill, 0, angle, center, flipped)?
         };
-        s.advance_cursor(rect.size());
+        self.advance_cursor(rect.size() + 4);
 
         Ok((rect.width() as u32, rect.height() as u32))
     }
@@ -541,5 +467,85 @@ impl PixState {
         }
 
         Ok(expanded)
+    }
+}
+
+impl PixState {
+    #[inline]
+    fn render_text(
+        &mut self,
+        text: &str,
+        mut color: Color,
+        outline: u8,
+        mut angle: Option<Scalar>,
+        center: Option<PointI2>,
+        flipped: Option<Flipped>,
+    ) -> PixResult<Rect<i32>> {
+        let s = &self.settings;
+        let wrap_width = s.wrap_width;
+        let colors = self.theme.colors;
+
+        let mut pos = self.cursor_pos();
+        if s.rect_mode == RectMode::Center {
+            let (width, height) = self.size_of(text)?;
+            pos.offset([-(clamp_size(width) / 2), -(clamp_size(height) / 2)]);
+        };
+        if outline == 0 && s.stroke_weight > 0 {
+            pos += i32::from(s.stroke_weight)
+        }
+
+        let mut angle_radians = angle;
+        if s.angle_mode == AngleMode::Radians {
+            angle = angle.map(Scalar::to_degrees);
+        } else {
+            angle_radians = angle.map(Scalar::to_radians);
+        }
+
+        self.push();
+
+        if self.ui.disabled {
+            color = color.blended(colors.background, 0.38);
+        }
+        let (w, h) = if wrap_width.is_some() {
+            self.renderer.text(
+                pos,
+                text,
+                wrap_width,
+                angle,
+                center,
+                flipped,
+                Some(color),
+                outline,
+            )?
+        } else {
+            let mut x = pos.x();
+            let mut y = pos.y();
+            let (mut total_width, mut total_height) = (0, 0);
+            for line in text.split('\n') {
+                let (line_width, line_height) = self.renderer.size_of(line, wrap_width)?;
+                let rect = rect![0, 0, clamp_size(line_width), clamp_size(line_height)];
+                let bounding_box = angle_radians.map_or(rect, |angle| rect.rotated(angle, center));
+                x -= bounding_box.x();
+                y -= bounding_box.y();
+                self.renderer.text(
+                    point![x, y],
+                    line,
+                    wrap_width,
+                    angle,
+                    center,
+                    flipped,
+                    Some(color),
+                    outline,
+                )?;
+                total_width += bounding_box.width() as u32;
+                total_height += bounding_box.height() as u32;
+                y += bounding_box.height();
+            }
+            (total_width, total_height)
+        };
+        let rect = rect![self.cursor_pos(), clamp_size(w), clamp_size(h)];
+
+        self.pop();
+        Ok(rect)
     }
 }

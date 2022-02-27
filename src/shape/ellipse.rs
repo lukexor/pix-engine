@@ -333,7 +333,12 @@ impl<T: Num> Ellipse<T> {
     /// Returns the bounding [Rect] of the ellipse.
     #[inline]
     pub fn bounding_rect(&self) -> Rect<T> {
-        rect![self.left(), self.top(), self.width(), self.height()]
+        rect![
+            self.left(),
+            self.top(),
+            self.width() + T::one(),
+            self.height() + T::one()
+        ]
     }
 
     /// Returns `Ellipse` as a [Vec].
