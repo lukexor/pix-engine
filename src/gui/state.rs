@@ -820,6 +820,16 @@ impl PixState {
             self.ui.pcursor.offset(-size / 2);
         }
 
+        if cfg!(feature = "debug_ui") {
+            self.push();
+            self.no_fill();
+            self.stroke(Color::RED);
+            let _ = self.rect(rect![pos, size.x(), size.y()]);
+            self.fill(Color::BLUE);
+            let _ = self.circle(circle![self.ui.pcursor(), 3]);
+            self.pop();
+        }
+
         // Move cursor to the next line with padding, choosing the maximum of the next line or the
         // previous y value to account for variable line heights when using `same_line`.
         let line_height = self.ui.line_height.max(size.y());

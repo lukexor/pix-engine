@@ -50,6 +50,7 @@ opengl = []
 # TODO: `backtrace` feature can be removed when `Backtrace` lands in stable
 backtrace = ["anyhow/backtrace"]
 vcpkg = ["sdl2/static-link", "sdl2/use-vcpkg"]
+debug_ui = []
 
 [target."cfg(not(target_arch = \"wasm32\"))".dependencies]
 sdl2 = { version = "0.35.2", default_features = false, features = ["gfx", "image", "mixer", "ttf", "unsafe_textures"] }
