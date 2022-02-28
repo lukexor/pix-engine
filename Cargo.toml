@@ -27,7 +27,7 @@ bitflags = "1.2.1"
 chrono = "0.4.19"
 lazy_static = "1.4.0"
 num-traits = "0.2.14"
-png = "0.17.1"
+png = "0.17.4"
 serde = { version = "1.0.136", features = ["derive"], optional = true }
 rand = "0.8.5"
 lru = "0.7.0"
