@@ -118,7 +118,7 @@ pub(crate) trait Rendering: Sized {
         center: Option<PointI2>,
         flipped: Option<Flipped>,
         fill: Option<Color>,
-        outline: u8,
+        outline: u16,
     ) -> PixResult<(u32, u32)>;
 
     /// Returns the rendered dimensions of the given text using the current font

@@ -37,10 +37,7 @@
 //! # }
 //! ```
 
-use crate::{
-    ops::{clamp_dimensions, clamp_size},
-    prelude::*,
-};
+use crate::{ops::clamp_dimensions, prelude::*};
 
 impl PixState {
     /// Draw help marker text that, when hovered, displays a help box with text to the current
@@ -78,12 +75,11 @@ impl PixState {
 
         // Calculate hover area
         let marker = "?";
-        let (marker_width, marker_height) = s.size_of(marker)?;
+        let (marker_width, marker_height) = s.text_size(marker)?;
         let hover = rect![
-            pos.x(),
-            pos.y() - ipad.y(),
-            clamp_size(marker_width) + 2 * ipad.x(),
-            clamp_size(marker_height) + 2 * ipad.y()
+            pos,
+            marker_width + 2 * ipad.x(),
+            marker_height + 2 * ipad.y()
         ];
 
         // Check hover/active/keyboard focus
@@ -104,7 +100,7 @@ impl PixState {
 
         // Marker
         s.rect_mode(RectMode::Center);
-        s.set_cursor_pos(hover.center());
+        s.set_cursor_pos([hover.center().x(), hover.center().y() - 3]);
         s.no_stroke();
         s.fill(fg);
         s.text(marker)?;
@@ -114,9 +110,9 @@ impl PixState {
 
         // Tooltip
         if focused {
-            let (text_width, text_height) = s.size_of(text)?;
-            let text_width = clamp_size(text_width) + 2 * fpad.x();
-            let text_height = clamp_size(text_height) + 2 * fpad.y();
+            let (text_width, text_height) = s.text_size(text)?;
+            let text_width = text_width + 2 * fpad.x();
+            let text_height = text_height + 2 * fpad.y();
             s.push_id(id);
             s.advanced_tooltip(
                 text,
@@ -127,7 +123,7 @@ impl PixState {
 
                     s.stroke(stroke);
                     s.no_fill();
-                    s.rect([0, 0, text_width, text_height])?;
+                    s.rect([0, 0, text_width - 1, text_height - 1])?;
 
                     s.no_stroke();
                     s.fill(fg);
@@ -183,9 +179,9 @@ impl PixState {
         let spacing = s.theme.spacing;
         let pad = spacing.frame_pad;
 
-        let (text_width, text_height) = s.size_of(text)?;
-        let text_width = clamp_size(text_width) + 2 * pad.x();
-        let text_height = clamp_size(text_height) + 2 * pad.y();
+        let (text_width, text_height) = s.text_size(text)?;
+        let text_width = text_width + 2 * pad.x();
+        let text_height = text_height + 2 * pad.y();
 
         // Render
         s.push_id(id);
@@ -198,7 +194,7 @@ impl PixState {
 
                 s.stroke(stroke);
                 s.no_fill();
-                s.rect([0, 0, text_width, text_height])?;
+                s.rect([0, 0, text_width - 1, text_height - 1])?;
 
                 s.no_stroke();
                 s.fill(fg);

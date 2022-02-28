@@ -84,7 +84,7 @@ impl Gui {
             self.button_clicked = !self.button_clicked;
         }
         if self.button_clicked {
-            s.same_line([0, s.theme().spacing.item_pad.y()]);
+            s.same_line(None);
             s.text("Clicked!")?;
         }
 
@@ -144,25 +144,40 @@ impl Gui {
     fn text_widgets(&mut self, s: &mut PixState) -> PixResult<()> {
         s.text_transformed("Flipped", None, None, Flipped::Both)?;
         if s.hovered() {
+            s.fill(Color::LIGHT_GREY);
             s.tooltip("Flipped")?;
         }
         s.angle_mode(AngleMode::Degrees);
-        s.text_transformed("Rotated", 30.0, None, None)?;
+        s.fill(Color::LIGHT_YELLOW);
+        s.text_transformed("Rotated\nLines", 30.0, None, None)?;
 
+        s.fill(Color::LIGHT_GREEN);
+        s.text("Multiple\nLines")?;
+
+        s.same_line(None);
+        s.fill(Color::LIGHT_BLUE);
+        s.wrap(100);
+        s.text("Wrapped to 100 pixels")?;
+        s.no_wrap();
+
+        s.fill(Color::WHITE);
         s.font_style(FontStyle::BOLD);
         s.text("Bolded")?;
         s.font_style(FontStyle::ITALIC);
+        s.same_line(None);
         s.text("Italicized")?;
         s.font_style(FontStyle::UNDERLINE);
+        s.same_line(None);
         s.text("Underlined")?;
         s.font_style(FontStyle::STRIKETHROUGH);
+        s.same_line(None);
         s.text("Strikethrough")?;
 
         s.font_style(FontStyle::NORMAL);
         s.push();
         let colors = s.theme().colors;
         s.stroke(colors.secondary_variant);
-        s.stroke_weight(2);
+        s.stroke_weight(3);
         s.text("Outlined")?;
         s.pop();
 
@@ -248,7 +263,7 @@ impl Gui {
         s.slider("Slider", &mut self.slider, -5, 5)?;
         s.same_line(None);
         s.help_marker(
-            "CTRL+click to input a value.\n
+            "CTRL+click to input a value.\n\
             (CTRL is mapped to CMD on macOs)",
         )?;
         s.same_line([8, 0]);

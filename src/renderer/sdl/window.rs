@@ -13,7 +13,6 @@ use sdl2::{
     mouse::{Cursor as SdlCursor, SystemCursor as SdlSystemCursor},
     render::{Canvas, TextureQuery},
     surface::Surface,
-    ttf::Font as SdlFont,
     video::{FullscreenType, Window},
     Sdl,
 };
@@ -43,6 +42,50 @@ impl TextCacheKey {
             color,
             size,
         }
+    }
+}
+
+impl Renderer {
+    /// Returns the current window canvas, holding the canvas and texture creators for a window.
+    #[inline]
+    pub(super) fn window_canvas(&self) -> PixResult<&WindowCanvas> {
+        Ok(self
+            .windows
+            .get(&self.window_target)
+            .ok_or(PixError::InvalidWindow(self.window_target))?)
+    }
+
+    /// Returns the current window canvas, holding the canvas and texture creators for a window.
+    #[inline]
+    pub(super) fn window_canvas_mut(&mut self) -> PixResult<&mut WindowCanvas> {
+        Ok(self
+            .windows
+            .get_mut(&self.window_target)
+            .ok_or(PixError::InvalidWindow(self.window_target))?)
+    }
+
+    /// Returns the current SDL canvas.
+    #[inline]
+    pub(super) fn canvas(&self) -> PixResult<&Canvas<Window>> {
+        Ok(&self.window_canvas()?.canvas)
+    }
+
+    /// Returns the current SDL canvas.
+    #[inline]
+    pub(super) fn canvas_mut(&mut self) -> PixResult<&mut Canvas<Window>> {
+        Ok(&mut self.window_canvas_mut()?.canvas)
+    }
+
+    /// Returns the current SDL window.
+    #[inline]
+    pub(super) fn window(&self) -> PixResult<&Window> {
+        Ok(self.window_canvas()?.canvas.window())
+    }
+
+    /// Returns the current SDL window.
+    #[inline]
+    pub(super) fn window_mut(&mut self) -> PixResult<&mut Window> {
+        Ok(self.window_canvas_mut()?.canvas.window_mut())
     }
 }
 
@@ -141,66 +184,6 @@ impl WindowCanvas {
             text_cache: LruCache::new(s.text_cache_size),
             image_cache: LruCache::new(s.texture_cache_size),
         })
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub(super) fn text_texture_mut<'a>(
-        text_cache: &'a mut LruCache<TextCacheKey, RendererTexture>,
-        canvas: &Canvas<Window>,
-        text: &str,
-        wrap_width: Option<u32>,
-        fill: Color,
-        outline: u8,
-        font: &mut SdlFont<'static, 'static>,
-        current_font: FontId,
-        font_size: u16,
-    ) -> PixResult<&'a mut RendererTexture> {
-        let current_outline = font.get_outline_width();
-        let outline = u16::from(outline);
-        if current_outline != outline {
-            font.set_outline_width(outline);
-        }
-
-        let key = TextCacheKey::new(text, current_font, fill, font_size);
-        if !text_cache.contains(&key) {
-            let surface = wrap_width
-                .map_or_else(
-                    || font.render(text).blended(fill),
-                    |width| font.render(text).blended_wrapped(fill, width),
-                )
-                .context("invalid text")?;
-            text_cache.put(
-                key,
-                RendererTexture::new(
-                    canvas
-                        .create_texture_from_surface(surface)
-                        .context("failed to create text surface")?,
-                ),
-            );
-        }
-
-        // SAFETY: We just checked or inserted a texture.
-        Ok(text_cache.get_mut(&key).expect("valid text cache"))
-    }
-
-    pub(super) fn image_texture_mut<'a>(
-        image_cache: &'a mut LruCache<*const Image, RendererTexture>,
-        canvas: &Canvas<Window>,
-        img: &Image,
-    ) -> PixResult<&'a mut RendererTexture> {
-        let key: *const Image = img;
-        if !image_cache.contains(&key) {
-            image_cache.put(
-                key,
-                RendererTexture::new(
-                    canvas
-                        .create_texture_static(Some(img.format().into()), img.width(), img.height())
-                        .context("failed to create image texture")?,
-                ),
-            );
-        }
-        // SAFETY: We just checked or inserted a texture.
-        Ok(image_cache.get_mut(&key).expect("valid image cache"))
     }
 }
 

@@ -211,8 +211,7 @@ impl PixState {
         let id = s.ui.get_id(&label);
         let label = s.ui.get_label(label);
         let pos = s.cursor_pos();
-        let ipad = s.theme.spacing.item_pad;
-        let checkbox_size = clamp_size(s.theme.font_size) + ipad.y();
+        let (_, checkbox_size) = s.text_size(label)?;
 
         // Calculate checkbox rect
         let checkbox = square![pos, checkbox_size];
@@ -244,7 +243,7 @@ impl PixState {
             let half = checkbox_size / 2;
             let third = checkbox_size / 3;
             let x = checkbox.left() + half - 1;
-            let y = checkbox.bottom() - third;
+            let y = checkbox.bottom() - third + 1;
             let start = point![x - third + 2, y - third + 2];
             let mid = point![x, y];
             let end = point![x + third + 1, y - half + 2];
@@ -301,8 +300,8 @@ impl PixState {
         let id = s.ui.get_id(&label);
         let label = s.ui.get_label(label);
         let pos = s.cursor_pos();
-        let ipad = s.theme.spacing.item_pad;
-        let radio_size = clamp_size(s.theme.font_size) / 2 + ipad.y() / 3;
+        let (_, label_height) = s.text_size(label)?;
+        let radio_size = label_height / 2;
 
         // Calculate radio rect
         let radio = circle![pos + radio_size, radio_size];
@@ -314,7 +313,7 @@ impl PixState {
 
         s.push();
 
-        // Checkbox
+        // Radio
         s.rect_mode(RectMode::Corner);
         s.ellipse_mode(EllipseMode::Center);
         if hovered {

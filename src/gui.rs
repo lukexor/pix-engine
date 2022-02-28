@@ -99,6 +99,7 @@ use self::state::ElementId;
 use crate::{
     ops::{clamp_dimensions, clamp_size},
     prelude::*,
+    renderer::Rendering,
 };
 
 pub mod layout;
@@ -230,7 +231,23 @@ impl PixState {
     /// Return the size of text, clamped to i32.
     #[inline]
     pub(crate) fn text_size(&self, text: &str) -> PixResult<(i32, i32)> {
-        let (w, h) = self.size_of(text)?;
-        Ok(clamp_dimensions(w, h))
+        let s = &self.settings;
+        let wrap_width = s.wrap_width;
+        let ipad = self.theme.spacing.item_pad;
+        let pos = self.cursor_pos();
+        let wrap_width = if wrap_width.is_none() && text.contains('\n') {
+            text.lines()
+                .map(|line| {
+                    let (line_width, _) = self.renderer.size_of(line, None).unwrap_or_default();
+                    line_width
+                })
+                .max()
+                .map(|width| width + (pos.x() + ipad.x()) as u32)
+        } else {
+            wrap_width
+        };
+        let (w, h) = self.renderer.size_of(text, wrap_width)?;
+        // EXPL: Add same padding that `text_transformed` uses.
+        Ok(clamp_dimensions(w + 3, h + 3))
     }
 }

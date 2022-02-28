@@ -1,4 +1,3 @@
-use self::window::WindowCanvas;
 use crate::{
     gui::theme::{FontId, FontSrc},
     prelude::*,
@@ -23,7 +22,9 @@ use sdl2::{
     video::Window,
     EventPump, GameControllerSubsystem, Sdl,
 };
-use std::{cmp, collections::HashMap, fmt};
+use std::{collections::HashMap, fmt};
+use texture::RendererTexture;
+use window::{TextCacheKey, WindowCanvas};
 
 lazy_static! {
     static ref TTF: Sdl2TtfContext = sdl2::ttf::init().expect("sdl2_ttf initialized");
@@ -134,48 +135,6 @@ impl Renderer {
         self.loaded_fonts
             .get_mut(&(self.current_font, self.font_size))
             .expect("valid font")
-    }
-
-    /// Returns the current window canvas, holding the canvas and texture creators for a window.
-    #[inline]
-    fn window_canvas(&self) -> PixResult<&WindowCanvas> {
-        Ok(self
-            .windows
-            .get(&self.window_target)
-            .ok_or(PixError::InvalidWindow(self.window_target))?)
-    }
-
-    /// Returns the current window canvas, holding the canvas and texture creators for a window.
-    #[inline]
-    fn window_canvas_mut(&mut self) -> PixResult<&mut WindowCanvas> {
-        Ok(self
-            .windows
-            .get_mut(&self.window_target)
-            .ok_or(PixError::InvalidWindow(self.window_target))?)
-    }
-
-    /// Returns the current SDL canvas.
-    #[inline]
-    fn canvas(&self) -> PixResult<&Canvas<Window>> {
-        Ok(&self.window_canvas()?.canvas)
-    }
-
-    /// Returns the current SDL canvas.
-    #[inline]
-    fn canvas_mut(&mut self) -> PixResult<&mut Canvas<Window>> {
-        Ok(&mut self.window_canvas_mut()?.canvas)
-    }
-
-    /// Returns the current SDL window.
-    #[inline]
-    fn window(&self) -> PixResult<&Window> {
-        Ok(self.window_canvas()?.canvas.window())
-    }
-
-    /// Returns the current SDL window.
-    #[inline]
-    fn window_mut(&mut self) -> PixResult<&mut Window> {
-        Ok(self.window_canvas_mut()?.canvas.window_mut())
     }
 }
 
@@ -330,32 +289,53 @@ impl Rendering for Renderer {
         center: Option<PointI2>,
         flipped: Option<Flipped>,
         fill: Option<Color>,
-        outline: u8,
+        outline: u16,
     ) -> PixResult<(u32, u32)> {
         if text.is_empty() {
-            return Ok((0, 0));
+            return self.size_of(text, wrap_width);
         }
-
         if let Some(fill) = fill {
             let window = self
                 .windows
                 .get_mut(&self.window_target)
                 .ok_or(PixError::InvalidWindow(self.window_target))?;
-            let texture = WindowCanvas::text_texture_mut(
-                &mut window.text_cache,
-                &window.canvas,
-                text,
-                wrap_width,
-                fill,
-                outline,
-                self.loaded_fonts
-                    .get_mut(&(self.current_font, self.font_size))
-                    .expect("valid font"),
-                self.current_font,
-                self.font_size,
-            )?;
-            let TextureQuery { width, height, .. } = texture.query();
 
+            let texture = {
+                // FIXME: Use default or return error
+                let font = self
+                    .loaded_fonts
+                    .get_mut(&(self.current_font, self.font_size))
+                    .expect("valid font");
+                if font.get_outline_width() != outline {
+                    font.set_outline_width(outline);
+                }
+
+                let key = TextCacheKey::new(text, self.current_font, fill, self.font_size);
+                if !window.text_cache.contains(&key) {
+                    let surface = wrap_width
+                        .map_or_else(
+                            || font.render(text).blended(fill),
+                            |width| font.render(text).blended_wrapped(fill, width),
+                        )
+                        .context("invalid text")?;
+                    window.text_cache.put(
+                        key,
+                        RendererTexture::new(
+                            window
+                                .canvas
+                                .create_texture_from_surface(surface)
+                                .context("failed to create text surface")?,
+                        ),
+                    );
+                }
+
+                // SAFETY: We just checked or inserted a texture.
+                window.text_cache.get_mut(&key).expect("valid text cache")
+            };
+
+            let TextureQuery {
+                width, mut height, ..
+            } = texture.query();
             let update = |canvas: &mut Canvas<_>| -> PixResult<()> {
                 let src = None;
                 let dst = Some(SdlRect::new(pos.x(), pos.y(), width, height));
@@ -389,17 +369,16 @@ impl Rendering for Renderer {
             } else {
                 update(&mut window.canvas)?;
             }
-
+            if text.ends_with('\n') {
+                let font = self
+                    .loaded_fonts
+                    .get_mut(&(self.current_font, self.font_size))
+                    .expect("valid font");
+                height += font.height() as u32;
+            }
             Ok((width, height))
         } else {
-            let font = self.font_mut();
-            let surface = wrap_width
-                .map_or_else(
-                    || font.render(text).blended(Color::BLACK),
-                    |width| font.render(text).blended_wrapped(Color::BLACK, width),
-                )
-                .context("invalid text")?;
-            Ok(surface.size())
+            self.size_of(text, wrap_width)
         }
     }
 
@@ -437,25 +416,22 @@ impl Rendering for Renderer {
     fn size_of(&self, text: &str, wrap_width: Option<u32>) -> PixResult<(u32, u32)> {
         let font = self.font();
         if text.is_empty() {
-            return Ok(font.size_of("").unwrap_or_default());
+            return Ok((0, font.height() as u32));
         }
-        if let Some(width) = wrap_width {
-            Ok(font
+        let (width, mut height) = if let Some(width) = wrap_width {
+            let (width, height) = font
                 .render(text)
                 .blended_wrapped(Color::BLACK, width)
                 .context("invalid text")?
-                .size())
-        } else if text.contains('\n') {
-            let mut size = (0, 0);
-            for line in text.lines() {
-                let (w, h) = font.size_of(line).context("failed to get text size")?;
-                size.0 = cmp::max(size.0, w);
-                size.1 += h;
-            }
-            Ok(size)
+                .size();
+            (width, height)
         } else {
-            Ok(font.size_of(text)?)
+            font.size_of(text)?
+        };
+        if text.ends_with('\n') {
+            height += font.height() as u32;
         }
+        Ok((width, height))
     }
 
     /// Draw a pixel to the current canvas.
@@ -557,8 +533,7 @@ impl Rendering for Renderer {
             if let Some(fill) = fill {
                 radius
                     .map_or_else(
-                        // EXPL: SDL2_gfx renders this 1px bigger than it should.
-                        || canvas.box_(x, y, x + width - 1, y + height - 1, fill),
+                        || canvas.box_(x, y, x + width, y + height, fill),
                         |radius| {
                             let radius = radius as i16;
                             canvas.rounded_box(x, y, x + width, y + height, radius, fill)
@@ -569,7 +544,8 @@ impl Rendering for Renderer {
             if let Some(stroke) = stroke {
                 radius
                     .map_or_else(
-                        || canvas.rectangle(x, y, x + width, y + height, stroke),
+                        // EXPL: SDL2_gfx renders this 1px smaller than it should.
+                        || canvas.rectangle(x, y, x + width + 1, y + height + 1, stroke),
                         |radius| {
                             let radius = radius as i16;
                             canvas.rounded_rectangle(x, y, x + width, y + height, radius, stroke)
@@ -747,8 +723,26 @@ impl Rendering for Renderer {
             .windows
             .get_mut(&self.window_target)
             .ok_or(PixError::InvalidWindow(self.window_target))?;
-        let texture =
-            WindowCanvas::image_texture_mut(&mut window.image_cache, &window.canvas, img)?;
+        let texture = {
+            let key: *const Image = img;
+            if !window.image_cache.contains(&key) {
+                window.image_cache.put(
+                    key,
+                    RendererTexture::new(
+                        window
+                            .canvas
+                            .create_texture_static(
+                                Some(img.format().into()),
+                                img.width(),
+                                img.height(),
+                            )
+                            .context("failed to create image texture")?,
+                    ),
+                );
+            }
+            // SAFETY: We just checked or inserted a texture.
+            window.image_cache.get_mut(&key).expect("valid image cache")
+        };
         let [r, g, b, a] = tint.map_or([255; 4], |t| t.channels());
         texture.set_color_mod(r, g, b);
         texture.set_alpha_mod(a);

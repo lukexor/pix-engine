@@ -41,6 +41,7 @@ All notable changes to this project will be documented in this file.
 - Changed how `PixState::on_update` handles frame rates and no longer sleeps
   when `vsync` is enabled.
 - Changed vertical scroll direction to be natural.
+- Fixed off-by-one error in `Ellipse::bounding_rect`.
 
 ### Breaking
 
@@ -57,6 +58,7 @@ All notable changes to this project will be documented in this file.
 - Changed `PixState::delta_time` and `PixState::elapsed` to return a `Duration`
   instead of milliseconds.
 - Changed `PixState::avg_frame_rate` to return an `f32` instead of `usize`.
+- Changed `PixState::stroke_weight` to accept a `u16` instead of a `u8`.
 
 ## [0.5.4] - 2022-01-26
 

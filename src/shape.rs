@@ -153,7 +153,7 @@ impl PixState {
         let s = &self.settings;
         if let Some(stroke) = s.stroke {
             self.renderer
-                .line(line.into(), s.smooth, s.stroke_weight, stroke)?;
+                .line(line.into(), s.smooth, s.stroke_weight as u8, stroke)?;
         }
         Ok(())
     }

@@ -180,7 +180,7 @@ impl PixState {
         let mut changed = false;
         for (i, tab) in tabs.iter().enumerate() {
             if i > 0 {
-                s.same_line([-ipad.x() + 1, 0]);
+                s.same_line([-ipad.x() + 2, 0]);
             } else {
                 let pos = s.cursor_pos();
                 s.set_cursor_pos([pos.x() + fpad.x(), pos.y()]);
@@ -206,7 +206,7 @@ impl PixState {
 
             // Render
             s.rect_mode(RectMode::Corner);
-            let clip = tab_rect.offset_size([1, 1]);
+            let clip = tab_rect.offset_size([1, 0]);
             s.clip(clip)?;
             if hovered {
                 s.frame_cursor(&Cursor::hand())?;
@@ -223,16 +223,14 @@ impl PixState {
                 s.fill(colors.background);
             }
             if active {
-                s.clip(tab_rect.offset([1, 0]))?;
+                s.clip(tab_rect.offset_size([2, 0]))?;
                 s.rect(tab_rect.offset([1, 1]))?;
             } else {
                 s.rect(tab_rect)?;
             }
-            s.no_clip()?;
 
             // Tab text
             s.rect_mode(RectMode::Center);
-            s.clip(tab_rect)?;
             s.set_cursor_pos(tab_rect.center());
             s.no_stroke();
             let is_active_tab = tab_label == selected.as_ref();
@@ -259,7 +257,7 @@ impl PixState {
         }
 
         let pos = s.cursor_pos();
-        s.set_cursor_pos([pos.x(), pos.y() - ipad.y() - font_size as i32 / 2 - 1]);
+        s.set_cursor_pos([pos.x(), pos.y() - ipad.y() - font_size as i32 / 2]);
         s.separator()?;
         s.spacing()?;
 

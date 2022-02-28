@@ -143,7 +143,7 @@ pub(crate) struct Settings {
     pub(crate) background: Color,
     pub(crate) fill: Option<Color>,
     pub(crate) stroke: Option<Color>,
-    pub(crate) stroke_weight: u8,
+    pub(crate) stroke_weight: u16,
     pub(crate) smooth: bool,
     pub(crate) bezier_detail: i32,
     pub(crate) wrap_width: Option<u32>,
@@ -324,7 +324,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn stroke_weight(&mut self, weight: u8) {
+    pub fn stroke_weight(&mut self, weight: u16) {
         self.settings.stroke_weight = weight;
     }
 
