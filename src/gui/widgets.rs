@@ -25,7 +25,7 @@
 //! # }
 //! ```
 
-use crate::{gui::Direction, ops::clamp_size, prelude::*, shape::PointF2};
+use crate::{gui::Direction, ops::clamp_size, prelude::*};
 
 pub mod field;
 pub mod select;
@@ -366,16 +366,16 @@ impl PixState {
     /// If the renderer fails to draw to the current render target, then an error is returned.
     pub fn arrow<P, S>(&mut self, pos: P, direction: Direction, scale: S) -> PixResult<()>
     where
-        P: Into<PointI2>,
-        S: Into<Scalar>,
+        P: Into<Point<i32>>,
+        S: Into<f64>,
     {
-        let pos: PointF2 = pos.into().as_();
+        let pos: Point<f64> = pos.into().as_();
         let scale = scale.into();
 
         let s = self;
         let font_size = clamp_size(s.theme.font_size);
 
-        let height = font_size as Scalar;
+        let height = font_size as f64;
         let mut ratio = height * 0.4 * scale;
         let center = pos + point![height * 0.5, height * 0.5 * scale];
 

@@ -208,13 +208,13 @@ impl<T: Num> Ellipse<T> {
     }
 
     /// Constructs an `Ellipse` at position [Point] with `width` and `height`.
-    pub fn with_position<P: Into<Point<T, 2>>>(p: P, width: T, height: T) -> Self {
+    pub fn with_position<P: Into<Point<T>>>(p: P, width: T, height: T) -> Self {
         let p = p.into();
         Self::new(p.x(), p.y(), width, height)
     }
 
     /// Constructs a circle `Ellipse` at position [Point] with `radius`.
-    pub fn circle_with_position<P: Into<Point<T, 2>>>(p: P, radius: T) -> Self {
+    pub fn circle_with_position<P: Into<Point<T>>>(p: P, radius: T) -> Self {
         let p = p.into();
         Self::circle(p.x(), p.y(), radius)
     }
@@ -228,7 +228,7 @@ impl<T: Num> Ellipse<T> {
     /// let e = Ellipse::from_center([50, 50], 100, 100);
     /// assert_eq!(e.as_array(), [0, 0, 100, 100]);
     /// ```
-    pub fn from_center<P: Into<Point<T, 2>>>(p: P, width: T, height: T) -> Self {
+    pub fn from_center<P: Into<Point<T>>>(p: P, width: T, height: T) -> Self {
         let p = p.into();
         let two = T::one() + T::one();
         Self::new(p.x() - width / two, p.y() - height / two, width, height)
@@ -243,7 +243,7 @@ impl<T: Num> Ellipse<T> {
     /// let c = Ellipse::circle_from_center([50, 50], 100);
     /// assert_eq!(c.as_array(), [0, 0, 200, 200]);
     /// ```
-    pub fn circle_from_center<P: Into<Point<T, 2>>>(p: P, radius: T) -> Self {
+    pub fn circle_from_center<P: Into<Point<T>>>(p: P, radius: T) -> Self {
         let p = p.into();
         let two = T::one() + T::one();
         Self::circle_with_position(p - radius / two, radius)
@@ -285,7 +285,7 @@ impl<T: Num> Ellipse<T> {
     #[inline]
     pub fn offset<P>(&mut self, offsets: P)
     where
-        P: Into<Point<T, 2>>,
+        P: Into<Point<T>>,
     {
         let offsets = offsets.into();
         for (v, o) in self.iter_mut().take(2).zip(offsets) {
@@ -326,7 +326,7 @@ impl<T: Num> Ellipse<T> {
 
     /// Returns the `size` of the ellipse as a `Point`.
     #[inline]
-    pub fn size(&self) -> Point<T, 2> {
+    pub fn size(&self) -> Point<T> {
         point!(self.width(), self.height())
     }
 
@@ -398,32 +398,32 @@ impl<T: Num> Ellipse<T> {
     }
 
     /// Returns the center position as [Point].
-    pub fn center(&self) -> Point<T, 2> {
+    pub fn center(&self) -> Point<T> {
         point!(self.x(), self.y())
     }
 
     /// Returns the top-left position as [Point].
-    pub fn top_left(&self) -> Point<T, 2> {
+    pub fn top_left(&self) -> Point<T> {
         point!(self.left(), self.top())
     }
 
     /// Returns the top-right position as [Point].
-    pub fn top_right(&self) -> Point<T, 2> {
+    pub fn top_right(&self) -> Point<T> {
         point!(self.right(), self.top())
     }
 
     /// Returns the bottom-left position as [Point].
-    pub fn bottom_left(&self) -> Point<T, 2> {
+    pub fn bottom_left(&self) -> Point<T> {
         point!(self.left(), self.bottom())
     }
 
     /// Returns the bottom-right position as [Point].
-    pub fn bottom_right(&self) -> Point<T, 2> {
+    pub fn bottom_right(&self) -> Point<T> {
         point!(self.right(), self.bottom())
     }
 
     /// Set position centered on a [Point].
-    pub fn center_on<P: Into<Point<T, 2>>>(&mut self, p: P) {
+    pub fn center_on<P: Into<Point<T>>>(&mut self, p: P) {
         let p = p.into();
         self.set_x(p.x());
         self.set_y(p.y());
@@ -461,14 +461,14 @@ impl<T: Num, const N: usize> Contains<T, N> for Ellipse<T> {
     }
 }
 
-impl<T: Num> Intersects<T, 2> for Ellipse<T> {
+impl<T: Num> Intersects<T> for Ellipse<T> {
     type Shape = Ellipse<T>;
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
-    fn intersects_line<L>(&self, _line: L) -> Option<(Point<T, 2>, T)>
+    fn intersects_line<L>(&self, _line: L) -> Option<(Point<T>, T)>
     where
-        L: Into<Line<T, 2>>,
+        L: Into<Line<T>>,
     {
         todo!("ellipse intersects_line")
     }

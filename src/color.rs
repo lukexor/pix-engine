@@ -99,7 +99,7 @@
 //! # Ok::<(), PixError>(())
 //! ```
 
-use crate::{prelude::Scalar, random};
+use crate::random;
 use conversion::{calculate_channels, clamp_levels, convert_levels, maxes};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -315,7 +315,7 @@ impl Color {
     /// let c = Color::with_mode(ColorMode::Hsb, 126.0, 50.0, 100.0);
     /// assert_eq!(c.channels(), [128, 255, 140, 255]);
     /// ```
-    pub fn with_mode<T: Into<Scalar>>(mode: Mode, v1: T, v2: T, v3: T) -> Self {
+    pub fn with_mode<T: Into<f64>>(mode: Mode, v1: T, v2: T, v3: T) -> Self {
         let [_, _, _, alpha_max] = maxes(mode);
         Self::with_mode_alpha(mode, v1.into(), v2.into(), v3.into(), alpha_max)
     }
@@ -332,7 +332,7 @@ impl Color {
     /// let c = Color::with_mode_alpha(ColorMode::Hsb, 126.0, 50.0, 100.0, 0.8);
     /// assert_eq!(c.channels(), [128, 255, 140, 204]);
     /// ```
-    pub fn with_mode_alpha<T: Into<Scalar>>(mode: Mode, v1: T, v2: T, v3: T, alpha: T) -> Self {
+    pub fn with_mode_alpha<T: Into<f64>>(mode: Mode, v1: T, v2: T, v3: T, alpha: T) -> Self {
         let [v1, v2, v3, alpha] = [v1.into(), v2.into(), v3.into(), alpha.into()];
         let channels = if mode == Rgb {
             [v1 as u8, v2 as u8, v3 as u8, alpha as u8]
@@ -398,7 +398,7 @@ impl Color {
     /// assert_eq!(c.channels(), [25, 128, 36, 255]);
     /// ```
     #[inline]
-    pub fn hsb<T: Into<Scalar>>(h: T, s: T, b: T) -> Self {
+    pub fn hsb<T: Into<f64>>(h: T, s: T, b: T) -> Self {
         Self::with_mode(Hsb, h, s, b)
     }
 
@@ -412,7 +412,7 @@ impl Color {
     /// assert_eq!(c.channels(), [25, 128, 36, 128]);
     /// ```
     #[inline]
-    pub fn hsba<T: Into<Scalar>>(h: T, s: T, b: T, a: T) -> Self {
+    pub fn hsba<T: Into<f64>>(h: T, s: T, b: T, a: T) -> Self {
         Self::with_mode_alpha(Hsb, h, s, b, a)
     }
 
@@ -426,7 +426,7 @@ impl Color {
     /// assert_eq!(c.channels(), [25, 230, 46, 255]);
     /// ```
     #[inline]
-    pub fn hsl<T: Into<Scalar>>(h: T, s: T, l: T) -> Self {
+    pub fn hsl<T: Into<f64>>(h: T, s: T, l: T) -> Self {
         Self::with_mode(Hsl, h, s, l)
     }
 
@@ -440,7 +440,7 @@ impl Color {
     /// assert_eq!(c.channels(), [25, 230, 46, 128]);
     /// ```
     #[inline]
-    pub fn hsla<T: Into<Scalar>>(h: T, s: T, l: T, a: T) -> Self {
+    pub fn hsla<T: Into<f64>>(h: T, s: T, l: T, a: T) -> Self {
         Self::with_mode_alpha(Hsl, h, s, l, a)
     }
 
@@ -453,7 +453,7 @@ impl Color {
     /// let c = Color::from_levels(ColorMode::Rgb, 0.4, 0.5, 1.0, 0.8);
     /// assert_eq!(c.channels(), [102, 128, 255, 204]);
     /// ```
-    pub fn from_levels<T: Into<Scalar>>(mode: Mode, v1: T, v2: T, v3: T, alpha: T) -> Self {
+    pub fn from_levels<T: Into<f64>>(mode: Mode, v1: T, v2: T, v3: T, alpha: T) -> Self {
         let mut levels = [v1.into(), v2.into(), v3.into(), alpha.into()];
         for v in &mut levels {
             *v = (*v).clamp(0.0, 1.0);
@@ -545,21 +545,21 @@ impl Color {
     /// ```
     #[inline]
     #[must_use]
-    pub const fn maxes(&self) -> [Scalar; 4] {
+    pub const fn maxes(&self) -> [f64; 4] {
         maxes(self.mode)
     }
 
     /// Returns the `Color` levels for the given [Mode] which range from `0.0..=1.0`.
     #[inline]
     #[must_use]
-    pub fn levels(&self) -> [Scalar; 4] {
+    pub fn levels(&self) -> [f64; 4] {
         let [r, g, b, a] = self.channels;
         let [r_max, g_max, b_max, a_max] = maxes(Rgb);
         let levels = clamp_levels([
-            r as Scalar / r_max,
-            g as Scalar / g_max,
-            b as Scalar / b_max,
-            a as Scalar / a_max,
+            r as f64 / r_max,
+            g as f64 / g_max,
+            b as f64 / b_max,
+            a as f64 / a_max,
         ]);
         // Convert to current mode
         convert_levels(levels, Rgb, self.mode)
@@ -576,7 +576,7 @@ impl Color {
     /// assert_eq!(c.channels(), [255, 128, 102, 255]);
     /// ```
     #[inline]
-    pub fn set_levels(&mut self, levels: [Scalar; 4]) {
+    pub fn set_levels(&mut self, levels: [f64; 4]) {
         let levels = clamp_levels(levels);
         self.update_channels(levels, self.mode);
     }
@@ -763,7 +763,7 @@ impl Color {
     /// ```
     #[inline]
     #[must_use]
-    pub fn hue(&self) -> Scalar {
+    pub fn hue(&self) -> f64 {
         let maxes = maxes(Hsb);
         let levels = convert_levels(self.levels(), self.mode, Hsb);
         levels[0] * maxes[0]
@@ -781,7 +781,7 @@ impl Color {
     /// assert_eq!(c.channels(), [43, 128, 0, 255]);
     /// ```
     #[inline]
-    pub fn set_hue<H: Into<Scalar>>(&mut self, h: H) {
+    pub fn set_hue<H: Into<f64>>(&mut self, h: H) {
         let maxes = maxes(Hsb);
         let mut levels = convert_levels(self.levels(), self.mode, Hsb);
         levels[0] = h.into() / maxes[0];
@@ -799,7 +799,7 @@ impl Color {
     /// ```
     #[inline]
     #[must_use]
-    pub fn saturation(&self) -> Scalar {
+    pub fn saturation(&self) -> f64 {
         let maxes = maxes(Hsb);
         let levels = convert_levels(self.levels(), self.mode, Hsb);
         levels[1] * maxes[1]
@@ -824,7 +824,7 @@ impl Color {
     /// assert_eq!(c.channels(), [96, 32, 32, 255]);
     /// ```
     #[inline]
-    pub fn set_saturation<S: Into<Scalar>>(&mut self, s: S) {
+    pub fn set_saturation<S: Into<f64>>(&mut self, s: S) {
         let mode = match self.mode {
             Hsb | Hsl => self.mode,
             Rgb => Hsb,
@@ -846,7 +846,7 @@ impl Color {
     /// ```
     #[inline]
     #[must_use]
-    pub fn brightness(&self) -> Scalar {
+    pub fn brightness(&self) -> f64 {
         let maxes = maxes(Hsb);
         let levels = convert_levels(self.levels(), self.mode, Hsb);
         levels[2] * maxes[2]
@@ -864,7 +864,7 @@ impl Color {
     /// assert_eq!(c.channels(), [230, 0, 0, 255]);
     /// ```
     #[inline]
-    pub fn set_brightness<B: Into<Scalar>>(&mut self, b: B) {
+    pub fn set_brightness<B: Into<f64>>(&mut self, b: B) {
         let maxes = maxes(Hsb);
         let mut levels = convert_levels(self.levels(), self.mode, Hsb);
         levels[2] = b.into() / maxes[2];
@@ -882,7 +882,7 @@ impl Color {
     /// ```
     #[inline]
     #[must_use]
-    pub fn lightness(&self) -> Scalar {
+    pub fn lightness(&self) -> f64 {
         let maxes = maxes(Hsl);
         let levels = convert_levels(self.levels(), self.mode, Hsl);
         levels[2] * maxes[2]
@@ -900,7 +900,7 @@ impl Color {
     /// assert_eq!(c.channels(), [255, 204, 204, 255]);
     /// ```
     #[inline]
-    pub fn set_lightness<L: Into<Scalar>>(&mut self, l: L) {
+    pub fn set_lightness<L: Into<f64>>(&mut self, l: L) {
         let maxes = maxes(Hsl);
         let mut levels = convert_levels(self.levels(), self.mode, Hsl);
         levels[2] = l.into() / maxes[2];

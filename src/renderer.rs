@@ -1,10 +1,6 @@
 //! Graphics renderer functions.
 
-use crate::{
-    image::Icon,
-    prelude::*,
-    shape::{LineI2, PointI2, QuadI2, TriI2},
-};
+use crate::{image::Icon, prelude::*};
 
 pub(crate) use crate::{texture::TextureRenderer, window::WindowRenderer};
 
@@ -111,11 +107,11 @@ pub(crate) trait Rendering: Sized {
     #[allow(clippy::too_many_arguments)]
     fn text(
         &mut self,
-        position: PointI2,
+        position: Point<i32>,
         text: &str,
         wrap_width: Option<u32>,
-        angle: Option<Scalar>,
-        center: Option<PointI2>,
+        angle: Option<f64>,
+        center: Option<Point<i32>>,
         flipped: Option<Flipped>,
         fill: Option<Color>,
         outline: u16,
@@ -126,20 +122,20 @@ pub(crate) trait Rendering: Sized {
     fn size_of(&self, text: &str, wrap_width: Option<u32>) -> PixResult<(u32, u32)>;
 
     /// Draw a pixel to the current canvas.
-    fn point(&mut self, p: PointI2, color: Color) -> PixResult<()>;
+    fn point(&mut self, p: Point<i32>, color: Color) -> PixResult<()>;
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, line: LineI2, smooth: bool, width: u8, color: Color) -> PixResult<()>;
+    fn line(&mut self, line: Line<i32>, smooth: bool, width: u8, color: Color) -> PixResult<()>;
 
     /// Draw a cubic Bezier curve to the current canvas.
     fn bezier<I>(&mut self, ps: I, detail: i32, stroke: Option<Color>) -> PixResult<()>
     where
-        I: Iterator<Item = PointI2>;
+        I: Iterator<Item = Point<i32>>;
 
     /// Draw a triangle to the current canvas.
     fn triangle(
         &mut self,
-        tri: TriI2,
+        tri: Tri<i32>,
         smooth: bool,
         fill: Option<Color>,
         stroke: Option<Color>,
@@ -157,7 +153,7 @@ pub(crate) trait Rendering: Sized {
     /// Draw a quadrilateral to the current canvas.
     fn quad(
         &mut self,
-        quad: QuadI2,
+        quad: Quad<i32>,
         smooth: bool,
         fill: Option<Color>,
         stroke: Option<Color>,
@@ -172,7 +168,7 @@ pub(crate) trait Rendering: Sized {
         stroke: Option<Color>,
     ) -> PixResult<()>
     where
-        I: Iterator<Item = PointI2>;
+        I: Iterator<Item = Point<i32>>;
 
     /// Draw a ellipse to the current canvas.
     fn ellipse(
@@ -187,7 +183,7 @@ pub(crate) trait Rendering: Sized {
     #[allow(clippy::too_many_arguments)]
     fn arc(
         &mut self,
-        p: PointI2,
+        p: Point<i32>,
         radius: i32,
         start: i32,
         end: i32,
@@ -204,8 +200,8 @@ pub(crate) trait Rendering: Sized {
         img: &Image,
         src: Option<Rect<i32>>,
         dst: Option<Rect<i32>>,
-        angle: Scalar,
-        center: Option<PointI2>,
+        angle: f64,
+        center: Option<Point<i32>>,
         flipped: Option<Flipped>,
         tint: Option<Color>,
     ) -> PixResult<()>;

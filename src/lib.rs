@@ -71,10 +71,8 @@ pub mod prelude {
     pub use super::graphics::lighting::{Light, LightSource};
     pub use super::gui::theme::{self, Builder as ThemeBuilder, ColorType, Font, Theme};
     pub use super::image::{Image, PixelFormat};
-    pub use super::math::{map, random_rng, Float, Num, Scalar};
-    pub use super::shape::{
-        Contains, Ellipse, Intersects, Line, Point, PointI2, Quad, Rect, Sphere, Tri,
-    };
+    pub use super::math::{map, random_rng, Float, Num};
+    pub use super::shape::{Contains, Ellipse, Intersects, Line, Point, Quad, Rect, Sphere, Tri};
     pub use super::state::{
         settings::{
             AngleMode, ArcMode, BlendMode, DrawMode, EllipseMode, FontStyle, ImageMode, RectMode,

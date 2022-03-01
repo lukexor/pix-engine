@@ -5,7 +5,7 @@ const HEIGHT: u32 = 600;
 const SIZE: u32 = 4;
 
 struct Colors {
-    h: Scalar,
+    h: f64,
     auto: bool,
 }
 
@@ -16,13 +16,13 @@ impl Colors {
 
     #[allow(clippy::many_single_char_names)]
     fn draw_gradient(&mut self, state: &mut PixState) -> PixResult<()> {
-        let w = WIDTH as Scalar;
-        let h = HEIGHT as Scalar;
-        let size = SIZE as Scalar;
+        let w = WIDTH as f64;
+        let h = HEIGHT as f64;
+        let size = SIZE as f64;
         for x in 0..WIDTH / SIZE {
             for y in 0..HEIGHT / SIZE {
-                let x = (SIZE * x) as Scalar;
-                let y = (SIZE * y) as Scalar;
+                let x = (SIZE * x) as f64;
+                let y = (SIZE * y) as f64;
                 let s = map(x, 0.0, w, 0.0, 100.0);
                 let v = map(y, 0.0, h, 0.0, 100.0);
                 state.fill(hsb!(self.h, s, v));
@@ -32,7 +32,7 @@ impl Colors {
         Ok(())
     }
 
-    fn modify_hue(&mut self, change: Scalar, auto: bool) {
+    fn modify_hue(&mut self, change: f64, auto: bool) {
         self.auto = auto;
         self.h = (self.h + change) % 360.0;
         if self.h < 0.0 {

@@ -46,7 +46,6 @@ use crate::{
     gui::state::UiState,
     prelude::*,
     renderer::{Renderer, RendererSettings, Rendering, WindowRenderer},
-    shape::PointI2,
     texture::TextureRenderer,
 };
 use environment::Environment;
@@ -131,7 +130,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn mouse_pos(&self) -> PointI2 {
+    pub fn mouse_pos(&self) -> Point<i32> {
         self.ui.mouse_pos()
     }
 
@@ -152,7 +151,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn pmouse_pos(&self) -> PointI2 {
+    pub fn pmouse_pos(&self) -> Point<i32> {
         self.ui.pmouse_pos()
     }
 
@@ -469,7 +468,7 @@ impl PixState {
 
     /// Updates the mouse position state this frame.
     #[inline]
-    pub(crate) fn on_mouse_motion(&mut self, pos: PointI2) {
+    pub(crate) fn on_mouse_motion(&mut self, pos: Point<i32>) {
         self.ui.pmouse.pos = self.ui.mouse.pos;
         self.ui.mouse.pos = pos;
     }

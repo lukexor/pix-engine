@@ -120,7 +120,7 @@ impl PixState {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// # struct App { position: Scalar, velocity: Scalar };
+    /// # struct App { position: f64, velocity: f64 };
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     // Update position based on frame timestep

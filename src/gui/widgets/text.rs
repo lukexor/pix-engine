@@ -161,8 +161,8 @@ impl PixState {
     ) -> PixResult<(u32, u32)>
     where
         S: AsRef<str>,
-        A: Into<Option<Scalar>>,
-        C: Into<Option<PointI2>>,
+        A: Into<Option<f64>>,
+        C: Into<Option<Point<i32>>>,
         F: Into<Option<Flipped>>,
     {
         let text = text.as_ref();
@@ -480,8 +480,8 @@ impl PixState {
         text: &str,
         color: Color,
         outline: u16,
-        angle: Option<Scalar>,
-        center: Option<PointI2>,
+        angle: Option<f64>,
+        center: Option<Point<i32>>,
         flipped: Option<Flipped>,
     ) -> PixResult<Rect<i32>> {
         let s = &self.settings;
@@ -519,7 +519,7 @@ impl PixState {
         };
         let rect = if matches!(angle, Some(angle) if angle != 0.0) {
             let angle = if angle_mode == AngleMode::Radians {
-                angle.map(Scalar::to_degrees)
+                angle.map(f64::to_degrees)
             } else {
                 angle
             };

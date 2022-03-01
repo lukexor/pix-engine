@@ -14,7 +14,7 @@
 //! ```
 //! use pix_engine::prelude::*;
 //!
-//! let p: PointI2 = point!(); // origin point at (0, 0, 0)
+//! let p: Point<i32> = point!(); // origin point at (0, 0, 0)
 //!
 //! let p = point!(5); // 1D point on the x-axis
 //!
@@ -45,29 +45,11 @@ pub struct Point<T = i32, const N: usize = 2>(
     #[cfg_attr(feature = "serde", serde(with = "arrays"))] pub(crate) [T; N],
 );
 
-/// A 1D `Point` represented by `i32`.
-pub type PointI1 = Point<i32, 1>;
-
-/// A 2D `Point` represented by `i32`.
-pub type PointI2 = Point<i32, 2>;
-
-/// A 3D `Point` represented by `i32`.
-pub type PointI3 = Point<i32, 3>;
-
-/// A 1D `Point` represented by `f32` or `f64` depending on platform.
-pub type PointF1 = Point<Scalar, 1>;
-
-/// A 2D `Point` represented by `f32` or `f64` depending on platform.
-pub type PointF2 = Point<Scalar, 2>;
-
-/// A 3D `Point` represented by `f32` or `f64` depending on platform.
-pub type PointF3 = Point<Scalar, 3>;
-
 /// Constructs a [Point] with N coordinates.
 ///
 /// ```
 /// # use pix_engine::prelude::*;
-/// let p: PointI2 = point!();
+/// let p: Point<i32> = point!();
 /// assert_eq!(p.as_array(), [0, 0]);
 ///
 /// let p = point!(1);
@@ -122,7 +104,7 @@ impl<T, const N: usize> Point<T, N> {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// let p: PointI2 = Point::origin();
+    /// let p: Point<i32> = Point::origin();
     /// assert_eq!(p.as_array(), [0, 0]);
     /// ```
     #[inline]
@@ -142,7 +124,7 @@ impl<T> Point<T, 1> {
     }
 }
 
-impl<T> Point<T, 2> {
+impl<T> Point<T> {
     /// Constructs a `Point` from individual x/y coordinates.
     #[inline]
     pub const fn from_xy(x: T, y: T) -> Self {
@@ -507,7 +489,7 @@ impl<T: Num + Float, const N: usize> Point<T, N> {
     }
 }
 
-impl Draw for PointI2 {
+impl Draw for Point<i32> {
     /// Draw point to the current [`PixState`] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.point(*self)

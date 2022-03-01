@@ -269,14 +269,14 @@ pub trait AppState {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// # struct App { pos: PointI2 };
+    /// # struct App { pos: Point<i32> };
     /// # impl AppState for App {
     /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
     /// fn on_mouse_dragged(
     ///     &mut self,
     ///     s: &mut PixState,
-    ///     pos: PointI2,
-    ///     rel_pos: PointI2,
+    ///     pos: Point<i32>,
+    ///     rel_pos: Point<i32>,
     /// ) -> PixResult<bool> {
     ///     self.pos = pos;
     ///     Ok(true)
@@ -286,8 +286,8 @@ pub trait AppState {
     fn on_mouse_dragged(
         &mut self,
         s: &mut PixState,
-        pos: PointI2,
-        rel_pos: PointI2,
+        pos: Point<i32>,
+        rel_pos: Point<i32>,
     ) -> PixResult<bool> {
         Ok(false)
     }
@@ -500,7 +500,7 @@ pub trait AppState {
     ///     &mut self,
     ///     s: &mut PixState,
     ///     btn: Mouse,
-    ///     pos: PointI2,
+    ///     pos: Point<i32>,
     /// ) -> PixResult<bool> {
     ///     if let Mouse::Left = btn {
     ///         if self.canvas.contains_point(pos) {
@@ -511,7 +511,7 @@ pub trait AppState {
     /// }
     /// # }
     /// ```
-    fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse, pos: PointI2) -> PixResult<bool> {
+    fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse, pos: Point<i32>) -> PixResult<bool> {
         Ok(false)
     }
 
@@ -535,7 +535,7 @@ pub trait AppState {
     ///     &mut self,
     ///     s: &mut PixState,
     ///     btn: Mouse,
-    ///     pos: PointI2,
+    ///     pos: Point<i32>,
     /// ) -> PixResult<bool> {
     ///     if let Mouse::Left = btn {
     ///         if self.canvas.contains_point(pos) {
@@ -546,7 +546,7 @@ pub trait AppState {
     /// }
     /// # }
     /// ```
-    fn on_mouse_released(&mut self, s: &mut PixState, btn: Mouse, pos: PointI2) -> PixResult<bool> {
+    fn on_mouse_released(&mut self, s: &mut PixState, btn: Mouse, pos: Point<i32>) -> PixResult<bool> {
         Ok(false)
     }
 
@@ -570,7 +570,7 @@ pub trait AppState {
     ///     &mut self,
     ///     s: &mut PixState,
     ///     btn: Mouse,
-    ///     pos: PointI2,
+    ///     pos: Point<i32>,
     /// ) -> PixResult<bool> {
     ///     if let Mouse::Left = btn {
     ///         if self.item.contains_point(pos) {
@@ -581,7 +581,7 @@ pub trait AppState {
     /// }
     /// # }
     /// ```
-    fn on_mouse_clicked(&mut self, s: &mut PixState, btn: Mouse, pos: PointI2) -> PixResult<bool> {
+    fn on_mouse_clicked(&mut self, s: &mut PixState, btn: Mouse, pos: Point<i32>) -> PixResult<bool> {
         Ok(false)
     }
 
@@ -606,7 +606,7 @@ pub trait AppState {
     ///     &mut self,
     ///     s: &mut PixState,
     ///     btn: Mouse,
-    ///     pos: PointI2,
+    ///     pos: Point<i32>,
     /// ) -> PixResult<bool> {
     ///     if let Mouse::Left = btn {
     ///         if self.item.contains_point(pos) {
@@ -621,7 +621,7 @@ pub trait AppState {
         &mut self,
         s: &mut PixState,
         btn: Mouse,
-        pos: PointI2,
+        pos: Point<i32>,
     ) -> PixResult<bool> {
         Ok(false)
     }
@@ -640,14 +640,14 @@ pub trait AppState {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// # struct App { pos: PointI2 };
+    /// # struct App { pos: Point<i32> };
     /// # impl AppState for App {
     /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
     /// fn on_mouse_motion(
     ///     &mut self,
     ///     s: &mut PixState,
-    ///     pos: PointI2,
-    ///     rel_pos: PointI2,
+    ///     pos: Point<i32>,
+    ///     rel_pos: Point<i32>,
     /// ) -> PixResult<bool> {
     ///     self.pos = pos;
     ///     Ok(true)
@@ -657,8 +657,8 @@ pub trait AppState {
     fn on_mouse_motion(
         &mut self,
         s: &mut PixState,
-        pos: PointI2,
-        rel_pos: PointI2,
+        pos: Point<i32>,
+        rel_pos: Point<i32>,
     ) -> PixResult<bool> {
         Ok(false)
     }
@@ -676,16 +676,16 @@ pub trait AppState {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// # struct App { scroll: PointI2 };
+    /// # struct App { scroll: Point<i32> };
     /// # impl AppState for App {
     /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
-    /// fn on_mouse_wheel(&mut self, s: &mut PixState, pos: PointI2) -> PixResult<bool> {
+    /// fn on_mouse_wheel(&mut self, s: &mut PixState, pos: Point<i32>) -> PixResult<bool> {
     ///     self.scroll += pos;
     ///     Ok(true)
     /// }
     /// # }
     /// ```
-    fn on_mouse_wheel(&mut self, s: &mut PixState, pos: PointI2) -> PixResult<bool> {
+    fn on_mouse_wheel(&mut self, s: &mut PixState, pos: Point<i32>) -> PixResult<bool> {
         Ok(false)
     }
 

@@ -32,18 +32,6 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
 pub struct Tri<T = i32, const N: usize = 2>(pub(crate) [Point<T, N>; 3]);
 
-/// A 2D `Triangle` represented by `i32`.
-pub type TriI2 = Tri<i32, 2>;
-
-/// A 3D `Tri` represented by `i32`.
-pub type TriI3 = Tri<i32, 3>;
-
-/// A 2D `Tri` represented by `f32` or `f64` depending on platform.
-pub type TriF2 = Tri<Scalar, 2>;
-
-/// A 3D `Tri` represented by `f32` or `f64` depending on platform.
-pub type TriF3 = Tri<Scalar, 3>;
-
 /// Constructs a [Triangle][Tri] with three points.
 ///
 /// ```
@@ -98,7 +86,7 @@ impl<T, const N: usize> Tri<T, N> {
     }
 }
 
-impl<T> Tri<T, 2> {
+impl<T> Tri<T> {
     /// Constructs a `Triangle` from individual x/y coordinates.
     #[inline]
     pub const fn from_xy(x1: T, y1: T, x2: T, y2: T, x3: T, y3: T) -> Self {
@@ -239,15 +227,15 @@ impl<T: Copy, const N: usize> Tri<T, N> {
     }
 }
 
-impl Draw for TriI2 {
+impl Draw for Tri<i32> {
     /// Draw `Triangle` to the current [`PixState`] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.triangle(*self)
     }
 }
 
-impl<T: Copy> From<[T; 6]> for Tri<T, 2> {
-    /// Converts `[T; 6]` into `Tri<T, 2>`.
+impl<T: Copy> From<[T; 6]> for Tri<T> {
+    /// Converts `[T; 6]` into `Tri<T>`.
     #[inline]
     fn from([x1, y1, x2, y2, x3, y3]: [T; 6]) -> Self {
         Self::from_xy(x1, y1, x2, y2, x3, y3)
@@ -262,8 +250,8 @@ impl<T: Copy> From<[T; 9]> for Tri<T, 3> {
     }
 }
 
-impl<T: Copy> From<[[T; 2]; 3]> for Tri<T, 2> {
-    /// Converts `[[T; 2]; 3]` into `Tri<T, 2>`.
+impl<T: Copy> From<[[T; 2]; 3]> for Tri<T> {
+    /// Converts `[[T; 2]; 3]` into `Tri<T>`.
     #[inline]
     fn from([[x1, y1], [x2, y2], [x3, y3]]: [[T; 2]; 3]) -> Self {
         Self::from_xy(x1, y1, x2, y2, x3, y3)

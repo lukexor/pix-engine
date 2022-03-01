@@ -281,7 +281,7 @@ impl Image {
     #[inline]
     pub fn bounding_rect_offset<P>(&self, offset: P) -> Rect<i32>
     where
-        P: Into<PointI2>,
+        P: Into<Point<i32>>,
     {
         let (width, height) = clamp_dimensions(self.width, self.height);
         rect![offset.into(), width, height]
@@ -289,7 +289,7 @@ impl Image {
 
     /// Returns the center position as [Point].
     #[inline]
-    pub fn center(&self) -> PointI2 {
+    pub fn center(&self) -> Point<i32> {
         let (width, height) = clamp_dimensions(self.width, self.height);
         point!(width / 2, height / 2)
     }
@@ -458,7 +458,7 @@ impl PixState {
     /// ```
     pub fn image<P>(&mut self, img: &Image, position: P) -> PixResult<()>
     where
-        P: Into<PointI2>,
+        P: Into<Point<i32>>,
     {
         let pos = position.into();
         let dst = img.bounding_rect_offset(pos);
@@ -504,8 +504,8 @@ impl PixState {
     where
         R1: Into<Option<Rect<i32>>>,
         R2: Into<Option<Rect<i32>>>,
-        A: Into<Option<Scalar>>,
-        C: Into<Option<PointI2>>,
+        A: Into<Option<f64>>,
+        C: Into<Option<Point<i32>>>,
         F: Into<Option<Flipped>>,
     {
         let s = &self.settings;

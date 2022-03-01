@@ -114,8 +114,8 @@ impl TextureRenderer for Renderer {
         texture_id: TextureId,
         src: Option<Rect<i32>>,
         dst: Option<Rect<i32>>,
-        angle: Scalar,
-        center: Option<PointI2>,
+        angle: f64,
+        center: Option<Point<i32>>,
         flipped: Option<Flipped>,
         tint: Option<Color>,
     ) -> PixResult<()> {

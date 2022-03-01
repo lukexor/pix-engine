@@ -455,8 +455,8 @@ impl Default for Colors {
 #[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct SpacingBuilder {
-    frame_pad: PointI2,
-    item_pad: PointI2,
+    frame_pad: Point<i32>,
+    item_pad: Point<i32>,
     scroll_size: i32,
 }
 
@@ -506,9 +506,9 @@ impl SpacingBuilder {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Spacing {
     /// Padding between the edge of frames/windows and UI widgets.
-    pub frame_pad: PointI2,
+    pub frame_pad: Point<i32>,
     /// Padding between UI widgets.
-    pub item_pad: PointI2,
+    pub item_pad: Point<i32>,
     /// Scroll bar size in UI widgets.
     pub scroll_size: i32,
 }

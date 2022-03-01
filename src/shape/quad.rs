@@ -43,23 +43,11 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
 pub struct Quad<T = i32, const N: usize = 2>(pub(crate) [Point<T, N>; 4]);
 
-/// A 2D `Quad` represented by `i32`.
-pub type QuadI2 = Quad<i32, 2>;
-
-/// A 3D `Quad` represented by `i32`.
-pub type QuadI3 = Quad<i32, 3>;
-
-/// A 2D `Quad` represented by `f32` or `f64` depending on platform.
-pub type QuadF2 = Quad<Scalar, 2>;
-
-/// A 3D `Quad` represented by `f32` or `f64` depending on platform.
-pub type QuadF3 = Quad<Scalar, 3>;
-
 /// Constructs a [Quad] with four points.
 ///
 /// ```
 /// # use pix_engine::prelude::*;
-/// let p1: PointI2 = [10, 10].into();
+/// let p1: Point<i32> = [10, 10].into();
 /// let p2 = point!(100, 10);
 /// let q = quad!(p1, p2, [90, 50], [10, 80]);
 /// assert_eq!(q.as_array(), [
@@ -112,7 +100,7 @@ impl<T, const N: usize> Quad<T, N> {
     }
 }
 
-impl<T> Quad<T, 2> {
+impl<T> Quad<T> {
     /// Constructs a `Quad` from individual x/y coordinates.
     #[allow(clippy::too_many_arguments)]
     #[inline]
@@ -293,15 +281,15 @@ impl<T: Copy, const N: usize> Quad<T, N> {
     }
 }
 
-impl Draw for QuadI2 {
+impl Draw for Quad<i32> {
     /// Draw `Quad` to the current [`PixState`] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.quad(*self)
     }
 }
 
-impl<T: Copy> From<[T; 8]> for Quad<T, 2> {
-    /// Converts `[T; 8]` into `Quad<T, 2>`.
+impl<T: Copy> From<[T; 8]> for Quad<T> {
+    /// Converts `[T; 8]` into `Quad<T>`.
     #[inline]
     fn from([x1, y1, x2, y2, x3, y3, x4, y4]: [T; 8]) -> Self {
         Self::from_xy(x1, y1, x2, y2, x3, y3, x4, y4)
@@ -316,8 +304,8 @@ impl<T: Copy> From<[T; 12]> for Quad<T, 3> {
     }
 }
 
-impl<T: Copy> From<[[T; 2]; 4]> for Quad<T, 2> {
-    /// Converts `[[T; 2]; 4]` into `Quad<T, 2>`.
+impl<T: Copy> From<[[T; 2]; 4]> for Quad<T> {
+    /// Converts `[[T; 2]; 4]` into `Quad<T>`.
     #[inline]
     fn from([[x1, y1], [x2, y2], [x3, y3], [x4, y4]]: [[T; 2]; 4]) -> Self {
         Self::from_xy(x1, y1, x2, y2, x3, y3, x4, y4)
@@ -334,17 +322,17 @@ impl<T: Copy> From<[[T; 3]; 4]> for Quad<T, 3> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{prelude::*, shape::LineF2};
+    use crate::prelude::*;
 
     macro_rules! assert_approx_eq {
         ($i1:expr, $i2:expr) => {
-            assert_approx_eq!($i1, $i2, Scalar::EPSILON);
+            assert_approx_eq!($i1, $i2, f64::EPSILON);
         };
         ($i1:expr, $i2:expr, $e:expr) => {{
             match ($i1, $i2) {
                 (Some((p1, t1)), Some((p2, t2))) => {
-                    let [x1, y1]: [Scalar; 2] = p1.as_array();
-                    let [x2, y2]: [Scalar; 2] = p2.as_array();
+                    let [x1, y1]: [f64; 2] = p1.as_array();
+                    let [x2, y2]: [f64; 2] = p2.as_array();
                     let xd = (x1 - x2).abs();
                     let yd = (y1 - y2).abs();
                     let td = (t1 - t2).abs();
@@ -362,7 +350,7 @@ mod tests {
         let rect = rect!(10.0, 10.0, 100.0, 100.0);
 
         // Left
-        let line: LineF2 = line_!([3.0, 7.0], [20.0, 30.0]);
+        let line: Line<f64> = line_!([3.0, 7.0], [20.0, 30.0]);
         assert_approx_eq!(
             rect.intersects_line(line),
             Some((point!(10.0, 16.471), 0.411)),
@@ -370,7 +358,7 @@ mod tests {
         );
 
         // Right
-        let line: LineF2 = line_!([150.0, 50.0], [90.0, 30.0]);
+        let line: Line<f64> = line_!([150.0, 50.0], [90.0, 30.0]);
         assert_approx_eq!(
             rect.intersects_line(line),
             Some((point!(110.0, 36.667), 0.667)),
@@ -378,7 +366,7 @@ mod tests {
         );
 
         // Top
-        let line: LineF2 = line_!([50.0, 5.0], [70.0, 30.0]);
+        let line: Line<f64> = line_!([50.0, 5.0], [70.0, 30.0]);
         assert_approx_eq!(
             rect.intersects_line(line),
             Some((point!(54.0, 10.0), 0.2)),
@@ -386,7 +374,7 @@ mod tests {
         );
 
         // Bottom
-        let line: LineF2 = line_!([50.0, 150.0], [30.0, 30.0]);
+        let line: Line<f64> = line_!([50.0, 150.0], [30.0, 30.0]);
         assert_approx_eq!(
             rect.intersects_line(line),
             Some((point!(43.3333, 110.0), 0.333)),

@@ -511,7 +511,7 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn center(&self) -> PixResult<PointI2> {
+    pub fn center(&self) -> PixResult<Point<i32>> {
         let (width, height) = self.dimensions()?;
         let (width, height) = clamp_dimensions(width, height);
         Ok(point![width / 2, height / 2])
@@ -523,7 +523,7 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn window_center(&self) -> PixResult<PointI2> {
+    pub fn window_center(&self) -> PixResult<Point<i32>> {
         let (width, height) = self.window_dimensions()?;
         let (width, height) = clamp_dimensions(width, height);
         Ok(point![width / 2, height / 2])

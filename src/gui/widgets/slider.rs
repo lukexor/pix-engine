@@ -199,7 +199,7 @@ impl PixState {
                 // Process keyboard input
                 s.ui.begin_edit(id);
             } else {
-                let mut mdelta = (s.mouse_pos().x() - s.pmouse_pos().x()) as Scalar;
+                let mut mdelta = (s.mouse_pos().x() - s.pmouse_pos().x()) as f64;
                 if s.keymod_down(KeyMod::ALT) {
                     mdelta /= 10.0;
                 } else if s.keymod_down(KeyMod::SHIFT) {
@@ -364,14 +364,14 @@ impl PixState {
         // Scroll thumb
         s.no_stroke();
         s.fill(fg.blended(bg, 0.60));
-        let slider_w = slider.width() as Scalar;
-        let vmin: Scalar = NumCast::from(min).expect("valid number cast");
-        let vmax: Scalar = NumCast::from(max).expect("valid number cast");
-        let val: Scalar = NumCast::from(*value).expect("valid number cast");
+        let slider_w = slider.width() as f64;
+        let vmin: f64 = NumCast::from(min).expect("valid number cast");
+        let vmax: f64 = NumCast::from(max).expect("valid number cast");
+        let val: f64 = NumCast::from(*value).expect("valid number cast");
         let thumb_w = if vmax - vmin > 1.0 {
             slider_w / (vmax - vmin)
         } else {
-            THUMB_MIN as Scalar
+            THUMB_MIN as f64
         };
         let thumb_w = thumb_w.min(slider_w);
         let offset = ((val - vmin) / (vmax - vmin)) * (slider_w - thumb_w);
@@ -402,8 +402,8 @@ impl PixState {
                 s.ui.begin_edit(id);
             } else {
                 // Process mouse input
-                let mx = (s.mouse_pos().x() - slider.x()).clamp(0, slider.width()) as Scalar
-                    / slider.width() as Scalar;
+                let mx = (s.mouse_pos().x() - slider.x()).clamp(0, slider.width()) as f64
+                    / slider.width() as f64;
                 new_value = NumCast::from(mx.mul_add(vmax - vmin, vmin)).unwrap_or(*value);
             }
         }

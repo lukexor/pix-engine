@@ -69,7 +69,7 @@ impl Color {
     /// ```
     pub fn from_slice<T, S>(mode: ColorMode, slice: S) -> PixResult<Self>
     where
-        T: Copy + Into<Scalar>,
+        T: Copy + Into<f64>,
         S: AsRef<[T]>,
     {
         let slice = slice.as_ref();
@@ -134,13 +134,13 @@ impl Color {
     /// Constructs an opaque `Color` blended over a given background, using an alpha value.
     pub fn blended<A>(&self, bg: Color, alpha: A) -> Self
     where
-        A: Into<Scalar>,
+        A: Into<f64>,
     {
         let a = alpha.into().clamp(0.0, 1.0);
         let [v1, v2, v3, _] = convert_levels(bg.levels(), bg.mode(), self.mode());
         let [bv1, bv2, bv3, _] = self.levels();
 
-        let blended = |bg: Scalar, fg: Scalar, alpha: Scalar| bg.mul_add(1.0 - alpha, fg * alpha);
+        let blended = |bg: f64, fg: f64, alpha: f64| bg.mul_add(1.0 - alpha, fg * alpha);
         let levels = clamp_levels([
             blended(v1, bv1, a),
             blended(v2, bv2, a),
@@ -172,9 +172,9 @@ impl Color {
     /// ```
     pub fn lerp<A>(&self, other: Color, amt: A) -> Self
     where
-        A: Into<Scalar>,
+        A: Into<f64>,
     {
-        let lerp = |start: Scalar, stop: Scalar, amt: Scalar| amt.mul_add(stop - start, start);
+        let lerp = |start: f64, stop: f64, amt: f64| amt.mul_add(stop - start, start);
 
         let amt = amt.into().clamp(0.0, 1.0);
         let [v1, v2, v3, a] = self.levels();
@@ -257,7 +257,7 @@ impl TryFrom<&str> for Color {
 }
 
 /// Return the max value for each [`ColorMode`].
-pub(crate) const fn maxes(mode: ColorMode) -> [Scalar; 4] {
+pub(crate) const fn maxes(mode: ColorMode) -> [f64; 4] {
     match mode {
         Rgb => [255.0; 4],
         Hsb | Hsl => [360.0, 100.0, 100.0, 1.0],
@@ -265,7 +265,7 @@ pub(crate) const fn maxes(mode: ColorMode) -> [Scalar; 4] {
 }
 
 /// Clamp levels to `0.0..=1.0`.
-pub(crate) fn clamp_levels(levels: [Scalar; 4]) -> [Scalar; 4] {
+pub(crate) fn clamp_levels(levels: [f64; 4]) -> [f64; 4] {
     [
         levels[0].clamp(0.0, 1.0),
         levels[1].clamp(0.0, 1.0),
@@ -275,7 +275,7 @@ pub(crate) fn clamp_levels(levels: [Scalar; 4]) -> [Scalar; 4] {
 }
 
 /// Converts levels from one [`ColorMode`] to another.
-pub(crate) fn convert_levels(levels: [Scalar; 4], from: ColorMode, to: ColorMode) -> [Scalar; 4] {
+pub(crate) fn convert_levels(levels: [f64; 4], from: ColorMode, to: ColorMode) -> [f64; 4] {
     match (from, to) {
         (Hsb, Rgb) => hsb_to_rgb(levels),
         (Hsl, Rgb) => hsl_to_rgb(levels),
@@ -289,17 +289,17 @@ pub(crate) fn convert_levels(levels: [Scalar; 4], from: ColorMode, to: ColorMode
 
 /// Converts to [Rgb] to [Hsb] format.
 #[allow(clippy::many_single_char_names)]
-pub(crate) fn rgb_to_hsb([r, g, b, a]: [Scalar; 4]) -> [Scalar; 4] {
+pub(crate) fn rgb_to_hsb([r, g, b, a]: [f64; 4]) -> [f64; 4] {
     let c_max = r.max(g).max(b);
     let c_min = r.min(g).min(b);
     let chr = c_max - c_min;
-    if chr.abs() < Scalar::EPSILON {
+    if chr.abs() < f64::EPSILON {
         [0.0, 0.0, c_max, a]
     } else {
-        let mut h = if (r - c_max).abs() < Scalar::EPSILON {
+        let mut h = if (r - c_max).abs() < f64::EPSILON {
             // Magenta to yellow
             (g - b) / chr
-        } else if (g - c_max).abs() < Scalar::EPSILON {
+        } else if (g - c_max).abs() < f64::EPSILON {
             // Yellow to cyan
             2.0 + (b - r) / chr
         } else {
@@ -318,18 +318,18 @@ pub(crate) fn rgb_to_hsb([r, g, b, a]: [Scalar; 4]) -> [Scalar; 4] {
 
 /// Converts to [Rgb] to [Hsl] format.
 #[allow(clippy::many_single_char_names)]
-pub(crate) fn rgb_to_hsl([r, g, b, a]: [Scalar; 4]) -> [Scalar; 4] {
+pub(crate) fn rgb_to_hsl([r, g, b, a]: [f64; 4]) -> [f64; 4] {
     let c_max = r.max(g).max(b);
     let c_min = r.min(g).min(b);
     let l = c_max + c_min;
     let chr = c_max - c_min;
-    if chr.abs() < Scalar::EPSILON {
+    if chr.abs() < f64::EPSILON {
         [0.0, 0.0, l / 2.0, a]
     } else {
-        let mut h = if (r - c_max).abs() < Scalar::EPSILON {
+        let mut h = if (r - c_max).abs() < f64::EPSILON {
             // Magenta to yellow
             (g - b) / chr
-        } else if (g - c_max).abs() < Scalar::EPSILON {
+        } else if (g - c_max).abs() < f64::EPSILON {
             // Yellow to cyan
             2.0 + (b - r) / chr
         } else {
@@ -348,17 +348,17 @@ pub(crate) fn rgb_to_hsl([r, g, b, a]: [Scalar; 4]) -> [Scalar; 4] {
 
 /// Converts to [Hsb] to [Rgb] format.
 #[allow(clippy::many_single_char_names)]
-pub(crate) fn hsb_to_rgb([h, s, b, a]: [Scalar; 4]) -> [Scalar; 4] {
-    if b.abs() < Scalar::EPSILON {
+pub(crate) fn hsb_to_rgb([h, s, b, a]: [f64; 4]) -> [f64; 4] {
+    if b.abs() < f64::EPSILON {
         [0.0, 0.0, 0.0, a]
-    } else if s.abs() < Scalar::EPSILON {
+    } else if s.abs() < f64::EPSILON {
         [b, b, b, a]
     } else {
         let h = h * 6.0;
         let sector = h.floor().clamp(0.0, 2160.0) as usize;
         let tint1 = b * (1.0 - s);
-        let tint2 = b * (1.0 - s * (h - sector as Scalar));
-        let tint3 = b * (1.0 - s * (1.0 + sector as Scalar - h));
+        let tint2 = b * (1.0 - s * (h - sector as f64));
+        let tint3 = b * (1.0 - s * (1.0 + sector as f64 - h));
         let (r, g, b) = match sector {
             // Yellow to green
             1 => (tint2, b, tint1),
@@ -379,8 +379,8 @@ pub(crate) fn hsb_to_rgb([h, s, b, a]: [Scalar; 4]) -> [Scalar; 4] {
 
 /// Converts to [Hsl] to [Rgb] format.
 #[allow(clippy::many_single_char_names)]
-pub(crate) fn hsl_to_rgb([h, s, l, a]: [Scalar; 4]) -> [Scalar; 4] {
-    if s.abs() < Scalar::EPSILON {
+pub(crate) fn hsl_to_rgb([h, s, l, a]: [f64; 4]) -> [f64; 4] {
+    if s.abs() < f64::EPSILON {
         [l, l, l, a]
     } else {
         let h = h * 6.0;
@@ -390,7 +390,7 @@ pub(crate) fn hsl_to_rgb([h, s, l, a]: [Scalar; 4]) -> [Scalar; 4] {
             l + s - l * s
         };
         let zest = 2.0 * l - b;
-        let hzb_to_rgb = |h: Scalar, z: Scalar, b: Scalar| -> Scalar {
+        let hzb_to_rgb = |h: f64, z: f64, b: f64| -> f64 {
             let h = if h < 0.0 {
                 h + 6.0
             } else if h >= 6.0 {
@@ -420,7 +420,7 @@ pub(crate) fn hsl_to_rgb([h, s, l, a]: [Scalar; 4]) -> [Scalar; 4] {
 
 /// Converts to [Hsl] to [Hsb] format.
 #[allow(clippy::many_single_char_names)]
-pub(crate) fn hsl_to_hsb([h, s, l, a]: [Scalar; 4]) -> [Scalar; 4] {
+pub(crate) fn hsl_to_hsb([h, s, l, a]: [f64; 4]) -> [f64; 4] {
     let b = if l < 0.5 {
         (1.0 + s) * l
     } else {
@@ -432,10 +432,10 @@ pub(crate) fn hsl_to_hsb([h, s, l, a]: [Scalar; 4]) -> [Scalar; 4] {
 
 /// Converts to [Hsb] to [Hsl] format.
 #[allow(clippy::many_single_char_names)]
-pub(crate) fn hsb_to_hsl([h, s, b, a]: [Scalar; 4]) -> [Scalar; 4] {
+pub(crate) fn hsb_to_hsl([h, s, b, a]: [f64; 4]) -> [f64; 4] {
     let l = (2.0 - s) * b / 2.0;
     let s = match l {
-        _ if (l - 1.0).abs() < Scalar::EPSILON => 0.0,
+        _ if (l - 1.0).abs() < f64::EPSILON => 0.0,
         _ if l < 0.5 => s / 2.0 - s,
         _ => s * b / (2.0 - l * 2.0),
     };
@@ -443,7 +443,7 @@ pub(crate) fn hsb_to_hsl([h, s, b, a]: [Scalar; 4]) -> [Scalar; 4] {
 }
 
 /// Converts levels to [u8] RGBA channels.
-pub(crate) fn calculate_channels(levels: [Scalar; 4]) -> [u8; 4] {
+pub(crate) fn calculate_channels(levels: [f64; 4]) -> [u8; 4] {
     let [r, g, b, a] = levels;
     let [r_max, g_max, b_max, a_max] = maxes(Rgb);
     [
@@ -456,7 +456,7 @@ pub(crate) fn calculate_channels(levels: [Scalar; 4]) -> [u8; 4] {
 
 impl Color {
     /// Update RGB channels by calculating them from the current levels.
-    pub(crate) fn update_channels(&mut self, levels: [Scalar; 4], mode: ColorMode) {
+    pub(crate) fn update_channels(&mut self, levels: [f64; 4], mode: ColorMode) {
         let levels = convert_levels(levels, mode, Rgb);
         self.channels = calculate_channels(levels);
     }
@@ -468,7 +468,7 @@ macro_rules! impl_from {
             impl From<$source> for Color {
                 #[doc = concat!("Convert [", stringify!($source), "] to grayscale `Color`")]
                 fn from(gray: $source) -> Self {
-                    let gray = Scalar::from(gray);
+                    let gray = f64::from(gray);
                     Self::with_mode(Rgb, gray, gray, gray)
                 }
             }
@@ -476,7 +476,7 @@ macro_rules! impl_from {
             impl From<[$source; 1]> for Color {
                 #[doc = concat!("Convert [", stringify!($source), "] to grayscale `Color`")]
                 fn from([gray]: [$source; 1]) -> Self {
-                    let gray = Scalar::from(gray);
+                    let gray = f64::from(gray);
                     Self::with_mode(Rgb, gray, gray, gray)
                 }
             }
@@ -484,8 +484,8 @@ macro_rules! impl_from {
             impl From<[$source; 2]> for Color {
                 #[doc = concat!("Convert `[", stringify!($source), "; 2]` to grayscale `Color` with alpha")]
                 fn from([gray, alpha]: [$source; 2]) -> Self {
-                    let gray = Scalar::from(gray);
-                    let alpha = Scalar::from(alpha);
+                    let gray = f64::from(gray);
+                    let alpha = f64::from(alpha);
                     Self::with_mode_alpha(Rgb, gray, gray, gray, alpha)
                 }
             }
@@ -493,14 +493,14 @@ macro_rules! impl_from {
             impl From<[$source; 3]> for Color {
                 #[doc = concat!("Convert `[", stringify!($source), "; 3]` to `Color` with max alpha")]
                 fn from([r, g, b]: [$source; 3]) -> Self {
-                    Self::with_mode(Rgb, Scalar::from(r), Scalar::from(g), Scalar::from(b))
+                    Self::with_mode(Rgb, f64::from(r), f64::from(g), f64::from(b))
                 }
             }
 
             impl From<[$source; 4]> for Color {
                 #[doc = concat!("Convert `[", stringify!($source), "; 4]` to `Color`")]
                 fn from([r, g, b, a]: [$source; 4]) -> Self {
-                    Self::with_mode_alpha(Rgb, Scalar::from(r), Scalar::from(g), Scalar::from(b), Scalar::from(a))
+                    Self::with_mode_alpha(Rgb, f64::from(r), f64::from(g), f64::from(b), f64::from(a))
                 }
             }
         )*
@@ -508,7 +508,6 @@ macro_rules! impl_from {
 }
 
 impl_from!(i8, u8, i16, u16, f32);
-#[cfg(target_pointer_width = "64")]
 impl_from!(i32, u32, f64);
 
 #[cfg(test)]

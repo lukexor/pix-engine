@@ -8,7 +8,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 #[derive(Debug, Copy, Clone, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
-pub enum LightSource<T = Scalar, const N: usize = 3> {
+pub enum LightSource<T = f64, const N: usize = 3> {
     /// Ambient light.
     Ambient,
     /// Light from a specific point.
@@ -21,18 +21,12 @@ pub enum LightSource<T = Scalar, const N: usize = 3> {
 #[derive(Debug, Copy, Clone, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
-pub struct Light<T = Scalar, const N: usize = 3> {
+pub struct Light<T = f64, const N: usize = 3> {
     /// Source of light.
     pub source: LightSource<T, N>,
     /// Light intensity.
     pub intensity: T,
 }
-
-/// A 2D `Light` represented by floating point numbers.
-pub type LightF2 = Light<Scalar, 2>;
-
-/// A 3D `Light` represented by floating point numbers.
-pub type LightF3 = Light<Scalar, 3>;
 
 impl<T, const N: usize> Light<T, N> {
     /// Constructs a new `Light`.

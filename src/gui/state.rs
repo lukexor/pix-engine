@@ -4,8 +4,6 @@ use super::theme::FontId;
 use crate::{
     gui::{keys::KeyState, mouse::MouseState},
     prelude::*,
-    shape::PointI2,
-    vector::VectorI2,
 };
 use lru::LruCache;
 use std::{
@@ -91,9 +89,9 @@ impl Texture {
 #[derive(Debug)]
 pub(crate) struct UiState {
     /// Current global render position, in window coordinates.
-    cursor: PointI2,
+    cursor: Point<i32>,
     /// Previous global render position, in window coordinates.
-    pcursor: PointI2,
+    pcursor: Point<i32>,
     /// Offset for global render position, in window coordinates.
     column_offset: i32,
     /// Current line height.
@@ -101,7 +99,7 @@ pub(crate) struct UiState {
     /// Previous line height.
     pub(crate) pline_height: i32,
     /// Temporary stack of cursor positions.
-    cursor_stack: Vec<(PointI2, PointI2, i32, i32)>,
+    cursor_stack: Vec<(Point<i32>, Point<i32>, i32, i32)>,
     /// Temporary stack of cursor offset.
     offset_stack: Vec<i32>,
     /// ID stack to assist with generating unique element IDs.
@@ -115,7 +113,7 @@ pub(crate) struct UiState {
     /// Mouse state for the current frame.
     pub(crate) mouse: MouseState,
     /// Mouse position offset for rendering within textures and viewports.
-    pub(crate) mouse_offset: Option<PointI2>,
+    pub(crate) mouse_offset: Option<Point<i32>>,
     /// Mouse state for the previous frame.
     pub(crate) pmouse: MouseState,
     /// Keyboard state for the current frame.
@@ -216,19 +214,19 @@ impl UiState {
 
     /// Returns the current UI rendering position.
     #[inline]
-    pub(crate) const fn cursor(&self) -> PointI2 {
+    pub(crate) const fn cursor(&self) -> Point<i32> {
         self.cursor
     }
 
     /// Set the current UI rendering position.
     #[inline]
-    pub(crate) fn set_cursor<P: Into<PointI2>>(&mut self, cursor: P) {
+    pub(crate) fn set_cursor<P: Into<Point<i32>>>(&mut self, cursor: P) {
         self.cursor = cursor.into();
     }
 
     /// Returns the previous UI rendering position.
     #[inline]
-    pub(crate) const fn pcursor(&self) -> PointI2 {
+    pub(crate) const fn pcursor(&self) -> Point<i32> {
         self.pcursor
     }
 
@@ -278,7 +276,7 @@ impl UiState {
 
     /// Returns the current mouse position coordinates as `(x, y)`.
     #[inline]
-    pub(crate) fn mouse_pos(&self) -> PointI2 {
+    pub(crate) fn mouse_pos(&self) -> Point<i32> {
         let mut pos = self.mouse.pos;
         if let Some(offset) = self.mouse_offset {
             pos.offset(-offset);
@@ -288,7 +286,7 @@ impl UiState {
 
     /// Returns the previous mouse position coordinates last frame as `(x, y)`.
     #[inline]
-    pub(crate) fn pmouse_pos(&self) -> PointI2 {
+    pub(crate) fn pmouse_pos(&self) -> Point<i32> {
         let mut pos = self.pmouse.pos;
         if let Some(offset) = self.mouse_offset {
             pos.offset(-offset);
@@ -298,7 +296,7 @@ impl UiState {
 
     /// Set a mouse offset for rendering within textures or viewports.
     #[inline]
-    pub(crate) fn offset_mouse<P: Into<PointI2>>(&mut self, offset: P) {
+    pub(crate) fn offset_mouse<P: Into<Point<i32>>>(&mut self, offset: P) {
         self.mouse_offset = Some(offset.into());
     }
 
@@ -372,7 +370,7 @@ impl UiState {
 
     /// Try to capture `hover` if no other element is currently `hovered`.
     #[inline]
-    pub(crate) fn try_hover<S: Contains<i32, 2>>(&mut self, id: ElementId, shape: &S) -> bool {
+    pub(crate) fn try_hover<S: Contains<i32>>(&mut self, id: ElementId, shape: &S) -> bool {
         if !self.has_hover() && !self.disabled && shape.contains_point(self.mouse_pos()) {
             self.hover(id);
         }
@@ -508,15 +506,15 @@ impl UiState {
 
     /// Returns the current `scroll` state for this element.
     #[inline]
-    pub(crate) fn scroll(&self, id: ElementId) -> VectorI2 {
+    pub(crate) fn scroll(&self, id: ElementId) -> Vector<i32> {
         self.elements
             .peek(&id)
-            .map_or_else(VectorI2::default, |state| state.scroll)
+            .map_or_else(Vector::default, |state| state.scroll)
     }
 
     /// Set the current `scroll` state for this element.
     #[inline]
-    pub(crate) fn set_scroll(&mut self, id: ElementId, scroll: VectorI2) {
+    pub(crate) fn set_scroll(&mut self, id: ElementId, scroll: Vector<i32>) {
         if let Some(state) = self.elements.get_mut(&id) {
             state.scroll = scroll;
         } else {
@@ -684,7 +682,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub const fn cursor_pos(&self) -> PointI2 {
+    pub const fn cursor_pos(&self) -> Point<i32> {
         self.ui.cursor()
     }
 
@@ -705,7 +703,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn set_cursor_pos<P: Into<PointI2>>(&mut self, cursor: P) {
+    pub fn set_cursor_pos<P: Into<Point<i32>>>(&mut self, cursor: P) {
         self.ui.set_cursor(cursor.into());
     }
 
@@ -807,7 +805,7 @@ impl PixState {
 impl PixState {
     /// Advance the current UI cursor position for an element.
     #[inline]
-    pub(crate) fn advance_cursor<S: Into<PointI2>>(&mut self, size: S) {
+    pub(crate) fn advance_cursor<S: Into<Point<i32>>>(&mut self, size: S) {
         let size = size.into();
         let pos = self.ui.cursor;
         let padx = self.theme.spacing.frame_pad.x();
@@ -883,7 +881,7 @@ impl PixState {
 /// Internal tracked UI element state.
 #[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct ElementState {
-    scroll: VectorI2,
+    scroll: Vector<i32>,
     text_edit: String,
     current_tab: usize,
     expanded: bool,

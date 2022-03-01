@@ -9,7 +9,7 @@ use std::{
 /// Keep track of mouse position and clicks between frames.
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub(crate) struct MouseState {
-    pub(crate) pos: PointI2,
+    pub(crate) pos: Point<i32>,
     pub(crate) xrel: i32,
     pub(crate) yrel: i32,
     pub(crate) pressed: HashSet<Mouse>,

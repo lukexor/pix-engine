@@ -61,12 +61,12 @@ struct Stream {
     glyphs: Vec<Glyph>,
     glyph_size: u32,
     color: Color,
-    speed: Scalar,
+    speed: f64,
     spawned: bool,
 }
 
 impl Stream {
-    const SPEED_RANGE: (Scalar, Scalar) = (150.0, 500.0);
+    const SPEED_RANGE: (f64, f64) = (150.0, 500.0);
     const HEIGHT_RANGE: (usize, usize) = (1, 25);
     const START_RANGE: (i32, i32) = (-2000, -500);
     const SPAWN_RANGE: (i32, i32) = (-200, -50);

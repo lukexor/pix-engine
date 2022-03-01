@@ -1,8 +1,8 @@
 use pix_engine::prelude::*;
 
 struct Shapes {
-    rotation: Scalar,
-    scale: Scalar,
+    rotation: f64,
+    scale: f64,
     scale_latch: bool,
 }
 

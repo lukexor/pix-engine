@@ -185,14 +185,14 @@ impl PixState {
         texture_id: TextureId,
         src: R1,
         dst: R2,
-        mut angle: Scalar,
+        mut angle: f64,
         center: C,
         flipped: F,
     ) -> PixResult<()>
     where
         R1: Into<Option<Rect<i32>>>,
         R2: Into<Option<Rect<i32>>>,
-        C: Into<Option<PointI2>>,
+        C: Into<Option<Point<i32>>>,
         F: Into<Option<Flipped>>,
     {
         let s = &self.settings;
@@ -478,8 +478,8 @@ pub(crate) trait TextureRenderer {
         texture_id: TextureId,
         src: Option<Rect<i32>>,
         dst: Option<Rect<i32>>,
-        angle: Scalar,
-        center: Option<PointI2>,
+        angle: f64,
+        center: Option<Point<i32>>,
         flipped: Option<Flipped>,
         tint: Option<Color>,
     ) -> PixResult<()>;

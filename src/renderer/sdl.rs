@@ -2,7 +2,6 @@ use crate::{
     gui::theme::{FontId, FontSrc},
     prelude::*,
     renderer::{RendererSettings, Rendering},
-    shape::{LineI2, PointI2, QuadI2, TriI2},
 };
 use anyhow::Context;
 use lazy_static::lazy_static;
@@ -282,11 +281,11 @@ impl Rendering for Renderer {
     #[inline]
     fn text(
         &mut self,
-        pos: PointI2,
+        pos: Point<i32>,
         text: &str,
         wrap_width: Option<u32>,
-        angle: Option<Scalar>,
-        center: Option<PointI2>,
+        angle: Option<f64>,
+        center: Option<Point<i32>>,
         flipped: Option<Flipped>,
         fill: Option<Color>,
         outline: u16,
@@ -436,7 +435,7 @@ impl Rendering for Renderer {
 
     /// Draw a pixel to the current canvas.
     #[inline]
-    fn point(&mut self, p: PointI2, color: Color) -> PixResult<()> {
+    fn point(&mut self, p: Point<i32>, color: Color) -> PixResult<()> {
         self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
             let [x, y] = p.map(|v| v as i16);
             Ok(canvas.pixel(x, y, color).map_err(PixError::Renderer)?)
@@ -445,7 +444,7 @@ impl Rendering for Renderer {
 
     /// Draw a line to the current canvas.
     #[inline]
-    fn line(&mut self, line: LineI2, smooth: bool, width: u8, color: Color) -> PixResult<()> {
+    fn line(&mut self, line: Line<i32>, smooth: bool, width: u8, color: Color) -> PixResult<()> {
         self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
             let [x1, y1] = line.start().map(|v| v as i16);
             let [x2, y2] = line.end().map(|v| v as i16);
@@ -471,7 +470,7 @@ impl Rendering for Renderer {
     #[inline]
     fn bezier<I>(&mut self, ps: I, detail: i32, stroke: Option<Color>) -> PixResult<()>
     where
-        I: Iterator<Item = PointI2>,
+        I: Iterator<Item = Point<i32>>,
     {
         self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
             let (vx, vy): (Vec<i16>, Vec<i16>) = ps
@@ -493,7 +492,7 @@ impl Rendering for Renderer {
     #[inline]
     fn triangle(
         &mut self,
-        tri: TriI2,
+        tri: Tri<i32>,
         smooth: bool,
         fill: Option<Color>,
         stroke: Option<Color>,
@@ -561,7 +560,7 @@ impl Rendering for Renderer {
     #[inline]
     fn quad(
         &mut self,
-        quad: QuadI2,
+        quad: Quad<i32>,
         smooth: bool,
         fill: Option<Color>,
         stroke: Option<Color>,
@@ -600,7 +599,7 @@ impl Rendering for Renderer {
         stroke: Option<Color>,
     ) -> PixResult<()>
     where
-        I: Iterator<Item = PointI2>,
+        I: Iterator<Item = Point<i32>>,
     {
         self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
             let (vx, vy): (Vec<i16>, Vec<i16>) = ps
@@ -669,7 +668,7 @@ impl Rendering for Renderer {
     #[inline]
     fn arc(
         &mut self,
-        p: PointI2,
+        p: Point<i32>,
         radius: i32,
         start: i32,
         end: i32,
@@ -714,8 +713,8 @@ impl Rendering for Renderer {
         img: &Image,
         src: Option<Rect<i32>>,
         dst: Option<Rect<i32>>,
-        angle: Scalar,
-        center: Option<PointI2>,
+        angle: f64,
+        center: Option<Point<i32>>,
         flipped: Option<Flipped>,
         tint: Option<Color>,
     ) -> PixResult<()> {
@@ -943,17 +942,17 @@ impl From<&Rect<i32>> for SdlRect {
 }
 
 #[doc(hidden)]
-impl From<PointI2> for SdlPoint {
-    /// Convert [`PointI2`] to [`SdlPoint`].
-    fn from(p: PointI2) -> Self {
+impl From<Point<i32>> for SdlPoint {
+    /// Convert [`Point<i32>`] to [`SdlPoint`].
+    fn from(p: Point<i32>) -> Self {
         Self::new(p.x(), p.y())
     }
 }
 
 #[doc(hidden)]
-impl From<&PointI2> for SdlPoint {
-    /// Convert &[`PointI2`] to [`SdlPoint`].
-    fn from(p: &PointI2) -> Self {
+impl From<&Point<i32>> for SdlPoint {
+    /// Convert &[`Point<i32>`] to [`SdlPoint`].
+    fn from(p: &Point<i32>) -> Self {
         Self::new(p.x(), p.y())
     }
 }

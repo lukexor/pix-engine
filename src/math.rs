@@ -9,18 +9,7 @@ use rand::{self, distributions::uniform::SampleUniform, Rng};
 use std::ops::{AddAssign, Range};
 
 /// Default math constants.
-#[cfg(target_pointer_width = "32")]
-pub use std::f32::consts::*;
-#[cfg(target_pointer_width = "64")]
 pub use std::f64::consts::*;
-
-/// Default Scalar for floating point math.
-#[cfg(target_pointer_width = "32")]
-pub type Scalar = f32;
-
-/// Default Scalar for floating point math.
-#[cfg(target_pointer_width = "64")]
-pub type Scalar = f64;
 
 /// Default number trait used for objects and shapes.
 pub trait Num: NumTrait + NumOps + NumAssignOps + Copy + Default + PartialOrd {}
@@ -42,7 +31,7 @@ const PERLIN_ZWRAP: usize = 1 << PERLIN_ZWRAPB;
 const PERLIN_SIZE: usize = 4095;
 
 lazy_static! {
-    static ref PERLIN: Vec<Scalar> = {
+    static ref PERLIN: Vec<f64> = {
         let mut perlin = Vec::with_capacity(PERLIN_SIZE + 1);
         for _ in 0..=PERLIN_SIZE {
             perlin.push(random(1.0));
@@ -111,9 +100,9 @@ where
 /// let n = noise([2.0, 1.5, 3.0]);
 /// assert!(n >= 0.0 && n < 1.0);
 /// ```
-pub fn noise<V, const N: usize>(vector: V) -> Scalar
+pub fn noise<V, const N: usize>(vector: V) -> f64
 where
-    V: Into<Vector<Scalar, N>>,
+    V: Into<Vector<f64, N>>,
 {
     let v = vector.into();
 
@@ -136,7 +125,7 @@ where
 
     let (mut n1, mut n2, mut n3);
 
-    let scaled_cosine = |i: Scalar| 0.5 * (1.0 - (i - PI).cos());
+    let scaled_cosine = |i: f64| 0.5 * (1.0 - (i - PI).cos());
 
     let perlin_octaves = 4; // default to medium smooth
     let perlin_amp_falloff = 0.5; // 50% reduction/octave
@@ -278,7 +267,7 @@ macro_rules! noise {
 /// ```
 pub fn map<T>(value: T, start1: T, end1: T, start2: T, end2: T) -> T
 where
-    T: NumCast + Into<Scalar> + PartialOrd + Copy,
+    T: NumCast + Into<f64> + PartialOrd + Copy,
 {
     let default = end2;
     let start1 = start1.into();

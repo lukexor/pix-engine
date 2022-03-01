@@ -7,25 +7,25 @@ const HEIGHT: u32 = 150;
 const N: usize = WIDTH as usize;
 const NLEN: usize = N - 1;
 const NHEIGHT: usize = HEIGHT as usize;
-const N_SCALAR: Scalar = N as Scalar;
+const N_SCALAR: f64 = N as f64;
 
-const XVEL: Scalar = 1.8; // Velocity of fluid
+const XVEL: f64 = 1.8; // Velocity of fluid
 
 const SPACING: usize = 20;
 const COUNT: usize = N / SPACING + 1;
 
-const DT: Scalar = 0.004; // Delta time modifier
-const DIFF: Scalar = 0.000018; // Diffusion
-const VISC: Scalar = 0.00000001; // Viscosity
+const DT: f64 = 0.004; // Delta time modifier
+const DIFF: f64 = 0.000018; // Diffusion
+const VISC: f64 = 0.00000001; // Viscosity
 
 struct Fluid {
-    s: Vec<Scalar>,
-    density: Vec<Scalar>,
-    velx: Vec<Scalar>,
-    vely: Vec<Scalar>,
-    velx0: Vec<Scalar>,
-    vely0: Vec<Scalar>,
-    tmp: Vec<Scalar>,
+    s: Vec<f64>,
+    density: Vec<f64>,
+    velx: Vec<f64>,
+    vely: Vec<f64>,
+    velx0: Vec<f64>,
+    vely0: Vec<f64>,
+    tmp: Vec<f64>,
 }
 
 fn get_idx(x: usize, y: usize) -> usize {
@@ -38,18 +38,12 @@ fn get_xy(idx: usize) -> (usize, usize) {
     (idx % N, idx / N)
 }
 
-fn diffuse(b: usize, xs: &mut [Scalar], xs0: &[Scalar], amt: Scalar, tmp: &mut [Scalar]) {
-    let a = DT * amt * (N - 2).pow(2) as Scalar;
+fn diffuse(b: usize, xs: &mut [f64], xs0: &[f64], amt: f64, tmp: &mut [f64]) {
+    let a = DT * amt * (N - 2).pow(2) as f64;
     linear_solve(b, xs, xs0, a, 1.0 + 6.0 * a, tmp);
 }
 
-fn project(
-    velx: &mut [Scalar],
-    vely: &mut [Scalar],
-    p: &mut [Scalar],
-    div: &mut [Scalar],
-    tmp: &mut [Scalar],
-) {
+fn project(velx: &mut [f64], vely: &mut [f64], p: &mut [f64], div: &mut [f64], tmp: &mut [f64]) {
     let c = 1.0 / 6.0;
     div.par_iter_mut()
         .zip(tmp.par_iter_mut())
@@ -79,12 +73,12 @@ fn project(
         });
 }
 
-fn advect(b: usize, d: &mut [Scalar], d0: &[Scalar], velx: &[Scalar], vely: &[Scalar]) {
+fn advect(b: usize, d: &mut [f64], d0: &[f64], velx: &[f64], vely: &[f64]) {
     d.par_iter_mut().enumerate().for_each(|(i, d)| {
         let (x, y) = get_xy(i);
         if (1..NLEN).contains(&x) && (1..NHEIGHT).contains(&y) {
-            let mut x = x as Scalar - (DT * N_SCALAR * velx[i]);
-            let mut y = y as Scalar - (DT * N_SCALAR * vely[i]);
+            let mut x = x as f64 - (DT * N_SCALAR * velx[i]);
+            let mut y = y as f64 - (DT * N_SCALAR * vely[i]);
 
             if x < 0.5 {
                 x = 0.5;
@@ -103,9 +97,9 @@ fn advect(b: usize, d: &mut [Scalar], d0: &[Scalar], velx: &[Scalar], vely: &[Sc
             let j0 = y.floor() as usize;
             let j1 = j0 + 1;
 
-            let s1 = x - i0 as Scalar;
+            let s1 = x - i0 as f64;
             let s0 = 1.0 - s1;
-            let t1 = y - j0 as Scalar;
+            let t1 = y - j0 as f64;
             let t0 = 1.0 - t1;
 
             let pd = d.clamp(0.0, 500.0);
@@ -118,14 +112,7 @@ fn advect(b: usize, d: &mut [Scalar], d0: &[Scalar], velx: &[Scalar], vely: &[Sc
 }
 
 #[allow(clippy::many_single_char_names)]
-fn linear_solve(
-    b: usize,
-    xs: &mut [Scalar],
-    xs0: &[Scalar],
-    a: Scalar,
-    c: Scalar,
-    tmp: &mut [Scalar],
-) {
+fn linear_solve(b: usize, xs: &mut [f64], xs0: &[f64], a: f64, c: f64, tmp: &mut [f64]) {
     let c_recip = c.recip();
     tmp.par_iter_mut().enumerate().for_each(|(i, tmp)| {
         let (x, y) = get_xy(i);
@@ -142,7 +129,7 @@ fn linear_solve(
     set_bounds(b, xs);
 }
 
-fn set_bounds(b: usize, xs: &mut [Scalar]) {
+fn set_bounds(b: usize, xs: &mut [f64]) {
     for i in 1..NLEN {
         let (_, y) = get_xy(i);
         if y > NHEIGHT {
@@ -234,14 +221,14 @@ impl Fluid {
         Ok(())
     }
 
-    fn add_density(&mut self, idx: usize, amount: Scalar) {
+    fn add_density(&mut self, idx: usize, amount: f64) {
         self.density[idx] += amount;
         let velx = random!(-XVEL, XVEL);
         let vely = random!(-0.03, -0.01);
         self.add_velocity(idx, velx, vely);
     }
 
-    fn add_velocity(&mut self, idx: usize, amount_x: Scalar, amount_y: Scalar) {
+    fn add_velocity(&mut self, idx: usize, amount_x: f64, amount_y: f64) {
         self.velx[idx] += amount_x;
         self.vely[idx] += amount_y;
     }
@@ -249,16 +236,16 @@ impl Fluid {
 
 struct App {
     fluid: Fluid,
-    sincos: Vec<(Scalar, Scalar)>,
-    xs: [Scalar; COUNT],
-    ys: [Scalar; COUNT],
+    sincos: Vec<(f64, f64)>,
+    xs: [f64; COUNT],
+    ys: [f64; COUNT],
 }
 
 impl App {
     fn new() -> Self {
         let mut sincos = Vec::with_capacity(628);
         for i in 0..628 {
-            sincos.push((i as Scalar * 0.01).sin_cos());
+            sincos.push((i as f64 * 0.01).sin_cos());
         }
         Self {
             fluid: Fluid::new(),
@@ -276,8 +263,8 @@ impl App {
                 let ymin = random!(-16, 0);
                 for j in ymin..0 {
                     let idx = get_idx(
-                        (self.xs[k] + i as Scalar).floor() as usize,
-                        (self.ys[k] + j as Scalar).floor() as usize,
+                        (self.xs[k] + i as f64).floor() as usize,
+                        (self.ys[k] + j as f64).floor() as usize,
                     );
                     self.fluid.add_density(idx, random!(10.0, 40.0));
                     let velx = random!(-XVEL / 2.0, XVEL / 2.0);
@@ -289,11 +276,11 @@ impl App {
         Ok(())
     }
 
-    fn drag(&mut self, pos: PointI2) -> PixResult<()> {
-        let mx = pos.x() as Scalar;
-        let my = pos.y() as Scalar;
+    fn drag(&mut self, pos: Point<i32>) -> PixResult<()> {
+        let mx = pos.x() as f64;
+        let my = pos.y() as f64;
         for r in 3..10 {
-            let r = r as Scalar;
+            let r = r as f64;
             for (sin, cos) in self.sincos.iter() {
                 let idx = get_idx((mx + r * cos) as usize, (my + r * sin) as usize);
                 self.fluid.add_density(idx, random!(2.0, 5.0));
@@ -312,8 +299,8 @@ impl AppState for App {
         s.clip([0, 0, WIDTH as i32, HEIGHT as i32 - 10])?;
 
         for i in 0..COUNT {
-            self.xs[i] = (i * SPACING) as Scalar;
-            self.ys[i] = HEIGHT as Scalar;
+            self.xs[i] = (i * SPACING) as f64;
+            self.ys[i] = HEIGHT as f64;
         }
 
         Ok(())
@@ -331,8 +318,8 @@ impl AppState for App {
     fn on_mouse_dragged(
         &mut self,
         _s: &mut PixState,
-        pos: PointI2,
-        _rel_pos: PointI2,
+        pos: Point<i32>,
+        _rel_pos: Point<i32>,
     ) -> PixResult<bool> {
         self.drag(pos)?;
         Ok(false)

@@ -62,7 +62,7 @@ pub use sphere::*;
 pub use triangle::*;
 
 /// Trait for shape containing operations.
-pub trait Contains<T, const N: usize> {
+pub trait Contains<T = i32, const N: usize = 2> {
     /// The shape type. e.g. [`Rect<T>`].
     type Shape;
 
@@ -78,7 +78,7 @@ pub trait Contains<T, const N: usize> {
 }
 
 /// Trait for shape intersection operations.
-pub trait Intersects<T, const N: usize> {
+pub trait Intersects<T = i32, const N: usize = 2> {
     /// The shape type. e.g. [`Rect<T>`].
     type Shape;
 
@@ -117,7 +117,7 @@ impl PixState {
     /// ```
     pub fn point<P>(&mut self, p: P) -> PixResult<()>
     where
-        P: Into<PointI2>,
+        P: Into<Point<i32>>,
     {
         if let Some(stroke) = self.settings.stroke {
             self.renderer.point(p.into(), stroke)?;
@@ -148,7 +148,7 @@ impl PixState {
     /// ```
     pub fn line<L>(&mut self, line: L) -> PixResult<()>
     where
-        L: Into<LineI2>,
+        L: Into<Line<i32>>,
     {
         let s = &self.settings;
         if let Some(stroke) = s.stroke {
@@ -184,7 +184,7 @@ impl PixState {
     /// ```
     pub fn bezier<P, I>(&mut self, points: I) -> PixResult<()>
     where
-        P: Into<PointI2>,
+        P: Into<Point<i32>>,
         I: IntoIterator<Item = P>,
     {
         let s = &self.settings;
@@ -218,7 +218,7 @@ impl PixState {
     /// ```
     pub fn triangle<T>(&mut self, tri: T) -> PixResult<()>
     where
-        T: Into<TriI2>,
+        T: Into<Tri<i32>>,
     {
         let s = &self.settings;
         self.renderer
@@ -375,7 +375,7 @@ impl PixState {
     /// ```
     pub fn quad<Q>(&mut self, quad: Q) -> PixResult<()>
     where
-        Q: Into<QuadI2>,
+        Q: Into<Quad<i32>>,
     {
         let s = &self.settings;
         self.renderer.quad(quad.into(), s.smooth, s.fill, s.stroke)
@@ -404,7 +404,7 @@ impl PixState {
     /// ```
     pub fn polygon<P, I>(&mut self, points: I) -> PixResult<()>
     where
-        P: Into<PointI2>,
+        P: Into<Point<i32>>,
         I: IntoIterator<Item = P>,
     {
         let s = &self.settings;
@@ -454,10 +454,10 @@ impl PixState {
     ) -> PixResult<()>
     where
         V: IntoIterator<Item = P1>,
-        P1: Into<PointF2>,
-        P2: Into<PointI2>,
-        A: Into<Option<Scalar>>,
-        S: Into<Option<Scalar>>,
+        P1: Into<Point<f64>>,
+        P2: Into<Point<i32>>,
+        A: Into<Option<f64>>,
+        S: Into<Option<f64>>,
     {
         let s = &self.settings;
         let pos = pos.into();
@@ -467,7 +467,7 @@ impl PixState {
         };
         let scale = scale.into().unwrap_or(1.0);
         let (sin, cos) = angle.sin_cos();
-        let (px, py) = (pos.x() as Scalar, pos.y() as Scalar);
+        let (px, py) = (pos.x() as f64, pos.y() as f64);
         let vs = vertexes.into_iter().map(|v| {
             let v = v.into();
             // rotation * scale + translation
@@ -566,7 +566,7 @@ impl PixState {
     /// ```
     pub fn arc<P>(&mut self, p: P, radius: i32, start: i32, end: i32) -> PixResult<()>
     where
-        P: Into<PointI2>,
+        P: Into<Point<i32>>,
     {
         let s = &self.settings;
         let p = p.into();

@@ -95,27 +95,9 @@ use std::{fmt, ops::MulAssign};
 #[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
-pub struct Vector<T = Scalar, const N: usize = 2>(
+pub struct Vector<T = f64, const N: usize = 2>(
     #[cfg_attr(feature = "serde", serde(with = "arrays"))] pub(crate) [T; N],
 );
-
-/// A 1D `Vector` represented by `i32`.
-pub type VectorI1 = Vector<i32, 1>;
-
-/// A 2D `Vector` represented by `i32`.
-pub type VectorI2 = Vector<i32, 2>;
-
-/// A 3D `Vector` represented by `i32`.
-pub type VectorI3 = Vector<i32, 3>;
-
-/// A 1D `Vector` represented by `f32` or `f64` depending on platform.
-pub type VectorF1 = Vector<Scalar, 1>;
-
-/// A 2D `Vector` represented by `f32` or `f64` depending on platform.
-pub type VectorF2 = Vector<Scalar, 2>;
-
-/// A 3D `Vector` represented by `f32` or `f64` depending on platform.
-pub type VectorF3 = Vector<Scalar, 3>;
 
 /// Constructs a [Vector].
 ///
@@ -198,7 +180,7 @@ impl<T> Vector<T, 1> {
     }
 }
 
-impl<T> Vector<T, 2> {
+impl<T> Vector<T> {
     /// Constructs a `Vector` from individual x/y coordinates.
     #[inline]
     pub const fn from_xy(x: T, y: T) -> Self {
@@ -214,7 +196,7 @@ impl<T> Vector<T, 3> {
     }
 }
 
-impl<T: Num + Float> Vector<T, 2> {
+impl<T: Num + Float> Vector<T> {
     /// Constructs a `Vector` from another `Vector`, rotated by an `angle`.
     ///
     /// # Example
@@ -228,7 +210,7 @@ impl<T: Num + Float> Vector<T, 2> {
     /// ```
     pub fn rotated<V>(v: V, angle: T) -> Self
     where
-        V: Into<Vector<T, 2>>,
+        V: Into<Vector<T>>,
     {
         let mut v = v.into();
         v.rotate(angle);

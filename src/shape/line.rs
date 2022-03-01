@@ -34,18 +34,6 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
 pub struct Line<T = i32, const N: usize = 2>(pub(crate) [Point<T, N>; 2]);
 
-/// A 2D `Line` represented by `i32`.
-pub type LineI2 = Line<i32, 2>;
-
-/// A 3D `Line` represented by `i32`.
-pub type LineI3 = Line<i32, 3>;
-
-/// A 2D `Line` represented by `f32` or `f64` depending on platform.
-pub type LineF2 = Line<Scalar, 2>;
-
-/// A 3D `Line` represented by `f32` or `f64` depending on platform.
-pub type LineF3 = Line<Scalar, 3>;
-
 /// Constructs a [Line] with two points.
 ///
 /// ```
@@ -101,7 +89,7 @@ impl<T, const N: usize> Line<T, N> {
     }
 }
 
-impl<T> Line<T, 2> {
+impl<T> Line<T> {
     /// Constructs a `Line` from individual x/y coordinates.
     #[inline]
     pub const fn from_xy(x1: T, y1: T, x2: T, y2: T) -> Self {
@@ -211,15 +199,15 @@ impl<T: Copy, const N: usize> Line<T, N> {
     }
 }
 
-impl<T: Float> Intersects<T, 2> for Line<T, 2> {
-    type Shape = Line<T, 2>;
+impl<T: Float> Intersects<T> for Line<T> {
+    type Shape = Line<T>;
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
     #[allow(clippy::many_single_char_names)]
-    fn intersects_line<L>(&self, other: L) -> Option<(Point<T, 2>, T)>
+    fn intersects_line<L>(&self, other: L) -> Option<(Point<T>, T)>
     where
-        L: Into<Line<T, 2>>,
+        L: Into<Line<T>>,
     {
         let other = other.into();
         let [start1, end1] = self.as_array();
@@ -252,15 +240,15 @@ impl<T: Float> Intersects<T, 2> for Line<T, 2> {
     }
 }
 
-impl Draw for LineI2 {
+impl Draw for Line<i32> {
     /// Draw `Line` to the current [`PixState`] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
         s.line(*self)
     }
 }
 
-impl<T: Copy> From<[T; 4]> for Line<T, 2> {
-    /// Converts `[T; 4]` into `Line<T, 2>`.
+impl<T: Copy> From<[T; 4]> for Line<T> {
+    /// Converts `[T; 4]` into `Line<T>`.
     #[inline]
     fn from([x1, y1, x2, y2]: [T; 4]) -> Self {
         Self::from_xy(x1, y1, x2, y2)
@@ -275,8 +263,8 @@ impl<T: Copy> From<[T; 6]> for Line<T, 3> {
     }
 }
 
-impl<T: Copy> From<[[T; 2]; 2]> for Line<T, 2> {
-    /// Converts `[[T; 2]; 2]` into `Line<T, 2>`.
+impl<T: Copy> From<[[T; 2]; 2]> for Line<T> {
+    /// Converts `[[T; 2]; 2]` into `Line<T>`.
     #[inline]
     fn from([[x1, y1], [x2, y2]]: [[T; 2]; 2]) -> Self {
         Self::from_xy(x1, y1, x2, y2)

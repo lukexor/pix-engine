@@ -1,4 +1,4 @@
-use pix_engine::{prelude::*, shape::PointF2, vector::VectorF2};
+use pix_engine::prelude::*;
 
 const WIDTH: u32 = 1000;
 const HEIGHT: u32 = 800;
@@ -14,7 +14,7 @@ const LIGHT: &[u8] = include_bytes!("light.png");
 
 #[derive(Debug)]
 struct Cell {
-    pos: PointI2,
+    pos: Point<i32>,
     edges: [(bool, usize); 4],
     exists: bool,
 }
@@ -22,7 +22,7 @@ struct Cell {
 // 0,0 -> 0,0,16,16
 // 1,0 -> 16,0,32,16
 impl Cell {
-    pub fn new<P: Into<PointI2>>(pos: P) -> Self {
+    pub fn new<P: Into<Point<i32>>>(pos: P) -> Self {
         Self {
             pos: pos.into() * BLOCK_SIZE as i32,
             edges: [(false, 0); 4],
@@ -37,9 +37,9 @@ impl Cell {
 
 struct RayScene {
     cells: Vec<Cell>,
-    edges: Vec<Line<i32, 2>>,
-    points: Vec<PointI2>,
-    polygons: Vec<(Scalar, PointI2)>,
+    edges: Vec<Line<i32>>,
+    points: Vec<Point<i32>>,
+    polygons: Vec<(f64, Point<i32>)>,
     xcells: u32,
     ycells: u32,
     drawing: bool,
@@ -82,7 +82,7 @@ impl RayScene {
     fn get_edge_index(&mut self, i: usize, dir: usize) -> usize {
         self.cells[i].edges[dir].1
     }
-    fn get_edge_mut(&mut self, i: usize) -> &mut Line<i32, 2> {
+    fn get_edge_mut(&mut self, i: usize) -> &mut Line<i32> {
         &mut self.edges[i]
     }
 
@@ -195,13 +195,13 @@ impl RayScene {
     }
 
     #[allow(clippy::many_single_char_names)]
-    fn calc_visibility_polygons(&mut self, o: PointI2) {
+    fn calc_visibility_polygons(&mut self, o: Point<i32>) {
         self.polygons.clear();
         for &p in self.points.iter() {
-            let v = (p - o).as_::<Scalar>();
+            let v = (p - o).as_::<f64>();
             // Cast three rays - one at and one off to each side
             for offset in -1..=1 {
-                let angle = offset as Scalar / 10_000.0;
+                let angle = offset as f64 / 10_000.0;
                 let r = Vector::rotated(v, angle);
                 if let Some(intersect) = self.cast_ray(o, r) {
                     let [x, y] = intersect.as_array();
@@ -218,13 +218,13 @@ impl RayScene {
             .dedup_by(|a, b| (a.1.x() - b.1.x()).abs() < 1 && (a.1.y() - b.1.y()).abs() < 1);
     }
 
-    fn cast_ray(&self, o: PointI2, r: VectorF2) -> Option<PointF2> {
+    fn cast_ray(&self, o: Point<i32>, r: Vector<f64>) -> Option<Point<f64>> {
         let mut intersect = None;
-        let mut closest_param = Scalar::INFINITY;
-        let o = o.as_::<Scalar>();
+        let mut closest_param = f64::INFINITY;
+        let o = o.as_::<f64>();
         let ray = Line::new(o, o + r);
         for &e in self.edges.iter() {
-            if let Some((point, param)) = ray.intersects_line(e.as_::<Scalar>()) {
+            if let Some((point, param)) = ray.intersects_line(e.as_::<f64>()) {
                 if intersect.is_none() || param < closest_param {
                     intersect = Some(point);
                     closest_param = param;
@@ -341,7 +341,12 @@ impl AppState for RayScene {
         Ok(())
     }
 
-    fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse, pos: PointI2) -> PixResult<bool> {
+    fn on_mouse_pressed(
+        &mut self,
+        s: &mut PixState,
+        btn: Mouse,
+        pos: Point<i32>,
+    ) -> PixResult<bool> {
         if btn == Mouse::Left
             && rect![0, 0, s.width()? as i32, s.height()? as i32].contains_point(pos)
         {
@@ -356,8 +361,8 @@ impl AppState for RayScene {
     fn on_mouse_dragged(
         &mut self,
         s: &mut PixState,
-        pos: PointI2,
-        rel_pos: PointI2,
+        pos: Point<i32>,
+        rel_pos: Point<i32>,
     ) -> PixResult<bool> {
         if s.mouse_buttons().contains(&Mouse::Left) {
             let within_window =

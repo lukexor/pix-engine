@@ -59,6 +59,7 @@ All notable changes to this project will be documented in this file.
   instead of milliseconds.
 - Changed `PixState::avg_frame_rate` to return an `f32` instead of `usize`.
 - Changed `PixState::stroke_weight` to accept a `u16` instead of a `u8`.
+- Removed generic type aliases for all types that now have reasonable defaults.
 
 ## [0.5.4] - 2022-01-26
 

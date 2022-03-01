@@ -1,34 +1,32 @@
 use pix_engine::{
     math::{FRAC_PI_2, PI, TAU},
     prelude::*,
-    shape::PointF2,
-    vector::VectorF2,
 };
 
-const SHIP_SCALE: Scalar = 4.0;
+const SHIP_SCALE: f64 = 4.0;
 const ASTEROID_SIZE: u32 = 64;
 const MIN_ASTEROID_SIZE: u32 = 16;
-const SHIP_THRUST: Scalar = 150.0;
-const MAX_THRUST: Scalar = 600.0;
-const MAX_ASTEROID_SPEED: Scalar = 50.0;
-const SHATTERED_ASTEROID_SPEED: Scalar = 100.0;
-const BULLET_SPEED: Scalar = 200.0;
-const ASTEROID_SAFE_RADIUS: Scalar = 80.0; // So asteroids don't spawn near player
+const SHIP_THRUST: f64 = 150.0;
+const MAX_THRUST: f64 = 600.0;
+const MAX_ASTEROID_SPEED: f64 = 50.0;
+const SHATTERED_ASTEROID_SPEED: f64 = 100.0;
+const BULLET_SPEED: f64 = 200.0;
+const ASTEROID_SAFE_RADIUS: f64 = 80.0; // So asteroids don't spawn near player
 
-const ORIGIN: PointF2 = point!(0.0, 0.0);
-const SHIP_MODEL: [PointF2; 3] = [point!(5.0, 0.0), point!(-2.5, -2.5), point!(-2.5, 2.5)];
+const ORIGIN: Point<f64> = point!(0.0, 0.0);
+const SHIP_MODEL: [Point<f64>; 3] = [point!(5.0, 0.0), point!(-2.5, -2.5), point!(-2.5, 2.5)];
 
 struct SpaceObj {
     size: u32,
-    pos: PointF2,
-    start_pos: PointF2,
-    vel: VectorF2,
-    angle: Scalar,
+    pos: Point<f64>,
+    start_pos: Point<f64>,
+    vel: Vector<f64>,
+    angle: f64,
     destroyed: bool,
 }
 
 impl SpaceObj {
-    fn new(pos: PointF2, vel: VectorF2, size: u32, angle: Scalar) -> Self {
+    fn new(pos: Point<f64>, vel: Vector<f64>, size: u32, angle: f64) -> Self {
         Self {
             pos,
             start_pos: pos,
@@ -39,7 +37,7 @@ impl SpaceObj {
         }
     }
 
-    fn new_asteroid(ship: &SpaceObj, mut pos: PointF2) -> Self {
+    fn new_asteroid(ship: &SpaceObj, mut pos: Point<f64>) -> Self {
         if Ellipse::circle_with_position(ship.pos, ASTEROID_SAFE_RADIUS).contains_point(pos) {
             pos.offset(-ship.pos)
         }
@@ -49,7 +47,7 @@ impl SpaceObj {
         Self::new(pos, vel, ASTEROID_SIZE, angle)
     }
 
-    fn contains_point(&self, p: PointF2) -> bool {
+    fn contains_point(&self, p: Point<f64>) -> bool {
         Ellipse::from(self).contains_point(p.round().as_::<i32>())
     }
 }
@@ -67,7 +65,7 @@ impl From<&SpaceObj> for Ellipse {
 }
 
 struct Asteroids {
-    asteroid_model: [PointF2; 20],
+    asteroid_model: [Point<f64>; 20],
     asteroids: Vec<SpaceObj>,
     broken_asteroids: Vec<SpaceObj>,
     bullets: Vec<SpaceObj>,
@@ -86,7 +84,7 @@ impl Asteroids {
         let mut asteroid_model = [Point::default(); 20];
         for (i, p) in asteroid_model.iter_mut().enumerate() {
             let noise = random!(0.8, 1.2);
-            let a = (i as Scalar / 20.0) * 2.0 * PI;
+            let a = (i as f64 / 20.0) * 2.0 * PI;
             *p = point!(noise * a.sin(), noise * a.cos());
         }
         Self {
@@ -95,7 +93,7 @@ impl Asteroids {
             broken_asteroids: Vec::new(),
             bullets: Vec::new(),
             ship: SpaceObj::new(
-                point!(width as Scalar / 2.0, height as Scalar / 2.0),
+                point!(width as f64 / 2.0, height as f64 / 2.0),
                 vector!(),
                 4,
                 0.0,
@@ -124,7 +122,7 @@ impl Asteroids {
         } else {
             self.level + 2
         };
-        let (w, h) = (self.width as Scalar, self.height as Scalar);
+        let (w, h) = (self.width as f64, self.height as f64);
         for _ in 0..asteroid_count {
             let pos = point!(random!(w), random!(h));
             self.asteroids.push(SpaceObj::new_asteroid(&self.ship, pos));
@@ -162,13 +160,13 @@ impl Asteroids {
         }
         // Thrust
         if s.key_down(Key::Up) {
-            self.ship.vel += VectorF2::from_angle(self.ship.angle, SHIP_THRUST * elapsed);
+            self.ship.vel += Vector::from_angle(self.ship.angle, SHIP_THRUST * elapsed);
             self.ship.vel.limit(MAX_THRUST);
         }
     }
 
     fn draw_asteroids(&mut self, s: &mut PixState) -> PixResult<()> {
-        let (w, h) = (self.width as Scalar, self.height as Scalar);
+        let (w, h) = (self.width as f64, self.height as f64);
         let elapsed = s.delta_time().as_secs_f64();
         // Draw asteroids
         for a in self.asteroids.iter_mut() {
@@ -179,7 +177,7 @@ impl Asteroids {
             }
 
             a.pos += a.vel * elapsed;
-            a.pos.wrap([w, h], a.size as Scalar);
+            a.pos.wrap([w, h], a.size as f64);
             a.angle += 0.5 * elapsed; // Give some twirl
             s.fill(Color::BLACK);
             s.stroke(Color::YELLOW);
@@ -187,14 +185,14 @@ impl Asteroids {
                 self.asteroid_model,
                 a.pos.round().as_::<i32>(),
                 a.angle,
-                a.size as Scalar,
+                a.size as f64,
             )?;
         }
         Ok(())
     }
 
     fn draw_bullets(&mut self, s: &mut PixState) -> PixResult<()> {
-        let (w, h) = (self.width as Scalar, self.height as Scalar);
+        let (w, h) = (self.width as f64, self.height as f64);
         let elapsed = s.delta_time().as_secs_f64();
         // Update bullet and check collisions
         for b in self.bullets.iter_mut() {
@@ -213,13 +211,13 @@ impl Asteroids {
                         let speed = random!(MAX_ASTEROID_SPEED, SHATTERED_ASTEROID_SPEED);
                         self.broken_asteroids.push(SpaceObj::new(
                             a.pos,
-                            VectorF2::from_angle(a1, speed),
+                            Vector::from_angle(a1, speed),
                             a.size >> 1,
                             a1,
                         ));
                         self.broken_asteroids.push(SpaceObj::new(
                             a.pos,
-                            VectorF2::from_angle(a2, speed),
+                            Vector::from_angle(a2, speed),
                             a.size >> 1,
                             a2,
                         ));
@@ -247,10 +245,10 @@ impl Asteroids {
     }
 
     fn draw_ship(&mut self, s: &mut PixState) -> PixResult<()> {
-        let (w, h) = (self.width as Scalar, self.height as Scalar);
+        let (w, h) = (self.width as f64, self.height as f64);
         let elapsed = s.delta_time().as_secs_f64();
         self.ship.pos += self.ship.vel * elapsed;
-        self.ship.pos.wrap([w, h], self.ship.size as Scalar);
+        self.ship.pos.wrap([w, h], self.ship.size as f64);
         s.fill(Color::BLACK);
         s.stroke(Color::WHITE);
         s.wireframe(
@@ -291,7 +289,7 @@ impl Asteroids {
 
         // Check win condition
         if self.asteroids.is_empty() {
-            let (w, h) = (self.width as Scalar, self.height as Scalar);
+            let (w, h) = (self.width as f64, self.height as f64);
             self.level += 1;
             self.score += 1000;
             self.bullets.clear();
@@ -346,7 +344,7 @@ impl AppState for Asteroids {
             Key::Space if !self.gameover => {
                 self.bullets.push(SpaceObj::new(
                     self.ship.pos,
-                    VectorF2::from_angle(self.ship.angle, self.ship.vel.mag() + BULLET_SPEED),
+                    Vector::from_angle(self.ship.angle, self.ship.vel.mag() + BULLET_SPEED),
                     1,
                     0.0,
                 ));

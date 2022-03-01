@@ -213,13 +213,13 @@ impl<T: Copy> Rect<T> {
 
 impl<T: Num> Rect<T> {
     /// Constructs a `Rect` at position [Point] with `width` and `height`.
-    pub fn with_position<P: Into<Point<T, 2>>>(p: P, width: T, height: T) -> Self {
+    pub fn with_position<P: Into<Point<T>>>(p: P, width: T, height: T) -> Self {
         let p = p.into();
         Self::new(p.x(), p.y(), width, height)
     }
 
     /// Constructs a square `Rect` at position [Point] with `size`.
-    pub fn square_with_position<P: Into<Point<T, 2>>>(p: P, size: T) -> Self {
+    pub fn square_with_position<P: Into<Point<T>>>(p: P, size: T) -> Self {
         Self::with_position(p, size, size)
     }
 
@@ -236,7 +236,7 @@ impl<T: Num> Rect<T> {
     /// let r = Rect::with_points([50, 50], [150, 150]);
     /// assert_eq!(r.as_array(), [50, 50, 100, 100]);
     /// ```
-    pub fn with_points<P: Into<Point<T, 2>>>(p1: P, p2: P) -> Self {
+    pub fn with_points<P: Into<Point<T>>>(p1: P, p2: P) -> Self {
         let p1 = p1.into();
         let p2 = p2.into();
         assert!(p2 > p1, "bottom-right point must be greater than top-right",);
@@ -254,7 +254,7 @@ impl<T: Num> Rect<T> {
     /// let r = Rect::from_center([50, 50], 100, 100);
     /// assert_eq!(r.as_array(), [0, 0, 100, 100]);
     /// ```
-    pub fn from_center<P: Into<Point<T, 2>>>(p: P, width: T, height: T) -> Self {
+    pub fn from_center<P: Into<Point<T>>>(p: P, width: T, height: T) -> Self {
         let p = p.into();
         let two = T::one() + T::one();
         Self::new(p.x() - width / two, p.y() - height / two, width, height)
@@ -269,7 +269,7 @@ impl<T: Num> Rect<T> {
     /// let s = Rect::square_from_center([50, 50], 100);
     /// assert_eq!(s.as_array(), [0, 0, 100, 100]);
     /// ```
-    pub fn square_from_center<P: Into<Point<T, 2>>>(p: P, size: T) -> Self {
+    pub fn square_from_center<P: Into<Point<T>>>(p: P, size: T) -> Self {
         let p = p.into();
         let two = T::one() + T::one();
         let offset = size / two;
@@ -278,7 +278,7 @@ impl<T: Num> Rect<T> {
 
     /// Returns the `size` of the rectangle as a `Point`.
     #[inline]
-    pub fn size(&self) -> Point<T, 2> {
+    pub fn size(&self) -> Point<T> {
         point!(self.width(), self.height())
     }
 
@@ -298,7 +298,7 @@ impl<T: Num> Rect<T> {
     #[inline]
     pub fn offset<P>(&self, offsets: P) -> Self
     where
-        P: Into<Point<T, 2>>,
+        P: Into<Point<T>>,
     {
         let offsets = offsets.into();
         let mut rect = *self;
@@ -312,7 +312,7 @@ impl<T: Num> Rect<T> {
     #[inline]
     pub fn offset_size<P>(&self, offsets: P) -> Self
     where
-        P: Into<Point<T, 2>>,
+        P: Into<Point<T>>,
     {
         let offsets = offsets.into();
         let mut rect = *self;
@@ -326,7 +326,7 @@ impl<T: Num> Rect<T> {
     #[inline]
     pub fn grow<P>(&self, offsets: P) -> Self
     where
-        P: Into<Point<T, 2>>,
+        P: Into<Point<T>>,
     {
         let offsets = offsets.into();
         let mut rect = *self;
@@ -343,7 +343,7 @@ impl<T: Num> Rect<T> {
     #[inline]
     pub fn shrink<P>(&self, offsets: P) -> Self
     where
-        P: Into<Point<T, 2>>,
+        P: Into<Point<T>>,
     {
         let offsets = offsets.into();
         let mut rect = *self;
@@ -420,7 +420,7 @@ impl<T: Num> Rect<T> {
 
     /// Returns the center position as [Point].
     #[inline]
-    pub fn center(&self) -> Point<T, 2> {
+    pub fn center(&self) -> Point<T> {
         let two = T::one() + T::one();
         point!(
             self.x() + self.width() / two,
@@ -430,32 +430,32 @@ impl<T: Num> Rect<T> {
 
     /// Returns the top-left position as [Point].
     #[inline]
-    pub fn top_left(&self) -> Point<T, 2> {
+    pub fn top_left(&self) -> Point<T> {
         point!(self.left(), self.top())
     }
 
     /// Returns the top-right position as [Point].
     #[inline]
-    pub fn top_right(&self) -> Point<T, 2> {
+    pub fn top_right(&self) -> Point<T> {
         point!(self.right(), self.top())
     }
 
     /// Returns the bottom-left position as [Point].
     #[inline]
-    pub fn bottom_left(&self) -> Point<T, 2> {
+    pub fn bottom_left(&self) -> Point<T> {
         point!(self.left(), self.bottom())
     }
 
     /// Returns the bottom-right position as [Point].
     #[inline]
-    pub fn bottom_right(&self) -> Point<T, 2> {
+    pub fn bottom_right(&self) -> Point<T> {
         point!(self.right(), self.bottom())
     }
 
     /// Returns the four [Point]s that compose this `Rect` as `[top_left, top_right, bottom_right,
     /// bottom_left]`.
     #[inline]
-    pub fn points(&self) -> [Point<T, 2>; 4] {
+    pub fn points(&self) -> [Point<T>; 4] {
         [
             self.top_left(),
             self.top_right(),
@@ -466,7 +466,7 @@ impl<T: Num> Rect<T> {
 
     /// Set position centered on a [Point].
     #[inline]
-    pub fn center_on<P: Into<Point<T, 2>>>(&mut self, p: P) {
+    pub fn center_on<P: Into<Point<T>>>(&mut self, p: P) {
         let p = p.into();
         let two = T::one() + T::one();
         self.set_x(p.x() - self.width() / two);
@@ -476,9 +476,9 @@ impl<T: Num> Rect<T> {
     /// Returns the bounding box for a given rectangle rotated about a `center` by a given
     /// `angle`. Passing `None` for `center` rotates about the top-left point of the rectangle.
     #[inline]
-    pub fn rotated(&self, angle: Scalar, center: Option<Point<T, 2>>) -> Self
+    pub fn rotated(&self, angle: f64, center: Option<Point<T>>) -> Self
     where
-        T: Ord + Bounded + AsPrimitive<Scalar> + NumCast,
+        T: Ord + Bounded + AsPrimitive<f64> + NumCast,
     {
         if angle == 0.0 {
             return *self;
@@ -486,10 +486,10 @@ impl<T: Num> Rect<T> {
 
         let sin_cos = angle.sin_cos();
         // Determine rotated bounding box
-        let [cx, cy]: [Scalar; 2] = center.unwrap_or_else(|| self.center()).as_().as_array();
+        let [cx, cy]: [f64; 2] = center.unwrap_or_else(|| self.center()).as_().as_array();
         let (sin, cos) = sin_cos;
         let transformed_points = self.points().map(|p| {
-            let [x, y]: [Scalar; 2] = p.as_().as_array();
+            let [x, y]: [f64; 2] = p.as_().as_array();
             point![
                 NumCast::from(((x - cx).mul_add(cos, cx) - (y - cy) * sin).round())
                     .expect("valid number cast"),
@@ -536,14 +536,14 @@ impl<T: Num, const N: usize> Contains<T, N> for Rect<T> {
     }
 }
 
-impl<T: Float> Intersects<T, 2> for Rect<T> {
+impl<T: Float> Intersects<T> for Rect<T> {
     type Shape = Rect<T>;
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
-    fn intersects_line<L>(&self, line: L) -> Option<(Point<T, 2>, T)>
+    fn intersects_line<L>(&self, line: L) -> Option<(Point<T>, T)>
     where
-        L: Into<Line<T, 2>>,
+        L: Into<Line<T>>,
     {
         let line = line.into();
         let left = line.intersects_line([self.top_left(), self.bottom_left()]);
@@ -602,16 +602,16 @@ impl<T: Copy> From<&[T; 3]> for Rect<T> {
     }
 }
 
-impl Add<PointI2> for Rect {
+impl Add<Point<i32>> for Rect {
     type Output = Self;
-    fn add(self, p: PointI2) -> Self::Output {
+    fn add(self, p: Point<i32>) -> Self::Output {
         self.offset(p)
     }
 }
 
-impl Sub<PointI2> for Rect {
+impl Sub<Point<i32>> for Rect {
     type Output = Self;
-    fn sub(self, p: PointI2) -> Self::Output {
+    fn sub(self, p: Point<i32>) -> Self::Output {
         self.offset(-p)
     }
 }
