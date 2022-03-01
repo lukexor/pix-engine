@@ -186,7 +186,7 @@ impl PixState {
         let (vw, vh) = s.text_size(&text)?;
         let center = drag.center() - point![vw, vh] / 2;
         s.set_cursor_pos(center);
-        s.no_stroke();
+        s.stroke(None);
         s.fill(fg);
         s.text(&text)?;
 
@@ -362,7 +362,7 @@ impl PixState {
         s.rect(slider)?;
 
         // Scroll thumb
-        s.no_stroke();
+        s.stroke(None);
         s.fill(fg.blended(bg, 0.60));
         let slider_w = slider.width() as f64;
         let vmin: f64 = NumCast::from(min).expect("valid number cast");
@@ -389,7 +389,7 @@ impl PixState {
         let (vw, vh) = s.text_size(&text)?;
         let center = slider.center() - point![vw, vh] / 2;
         s.set_cursor_pos(center);
-        s.no_stroke();
+        s.stroke(None);
         s.fill(fg);
         s.text(&text)?;
 

@@ -74,7 +74,7 @@ impl PixState {
             s.background(colors.background);
 
             s.set_cursor_pos(s.cursor_pos() - scroll);
-            s.no_stroke();
+            s.stroke(None);
             s.fill(fg);
             f(s)?;
             max_cursor_pos = s.cursor_pos() + scroll;
@@ -87,7 +87,7 @@ impl PixState {
             s.rect([0, bottom, scroll_width, fpad.y()])?; // Bottom
 
             s.stroke(stroke);
-            s.no_fill();
+            s.fill(None);
             s.rect([0, 0, scroll_width, scroll_height])?;
             Ok(())
         })?;
@@ -237,7 +237,7 @@ impl PixState {
         if active || focused {
             s.stroke(stroke);
         } else {
-            s.no_stroke();
+            s.stroke(None);
         }
         s.fill(colors.on_secondary);
         s.rect(rect)?;

@@ -236,7 +236,7 @@ impl Asteroids {
 
         // Draw bullets
         s.fill(Color::WHITE);
-        s.no_stroke();
+        s.stroke(None);
         for b in self.bullets.iter() {
             s.circle(Ellipse::from(b))?;
         }
@@ -263,7 +263,7 @@ impl Asteroids {
         let x = self.width as i32 / 2 - 8;
         let y = self.height as i32 / 2 - 100;
         s.fill(Color::WHITE);
-        s.no_stroke();
+        s.stroke(None);
         s.font_size(32)?;
         s.rect_mode(RectMode::Center);
         s.set_cursor_pos([x, y]);
@@ -278,7 +278,7 @@ impl Asteroids {
         // Draw Level, Lives, & Score
         s.font_size(16)?;
         s.fill(Color::WHITE);
-        s.no_stroke();
+        s.stroke(None);
         s.text(format!("LEVEL: {}  SCORE: {}", self.level, self.score))?;
 
         s.fill(Color::BLACK);
@@ -326,11 +326,8 @@ impl AppState for Asteroids {
     fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
         match event.key {
             Key::Escape => {
-                if s.running() {
-                    s.no_run()
-                } else {
-                    s.run()
-                }
+                let running = s.running();
+                s.run(!running);
             }
             Key::R => self.reset(),
             Key::Space if self.gameover => self.reset(),

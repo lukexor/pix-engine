@@ -93,19 +93,19 @@ impl PixState {
         // Marker outline
         s.rect_mode(RectMode::Corner);
         let [_, bg, fg] = s.widget_colors(id, ColorType::Background);
-        s.disable();
-        s.no_stroke();
+        s.disable(true);
+        s.stroke(None);
         s.fill(bg);
         s.square(hover)?;
 
         // Marker
         s.rect_mode(RectMode::Center);
         s.set_cursor_pos([hover.center().x(), hover.center().y() - 3]);
-        s.no_stroke();
+        s.stroke(None);
         s.fill(fg);
         s.text(marker)?;
         if !disabled {
-            s.no_disable();
+            s.disable(false);
         }
 
         // Tooltip
@@ -122,10 +122,10 @@ impl PixState {
                     s.background(bg);
 
                     s.stroke(stroke);
-                    s.no_fill();
+                    s.fill(None);
                     s.rect([0, 0, text_width - 1, text_height - 1])?;
 
-                    s.no_stroke();
+                    s.stroke(None);
                     s.fill(fg);
                     s.text(text)?;
                     Ok(())
@@ -193,10 +193,10 @@ impl PixState {
                 s.background(bg);
 
                 s.stroke(stroke);
-                s.no_fill();
+                s.fill(None);
                 s.rect([0, 0, text_width - 1, text_height - 1])?;
 
-                s.no_stroke();
+                s.stroke(None);
                 s.fill(fg);
                 s.text(text)?;
                 Ok(())

@@ -243,7 +243,7 @@ impl RayScene {
         self.calc_visibility_polygons(mouse);
 
         s.fill(Color::WHITE);
-        s.no_stroke();
+        s.stroke(None);
         if !self.polygons.is_empty() {
             for i in 0..self.polygons.len() - 1 {
                 let p1 = self.polygons[i].1;
@@ -257,7 +257,7 @@ impl RayScene {
         }
 
         s.fill(Color::BLACK);
-        s.no_stroke();
+        s.stroke(None);
         s.circle([mouse.x(), mouse.y(), 2])?;
         Ok(())
     }
@@ -267,7 +267,7 @@ impl AppState for RayScene {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         s.background(Color::BLACK);
         s.scale(SCALE as f32, SCALE as f32)?;
-        s.no_cursor();
+        s.cursor(None)?;
 
         let w = self.xcells * BLOCK_SIZE;
         let h = self.ycells * BLOCK_SIZE;
@@ -309,11 +309,11 @@ impl AppState for RayScene {
             } else {
                 (mouse.y() - 254, 511)
             };
-            s.clip([cx, cy, cw, ch])?;
+            s.clip(rect![cx, cy, cw, ch])?;
 
             self.draw_visibility_polygons(s)?;
         } else {
-            s.no_clip()?;
+            s.clip(None)?;
         }
 
         s.fill(Color::BLUE);

@@ -172,7 +172,7 @@ impl AppState for Matrix {
         s.background(BG_COLOR);
         s.set_window_dimensions(s.display_dimensions()?)?;
         self.init(s.dimensions()?);
-        s.no_cursor();
+        s.cursor(None)?;
         s.font_style(FontStyle::BOLD);
         s.fullscreen(true)?;
         Ok(())
@@ -200,19 +200,12 @@ impl AppState for Matrix {
 
     fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
         match event.key {
-            Key::Escape => {
-                s.quit();
-            }
+            Key::Escape => s.quit(),
             Key::Space => {
-                if s.running() {
-                    s.no_run();
-                } else {
-                    s.run();
-                }
+                let running = s.running();
+                s.run(!running);
             }
-            Key::Return => {
-                s.toggle_fullscreen()?;
-            }
+            Key::Return => s.toggle_fullscreen()?,
             _ => (),
         }
         Ok(false)

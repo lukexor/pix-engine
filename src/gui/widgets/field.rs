@@ -156,18 +156,18 @@ impl PixState {
             x -= width - clip.width();
         }
 
-        s.no_wrap();
+        s.wrap(None);
         s.set_cursor_pos([x, y]);
         s.clip(clip)?;
-        s.no_stroke();
+        s.stroke(None);
         s.fill(fg);
         if value.is_empty() {
             // FIXME: push and pop disabled state instead
             s.ui.push_cursor();
-            s.disable();
+            s.disable(true);
             s.text(&hint)?;
             if !disabled {
-                s.no_disable();
+                s.disable(false);
             }
             s.ui.pop_cursor();
             if focused {
@@ -179,7 +179,7 @@ impl PixState {
             s.text(&value)?;
         }
 
-        s.no_clip()?;
+        s.clip(None)?;
         s.ui.pop_cursor();
         s.pop();
 
@@ -322,15 +322,15 @@ impl PixState {
 
         s.set_cursor_pos(text_pos);
         s.clip(clip)?;
-        s.no_stroke();
+        s.stroke(None);
         s.fill(fg);
         let (_, text_height) = if value.is_empty() {
             // FIXME: push and pop disabled state instead
             s.ui.push_cursor();
-            s.disable();
+            s.disable(true);
             let size = s.text(&hint)?;
             if !disabled {
-                s.no_disable();
+                s.disable(false);
             }
             s.ui.pop_cursor();
             if focused {
@@ -377,7 +377,7 @@ impl PixState {
             s.ui.set_scroll(id, scroll);
         }
 
-        s.no_clip()?;
+        s.clip(None)?;
         s.ui.pop_cursor();
         s.pop();
 

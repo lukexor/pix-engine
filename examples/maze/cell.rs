@@ -65,9 +65,9 @@ impl Cell {
     pub fn draw<C: Into<Color>>(&self, s: &mut PixState, color: C) -> PixResult<()> {
         let color = color.into();
         s.fill(color);
-        s.no_stroke();
+        s.stroke(None);
         s.rect(self.rect)?;
-        s.no_fill();
+        s.fill(None);
         s.stroke(Color::WHITE);
         let top_left = self.rect.top_left();
         let top_right = self.rect.top_right();

@@ -127,7 +127,7 @@ impl MazeApp {
         let h = HEIGHT as i32;
         s.set_cursor_pos([10, h - 45]);
         s.fill(Color::WHITE);
-        s.no_stroke();
+        s.stroke(None);
         if s.button("Create")? {
             self.start_create_maze();
         }
@@ -180,7 +180,7 @@ impl AppState for MazeApp {
         let frame_rate = s.target_frame_rate().unwrap_or(60);
         match event.key {
             Key::Up if frame_rate >= 60 => {
-                s.clear_frame_rate();
+                s.frame_rate(None);
             }
             Key::Up if frame_rate < 60 => {
                 s.frame_rate(frame_rate + 10);

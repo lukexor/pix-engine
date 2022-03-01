@@ -10,7 +10,7 @@
 //!
 //! # Example
 //!
-//! ```rust no_run
+//! ```rust run(false)
 //! use pix_engine::prelude::*;
 //!
 //! struct MyApp;

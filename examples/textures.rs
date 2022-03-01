@@ -27,7 +27,7 @@ impl AppState for Textures {
 
                 let color = Color::random();
                 s.fill(color);
-                s.no_stroke();
+                s.stroke(None);
                 s.rect([10, 10, w as i32 - 20, h as i32 - 20])?;
 
                 s.fill(color.inverted());

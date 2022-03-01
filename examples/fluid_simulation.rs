@@ -294,9 +294,9 @@ impl AppState for App {
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         s.background(Color::BLACK);
         s.rect_mode(RectMode::Center);
-        s.no_stroke();
+        s.stroke(None);
         s.cursor(Cursor::hand())?;
-        s.clip([0, 0, WIDTH as i32, HEIGHT as i32 - 10])?;
+        s.clip(rect![0, 0, WIDTH as i32, HEIGHT as i32 - 10])?;
 
         for i in 0..COUNT {
             self.xs[i] = (i * SPACING) as f64;

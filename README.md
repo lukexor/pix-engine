@@ -192,9 +192,9 @@ impl AppState for MyApp {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         // Set fill color to black if mouse is pressed, otherwise wite.
         if s.mouse_pressed() {
-            s.fill(0);
+            s.fill(color!(0));
         } else {
-            s.fill(255);
+            s.fill(color!(255));
         }
 
         // Draw a circle with fill color at the mouse position with a radius of

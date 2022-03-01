@@ -17,26 +17,21 @@
 //!
 //! - [`PixState::background`]: Sets the [Color] used by [`PixState::clear`] to clear the canvas.
 //! - [`PixState::fill`]: Sets the [Color] used to fill shapes.
-//! - [`PixState::no_fill`]: Clears the [Color] used to fill shapes.
 //! - [`PixState::stroke`]: Sets the [Color] used to stroke shapes and text.
-//! - [`PixState::no_stroke`]: Clears the [Color] used to stroke shapes and text.
 //! - [`PixState::stroke_weight`]: Sets the stroke line thickness for lines and text.
+//! - [`PixState::text_shadow`]: Sets the shadow distance for drawing text.
 //! - [`PixState::smooth`]: Enables the anti-alias smoothing option for drawing shapes.
-//! - [`PixState::no_smooth`]: Disables the anti-alias smoothing option for drawing shapes.
 //! - [`PixState::bezier_detail`]: Set the resolution at which Bezier curves are dispalyed.
 //! - [`PixState::wrap`]: Sets the wrap width for rendering text.
-//! - [`PixState::no_wrap`]: Clears the wrap width for rendering text.
 //! - [`PixState::clip`]: Sets a clip rectangle for rendering.
-//! - [`PixState::no_clip`]: Clears the clip rectangle for rendering.
 //! - [`PixState::fullscreen`]: Sets fullscreen mode to enabled or disabled.
 //! - [`PixState::toggle_fullscreen`]: Toggles fullscreen.
 //! - [`PixState::vsync`]: Sets vertical sync mode to enabled or disabled.
 //! - [`PixState::toggle_vsync`]: Toggles vertical sync.
-//! - [`PixState::cursor`]: Set a custom window cursor.
-//! - [`PixState::no_cursor`]: Hide the window cursor.
+//! - [`PixState::cursor`]: Set a custom window cursor or hide the cursor.
+//! - [`PixState::disable`]: Disable UI elements from being interactive.
 //! - [`PixState::running`]: Whether the render loop is running (calling [`AppState::on_update`]).
-//! - [`PixState::run`]: Enable the render loop.
-//! - [`PixState::no_run`]: Disable the render loop.
+//! - [`PixState::run`]: Enable or disable the render loop.
 //! - [`PixState::show_frame_rate`]: Display the average frame rate in the title bar.
 //! - [`PixState::target_frame_rate`]: Return the current targeted frame rate.
 //! - [`PixState::frame_rate`]: Set a targeted frame rate.
@@ -139,11 +134,16 @@ bitflags! {
 /// Several settings used to change various functionality of the engine.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'static")))]
 pub(crate) struct Settings {
     pub(crate) background: Color,
     pub(crate) fill: Option<Color>,
     pub(crate) stroke: Option<Color>,
     pub(crate) stroke_weight: u16,
+    pub(crate) font_size: u32,
+    pub(crate) font_style: FontStyle,
+    pub(crate) font_family: Font,
+    pub(crate) text_shadow: Option<u16>,
     pub(crate) smooth: bool,
     pub(crate) bezier_detail: i32,
     pub(crate) wrap_width: Option<u32>,
@@ -161,6 +161,7 @@ pub(crate) struct Settings {
     pub(crate) angle_mode: AngleMode,
     pub(crate) blend_mode: BlendMode,
     pub(crate) cursor: Option<Cursor>,
+    pub(crate) disabled: bool,
 }
 
 impl Default for Settings {
@@ -170,6 +171,10 @@ impl Default for Settings {
             fill: Some(Color::WHITE),
             stroke: None,
             stroke_weight: 1,
+            font_size: 14,
+            font_style: FontStyle::NORMAL,
+            font_family: Font::default(),
+            text_shadow: None,
             smooth: true,
             bezier_detail: 20,
             wrap_width: None,
@@ -187,6 +192,7 @@ impl Default for Settings {
             angle_mode: AngleMode::Radians,
             blend_mode: BlendMode::None,
             cursor: Some(Cursor::default()),
+            disabled: false,
         }
     }
 }
@@ -216,7 +222,8 @@ impl PixState {
         let _result = self.clear(); // If this errors, something is very wrong
     }
 
-    /// Sets the [Color] value used to fill shapes drawn on the canvas.
+    /// Sets the [Color] value used to fill shapes drawn on the canvas. `None` disables fill
+    /// entirely.
     ///
     /// # Example
     ///
@@ -227,6 +234,8 @@ impl PixState {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.fill(Color::ALICE_BLUE);
     ///     s.rect([0, 0, 100, 100])?;
+    ///     s.fill((None));
+    ///     s.rect([25, 25, 75, 75])?;
     ///     Ok(())
     /// }
     /// # }
@@ -234,34 +243,13 @@ impl PixState {
     #[inline]
     pub fn fill<C>(&mut self, color: C)
     where
-        C: Into<Color>,
+        C: Into<Option<Color>>,
     {
-        self.settings.fill = Some(color.into());
+        self.settings.fill = color.into();
     }
 
-    /// Disables filling shapes drawn on the canvas.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # struct App;
-    /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.stroke(Color::BLACK);
-    ///     s.no_fill();
-    ///     // Draws a black outlined rectangle, with the background showing through
-    ///     s.rect([0, 0, 100, 100])?;
-    ///     Ok(())
-    /// }
-    /// # }
-    /// ```
-    #[inline]
-    pub fn no_fill(&mut self) {
-        self.settings.fill = None;
-    }
-
-    /// Sets the [Color] value used to outline shapes drawn on the canvas.
+    /// Sets the [Color] value used to outline shapes drawn on the canvas. `None` disables stroke
+    /// entirely.
     ///
     /// # Example
     ///
@@ -272,6 +260,8 @@ impl PixState {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.stroke(Color::BLACK);
     ///     s.rect([0, 0, 100, 100])?;
+    ///     s.stroke((None));
+    ///     s.rect([25, 25, 75, 75])?;
     ///     Ok(())
     /// }
     /// # }
@@ -279,31 +269,9 @@ impl PixState {
     #[inline]
     pub fn stroke<C>(&mut self, color: C)
     where
-        C: Into<Color>,
+        C: Into<Option<Color>>,
     {
-        self.settings.stroke = Some(color.into());
-    }
-
-    /// Disables outlining shapes drawn on the canvas.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # struct App;
-    /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.fill(Color::BLUE);
-    ///     s.no_stroke();
-    ///     // Shows a solid blue rectangle with no outline
-    ///     s.rect([0, 0, 100, 100])?;
-    ///     Ok(())
-    /// }
-    /// # }
-    /// ```
-    #[inline]
-    pub fn no_stroke(&mut self) {
-        self.settings.stroke = None;
+        self.settings.stroke = color.into();
     }
 
     /// Sets the width used to draw lines on the canvas.
@@ -328,8 +296,12 @@ impl PixState {
         self.settings.stroke_weight = weight;
     }
 
-    /// Enables the anti-alias option used for drawing shapes on the canvas. `smooth` is enabled
-    /// by default. [`no_smooth`][PixState::no_smooth] can be used to disable anti-aliasing.
+    /// Set the font size for drawing to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to load the given font size from the currently loaded font data, then
+    /// an error is returned.
     ///
     /// # Example
     ///
@@ -338,19 +310,23 @@ impl PixState {
     /// # struct App;
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     // Draws a smooth diagonal line
-    ///     s.line(line_![0, 0, 100, 100])?;
+    ///     s.font_size(22);
+    ///     s.text("Some big text")?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
     #[inline]
-    pub fn smooth(&mut self) {
-        self.settings.smooth = true;
+    pub fn font_size(&mut self, size: u32) -> PixResult<()> {
+        self.settings.font_size = size;
+        self.renderer.font_size(size)
     }
 
-    /// Disables the anti-alias option used for drawing shapes on the canvas. `smooth` is enabled
-    /// by default.
+    /// Set the font style for drawing to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to load the current font, then an error is returned.
     ///
     /// # Example
     ///
@@ -359,16 +335,93 @@ impl PixState {
     /// # struct App;
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     // Draws a non-smooth diagonal line
-    ///     s.no_smooth();
+    ///     s.font_style(FontStyle::BOLD);
+    ///     s.text("Some bold text")?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    pub fn font_style(&mut self, style: FontStyle) {
+        self.settings.font_style = style;
+        self.renderer.font_style(style);
+    }
+
+    /// Set the font family for drawing to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to load the given font size from the currently loaded font data, then
+    /// an error is returned.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.font_family(Font::NOTO)?;
+    ///     s.text("Some NOTO family text")?;
+    ///     s.font_family(Font::from_file("Custom font", "./custom_font.ttf"))?;
+    ///     s.text("Some custom family text")?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    pub fn font_family(&mut self, font: Font) -> PixResult<()> {
+        self.settings.font_family = font;
+        self.renderer.font_family(&self.settings.font_family)
+    }
+
+    /// Sets the text shadow distance used to draw text on the canvas.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     s.text_shadow(2);
+    ///     // Draws a 2-pixel offset shhadow
+    ///     s.text("Shadowed")?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    pub fn text_shadow<D>(&mut self, distance: D)
+    where
+        D: Into<Option<u16>>,
+    {
+        self.settings.text_shadow = distance.into();
+    }
+
+    /// Enable or disable the anti-alias option used for drawing shapes on the canvas. `smooth` is
+    /// enabled by default.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     // Draws a anti-aliased diagonal line
+    ///     s.smooth(true);
+    ///     s.line(line_![0, 0, 100, 100])?;
+    ///     // Disables anti-aliasing
+    ///     s.smooth(false);
     ///     s.line(line_![0, 0, 100, 100])?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
     #[inline]
-    pub fn no_smooth(&mut self) {
-        self.settings.smooth = false;
+    pub fn smooth(&mut self, val: bool) {
+        self.settings.smooth = val;
     }
 
     /// Set the resolution at which [`PixState::bezier`] curves are displayed. The default is `20`.
@@ -392,7 +445,7 @@ impl PixState {
         self.settings.bezier_detail = detail;
     }
 
-    /// Sets the wrap width used to draw text on the canvas.
+    /// Sets the wrap width used to draw text on the canvas. `None` disables text wrap.
     ///
     /// # Example
     ///
@@ -401,7 +454,6 @@ impl PixState {
     /// # struct App;
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.wrap(100);
     ///     // Renders as (depending on font width):
     ///     //
     ///     // Lorem ipsum
@@ -409,40 +461,26 @@ impl PixState {
     ///     // consetetur
     ///     // sadipscing
     ///     // elitr, sed diam
+    ///     s.wrap(100);
+    ///     s.text("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam")?;
+    ///
+    ///     // Disable wrapping
+    ///     s.wrap((None));
     ///     s.text("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam")?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
     #[inline]
-    pub fn wrap(&mut self, width: u32) {
-        self.settings.wrap_width = Some(width);
+    pub fn wrap<W>(&mut self, width: W)
+    where
+        W: Into<Option<u32>>,
+    {
+        self.settings.wrap_width = width.into();
     }
 
-    /// Disable wrapping when drawing text on the canvas.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # struct App;
-    /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.no_wrap();
-    ///     // Renders all on one line, which may extend beyond the window width
-    ///     s.text("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam")?;
-    ///     // Still honors newlines and so renders as two lines
-    ///     s.text("Lorem ipsum dolor sit amet,\nconsetetur sadipscing elitr, sed diam")?;
-    ///     Ok(())
-    /// }
-    /// # }
-    /// ```
-    #[inline]
-    pub fn no_wrap(&mut self) {
-        self.settings.wrap_width = None;
-    }
-
-    /// Sets the clip [Rect] used by the renderer to draw to the current canvas.
+    /// Sets the clip [Rect] used by the renderer to draw to the current canvas. `None` disables
+    /// clipping.
     ///
     /// # Errors
     ///
@@ -455,7 +493,7 @@ impl PixState {
     /// # struct App;
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.clip([0, 0, 100, 100])?;
+    ///     s.clip(rect![0, 0, 100, 100])?;
     ///     // Renders a quarter pie-slice with radius 100
     ///     s.circle([100, 100, 200, 200])?;
     ///     Ok(())
@@ -465,39 +503,10 @@ impl PixState {
     #[inline]
     pub fn clip<R>(&mut self, rect: R) -> PixResult<()>
     where
-        R: Into<Rect<i32>>,
+        R: Into<Option<Rect<i32>>>,
     {
-        self.settings.clip = Some(rect.into());
+        self.settings.clip = rect.into();
         self.renderer.clip(self.settings.clip)
-    }
-
-    /// Clears the clip [Rect] used by the renderer to draw to the current canvas.
-    ///
-    /// # Errors
-    ///
-    /// If the current render target is closed or dropped, then an error is returned.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # struct App;
-    /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.clip([0, 0, 100, 100])?;
-    ///     // Renders a quarter pie-slice with radius 100
-    ///     s.circle([100, 100, 200, 200])?;
-    ///     s.no_clip()?;
-    ///     // Renders a circle with radius 100 in the center of the pie-slice
-    ///     s.circle([100, 100, 100, 100])?;
-    ///     Ok(())
-    /// }
-    /// # }
-    /// ```
-    #[inline]
-    pub fn no_clip(&mut self) -> PixResult<()> {
-        self.settings.clip = None;
-        self.renderer.clip(None)
     }
 
     /// Set the application to fullscreen or not.
@@ -618,11 +627,11 @@ impl PixState {
         self.renderer.set_vsync(vsync_enabled)
     }
 
-    /// Set the mouse cursor to a predefined symbol or image.
+    /// Set the mouse cursor to a predefined symbol or image. `None` hides the cursor.
     ///
     /// # Errors
     ///
-    /// If the rendere fails to set the cursor or load it from an image file, then an error is
+    /// If the renderer fails to set the cursor or load it from an image file, then an error is
     /// returned.
     ///
     /// # Example
@@ -643,33 +652,35 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn cursor(&mut self, cursor: Cursor) -> PixResult<()> {
-        self.settings.cursor = Some(cursor);
+    pub fn cursor<C>(&mut self, cursor: C) -> PixResult<()>
+    where
+        C: Into<Option<Cursor>>,
+    {
+        self.settings.cursor = cursor.into();
         self.renderer.cursor(self.settings.cursor.as_ref())
     }
 
-    /// Hide the mouse cursor.
+    /// Disables any UI elements drawn after this is called, preventing them from being interacted
+    /// with.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// # struct App;
+    /// # struct App { checkbox: bool };
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.no_cursor();
-    ///     if s.button("Hover me")? {
-    ///         println!("Interactable elements show a cursor temporarily");
+    ///     if s.button("Disable UI")? {
+    ///         s.disable(true);
     ///     }
+    ///     s.checkbox("Disabled checkbox", &mut self.checkbox)?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    #[inline]
-    pub fn no_cursor(&mut self) {
-        self.settings.cursor = None;
-        // SAFETY: Setting to NONE to hide cursor can't error.
-        let _cant_fail = self.renderer.cursor(None);
+    pub fn disable(&mut self, disabled: bool) {
+        self.settings.disabled = disabled;
+        self.ui.disabled = disabled;
     }
 
     /// Whether the render loop is running or not.
@@ -683,12 +694,9 @@ impl PixState {
     /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
     /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
     ///     if let Key::Return = event.key {
-    ///         // Pause rendering
-    ///         if s.running() {
-    ///             s.no_run();
-    ///         } else {
-    ///             s.run();
-    ///         }
+    ///         // Toggle pausing rendering
+    ///         let running = s.running();
+    ///         s.run(!running);
     ///         return Ok(true);
     ///     }
     ///     Ok(false)
@@ -701,7 +709,7 @@ impl PixState {
         self.settings.running
     }
 
-    /// Unpause the render loop.
+    /// Pause or resume the render loop called by [AppState::on_update].
     ///
     /// # Example
     ///
@@ -712,12 +720,9 @@ impl PixState {
     /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
     /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
     ///     if let Key::Return = event.key {
-    ///         // Pause rendering
-    ///         if s.running() {
-    ///             s.no_run();
-    ///         } else {
-    ///             s.run();
-    ///         }
+    ///         // Toggle rendering
+    ///         let running = s.running();
+    ///         s.run(running);
     ///         return Ok(true);
     ///     }
     ///     Ok(false)
@@ -725,36 +730,8 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn run(&mut self) {
-        self.settings.running = true;
-    }
-
-    /// Pause the render loop by no longer calling [`AppState::on_update`] every frame.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # struct App;
-    /// # impl AppState for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
-    ///     if let Key::Return = event.key {
-    ///         // Pause rendering
-    ///         if s.running() {
-    ///             s.no_run();
-    ///         } else {
-    ///             s.run();
-    ///         }
-    ///         return Ok(true);
-    ///     }
-    ///     Ok(false)
-    /// }
-    /// # }
-    /// ```
-    #[inline]
-    pub fn no_run(&mut self) {
-        self.settings.running = false;
+    pub fn run(&mut self, val: bool) {
+        self.settings.running = val;
     }
 
     /// Set whether to show the current frame rate per second in the title or not.
@@ -805,7 +782,8 @@ impl PixState {
         self.settings.target_frame_rate
     }
 
-    /// Set a target frame rate to render at, controls how often [`AppState::on_update`] is called.
+    /// Set a target frame rate to render at, controls how often [`AppState::on_update`] is
+    /// called. `None` clears the target frame rate.
     ///
     /// # Example
     ///
@@ -822,32 +800,11 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn frame_rate(&mut self, rate: usize) {
-        self.settings.target_frame_rate = Some(rate);
-    }
-
-    /// Remove target frame rate and call [`AppState::on_update`] as often as possible.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # struct App;
-    /// # impl AppState for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
-    ///     if let Key::Escape = event.key {
-    ///         // Resume rendering as many frames as possible per second
-    ///         s.clear_frame_rate();
-    ///         return Ok(true);
-    ///     }
-    ///     Ok(false)
-    /// }
-    /// # }
-    /// ```
-    #[inline]
-    pub fn clear_frame_rate(&mut self) {
-        self.settings.target_frame_rate = None;
+    pub fn frame_rate<R>(&mut self, rate: R)
+    where
+        R: Into<Option<usize>>,
+    {
+        self.settings.target_frame_rate = rate.into();
     }
 
     /// Set the rendering scale of the current canvas.
@@ -1064,8 +1021,7 @@ impl PixState {
     /// # }
     #[inline]
     pub fn push(&mut self) {
-        self.setting_stack
-            .push((self.settings.clone(), self.theme.clone()));
+        self.setting_stack.push(self.settings.clone());
     }
 
     /// Restores the previous draw settings and transforms, if present. If the settings stack is
@@ -1096,22 +1052,21 @@ impl PixState {
     /// # }
     #[inline]
     pub fn pop(&mut self) {
-        if let Some((settings, theme)) = self.setting_stack.pop() {
+        if let Some(settings) = self.setting_stack.pop() {
             self.settings = settings;
-            self.theme = theme;
+            self.ui.disabled = self.settings.disabled;
         }
         let s = &self.settings;
-        let t = &self.theme;
         // All of these settings should be valid since they were set prior to `pop()` being
         // called.
         self.renderer.clip(s.clip).expect("valid clip setting");
         // Excluding restoring cursor - as it's used for mouse hover.
         self.renderer
-            .font_size(t.font_size)
+            .font_size(s.font_size)
             .expect("valid font size");
-        self.renderer.font_style(t.styles.body);
+        self.renderer.font_style(s.font_style);
         self.renderer
-            .font_family(&t.fonts.body)
+            .font_family(&s.font_family)
             .expect("valid font family");
         self.renderer.blend_mode(s.blend_mode);
     }

@@ -21,9 +21,9 @@
 //!     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!         // Main render loop. Called as often as possible, or based on `target frame rate`.
 //!         if s.mouse_pressed() {
-//!             s.fill(0);
+//!             s.fill(color!(0));
 //!         } else {
-//!             s.fill(255);
+//!             s.fill(color!(255));
 //!         }
 //!         let m = s.mouse_pos();
 //!         s.circle([m.x(), m.y(), 80])?;
@@ -92,9 +92,9 @@ pub trait AppState {
     ///
     /// By default, this is called as often as possible but can be controlled by changing the
     /// [target frame rate]. It will continue to be executed until the application is terminated,
-    /// or [`PixState::no_run`] is called.
+    /// or [`PixState::run(false)`] is called.
     ///
-    /// After [`PixState::no_run`] is called, you can call [`PixState::redraw`] or
+    /// After [`PixState::run(false)`] is called, you can call [`PixState::redraw`] or
     /// [`PixState::run_times`] to control the execution.
     ///
     /// [target frame rate]: PixState::frame_rate
@@ -118,9 +118,9 @@ pub trait AppState {
     /// # impl AppState for App {
     /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     if s.mouse_pressed() {
-    ///         s.fill(0);
+    ///         s.fill(color!(0));
     ///     } else {
-    ///         s.fill(255);
+    ///         s.fill(color!(255));
     ///     }
     ///     let m = s.mouse_pos();
     ///     s.circle([m.x(), m.y(), 80])?;
@@ -511,7 +511,12 @@ pub trait AppState {
     /// }
     /// # }
     /// ```
-    fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse, pos: Point<i32>) -> PixResult<bool> {
+    fn on_mouse_pressed(
+        &mut self,
+        s: &mut PixState,
+        btn: Mouse,
+        pos: Point<i32>,
+    ) -> PixResult<bool> {
         Ok(false)
     }
 
@@ -546,7 +551,12 @@ pub trait AppState {
     /// }
     /// # }
     /// ```
-    fn on_mouse_released(&mut self, s: &mut PixState, btn: Mouse, pos: Point<i32>) -> PixResult<bool> {
+    fn on_mouse_released(
+        &mut self,
+        s: &mut PixState,
+        btn: Mouse,
+        pos: Point<i32>,
+    ) -> PixResult<bool> {
         Ok(false)
     }
 
@@ -581,7 +591,12 @@ pub trait AppState {
     /// }
     /// # }
     /// ```
-    fn on_mouse_clicked(&mut self, s: &mut PixState, btn: Mouse, pos: Point<i32>) -> PixResult<bool> {
+    fn on_mouse_clicked(
+        &mut self,
+        s: &mut PixState,
+        btn: Mouse,
+        pos: Point<i32>,
+    ) -> PixResult<bool> {
         Ok(false)
     }
 

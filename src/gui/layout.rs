@@ -215,7 +215,7 @@ impl PixState {
             if active || focused {
                 s.stroke(stroke);
             } else {
-                s.no_stroke();
+                s.stroke(None);
             }
             if hovered {
                 s.fill(fg.blended(colors.background, 0.04));
@@ -232,7 +232,7 @@ impl PixState {
             // Tab text
             s.rect_mode(RectMode::Center);
             s.set_cursor_pos(tab_rect.center());
-            s.no_stroke();
+            s.stroke(None);
             let is_active_tab = tab_label == selected.as_ref();
             if is_active_tab {
                 s.fill(colors.secondary_variant);
@@ -242,7 +242,7 @@ impl PixState {
                 s.fill(colors.secondary_variant.blended(bg, 0.60));
             }
             s.text(tab_label)?;
-            s.no_clip()?;
+            s.clip(None)?;
 
             s.ui.pop_cursor();
             s.pop();

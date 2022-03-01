@@ -172,7 +172,7 @@ impl ColorConsts {
 
 impl AppState for ColorConsts {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.no_stroke();
+        s.stroke(None);
         for (i, &color) in COLORS.iter().enumerate() {
             s.fill(color.0);
             s.square(self.cells[i])?;

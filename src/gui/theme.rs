@@ -20,7 +20,7 @@
 //! # }
 //! ```
 
-use crate::{prelude::*, renderer::Rendering};
+use crate::prelude::*;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 #[cfg(not(target_arch = "wasm32"))]
@@ -615,113 +615,6 @@ impl Theme {
 }
 
 impl PixState {
-    /// Set the font size for drawing to the current canvas.
-    ///
-    /// # Errors
-    ///
-    /// If the renderer fails to load the given font size from the currently loaded font data, then
-    /// an error is returned.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # struct App;
-    /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.font_size(22);
-    ///     s.text("Some big text")?;
-    ///     Ok(())
-    /// }
-    /// # }
-    /// ```
-    #[inline]
-    pub fn font_size(&mut self, size: u32) -> PixResult<()> {
-        self.theme.font_size = size;
-        self.renderer.font_size(self.theme.font_size)
-    }
-
-    /// Return the dimensions of given text for drawing to the current canvas.
-    ///
-    /// # Errors
-    ///
-    /// If the renderer fails to load the current font, then an error is returned.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # struct App;
-    /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     let text = "Some text";
-    ///     let (w, h) = s.size_of(text)?;
-    ///     // Draw a box behind the text
-    ///     s.rect(rect![s.cursor_pos() - 10, w as i32 + 20, h as i32 + 20]);
-    ///     s.text(text)?;
-    ///     Ok(())
-    /// }
-    /// # }
-    /// ```
-    #[inline]
-    pub fn size_of<S: AsRef<str>>(&self, text: S) -> PixResult<(u32, u32)> {
-        self.renderer
-            .size_of(text.as_ref(), self.settings.wrap_width)
-    }
-
-    /// Set the font style for drawing to the current canvas.
-    ///
-    /// # Errors
-    ///
-    /// If the renderer fails to load the current font, then an error is returned.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # struct App;
-    /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.font_style(FontStyle::BOLD);
-    ///     s.text("Some bold text")?;
-    ///     Ok(())
-    /// }
-    /// # }
-    /// ```
-    #[inline]
-    pub fn font_style(&mut self, style: FontStyle) {
-        self.theme.styles.body = style;
-        self.renderer.font_style(style);
-    }
-
-    /// Set the font family for drawing to the current canvas.
-    ///
-    /// # Errors
-    ///
-    /// If the renderer fails to load the given font size from the currently loaded font data, then
-    /// an error is returned.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # struct App;
-    /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.font_family(Font::NOTO)?;
-    ///     s.text("Some NOTO family text")?;
-    ///     s.font_family(Font::from_file("Custom font", "./custom_font.ttf"))?;
-    ///     s.text("Some custom family text")?;
-    ///     Ok(())
-    /// }
-    /// # }
-    /// ```
-    #[inline]
-    pub fn font_family(&mut self, font: Font) -> PixResult<()> {
-        self.theme.fonts.body = font;
-        self.renderer.font_family(&self.theme.fonts.body)
-    }
-
     /// Returns the reference to the current theme.
     #[inline]
     pub const fn theme(&self) -> &Theme {

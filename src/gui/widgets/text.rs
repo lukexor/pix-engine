@@ -29,6 +29,34 @@
 use crate::{gui::Direction, ops::clamp_size, prelude::*, renderer::Rendering};
 
 impl PixState {
+    /// Return the dimensions of given text for drawing to the current canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the renderer fails to load the current font, then an error is returned.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// # struct App;
+    /// # impl AppState for App {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    ///     let text = "Some text";
+    ///     let (w, h) = s.size_of(text)?;
+    ///     // Draw a box behind the text
+    ///     s.rect(rect![s.cursor_pos() - 10, w as i32 + 20, h as i32 + 20]);
+    ///     s.text(text)?;
+    ///     Ok(())
+    /// }
+    /// # }
+    /// ```
+    #[inline]
+    pub fn size_of<S: AsRef<str>>(&self, text: S) -> PixResult<(u32, u32)> {
+        self.renderer
+            .size_of(text.as_ref(), self.settings.wrap_width)
+    }
+
     /// Draw body text to the current canvas.
     ///
     /// Returns the rendered `(width, height)` of the text, including any newlines or text
@@ -272,18 +300,18 @@ impl PixState {
         if active || focused {
             s.stroke(stroke);
         } else {
-            s.no_stroke();
+            s.stroke(None);
         }
         if hovered {
             s.frame_cursor(&Cursor::hand())?;
             s.fill(bg);
         } else {
-            s.no_fill();
+            s.fill(None);
         }
         s.rect(hover)?;
 
         // Text
-        s.no_stroke();
+        s.stroke(None);
         s.fill(fg);
         s.set_cursor_pos([hover.x() + fpad.x(), hover.y() + fpad.y()]);
         s.text_transformed(text, 0.0, None, None)?;
@@ -345,18 +373,18 @@ impl PixState {
         if active || focused {
             s.stroke(stroke);
         } else {
-            s.no_stroke();
+            s.stroke(None);
         }
         if hovered {
             s.frame_cursor(&Cursor::hand())?;
             s.fill(bg);
         } else {
-            s.no_fill();
+            s.fill(None);
         }
         s.rect(hover)?;
 
         // Arrow
-        s.no_stroke();
+        s.stroke(None);
         s.fill(fg);
         if expanded {
             s.arrow(hover.top_left() + fpad, Direction::Down, 1.0)?;
@@ -432,7 +460,7 @@ impl PixState {
         if active || focused {
             s.stroke(stroke);
         } else {
-            s.no_stroke();
+            s.stroke(None);
         }
         if hovered {
             s.frame_cursor(&Cursor::hand())?;
@@ -441,7 +469,7 @@ impl PixState {
         s.rect(hover)?;
 
         // Arrow
-        s.no_stroke();
+        s.stroke(None);
         s.fill(fg);
         if expanded {
             s.arrow(hover.top_left() + fpad, Direction::Down, 1.0)?;

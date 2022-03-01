@@ -43,15 +43,15 @@ impl AppState for Shapes {
         s.rounded_rect([150, 220, 150, 100], 16)?;
 
         s.stroke(Color::CORNFLOWER_BLUE);
-        s.no_fill();
+        s.fill(None);
         s.quad([[360, 30], [380, 120], [500, 160], [520, 40]])?;
 
-        s.no_stroke();
+        s.stroke(None);
         s.fill(Color::CORAL);
         s.polygon([[320, 230], [320, 320], [460, 360], [520, 240], [400, 300]])?;
 
         s.stroke(Color::CRIMSON);
-        s.no_fill();
+        s.fill(None);
         let delta = s.delta_time().as_secs_f64();
         self.rotation += delta;
         if self.scale_latch {

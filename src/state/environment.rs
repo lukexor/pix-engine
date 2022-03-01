@@ -194,7 +194,7 @@ impl PixState {
     /// # impl AppState for App {
     /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
     /// fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.no_run(); // Disable render loop
+    ///     s.run(false); // Disable render loop
     ///     Ok(())
     /// }
     /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
@@ -226,7 +226,7 @@ impl PixState {
     /// # impl AppState for App {
     /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
     /// fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.no_run(); // Disable render loop
+    ///     s.run(false); // Disable render loop
     ///     Ok(())
     /// }
     /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {

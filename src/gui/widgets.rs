@@ -98,10 +98,10 @@ impl PixState {
         s.rect_mode(RectMode::Center);
         s.clip(button)?;
         s.set_cursor_pos(button.center());
-        s.no_stroke();
+        s.stroke(None);
         s.fill(fg);
         s.text(label)?;
-        s.no_clip()?;
+        s.clip(None)?;
 
         s.ui.pop_cursor();
         s.pop();
@@ -163,12 +163,12 @@ impl PixState {
         let [stroke, bg, fg] = s.widget_colors(id, ColorType::Primary);
         if focused {
             s.stroke(stroke);
-            s.no_fill();
+            s.fill(None);
             s.rect(bounding_box)?;
         }
 
         // Button text
-        s.no_stroke();
+        s.stroke(None);
         if active {
             s.fill(fg.blended(bg, 0.04));
         } else {
@@ -327,7 +327,7 @@ impl PixState {
         };
         if is_selected {
             s.stroke(bg);
-            s.no_fill();
+            s.fill(None);
         } else {
             s.stroke(stroke);
             s.fill(bg);

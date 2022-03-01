@@ -444,15 +444,15 @@ impl UiState {
             // If element is focused when Tab pressed, clear it so the next element can capture focus.
             // If SHIFT was held, re-focus the last element rendered
             // Clear keys, so next element doesn't trigger tab logic
-            let no_focus = self.focused == Some(ElementId::NONE);
-            if no_focus || focused {
+            let none_focused = self.focused == Some(ElementId::NONE);
+            if none_focused || focused {
                 if self.keys.mod_down(KeyMod::SHIFT) {
                     self.focused = self.last_focusable;
                     self.clear_entered();
                 } else if focused {
                     self.focused = None;
                     self.clear_entered();
-                } else if no_focus {
+                } else if none_focused {
                     self.focused = Some(id);
                     self.clear_entered();
                 }
@@ -621,49 +621,6 @@ impl PixState {
         self.ui.id_stack.pop();
     }
 
-    /// Disables any UI elements drawn after this is called.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # struct App { checkbox: bool };
-    /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     if s.button("Disable UI")? {
-    ///         s.disable();
-    ///     }
-    ///     s.checkbox("Disabled checkbox", &mut self.checkbox)?;
-    ///     Ok(())
-    /// }
-    /// # }
-    /// ```
-    pub fn disable(&mut self) {
-        self.ui.disabled = true;
-    }
-
-    /// Enables any UI elements drawn after this is called.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # struct App { checkbox: bool };
-    /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.disable();
-    ///     if s.button("Enable UI")? {
-    ///         s.no_disable();
-    ///     }
-    ///     s.checkbox("Enabled checkbox", &mut self.checkbox)?;
-    ///     Ok(())
-    /// }
-    /// # }
-    /// ```
-    pub fn no_disable(&mut self) {
-        self.ui.disabled = false;
-    }
-
     /// Returns the current UI rendering position.
     ///
     /// # Example
@@ -820,7 +777,7 @@ impl PixState {
 
         if cfg!(feature = "debug_ui") {
             self.push();
-            self.no_fill();
+            self.fill(None);
             self.stroke(Color::RED);
             let _ = self.rect(rect![pos, size.x(), size.y()]);
             self.fill(Color::BLUE);

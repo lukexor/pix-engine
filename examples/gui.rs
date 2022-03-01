@@ -158,7 +158,7 @@ impl Gui {
         s.fill(Color::LIGHT_BLUE);
         s.wrap(100);
         s.text("Wrapped to 100 pixels")?;
-        s.no_wrap();
+        s.wrap(None);
 
         s.fill(Color::WHITE);
         s.font_style(FontStyle::BOLD);
@@ -390,7 +390,7 @@ impl AppState for Gui {
         s.clear()?;
 
         if self.disabled {
-            s.disable();
+            s.disable(true);
         }
 
         s.heading("Widgets")?;
@@ -427,10 +427,10 @@ impl AppState for Gui {
 
         s.separator()?;
 
-        s.no_disable();
+        s.disable(false);
         s.checkbox("Disable Elements", &mut self.disabled)?;
         if self.disabled {
-            s.disable();
+            s.disable(true);
         }
         s.text(format!("Mouse: {}", s.mouse_pos()))?;
 

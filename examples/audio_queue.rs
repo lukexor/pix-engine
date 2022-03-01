@@ -164,7 +164,7 @@ impl AppState for QueueDemo {
                 py = y;
                 s.point([10 + x, 400 + y])?;
             }
-            s.no_stroke();
+            s.stroke(None);
         }
 
         Ok(())

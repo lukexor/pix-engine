@@ -63,7 +63,7 @@ pub struct PixState {
     pub(crate) env: Environment,
     pub(crate) ui: UiState,
     pub(crate) settings: Settings,
-    pub(crate) setting_stack: Vec<(Settings, Theme)>,
+    pub(crate) setting_stack: Vec<Settings>,
     pub(crate) theme: Theme,
 }
 
@@ -387,23 +387,25 @@ impl PixState {
     pub(crate) fn new(settings: RendererSettings, theme: Theme) -> PixResult<Self> {
         let show_frame_rate = settings.show_frame_rate;
         let target_frame_rate = settings.target_frame_rate;
-        let mut renderer = Renderer::new(settings)?;
-        renderer.font_size(theme.font_size)?;
-        renderer.font_family(&theme.fonts.body)?;
-        Ok(Self {
+        let renderer = Renderer::new(settings)?;
+        // renderer.font_size(theme.font_size)?;
+        // renderer.font_family(&theme.fonts.body)?;
+        let mut state = Self {
             renderer,
             env: Environment::default(),
             ui: UiState::default(),
-            settings: Settings {
-                background: theme.colors.background,
-                fill: Some(theme.colors.on_background()),
-                show_frame_rate,
-                target_frame_rate,
-                ..Settings::default()
-            },
+            settings: Settings::default(),
             setting_stack: Vec::new(),
-            theme,
-        })
+            theme: theme.clone(),
+        };
+        state.background(theme.colors.background);
+        state.fill(theme.colors.on_background());
+        state.show_frame_rate(show_frame_rate);
+        state.frame_rate(target_frame_rate);
+        state.font_size(theme.font_size)?;
+        state.font_style(theme.styles.body);
+        state.font_family(theme.fonts.body)?;
+        Ok(state)
     }
 
     /// Handle state changes this frame prior to calling [`AppState::on_update`].

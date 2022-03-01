@@ -131,7 +131,7 @@ impl PixState {
         s.rect(arrow_box)?;
 
         if arrow_x + arrow_width - fpad.x() <= select_box.right() {
-            s.no_stroke();
+            s.stroke(None);
             s.fill(fg);
             s.clip(arrow_box)?;
             s.arrow(
@@ -151,13 +151,13 @@ impl PixState {
             select_box.height()
         ])?;
 
-        s.no_wrap();
+        s.wrap(None);
         s.set_cursor_pos(select_box.top_left() + fpad);
-        s.no_stroke();
+        s.stroke(None);
         s.fill(fg);
         s.text(&items[*selected])?;
 
-        s.no_clip()?;
+        s.clip(None)?;
         s.ui.pop_cursor();
         s.pop();
         s.advance_cursor([select_box.right() - pos.x(), select_box.height()]);
@@ -437,7 +437,7 @@ impl PixState {
             s.clip(item_clip)?;
             if hovered && clickable && item_rect.contains_point(mpos) {
                 s.frame_cursor(&Cursor::hand())?;
-                s.no_stroke();
+                s.stroke(None);
                 s.fill(bg);
                 s.rect([item_clip.x(), y, item_clip.width(), line_height])?;
                 if active && s.mouse_clicked(Mouse::Left) {
@@ -445,7 +445,7 @@ impl PixState {
                 }
             }
             if *selected == i {
-                s.no_stroke();
+                s.stroke(None);
                 if disabled {
                     s.fill(colors.primary.blended(colors.background, 0.38));
                 } else {
@@ -456,7 +456,7 @@ impl PixState {
             s.pop();
             s.clip(content_clip)?;
             s.set_cursor_pos([x, y + ipad.y()]);
-            s.no_stroke();
+            s.stroke(None);
             if *selected == i {
                 s.fill(colors.on_primary);
             } else {
@@ -467,7 +467,7 @@ impl PixState {
             y += line_height;
         }
 
-        s.no_clip()?;
+        s.clip(None)?;
 
         Ok(())
     }
