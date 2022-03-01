@@ -34,8 +34,7 @@
 //! - [`PixState::run`]: Enable or disable the render loop.
 //! - [`PixState::show_frame_rate`]: Display the average frame rate in the title bar.
 //! - [`PixState::target_frame_rate`]: Return the current targeted frame rate.
-//! - [`PixState::frame_rate`]: Set a targeted frame rate.
-//! - [`PixState::clear_frame_rate`]: Clears the targeted frame rate.
+//! - [`PixState::frame_rate`]: Set or clear a targeted frame rate.
 //! - [`PixState::scale`]: Scale the current canvas.
 //! - [`PixState::rect_mode`]: Change the [`RectMode`] for rendering rectangles.
 //! - [`PixState::ellipse_mode`]: Change the [`EllipseMode`] for rendering ellipses.
