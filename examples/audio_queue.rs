@@ -173,8 +173,8 @@ impl AppState for QueueDemo {
 
 fn main() -> PixResult<()> {
     let raw_file = match std::env::args().nth(1) {
-        None => PathBuf::from("./audio/melancholy.raw"),
-        Some(s) => PathBuf::from(s),
+        Some(s) if !s.is_empty() => PathBuf::from(s),
+        _ => PathBuf::from("./audio/melancholy.raw"),
     };
     let mut engine = PixEngine::builder()
         .with_dimensions(1024, 768)
