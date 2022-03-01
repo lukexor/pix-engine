@@ -370,8 +370,8 @@ impl UiState {
 
     /// Try to capture `hover` if no other element is currently `hovered`.
     #[inline]
-    pub(crate) fn try_hover<S: Contains<i32>>(&mut self, id: ElementId, shape: &S) -> bool {
-        if !self.has_hover() && !self.disabled && shape.contains_point(self.mouse_pos()) {
+    pub(crate) fn try_hover<S: Contains<Point<i32>>>(&mut self, id: ElementId, shape: &S) -> bool {
+        if !self.has_hover() && !self.disabled && shape.contains(self.mouse_pos()) {
             self.hover(id);
         }
         self.is_hovered(id)
@@ -699,7 +699,7 @@ impl PixState {
     #[must_use]
     pub fn hovered(&self) -> bool {
         self.ui.last_size.map_or(false, |rect| {
-            !self.ui.disabled && rect.contains_point(self.mouse_pos())
+            !self.ui.disabled && rect.contains(self.mouse_pos())
         })
     }
 
@@ -724,9 +724,7 @@ impl PixState {
     #[must_use]
     pub fn clicked(&self) -> bool {
         self.ui.last_size.map_or(false, |rect| {
-            !self.ui.disabled
-                && self.mouse_clicked(Mouse::Left)
-                && rect.contains_point(self.mouse_pos())
+            !self.ui.disabled && self.mouse_clicked(Mouse::Left) && rect.contains(self.mouse_pos())
         })
     }
 
@@ -754,7 +752,7 @@ impl PixState {
             !self.ui.disabled
                 && self.mouse_clicked(Mouse::Left)
                 && self.mouse_dbl_clicked(Mouse::Left)
-                && rect.contains_point(self.mouse_pos())
+                && rect.contains(self.mouse_pos())
         })
     }
 }

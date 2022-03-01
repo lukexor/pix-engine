@@ -150,58 +150,42 @@ impl<T: Num> Sphere<T> {
     }
 }
 
-impl<T: Num, const N: usize> Contains<T, N> for Sphere<T> {
-    type Shape = Sphere<T>;
-
+impl<T: Num> Contains<Point<T>> for Sphere<T> {
     /// Returns whether this sphere contains a given [Point].
-    fn contains_point<P>(&self, p: P) -> bool
-    where
-        P: Into<Point<T, N>>,
-    {
-        let p = p.into();
+    fn contains(&self, p: Point<T>) -> bool {
         let px = p.x() - self.x();
         let py = p.y() - self.y();
         let pz = p.z() - self.z();
         let r = self.radius() * self.radius();
         (px * px + py * py + pz * pz) < r
     }
+}
 
+impl<T: Num> Contains<Sphere<T>> for Sphere<T> {
     /// Returns whether this sphere completely contains another sphere.
-    fn contains_shape<O>(&self, other: O) -> bool
-    where
-        O: Into<Self::Shape>,
-    {
-        let other = other.into();
-        let px = other.x() - self.x();
-        let py = other.y() - self.y();
-        let pz = other.z() - self.z();
+    fn contains(&self, sphere: Sphere<T>) -> bool {
+        let px = sphere.x() - self.x();
+        let py = sphere.y() - self.y();
+        let pz = sphere.z() - self.z();
         let r = self.radius() * self.radius();
         (px * px + py * py + pz * pz) < r
     }
 }
 
-impl<T: Num> Intersects<T, 3> for Sphere<T> {
-    type Shape = Sphere<T>;
-
-    /// Returns the closest intersection point with a given line and distance along the line or
-    /// `None` if there is no intersection.
-    fn intersects_line<L>(&self, _line: L) -> Option<(Point<T, 3>, T)>
-    where
-        L: Into<Line<T, 3>>,
-    {
-        todo!("sphere intersects_line")
-    }
+impl<T: Num> Intersects<Sphere<T>> for Sphere<T> {
+    // FIXME: Provide a better intersection result
+    type Result = ();
 
     /// Returns whether this sphere intersects another sphere.
-    fn intersects_shape<O>(&self, other: O) -> bool
-    where
-        O: Into<Self::Shape>,
-    {
-        let other = other.into();
-        let px = other.x() - self.x();
-        let py = other.y() - self.y();
-        let pz = other.z() - self.z();
-        let r = other.radius() + self.radius();
-        (px * px + py * py + pz * pz) < r * r
+    fn intersects(&self, sphere: Sphere<T>) -> Option<Self::Result> {
+        let px = sphere.x() - self.x();
+        let py = sphere.y() - self.y();
+        let pz = sphere.z() - self.z();
+        let r = sphere.radius() + self.radius();
+        if (px * px + py * py + pz * pz) < r * r {
+            Some(())
+        } else {
+            None
+        }
     }
 }

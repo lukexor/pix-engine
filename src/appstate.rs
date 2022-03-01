@@ -503,7 +503,7 @@ pub trait AppState {
     ///     pos: Point<i32>,
     /// ) -> PixResult<bool> {
     ///     if let Mouse::Left = btn {
-    ///         if self.canvas.contains_point(pos) {
+    ///         if self.canvas.contains(pos) {
     ///             self.drawing = true;
     ///         }
     ///     }
@@ -543,7 +543,7 @@ pub trait AppState {
     ///     pos: Point<i32>,
     /// ) -> PixResult<bool> {
     ///     if let Mouse::Left = btn {
-    ///         if self.canvas.contains_point(pos) {
+    ///         if self.canvas.contains(pos) {
     ///             self.drawing = false;
     ///         }
     ///     }
@@ -583,7 +583,7 @@ pub trait AppState {
     ///     pos: Point<i32>,
     /// ) -> PixResult<bool> {
     ///     if let Mouse::Left = btn {
-    ///         if self.item.contains_point(pos) {
+    ///         if self.item.contains(pos) {
     ///             self.selected = true;
     ///         }
     ///     }
@@ -624,7 +624,7 @@ pub trait AppState {
     ///     pos: Point<i32>,
     /// ) -> PixResult<bool> {
     ///     if let Mouse::Left = btn {
-    ///         if self.item.contains_point(pos) {
+    ///         if self.item.contains(pos) {
     ///             self.execute_item()
     ///         }
     ///     }

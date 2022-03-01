@@ -38,7 +38,7 @@ impl SpaceObj {
     }
 
     fn new_asteroid(ship: &SpaceObj, mut pos: Point<f64>) -> Self {
-        if Ellipse::circle_with_position(ship.pos, ASTEROID_SAFE_RADIUS).contains_point(pos) {
+        if Ellipse::circle_with_position(ship.pos, ASTEROID_SAFE_RADIUS).contains(pos) {
             pos.offset(-ship.pos)
         }
         let mut vel = Vector::random();
@@ -47,8 +47,8 @@ impl SpaceObj {
         Self::new(pos, vel, ASTEROID_SIZE, angle)
     }
 
-    fn contains_point(&self, p: Point<f64>) -> bool {
-        Ellipse::from(self).contains_point(p.round().as_::<i32>())
+    fn contains(&self, p: Point<f64>) -> bool {
+        Ellipse::from(self).contains(p.round().as_::<i32>())
     }
 }
 
@@ -171,7 +171,7 @@ impl Asteroids {
         // Draw asteroids
         for a in self.asteroids.iter_mut() {
             // Ship collision
-            if a.contains_point(self.ship.pos) {
+            if a.contains(self.ship.pos) {
                 self.exploded();
                 return Ok(());
             }
@@ -200,7 +200,7 @@ impl Asteroids {
             b.angle -= 1.0 * elapsed;
 
             for a in self.asteroids.iter_mut() {
-                if a.contains_point(b.pos) {
+                if a.contains(b.pos) {
                     // Asteroid hit
                     b.destroyed = true; // Removes bullet
 

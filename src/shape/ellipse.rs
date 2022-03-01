@@ -430,15 +430,9 @@ impl<T: Num> Ellipse<T> {
     }
 }
 
-impl<T: Num, const N: usize> Contains<T, N> for Ellipse<T> {
-    type Shape = Ellipse<T>;
-
+impl<T: Num> Contains<Point<T>> for Ellipse<T> {
     /// Returns whether this ellipse contains a given [Point].
-    fn contains_point<P>(&self, p: P) -> bool
-    where
-        P: Into<Point<T, N>>,
-    {
-        let p = p.into();
+    fn contains(&self, p: Point<T>) -> bool {
         let px = p.x() - self.x();
         let py = p.y() - self.y();
         let two = T::one() + T::one();
@@ -446,47 +440,16 @@ impl<T: Num, const N: usize> Contains<T, N> for Ellipse<T> {
         let ry = self.height() / two;
         (px * px) / (rx * rx) + (py * py) / (ry * ry) <= T::one()
     }
-
-    /// Returns whether this ellipse completely contains another ellipse.
-    fn contains_shape<O>(&self, other: O) -> bool
-    where
-        O: Into<Self::Shape>,
-    {
-        let other = other.into();
-        let px = self.x() - other.x();
-        let py = self.y() - other.y();
-        let rx = self.width() + other.width();
-        let ry = self.height() + other.height();
-        (px * px) / (rx * rx) + (py * py) / (ry * ry) <= T::one()
-    }
 }
 
-impl<T: Num> Intersects<T> for Ellipse<T> {
-    type Shape = Ellipse<T>;
-
-    /// Returns the closest intersection point with a given line and distance along the line or
-    /// `None` if there is no intersection.
-    fn intersects_line<L>(&self, _line: L) -> Option<(Point<T>, T)>
-    where
-        L: Into<Line<T>>,
-    {
-        todo!("ellipse intersects_line")
-    }
-
-    /// Returns whether this circle intersects with another circle.
-    fn intersects_shape<O>(&self, other: O) -> bool
-    where
-        O: Into<Self::Shape>,
-    {
-        let other = other.into();
-        let px = self.x() - other.x();
-        let py = self.y() - other.y();
-        if self.width() == self.height() {
-            let r = self.width() + other.width();
-            (px * px + py * py) <= r * r
-        } else {
-            todo!("ellipse intersects_shape")
-        }
+impl<T: Num> Contains<Ellipse<T>> for Ellipse<T> {
+    /// Returns whether this ellipse completely contains another ellipse.
+    fn contains(&self, ellipse: Ellipse<T>) -> bool {
+        let px = self.x() - ellipse.x();
+        let py = self.y() - ellipse.y();
+        let rx = self.width() + ellipse.width();
+        let ry = self.height() + ellipse.height();
+        (px * px) / (rx * rx) + (py * py) / (ry * ry) <= T::one()
     }
 }
 

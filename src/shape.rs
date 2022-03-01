@@ -4,8 +4,8 @@
 //!
 //! Provided traits:
 //!
-//! - [Contains]: Defines [`contains_point`] and [`contains_shape`].
-//! - [Intersects]: Defines [`intersects_line`] and [`intersects_shape`].
+//! - [Contains]: Defines [`contains`] for shapes containing other shapes.
+//! - [Intersects]: Defines [`intersects`] for shapes intersecting other shapes.
 //!
 //! Provided [`PixState`] methods;
 //!
@@ -23,10 +23,8 @@
 //! - [`PixState::ellipse`]: Draw an [Ellipse] to the current canvas.
 //! - [`PixState::arc`]: Draw an arc to the current canvas.
 //!
-//! [`contains_point`]: Contains::contains_point
-//! [`contains_shape`]: Contains::contains_shape
-//! [`intersects_line`]: Intersects::intersects_line
-//! [`intersects_shape`]: Intersects::intersects_shape
+//! [`contains`]: Contains::contains
+//! [`intersects`]: Intersects::intersects
 
 use crate::{prelude::*, renderer::Rendering};
 use std::iter::Iterator;
@@ -62,36 +60,18 @@ pub use sphere::*;
 pub use triangle::*;
 
 /// Trait for shape containing operations.
-pub trait Contains<T = i32, const N: usize = 2> {
-    /// The shape type. e.g. [`Rect<T>`].
-    type Shape;
-
-    /// Returns whether this shape contains a given [Point].
-    fn contains_point<P>(&self, _p: P) -> bool
-    where
-        P: Into<Point<T, N>>;
-
-    /// Returns whether this shape completely contains another shape of the same type.
-    fn contains_shape<O>(&self, _other: O) -> bool
-    where
-        O: Into<Self::Shape>;
+pub trait Contains<S> {
+    /// Returns whether this shape contains a another shape.
+    fn contains(&self, shape: S) -> bool;
 }
 
 /// Trait for shape intersection operations.
-pub trait Intersects<T = i32, const N: usize = 2> {
-    /// The shape type. e.g. [`Rect<T>`].
-    type Shape;
+pub trait Intersects<S> {
+    /// The result of the intersection.
+    type Result;
 
-    /// Returns the closest intersection point with a given line and distance along the line or
-    /// `None` if there is no intersection.
-    fn intersects_line<L>(&self, _line: L) -> Option<(Point<T, N>, T)>
-    where
-        L: Into<Line<T, N>>;
-
-    /// Returns whether this shape intersects with another shape of the same type.
-    fn intersects_shape<O>(&self, _other: O) -> bool
-    where
-        O: Into<Self::Shape>;
+    /// Returns an intersection result based on the shape or `None` if there is no intersection.
+    fn intersects(&self, shape: S) -> Option<Self::Result>;
 }
 
 impl PixState {

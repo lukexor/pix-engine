@@ -180,7 +180,7 @@ impl AppState for ColorConsts {
         }
         for (i, &color) in COLORS.iter().enumerate() {
             let pos = s.mouse_pos();
-            if self.cells[i].contains_point(pos) {
+            if self.cells[i].contains(pos) {
                 s.tooltip(color.1)?;
             }
         }

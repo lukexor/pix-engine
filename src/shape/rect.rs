@@ -511,45 +511,33 @@ impl<T: Num> Rect<T> {
     }
 }
 
-impl<T: Num, const N: usize> Contains<T, N> for Rect<T> {
-    type Shape = Rect<T>;
-
+impl<T: Num> Contains<Point<T>> for Rect<T> {
     /// Returns whether this rectangle contains a given [Point].
-    fn contains_point<P>(&self, p: P) -> bool
-    where
-        P: Into<Point<T, N>>,
-    {
-        let p = p.into();
+    fn contains(&self, p: Point<T>) -> bool {
         p.x() >= self.left() && p.x() < self.right() && p.y() >= self.top() && p.y() < self.bottom()
-    }
-
-    /// Returns whether this rectangle completely contains another rectangle.
-    fn contains_shape<O>(&self, other: O) -> bool
-    where
-        O: Into<Self::Shape>,
-    {
-        let other = other.into();
-        other.left() >= self.left()
-            && other.right() < self.right()
-            && other.top() >= self.top()
-            && other.bottom() < self.bottom()
     }
 }
 
-impl<T: Float> Intersects<T> for Rect<T> {
-    type Shape = Rect<T>;
+impl<T: Num> Contains<Rect<T>> for Rect<T> {
+    /// Returns whether this rectangle completely contains another rectangle.
+    fn contains(&self, rect: Rect<T>) -> bool {
+        rect.left() >= self.left()
+            && rect.right() < self.right()
+            && rect.top() >= self.top()
+            && rect.bottom() < self.bottom()
+    }
+}
+
+impl<T: Float> Intersects<Line<T>> for Rect<T> {
+    type Result = (Point<T>, T);
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
-    fn intersects_line<L>(&self, line: L) -> Option<(Point<T>, T)>
-    where
-        L: Into<Line<T>>,
-    {
-        let line = line.into();
-        let left = line.intersects_line([self.top_left(), self.bottom_left()]);
-        let right = line.intersects_line([self.top_right(), self.bottom_right()]);
-        let top = line.intersects_line([self.top_left(), self.top_right()]);
-        let bottom = line.intersects_line([self.bottom_left(), self.bottom_right()]);
+    fn intersects(&self, line: Line<T>) -> Option<Self::Result> {
+        let left = line.intersects(line_![self.top_left(), self.bottom_left()]);
+        let right = line.intersects(line_![self.top_right(), self.bottom_right()]);
+        let top = line.intersects(line_![self.top_left(), self.top_right()]);
+        let bottom = line.intersects(line_![self.bottom_left(), self.bottom_right()]);
         [left, right, top, bottom]
             .iter()
             .filter_map(|&p| p)
@@ -563,19 +551,24 @@ impl<T: Float> Intersects<T> for Rect<T> {
                 }
             })
     }
+}
+
+impl<T: Num> Intersects<Rect<T>> for Rect<T> {
+    // FIXME: Provide a better intersection result
+    type Result = ();
 
     /// Returns whether this rectangle intersects with another rectangle.
-    fn intersects_shape<O>(&self, other: O) -> bool
-    where
-        O: Into<Self::Shape>,
-    {
-        let other = other.into();
+    fn intersects(&self, rect: Rect<T>) -> Option<Self::Result> {
         let tl = self.top_left();
         let br = self.bottom_right();
-        let otl = other.top_left();
-        let obr = other.bottom_right();
+        let otl = rect.top_left();
+        let obr = rect.bottom_right();
         // Both rectangle corner x and y values overlap ranges
-        tl.x() < obr.x() && br.x() > otl.x() && tl.y() < otl.y() && br.y() > obr.y()
+        if tl.x() < obr.x() && br.x() > otl.x() && tl.y() < otl.y() && br.y() > obr.y() {
+            Some(())
+        } else {
+            None
+        }
     }
 }
 

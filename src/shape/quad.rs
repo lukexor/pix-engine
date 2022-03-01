@@ -352,7 +352,7 @@ mod tests {
         // Left
         let line: Line<f64> = line_!([3.0, 7.0], [20.0, 30.0]);
         assert_approx_eq!(
-            rect.intersects_line(line),
+            rect.intersects(line),
             Some((point!(10.0, 16.471), 0.411)),
             0.001
         );
@@ -360,7 +360,7 @@ mod tests {
         // Right
         let line: Line<f64> = line_!([150.0, 50.0], [90.0, 30.0]);
         assert_approx_eq!(
-            rect.intersects_line(line),
+            rect.intersects(line),
             Some((point!(110.0, 36.667), 0.667)),
             0.001
         );
@@ -368,7 +368,7 @@ mod tests {
         // Top
         let line: Line<f64> = line_!([50.0, 5.0], [70.0, 30.0]);
         assert_approx_eq!(
-            rect.intersects_line(line),
+            rect.intersects(line),
             Some((point!(54.0, 10.0), 0.2)),
             0.001
         );
@@ -376,7 +376,7 @@ mod tests {
         // Bottom
         let line: Line<f64> = line_!([50.0, 150.0], [30.0, 30.0]);
         assert_approx_eq!(
-            rect.intersects_line(line),
+            rect.intersects(line),
             Some((point!(43.3333, 110.0), 0.333)),
             0.001
         );

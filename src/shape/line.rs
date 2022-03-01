@@ -199,19 +199,15 @@ impl<T: Copy, const N: usize> Line<T, N> {
     }
 }
 
-impl<T: Float> Intersects<T> for Line<T> {
-    type Shape = Line<T>;
+impl<T: Float> Intersects<Line<T>> for Line<T> {
+    type Result = (Point<T>, T);
 
     /// Returns the closest intersection point with a given line and distance along the line or
     /// `None` if there is no intersection.
     #[allow(clippy::many_single_char_names)]
-    fn intersects_line<L>(&self, other: L) -> Option<(Point<T>, T)>
-    where
-        L: Into<Line<T>>,
-    {
-        let other = other.into();
+    fn intersects(&self, line: Line<T>) -> Option<Self::Result> {
         let [start1, end1] = self.as_array();
-        let [start2, end2] = other.as_array();
+        let [start2, end2] = line.as_array();
         let [x1, y1] = start1.as_array();
         let [x2, y2] = end1.as_array();
         let [x3, y3] = start2.as_array();
@@ -229,14 +225,6 @@ impl<T: Float> Intersects<T> for Line<T> {
         } else {
             None
         }
-    }
-
-    /// Returns whether this line intersections with another line
-    fn intersects_shape<O>(&self, other: O) -> bool
-    where
-        O: Into<Self::Shape>,
-    {
-        self.intersects_line(other).is_some()
     }
 }
 

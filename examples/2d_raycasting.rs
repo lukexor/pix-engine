@@ -224,7 +224,7 @@ impl RayScene {
         let o = o.as_::<f64>();
         let ray = Line::new(o, o + r);
         for &e in self.edges.iter() {
-            if let Some((point, param)) = ray.intersects_line(e.as_::<f64>()) {
+            if let Some((point, param)) = ray.intersects(e.as_::<f64>()) {
                 if intersect.is_none() || param < closest_param {
                     intersect = Some(point);
                     closest_param = param;
@@ -236,7 +236,7 @@ impl RayScene {
 
     fn draw_visibility_polygons(&mut self, s: &mut PixState) -> PixResult<()> {
         let mouse = s.mouse_pos();
-        if !rect![0, 0, s.width()? as i32, s.height()? as i32].contains_point(mouse) {
+        if !rect![0, 0, s.width()? as i32, s.height()? as i32].contains(mouse) {
             return Ok(());
         }
 
@@ -320,7 +320,7 @@ impl AppState for RayScene {
         let mut in_cell = None;
         for cell in self.cells.iter().filter(|c| c.exists) {
             let sq = square![cell.pos, BLOCK_SIZE as i32];
-            if sq.contains_point(mouse) {
+            if sq.contains(mouse) {
                 in_cell = Some(cell);
             }
             s.square(sq)?;
@@ -347,9 +347,7 @@ impl AppState for RayScene {
         btn: Mouse,
         pos: Point<i32>,
     ) -> PixResult<bool> {
-        if btn == Mouse::Left
-            && rect![0, 0, s.width()? as i32, s.height()? as i32].contains_point(pos)
-        {
+        if btn == Mouse::Left && rect![0, 0, s.width()? as i32, s.height()? as i32].contains(pos) {
             let i = self.get_cell_index(pos.x() as u32, pos.y() as u32);
             self.cells[i].exists = !self.cells[i].exists;
             self.drawing = self.cells[i].exists;
@@ -365,8 +363,7 @@ impl AppState for RayScene {
         rel_pos: Point<i32>,
     ) -> PixResult<bool> {
         if s.mouse_buttons().contains(&Mouse::Left) {
-            let within_window =
-                rect![0, 0, s.width()? as i32, s.height()? as i32].contains_point(pos);
+            let within_window = rect![0, 0, s.width()? as i32, s.height()? as i32].contains(pos);
             if within_window && (rel_pos.x() > 0 || rel_pos.y() > 0) {
                 let i = self.get_cell_index(pos.x() as u32, pos.y() as u32);
                 self.cells[i].exists = self.drawing;

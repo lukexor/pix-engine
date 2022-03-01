@@ -461,6 +461,12 @@ impl PixEngine {
                         state.close_controller(id);
                     }
                 }
+                Event::JoyDeviceRemoved { joy_id } => {
+                    let id = ControllerId(joy_id);
+                    if !app.on_controller_update(state, id, ControllerUpdate::Removed)? {
+                        state.open_controller(id)?;
+                    }
+                }
                 Event::ControllerRemapped { controller_id } => {
                     let id = ControllerId(controller_id);
                     app.on_controller_update(state, id, ControllerUpdate::Remapped)?;

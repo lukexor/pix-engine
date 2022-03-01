@@ -179,8 +179,8 @@ impl PixState {
             }
         }
         let clicked_outside = s.mouse_down(Mouse::Left)
-            && !select_box.contains_point(s.mouse_pos())
-            && !expanded_list.contains_point(s.mouse_pos());
+            && !select_box.contains(s.mouse_pos())
+            && !expanded_list.contains(s.mouse_pos());
         if (expanded && clicked_outside) || s.ui.was_clicked(id) {
             s.ui.set_expanded(id, !expanded);
         }
@@ -435,7 +435,7 @@ impl PixState {
                 item_rect.bottom() > content_clip.y() || item_rect.top() < select_list.height();
             s.push();
             s.clip(item_clip)?;
-            if hovered && clickable && item_rect.contains_point(mpos) {
+            if hovered && clickable && item_rect.contains(mpos) {
                 s.frame_cursor(&Cursor::hand())?;
                 s.stroke(None);
                 s.fill(bg);

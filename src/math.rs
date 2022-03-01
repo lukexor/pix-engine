@@ -3,7 +3,7 @@
 use crate::prelude::Vector;
 use lazy_static::lazy_static;
 use num_traits::{
-    Float as FloatTrait, Num as NumTrait, NumAssignOps, NumAssignRef, NumCast, NumOps, NumRef,
+    Float as FloatT, Num as NumT, NumAssignOps, NumAssignRef, NumCast, NumOps, NumRef,
 };
 use rand::{self, distributions::uniform::SampleUniform, Rng};
 use std::ops::{AddAssign, Range};
@@ -12,17 +12,28 @@ use std::ops::{AddAssign, Range};
 pub use std::f64::consts::*;
 
 /// Default number trait used for objects and shapes.
-pub trait Num: NumTrait + NumOps + NumAssignOps + Copy + Default + PartialOrd {}
-
-/// Default floating-point number trait used math operations.
-pub trait Float: Num + FloatTrait {}
-
-impl<T> Num for T where
-    T: NumTrait + NumOps + NumRef + NumAssignOps + NumAssignRef + Copy + Default + PartialOrd
+pub trait Num:
+    NumT + NumOps + NumAssignOps + NumAssignRef + Copy + Default + PartialOrd + PartialEq
 {
 }
 
-impl<T> Float for T where T: Num + FloatTrait {}
+/// Default floating-point number trait used math operations.
+pub trait Float: Num + FloatT {}
+
+impl<T> Num for T where
+    T: NumT
+        + NumOps
+        + NumRef
+        + NumAssignOps
+        + NumAssignRef
+        + Copy
+        + Default
+        + PartialOrd
+        + PartialEq
+{
+}
+
+impl<T> Float for T where T: Num + FloatT {}
 
 const PERLIN_YWRAPB: usize = 4;
 const PERLIN_YWRAP: usize = 1 << PERLIN_YWRAPB;

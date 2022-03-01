@@ -62,6 +62,10 @@ All notable changes to this project will be documented in this file.
 - Removed generic type aliases for all types that now have reasonable defaults.
 - Removed `PixState::no_*` methods in favor of the main setter method accepting
   `false` or `None`.
+- Added `PartialEq` to `Num` trait.
+- Modified `Contains` and `Intersects` traits to be more generic and have a
+  single `contains` or `intersects` method to allow for future implementations
+  of other shapes.
 
 ## [0.5.4] - 2022-01-26
 
