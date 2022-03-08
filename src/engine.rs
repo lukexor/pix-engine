@@ -350,7 +350,7 @@ impl PixEngine {
             debug!("Quitting with `AppState::on_stop`");
             let on_stop = app.on_stop(&mut self.state);
             if self.state.should_quit() {
-                info!("Qutting `PixEngine`...");
+                info!("Quitting `PixEngine`...");
                 break 'on_stop on_stop.and(result);
             }
         }
