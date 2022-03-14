@@ -49,7 +49,7 @@
 //! ```
 
 use crate::prelude::*;
-use log::{info, trace};
+use log::info;
 use std::{
     fmt,
     ops::{Deref, DerefMut},
@@ -360,8 +360,6 @@ impl PixState {
     where
         F: FnOnce(&mut PixState) -> PixResult<()>,
     {
-        trace!("Targeting TextureId: {} for rendering", id);
-
         self.push();
         self.ui.push_cursor();
         self.set_cursor_pos(self.theme.spacing.frame_pad);
@@ -372,8 +370,6 @@ impl PixState {
 
         self.ui.pop_cursor();
         self.pop();
-
-        trace!("Restoring render target");
 
         result
     }

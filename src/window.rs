@@ -6,7 +6,6 @@ use crate::{
     prelude::*,
     renderer::{Renderer, RendererSettings},
 };
-use log::trace;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 #[cfg(not(target_arch = "wasm32"))]
@@ -591,8 +590,6 @@ impl PixState {
     where
         F: FnOnce(&mut PixState) -> PixResult<()>,
     {
-        trace!("Targeting WindowId: {} for rendering", id);
-
         self.push();
         self.ui.push_cursor();
         self.set_cursor_pos(self.theme.spacing.frame_pad);
@@ -603,8 +600,6 @@ impl PixState {
 
         self.ui.pop_cursor();
         self.pop();
-
-        trace!("Restoring render target");
 
         result
     }

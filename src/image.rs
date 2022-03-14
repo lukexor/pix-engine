@@ -344,7 +344,7 @@ impl Image {
             .map(|slice| match *slice {
                 [red, green, blue] => Color::rgb(red, green, blue),
                 [red, green, blue, alpha] => Color::rgba(red, green, blue, alpha),
-                _ => panic!("invalid number of color channels"),
+                _ => Color::TRANSPARENT,
             })
             .collect()
     }
@@ -362,7 +362,7 @@ impl Image {
         match self.data.get(idx..idx + channels) {
             Some([red, green, blue]) => Color::rgb(*red, *green, *blue),
             Some([red, green, blue, alpha]) => Color::rgba(*red, *green, *blue, *alpha),
-            _ => panic!("invalid number of color channels"),
+            _ => Color::TRANSPARENT,
         }
     }
 
@@ -432,7 +432,7 @@ impl Image {
     /// Helper function to get the byte array index based on `(x, y)`.
     #[inline]
     const fn idx(&self, x: u32, y: u32) -> usize {
-        self.format.channels() * (y * self.width + x) as usize
+        self.format.channels() * (x + y * self.width) as usize
     }
 }
 
@@ -578,7 +578,7 @@ impl Iterator for Pixels<'_> {
                 let a = self.1.next()?;
                 Some(Color::rgba(r, g, b, a))
             }
-            _ => panic!("invalid number of color channels"),
+            _ => Some(Color::TRANSPARENT),
         }
     }
 }

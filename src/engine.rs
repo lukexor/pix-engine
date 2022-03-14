@@ -33,7 +33,7 @@
 //! ```
 
 use crate::{image::Icon, prelude::*, renderer::RendererSettings};
-use log::{debug, error, info, trace};
+use log::{debug, error, info};
 use std::{
     thread,
     time::{Duration, Instant},
@@ -312,7 +312,7 @@ impl PixEngine {
 
         // on_stop loop enables on_stop to prevent application close if necessary
         'on_stop: loop {
-            trace!("Starting `AppState::on_update` loop.");
+            debug!("Starting `AppState::on_update` loop.");
             // running loop continues until an event or on_update returns false or errors
             let result = 'running: loop {
                 let start_time = Instant::now();
@@ -366,7 +366,6 @@ impl PixEngine {
     {
         let state = &mut self.state;
         while let Some(event) = state.poll_event() {
-            // Demote noisy events to trace
             if let Event::ControllerAxisMotion { .. }
             | Event::JoyAxisMotion { .. }
             | Event::MouseMotion { .. }
@@ -374,7 +373,7 @@ impl PixEngine {
             | Event::KeyDown { repeat: true, .. }
             | Event::KeyUp { repeat: true, .. } = event
             {
-                trace!("Polling event {:?}", event);
+                // Ignore noisy events
             } else {
                 debug!("Polling event {:?}", event);
             }
