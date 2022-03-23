@@ -68,13 +68,10 @@ impl Renderer {
         F: FnOnce(&mut Canvas<Window>) -> PixResult<()>,
     {
         if let Some(texture_id) = self.texture_target {
-            let window = self.windows.values_mut().find_map(|w| {
-                if w.textures.contains_key(&texture_id) {
-                    Some(w)
-                } else {
-                    None
-                }
-            });
+            let window = self
+                .windows
+                .values_mut()
+                .find(|w| w.textures.contains_key(&texture_id));
             if let Some(window) = window {
                 // We ensured there's a valid texture above
                 let texture = window.textures.get(&texture_id).expect("valid texture");
@@ -793,13 +790,10 @@ impl Rendering for Renderer {
     #[inline]
     fn to_bytes(&mut self) -> PixResult<Vec<u8>> {
         if let Some(texture_id) = self.texture_target {
-            let window = self.windows.values_mut().find_map(|w| {
-                if w.textures.contains_key(&texture_id) {
-                    Some(w)
-                } else {
-                    None
-                }
-            });
+            let window = self
+                .windows
+                .values_mut()
+                .find(|w| w.textures.contains_key(&texture_id));
             if let Some(window) = window {
                 // We ensured there's a valid texture above
                 let texture = window.textures.get(&texture_id).expect("valid texture");
