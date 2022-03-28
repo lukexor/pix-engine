@@ -447,7 +447,7 @@ impl PixState {
         };
         let scale = scale.into().unwrap_or(1.0);
         let (sin, cos) = angle.sin_cos();
-        let (px, py) = (pos.x() as f64, pos.y() as f64);
+        let (px, py) = (f64::from(pos.x()), f64::from(pos.y()));
         let vs = vertexes.into_iter().map(|v| {
             let v = v.into();
             // rotation * scale + translation

@@ -134,6 +134,10 @@ pub enum Direction {
 
 impl PixState {
     /// Return usable UI width given the current UI cursor position and padding clamped to i32.
+    ///
+    /// # Errors
+    ///
+    /// If the current window target has been closed or is invalid, then an error is returned.
     #[inline]
     pub fn ui_width(&self) -> PixResult<i32> {
         let pos = self.cursor_pos();
@@ -142,6 +146,10 @@ impl PixState {
     }
 
     /// Return usable UI height given the current UI cursor position and padding clamped to i32.
+    ///
+    /// # Errors
+    ///
+    /// If the current window target has been closed or is invalid, then an error is returned.
     #[inline]
     pub fn ui_height(&self) -> PixResult<i32> {
         let pos = self.cursor_pos();

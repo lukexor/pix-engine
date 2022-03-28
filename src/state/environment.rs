@@ -86,7 +86,7 @@ impl PixState {
     /// ```
     #[inline]
     #[must_use]
-    pub fn focused(&self) -> bool {
+    pub const fn focused(&self) -> bool {
         self.env.focused_window.is_some()
     }
 
@@ -131,7 +131,7 @@ impl PixState {
     /// ```
     #[inline]
     #[must_use]
-    pub fn delta_time(&self) -> Duration {
+    pub const fn delta_time(&self) -> Duration {
         self.env.delta_time
     }
 

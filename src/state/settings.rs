@@ -708,7 +708,7 @@ impl PixState {
         self.settings.running
     }
 
-    /// Pause or resume the render loop called by [AppState::on_update].
+    /// Pause or resume the render loop called by [`AppState::on_update`].
     ///
     /// # Example
     ///
@@ -1090,7 +1090,7 @@ impl PixState {
             })
     }
 
-    /// Get whether VSync is enabled.
+    /// Get whether `VSync` is enabled.
     #[inline]
     pub(crate) fn vsync_enabled(&self) -> bool {
         self.renderer.vsync()

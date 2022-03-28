@@ -41,7 +41,7 @@ use crate::{
     ops::clamp_size,
     prelude::*,
 };
-use num_traits::{clamp, Bounded, NumCast};
+use num_traits::{clamp, Bounded};
 use std::{borrow::Cow, error::Error, fmt, str::FromStr};
 
 impl PixState {
@@ -66,7 +66,7 @@ impl PixState {
     /// ```
     pub fn drag<T, L>(&mut self, label: L, value: &mut T, speed: T) -> PixResult<bool>
     where
-        T: Num + NumCast + Bounded + fmt::Display + FromStr,
+        T: Num + num_traits::NumCast + Bounded + fmt::Display + FromStr,
         <T as FromStr>::Err: Error + Sync + Send + 'static,
         L: AsRef<str>,
     {
@@ -107,7 +107,7 @@ impl PixState {
         formatter: Option<fn(&T) -> Cow<'a, str>>,
     ) -> PixResult<bool>
     where
-        T: Num + NumCast + fmt::Display + FromStr,
+        T: Num + num_traits::NumCast + fmt::Display + FromStr,
         <T as FromStr>::Err: Error + Sync + Send + 'static,
         L: AsRef<str>,
     {
@@ -199,16 +199,19 @@ impl PixState {
                 // Process keyboard input
                 s.ui.begin_edit(id);
             } else {
-                let mut mdelta = (s.mouse_pos().x() - s.pmouse_pos().x()) as f64;
+                let mut mdelta: f64 =
+                    num_traits::NumCast::from(s.mouse_pos().x() - s.pmouse_pos().x())
+                        .unwrap_or_default();
                 if s.keymod_down(KeyMod::ALT) {
                     mdelta /= 10.0;
                 } else if s.keymod_down(KeyMod::SHIFT) {
                     mdelta *= 10.0;
                 }
-                let mut delta = speed * NumCast::from(mdelta).unwrap_or_default();
+                let mut delta = speed * num_traits::NumCast::from(mdelta).unwrap_or_default();
                 // Handle integer division truncation to ensure at least some minimum drag occurs
                 if mdelta != 0.0 && delta == T::zero() {
-                    delta = T::one() * NumCast::from(mdelta.signum()).unwrap_or_default();
+                    delta =
+                        T::one() * num_traits::NumCast::from(mdelta.signum()).unwrap_or_default();
                 }
                 new_value = clamp(new_value + delta, min, max);
             }
@@ -244,7 +247,7 @@ impl PixState {
     /// ```
     pub fn slider<T, L>(&mut self, label: L, value: &mut T, min: T, max: T) -> PixResult<bool>
     where
-        T: Num + NumCast + fmt::Display + FromStr,
+        T: Num + num_traits::NumCast + fmt::Display + FromStr,
         <T as FromStr>::Err: Error + Sync + Send + 'static,
         L: AsRef<str>,
     {
@@ -287,7 +290,7 @@ impl PixState {
         formatter: Option<fn(&T) -> Cow<'a, str>>,
     ) -> PixResult<bool>
     where
-        T: Num + NumCast + fmt::Display + FromStr,
+        T: Num + num_traits::NumCast + fmt::Display + FromStr,
         <T as FromStr>::Err: Error + Sync + Send + 'static,
         L: AsRef<str>,
     {
@@ -364,14 +367,14 @@ impl PixState {
         // Scroll thumb
         s.stroke(None);
         s.fill(fg.blended(bg, 0.60));
-        let slider_w = slider.width() as f64;
-        let vmin: f64 = NumCast::from(min).expect("valid number cast");
-        let vmax: f64 = NumCast::from(max).expect("valid number cast");
-        let val: f64 = NumCast::from(*value).expect("valid number cast");
-        let thumb_w = if vmax - vmin > 1.0 {
+        let slider_w = f64::from(slider.width());
+        let vmin: f64 = num_traits::NumCast::from(min).expect("valid number cast");
+        let vmax: f64 = num_traits::NumCast::from(max).expect("valid number cast");
+        let val: f64 = num_traits::NumCast::from(*value).expect("valid number cast");
+        let thumb_w: f64 = if vmax - vmin > 1.0 {
             slider_w / (vmax - vmin)
         } else {
-            THUMB_MIN as f64
+            f64::from(THUMB_MIN)
         };
         let thumb_w = thumb_w.min(slider_w);
         let offset = ((val - vmin) / (vmax - vmin)) * (slider_w - thumb_w);
@@ -402,9 +405,10 @@ impl PixState {
                 s.ui.begin_edit(id);
             } else {
                 // Process mouse input
-                let mx = (s.mouse_pos().x() - slider.x()).clamp(0, slider.width()) as f64
-                    / slider.width() as f64;
-                new_value = NumCast::from(mx.mul_add(vmax - vmin, vmin)).unwrap_or(*value);
+                let mx = f64::from((s.mouse_pos().x() - slider.x()).clamp(0, slider.width()))
+                    / f64::from(slider.width());
+                new_value =
+                    num_traits::NumCast::from(mx.mul_add(vmax - vmin, vmin)).unwrap_or(*value);
             }
         }
         s.ui.handle_events(id);

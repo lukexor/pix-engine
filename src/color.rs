@@ -556,10 +556,10 @@ impl Color {
         let [r, g, b, a] = self.channels;
         let [r_max, g_max, b_max, a_max] = maxes(Rgb);
         let levels = clamp_levels([
-            r as f64 / r_max,
-            g as f64 / g_max,
-            b as f64 / b_max,
-            a as f64 / a_max,
+            f64::from(r) / r_max,
+            f64::from(g) / g_max,
+            f64::from(b) / b_max,
+            f64::from(a) / a_max,
         ]);
         // Convert to current mode
         convert_levels(levels, Rgb, self.mode)

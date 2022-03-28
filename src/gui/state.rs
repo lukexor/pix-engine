@@ -777,9 +777,9 @@ impl PixState {
             self.push();
             self.fill(None);
             self.stroke(Color::RED);
-            let _ = self.rect(rect![pos, size.x(), size.y()]);
+            let _result = self.rect(rect![pos, size.x(), size.y()]);
             self.fill(Color::BLUE);
-            let _ = self.circle(circle![self.ui.pcursor(), 3]);
+            let _result = self.circle(circle![self.ui.pcursor(), 3]);
             self.pop();
         }
 

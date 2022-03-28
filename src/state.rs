@@ -352,7 +352,7 @@ impl PixState {
     /// ```
     #[inline]
     #[must_use]
-    pub fn keymod_down(&self, keymod: KeyMod) -> bool {
+    pub const fn keymod_down(&self, keymod: KeyMod) -> bool {
         self.ui.keys.mod_down(keymod)
     }
 

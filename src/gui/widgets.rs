@@ -375,7 +375,7 @@ impl PixState {
         let s = self;
         let font_size = clamp_size(s.theme.font_size);
 
-        let height = font_size as f64;
+        let height = f64::from(font_size);
         let mut ratio = height * 0.4 * scale;
         let center = pos + point![height * 0.5, height * 0.5 * scale];
 

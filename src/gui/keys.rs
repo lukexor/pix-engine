@@ -33,7 +33,7 @@ impl KeyState {
 
     /// Returns if a specific [`KeyMod`] is currently being held.
     #[inline]
-    pub(crate) fn mod_down(&self, keymod: KeyMod) -> bool {
+    pub(crate) const fn mod_down(&self, keymod: KeyMod) -> bool {
         self.keymod.intersects(keymod)
     }
 

@@ -140,7 +140,7 @@ impl PixState {
                     select_y + arrow_box.height() / 2 - arrow_width / 4,
                 ],
                 Direction::Down,
-                fpad.y() as f64 / 8.0,
+                f64::from(fpad.y()) / 8.0,
             )?;
         }
 
