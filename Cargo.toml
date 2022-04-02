@@ -67,7 +67,7 @@ lto = true
 [package.metadata.vcpkg]
 dependencies = ["sdl2", "sdl2-image[libjpeg-turbo,tiff,libwebp]", "sdl2-ttf", "sdl2-gfx", "sdl2-mixer"]
 git = "https://github.com/microsoft/vcpkg"
-rev = "af2287382b1991dbdcb7e5112d236f3323b9dd7a"
+rev = "b86c0c35b88e2bf3557ff49dc831689c2f085090"
 
 [package.metadata.vcpkg.target]
 x86_64-pc-windows-msvc = { triplet = "x64-windows-static-md" }
