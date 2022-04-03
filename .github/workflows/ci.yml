@@ -19,6 +19,9 @@ jobs:
       matrix:
         os:  [macos-latest, ubuntu-latest, windows-latest]
         toolchain: [nightly, beta, stable, 1.59.0]
+        include:
+          - os: windows-latest
+            features: vcpkg
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -46,32 +49,32 @@ jobs:
         command: clippy
 
     - name: Install build dependencies
-      if: ${{ matrix.os == "macos-latest" }}
+      if: matrix.os == 'macos-latest'
       run: brew install sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
 
     - name: Install build dependencies
-      if: ${{ matrix.os == "ubuntu-latest" }}
+      if: matrix.os == 'ubuntu-latest'
       run: sudo apt-get install libsdl2-dev libsdl2-gfx-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
 
     - name: Install build dependencies
-      if: ${{ matrix.os == "windows-latest" }}
+      if: matrix.os == 'windows-latest'
       run: cargo install cargo-vcpkg
 
     - name: Build dependencies
-      if: ${{ matrix.os == "windows-latest" }}
+      if: matrix.os == 'windows-latest'
       run: cargo vcpkg -v build
 
     - name: Build source
-      run: cargo build --all-targets --features "serde vcpkg" --verbose
+      run: cargo build --all-targets --features serde ${{ matrix.features }} --verbose
 
     - name: Build documentation
-      run: cargo doc --features "serde vcpkg" --verbose
+      run: cargo doc --features serde ${{ matrix.features }} --verbose
 
     - name: Run unit tests
-      run: cargo test --features "serde vcpkg" --verbose
+      run: cargo test --features serde ${{ matrix.features }} --verbose
 
     - name: Run integration tests
       # TODO: Fix missing video device on linux and audio API issue on windows
-      if: ${{ matrix.os == 'macos-latest' }}
+      if: matrix.os == 'macos-latest'
       run: |
-        cargo test run_engine --features "serde vcpkg" -- --test-threads=1 --ignored
+        cargo test run_engine --features serde ${{ matrix.features }} -- --test-threads=1 --ignored
