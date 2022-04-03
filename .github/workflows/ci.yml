@@ -54,7 +54,9 @@ jobs:
 
     - name: Install build dependencies
       if: matrix.os == 'ubuntu-latest'
-      run: sudo apt-get install libsdl2-dev libsdl2-gfx-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
+      run: |
+        sudo apt-get update -y -qq
+        sudo apt-get install libsdl2-dev libsdl2-gfx-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
 
     - name: Install build dependencies
       if: matrix.os == 'windows-latest'
@@ -65,16 +67,16 @@ jobs:
       run: cargo vcpkg -v build
 
     - name: Build source
-      run: cargo build --all-targets --features serde ${{ matrix.features }} --verbose
+      run: cargo build --all-targets --features serde,${{ matrix.features }} --verbose
 
     - name: Build documentation
-      run: cargo doc --features serde ${{ matrix.features }} --verbose
+      run: cargo doc --features serde,${{ matrix.features }} --verbose
 
     - name: Run unit tests
-      run: cargo test --features serde ${{ matrix.features }} --verbose
+      run: cargo test --features serde,${{ matrix.features }} --verbose
 
     - name: Run integration tests
       # TODO: Fix missing video device on linux and audio API issue on windows
       if: matrix.os == 'macos-latest'
       run: |
-        cargo test run_engine --features serde ${{ matrix.features }} -- --test-threads=1 --ignored
+        cargo test run_engine --features serde,${{ matrix.features }} -- --test-threads=1 --ignored
