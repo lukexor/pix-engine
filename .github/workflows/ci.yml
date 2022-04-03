@@ -46,9 +46,19 @@ jobs:
         command: clippy
 
     - name: Install build dependencies
+      if: ${{ matrix.os == "macos-latest" }}
+      run: brew install sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
+
+    - name: Install build dependencies
+      if: ${{ matrix.os == "ubuntu-latest" }}
+      run: sudo apt-get install libsdl2-dev libsdl2-gfx-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
+
+    - name: Install build dependencies
+      if: ${{ matrix.os == "windows-latest" }}
       run: cargo install cargo-vcpkg
 
     - name: Build dependencies
+      if: ${{ matrix.os == "windows-latest" }}
       run: cargo vcpkg -v build
 
     - name: Build source
