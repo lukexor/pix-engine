@@ -31,7 +31,7 @@ png = "0.17.5"
 serde = { version = "1.0.136", features = ["derive"], optional = true }
 rand = "0.8.5"
 lru = "0.7.5"
-anyhow = "1.0.56"
+anyhow = "1.0.57"
 thiserror = "1.0.29"
 log = "0.4.16"
 
