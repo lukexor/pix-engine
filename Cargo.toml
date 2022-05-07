@@ -26,14 +26,14 @@ crate-type = ["cdylib", "rlib"]
 bitflags = "1.2.1"
 chrono = "0.4.19"
 lazy_static = "1.4.0"
-num-traits = "0.2.14"
+num-traits = "0.2.15"
 png = "0.17.5"
 serde = { version = "1.0.136", features = ["derive"], optional = true }
 rand = "0.8.5"
 lru = "0.7.5"
 anyhow = "1.0.56"
 thiserror = "1.0.29"
-log = "0.4.16"
+log = "0.4.17"
 
 [dev-dependencies]
 rayon = "1.5.1"
