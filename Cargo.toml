@@ -26,7 +26,7 @@ crate-type = ["cdylib", "rlib"]
 bitflags = "1.2.1"
 chrono = "0.4.19"
 lazy_static = "1.4.0"
-num-traits = "0.2.14"
+num-traits = "0.2.15"
 png = "0.17.5"
 serde = { version = "1.0.137", features = ["derive"], optional = true }
 rand = "0.8.5"
