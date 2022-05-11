@@ -58,9 +58,14 @@ impl AudioRenderer for Renderer {
         self.audio_device.spec().freq
     }
 
+    /// Returns the queued buffer size of the current audio queue device.
+    fn audio_queued_size(&self) -> u32 {
+        self.audio_device.size()
+    }
+
     /// Returns the buffer size of the current audio queue device.
     fn audio_size(&self) -> u32 {
-        self.audio_device.size()
+        self.audio_device.spec().size
     }
 
     /// Resume playback of the current audio device.

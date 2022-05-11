@@ -415,6 +415,13 @@ impl PixState {
         self.renderer.audio_sample_rate()
     }
 
+    /// Returns the queued buffer size of the current audio queue device.
+    #[inline]
+    #[must_use]
+    pub fn audio_queued_size(&self) -> u32 {
+        self.renderer.audio_queued_size()
+    }
+
     /// Returns the buffer size of the current audio queue device.
     #[inline]
     #[must_use]
@@ -674,6 +681,9 @@ pub(crate) trait AudioRenderer {
 
     /// Return the sample rate of the current audio queue device.
     fn audio_sample_rate(&self) -> i32;
+
+    /// Returns the queued buffer size of the current audio queue device.
+    fn audio_queued_size(&self) -> u32;
 
     /// Returns the buffer size of the current audio queue device.
     fn audio_size(&self) -> u32;
