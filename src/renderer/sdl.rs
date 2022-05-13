@@ -156,7 +156,7 @@ impl Rendering for Renderer {
         let desired_spec = AudioSpecDesired {
             freq: Some(s.audio_sample_rate),
             channels: Some(1),
-            samples: None,
+            samples: Some(4096),
         };
         let audio_device = audio_subsys
             .open_queue(None, &desired_spec)
