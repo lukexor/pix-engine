@@ -339,8 +339,7 @@ impl PixEngine {
                 }
 
                 // Accounts for variance in frame rates so we don't sleep too long
-                let epsilon = Duration::from_micros(900);
-                let time_to_next_frame = start_time + target_delta_time - epsilon;
+                let time_to_next_frame = start_time + target_delta_time;
                 let now = Instant::now();
                 if !self.state.vsync_enabled() && time_to_next_frame > now {
                     thread::sleep(time_to_next_frame - now);
