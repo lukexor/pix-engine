@@ -28,6 +28,7 @@ use std::path::PathBuf;
 use std::{
     borrow::Cow,
     collections::hash_map::DefaultHasher,
+    fmt,
     hash::{Hash, Hasher},
 };
 
@@ -293,7 +294,7 @@ impl Font {
 }
 
 /// Represents a source of font glyph data.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) enum FontSrc {
     /// A font from byte data.
@@ -301,6 +302,15 @@ pub(crate) enum FontSrc {
     #[cfg(not(target_arch = "wasm32"))]
     /// A path to a `.ttf` font file.
     Path(PathBuf),
+}
+
+impl fmt::Debug for FontSrc {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Bytes(bytes) => write!(f, "Bytes([u8; {}])", bytes.len()),
+            Self::Path(path) => write!(f, "Path({})", path.display()),
+        }
+    }
 }
 
 impl FontSrc {
