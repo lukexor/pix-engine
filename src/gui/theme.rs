@@ -78,9 +78,9 @@ pub(crate) type FontId = u64;
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'static")))]
 pub struct Builder {
     name: String,
+    #[cfg_attr(feature = "serde", serde(skip))]
     fonts: Fonts,
     size: u32,
     styles: FontStyles,
@@ -222,8 +222,6 @@ impl Builder {
 /// Represents a font family name along with the font glyph source.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[must_use]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'static")))]
 pub struct Font {
     /// Family name of the font.
     pub(crate) name: Cow<'static, str>,
@@ -283,6 +281,13 @@ impl Font {
         self.name.as_ref()
     }
 
+    /// Returns the source data of the font family.
+    #[inline]
+    #[must_use]
+    pub(crate) fn source(&self) -> &FontSrc {
+        &self.source
+    }
+
     /// Returns the hashed identifier for this font family.
     #[inline]
     #[must_use]
@@ -295,7 +300,6 @@ impl Font {
 
 /// Represents a source of font glyph data.
 #[derive(Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) enum FontSrc {
     /// A font from byte data.
     Bytes(&'static [u8]),
@@ -326,8 +330,6 @@ impl FontSrc {
 
 /// A set of font families for body, heading, and monospace text.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'static")))]
 #[non_exhaustive]
 pub struct Fonts {
     /// Body font.
@@ -566,11 +568,11 @@ impl Spacing {
 #[non_exhaustive]
 #[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'static")))]
 pub struct Theme {
     /// The name of this theme.
     pub name: String,
     /// The font families used in this theme.
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub fonts: Fonts,
     /// The body font size used in this theme.
     pub font_size: u32,

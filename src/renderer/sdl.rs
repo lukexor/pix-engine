@@ -103,7 +103,7 @@ impl Renderer {
             .font_data
             .get(&self.current_font)
             .expect("valid loaded font");
-        let loaded_font = match font_data.source {
+        let loaded_font = match font_data.source() {
             FontSrc::Bytes(bytes) => {
                 let rwops = RWops::from_bytes(bytes).map_err(PixError::Renderer)?;
                 TTF.load_font_from_rwops(rwops, self.font_size)
@@ -835,7 +835,6 @@ impl Rendering for Renderer {
 }
 
 impl fmt::Debug for Renderer {
-    #[doc(hidden)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Renderer")
             .field(
@@ -852,7 +851,7 @@ impl fmt::Debug for Renderer {
             .field("blend_mode", &self.blend_mode)
             .field(
                 "current_font",
-                &self.font_data.peek(&self.current_font).map(|f| &f.name),
+                &self.font_data.peek(&self.current_font).map(Font::name),
             )
             .field("font_size", &self.font_size)
             .field("font_style", &self.font_style)

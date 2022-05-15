@@ -325,9 +325,6 @@ mod tests {
     use crate::prelude::*;
 
     macro_rules! assert_approx_eq {
-        ($i1:expr, $i2:expr) => {
-            assert_approx_eq!($i1, $i2, f64::EPSILON);
-        };
         ($i1:expr, $i2:expr, $e:expr) => {{
             match ($i1, $i2) {
                 (Some((p1, t1)), Some((p2, t2))) => {

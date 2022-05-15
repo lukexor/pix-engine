@@ -133,7 +133,6 @@ bitflags! {
 /// Several settings used to change various functionality of the engine.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(bound(deserialize = "'de: 'static")))]
 pub(crate) struct Settings {
     pub(crate) background: Color,
     pub(crate) fill: Option<Color>,
@@ -141,6 +140,7 @@ pub(crate) struct Settings {
     pub(crate) stroke_weight: u16,
     pub(crate) font_size: u32,
     pub(crate) font_style: FontStyle,
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub(crate) font_family: Font,
     pub(crate) text_shadow: Option<u16>,
     pub(crate) smooth: bool,
