@@ -682,10 +682,10 @@ pub(crate) trait AudioRenderer {
     /// Return the sample rate of the current audio queue device.
     fn audio_sample_rate(&self) -> i32;
 
-    /// Returns the queued buffer size of the current audio queue device.
+    /// Returns the queued buffer size (in bytes) of the current audio queue device.
     fn audio_queued_size(&self) -> u32;
 
-    /// Returns the buffer size of the current audio queue device.
+    /// Returns the buffer size (in bytes) of the current audio queue device.
     fn audio_size(&self) -> u32;
 
     /// Resume playback of the current audio queue device.
