@@ -317,7 +317,6 @@ impl PixEngine {
             let result = 'running: loop {
                 let start_time = Instant::now();
                 let time_since_last = start_time - self.state.last_frame_time();
-                let target_delta_time = self.state.target_delta_time();
 
                 self.handle_events(app)?;
                 if self.state.should_quit() {
@@ -338,11 +337,12 @@ impl PixEngine {
                     self.state.increment_frame(time_since_last)?;
                 }
 
-                // Accounts for variance in frame rates so we don't sleep too long
-                let time_to_next_frame = start_time + target_delta_time;
-                let now = Instant::now();
-                if !self.state.vsync_enabled() && time_to_next_frame > now {
-                    thread::sleep(time_to_next_frame - now);
+                if let Some(target_delta_time) = self.state.target_delta_time() {
+                    let time_to_next_frame = start_time + target_delta_time;
+                    let now = Instant::now();
+                    if !self.state.vsync_enabled() && time_to_next_frame > now {
+                        thread::sleep(time_to_next_frame - now);
+                    }
                 }
             };
 
