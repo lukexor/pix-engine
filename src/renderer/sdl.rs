@@ -154,9 +154,9 @@ impl Rendering for Renderer {
         // Set up Audio
         let audio_subsys = context.audio().map_err(PixError::Renderer)?;
         let desired_spec = AudioSpecDesired {
-            freq: Some(s.audio_sample_rate),
-            channels: Some(1),
-            samples: Some(4096),
+            freq: s.audio_sample_rate,
+            channels: s.audio_channels,
+            samples: s.audio_buffer_size,
         };
         let audio_device = audio_subsys
             .open_queue(None, &desired_spec)

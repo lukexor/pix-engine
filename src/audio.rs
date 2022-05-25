@@ -251,7 +251,7 @@ pub struct AudioSpecDesired {
 }
 
 /// Audio device specification.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct AudioSpec {
     /// DSP frequency (samples per second) in Hz.
@@ -259,7 +259,7 @@ pub struct AudioSpec {
     /// Number of separate sound channels.
     pub channels: u8,
     /// The audio buffer silence value.
-    pub silence: u8,
+    pub silence: f32,
     /// The audio buffer size in samples (power of 2).
     pub samples: u16,
     /// The audio buffer size in bytes.
@@ -269,11 +269,11 @@ pub struct AudioSpec {
 impl Default for AudioSpec {
     fn default() -> Self {
         Self {
-            freq: 48_000,
+            freq: 44_100,
             channels: 1,
-            silence: 0,
-            samples: 0,
-            size: 0,
+            silence: 0.0,
+            samples: 512,
+            size: 2048,
         }
     }
 }
@@ -314,7 +314,7 @@ impl<CB: AudioCallback> AudioDevice<CB> {
     /// Pause playback of this audio callback device.
     #[inline]
     pub fn pause(&self) {
-        self.inner.resume();
+        self.inner.pause();
     }
 }
 

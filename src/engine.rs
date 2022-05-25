@@ -149,15 +149,22 @@ impl Builder {
         self
     }
 
-    /// Set audio sample rate.
+    /// Set audio sample rate in Hz (samples per second). Defaults to device fallback sample rate.
     pub fn audio_sample_rate(&mut self, sample_rate: i32) -> &mut Self {
-        self.settings.audio_sample_rate = sample_rate;
+        self.settings.audio_sample_rate = Some(sample_rate);
         self
     }
 
-    /// Set number of audio channels.
+    /// Set number of audio channels (1 for Mono, 2 for Stereo, etc). Defaults to device fallback
+    /// number of channels.
     pub fn audio_channels(&mut self, channels: u8) -> &mut Self {
-        self.settings.audio_channels = channels;
+        self.settings.audio_channels = Some(channels);
+        self
+    }
+
+    /// Set audio buffer size in samples. Defaults to device fallback sample size.
+    pub fn audio_buffer_size(&mut self, buffer_size: u16) -> &mut Self {
+        self.settings.audio_buffer_size = Some(buffer_size);
         self
     }
 
