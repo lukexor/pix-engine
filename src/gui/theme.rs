@@ -24,11 +24,12 @@ use crate::prelude::*;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 #[cfg(not(target_arch = "wasm32"))]
+use std::fmt;
+#[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
 use std::{
     borrow::Cow,
     collections::hash_map::DefaultHasher,
-    fmt,
     hash::{Hash, Hasher},
 };
 
@@ -225,33 +226,59 @@ impl Builder {
 pub struct Font {
     /// Family name of the font.
     pub(crate) name: Cow<'static, str>,
+    #[cfg(not(target_arch = "wasm32"))]
     /// Data source for the font.
     pub(crate) source: FontSrc,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl Default for Font {
     fn default() -> Self {
         Self::EMULOGIC
     }
 }
 
+#[cfg(target_arch = "wasm32")]
+impl Default for Font {
+    fn default() -> Self {
+        Self::named("Arial")
+    }
+}
+
 impl Font {
+    #[cfg(not(target_arch = "wasm32"))]
     const NOTO_TTF: &'static [u8] = include_bytes!("../../assets/noto_sans_regular.ttf");
+    #[cfg(not(target_arch = "wasm32"))]
     const EMULOGIC_TTF: &'static [u8] = include_bytes!("../../assets/emulogic.ttf");
+    #[cfg(not(target_arch = "wasm32"))]
     const INCONSOLATA_TTF: &'static [u8] = include_bytes!("../../assets/inconsolata_bold.ttf");
 
     /// [Noto Sans Regular](https://fonts.google.com/noto/specimen/Noto+Sans) - an open-source used
     /// by Linux and Google.
+    #[cfg(not(target_arch = "wasm32"))]
     pub const NOTO: Self = Self::from_bytes("Noto", Self::NOTO_TTF);
 
     /// Emulogic - a bold, retro gaming pixel font by Freaky Fonts.
+    #[cfg(not(target_arch = "wasm32"))]
     pub const EMULOGIC: Self = Self::from_bytes("Emulogic", Self::EMULOGIC_TTF);
 
     /// [Inconsolata](https://fonts.google.com/specimen/Inconsolata) - an open-source monospace
     /// font designed for source code and terminals.
+    #[cfg(not(target_arch = "wasm32"))]
     pub const INCONSOLATA: Self = Self::from_bytes("Inconsolata", Self::INCONSOLATA_TTF);
 
+    /// Constructs a new `Font` instance with a given name.
+    #[inline]
+    pub const fn named(name: &'static str) -> Self {
+        Self {
+            name: Cow::Borrowed(name),
+            #[cfg(not(target_arch = "wasm32"))]
+            source: FontSrc::None,
+        }
+    }
+
     /// Constructs a new `Font` instance from a static byte array.
+    #[cfg(not(target_arch = "wasm32"))]
     #[inline]
     pub const fn from_bytes(name: &'static str, bytes: &'static [u8]) -> Self {
         Self {
@@ -282,9 +309,10 @@ impl Font {
     }
 
     /// Returns the source data of the font family.
+    #[cfg(not(target_arch = "wasm32"))]
     #[inline]
     #[must_use]
-    pub(crate) fn source(&self) -> &FontSrc {
+    pub(crate) const fn source(&self) -> &FontSrc {
         &self.source
     }
 
@@ -300,23 +328,29 @@ impl Font {
 
 /// Represents a source of font glyph data.
 #[derive(Clone, PartialEq, Eq, Hash)]
+#[cfg(not(target_arch = "wasm32"))]
 pub(crate) enum FontSrc {
+    /// No source provided.
+    None,
     /// A font from byte data.
     Bytes(&'static [u8]),
-    #[cfg(not(target_arch = "wasm32"))]
     /// A path to a `.ttf` font file.
     Path(PathBuf),
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl fmt::Debug for FontSrc {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::None => write!(f, "None"),
             Self::Bytes(bytes) => write!(f, "Bytes([u8; {}])", bytes.len()),
+            #[cfg(not(target_arch = "wasm32"))]
             Self::Path(path) => write!(f, "Path({})", path.display()),
         }
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl FontSrc {
     pub(crate) const fn from_bytes(bytes: &'static [u8]) -> Self {
         Self::Bytes(bytes)
@@ -343,9 +377,12 @@ pub struct Fonts {
 impl Default for Fonts {
     fn default() -> Self {
         Self {
-            body: Font::EMULOGIC,
-            heading: Font::EMULOGIC,
+            body: Font::default(),
+            heading: Font::default(),
+            #[cfg(not(target_arch = "wasm32"))]
             monospace: Font::INCONSOLATA,
+            #[cfg(target_arch = "wasm32")]
+            monospace: Font::named("Courier"),
         }
     }
 }

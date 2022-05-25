@@ -1,9 +1,11 @@
+//! SDL Renderer
+
 use crate::{
     gui::theme::{FontId, FontSrc},
     prelude::*,
     renderer::{RendererSettings, Rendering},
 };
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use lazy_static::lazy_static;
 use log::{debug, warn};
 use lru::LruCache;
@@ -31,7 +33,7 @@ lazy_static! {
         sdl2::image::init(InitFlag::PNG | InitFlag::JPG).expect("sdl2_image initialized");
 }
 
-pub(crate) use audio::RendererAudioDevice;
+pub use audio::{AudioDevice, AudioFormatNum};
 
 mod audio;
 mod event;
@@ -104,6 +106,7 @@ impl Renderer {
             .get(&self.current_font)
             .expect("valid loaded font");
         let loaded_font = match font_data.source() {
+            FontSrc::None => return Err(anyhow!("Must provide a font data source")),
             FontSrc::Bytes(bytes) => {
                 let rwops = RWops::from_bytes(bytes).map_err(PixError::Renderer)?;
                 TTF.load_font_from_rwops(rwops, self.font_size)

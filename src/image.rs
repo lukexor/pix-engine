@@ -1,19 +1,20 @@
 //! [Image] and [`PixelFormat`] functions.
 
 use crate::{ops::clamp_dimensions, prelude::*, renderer::Rendering};
+#[cfg(not(target_arch = "wasm32"))]
 use anyhow::Context;
+#[cfg(not(target_arch = "wasm32"))]
 use png::{BitDepth, ColorType, Decoder};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+#[cfg(not(target_arch = "wasm32"))]
 use std::{
     ffi::OsStr,
-    fmt,
     fs::File,
     io::{self, BufReader, BufWriter},
-    iter::Copied,
     path::{Path, PathBuf},
-    slice,
 };
+use std::{fmt, iter::Copied, slice};
 
 /// Format for interpreting image data.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -187,6 +188,7 @@ impl Image {
     /// # Errors
     ///
     /// If the file format is not supported or extension is not `.png`, then an error is returned.
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn from_file<P: AsRef<Path>>(path: P) -> PixResult<Self> {
         let path = path.as_ref();
         let ext = path.extension();
@@ -202,6 +204,7 @@ impl Image {
     ///
     /// If the file format is not supported or there is an [`io::Error`] reading the file then an
     /// error is returned.
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn from_read<R: io::Read>(read: R) -> PixResult<Self> {
         let png_file = BufReader::new(read);
         let png = Decoder::new(png_file);
@@ -410,6 +413,7 @@ impl Image {
     /// }
     /// # }
     /// ```
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn save<P>(&self, path: P) -> PixResult<()>
     where
         P: AsRef<Path>,
@@ -593,6 +597,7 @@ pub enum Icon {
     Path(PathBuf),
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl<T: Into<PathBuf>> From<T> for Icon {
     fn from(value: T) -> Self {
         Self::Path(value.into())

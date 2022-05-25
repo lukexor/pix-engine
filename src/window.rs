@@ -58,6 +58,7 @@ impl DerefMut for WindowId {
 #[non_exhaustive]
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(target_arch = "wasm32", derive(Copy))]
 #[allow(variant_size_differences)]
 pub enum Cursor {
     /// A system supported cursor. e.g. Arrow, Hand, etc.

@@ -1,24 +1,101 @@
 use super::Renderer;
 use crate::{
-    audio::{AudioRenderer, DeviceCallback},
+    audio::{AudioDeviceDriver, AudioDriver},
     prelude::*,
 };
 use anyhow::anyhow;
 use log::warn;
 use sdl2::audio::{
-    AudioCallback as SdlAudioCallback, AudioDevice as SdlAudioDevice, AudioSpec as SdlAudioSpec,
+    AudioCallback as SdlAudioCallback, AudioDevice as SdlAudioDevice,
+    AudioFormat as SdlAudioFormat, AudioSpec as SdlAudioSpec,
     AudioSpecDesired as SdlAudioSpecDesired, AudioStatus as SdlAudioStatus,
 };
+use std::fmt;
+
+pub use sdl2::audio::AudioFormatNum;
 
 // ~1.5 minutes of audio @ 48,000 HZ.
 const WARN_QUEUE_SIZE: u32 = 1 << 22;
 // ~11.5  minutes of audio @ 48,000 HZ.
 const MAX_QUEUE_SIZE: u32 = 1 << 25;
 
-/// A alias around a SDL audio device.
-pub(crate) type RendererAudioDevice<CB> = SdlAudioDevice<CB>;
+/// Audio callback or playback device that can be paused and resumed.
+pub struct AudioDevice<CB: AudioCallback>(SdlAudioDevice<UserCallback<CB>>);
 
-impl AudioRenderer for Renderer {
+impl<CB: AudioCallback> AudioDeviceDriver for AudioDevice<CB> {
+    /// Return the status of this audio callback device.
+    #[inline]
+    fn status(&self) -> AudioStatus {
+        self.0.status().into()
+    }
+
+    /// Return the current driver of this audio callback device.
+    #[inline]
+    #[must_use]
+    fn driver(&self) -> &'static str {
+        self.0.subsystem().current_audio_driver()
+    }
+
+    /// Returns the [`AudioSpec`] for this audio callback device.
+    #[inline]
+    fn spec(&self) -> AudioSpec {
+        self.0.spec().into()
+    }
+
+    /// Resumes playback of this audio callback device.
+    #[inline]
+    fn resume(&self) {
+        self.0.resume();
+    }
+
+    /// Pause playback of this audio callback device.
+    #[inline]
+    fn pause(&self) {
+        self.0.pause();
+    }
+}
+
+impl<CB: AudioCallback> fmt::Debug for AudioDevice<CB> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("AudioDevice")
+            .field("status", &self.status())
+            .field("driver", &self.driver())
+            .field("spec", &self.spec())
+            .finish()
+    }
+}
+
+/// A wrapper around `AudioCallback`, which we can implement `SdlAudioCallback` for.
+pub(crate) struct UserCallback<CB>(CB);
+
+impl<CB: AudioCallback> UserCallback<CB> {
+    fn new(callback: CB) -> Self {
+        Self(callback)
+    }
+}
+
+impl<CB: AudioCallback> AudioDevice<CB> {
+    /// Creates a new `AudioDevice` from a renderer-specific device.
+    pub(crate) fn new(device: SdlAudioDevice<UserCallback<CB>>) -> Self {
+        Self(device)
+    }
+}
+
+impl<CB: AudioCallback> SdlAudioCallback for UserCallback<CB> {
+    type Channel = CB::Channel;
+    fn callback(&mut self, out: &mut [Self::Channel]) {
+        self.0.callback(out);
+    }
+}
+
+impl<CB: AudioCallback> From<SdlAudioDevice<UserCallback<CB>>> for AudioDevice<CB> {
+    /// Convert [`<SdlAudioDevice<DeviceCallback>>`] to [`AudioDevice`].
+    fn from(device: SdlAudioDevice<UserCallback<CB>>) -> Self {
+        Self::new(device)
+    }
+}
+
+impl AudioDriver for Renderer {
     /// Add audio samples to the audio buffer queue.
     #[inline]
     fn enqueue_audio(&mut self, samples: &[f32]) -> PixResult<()> {
@@ -98,8 +175,8 @@ impl AudioRenderer for Renderer {
             .context
             .audio()
             .map_err(PixError::Renderer)?
-            .open_playback(device, &desired_spec.into(), |spec| DeviceCallback {
-                inner: get_callback(spec.into()),
+            .open_playback(device, &desired_spec.into(), |spec| {
+                UserCallback::new(get_callback(spec.into()))
             })
             .map_err(PixError::Renderer)?
             .into())
@@ -123,27 +200,11 @@ impl AudioRenderer for Renderer {
             .context
             .audio()
             .map_err(PixError::Renderer)?
-            .open_capture(device, &desired_spec.into(), |spec| DeviceCallback {
-                inner: get_callback(spec.into()),
+            .open_capture(device, &desired_spec.into(), |spec| {
+                UserCallback::new(get_callback(spec.into()))
             })
             .map_err(PixError::Renderer)?
             .into())
-    }
-}
-
-#[doc(hidden)]
-impl<CB: AudioCallback> SdlAudioCallback for DeviceCallback<CB> {
-    type Channel = f32;
-    fn callback(&mut self, out: &mut [Self::Channel]) {
-        self.inner.callback(out);
-    }
-}
-
-#[doc(hidden)]
-impl<CB: AudioCallback> From<SdlAudioDevice<DeviceCallback<CB>>> for AudioDevice<CB> {
-    /// Convert [`<SdlAudioDevice<DeviceCallback<CB>>>`] to [`AudioDevice<CB>`].
-    fn from(device: SdlAudioDevice<DeviceCallback<CB>>) -> Self {
-        Self::new(device)
     }
 }
 
@@ -172,13 +233,46 @@ impl From<&AudioSpecDesired> for SdlAudioSpecDesired {
 }
 
 #[doc(hidden)]
+impl From<SdlAudioFormat> for AudioFormat {
+    /// Convert [`SdlAudioFormat`] to [`AudioFormat`].
+    fn from(format: SdlAudioFormat) -> Self {
+        match format {
+            SdlAudioFormat::U8 => Self::U8,
+            SdlAudioFormat::S8 => Self::S8,
+            SdlAudioFormat::U16LSB => Self::U16LSB,
+            SdlAudioFormat::U16MSB => Self::U16MSB,
+            SdlAudioFormat::S16LSB => Self::S16LSB,
+            SdlAudioFormat::S16MSB => Self::S16MSB,
+            SdlAudioFormat::S32LSB => Self::S32LSB,
+            SdlAudioFormat::S32MSB => Self::S32MSB,
+            SdlAudioFormat::F32LSB => Self::F32LSB,
+            SdlAudioFormat::F32MSB => Self::F32MSB,
+        }
+    }
+}
+
+#[doc(hidden)]
 impl From<SdlAudioSpec> for AudioSpec {
     /// Convert [`SdlAudioSpec`] to [`AudioSpec`].
     fn from(spec: SdlAudioSpec) -> Self {
         Self {
             freq: spec.freq,
+            format: spec.format.into(),
             channels: spec.channels,
-            silence: spec.silence,
+            samples: spec.samples,
+            size: spec.size,
+        }
+    }
+}
+
+#[doc(hidden)]
+impl From<&SdlAudioSpec> for AudioSpec {
+    /// Convert [`SdlAudioSpec`] to [`AudioSpec`].
+    fn from(spec: &SdlAudioSpec) -> Self {
+        Self {
+            freq: spec.freq,
+            format: spec.format.into(),
+            channels: spec.channels,
             samples: spec.samples,
             size: spec.size,
         }

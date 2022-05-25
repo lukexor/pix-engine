@@ -5,10 +5,14 @@ use crate::{image::Icon, prelude::*};
 pub(crate) use crate::{texture::TextureRenderer, window::WindowRenderer};
 
 #[cfg(not(target_arch = "wasm32"))]
-pub(crate) mod sdl;
-
+pub mod sdl;
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) use sdl::Renderer;
+
+#[cfg(target_arch = "wasm32")]
+pub mod wasm;
+#[cfg(target_arch = "wasm32")]
+pub(crate) use wasm::Renderer;
 
 /// Settings used to set up the renderer.
 #[derive(Debug, Clone)]

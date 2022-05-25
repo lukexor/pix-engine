@@ -52,7 +52,9 @@
 //! }
 //!
 //! impl AudioCallback for SquareWave {
-//!     fn callback(&mut self, out: &mut [f32]) {
+//!     type Channel = f32;
+//!
+//!     fn callback(&mut self, out: &mut [Self::Channel]) {
 //!         // Generate a square wave
 //!         for x in out.iter_mut() {
 //!             *x = if self.phase <= 0.5 {
@@ -111,7 +113,9 @@
 //! }
 //!
 //! impl AudioCallback for Recording {
-//!     fn callback(&mut self, input: &mut [f32]) {
+//!     type Channel = f32;
+//!
+//!     fn callback(&mut self, input: &mut [Self::Channel]) {
 //!         if self.done {
 //!             return;
 //!         }
@@ -176,10 +180,12 @@
 use crate::prelude::{PixResult, PixState};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 #[cfg(not(target_arch = "wasm32"))]
-use crate::renderer::sdl::RendererAudioDevice;
+pub use crate::renderer::sdl::{AudioDevice, AudioFormatNum};
+
+#[cfg(target_arch = "wasm32")]
+pub use crate::renderer::wasm::{AudioDevice, AudioFormatNum};
 
 /// Trait for allowing [`PixEngine`] to request audio samples from your application.
 ///
@@ -187,7 +193,13 @@ use crate::renderer::sdl::RendererAudioDevice;
 ///
 /// [`PixEngine`]: crate::engine::PixEngine
 /// [module-level documentation]: crate::audio
-pub trait AudioCallback: Send {
+pub trait AudioCallback: Send
+where
+    Self::Channel: AudioFormatNum + 'static,
+{
+    /// The audio type format for channel samples.
+    type Channel;
+
     /// Called when the audio playback device needs samples to play or the capture device has
     /// samples available. `buffer` is a pre-allocated buffer you can iterate over and update to
     /// provide audio samples, or consume to record audio samples.
@@ -204,7 +216,9 @@ pub trait AudioCallback: Send {
     /// }
     ///
     /// impl AudioCallback for SquareWave {
-    ///     fn callback(&mut self, out: &mut [f32]) {
+    ///     type Channel = f32;
+    ///
+    ///     fn callback(&mut self, out: &mut [Self::Channel]) {
     ///         // Generate a square wave
     ///         for x in out.iter_mut() {
     ///             *x = if self.phase <= 0.5 {
@@ -217,12 +231,94 @@ pub trait AudioCallback: Send {
     ///     }
     /// }
     /// ```
-    fn callback(&mut self, buffer: &mut [f32]);
+    fn callback(&mut self, buffer: &mut [Self::Channel]);
+}
+
+/// Audio number and endianness format for the given audio device.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[must_use]
+pub enum AudioFormat {
+    /// Unsigned 8-bit samples
+    U8,
+    /// Signed 8-bit samples
+    S8,
+    /// Unsigned 16-bit samples, little-endian
+    U16LSB,
+    /// Unsigned 16-bit samples, big-endian
+    U16MSB,
+    /// Signed 16-bit samples, little-endian
+    S16LSB,
+    /// Signed 16-bit samples, big-endian
+    S16MSB,
+    /// Signed 32-bit samples, little-endian
+    S32LSB,
+    /// Signed 32-bit samples, big-endian
+    S32MSB,
+    /// 32-bit floating point samples, little-endian
+    F32LSB,
+    /// 32-bit floating point samples, big-endian
+    F32MSB,
+}
+
+#[cfg(target_endian = "little")]
+impl AudioFormat {
+    /// Unsigned 16-bit samples, native endian
+    #[inline]
+    pub const fn u16_sys() -> AudioFormat {
+        AudioFormat::U16LSB
+    }
+    /// Signed 16-bit samples, native endian
+    #[inline]
+    pub const fn s16_sys() -> AudioFormat {
+        AudioFormat::S16LSB
+    }
+    /// Signed 32-bit samples, native endian
+    #[inline]
+    pub const fn s32_sys() -> AudioFormat {
+        AudioFormat::S32LSB
+    }
+    /// 32-bit floating point samples, native endian
+    #[inline]
+    pub const fn f32_sys() -> AudioFormat {
+        AudioFormat::F32LSB
+    }
+}
+
+#[cfg(target_endian = "big")]
+impl AudioFormat {
+    /// Unsigned 16-bit samples, native endian
+    #[inline]
+    pub const fn u16_sys() -> AudioFormat {
+        AudioFormat::U16MSB
+    }
+    /// Signed 16-bit samples, native endian
+    #[inline]
+    pub const fn s16_sys() -> AudioFormat {
+        AudioFormat::S16MSB
+    }
+    /// Signed 32-bit samples, native endian
+    #[inline]
+    pub const fn s32_sys() -> AudioFormat {
+        AudioFormat::S32MSB
+    }
+    /// 32-bit floating point samples, native endian
+    #[inline]
+    pub const fn f32_sys() -> AudioFormat {
+        AudioFormat::F32MSB
+    }
+}
+
+impl Default for AudioFormat {
+    fn default() -> Self {
+        Self::f32_sys()
+    }
 }
 
 /// Playback status of an audio device.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[must_use]
 pub enum AudioStatus {
     /// Audio device is stopped.
     Stopped,
@@ -241,6 +337,7 @@ impl Default for AudioStatus {
 /// Desired audio device specification.
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[must_use]
 pub struct AudioSpecDesired {
     /// DSP frequency (samples per second) in Hz. Set to None for the device’s fallback frequency.
     pub freq: Option<i32>,
@@ -253,13 +350,14 @@ pub struct AudioSpecDesired {
 /// Audio device specification.
 #[derive(Debug, Copy, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[must_use]
 pub struct AudioSpec {
     /// DSP frequency (samples per second) in Hz.
     pub freq: i32,
+    /// `AudioFormat` for the generic sample type.
+    pub format: AudioFormat,
     /// Number of separate sound channels.
     pub channels: u8,
-    /// The audio buffer silence value.
-    pub silence: f32,
     /// The audio buffer size in samples (power of 2).
     pub samples: u16,
     /// The audio buffer size in bytes.
@@ -270,65 +368,30 @@ impl Default for AudioSpec {
     fn default() -> Self {
         Self {
             freq: 44_100,
+            format: AudioFormat::default(),
             channels: 1,
-            silence: 0.0,
             samples: 512,
             size: 2048,
         }
     }
 }
 
-/// Audio callback or playback device that can be paused and resumed.
-pub struct AudioDevice<CB: AudioCallback> {
-    inner: RendererAudioDevice<DeviceCallback<CB>>,
-}
-
-impl<CB: AudioCallback> AudioDevice<CB> {
+/// Provides access to audio device driver properties and controlling playback.
+pub trait AudioDeviceDriver {
     /// Return the status of this audio callback device.
-    #[inline]
-    #[must_use]
-    pub fn audio_status(&self) -> AudioStatus {
-        self.inner.status().into()
-    }
+    fn status(&self) -> AudioStatus;
 
     /// Return the current driver of this audio callback device.
-    #[inline]
-    #[must_use]
-    pub fn audio_driver(&self) -> &'static str {
-        self.inner.subsystem().current_audio_driver()
-    }
+    fn driver(&self) -> &'static str;
 
-    /// Returns the sample rate for this audio callback device.
-    #[inline]
-    #[must_use]
-    pub fn audio_sample_rate(&self) -> i32 {
-        self.inner.spec().freq
-    }
+    /// Returns the [`AudioSpec`] for this audio callback device.
+    fn spec(&self) -> AudioSpec;
 
     /// Resumes playback of this audio callback device.
-    #[inline]
-    pub fn resume(&self) {
-        self.inner.resume();
-    }
+    fn resume(&self);
 
     /// Pause playback of this audio callback device.
-    #[inline]
-    pub fn pause(&self) {
-        self.inner.pause();
-    }
-}
-
-impl<CB: AudioCallback> AudioDevice<CB> {
-    /// Creates a new `AudioDevice` from a renderer-specific device.
-    pub(crate) fn new(device: RendererAudioDevice<DeviceCallback<CB>>) -> Self {
-        Self { inner: device }
-    }
-}
-
-impl<CB: AudioCallback> fmt::Debug for AudioDevice<CB> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("AudioDevice").finish()
-    }
+    fn pause(&self);
 }
 
 impl PixState {
@@ -396,7 +459,6 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    #[must_use]
     pub fn audio_status(&self) -> AudioStatus {
         self.renderer.audio_status()
     }
@@ -501,7 +563,9 @@ impl PixState {
     /// }
     ///
     /// impl AudioCallback for SquareWave {
-    ///     fn callback(&mut self, out: &mut [f32]) {
+    ///     type Channel = f32;
+    ///
+    ///     fn callback(&mut self, out: &mut [Self::Channel]) {
     ///         // Generate a square wave
     ///         for x in out.iter_mut() {
     ///             *x = if self.phase <= 0.5 {
@@ -583,7 +647,9 @@ impl PixState {
     /// }
     ///
     /// impl AudioCallback for Recording {
-    ///     fn callback(&mut self, input: &mut [f32]) {
+    ///     type Channel = f32;
+    ///
+    ///     fn callback(&mut self, input: &mut [Self::Channel]) {
     ///         if self.done {
     ///             return;
     ///         }
@@ -660,13 +726,8 @@ impl PixState {
     }
 }
 
-/// A newtype wrapper around `AudioCallback`.
-pub(crate) struct DeviceCallback<CB: AudioCallback> {
-    pub(crate) inner: CB,
-}
-
 /// Trait representing audio support.
-pub(crate) trait AudioRenderer {
+pub(crate) trait AudioDriver {
     /// Add audio samples to the current audio buffer queue.
     fn enqueue_audio(&mut self, samples: &[f32]) -> PixResult<()>;
 

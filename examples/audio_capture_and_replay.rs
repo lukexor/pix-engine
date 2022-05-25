@@ -13,7 +13,9 @@ struct Recording {
 // Append the input of the callback to the record_buffer.
 // When the record_buffer is full, send it to the main thread via done_sender.
 impl AudioCallback for Recording {
-    fn callback(&mut self, input: &mut [f32]) {
+    type Channel = f32;
+
+    fn callback(&mut self, input: &mut [Self::Channel]) {
         if self.done {
             return;
         }
@@ -38,7 +40,9 @@ struct Playback {
 }
 
 impl AudioCallback for Playback {
-    fn callback(&mut self, out: &mut [f32]) {
+    type Channel = f32;
+
+    fn callback(&mut self, out: &mut [Self::Channel]) {
         for x in out.iter_mut() {
             *x = *self.data.get(self.pos).unwrap_or(&0.0);
             self.pos += 1;
@@ -75,7 +79,7 @@ impl CaptureReplayDemo {
             }
         })?;
 
-        log::info!("Audio Driver: {:?}", capture_device.audio_driver());
+        log::info!("Audio Driver: {:?}", capture_device.driver());
         capture_device.resume();
 
         // Wait for recording to finish

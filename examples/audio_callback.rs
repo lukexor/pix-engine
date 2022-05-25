@@ -4,13 +4,15 @@ use std::{env, time::Duration};
 struct SquareWave {
     phase_inc: f32,
     phase: f32,
-    volume: f32,
+    volume: i8,
 }
 
 struct CallbackDemo;
 
 impl AudioCallback for SquareWave {
-    fn callback(&mut self, out: &mut [f32]) {
+    type Channel = i8;
+
+    fn callback(&mut self, out: &mut [Self::Channel]) {
         // Generate a square wave
         for x in out.iter_mut() {
             *x = if self.phase <= 0.5 {
@@ -37,12 +39,12 @@ impl AppState for CallbackDemo {
             SquareWave {
                 phase_inc: 440.0 / spec.freq as f32,
                 phase: 0.0,
-                volume: 0.25,
+                volume: 40,
             }
         })?;
 
         // Start playback
-        log::info!("Audio Driver: {:?}", device.audio_driver());
+        log::info!("Audio Driver: {:?}", device.driver());
         device.resume();
 
         // Play for 2 seconds then quit.
