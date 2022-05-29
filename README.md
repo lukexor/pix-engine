@@ -78,7 +78,6 @@ There are several options for installing `SDL2`, but these are the most common:
 
 - Install via [homebrew][] for `macOS`, a package management tool like `apt` for
   `Linux` or `MSVC` for `Windows`.
-- [vcpkg][] which will download and install the dependencies for you.
 
 For more details and installation options see the [rust-sdl2][] documentation.
 
@@ -120,34 +119,6 @@ sudo pacman -S sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
       Windows installation.
 4. Copy `SDL2.dll` from `SDL2-2.0.XX\lib\x64\` to your `cargo` project next to
    `Cargo.toml`.
-
-#### macOS, Linux and Windows with vcpkg
-
-[vcpkg][] can download and install the correct versions for you, but requires
-some setup.
-
-Add the following to your `Cargo.toml`:
-
-```toml
-[dependencies]
-pix-engine = { version = "0.5.4", features = ["vcpkg"] }
-
-[package.metadata.vcpkg]
-dependencies = ["sdl2", "sdl2-image[libjpeg-turbo,tiff,libwebp]", "sdl2-ttf", "sdl2-gfx", "sdl2-mixer"]
-git = "https://github.com/microsoft/vcpkg"
-rev = "261c458af6e3eed5d099144aff95d2b5035f656b"
-
-[package.metadata.vcpkg.target]
-x86_64-pc-windows-msvc = { triplet = "x64-windows-static-md" }
-```
-
-Then build your project like this:
-
-```sh
-cargo install cargo-vcpkg
-cargo vcpkg build
-cargo build
-```
 
 ### Creating Your Application
 
@@ -258,11 +229,6 @@ fn main() -> PixResult<()> {
   backtraces based on environment variables outlined in
   [std::backtrace][]. Useful for debugging.
 
-* **vcpkg** -
-  Enables static linking of the [SDL2][] libraries which are dependencies for
-  macOS, Linux, and Windows targets. Using this feature is the easiest way to
-  get up and running unless you already have `SDL2` installed on your system.
-
 ### Renderer Features
 
 * **opengl** -
@@ -309,7 +275,6 @@ implementation and evolution of this crate:
 [Rust]: https://www.rust-lang.org/
 [SDL2]: https://crates.io/crates/sdl2/
 [homebrew]: https://brew.sh/
-[vcpkg]: https://github.com/microsoft/vcpkg
 [rust-sdl2]: https://github.com/Rust-SDL2/rust-sdl2#sdl20-development-libraries
 [log]: https://crates.io/crates/log
 [env_logger]: https://crates.io/crates/env_logger
