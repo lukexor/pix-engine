@@ -344,11 +344,13 @@ impl PixEngine {
                     self.state.increment_frame(time_since_last)?;
                 }
 
-                if let Some(target_delta_time) = self.state.target_delta_time() {
-                    let time_to_next_frame = start_time + target_delta_time;
-                    let now = Instant::now();
-                    if !self.state.vsync_enabled() && time_to_next_frame > now {
-                        thread::sleep(time_to_next_frame - now);
+                if !self.state.vsync_enabled() {
+                    if let Some(target_delta_time) = self.state.target_delta_time() {
+                        let time_to_next_frame = start_time + target_delta_time;
+                        let now = Instant::now();
+                        if time_to_next_frame > now {
+                            thread::sleep(time_to_next_frame - now);
+                        }
                     }
                 }
             };
