@@ -17,7 +17,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:  [macos-latest, ubuntu-latest, windows-latest]
+        # TODO: Add back windows-latest
+        os:  [macos-latest, ubuntu-latest]
         toolchain: [nightly, beta, stable, 1.59.0]
     steps:
     - name: Checkout
@@ -48,10 +49,17 @@ jobs:
     - name: Install Homebrew
       if: matrix.os != 'macos-latest'
       run: |
+        sudo apt-get install curl
         bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
+        test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        echo "LIBRARY_PATH='$LIBRARY_PATH:$(brew --prefix)/lib'" >> $GITHUB_ENV
+        sudo apt-get install build-essential
 
     - name: Install build dependencies
-      run: brew install sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
+      run: |
+        brew update
+        brew install sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
 
     - name: Build source
       run: cargo build --all-targets --features "serde" --verbose

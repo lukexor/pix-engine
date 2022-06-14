@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## 0.5.5
 
 ### Added
 
@@ -42,6 +42,11 @@ All notable changes to this project will be documented in this file.
   when `vsync` is enabled.
 - Changed vertical scroll direction to be natural.
 - Fixed off-by-one error in `Ellipse::bounding_rect`.
+- Set default audio buffer size to 4096.
+- Fixed target frame rate epsilon.
+- Updated audio buffer doucmentation.
+- Fixed update rate limiting when vsync is disabled and no target frame rate set.
+- Changed default audio settings to use device defaults.
 
 ### Breaking
 
@@ -66,6 +71,9 @@ All notable changes to this project will be documented in this file.
 - Modified `Contains` and `Intersects` traits to be more generic and have a
   single `contains` or `intersects` method to allow for future implementations
   of other shapes.
+- Added `PixState::audio_queued_size` and `PixState::audio_size`
+- Added support for multiple channel types for `AudioCallback`.
+- Removed `vcpkg` support due to flaky error rates.
 
 ## [0.5.4] - 2022-01-26
 
