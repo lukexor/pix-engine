@@ -35,7 +35,7 @@ lazy_static! {
 
 pub use audio::{AudioDevice, AudioFormatNum};
 
-mod audio;
+pub mod audio;
 mod event;
 mod texture;
 mod window;

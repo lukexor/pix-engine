@@ -22,7 +22,7 @@ impl Direction {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Cell {
     id: usize,
     col: u32,

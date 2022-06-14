@@ -348,7 +348,7 @@ pub struct AudioSpecDesired {
 }
 
 /// Audio device specification.
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[must_use]
 pub struct AudioSpec {

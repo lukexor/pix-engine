@@ -1,3 +1,5 @@
+//! SDL Audio
+
 use super::Renderer;
 use crate::{
     audio::{AudioDeviceDriver, AudioDriver},
