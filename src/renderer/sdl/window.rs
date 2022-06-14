@@ -6,7 +6,6 @@ use crate::{
     window::{Position, WindowId},
 };
 use anyhow::{bail, Context};
-use log::debug;
 use lru::LruCache;
 use sdl2::{
     image::LoadSurface,
@@ -153,7 +152,7 @@ impl WindowCanvas {
             canvas_builder = canvas_builder.present_vsync();
         }
         let mut canvas = canvas_builder.build().context("failed to build canvas")?;
-        debug!("Using SDL Renderer `{}`", canvas.info().name);
+        log::debug!("Using SDL Renderer `{}`", canvas.info().name);
         canvas
             .set_logical_size(win_width, win_height)
             .context("invalid logical canvas size")?;
@@ -177,6 +176,7 @@ impl WindowCanvas {
             canvas.window_mut().set_icon(surface);
         }
 
+        log::debug!("Created new window: {}", window_id);
         Ok(Self {
             id: window_id,
             canvas,
@@ -395,6 +395,7 @@ impl WindowRenderer for Renderer {
 
     /// Set the window to synchronize frame rate to the screens refresh rate.
     fn set_vsync(&mut self, val: bool) -> PixResult<()> {
+        log::debug!("Set VSync: {}", val);
         let window_canvas = self
             .windows
             .get_mut(&self.window_target)
