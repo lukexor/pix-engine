@@ -17,7 +17,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        features: ["serde"]
         os:  [macos-latest, ubuntu-latest]
         toolchain: [nightly, beta, stable, 1.59.0]
     steps:
@@ -65,17 +64,17 @@ jobs:
 
     - name: Build source
       run: |
-        cargo build --all-targets --features "${{matrix.feature}}"--verbose
+        cargo build --all-targets --features "serde" --verbose
         # bash bin/build_wasm.sh --dev
 
     - name: Build documentation
-      run: cargo doc --features "${{matrix.feature}}" --verbose
+      run: cargo doc --features "serde" --verbose
 
     - name: Run unit tests
-      run: cargo test --features "${{matrix.feature}}" --verbose
+      run: cargo test --features "serde" --verbose
 
     - name: Run integration tests
       # TODO: Fix missing video device on linux and audio API issue on windows
       if: matrix.os == 'macos-latest'
       run: |
-        cargo test run_engine --features "${{matrix.feature}}" -- --test-threads=1 --ignored
+        cargo test run_engine --features "serde" -- --test-threads=1 --ignored
