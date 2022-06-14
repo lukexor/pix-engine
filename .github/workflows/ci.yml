@@ -54,6 +54,7 @@ jobs:
         test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
         test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
         echo "LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
         sudo apt-get update
         sudo apt-get install build-essential
 
