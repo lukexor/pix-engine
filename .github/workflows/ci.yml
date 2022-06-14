@@ -17,8 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # TODO: Add back windows-latest
-        os:  [macos-latest, ubuntu-latest]
+        os:  [macos-latest, ubuntu-latest, windows-latest]
         toolchain: [nightly, beta, stable, 1.59.0]
     steps:
     - name: Checkout
@@ -50,10 +49,12 @@ jobs:
       if: matrix.os != 'macos-latest'
       run: |
         sudo apt-get install curl
-        bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        NONINTERACTIVE=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
         test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-        echo "LD_LIBRARY_PATH='$LD_LIBRARY_PATH:$(brew --prefix)/lib'" >> $GITHUB_ENV
+        echo "LIBRARY_PATH='$LIBRARY_PATH:$(brew --prefix)/lib'" >> $GITHUB_ENV
+        ls $(brew --prefix)/lib
+        echo $LIBRARY_PATH
         sudo apt-get install build-essential
 
     - name: Install build dependencies
