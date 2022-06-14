@@ -17,6 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        features: ["", "serde"]
         os:  [macos-latest, ubuntu-latest]
         toolchain: [nightly, beta, stable, 1.59.0]
     steps:
@@ -46,34 +47,35 @@ jobs:
         command: clippy
 
     - name: Install Homebrew
-      if: matrix.os != 'macos-latest'
+      if: matrix.os == 'ubuntu-latest'
       shell: bash
       run: |
-        sudo apt-get install curl
-        NONINTERACTIVE=1 bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        set -xeuo pipefail
+        bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
         test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-        echo "LIBRARY_PATH='$LIBRARY_PATH:$(brew --prefix)/lib'" >> $GITHUB_ENV
+        echo "LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
+        sudo apt-get update
         sudo apt-get install build-essential
 
     - name: Install build dependencies
       run: |
         brew update
         brew install sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
-        ls $(brew --prefix)/lib
-        echo $LIBRARY_PATH
 
     - name: Build source
-      run: cargo build --all-targets --features "serde" --verbose
+      run: |
+        cargo build --all-targets --features "${{matrix.feature}}"--verbose
+        # bash bin/build_wasm.sh --dev
 
     - name: Build documentation
-      run: cargo doc --features "serde" --verbose
+      run: cargo doc --features "${{matrix.feature}}" --verbose
 
     - name: Run unit tests
-      run: cargo test --features "serde" --verbose
+      run: cargo test --features "${{matrix.feature}}" --verbose
 
     - name: Run integration tests
       # TODO: Fix missing video device on linux and audio API issue on windows
       if: matrix.os == 'macos-latest'
       run: |
-        cargo test run_engine --features "serde" -- --test-threads=1 --ignored
+        cargo test run_engine --features "${{matrix.feature}}" -- --test-threads=1 --ignored
