@@ -48,7 +48,7 @@ jobs:
     - name: Install Homebrew
       if: matrix.os != 'macos-latest'
       run: |
-        sh -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
     - name: Install build dependencies
       run: brew install sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
