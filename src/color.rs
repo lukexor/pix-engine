@@ -28,6 +28,11 @@
 //! [prelude](crate::prelude) matching the [SVG 1.0 Color
 //! Keywords](https://www.w3.org/TR/SVG11/types.html#ColorKeywords).
 //!
+//! [color!]: crate::prelude::color
+//! [rgb!]: crate::prelude::rgb
+//! [hsb!]: crate::prelude::hsb
+//! [hsl!]: crate::prelude::hsl
+//!
 //! # Examples
 //!
 //! Rgb values range from `0..=255` for red, green, blue and alpha transparency.
@@ -172,6 +177,8 @@ macro_rules! color {
 /// Constructs a [Color] with `red`, `green`, `blue` and optional `alpha`.
 ///
 /// Alias for [color!].
+///
+/// [color!]: crate::prelude::color
 ///
 /// # Examples
 ///

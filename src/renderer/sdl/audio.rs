@@ -91,7 +91,7 @@ impl<CB: AudioCallback> SdlAudioCallback for UserCallback<CB> {
 }
 
 impl<CB: AudioCallback> From<SdlAudioDevice<UserCallback<CB>>> for AudioDevice<CB> {
-    /// Convert [`<SdlAudioDevice<DeviceCallback>>`] to [`AudioDevice`].
+    /// Convert [`SdlAudioDevice<UseCallback<CB>>`] to [`AudioDevice`].
     fn from(device: SdlAudioDevice<UserCallback<CB>>) -> Self {
         Self::new(device)
     }
