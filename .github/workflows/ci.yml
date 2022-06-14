@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        features: ["", "serde"]
+        features: ["serde"]
         os:  [macos-latest, ubuntu-latest]
         toolchain: [nightly, beta, stable, 1.59.0]
     steps:
