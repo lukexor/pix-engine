@@ -53,7 +53,7 @@ jobs:
         bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
         test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-        echo "LIBRARY_PATH='$LIBRARY_PATH:$(brew --prefix)/lib'" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH='$LD_LIBRARY_PATH:$(brew --prefix)/lib'" >> $GITHUB_ENV
         sudo apt-get install build-essential
 
     - name: Install build dependencies
