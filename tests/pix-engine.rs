@@ -1,7 +1,7 @@
 //! Integration tests using [PixEngine] must be run on the main thread.
 //!
 //! ```no_run
-//! cargo test run_engine -- --test-threads=1 --ignored
+//! cargo test engine -- --test-threads=1 --ignored
 //! ```
 //!
 //! This is due to `SDL2` context needing to be on the main thread.
@@ -60,7 +60,7 @@ fn create_engine() -> PixResult<PixEngine> {
 
 #[test]
 #[ignore = "engine can only be tested in the main thread. --test-threads=1"]
-fn test_run_engine_start() -> PixResult<()> {
+fn single_thread_engine_start() -> PixResult<()> {
     let mut eng = create_engine()?;
     // Quitting from on_start should exit the game loop early
     let mut app = App::new();
@@ -74,7 +74,7 @@ fn test_run_engine_start() -> PixResult<()> {
 
 #[test]
 #[ignore = "engine can only be tested in the main thread. --test-threads=1"]
-fn test_run_engine_update() -> PixResult<()> {
+fn single_thread_engine_update() -> PixResult<()> {
     let mut eng = create_engine()?;
     // Quitting from on_update should exit but still run on_stop
     let mut app = App::new();
@@ -88,7 +88,7 @@ fn test_run_engine_update() -> PixResult<()> {
 
 #[test]
 #[ignore = "engine can only be tested in the main thread. --test-threads=1"]
-fn test_run_engine_stop() -> PixResult<()> {
+fn single_thread_engine_stop() -> PixResult<()> {
     let mut eng = create_engine()?;
     // Aborting quit from on_stop should resume game loop
     let mut app = App::new();

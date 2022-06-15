@@ -47,7 +47,7 @@ pretty_env_logger = "0.4.0"
 [dev-dependencies.cargo-husky]
 version = "1.5.0"
 default-features = false
-features = ["prepush-hook", "run-cargo-test", "run-cargo-clippy"]
+features = ["user-hooks"]
 
 [features]
 default = []
