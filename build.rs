@@ -1,8 +1,8 @@
 use std::env;
 use std::path::PathBuf;
 
-const MSVC: &str = "msvc";
-const MINGW: &str = "gnu-mingw";
+const MSVC: &str = "lib/msvc";
+const MINGW: &str = "lib/gnu-mingw";
 
 fn main() {
     let target = env::var("TARGET").expect("valid TARGET defined");
@@ -19,7 +19,7 @@ fn main() {
             lib_dir.push(MINGW);
             dll_dir.push(MINGW);
         } else {
-            eprintln!("windowws target {} unsupported", target);
+            eprintln!("{} target unsupported", target);
             return;
         }
         lib_dir.push("lib");
