@@ -235,21 +235,17 @@ fn main() -> PixResult<()> {
 
 ### Utility Features
 
-* **serde** -
-  Adds [serde][] `Serialize`/`Deserialize` implementations for all
+* **serde** - Adds [serde][] `Serialize`/`Deserialize` implementations for all
   enums/structs.
 
-* **backtrace** -
-  Enables the `backtrace` feature for [anyhow][], which allows printing
-  backtraces based on environment variables outlined in
-  [std::backtrace][]. Useful for debugging.
+* **backtrace** - Enables the `backtrace` feature for [anyhow][], which allows printing
+  backtraces based on environment variables outlined in [std::backtrace][]. Useful for debugging.
 
 ### Renderer Features
 
-* **opengl** -
-  Forces `sdl2` to use `opengl` as its renderer. This feature is disabled by
-  default, allowing `sdl2` to use whichever renderer it defaults to on the
-  target system. For example, macOS defaults to `metal`.
+* **opengl** - Forces `sdl2` to use `opengl` as its renderer. This feature is disabled by
+  default, allowing `sdl2` to use whichever renderer it defaults to on the target system. For
+  example, macOS defaults to `metal`.
 
 ## Known Issues
 
