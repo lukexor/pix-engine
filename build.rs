@@ -12,7 +12,7 @@ fn main() {
         );
         let mut lib_dir = manifest_dir.join("lib").clone();
         let mut dll_dir = manifest_dir.join("lib").clone();
-        
+
         if target.contains("msvc") {
             lib_dir.push(MSVC);
             dll_dir.push(MSVC);
