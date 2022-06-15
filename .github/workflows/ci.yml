@@ -46,7 +46,7 @@ jobs:
         command: clippy
 
     - name: Install Homebrew
-      if: matrix.os == "ubuntu-latest"
+      if: matrix.os == 'ubuntu-latest'
       shell: bash
       run: |
         set -xeuo pipefail
@@ -76,6 +76,6 @@ jobs:
 
     - name: Run integration tests
       # TODO: Fix missing video device on linux and audio API issue on windows
-      if: matrix.os == "macos-latest"
+      if: matrix.os == 'macos-latest'
       run: |
         cargo test run_engine --features "serde" -- --test-threads=1 --ignored
