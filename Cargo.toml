@@ -11,6 +11,7 @@ repository = "https://github.com/lukexor/pix-engine.git"
 resolver = "2"
 version = "0.5.5"
 exclude = ["/images", "/audio"]
+build = "build.rs"
 
 [package.metadata]
 msrv = "1.59.0"

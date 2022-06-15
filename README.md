@@ -72,7 +72,8 @@ at <https://www.rust-lang.org/learn/get-started>.
 
 When building or running applications for a desktop target such as `macOS`,
 `Linux`, or `Windows` and not a [Web-Assembly][WASM] target, you must install
-[SDL2][] libraries.
+[SDL2][] libraries. Note for windows: You may need to install
+[Visual Studio C++ Build Tools][vc++].
 
 There are several options for installing `SDL2`, but these are the most common:
 
@@ -81,13 +82,16 @@ There are several options for installing `SDL2`, but these are the most common:
 
 For more details and installation options see the [rust-sdl2][] documentation.
 
-#### macOS with homebrew
+#### macOS, Linux, or Windows 10 Subsystem for Linux (homebrew)
 
 ```sh
 brew install sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
 ```
 
-#### Linux
+#### Linux (package manager)
+
+Note: The minimum `SDL2` version is `2.0.20`. Some package managers may not have
+the latest versions available.
 
 *Ubuntu*:
 
@@ -109,16 +113,27 @@ sudo pacman -S sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
 
 #### Windows (MSVC)
 
-1. Download `MSVC` development libraries from <http://www.libsdl.org/> (`SDL2-devel-2.0.XX-VC.zip`).
-2. Unzip `SDL2-devel-2.0.XX-VC.zip` into a folder.
-3. Copy library files from `SDL2-2.0.XX\lib\x64\` to
-   `C:\Users\{Username}\.rustup\toolchains\{current
-   toolchain}\lib\rustlib\{current toolchain}\lib` where `current toolchain` is
-   likely `stable-x86_64-pc-windows-msvc`.
-    - *Note*: If you don't use `rustup`, See [rust-sdl2][] for more info on
-      Windows installation.
-4. Copy `SDL2.dll` from `SDL2-2.0.XX\lib\x64\` to your `cargo` project next to
-   `Cargo.toml`.
+1. Download the latest `SDL2` `MSVC` development libraries from
+   <https://www.libsdl.org/download-2.0.php> e.g. (`SDL2-devel-2.0.20-VC.zip`).
+2. Download the latest `SDL2_image`, `SDL2_mixer`, and `SDL2_ttf` `MSVC`
+   development libraries from
+   <https://www.libsdl.org/projects/>. e.g. (`SDL2_image-devel-2.0.5-VC.zip`).
+3. Unzip each `.zip` file into a folder.
+3. Copy library files:
+   * from: `lib\x64\`
+   * to: `C:\Users\{Username}\.rustup\toolchains\{current toolchain}\lib\rustlib\{current toolchain}\lib`
+     where `{current toolchain}` is likely `stable-x86_64-pc-windows-msvc`.
+   - *Note*: If you don't use `rustup`, See [rust-sdl2][] for more info on
+     Windows installation.
+4. Copy all `dll` files:
+   * from: `lib\x64\`
+   * to: your `cargo` project next to `Cargo.toml`.
+
+#### Windows (MinGW)
+
+Similar steps to `MSVC` except the downloads will be tar gzipped and the library
+files will reside in `x86_64-w64-mingw32\lib` and `dll` files will reside in
+`x86_64-w64-mingw32\bin`.
 
 ### Creating Your Application
 
@@ -274,6 +289,7 @@ implementation and evolution of this crate:
 
 [Rust]: https://www.rust-lang.org/
 [SDL2]: https://crates.io/crates/sdl2/
+[vc++]: https://visualstudio.microsoft.com/visual-cpp-build-tools/
 [homebrew]: https://brew.sh/
 [rust-sdl2]: https://github.com/Rust-SDL2/rust-sdl2#sdl20-development-libraries
 [log]: https://crates.io/crates/log
