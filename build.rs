@@ -4,15 +4,15 @@ use std::path::PathBuf;
 const MSVC: &str = "msvc";
 const MINGW: &str = "gnu-mingw";
 
-fn main() -> Result<(), &'static str> {
+fn main() {
     let target = env::var("TARGET").expect("valid TARGET defined");
     if target.contains("pc-windows") {
         let manifest_dir = PathBuf::from(
             env::var("CARGO_MANIFEST_DIR").expect("valid CARGO_MANIFEST_DIR defined"),
-        )
-        .join("lib");
-        let mut lib_dir = manifest_dir.clone();
-        let mut dll_dir = manifest_dir.clone();
+        );
+        let mut lib_dir = manifest_dir.join("lib").clone();
+        let mut dll_dir = manifest_dir.join("lib").clone();
+        
         if target.contains("msvc") {
             lib_dir.push(MSVC);
             dll_dir.push(MSVC);
@@ -20,8 +20,7 @@ fn main() -> Result<(), &'static str> {
             lib_dir.push(MINGW);
             dll_dir.push(MINGW);
         } else {
-            eprintln!("{} target unsupported", target);
-            return Ok(());
+            panic!("{} target unsupported", target);
         }
         lib_dir.push("lib");
         dll_dir.push("dll");
@@ -39,18 +38,18 @@ fn main() -> Result<(), &'static str> {
         );
         println!("cargo:rustc-link-search=LIBRARY_PATH={}", dll_dir.display());
         for entry in std::fs::read_dir(&dll_dir).unwrap_or_else(|err| {
-            panic!("Can't read DLL directory: {}, {}", dll_dir.display(), err)
+            panic!("can't read dll directory: {}, {}", dll_dir.display(), err)
         }) {
-            let entry_path = entry.expect("Invalid fs entry").path();
+            let entry_path = dbg!(entry.expect("invalid fs entry").path());
             let file_name_result = entry_path.file_name();
             let mut new_file_path = manifest_dir.clone();
             if let Some(file_name) = file_name_result {
-                let file_name = file_name.to_str().unwrap();
+                let file_name = dbg!(file_name.to_str().expect("valid filename"));
                 if file_name.ends_with(".dll") {
                     new_file_path.push(file_name);
                     std::fs::copy(&entry_path, &new_file_path).unwrap_or_else(|err| {
                         panic!(
-                            "Can't copy DLL directory: {} to {}, {}",
+                            "can't copy dll directory: {} to {}, {}",
                             entry_path.display(),
                             new_file_path.display(),
                             err
@@ -60,5 +59,4 @@ fn main() -> Result<(), &'static str> {
             }
         }
     }
-    Ok(())
 }
