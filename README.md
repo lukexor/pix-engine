@@ -129,11 +129,8 @@ sudo pacman -S sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
    * from: `lib\x64\`
    * to: your `cargo` project next to `Cargo.toml`.
 
-#### Windows (MinGW)
-
-Similar steps to `MSVC` except the downloads will be tar gzipped and the library
-files will reside in `x86_64-w64-mingw32\lib` and `dll` files will reside in
-`x86_64-w64-mingw32\bin`.
+MSVC binaries for SDL2 are also present in this repository under the `lib`
+folder.
 
 ### Creating Your Application
 
