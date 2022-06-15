@@ -31,7 +31,7 @@ num-traits = "0.2.15"
 png = "0.17.5"
 serde = { version = "1.0.137", features = ["derive"], optional = true }
 rand = "0.8.5"
-lru = "0.7.6"
+lru = "0.7.7"
 anyhow = "1.0.57"
 thiserror = "1.0.31"
 log = "0.4.17"
