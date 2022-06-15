@@ -60,11 +60,13 @@ jobs:
     - name: Install build dependencies
       if: matrix.os != 'windows-latest'
       run: |
+        set -xeuo pipefail
         brew update
         brew install sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
 
     - name: Build source
       run: |
+        set -xeuo pipefail
         cargo build --all-targets --features "serde" --verbose
         # bash bin/build_wasm.sh --dev
 
@@ -77,5 +79,4 @@ jobs:
     - name: Run integration tests
       # TODO: Fix missing video device on linux and audio API issue on windows
       if: matrix.os == 'macos-latest'
-      run: |
-        cargo test run_engine --features "serde" -- --test-threads=1 --ignored
+      run: cargo test run_engine --features "serde" -- --test-threads=1 --ignored
