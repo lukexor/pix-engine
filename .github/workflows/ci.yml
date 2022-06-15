@@ -46,7 +46,7 @@ jobs:
         command: clippy
 
     - name: Install Homebrew
-      if: matrix.os == "ubuntu-latest"
+      if: matrix.os == 'ubuntu-latest'
       run: |
         set -xeuo pipefail
         bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -58,7 +58,7 @@ jobs:
         sudo apt-get install build-essential
 
     - name: Install build dependencies
-      if: matrix.os != "windows-latest"
+      if: matrix.os != 'windows-latest'
       run: |
         brew update
         brew install sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
@@ -76,6 +76,6 @@ jobs:
 
     - name: Run integration tests
       # TODO: Fix missing video device on linux and audio API issue on windows
-      if: matrix.os == "macos-latest"
+      if: matrix.os == 'macos-latest'
       run: |
         cargo test run_engine --features "serde" -- --test-threads=1 --ignored
