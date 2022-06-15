@@ -33,6 +33,11 @@ fn main() -> Result<(), &'static str> {
             dll_dir.push("32");
         }
         println!("cargo:rustc-link-search=all={}", lib_dir.display());
+        println!(
+            "cargo:rustc-link-search=LD_LIBRARY_PATH={}",
+            dll_dir.display()
+        );
+        println!("cargo:rustc-link-search=LIBRARY_PATH={}", dll_dir.display());
         for entry in std::fs::read_dir(&dll_dir).unwrap_or_else(|err| {
             panic!("Can't read DLL directory: {}, {}", dll_dir.display(), err)
         }) {
