@@ -1,4 +1,4 @@
 *.nu
-*.dll
+/*.dll
 target/
 vcpkg/
