@@ -341,6 +341,7 @@ bitflags! {
     #[derive(Default)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "serde", serde(transparent))]
+    #[must_use]
     pub struct KeyMod: u16 {
         /// No key modifier.
         const NONE = 0x0000;

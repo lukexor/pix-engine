@@ -19,6 +19,12 @@ impl KeyState {
         !self.pressed.is_empty()
     }
 
+    /// Returns a list of the current keys pressed this frame.
+    #[inline]
+    pub(crate) const fn pressed(&self) -> &HashSet<Key> {
+        &self.pressed
+    }
+
     /// Returns if a specific [Key] is currently being held.
     #[inline]
     pub(crate) fn is_down(&self, key: Key) -> bool {
@@ -35,6 +41,12 @@ impl KeyState {
     #[inline]
     pub(crate) const fn mod_down(&self, keymod: KeyMod) -> bool {
         self.keymod.intersects(keymod)
+    }
+
+    /// Returns a list of the current key modifiers pressed this frame.
+    #[inline]
+    pub(crate) const fn keymod(&self) -> &KeyMod {
+        &self.keymod
     }
 
     /// Store a pressed [Key].

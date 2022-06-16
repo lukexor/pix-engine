@@ -174,7 +174,7 @@ impl PixState {
     #[inline]
     #[must_use]
     pub fn mouse_pressed(&self) -> bool {
-        self.ui.mouse.is_pressed()
+        self.ui.mouse_pressed()
     }
 
     /// Returns if the [Mouse] was clicked (pressed and released) this frame.
@@ -196,7 +196,7 @@ impl PixState {
     #[inline]
     #[must_use]
     pub fn mouse_clicked(&self, btn: Mouse) -> bool {
-        self.ui.mouse.was_clicked(btn)
+        self.ui.mouse_clicked(btn)
     }
 
     /// Returns if the [Mouse] was double clicked (pressed and released) this frame.
@@ -218,7 +218,7 @@ impl PixState {
     #[inline]
     #[must_use]
     pub fn mouse_dbl_clicked(&self, btn: Mouse) -> bool {
-        self.ui.mouse.was_dbl_clicked(btn)
+        self.ui.mouse_dbl_clicked(btn)
     }
 
     /// Returns if a specific [Mouse] button was pressed this frame.
@@ -240,7 +240,7 @@ impl PixState {
     #[inline]
     #[must_use]
     pub fn mouse_down(&self, btn: Mouse) -> bool {
-        self.ui.mouse.is_down(btn)
+        self.ui.mouse_down(btn)
     }
 
     /// Returns a list of the current mouse buttons pressed this frame.
@@ -265,7 +265,7 @@ impl PixState {
     #[inline]
     #[must_use]
     pub const fn mouse_buttons(&self) -> &HashSet<Mouse> {
-        &self.ui.mouse.pressed
+        self.ui.mouse_buttons()
     }
 
     /// Returns if any [Key] was pressed this frame.
@@ -287,7 +287,7 @@ impl PixState {
     #[inline]
     #[must_use]
     pub fn key_pressed(&self) -> bool {
-        self.ui.keys.is_pressed()
+        self.ui.key_pressed()
     }
 
     /// Returns if a specific [Key] was pressed this frame.
@@ -309,7 +309,7 @@ impl PixState {
     #[inline]
     #[must_use]
     pub fn key_down(&self, key: Key) -> bool {
-        self.ui.keys.is_down(key)
+        self.ui.key_down(key)
     }
 
     /// Returns a list of the current keys pressed this frame.
@@ -331,7 +331,7 @@ impl PixState {
     #[inline]
     #[must_use]
     pub const fn keys(&self) -> &HashSet<Key> {
-        &self.ui.keys.pressed
+        self.ui.keys()
     }
 
     /// Returns if a specific [`KeyMod`] was pressed this frame.
@@ -353,7 +353,7 @@ impl PixState {
     #[inline]
     #[must_use]
     pub const fn keymod_down(&self, keymod: KeyMod) -> bool {
-        self.ui.keys.mod_down(keymod)
+        self.ui.keymod_down(keymod)
     }
 
     /// Returns a list of the current key modifiers pressed this frame.
@@ -375,9 +375,8 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    #[must_use]
     pub const fn keymod(&self) -> &KeyMod {
-        &self.ui.keys.keymod
+        self.ui.keymod()
     }
 }
 

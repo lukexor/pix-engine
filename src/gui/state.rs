@@ -7,7 +7,7 @@ use crate::{
 };
 use lru::LruCache;
 use std::{
-    collections::hash_map::DefaultHasher,
+    collections::{hash_map::DefaultHasher, HashSet},
     convert::TryInto,
     error::Error,
     fmt,
@@ -292,6 +292,75 @@ impl UiState {
             pos.offset(-offset);
         }
         pos
+    }
+
+    /// Returns if any [Mouse] button was pressed this frame.
+    #[inline]
+    #[must_use]
+    pub(crate) fn mouse_pressed(&self) -> bool {
+        self.mouse.is_pressed()
+    }
+
+    /// Returns if the [Mouse] was clicked (pressed and released) this frame.
+    #[inline]
+    #[must_use]
+    pub(crate) fn mouse_clicked(&self, btn: Mouse) -> bool {
+        self.mouse.was_clicked(btn)
+    }
+
+    /// Returns if the [Mouse] was double clicked (pressed and released) this frame.
+    #[inline]
+    #[must_use]
+    pub(crate) fn mouse_dbl_clicked(&self, btn: Mouse) -> bool {
+        self.mouse.was_dbl_clicked(btn)
+    }
+
+    /// Returns if a specific [Mouse] button was pressed this frame.
+    #[inline]
+    #[must_use]
+    pub(crate) fn mouse_down(&self, btn: Mouse) -> bool {
+        self.mouse.is_down(btn)
+    }
+
+    /// Returns a list of the current mouse buttons pressed this frame.
+    #[inline]
+    #[must_use]
+    pub(crate) const fn mouse_buttons(&self) -> &HashSet<Mouse> {
+        self.mouse.pressed()
+    }
+
+    /// Returns if any [Key] was pressed this frame.
+    #[inline]
+    #[must_use]
+    pub(crate) fn key_pressed(&self) -> bool {
+        self.keys.is_pressed()
+    }
+
+    /// Returns if a specific [Key] was pressed this frame.
+    #[inline]
+    #[must_use]
+    pub(crate) fn key_down(&self, key: Key) -> bool {
+        self.keys.is_down(key)
+    }
+
+    /// Returns a list of the current keys pressed this frame.
+    #[inline]
+    #[must_use]
+    pub(crate) const fn keys(&self) -> &HashSet<Key> {
+        self.keys.pressed()
+    }
+
+    /// Returns if a specific [`KeyMod`] was pressed this frame.
+    #[inline]
+    #[must_use]
+    pub(crate) const fn keymod_down(&self, keymod: KeyMod) -> bool {
+        self.keys.mod_down(keymod)
+    }
+
+    /// Returns a list of the current key modifiers pressed this frame.
+    #[inline]
+    pub(crate) const fn keymod(&self) -> &KeyMod {
+        self.keys.keymod()
     }
 
     /// Set a mouse offset for rendering within textures or viewports.

@@ -58,6 +58,12 @@ impl MouseState {
         self.pressed.insert(btn);
     }
 
+    /// Returns a list of the current mouse buttons pressed this frame.
+    #[inline]
+    pub(crate) const fn pressed(&self) -> &HashSet<Mouse> {
+        &self.pressed
+    }
+
     /// Store mouse wheel motion.
     #[inline]
     pub(crate) fn wheel(&mut self, x: i32, y: i32) {
