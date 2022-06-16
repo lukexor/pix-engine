@@ -1,6 +1,6 @@
 # PixEngine
 
-[![Build Status]][build] [![Latest Version]][crates.io] [![Doc Status]][docs] [![Downloads]][crates.io] ![License]
+[![Build Status]][build] [![Latest Version]][crates.io] [![Doc Status]][docs] [![Downloads]][crates.io] [![License]][license]
 
 [Build Status]: https://img.shields.io/github/workflow/status/lukexor/pix-engine/CI?style=plastic
 [build]: https://github.com/lukexor/pix-engine/actions/workflows/ci.yml
@@ -10,6 +10,7 @@
 [docs]: https://docs.rs/pix-engine/
 [Downloads]: https://img.shields.io/crates/d/pix-engine?style=plastic
 [License]: https://img.shields.io/crates/l/pix-engine?style=plastic
+[license]: https://github.com/lukexor/pix-engine/blob/main/LICENSE-MIT
 
 ## Table of Contents
 
