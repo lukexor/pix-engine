@@ -10,8 +10,8 @@ fn main() {
         let manifest_dir = PathBuf::from(
             env::var("CARGO_MANIFEST_DIR").expect("valid CARGO_MANIFEST_DIR defined"),
         );
-        let mut lib_dir = manifest_dir.join("lib").clone();
-        let mut dll_dir = manifest_dir.join("lib").clone();
+        let mut lib_dir = manifest_dir.join("lib");
+        let mut dll_dir = manifest_dir.join("lib");
 
         if target.contains("msvc") {
             lib_dir.push(MSVC);
