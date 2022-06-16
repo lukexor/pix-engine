@@ -142,7 +142,8 @@ impl Builder {
         self
     }
 
-    /// Scales the window.
+    /// Set the rendering scale of the current canvas. Drawing coordinates are scaled by x/y
+    /// factors before being drawn to the canvas.
     pub fn scale(&mut self, x: f32, y: f32) -> &mut Self {
         self.settings.scale_x = x;
         self.settings.scale_y = y;

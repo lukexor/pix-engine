@@ -112,9 +112,7 @@ impl WindowCanvas {
         }
 
         // Set up window with options
-        let win_width = (s.scale_x * s.width as f32).floor() as u32;
-        let win_height = (s.scale_y * s.height as f32).floor() as u32;
-        let mut window_builder = video_subsys.window(&s.title, win_width, win_height);
+        let mut window_builder = video_subsys.window(&s.title, s.width, s.height);
         #[cfg(feature = "opengl")]
         {
             window_builder.opengl();
@@ -154,7 +152,7 @@ impl WindowCanvas {
         let mut canvas = canvas_builder.build().context("failed to build canvas")?;
         log::debug!("Using SDL Renderer `{}`", canvas.info().name);
         canvas
-            .set_logical_size(win_width, win_height)
+            .set_logical_size(s.width, s.height)
             .context("invalid logical canvas size")?;
         canvas
             .set_scale(s.scale_x, s.scale_y)
@@ -394,7 +392,15 @@ impl WindowRenderer for Renderer {
     }
 
     /// Set the window to synchronize frame rate to the screens refresh rate.
-    fn set_vsync(&mut self, val: bool) -> PixResult<()> {
+    ///
+    /// # Note
+    ///
+    /// Due to the current limitation with changing VSync at runtime, this method creates a new
+    /// window using the properties of the current window and returns the new `WindowId`.
+    ///
+    /// If you are storing and interacting with this window using the `WindowId`, make sure to
+    /// use the newly returned `WindowId`.
+    fn set_vsync(&mut self, val: bool) -> PixResult<WindowId> {
         log::debug!("Set VSync: {}", val);
         let window_canvas = self
             .windows
@@ -403,8 +409,8 @@ impl WindowRenderer for Renderer {
         let window = window_canvas.canvas.window();
         let (x, y) = window.position();
         let (w, h) = window.size();
-        self.settings.width = (w as f32 / self.settings.scale_x).floor() as u32;
-        self.settings.height = (h as f32 / self.settings.scale_y).floor() as u32;
+        self.settings.width = w;
+        self.settings.height = h;
         self.settings.x = Position::Positioned(x);
         self.settings.y = Position::Positioned(y);
         self.settings.vsync = val;
@@ -436,7 +442,7 @@ impl WindowRenderer for Renderer {
         self.windows.remove(&previous_window_id);
         self.window_target = new_window.id;
         self.windows.insert(new_window.id, new_window);
-        Ok(())
+        Ok(self.window_target)
     }
 
     /// Set window as the target for drawing operations.

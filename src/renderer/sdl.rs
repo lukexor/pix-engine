@@ -240,7 +240,8 @@ impl Rendering for Renderer {
         }
     }
 
-    /// Scale the current canvas.
+    /// Set the rendering scale of the current canvas. Drawing coordinates are scaled by x/y
+    /// factors before being drawn to the canvas.
     #[inline]
     fn scale(&mut self, x: f32, y: f32) -> PixResult<()> {
         self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {

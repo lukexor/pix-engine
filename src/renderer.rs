@@ -17,26 +17,47 @@ pub(crate) use wasm::Renderer;
 /// Settings used to set up the renderer.
 #[derive(Debug, Clone)]
 pub(crate) struct RendererSettings {
+    /// Base window title.
     pub(crate) title: String,
+    /// Application icon.
     pub(crate) icon: Option<Icon>,
+    /// Starting window X coordinate.
     pub(crate) x: Position,
+    /// Starting window Y coordinate.
     pub(crate) y: Position,
+    /// Starting window width.
     pub(crate) width: u32,
+    /// Starting window height.
     pub(crate) height: u32,
+    /// Rendering scale for x-coordinates.
     pub(crate) scale_x: f32,
+    /// Rendering scale for y-coordinates.
     pub(crate) scale_y: f32,
+    /// Audio queue sample rate. `None` uses device default.
     pub(crate) audio_sample_rate: Option<i32>,
+    /// Audio queue channel count. 1 for mono, 2 for stereo, etc. `None` uses device default.
     pub(crate) audio_channels: Option<u8>,
+    /// Audio queue buffer size. `None` uses devide default.
     pub(crate) audio_buffer_size: Option<u16>,
+    /// Window fullscreen mode.
     pub(crate) fullscreen: bool,
+    /// Sync [`PixEngine::on_update`] rate with monitor refresh rate.
     pub(crate) vsync: bool,
+    /// Enable window resizing.
     pub(crate) resizable: bool,
+    /// Disable window borders.
     pub(crate) borderless: bool,
+    /// Enable high resolution mode, if supported.
     pub(crate) allow_highdpi: bool,
+    /// Hide window.
     pub(crate) hidden: bool,
+    /// Show frame rate per second in title bar.
     pub(crate) show_frame_rate: bool,
+    /// Limit [`PixEngine::on_update`] to target frame frate per second.
     pub(crate) target_frame_rate: Option<usize>,
+    /// Size of allowed texture cache before least-used entries are evicted.
     pub(crate) texture_cache_size: usize,
+    /// Size of allowed font cache before least-used entries are evicted.
     pub(crate) text_cache_size: usize,
 }
 
@@ -88,7 +109,8 @@ pub(crate) trait Rendering: Sized {
     /// Updates the canvas from the current back buffer.
     fn present(&mut self);
 
-    /// Scale the current canvas.
+    /// Set the rendering scale of the current canvas. Drawing coordinates are scaled by x/y
+    /// factors before being drawn to the canvas.
     fn scale(&mut self, x: f32, y: f32) -> PixResult<()>;
 
     /// Set the font size for drawing text to the current canvas.

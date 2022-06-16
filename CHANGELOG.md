@@ -74,6 +74,8 @@ All notable changes to this project will be documented in this file.
 - Added `PixState::audio_queued_size` and `PixState::audio_size`
 - Added support for multiple channel types for `AudioCallback`.
 - Removed `vcpkg` support due to flaky error rates.
+- Changed `PixEngineBuilder::scale` to only set rendering scale, to mirror
+  `PixState::scale`. Removed `WindowBuilder::scale`.
 
 ## [0.5.4] - 2022-01-26
 

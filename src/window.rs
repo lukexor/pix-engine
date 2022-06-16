@@ -199,7 +199,15 @@ pub(crate) trait WindowRenderer {
     fn vsync(&self) -> bool;
 
     /// Set the window to synchronize frame rate to the screens refresh rate.
-    fn set_vsync(&mut self, val: bool) -> PixResult<()>;
+    ///
+    /// # Note
+    ///
+    /// Due to the current limitation with changing VSync at runtime, this method creates a new
+    /// window using the properties of the current window and returns the new `WindowId`.
+    ///
+    /// If you are storing and interacting with this window using the `WindowId`, make sure to
+    /// use the newly returned `WindowId`.
+    fn set_vsync(&mut self, val: bool) -> PixResult<WindowId>;
 
     /// Set window as the target for drawing operations.
     fn set_window_target(&mut self, id: WindowId) -> PixResult<()>;
@@ -313,14 +321,6 @@ impl<'a> WindowBuilder<'a> {
     /// Removes the window decoration.
     pub fn borderless(&mut self) -> &mut Self {
         self.settings.borderless = true;
-        self
-    }
-
-    /// Scales the window.
-    #[inline]
-    pub fn scale(&mut self, x: f32, y: f32) -> &mut Self {
-        self.settings.scale_x = x;
-        self.settings.scale_y = y;
         self
     }
 

@@ -35,7 +35,7 @@
 //! - [`PixState::show_frame_rate`]: Display the average frame rate in the title bar.
 //! - [`PixState::target_frame_rate`]: Return the current targeted frame rate.
 //! - [`PixState::frame_rate`]: Set or clear a targeted frame rate.
-//! - [`PixState::scale`]: Scale the current canvas.
+//! - [`PixState::scale`]: Set the rendering scale of the current canvas.
 //! - [`PixState::rect_mode`]: Change the [`RectMode`] for rendering rectangles.
 //! - [`PixState::ellipse_mode`]: Change the [`EllipseMode`] for rendering ellipses.
 //! - [`PixState::image_mode`]: Change the [`ImageMode`] for rendering images.
@@ -567,6 +567,14 @@ impl PixState {
 
     /// Set the window to synchronize frame rate to the screens refresh rate ([`VSync`]).
     ///
+    /// # Note
+    ///
+    /// Due to the current limitation with changing VSync at runtime, this method creates a new
+    /// window using the properties of the current window and returns the new `WindowId`.
+    ///
+    /// If you are storing and interacting with this window using the `WindowId`, make sure to
+    /// use the newly returned `WindowId`.
+    ///
     /// [`VSync`]: https://en.wikipedia.org/wiki/Screen_tearing#Vertical_synchronization
     ///
     /// # Errors
@@ -591,11 +599,19 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn vsync(&mut self, val: bool) -> PixResult<()> {
+    pub fn vsync(&mut self, val: bool) -> PixResult<WindowId> {
         self.renderer.set_vsync(val)
     }
 
     /// Toggle synchronizing frame rate to the screens refresh rate ([`VSync`]).
+    ///
+    /// # Note
+    ///
+    /// Due to the current limitation with changing VSync at runtime, this method creates a new
+    /// window using the properties of the current window and returns the new `WindowId`.
+    ///
+    /// If you are storing and interacting with this window using the `WindowId`, make sure to
+    /// use the newly returned `WindowId`.
     ///
     /// [`VSync`]: https://en.wikipedia.org/wiki/Screen_tearing#Vertical_synchronization
     ///
@@ -621,7 +637,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn toggle_vsync(&mut self) -> PixResult<()> {
+    pub fn toggle_vsync(&mut self) -> PixResult<WindowId> {
         let vsync_enabled = self.renderer.vsync();
         self.renderer.set_vsync(vsync_enabled)
     }
@@ -806,7 +822,8 @@ impl PixState {
         self.settings.target_frame_rate = rate.into();
     }
 
-    /// Set the rendering scale of the current canvas.
+    /// Set the rendering scale of the current canvas. Drawing coordinates are scaled by x/y
+    /// factors before being drawn to the canvas.
     ///
     /// # Errors
     ///
