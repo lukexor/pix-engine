@@ -98,6 +98,7 @@ All notable changes to this project will be documented in this file.
   `PixState::open_playback` and `PixState::open_capture`.
 - Added `PixState::audio_driver` method to return the driver for the Audio Queue.
 - Added `audio_callback` and `audio_capture_and_replay` examples.
+- Added `contains` implementation for `Point` on `Triangle`.
 
 ### Changed
 

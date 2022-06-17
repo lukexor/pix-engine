@@ -249,6 +249,20 @@ impl<T: Copy, const N: usize> Tri<T, N> {
     }
 }
 
+impl<T: Num> Contains<Point<T>> for Tri<T> {
+    /// Returns whether this rectangle contains a given [Point].
+    fn contains(&self, p: Point<T>) -> bool {
+        let [p1, p2, p3] = self.points();
+        let b1 = ((p.x() - p2.x()) * (p1.y() - p2.y()) - (p.y() - p2.y()) * (p1.x() - p2.x()))
+            < T::zero();
+        let b2 = ((p.x() - p3.x()) * (p2.y() - p3.y()) - (p.y() - p3.y()) * (p2.x() - p3.x()))
+            < T::zero();
+        let b3 = ((p.x() - p1.x()) * (p3.y() - p1.y()) - (p.y() - p1.y()) * (p3.x() - p1.x()))
+            < T::zero();
+        (b1 == b2) && (b2 == b3)
+    }
+}
+
 impl Draw for Tri<i32> {
     /// Draw `Triangle` to the current [`PixState`] canvas.
     fn draw(&self, s: &mut PixState) -> PixResult<()> {
