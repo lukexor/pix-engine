@@ -423,15 +423,6 @@ impl PixState {
             self.renderer
                 .texture(texture.id, texture.src, texture.dst, 0.0, None, None, None)?;
         }
-
-        // TODO: Remove when cursor implementation is stable
-        if std::env::var("DEBUG").is_ok() {
-            self.push();
-            self.fill(Color::RED);
-            self.circle(circle![self.cursor_pos(), 2])?;
-            self.pop();
-        }
-
         Ok(())
     }
 

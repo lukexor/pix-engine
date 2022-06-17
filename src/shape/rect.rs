@@ -117,48 +117,34 @@ impl<T> Rect<T> {
 }
 
 impl<T: Copy> Rect<T> {
-    /// Returns `Rect` as `[x, y, width, height]`.
+    /// Returns `Rect` coordinates as `[x, y, width, height]`.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
     /// let r = rect!(5, 10, 100, 100);
-    /// assert_eq!(r.as_array(), [5, 10, 100, 100]);
+    /// assert_eq!(r.coords(), [5, 10, 100, 100]);
     /// ```
     #[inline]
-    pub fn as_array(&self) -> [T; 4] {
+    pub fn coords(&self) -> [T; 4] {
         self.0
     }
 
-    /// Returns `Rect` as a byte slice `&[x, y, width, height]`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let r = rect!(5, 10, 100, 100);
-    /// assert_eq!(r.as_bytes(), &[5, 10, 100, 100]);
-    /// ```
-    #[inline]
-    pub fn as_bytes(&self) -> &[T; 4] {
-        &self.0
-    }
-
-    /// Returns `Rect` as a mutable byte slice `&mut [x, y, width, height]`.
+    /// Returns `Rect` coordinates as a mutable slice `&mut [x, y, width, height]`.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
     /// let mut r = rect!(5, 10, 100, 100);
-    /// for p in r.as_bytes_mut() {
+    /// for p in r.coords_mut() {
     ///     *p += 5;
     /// }
-    /// assert_eq!(r.as_bytes(), &[10, 15, 105, 105]);
+    /// assert_eq!(r.coords(), [10, 15, 105, 105]);
     /// ```
     #[inline]
-    pub fn as_bytes_mut(&mut self) -> &mut [T; 4] {
+    pub fn coords_mut(&mut self) -> &mut [T; 4] {
         &mut self.0
     }
 
@@ -234,7 +220,7 @@ impl<T: Num> Rect<T> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let r = Rect::with_points([50, 50], [150, 150]);
-    /// assert_eq!(r.as_array(), [50, 50, 100, 100]);
+    /// assert_eq!(r.coords(), [50, 50, 100, 100]);
     /// ```
     pub fn with_points<P: Into<Point<T>>>(p1: P, p2: P) -> Self {
         let p1 = p1.into();
@@ -252,7 +238,7 @@ impl<T: Num> Rect<T> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let r = Rect::from_center([50, 50], 100, 100);
-    /// assert_eq!(r.as_array(), [0, 0, 100, 100]);
+    /// assert_eq!(r.coords(), [0, 0, 100, 100]);
     /// ```
     pub fn from_center<P: Into<Point<T>>>(p: P, width: T, height: T) -> Self {
         let p = p.into();
@@ -267,7 +253,7 @@ impl<T: Num> Rect<T> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let s = Rect::square_from_center([50, 50], 100);
-    /// assert_eq!(s.as_array(), [0, 0, 100, 100]);
+    /// assert_eq!(s.coords(), [0, 0, 100, 100]);
     /// ```
     pub fn square_from_center<P: Into<Point<T>>>(p: P, size: T) -> Self {
         let p = p.into();
@@ -486,10 +472,10 @@ impl<T: Num> Rect<T> {
 
         let sin_cos = angle.sin_cos();
         // Determine rotated bounding box
-        let [cx, cy]: [f64; 2] = center.unwrap_or_else(|| self.center()).as_().as_array();
+        let [cx, cy]: [f64; 2] = center.unwrap_or_else(|| self.center()).as_().coords();
         let (sin, cos) = sin_cos;
         let transformed_points = self.points().map(|p| {
-            let [x, y]: [f64; 2] = p.as_().as_array();
+            let [x, y]: [f64; 2] = p.as_().coords();
             point![
                 NumCast::from(((x - cx).mul_add(cos, cx) - (y - cy) * sin).round())
                     .expect("valid number cast"),

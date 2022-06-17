@@ -204,7 +204,7 @@ impl RayScene {
                 let angle = offset as f64 / 10_000.0;
                 let r = Vector::rotated(v, angle);
                 if let Some(intersect) = self.cast_ray(o, r) {
-                    let [x, y] = intersect.as_array();
+                    let [x, y] = intersect.coords();
                     let intersect = point!(x.round() as i32, y.round() as i32);
                     self.polygons.push((r.heading(), intersect));
                     continue;

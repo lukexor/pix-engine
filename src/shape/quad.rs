@@ -50,7 +50,7 @@ pub struct Quad<T = i32, const N: usize = 2>(pub(crate) [Point<T, N>; 4]);
 /// let p1: Point<i32> = [10, 10].into();
 /// let p2 = point!(100, 10);
 /// let q = quad!(p1, p2, [90, 50], [10, 80]);
-/// assert_eq!(q.as_array(), [
+/// assert_eq!(q.points(), [
 ///   point!(10, 10),
 ///   point!(100, 10),
 ///   point!(90, 50),
@@ -58,7 +58,7 @@ pub struct Quad<T = i32, const N: usize = 2>(pub(crate) [Point<T, N>; 4]);
 /// ]);
 ///
 /// let q = quad!(10, 10, 100, 10, 90, 50, 10, 80);
-/// assert_eq!(q.as_array(), [
+/// assert_eq!(q.points(), [
 ///   point!(10, 10),
 ///   point!(100, 10),
 ///   point!(90, 50),
@@ -84,10 +84,10 @@ impl<T, const N: usize> Quad<T, N> {
     /// ```
     /// use pix_engine::prelude::*;
     /// let quad = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
-    /// assert_eq!(quad.p1().as_array(), [10, 20]);
-    /// assert_eq!(quad.p2().as_array(), [30, 10]);
-    /// assert_eq!(quad.p3().as_array(), [20, 25]);
-    /// assert_eq!(quad.p4().as_array(), [15, 15]);
+    /// assert_eq!(quad.p1().coords(), [10, 20]);
+    /// assert_eq!(quad.p2().coords(), [30, 10]);
+    /// assert_eq!(quad.p3().coords(), [20, 25]);
+    /// assert_eq!(quad.p4().coords(), [15, 15]);
     /// ```
     pub fn new<P1, P2, P3, P4>(p1: P1, p2: P2, p3: P3, p4: P4) -> Self
     where
@@ -111,6 +111,27 @@ impl<T> Quad<T> {
             point!(x3, y3),
             point!(x4, y4),
         ])
+    }
+}
+
+impl<T: Copy> Quad<T> {
+    /// Returns `Quad` coordinates as `[x1, y1, x2, y2, x3, y3, x4, y4]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let quad = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
+    /// assert_eq!(quad.coords(), [10, 20, 30, 10, 20, 25, 15, 15]);
+    /// ```
+    #[inline]
+    pub fn coords(&self) -> [T; 8] {
+        let [p1, p2, p3, p4] = self.points();
+        let [x1, y1] = p1.coords();
+        let [x2, y2] = p2.coords();
+        let [x3, y3] = p3.coords();
+        let [x4, y4] = p4.coords();
+        [x1, y1, x2, y2, x3, y3, x4, y4]
     }
 }
 
@@ -138,6 +159,27 @@ impl<T> Quad<T, 3> {
             point!(x3, y3, z3),
             point!(x4, y4, z4),
         ])
+    }
+}
+
+impl<T: Copy> Quad<T, 3> {
+    /// Returns `Quad` coordinates as `[x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let quad = Quad::new([10, 20, 5], [30, 10, 5], [20, 25, 5], [15, 15, 5]);
+    /// assert_eq!(quad.coords(), [10, 20, 5, 30, 10, 5, 20, 25, 5, 15, 15, 5]);
+    /// ```
+    #[inline]
+    pub fn coords(&self) -> [T; 12] {
+        let [p1, p2, p3, p4] = self.points();
+        let [x1, y1, z1] = p1.coords();
+        let [x2, y2, z2] = p2.coords();
+        let [x3, y3, z3] = p3.coords();
+        let [x4, y4, z4] = p4.coords();
+        [x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4]
     }
 }
 
@@ -209,7 +251,7 @@ impl<T: Copy, const N: usize> Quad<T, N> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let quad = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
-    /// assert_eq!(quad.as_array(), [
+    /// assert_eq!(quad.points(), [
     ///     point!(10, 20),
     ///     point!(30, 10),
     ///     point!(20, 25),
@@ -217,40 +259,21 @@ impl<T: Copy, const N: usize> Quad<T, N> {
     /// ]);
     /// ```
     #[inline]
-    pub fn as_array(&self) -> [Point<T, N>; 4] {
+    pub fn points(&self) -> [Point<T, N>; 4] {
         self.0
     }
 
-    /// Returns `Quad` points as a byte slice `&[Point<T, N>; 4]`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let quad = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
-    /// assert_eq!(quad.as_bytes(), &[
-    ///     point!(10, 20),
-    ///     point!(30, 10),
-    ///     point!(20, 25),
-    ///     point!(15, 15)
-    /// ]);
-    /// ```
-    #[inline]
-    pub fn as_bytes(&self) -> &[Point<T, N>; 4] {
-        &self.0
-    }
-
-    /// Returns `Quad` points as a mutable byte slice `&mut [Point<T, N>; 4]`.
+    /// Returns `Quad` points as a mutable slice `&mut [Point<T, N>; 4]`.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
     /// let mut quad = Quad::new([10, 20], [30, 10], [20, 25], [15, 15]);
-    /// for p in quad.as_bytes_mut() {
+    /// for p in quad.points_mut() {
     ///     *p += 5;
     /// }
-    /// assert_eq!(quad.as_bytes(), &[
+    /// assert_eq!(quad.points(), [
     ///     point!(15, 25),
     ///     point!(35, 15),
     ///     point!(25, 30),
@@ -258,7 +281,7 @@ impl<T: Copy, const N: usize> Quad<T, N> {
     /// ]);
     /// ```
     #[inline]
-    pub fn as_bytes_mut(&mut self) -> &mut [Point<T, N>; 4] {
+    pub fn points_mut(&mut self) -> &mut [Point<T, N>; 4] {
         &mut self.0
     }
 
@@ -328,8 +351,8 @@ mod tests {
         ($i1:expr, $i2:expr, $e:expr) => {{
             match ($i1, $i2) {
                 (Some((p1, t1)), Some((p2, t2))) => {
-                    let [x1, y1]: [f64; 2] = p1.as_array();
-                    let [x2, y2]: [f64; 2] = p2.as_array();
+                    let [x1, y1]: [f64; 2] = p1.coords();
+                    let [x2, y2]: [f64; 2] = p2.coords();
                     let xd = (x1 - x2).abs();
                     let yd = (y1 - y2).abs();
                     let td = (t1 - t2).abs();

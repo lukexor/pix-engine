@@ -21,16 +21,16 @@
 //! ```
 //! # use pix_engine::prelude::*;
 //! let v: Vector<f64, 3> = vector!(); // vector at the origin (0, 0, 0) with no direction or magnitude
-//! assert_eq!(v.as_array(), [0.0, 0.0, 0.0]);
+//! assert_eq!(v.coords(), [0.0, 0.0, 0.0]);
 //!
 //! let v = vector!(5.0); // 1D vector on the x-axis with magnitude 5
-//! assert_eq!(v.as_array(), [5.0]);
+//! assert_eq!(v.coords(), [5.0]);
 //!
 //! let v = vector!(5.0, 10.0); // 2D vector in the x/y-plane
-//! assert_eq!(v.as_array(), [5.0, 10.0]);
+//! assert_eq!(v.coords(), [5.0, 10.0]);
 //!
 //! let v = vector!(-1.5, 3.0, 2.2); // 3D vector
-//! assert_eq!(v.as_array(), [-1.5, 3.0, 2.2]);
+//! assert_eq!(v.coords(), [-1.5, 3.0, 2.2]);
 //! ```
 //!
 //! You can also create random `Vector`s using [`Vector::random`] which create unit vectors with
@@ -40,18 +40,18 @@
 //! use pix_engine::prelude::*;
 //!
 //! let v: Vector<f64, 1> = Vector::random();
-//! // `v.as_array()` will return something like:
+//! // `v.coords()` will return something like:
 //! // [-0.9993116191591512, 0.03709835324533284, 0.0]
 //! assert!(v.x() >= -1.0 && v.x() <= 1.0);
 //!
 //! let v: Vector<f64, 2> = Vector::random();
-//! // `v.as_array()` will return something like:
+//! // `v.coords()` will return something like:
 //! // [-0.9993116191591512, 0.03709835324533284, 0.0]
 //! assert!(v.x() >= -1.0 && v.x() <= 1.0);
 //! assert!(v.y() >= -1.0 && v.y() <= 1.0);
 //!
 //! let v: Vector<f64, 3> = Vector::random();
-//! // `v.as_array()` will return something like:
+//! // `v.coords()` will return something like:
 //! // [-0.40038099206441835, 0.8985763512414204, 0.17959844705110184]
 //! assert!(v.x() >= -1.0 && v.x() <= 1.0);
 //! assert!(v.y() >= -1.0 && v.y() <= 1.0);
@@ -106,16 +106,16 @@ pub struct Vector<T = f64, const N: usize = 2>(
 /// ```
 /// # use pix_engine::prelude::*;
 /// let v: Vector<f64, 3> = vector!();
-/// assert_eq!(v.as_array(), [0.0, 0.0, 0.0]);
+/// assert_eq!(v.coords(), [0.0, 0.0, 0.0]);
 ///
 /// let v = vector!(1.0);
-/// assert_eq!(v.as_array(), [1.0]);
+/// assert_eq!(v.coords(), [1.0]);
 ///
 /// let v = vector!(1.0, 2.0);
-/// assert_eq!(v.as_array(), [1.0, 2.0]);
+/// assert_eq!(v.coords(), [1.0, 2.0]);
 ///
 /// let v = vector!(1.0, -2.0, 1.0);
-/// assert_eq!(v.as_array(), [1.0, -2.0, 1.0]);
+/// assert_eq!(v.coords(), [1.0, -2.0, 1.0]);
 /// ```
 #[macro_export]
 macro_rules! vector {
@@ -141,13 +141,13 @@ impl<T, const N: usize> Vector<T, N> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let v = Vector::new([2.1]);
-    /// assert_eq!(v.as_array(), [2.1]);
+    /// assert_eq!(v.coords(), [2.1]);
     ///
     /// let v = Vector::new([2.1, 3.5]);
-    /// assert_eq!(v.as_array(), [2.1, 3.5]);
+    /// assert_eq!(v.coords(), [2.1, 3.5]);
     ///
     /// let v = Vector::new([2.1, 3.5, 1.0]);
-    /// assert_eq!(v.as_array(), [2.1, 3.5, 1.0]);
+    /// assert_eq!(v.coords(), [2.1, 3.5, 1.0]);
     /// ```
     #[inline]
     pub const fn new(coords: [T; N]) -> Self {
@@ -161,7 +161,7 @@ impl<T, const N: usize> Vector<T, N> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let v: Vector<f64, 3> = Vector::origin();
-    /// assert_eq!(v.as_array(), [0.0, 0.0, 0.0]);
+    /// assert_eq!(v.coords(), [0.0, 0.0, 0.0]);
     /// ```
     #[inline]
     pub fn origin() -> Self
@@ -279,7 +279,7 @@ impl<T: Num + Float> Vector<T, 3> {
     /// let v1 = vector!(1.0, 2.0, 3.0);
     /// let v2 = vector!(1.0, 2.0, 3.0);
     /// let cross = v1.cross(v2);
-    /// assert_eq!(cross.as_array(), [0.0, 0.0, 0.0]);
+    /// assert_eq!(cross.coords(), [0.0, 0.0, 0.0]);
     /// ```
     pub fn cross<V>(&self, v: V) -> Self
     where
@@ -326,11 +326,11 @@ impl<T: Copy, const N: usize> Vector<T, N> {
     /// # use pix_engine::prelude::*;
     /// let p = point!(1.0, 2.0);
     /// let v = Vector::from_point(p);
-    /// assert_eq!(v.as_array(), [1.0, 2.0]);
+    /// assert_eq!(v.coords(), [1.0, 2.0]);
     /// ```
     #[inline]
     pub fn from_point(p: Point<T, N>) -> Self {
-        Self::new(p.as_array())
+        Self::new(p.coords())
     }
 
     /// Returns the `x-coordinate`.
@@ -363,7 +363,7 @@ impl<T: Copy, const N: usize> Vector<T, N> {
     /// # use pix_engine::prelude::*;
     /// let mut v = vector!(1.0, 2.0);
     /// v.set_x(3.0);
-    /// assert_eq!(v.as_array(), [3.0, 2.0]);
+    /// assert_eq!(v.coords(), [3.0, 2.0]);
     /// ```
     #[inline]
     pub fn set_x(&mut self, x: T) {
@@ -400,7 +400,7 @@ impl<T: Copy, const N: usize> Vector<T, N> {
     /// # use pix_engine::prelude::*;
     /// let mut v = vector!(1.0, 2.0);
     /// v.set_y(3.0);
-    /// assert_eq!(v.as_array(), [1.0, 3.0]);
+    /// assert_eq!(v.coords(), [1.0, 3.0]);
     /// ```
     #[inline]
     pub fn set_y(&mut self, y: T) {
@@ -437,7 +437,7 @@ impl<T: Copy, const N: usize> Vector<T, N> {
     /// # use pix_engine::prelude::*;
     /// let mut v = vector!(1.0, 2.0, 1.0);
     /// v.set_z(3.0);
-    /// assert_eq!(v.as_array(), [1.0, 2.0, 3.0]);
+    /// assert_eq!(v.coords(), [1.0, 2.0, 3.0]);
     /// ```
     #[inline]
     pub fn set_z(&mut self, z: T) {
@@ -451,41 +451,27 @@ impl<T: Copy, const N: usize> Vector<T, N> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let v = vector!(2.0, 1.0, 3.0);
-    /// assert_eq!(v.as_array(), [2.0, 1.0, 3.0]);
+    /// assert_eq!(v.coords(), [2.0, 1.0, 3.0]);
     /// ```
     #[inline]
-    pub fn as_array(&self) -> [T; N] {
+    pub fn coords(&self) -> [T; N] {
         self.0
     }
 
-    /// Get `Vector` coordinates as a byte slice `&[T; N]`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let v = vector!(2.0, 1.0, 3.0);
-    /// assert_eq!(v.as_bytes(), &[2.0, 1.0, 3.0]);
-    /// ```
-    #[inline]
-    pub fn as_bytes(&self) -> &[T; N] {
-        &self.0
-    }
-
-    /// Get `Vector` coordinates as a mutable byte slice `&[T; N]`.
+    /// Get `Vector` coordinates as a mutable slice `&[T; N]`.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
     /// let mut vector = vector!(2.0, 1.0, 3.0);
-    /// for v in vector.as_bytes_mut() {
+    /// for v in vector.coords_mut() {
     ///     *v *= 2.0;
     /// }
-    /// assert_eq!(vector.as_bytes(), &[4.0, 2.0, 6.0]);
+    /// assert_eq!(vector.coords(), [4.0, 2.0, 6.0]);
     /// ```
     #[inline]
-    pub fn as_bytes_mut(&mut self) -> &mut [T; N] {
+    pub fn coords_mut(&mut self) -> &mut [T; N] {
         &mut self.0
     }
 
@@ -513,7 +499,7 @@ impl<T: Num, const N: usize> Vector<T, N> {
     /// # use pix_engine::prelude::*;
     /// let mut v = vector!(2.0, 3.0, 1.5);
     /// v.offset([2.0, -4.0]);
-    /// assert_eq!(v.as_array(), [4.0, -1.0, 1.5]);
+    /// assert_eq!(v.coords(), [4.0, -1.0, 1.5]);
     /// ```
     #[inline]
     pub fn offset<V, const M: usize>(&mut self, offsets: V)
@@ -564,7 +550,7 @@ impl<T: Num, const N: usize> Vector<T, N> {
     /// # use pix_engine::prelude::*;
     /// let mut v = vector!(2.0, 3.0, 1.5);
     /// v.scale(2.0);
-    /// assert_eq!(v.as_array(), [4.0, 6.0, 3.0]);
+    /// assert_eq!(v.coords(), [4.0, 6.0, 3.0]);
     /// ```
     pub fn scale<U>(&mut self, s: U)
     where
@@ -582,11 +568,11 @@ impl<T: Num, const N: usize> Vector<T, N> {
     /// # use pix_engine::prelude::*;
     /// let mut v = vector!(200.0, 300.0);
     /// v.wrap([150.0, 400.0], 10.0);
-    /// assert_eq!(v.as_array(), [-10.0, 300.0]);
+    /// assert_eq!(v.coords(), [-10.0, 300.0]);
     ///
     /// let mut v = vector!(-100.0, 300.0);
     /// v.wrap([150.0, 400.0], 10.0);
-    /// assert_eq!(v.as_array(), [160.0, 300.0]);
+    /// assert_eq!(v.coords(), [160.0, 300.0]);
     /// ```
     pub fn wrap(&mut self, wrap: [T; N], size: T)
     where
@@ -641,7 +627,7 @@ impl<T: Num + Float, const N: usize> Vector<T, N> {
     /// let v1 = Vector::new([1.0, 1.0, 0.0]);
     /// let normal = Vector::new([0.0, 1.0, 0.0]);
     /// let v2 = Vector::reflection(v1, normal);
-    /// assert_eq!(v2.as_array(), [-1.0, 1.0, 0.0]);
+    /// assert_eq!(v2.coords(), [-1.0, 1.0, 0.0]);
     /// ```
     pub fn reflection<V>(v: V, normal: V) -> Self
     where
@@ -660,7 +646,7 @@ impl<T: Num + Float, const N: usize> Vector<T, N> {
     /// # use pix_engine::prelude::*;
     /// let v1 = Vector::new([0.0, 5.0, 0.0]);
     /// let v2 = Vector::normalized(v1);
-    /// assert_eq!(v2.as_array(), [0.0, 1.0, 0.0]);
+    /// assert_eq!(v2.coords(), [0.0, 1.0, 0.0]);
     /// ```
     pub fn normalized<V>(v: V) -> Self
     where
@@ -832,7 +818,7 @@ impl<T: Num + Float, const N: usize> Vector<T, N> {
     /// let v1 = vector!(1.0, 1.0, 0.0);
     /// let v2 = vector!(3.0, 3.0, 0.0);
     /// let v3 = v1.lerp(v2, 0.5);
-    /// assert_eq!(v3.as_array(), [2.0, 2.0, 0.0]);
+    /// assert_eq!(v3.coords(), [2.0, 2.0, 0.0]);
     /// ```
     pub fn lerp<V>(&self, o: V, amt: T) -> Self
     where

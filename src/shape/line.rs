@@ -40,13 +40,13 @@ pub struct Line<T = i32, const N: usize = 2>(pub(crate) [Point<T, N>; 2]);
 /// # use pix_engine::prelude::*;
 ///
 /// let l = line_!([10, 20], [30, 10]);
-/// assert_eq!(l.as_array(), [
+/// assert_eq!(l.points(), [
 ///   point!(10, 20),
 ///   point!(30, 10),
 /// ]);
 ///
 /// let l = line_!([10, 20, 10], [30, 10, 40]);
-/// assert_eq!(l.as_array(), [
+/// assert_eq!(l.points(), [
 ///   point!(10, 20, 10),
 ///   point!(30, 10, 40),
 /// ]);
@@ -97,11 +97,53 @@ impl<T> Line<T> {
     }
 }
 
+impl<T: Copy> Line<T> {
+    /// Returns `Line` coordinates as `[x1, y1, x2, y2]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p1 = point!(5, 10);
+    /// let p2 = point!(100, 100);
+    /// let l = Line::new(p1, p2);
+    /// assert_eq!(l.coords(), [5, 10, 100, 100]);
+    /// ```
+    #[inline]
+    pub fn coords(&self) -> [T; 4] {
+        let [p1, p2] = self.points();
+        let [x1, y1] = p1.coords();
+        let [x2, y2] = p2.coords();
+        [x1, y1, x2, y2]
+    }
+}
+
 impl<T> Line<T, 3> {
     /// Constructs a `Line` from individual x/y/z coordinates.
     #[inline]
     pub const fn from_xyz(x1: T, y1: T, z1: T, x2: T, y2: T, z2: T) -> Self {
         Self([point!(x1, y1, z1), point!(x2, y2, z2)])
+    }
+}
+
+impl<T: Copy> Line<T, 3> {
+    /// Returns `Line` coordinates as `[x1, y1, z1, x2, y2, z2]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let p1 = point!(5, 10);
+    /// let p2 = point!(100, 100);
+    /// let l = Line::new(p1, p2);
+    /// assert_eq!(l.coords(), [5, 10, 100, 100]);
+    /// ```
+    #[inline]
+    pub fn coords(&self) -> [T; 6] {
+        let [p1, p2] = self.points();
+        let [x1, y1, z1] = p1.coords();
+        let [x2, y2, z2] = p2.coords();
+        [x1, y1, z1, x2, y2, z2]
     }
 }
 
@@ -130,7 +172,7 @@ impl<T: Copy, const N: usize> Line<T, N> {
         self.0[1] = end.into();
     }
 
-    /// Returns `Line` coordinates as `[x1, y1, z1, x2, y2, z2]`.
+    /// Returns `Line` points as `[Point<T, N>; 3]`.
     ///
     /// # Example
     ///
@@ -139,30 +181,14 @@ impl<T: Copy, const N: usize> Line<T, N> {
     /// let p1 = point!(5, 10);
     /// let p2 = point!(100, 100);
     /// let l = Line::new(p1, p2);
-    /// assert_eq!(l.as_array(), [point!(5, 10), point!(100, 100)]);
+    /// assert_eq!(l.points(), [point!(5, 10), point!(100, 100)]);
     /// ```
     #[inline]
-    pub fn as_array(&self) -> [Point<T, N>; 2] {
+    pub fn points(&self) -> [Point<T, N>; 2] {
         self.0
     }
 
-    /// Returns `Line` coordinates as a byte slice `&[x1, y1, z1, x2, y2, z2]`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let p1 = point!(5, 10);
-    /// let p2 = point!(100, 100);
-    /// let l = Line::new(p1, p2);
-    /// assert_eq!(l.as_bytes(), &[point!(5, 10), point!(100, 100)]);
-    /// ```
-    #[inline]
-    pub fn as_bytes(&self) -> &[Point<T, N>; 2] {
-        &self.0
-    }
-
-    /// Returns `Line` coordinates as a mutable byte slice `&mut [x1, y1, z1, x2, y2, z2]`.
+    /// Returns `Line` points as a mutable slice `&mut [Point<T, N>; 3]`.
     ///
     /// # Example
     ///
@@ -171,13 +197,13 @@ impl<T: Copy, const N: usize> Line<T, N> {
     /// let p1 = point!(5, 10);
     /// let p2 = point!(100, 100);
     /// let mut l = Line::new(p1, p2);
-    /// for p in l.as_bytes_mut() {
+    /// for p in l.points_mut() {
     ///     *p += 5;
     /// }
-    /// assert_eq!(l.as_bytes(), &[point!(10, 15), point!(105, 105)]);
+    /// assert_eq!(l.points(), [point!(10, 15), point!(105, 105)]);
     /// ```
     #[inline]
-    pub fn as_bytes_mut(&mut self) -> &mut [Point<T, N>; 2] {
+    pub fn points_mut(&mut self) -> &mut [Point<T, N>; 2] {
         &mut self.0
     }
 
@@ -206,12 +232,8 @@ impl<T: Float> Intersects<Line<T>> for Line<T> {
     /// `None` if there is no intersection.
     #[allow(clippy::many_single_char_names)]
     fn intersects(&self, line: Line<T>) -> Option<Self::Result> {
-        let [start1, end1] = self.as_array();
-        let [start2, end2] = line.as_array();
-        let [x1, y1] = start1.as_array();
-        let [x2, y2] = end1.as_array();
-        let [x3, y3] = start2.as_array();
-        let [x4, y4] = end2.as_array();
+        let [x1, y1, x2, y2] = self.coords();
+        let [x3, y3, x4, y4] = line.coords();
         let d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
         if d == T::zero() {
             return None;

@@ -90,7 +90,7 @@ impl PixState {
         let (item_width, item_height) = s.text_size(items.get(0).map_or("", AsRef::as_ref))?;
         let width = s.ui.next_width.take().unwrap_or(item_width);
         let (label_width, label_height) = s.text_size(label)?;
-        let [mut x, y] = pos.as_array();
+        let [mut x, y] = pos.coords();
         if !label.is_empty() {
             x += label_width + ipad.x();
         }
@@ -126,7 +126,7 @@ impl PixState {
         let arrow_width = font_size + 2 * fpad.y();
         let arrow_x = cmp::max(select_box.left(), select_box.right() - arrow_width);
 
-        let [_, select_y, _, select_height] = select_box.as_array();
+        let [_, select_y, _, select_height] = select_box.coords();
         let arrow_box = rect![arrow_x, select_y, arrow_width, select_height];
         s.rect(arrow_box)?;
 
@@ -245,7 +245,7 @@ impl PixState {
         // Calculate rect
         let (label_width, label_height) = s.text_size(label)?;
         let width = s.ui.next_width.take().unwrap_or(label_width);
-        let [x, mut y] = pos.as_array();
+        let [x, mut y] = pos.coords();
         if !label.is_empty() {
             y += label_height + ipad.y();
         }

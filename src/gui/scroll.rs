@@ -38,7 +38,7 @@ impl PixState {
         let ipad = spacing.item_pad;
 
         // Calculate rect
-        let [x, mut y] = pos.as_array();
+        let [x, mut y] = pos.coords();
         let (label_width, label_height) = s.text_size(label)?;
         if !label.is_empty() {
             y += label_height + ipad.y();

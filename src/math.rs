@@ -117,7 +117,7 @@ where
 {
     let v = vector.into();
 
-    let values = v.as_array();
+    let values = v.coords();
     let x = values.first().unwrap_or(&0.0).abs();
     let y = values.get(1).unwrap_or(&0.0).abs();
     let z = values.get(2).unwrap_or(&0.0).abs();

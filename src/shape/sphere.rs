@@ -70,21 +70,15 @@ impl<T> Sphere<T> {
 }
 
 impl<T: Copy> Sphere<T> {
-    /// Returns `Sphere` as `[x, y, z, radius]`.
+    /// Returns `Sphere` coordinates  as `[x, y, z, radius]`.
     #[inline]
-    pub fn as_array(&self) -> [T; 4] {
+    pub fn coords(&self) -> [T; 4] {
         self.0
     }
 
-    /// Returns `Sphere` as a byte slice `&[x, y, z, radius]`.
+    /// Returns `Sphere` coordinates as a mutable slice `&mut [x, y, z, radius]`.
     #[inline]
-    pub fn as_bytes(&self) -> &[T; 4] {
-        &self.0
-    }
-
-    /// Returns `Sphere` as a mutable byte slice `&mut [x, y, z, radius]`.
-    #[inline]
-    pub fn as_bytes_mut(&mut self) -> &mut [T; 4] {
+    pub fn coords_mut(&mut self) -> &mut [T; 4] {
         &mut self.0
     }
 }

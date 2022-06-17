@@ -126,7 +126,7 @@ impl PixState {
                 .take()
                 .unwrap_or_else(|| s.ui_width().unwrap_or(100));
         let (label_width, label_height) = s.text_size(label)?;
-        let [mut x, y] = pos.as_array();
+        let [mut x, y] = pos.coords();
         if !label.is_empty() {
             x += label_width + ipad.x();
         }
@@ -309,7 +309,7 @@ impl PixState {
                 .take()
                 .unwrap_or_else(|| s.ui_width().unwrap_or(100));
         let (label_width, label_height) = s.text_size(label)?;
-        let [mut x, y] = pos.as_array();
+        let [mut x, y] = pos.coords();
         if !label.is_empty() {
             x += label_width + ipad.x();
         }

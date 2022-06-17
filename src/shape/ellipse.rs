@@ -112,41 +112,27 @@ impl<T: Copy> Ellipse<T> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let e = ellipse!(5, 10, 100, 100);
-    /// assert_eq!(e.as_array(), [5, 10, 100, 100]);
+    /// assert_eq!(e.coords(), [5, 10, 100, 100]);
     /// ```
     #[inline]
-    pub fn as_array(&self) -> [T; 4] {
+    pub fn coords(&self) -> [T; 4] {
         self.0
     }
 
-    /// Returns `Ellipse` values as a byte slice `&[x, y, width, height]`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let e = ellipse!(5, 10, 100, 100);
-    /// assert_eq!(e.as_bytes(), &[5, 10, 100, 100]);
-    /// ```
-    #[inline]
-    pub fn as_bytes(&self) -> &[T; 4] {
-        &self.0
-    }
-
-    /// Returns `Ellipse` values as a mutable byte slice `&[x, y, width, height]`.
+    /// Returns `Ellipse` values as a mutable slice `&[x, y, width, height]`.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
     /// let mut e = ellipse!(5, 10, 100, 100);
-    /// for v in e.as_bytes_mut() {
+    /// for v in e.coords_mut() {
     ///     *v += 5;
     /// }
-    /// assert_eq!(e.as_bytes(), &[10, 15, 105, 105]);
+    /// assert_eq!(e.coords(), [10, 15, 105, 105]);
     /// ```
     #[inline]
-    pub fn as_bytes_mut(&mut self) -> &mut [T; 4] {
+    pub fn coords_mut(&mut self) -> &mut [T; 4] {
         &mut self.0
     }
 
@@ -226,7 +212,7 @@ impl<T: Num> Ellipse<T> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let e = Ellipse::from_center([50, 50], 100, 100);
-    /// assert_eq!(e.as_array(), [0, 0, 100, 100]);
+    /// assert_eq!(e.coords(), [0, 0, 100, 100]);
     /// ```
     pub fn from_center<P: Into<Point<T>>>(p: P, width: T, height: T) -> Self {
         let p = p.into();
@@ -241,7 +227,7 @@ impl<T: Num> Ellipse<T> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let c = Ellipse::circle_from_center([50, 50], 100);
-    /// assert_eq!(c.as_array(), [0, 0, 200, 200]);
+    /// assert_eq!(c.coords(), [0, 0, 200, 200]);
     /// ```
     pub fn circle_from_center<P: Into<Point<T>>>(p: P, radius: T) -> Self {
         let p = p.into();

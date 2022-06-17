@@ -76,6 +76,7 @@ All notable changes to this project will be documented in this file.
 - Removed `vcpkg` support due to flaky error rates.
 - Changed `PixEngineBuilder::scale` to only set rendering scale, to mirror
   `PixState::scale`. Removed `WindowBuilder::scale`.
+- Renamed `as_bytes` and `as_array` methods on shapes to `points` and `coords`.
 
 ## [0.5.4] - 2022-01-26
 

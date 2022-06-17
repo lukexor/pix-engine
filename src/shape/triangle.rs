@@ -38,14 +38,14 @@ pub struct Tri<T = i32, const N: usize = 2>(pub(crate) [Point<T, N>; 3]);
 /// # use pix_engine::prelude::*;
 ///
 /// let t = tri!([10, 20], [30, 10], [20, 25]);
-/// assert_eq!(t.as_array(), [
+/// assert_eq!(t.points(), [
 ///   point!(10, 20),
 ///   point!(30, 10),
 ///   point!(20, 25),
 /// ]);
 ///
 /// let t = tri!([10, 20, 10], [30, 10, 40], [20, 25, 20]);
-/// assert_eq!(t.as_array(), [
+/// assert_eq!(t.points(), [
 ///   point!(10, 20, 10),
 ///   point!(30, 10, 40),
 ///   point!(20, 25, 20),
@@ -72,9 +72,9 @@ impl<T, const N: usize> Tri<T, N> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let tri = Tri::new([10, 20], [30, 10], [20, 25]);
-    /// assert_eq!(tri.p1().as_array(), [10, 20]);
-    /// assert_eq!(tri.p2().as_array(), [30, 10]);
-    /// assert_eq!(tri.p3().as_array(), [20, 25]);
+    /// assert_eq!(tri.p1().coords(), [10, 20]);
+    /// assert_eq!(tri.p2().coords(), [30, 10]);
+    /// assert_eq!(tri.p3().coords(), [20, 25]);
     /// ```
     pub fn new<P1, P2, P3>(p1: P1, p2: P2, p3: P3) -> Self
     where
@@ -94,12 +94,52 @@ impl<T> Tri<T> {
     }
 }
 
+impl<T: Copy> Tri<T> {
+    /// Returns `Triangle` coordinates as `[x1, y1, x2, y2, x3, y3]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let tri = Tri::new([10, 20], [30, 10], [20, 25]);
+    /// assert_eq!(tri.coords(), [10, 20, 30, 10, 20, 25]);
+    /// ```
+    #[inline]
+    pub fn coords(&self) -> [T; 6] {
+        let [p1, p2, p3] = self.points();
+        let [x1, y1] = p1.coords();
+        let [x2, y2] = p2.coords();
+        let [x3, y3] = p3.coords();
+        [x1, y1, x2, y2, x3, y3]
+    }
+}
+
 impl<T> Tri<T, 3> {
     /// Constructs a `Triangle` from individual x/y/z coordinates.
     #[allow(clippy::too_many_arguments)]
     #[inline]
     pub const fn from_xyz(x1: T, y1: T, z1: T, x2: T, y2: T, z2: T, x3: T, y3: T, z3: T) -> Self {
         Self([point!(x1, y1, z1), point!(x2, y2, z2), point!(x3, y3, z3)])
+    }
+}
+
+impl<T: Copy> Tri<T, 3> {
+    /// Returns `Triangle` coordinates as `[x1, y1, z1, x2, y2, z2, x3, y3, z3]`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use pix_engine::prelude::*;
+    /// let tri = Tri::new([10, 20, 5], [30, 10, 5], [20, 25, 5]);
+    /// assert_eq!(tri.coords(), [10, 20, 5, 30, 10, 5, 20, 25, 5]);
+    /// ```
+    #[inline]
+    pub fn coords(&self) -> [T; 9] {
+        let [p1, p2, p3] = self.points();
+        let [x1, y1, z1] = p1.coords();
+        let [x2, y2, z2] = p2.coords();
+        let [x3, y3, z3] = p3.coords();
+        [x1, y1, z1, x2, y2, z2, x3, y3, z3]
     }
 }
 
@@ -156,53 +196,35 @@ impl<T: Copy, const N: usize> Tri<T, N> {
     /// ```
     /// # use pix_engine::prelude::*;
     /// let tri = Tri::new([10, 20], [30, 10], [20, 25]);
-    /// assert_eq!(tri.as_array(), [
+    /// assert_eq!(tri.points(), [
     ///     point!(10, 20),
     ///     point!(30, 10),
     ///     point!(20, 25),
     /// ]);
     /// ```
     #[inline]
-    pub fn as_array(&self) -> [Point<T, N>; 3] {
+    pub fn points(&self) -> [Point<T, N>; 3] {
         self.0
     }
 
-    /// Returns `Triangle` points as a byte slice `&[Point<T, N>; 3]`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// let tri = Tri::new([10, 20], [30, 10], [20, 25]);
-    /// assert_eq!(tri.as_bytes(), &[
-    ///     point!(10, 20),
-    ///     point!(30, 10),
-    ///     point!(20, 25),
-    /// ]);
-    /// ```
-    #[inline]
-    pub fn as_bytes(&self) -> &[Point<T, N>; 3] {
-        &self.0
-    }
-
-    /// Returns `Triangle` points as a mutable byte slice `&mut [Point<T, N>; 3]`.
+    /// Returns `Triangle` points as a mutable slice `&mut [Point<T, N>; 3]`.
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
     /// let mut tri = Tri::new([10, 20], [30, 10], [20, 25]);
-    /// for p in tri.as_bytes_mut() {
+    /// for p in tri.points_mut() {
     ///     *p += 5;
     /// }
-    /// assert_eq!(tri.as_bytes(), &[
+    /// assert_eq!(tri.points(), [
     ///     point!(15, 25),
     ///     point!(35, 15),
     ///     point!(25, 30),
     /// ]);
     /// ```
     #[inline]
-    pub fn as_bytes_mut(&mut self) -> &mut [Point<T, N>; 3] {
+    pub fn points_mut(&mut self) -> &mut [Point<T, N>; 3] {
         &mut self.0
     }
 
