@@ -30,6 +30,7 @@ use std::cmp;
 
 /// The maximum number of select elements that can be displayed at once.
 pub const MAX_DISPLAYED: usize = 100;
+const SELECT_POP_LABEL: &str = "##select_pop";
 
 impl PixState {
     /// Draw a select box the current canvas that returns `true` when selection is changed.
@@ -171,11 +172,41 @@ impl PixState {
         let changed = s.select_list_popup(id, selected, items, displayed_count, expanded_list)?;
 
         // Process input
+        s.push_id(id);
+        let list_id = s.ui.get_id(&SELECT_POP_LABEL);
+        let scroll = s.ui.scroll(list_id);
+        s.pop_id();
         let expanded = s.ui.expanded(id);
         if focused {
-            if let Some(Key::Escape | Key::Return) = s.ui.key_entered() {
-                s.ui.set_expanded(id, !expanded);
-                s.ui.clear_entered();
+            if let Some(key) = s.ui.key_entered() {
+                if let Key::Escape | Key::Return = key {
+                    s.ui.set_expanded(id, !expanded);
+                    s.ui.clear_entered();
+                } else {
+                    let new_selected = match key {
+                        Key::Up => Some(selected.saturating_sub(1)),
+                        Key::Down => Some(cmp::min(items.len() - 1, selected.saturating_add(1))),
+                        _ => None,
+                    };
+                    if let Some(selection) = new_selected {
+                        *selected = selection;
+                        s.ui.clear_entered();
+                        let sel_y = *selected as i32 * line_height;
+                        let mut new_scroll = scroll;
+                        let height = expanded_list.height();
+                        if sel_y < scroll.y() {
+                            // Snap scroll to top of the window
+                            new_scroll.set_y(sel_y);
+                        } else if sel_y + line_height > scroll.y() + height {
+                            // Snap scroll to bottom of the window
+                            new_scroll
+                                .set_y((sel_y + line_height) - (height - font_size - ipad.y()));
+                        }
+                        if new_scroll != scroll {
+                            s.ui.set_scroll(list_id, new_scroll);
+                        }
+                    }
+                }
             }
         }
         let clicked_outside = s.mouse_down(Mouse::Left)
@@ -275,17 +306,17 @@ impl PixState {
 
         // Process input
         let scroll = s.ui.scroll(id);
-        let line_height = font_size + ipad.y() * 2;
+        let line_height = font_size + 2 * ipad.y();
         if focused {
             if let Some(key) = s.ui.key_entered() {
                 let new_selected = match key {
-                    Key::Up => selected.saturating_sub(1),
-                    Key::Down => cmp::min(items.len() - 1, selected.saturating_add(1)),
-                    _ => *selected,
+                    Key::Up => Some(selected.saturating_sub(1)),
+                    Key::Down => Some(cmp::min(items.len() - 1, selected.saturating_add(1))),
+                    _ => None,
                 };
-                if *selected != new_selected {
+                if let Some(selection) = new_selected {
+                    *selected = selection;
                     s.ui.clear_entered();
-                    *selected = new_selected;
                     let sel_y = *selected as i32 * line_height;
                     let mut new_scroll = scroll;
                     let height = select_list.height();
@@ -362,7 +393,7 @@ impl PixState {
                     s.next_width(size.width() as u32);
                 }
                 s.push_id(id);
-                changed = s.select_list("", selected, items, displayed_count)?;
+                changed = s.select_list(SELECT_POP_LABEL, selected, items, displayed_count)?;
                 s.pop_id();
                 Ok(())
             })?;
