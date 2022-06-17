@@ -178,6 +178,7 @@ impl PixState {
         s.pop_id();
         let expanded = s.ui.expanded(id);
         if focused {
+            s.ui.set_expanded(id, true);
             if let Some(key) = s.ui.key_entered() {
                 if let Key::Escape | Key::Return = key {
                     s.ui.set_expanded(id, !expanded);
@@ -208,12 +209,14 @@ impl PixState {
                     }
                 }
             }
-        }
-        let clicked_outside = s.mouse_down(Mouse::Left)
-            && !select_box.contains(s.mouse_pos())
-            && !expanded_list.contains(s.mouse_pos());
-        if (expanded && clicked_outside) || s.ui.was_clicked(id) {
-            s.ui.set_expanded(id, !expanded);
+            let clicked_outside = s.mouse_down(Mouse::Left)
+                && !select_box.contains(s.mouse_pos())
+                && !expanded_list.contains(s.mouse_pos());
+            if (expanded && clicked_outside) || s.ui.was_clicked(id) {
+                s.ui.set_expanded(id, !expanded);
+            }
+        } else {
+            s.ui.set_expanded(id, false);
         }
         s.ui.handle_events(id);
 

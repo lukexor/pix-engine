@@ -119,6 +119,8 @@ All notable changes to this project will be documented in this file.
 - Made `PixState::present` public so that the current canvas can be updated in the middle of, or
   outside of `AppState::on_update`.
 - Fixed various documentation errors.
+- Fixed `PixState::select_box` expanding on focus and unexpenanding when focus
+  is lost.
 
 ### Breaking
 
