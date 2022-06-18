@@ -1,29 +1,18 @@
 use std::env;
 use std::path::PathBuf;
 
-const MSVC: &str = "msvc";
-const MINGW: &str = "gnu-mingw";
-
 fn main() {
+    println!("cargo:rerun-if-changes=build.rs");
+
     let target = env::var("TARGET").expect("valid TARGET defined");
-    if target.contains("pc-windows") {
+    if target.contains("pc-windows-msvc") {
         let manifest_dir = PathBuf::from(
             env::var("CARGO_MANIFEST_DIR").expect("valid CARGO_MANIFEST_DIR defined"),
         );
-        let mut lib_dir = manifest_dir.join("lib");
-        let mut dll_dir = manifest_dir.join("lib");
+        let out_dir = PathBuf::from(env::var("OUT_DIR").expect("valid CARGO_OUT_DIR defined"));
+        let mut lib_dir = manifest_dir.join("lib").join("msvc").join("lib");
+        let mut dll_dir = manifest_dir.join("lib").join("msvc").join("dll");
 
-        if target.contains("msvc") {
-            lib_dir.push(MSVC);
-            dll_dir.push(MSVC);
-        } else if target.contains("gnu") {
-            lib_dir.push(MINGW);
-            dll_dir.push(MINGW);
-        } else {
-            panic!("{} target unsupported", target);
-        }
-        lib_dir.push("lib");
-        dll_dir.push("dll");
         if target.contains("x86_64") {
             lib_dir.push("64");
             dll_dir.push("64");
@@ -31,25 +20,21 @@ fn main() {
             lib_dir.push("32");
             dll_dir.push("32");
         }
-        println!("cargo:rustc-link-search=all={}", lib_dir.display());
-        println!(
-            "cargo:rustc-link-search=LD_LIBRARY_PATH={}",
-            dll_dir.display()
-        );
-        println!("cargo:rustc-link-search=LIBRARY_PATH={}", dll_dir.display());
-        for entry in std::fs::read_dir(&dll_dir).unwrap_or_else(|err| {
-            panic!("can't read dll directory: {}, {}", dll_dir.display(), err)
-        }) {
-            let entry_path = dbg!(entry.expect("invalid fs entry").path());
-            let file_name_result = entry_path.file_name();
-            let mut new_file_path = manifest_dir.clone();
-            if let Some(file_name) = file_name_result {
-                let file_name = dbg!(file_name.to_str().expect("valid filename"));
-                if file_name.ends_with(".dll") {
-                    new_file_path.push(file_name);
+
+        println!("cargo:rustc-link-search=native={}", out_dir.display());
+
+        for dir in [lib_dir, dll_dir] {
+            for entry in std::fs::read_dir(&dir)
+                .unwrap_or_else(|err| panic!("can't read directory: {}, {}", dir.display(), err))
+            {
+                let entry_path = entry.expect("invalid fs entry").path();
+                let file_name_result = entry_path.file_name();
+                if let Some(file_name) = file_name_result {
+                    let file_name = file_name.to_str().expect("valid filename");
+                    let new_file_path = out_dir.join(file_name);
                     std::fs::copy(&entry_path, &new_file_path).unwrap_or_else(|err| {
                         panic!(
-                            "can't copy dll directory: {} to {}, {}",
+                            "can't copy directory: {} to {}, {}",
                             entry_path.display(),
                             new_file_path.display(),
                             err
