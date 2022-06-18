@@ -5,7 +5,7 @@ use crate::prelude::*;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 /// Source of [Light].
-#[derive(Debug, Copy, Clone, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
 pub enum LightSource<T = f64, const N: usize = 3> {
@@ -18,7 +18,7 @@ pub enum LightSource<T = f64, const N: usize = 3> {
 }
 
 /// `Light` representation including `source` and `intensity`.
-#[derive(Debug, Copy, Clone, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(bound = "T: Serialize + DeserializeOwned"))]
 pub struct Light<T = f64, const N: usize = 3> {
