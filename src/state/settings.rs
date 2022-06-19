@@ -318,6 +318,7 @@ impl PixState {
     #[inline]
     pub fn font_size(&mut self, size: u32) -> PixResult<()> {
         self.settings.font_size = size;
+        self.theme.font_size = size;
         self.renderer.font_size(size)
     }
 

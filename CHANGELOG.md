@@ -47,6 +47,7 @@ All notable changes to this project will be documented in this file.
 - Updated audio buffer doucmentation.
 - Fixed update rate limiting when vsync is disabled and no target frame rate set.
 - Changed default audio settings to use device defaults.
+- Swapped `lazy_static` for `once_cell`.
 
 ### Breaking
 
@@ -121,7 +122,6 @@ All notable changes to this project will be documented in this file.
 - Fixed various documentation errors.
 - Fixed `PixState::select_box` expanding on focus and unexpenanding when focus
   is lost.
-- Swapped `lazy_static` for `once_cell`.
 
 ### Breaking
 

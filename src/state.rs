@@ -387,8 +387,6 @@ impl PixState {
         let show_frame_rate = settings.show_frame_rate;
         let target_frame_rate = settings.target_frame_rate;
         let renderer = Renderer::new(settings)?;
-        // renderer.font_size(theme.font_size)?;
-        // renderer.font_family(&theme.fonts.body)?;
         let mut state = Self {
             renderer,
             env: Environment::default(),
