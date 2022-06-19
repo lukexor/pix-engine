@@ -1,4 +1,4 @@
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use pix_engine::prelude::*;
 use std::time::Duration;
 
@@ -9,17 +9,17 @@ const DEFAULT_GLYPH_SPACING: u32 = 12;
 const BG_COLOR: [u8; 4] = [0, 0, 0, 255];
 const FONT_DATA: &[u8] = include_bytes!("gn_koharuiro_sunray.ttf");
 
-lazy_static! {
-    static ref GLYPHS: Vec<char> = {
-        let mut glyphs = vec!['0', '1', '2', '3', '4', '5', '7', '8', '9', 'Z', ' ', ':', '.', '"', '-', '+', '*', ';', '|', '_', '╌', '*',
-    '=', 'ç', '<', '>', '¦'];
-        for i in 0..96 {
-            // SAFETY: We know 0x30A0..0x3100 can be represented as chars
-            glyphs.push(char::from_u32(0x30A0 + i).expect("valid unicode"))
-        }
-        glyphs
-    };
-}
+static GLYPHS: Lazy<Vec<char>> = Lazy::new(|| {
+    let mut glyphs = vec![
+        '0', '1', '2', '3', '4', '5', '7', '8', '9', 'Z', ' ', ':', '.', '"', '-', '+', '*', ';',
+        '|', '_', '╌', '*', '=', 'ç', '<', '>', '¦',
+    ];
+    for i in 0..96 {
+        // SAFETY: We know 0x30A0..0x3100 can be represented as chars
+        glyphs.push(char::from_u32(0x30A0 + i).expect("valid unicode"))
+    }
+    glyphs
+});
 
 struct Glyph {
     value: char,

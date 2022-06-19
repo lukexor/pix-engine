@@ -121,6 +121,7 @@ All notable changes to this project will be documented in this file.
 - Fixed various documentation errors.
 - Fixed `PixState::select_box` expanding on focus and unexpenanding when focus
   is lost.
+- Swapped `lazy_static` for `once_cell`.
 
 ### Breaking
 

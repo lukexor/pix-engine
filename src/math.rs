@@ -1,13 +1,13 @@
 //! Math functions and constants.
 
 use crate::prelude::Vector;
-use lazy_static::lazy_static;
 use num_traits::{
     Float as FloatT, Num as NumT, NumAssignOps, NumAssignRef, NumCast, NumOps, NumRef,
 };
 use rand::{self, distributions::uniform::SampleUniform, Rng};
 use std::ops::{AddAssign, Range};
 
+use once_cell::sync::Lazy;
 /// Default math constants.
 pub use std::f64::consts::*;
 
@@ -41,15 +41,13 @@ const PERLIN_ZWRAPB: usize = 8;
 const PERLIN_ZWRAP: usize = 1 << PERLIN_ZWRAPB;
 const PERLIN_SIZE: usize = 4095;
 
-lazy_static! {
-    static ref PERLIN: Vec<f64> = {
-        let mut perlin = Vec::with_capacity(PERLIN_SIZE + 1);
-        for _ in 0..=PERLIN_SIZE {
-            perlin.push(random(1.0));
-        }
-        perlin
-    };
-}
+static PERLIN: Lazy<Vec<f64>> = Lazy::new(|| {
+    let mut perlin = Vec::with_capacity(PERLIN_SIZE + 1);
+    for _ in 0..=PERLIN_SIZE {
+        perlin.push(random(1.0));
+    }
+    perlin
+});
 
 /// Returns a random number within a range.
 ///

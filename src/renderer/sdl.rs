@@ -6,14 +6,13 @@ use crate::{
     renderer::{RendererSettings, Rendering},
 };
 use anyhow::{anyhow, Context};
-use lazy_static::lazy_static;
 use log::{debug, warn};
 use lru::LruCache;
+use once_cell::sync::Lazy;
 use sdl2::{
     audio::{AudioQueue, AudioSpecDesired},
     controller::GameController,
     gfx::primitives::{DrawRenderer, ToColor},
-    image::{InitFlag, Sdl2ImageContext},
     mouse::{Cursor, SystemCursor},
     pixels::{Color as SdlColor, PixelFormatEnum as SdlPixelFormat},
     rect::{Point as SdlPoint, Rect as SdlRect},
@@ -27,11 +26,7 @@ use std::{collections::HashMap, fmt};
 use texture::RendererTexture;
 use window::{TextCacheKey, WindowCanvas};
 
-lazy_static! {
-    static ref TTF: Sdl2TtfContext = sdl2::ttf::init().expect("sdl2_ttf initialized");
-    static ref IMAGE: Sdl2ImageContext =
-        sdl2::image::init(InitFlag::PNG | InitFlag::JPG).expect("sdl2_image initialized");
-}
+static TTF: Lazy<Sdl2TtfContext> = Lazy::new(|| sdl2::ttf::init().expect("sdl2_ttf initialized"));
 
 pub use audio::{AudioDevice, AudioFormatNum};
 
