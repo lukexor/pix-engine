@@ -216,7 +216,7 @@ impl PixState {
                 new_value = clamp(new_value + delta, min, max);
             }
         }
-        s.ui.handle_events(id);
+        s.ui.handle_focus(id);
         s.advance_cursor([drag.right() - pos.x(), drag.height()]);
         if new_value == *value {
             Ok(false)
@@ -411,7 +411,7 @@ impl PixState {
                     num_traits::NumCast::from(mx.mul_add(vmax - vmin, vmin)).unwrap_or(*value);
             }
         }
-        s.ui.handle_events(id);
+        s.ui.handle_focus(id);
         s.advance_cursor([slider.right() - pos.x(), slider.height()]);
 
         if new_value == *value {

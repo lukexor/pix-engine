@@ -128,6 +128,8 @@ pub(crate) struct UiState {
     focused: Option<ElementId>,
     /// Which element is being edited.
     editing: Option<ElementId>,
+    /// Whether elements can be focused or not.
+    focus_enabled: bool,
     /// Last focusable element rendered.
     last_focusable: Option<ElementId>,
     /// Last bounding box rendered.
@@ -157,6 +159,7 @@ impl Default for UiState {
             hovered: None,
             focused: Some(ElementId::NONE),
             editing: None,
+            focus_enabled: true,
             last_focusable: None,
             last_size: None,
         }
@@ -502,9 +505,24 @@ impl UiState {
         self.editing = None;
     }
 
+    /// Disable global focus interaction.
+    #[inline]
+    pub(crate) fn disable_focus(&mut self) {
+        self.focus_enabled = false;
+    }
+
+    /// Enable global focus interaction.
+    #[inline]
+    pub(crate) fn enable_focus(&mut self) {
+        self.focus_enabled = true;
+    }
+
     /// Handles global element inputs for `focused` checks.
     #[inline]
-    pub(crate) fn handle_events(&mut self, id: ElementId) {
+    pub(crate) fn handle_focus(&mut self, id: ElementId) {
+        if !self.focus_enabled {
+            return;
+        }
         let active = self.is_active(id);
         let hovered = self.is_hovered(id);
         let focused = self.is_focused(id);

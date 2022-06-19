@@ -320,7 +320,7 @@ impl PixState {
         s.pop();
 
         // Process input
-        s.ui.handle_events(id);
+        s.ui.handle_focus(id);
         s.advance_cursor(hover.size());
         Ok(!s.ui.disabled && s.ui.was_clicked(id))
     }
@@ -404,7 +404,7 @@ impl PixState {
         {
             s.ui.set_expanded(id, !expanded);
         }
-        s.ui.handle_events(id);
+        s.ui.handle_focus(id);
 
         s.advance_cursor([hover.width(), ipad.y() / 2]);
 
@@ -489,7 +489,7 @@ impl PixState {
         {
             s.ui.set_expanded(id, !expanded);
         }
-        s.ui.handle_events(id);
+        s.ui.handle_focus(id);
 
         s.advance_cursor([hover.width(), ipad.y() / 2]);
 

@@ -140,7 +140,7 @@ impl PixState {
         s.pop();
 
         // Process input
-        s.ui.handle_events(id);
+        s.ui.handle_focus(id);
         s.advance_cursor([hover.width(), hover.height() - ipad.y()]);
 
         Ok(())

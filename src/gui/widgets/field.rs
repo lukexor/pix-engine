@@ -196,7 +196,7 @@ impl PixState {
                 value.retain(filter);
             }
         }
-        s.ui.handle_events(id);
+        s.ui.handle_focus(id);
         s.advance_cursor([input.right() - pos.x(), input.height()]);
 
         Ok(changed)
@@ -381,7 +381,7 @@ impl PixState {
         s.ui.pop_cursor();
         s.pop();
 
-        s.ui.handle_events(id);
+        s.ui.handle_focus(id);
         // Scrollbars
         let rect = s.scroll(id, input, 0, text_height)?;
         s.advance_cursor([rect.width().max(label_width), rect.bottom() - pos.y()]);

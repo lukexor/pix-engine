@@ -165,11 +165,13 @@ impl PixState {
 
         let line_height = font_size + 2 * ipad.y();
         let expanded_list = rect![
-            select_box.bottom_left(),
+            select_box.left(),
+            select_box.bottom() + 1,
             select_box.width(),
             displayed_count as i32 * line_height + 2 * fpad.y(),
         ];
-        let changed = s.select_list_popup(id, selected, items, displayed_count, expanded_list)?;
+        let original_selected = *selected;
+        s.select_list_popup(id, selected, items, displayed_count, expanded_list)?;
 
         // Process input
         s.push_id(id);
@@ -209,18 +211,17 @@ impl PixState {
                     }
                 }
             }
-            let clicked_outside = s.mouse_down(Mouse::Left)
-                && !select_box.contains(s.mouse_pos())
-                && !expanded_list.contains(s.mouse_pos());
-            if (expanded && clicked_outside) || s.ui.was_clicked(id) {
-                s.ui.set_expanded(id, !expanded);
-            }
-        } else {
+        }
+        let clicked_outside = s.mouse_down(Mouse::Left)
+            && !select_box.contains(s.mouse_pos())
+            && !expanded_list.contains(s.mouse_pos());
+        if (expanded && clicked_outside) || (!focused && !s.mouse_down(Mouse::Left)) {
             s.ui.set_expanded(id, false);
         }
-        s.ui.handle_events(id);
 
-        Ok(changed)
+        s.ui.handle_focus(id);
+
+        Ok(original_selected != *selected)
     }
 
     /// Draw a select list to the current canvas with a scrollable region that returns `true` when
@@ -336,7 +337,7 @@ impl PixState {
                 }
             }
         }
-        s.ui.handle_events(id);
+        s.ui.handle_focus(id);
 
         // Scrollbars
         let total_height = items.len() as i32 * line_height + 2;
@@ -395,9 +396,11 @@ impl PixState {
                 } else {
                     s.next_width(size.width() as u32);
                 }
+                s.ui.disable_focus();
                 s.push_id(id);
                 changed = s.select_list(SELECT_POP_LABEL, selected, items, displayed_count)?;
                 s.pop_id();
+                s.ui.enable_focus();
                 Ok(())
             })?;
             s.ui.clear_mouse_offset();

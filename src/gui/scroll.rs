@@ -97,7 +97,7 @@ impl PixState {
         s.ui.pop_cursor();
         s.pop();
 
-        s.ui.handle_events(id);
+        s.ui.handle_focus(id);
 
         // Scrollbars
         let total_width = max_cursor_pos.x() + s.ui.last_width() + fpad.x();
@@ -310,7 +310,7 @@ impl PixState {
                 }
             };
         }
-        s.ui.handle_events(id);
+        s.ui.handle_focus(id);
 
         if new_value == *value {
             Ok(false)

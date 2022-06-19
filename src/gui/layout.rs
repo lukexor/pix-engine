@@ -248,7 +248,7 @@ impl PixState {
             s.pop();
 
             // Process input
-            s.ui.handle_events(id);
+            s.ui.handle_focus(id);
             s.advance_cursor(tab_rect.size());
             if !disabled && s.ui.was_clicked(id) {
                 changed = true;
