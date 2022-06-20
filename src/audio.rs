@@ -21,6 +21,11 @@
 //! struct MyApp;
 //!
 //! impl AppState for MyApp {
+//!     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
+//!         s.resume_audio();
+//!         Ok(())
+//!     }
+//!
 //!     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!         // Some square wave samples of audio
 //!         let volume = 0.2;

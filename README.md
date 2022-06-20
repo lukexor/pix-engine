@@ -20,10 +20,13 @@
  - [Getting Started](#getting-started)
     - [Installing Dependencies](#installing-dependencies)
     - [Creating Your Application](#creating-your-application)
- - [Crate Features](#crate-features)
+    - [Build Features](#build-features)
+ - [Features](#features)
+    - [PixState](#pixstate)
+    - [Drawing](#drawing)
+    - [Audio](#audio)
+    - [UI](#ui)
     - [Logging](#logging)
-    - [Utility Features](#utility-features)
-    - [Renderer Features](#renderer-features)
  - [Known Issues](#known-issues)
  - [License](#license)
  - [Contribution](#contribution)
@@ -49,6 +52,8 @@ Some examples of things you can create with `pix-engine`:
 - 2D ray casting of scenes or objects.
 - 2D games like Asteroids, Tetris, Pong, or platformers including sound effects,
   music and UI elements.
+- Simple 3D scenes or games.
+- Audio playback and capture applications.
 - User interfaces for basic applications or configuration.
 - Algorithm visualizations for sorting, searching, or particle simulations.
 - Image viewing and editing.
@@ -208,7 +213,212 @@ fn main() -> PixResult<()> {
 }
 ```
 
-## Crate Features
+### Build Features
+
+The following features can be added to your `Cargo.toml` depending on your needs. e.g.:
+
+```toml
+[dependencies.pix-engine]
+version = "0.6.0"
+default-features = false
+features = ["serde"]
+```
+
+* **serde** - Adds [serde][] `Serialize`/`Deserialize` implementations for all
+  enums/structs.
+
+* **backtrace** - Enables the `backtrace` feature for [anyhow][], which allows printing
+  backtraces based on environment variables outlined in [std::backtrace][]. Useful for debugging.
+
+* **opengl** - Forces `sdl2` to use `opengl` as its renderer. This feature is disabled by
+  default, allowing `sdl2` to use whichever renderer it defaults to on the target system. For
+  example, macOS defaults to `metal`.
+
+## Features
+
+### PixState
+
+[`PixState`][PixState] is the global application context for the entire
+`pix-engine` lifecycle from setup to teardown. It contains all of the settings
+and methods required to draw pixels to the screen, manage windows, textures,
+rendering settings, etc. See [Creating Your
+Application](#creating-your-application) for a brief introduction to the engine
+lifecycle methods and examples of using [`PixState`][PixState].
+
+### Drawing
+
+All of the drawing primitives for drawing shapes, text, or UI widgets are all
+available on the [`PixState`][PixState] instance. Some methods are only available when the
+corresponding traits are in scope. Many traits are included by default in the
+[`prelude`](crate::prelude).
+
+Some examples:
+
+```rust no_run
+// Draw a circle at `(x, y)` coordinates`(0, 0)` with a radius of `80`.
+s.circle([0, 0, 80])?;
+
+// Draw a rectangle at `(x, y)` coordinates `(10, 20)` with a width `80` and a
+// height of `100`.
+s.rect([10, 20, 80, 100])?;
+```
+
+There are also several convenience macros for creating shapes that can be used
+for drawing, or storing inside a `struct`:
+
+```rust no_run
+// Create a triangle with points at `(x, y)` coordinates `(10, 20)`, `(30, 10)`, `(20, 25)`.
+let t = tri!([10, 20], [30, 10], [20, 25]);
+
+// Create a 3D point at `(x, y, z)` coordinates `(10, 20, 10)`.
+let p = point!(10, 20, 10);
+
+// Create a square at point `p` with a width/height of `100`.
+let r = square!(p, 100);
+```
+
+#### Textures
+
+Textures are simple a representation of pixels but have some extra flexibility:
+
+- They can be drawn to separately from the primary canvas being rendered.
+- They can be transformed, clipped, or modified.
+- They can be blended together and overlayed on each other.
+
+By default, all drawing operations target the primary window canvas. Once drawn,
+the pixels are static and can only be drawn over. Using textures allows you to
+create things like draggable elements, popups, animation sprites, etc.
+
+To create a texture:
+
+```rust no_run
+// Create a texture with a width and height of 256, formatting as RGB with no
+// alpha channel. You can also provide `None` as the format which will inherit
+// the format of the current window.
+let texture_id = s.create_texture(256, 256, PixelFormat::Rgb);
+
+// Draw to the texture. These changes are not visible in the window.
+s.with_texture(texture_id, |s: &mut PixState| -> PixResult<()> {
+  s.background(Color::BLACK);
+  s.text("Hello World!");
+  Ok(())
+})?;
+
+// Now draw the texture to the current canvas. Specifying `None` as the `src`
+// argument means use the entire texture size. The `dst` here is double the
+// original texture which has the effect of scaling the texture by 2.
+s.texture(texture_id, None, rect!(0, 0, 512, 512))?;
+
+// To clean up unused textures, simply delete them.
+s.delete_texture(texture_id)?;
+```
+
+### Audio
+
+A limited form of audio support is available, with wider support coming soon. By
+default, an audio queue is available that you can push samples to:
+
+```rust no_run
+s.resume_audio(); // Audio queue starts in a `Paused` state.
+
+// Some method generating `f32` samples between 0.0 and 1.0
+let samples = generate_audio();
+s.enqueue_audio(&samples);
+```
+
+There is also an [`AudioCallback`](crate::prelude::AudioCallback) trait you can
+implement for doing callback-based audio generation. See the `examples/` folder
+for details. Using this callback you can also do limited audio recording and
+playback with a microphone.
+
+### UI
+
+#### Summary
+
+`pix-engine` offers an immediate mode graphical user interface ([IMGUI][]) library which allows for
+rapid UI development that is performant and simple to setup/iterate on. Some limitations:
+
+- Styling is limited to simple color themes and spacing.
+- No animations or graphical effects.
+- Limited layout constructs - more complicated layouts require carefully crafted code.
+- Limited responsiveness for changes in viewport.
+
+Much of the API design is inspired by [Dear ImGui][], but note the following differences:
+
+- There are no window rendering utilities or features. Instead, separate native windows can be
+  opened with UI elements rendered within. This approach simplifies window management by leveraging
+  the native window features like minimize, maximize, resizing, etc.
+
+#### End-User Guide
+
+- `Tab`/`Shift-Tab` cycles focus through interactable elements.
+- `Enter`/`Return` on an active element simulates clicking on it.
+- `Ctrl+Click` (`Cmd+Click` on macOS) on a slider or drag box to edit the value as text.
+  - Pressing `Tab`/`Escape`/`Return` exits editing mode.
+- The mouse wheel can scroll elements that are out of view.
+- Text Fields:
+  - `Ctrl+Backspace` (`Cmd+Backspace` on macOS) to delete all content.
+  - `Alt+Backspace` (`Option+Backspace` on macOS) to delete a single word.
+  - `Ctrl+X` (`Cmd+X` on macOS) to cut contents to the system clipboard.
+  - `Ctrl+C` (`Cmd+C` on macOS) to copy contents to the system clipboard.
+  - `Ctrl+V` (`Cmd+V` on macOS) to paste contents from the system clipboard.
+
+#### Programmer Notes
+
+- See `gui` in the `examples/` folder to get started.
+- The UI is generated in code with UI method calls executed on the `PixState` instance in the
+  `PixState::on_update` render loop which is called every frame.
+- Elements are rendered in-order from top-left, to bottom-right.
+- Unless explicitly changed, each element will position itself below the previous element. Calling
+  `PixState::same_line` will shift position to the right of the previous element.
+
+#### Windows
+
+As your application grows, you may find the need to have different views open
+simultaneously. This can be done by opening up additional windows to render
+into. Each window has it's own canvas, while sharing the global `PixState`
+context settings. The API is very similar to working with textures.
+
+```rust no_run
+// Create a window with size of 800x600.
+let window_id = s
+  .window()
+  .with_dimensions(800, 600)
+  .with_title("My Window")
+  .position_centered()
+  .build()?;
+
+// Draw to the window. These changes are immediately visible in the window.
+s.with_window(window_id, |s: &mut PixState| -> PixResult<()> {
+  s.background(Color::BLACK);
+  s.fill(Color::RED);
+  s.text("Hello World!");
+  Ok(())
+})?;
+
+// A user can either close the window with the `X` button, `Ctrl-W`, `Alt-F4`,
+// etc. or you can close it programatically.
+s.close_window(window_id)?;
+```
+
+**Note:** One thing to consider when creating and managing widnows is that when
+a window gets closed, its ID becomes invalid. Attempting to draw in an invalid
+window will return an error. Thus, most window creation will also require
+removing invalid window IDs from their application:
+
+```rust no_run
+fn on_window_event(
+    &mut self,
+    _s: &mut PixState,
+    window_id: WindowId,
+    event: WindowEvent,
+) -> PixResult<()> {
+    if event == WindowEvent::Close && self.popup_window == Some(window_id) {
+      self.popup_window = None;
+    }
+    Ok(())
+}
+```
 
 ### Logging
 
@@ -230,20 +440,6 @@ fn main() -> PixResult<()> {
     engine.run(&mut app)
 }
 ```
-
-### Utility Features
-
-* **serde** - Adds [serde][] `Serialize`/`Deserialize` implementations for all
-  enums/structs.
-
-* **backtrace** - Enables the `backtrace` feature for [anyhow][], which allows printing
-  backtraces based on environment variables outlined in [std::backtrace][]. Useful for debugging.
-
-### Renderer Features
-
-* **opengl** - Forces `sdl2` to use `opengl` as its renderer. This feature is disabled by
-  default, allowing `sdl2` to use whichever renderer it defaults to on the target system. For
-  example, macOS defaults to `metal`.
 
 ## Known Issues
 
@@ -304,4 +500,5 @@ implementation and evolution of this crate:
 [olcPixelGameEngine]: https://github.com/OneLoneCoder/olcPixelGameEngine
 [The Coding Train]: https://www.youtube.com/channel/UCvjgXvBlbQiydffZU7m1_aw
 [p5js]: https://p5js.org/
+[IMGUI]: http://www.johno.se/book/imgui.html
 [Dear ImGui]: https://github.com/ocornut/imgui
