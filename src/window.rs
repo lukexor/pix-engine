@@ -202,7 +202,7 @@ pub(crate) trait WindowRenderer {
     ///
     /// # Note
     ///
-    /// Due to the current limitation with changing VSync at runtime, this method creates a new
+    /// Due to the current limitation with changing `VSync` at runtime, this method creates a new
     /// window using the properties of the current window and returns the new `WindowId`.
     ///
     /// If you are storing and interacting with this window using the `WindowId`, make sure to
