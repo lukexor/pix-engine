@@ -307,6 +307,7 @@ impl AppState for App {
     }
 
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+        s.clear()?;
         if s.mouse_down(Mouse::Left) {
             self.drag(s.mouse_pos())?;
         }
