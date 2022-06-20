@@ -1,14 +1,14 @@
 # Changelog
-
 All notable changes to this project will be documented in this file.
 
-## 0.5.5
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
 ### Added
-
-- Added `PixState::ui_width` and `PoixState::ui_height` methods take into
-  account remaining screen space with regards to current UI rendering position
-  and frame padding.
+- Added `PixState::ui_width` and `PoixState::ui_height` methods which take into
+  account remaining screen space with regards to current UI cursor position and
+  frame padding.
 - Added configurable `scroll_size` to the UI theme for the width of rendered
   scrollbars.
 - Added `PixState::mouse_dbl_clicked` method indicating mouse was double clicked
@@ -16,73 +16,85 @@ All notable changes to this project will be documented in this file.
 - Added `PixState::dbl_clicked` method indicating mouse was double clicked on
   the previous UI widget drawn.
 - Added `PixState::set_column_offset` and `PixState::reset_column_offset` to
-  allow controlling the x-offset position when rendering UI elements.
-- Added `ThemeBuilder` to prelude.
+  allow controlling the `x-offset` cursor position when rendering UI elements.
+- Added `ThemeBuilder` to `pix_engine::prelude`.
 - Added `PixState::focused_window` that takes a `WindowId` to check for focus.
 - Added `PixState::audio_size` to query the current size of the audio queue
   device.
+- Added `Triangle` `contains` `Point` implementation.
+- Added arrow keyboard navigation to `PixState::select_box` while focused.
 
 ### Changed
-
 - Improved element focus and blur.
-- Fixed widgets to properly render the label with the current `fill` color.
 - Increased the relative font size of `PixState::monospace`.
-- Fixed `PixState::bullet` to be more indented.
 - Removed indent of children under `PixState::collapsing_header`.
 - Fixed UI elements being able to take focus if disabled.
 - Blur focus by clicking outside on UI elements and by pressing escape/enter in
   input fields.
-- Fixed Tab size
-- Fixed select list padding
-- Fixed `PixState::mod_down` to correctly return true when multiple modifiers
-  are pressed.
 - Default types and dimensions for `Point`, `Vector`, `Line`, `Triangle`,
   `Quad`, `Light` and `LightSource` are now defined.
 - Changed how `PixState::on_update` handles frame rates and no longer sleeps
   when `vsync` is enabled.
 - Changed vertical scroll direction to be natural.
-- Fixed off-by-one error in `Ellipse::bounding_rect`.
 - Set default audio buffer size to 4096.
-- Fixed target frame rate epsilon.
 - Updated audio buffer doucmentation.
-- Fixed update rate limiting when vsync is disabled and no target frame rate set.
 - Changed default audio settings to use device defaults.
 - Swapped `lazy_static` for `once_cell`.
 
-### Breaking
+### Fixed
+- Fixed widgets to properly render the label with the current `fill` color.
+- Fixed `PixState::bullet` to be more indented.
+- Fixed `PixState::tab` size
+- Fixed `PixState::select_list` padding
+- Fixed `PixState::mod_down` to correctly return `true` when multiple modifiers
+  are pressed.
+- Fixed off-by-one error in `Ellipse::bounding_rect`.
+- Fixed `target_frame_rate` epsilon.
+- Fixed update rate limiting when `vsync` is disabled and no `target_frame_rate`
+- set.
+- Fixed `PixState::select_box` expanding on focus and unexpanding when focus
+  is lost.
+- Fixed `PixState::font_size` affecting `Theme` font size.
 
-- Altered `PixState::tab_bar` to take a `selected` parameter to control the
-  initial selected tab and altered the callback to take a generic type instead
+### Breaking
+- Changed `PixState::tab_bar` to take a `selected` parameter to control the
+  initial selected tab and changed the callback to take a generic type instead
   of a `usize`.
-- `PixState::enqueue_audio` now returns a `PixResult` in the event the audio device fails, or the
-  max queue size is reached.
+- `PixState::enqueue_audio` now returns a `PixResult` in the event the audio
+  device fails, or the max queue size is reached.
 - Removed clearing the screen by default in `AppState::on_update`, leaving it to
   the application to choose when to clear the screen.
-- Modified `PixState::focused` to return true whether any active windows have focus.
+- Changed `PixState::focused` to return `true` whether any active windows have
+  focus.
 - Renamed `PixState::keymods` to `PixState::keymod` which now returns a single
-  `&KeyMod` value instead of a `HashSet<KeyMod>`.
+  `&KeyMod` value instead of a `HashSet<KeyMod>` since `KeyMod` is already a
+  set of bitflags.
 - Changed `PixState::delta_time` and `PixState::elapsed` to return a `Duration`
   instead of milliseconds.
 - Changed `PixState::avg_frame_rate` to return an `f32` instead of `usize`.
 - Changed `PixState::stroke_weight` to accept a `u16` instead of a `u8`.
 - Removed generic type aliases for all types that now have reasonable defaults.
-- Removed `PixState::no_*` methods in favor of the main setter method accepting
-  `false` or `None`.
+- Removed `PixState::no_*` (e.g. `no_stroke`, `no_fill`, etc) methods in favor
+  of the main setter method accepting `false` or `None`.
 - Added `PartialEq` to `Num` trait.
 - Modified `Contains` and `Intersects` traits to be more generic and have a
   single `contains` or `intersects` method to allow for future implementations
   of other shapes.
-- Added `PixState::audio_queued_size` and `PixState::audio_size`
-- Added support for multiple channel types for `AudioCallback`.
-- Removed `vcpkg` support due to flaky error rates.
-- Changed `PixEngineBuilder::scale` to only set rendering scale, to mirror
-  `PixState::scale`. Removed `WindowBuilder::scale`.
-- Renamed `as_bytes` and `as_array` methods on shapes to `points` and `coords`.
+- Added `PixState::audio_queued_size` and changed `PixState::audio_size` to
+  return the buffer capacity instead of the queued size.
+- Added support for multiple concrete channel types for `AudioCallback` via
+  an associated trait type.
+- Removed `vcpkg` feature support due to flaky error rates. `Windows` builds now
+  can utilize a build script with static linking. `macOS` and `Linux` can
+  continue using `homebrew` or their distros package manager.
+- Changed `PixEngineBuilder::scale` to only set rendering scale and to not
+  affect window size, to mirror `PixState::scale`. Removed
+  `WindowBuilder::scale`.
+- Renamed all primitive `as_bytes` and `as_array` methods to `points`
+  and `coords`.
 
 ## [0.5.4] - 2022-01-26
-
 ### Added
-
 - Added `PixState::smooth` and `PixState::no_smooth` to toggle anti-alias
   drawing of shapes.
 - Added `PixState::day`, `PixState::month`, `PixState::year`, `PixState::hour`,
@@ -99,11 +111,8 @@ All notable changes to this project will be documented in this file.
   `PixState::open_playback` and `PixState::open_capture`.
 - Added `PixState::audio_driver` method to return the driver for the Audio Queue.
 - Added `audio_callback` and `audio_capture_and_replay` examples.
-- Added `contains` implementation for `Point` on `Triangle`.
-- Added arrow navigation to `PixState::select_box`.
 
 ### Changed
-
 - Removed sleeping when audio queue got too full in favor of a maximum buffer
   size with a warning indicating `resume_audio` was not called.
 - Updated `README` with better installation steps and a Table of Contents.
@@ -120,17 +129,12 @@ All notable changes to this project will be documented in this file.
 - Made `PixState::present` public so that the current canvas can be updated in the middle of, or
   outside of `AppState::on_update`.
 - Fixed various documentation errors.
-- Fixed `PixState::select_box` expanding on focus and unexpenanding when focus
-  is lost.
 
 ### Breaking
-
 - Made `WindowBuilder::new` crate-visible only. Prefer `PixState::window`.
 
 ## [0.5.3] - 2021-12-21
-
 ### Added
-
 - Fixed mapping of `WindowEvent::Exposed`.
 - Raw audio sample example.
 - `AudioStatus` enum for representing the playback status of the audio device.
@@ -142,27 +146,21 @@ All notable changes to this project will be documented in this file.
 - `PixState::menu` method that renders a clickable menu item with hover state.
 
 ### Changed
-
 - Engine loop sleeps remainder of target frame rate to reduce CPU usage.
 - Default audio sample rate to 48,000 Hz.
 - Fixed `ThemeBuilder` to default to "dark" theme.
 - Changed radio and checkboxes to scale based on `font_size`.
 
 ### Breaking
-
 - Disabled audio playback by default on startup. To queue and play audio you
   must first call `PixState::resume_audio`.
 
 ## [0.5.2] - 2021-12-13
-
 ### Changed
-
 - Updated MSRV in README.
 
 ## [0.5.1] - 2021-12-13
-
 ### Added
-
 - Basic gamepad controller support and a new event: `JoyHatMotion`.
 - `PixEngineBuider::with_deadzone` which alters the default gamepad axis
   deadzone.
@@ -173,29 +171,22 @@ All notable changes to this project will be documented in this file.
 - Warning logs for unsupported events.
 
 ### Changed
-
 #### Core
-
 - `PixEngineBuilder::icon` and `WindowBuilder::icon` now take an
   `Into<Icon>` parameter that can converted into either a `PathBuf` or an
   `Image` which allows loading an icon from a file, or a static or dynamic
   image.
 
 #### UI
-
 - Various UI padding now use frame padding instead of item padding.
 
 ### Breaking
-
 - Changed `Unknown` event variants to `Unsupported` to better reflect that some
   events are known, but are not supported by this library.
 
 ## [0.5.0] - 2021-11-27
-
 ### Added
-
 #### Core
-
 - `log` facade added for logging support.
 - Added methods to `PixEngineBuilder` to control cache sizes.
 - Added `PixState::elapsed` method which returns the total elasped time since
@@ -203,7 +194,6 @@ All notable changes to this project will be documented in this file.
 - A lot of documentation, examples, and README images.
 
 #### UI
-
 - Added `Theme` and `ThemeBuiilder` structs to customize UI theming for colors,
   fonts, sizes, styles and spacing. `PixEngineBuilder` updated with theme
   customizing methods. Default is a dark theme.
@@ -212,14 +202,12 @@ All notable changes to this project will be documented in this file.
 - `Cursor::no` method added.
 
 #### Window
-
 - `PixState` methods for getting and setting window dimensions changed to return
   a result instead of panicking and will return the dimensions for the current
   window target instead of only the primary window.
 - `PixState::save_canvas` and `PixState::save_texture` methods.
 
 #### Drawing
-
 - `Color::from_hex_alpha` and `Color::as_hex_alpha` added that take/return RGBA
    values.
 - `Color::blended` method added.
@@ -227,7 +215,6 @@ All notable changes to this project will be documented in this file.
   control the rendering viewport.
 
 #### Shapes
-
 - `Rect::resized` and `Rect::resize_by` methods added.
 - Added various `offset` methods to shapes.
 - `Ellipse::diameter` method for circular ellipses.
@@ -237,15 +224,12 @@ All notable changes to this project will be documented in this file.
   `serde` feature is enabled.
 
 ### Changed
-
 #### Core
-
 - Several types changed to `must_use`.
 - Several optimizations and performance improvements regarding caching and
   memory management.
 
 #### UI
-
 - `PixEngineBuilder::with_font` updated to take anything that can be turned into
   a `Font` struct which includes a path as before, but can now also take static
   font data loaded from `include_bytes!` for example.
@@ -254,23 +238,19 @@ All notable changes to this project will be documented in this file.
   wrap width.
 
 #### Drawing
-
 - Many `Color` methods made `const`.
 - `Color::set_levels` method added.
 - Changed shapes to use anti-aliasing where possible by default.
 - Added `PixState::stroke_weight` method to draw thick lines.
 
 #### Shapes
-
 - Fixed radius handling in a circle `Ellipse`.
 - `Line::new`, `Tri::new`, and `Quad::new` updated to support different types
   for each point parameter.
 - `Line`, `Tri`, and `Quad` macros updated to have better type inference.
 
 ### Breaking
-
 #### Core
-
 - `core` module removed and all included modules moved up a level.
 - `PixResult` changed to return `anyhow::Error`, which can include a backtrace
   on nightly. Many other types of errors returned now all return the same
@@ -287,13 +267,11 @@ All notable changes to this project will be documented in this file.
 - `math::constants::*` moved into `math`.
 
 #### UI
-
 - `PixEngineBuilder::with_font` changed to not take `size` as a parameter. Added
   an additional `PixEngineBuilder::with_font_size` method.
 - `PixState::primary_window_id` removed.
 
 #### Drawing
-
 - `Color::new`, `Color::new_alpha`, `Color::rgb`, and `Color::rgba` changed to
   take `u8` RGB/A values. Affects `rgb!` and `color!` macros. RGBA setter
   methods also updated to take `u8`.
@@ -314,14 +292,12 @@ All notable changes to this project will be documented in this file.
   `floor`, `ceil`, `round` and `trunc` methods added.
 
 #### Textures
-
 - `Texture` struct removed in favor of `TextureId`. All methods for getting or
   updating textures now take a `TextureId` instead.
 - Removed `unsafe` from `PixState::delete_texture`. Now it will simply return a
   `PixResult` if the `TextureId` is invalid.
 
 #### Shapes
-
 - All shapes had their `values` method changed to `as_array` and `set_values`
   method removed in favor of `as_bytes_mut`.
 - All shapes now have `as_bytes` and `as_bytes_mut` methods.
@@ -331,11 +307,8 @@ All notable changes to this project will be documented in this file.
   item was hovered.
 
 ## [0.4.2] - 2021-09-02
-
 ### Added
-
 #### Core
-
 - `crate::prelude` and `crate::prelude_3d` for common imports.
 - `Copy`, `Clone`, `Debug`, `Default`, `PartialEq`, `Eq`, and `Hash`
   implementations for many/most structs where appropriate.
@@ -358,7 +331,6 @@ All notable changes to this project will be documented in this file.
   `PixEngine` initialization.
 
 #### State
-
 - `PixState` methods for interacting with the window and `PixEngine` state:
   - `delta_time()`: Time elapsed since last frame.
   - `frame_count()` Total number of frame since application start.
@@ -403,7 +375,6 @@ All notable changes to this project will be documented in this file.
   - `pop()`: Restore previous drawing settings from the stack.
 
 #### Window
-
 - `WindowBuilder` struct for opening windows:
   - `new()`: Create a new `WindowBuilder` instance.
   - `with_dimensions()`: Set window (width, height).
@@ -443,7 +414,6 @@ All notable changes to this project will be documented in this file.
 - `window::Result` and `window::Error` for window related failures.
 
 #### Drawing
-
 - `ColorMode` enum with `Rgb`, `Hsb`, and `Hsl` variants.
 - `Color` struct with several methods for creating and converting between color
   modes.
@@ -457,12 +427,10 @@ All notable changes to this project will be documented in this file.
 - `Light` and `LightSource` structs for doing basic 3D light rendering.
 
 #### UI
-
 - New Immediate-mode UI drawing methods for buttons. More to come in future
   versions.
 
 #### Shapes
-
 - Made shape structs generic over their type and number of dimensions using new
   const generics.
 - Conversion implementations to convert shapes between units for better
@@ -477,17 +445,14 @@ All notable changes to this project will be documented in this file.
   `Tri` with convenience macros.
 
 #### Image
-
 - New `Image` methods for converting and manipulating images.
 - `image::Result` and `image::Error` for image failures.
 
 #### Events
-
 - `WindowEvent` struct.
 - `KeyMod` struct for detecting key modifiers on key press and release events.
 
 #### Misc
-
 - `math` module for noise and randomization utilities.
 - `Num` trait for generic number handling.
 - `Vector` type for doing N-dimensional vector math.
@@ -506,7 +471,6 @@ All notable changes to this project will be documented in this file.
 - Extensive documentation additions and README improvements.
 
 ### Changed
-
 - `description`, `category` and `keywords` updated in `Cargo.toml`.
 - Updated to [resolver 2](https://doc.rust-lang.org/cargo/reference/resolver.html#resolver-versions)
   in `Cargo.toml`
@@ -515,9 +479,7 @@ All notable changes to this project will be documented in this file.
 - Updated and refined examples.
 
 ### Breaking
-
 #### Core
-
 - Root imports have been removed in favor of `crate::prelude`.
 - `PixEngineResult` renamed to `PixResult`.
 - `PixEngineErr` renamed to `PixError` and `PixEngineErr::new()` removed.
@@ -534,7 +496,6 @@ All notable changes to this project will be documented in this file.
   `PixResult` instead of `PixEngineResult`.
 
 #### State
-
 - `State` trait renamed to `AppState`.
 - `StateData` struct renamed to `PixState`. Affects all methods from the `State`
   trait which was renamed to `PixState`.
@@ -555,7 +516,6 @@ All notable changes to this project will be documented in this file.
 - `StateData::is_inside_circle()` removed. Use `Ellipse::contains_point()` instead.
 
 #### Window
-
 - `WindowId` type changed from `u32` to `usize`.
 - `StateData::open_window()` renamed to `PixState::create_window()` which creates a `WindowBuilder`.
 - `StateData::close_window()` renamed to `PixState::close_window()`.
@@ -575,7 +535,6 @@ All notable changes to this project will be documented in this file.
 - `StateData::copy_window_texture()` removed.
 
 #### Drawing
-
 - `Pixel` renamed to `Color` with members made private.
 - `AlphaMode` renamed to `BlendMode`. `Normal` renamed to `None`. `Mask`
   removed. `Add` and `Mod` added.
@@ -633,12 +592,10 @@ All notable changes to this project will be documented in this file.
 - `StateData::draw_transform()` removed.
 
 #### Shapes
-
 - `Rect` members made private. Use getter/setter methods to access `x`, `y`,
   `width`, and `height` instead.
 
 #### Image
-
 - `ImageRef` struct removed along with all related methods: `new_ref()`,
   `ref_from()`, `rgb_ref()`, and `rgba_ref()`.
 - `rgb()` renamed to `with_rgb()`.
@@ -658,7 +615,6 @@ All notable changes to this project will be documented in this file.
   `&str` and returns `image::Result`.
 
 #### Events
-
 - `Input` renamed to `KeyEvent`. `released` removed. `held` changed to
   `repeat`. `key` and `keymod` added.
 - `Axis::Unknown` added and `Axis` made `[non_exhaustive]`.
@@ -678,3 +634,11 @@ All notable changes to this project will be documented in this file.
 - `State::get_mouse_y()` removed.
 - `State::get_mouse_wheel()` removed in favor of `AppState::on_mouse_wheel()`.
 - `State::poll()` removed. Use the `AppState::on_*` methods to respond to events.
+
+[Unreleased]: https://github.com/lukexor/pix-engine/compare/v0.5.4...HEAD
+[0.5.4]: https://github.com/lukexor/pix-engine/compare/v0.5.3...v0.5.4
+[0.5.3]: https://github.com/lukexor/pix-engine/compare/v0.5.2...v0.5.3
+[0.5.2]: https://github.com/lukexor/pix-engine/compare/v0.5.1...v0.5.2
+[0.5.1]: https://github.com/lukexor/pix-engine/compare/v0.5.0...v0.5.1
+[0.5.0]: https://github.com/lukexor/pix-engine/compare/v0.4.2...v0.5.0
+[0.4.2]: https://github.com/lukexor/pix-engine/compare/v0.4.1...v0.4.2
