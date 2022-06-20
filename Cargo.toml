@@ -9,8 +9,8 @@ license = "MIT OR Apache-2.0"
 name = "pix-engine"
 repository = "https://github.com/lukexor/pix-engine.git"
 resolver = "2"
-version = "0.5.5"
-exclude = ["/images", "/audio"]
+version = "0.6.0"
+exclude = ["/images", "/audio", "/pkg"]
 build = "build.rs"
 
 [package.metadata]
@@ -52,7 +52,7 @@ features = ["user-hooks"]
 [features]
 default = []
 opengl = []
-# TODO: `backtrace` feature can be removed when `Backtrace` lands in stable
+# TODO: `backtrace` feature can be removed when `Backtrace` lands in stable https://github.com/rust-lang/rust/issues/53487
 backtrace = ["anyhow/backtrace"]
 debug_ui = []
 

@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.6.0] - 2022-06-20
 ### Added
 - Added `PixState::ui_width` and `PoixState::ui_height` methods which take into
   account remaining screen space with regards to current UI cursor position and
@@ -635,7 +637,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `State::get_mouse_wheel()` removed in favor of `AppState::on_mouse_wheel()`.
 - `State::poll()` removed. Use the `AppState::on_*` methods to respond to events.
 
-[Unreleased]: https://github.com/lukexor/pix-engine/compare/v0.5.4...HEAD
+[Unreleased]: https://github.com/lukexor/pix-engine/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/lukexor/pix-engine/compare/v0.5.4...v0.6.0
 [0.5.4]: https://github.com/lukexor/pix-engine/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/lukexor/pix-engine/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/lukexor/pix-engine/compare/v0.5.1...v0.5.2
