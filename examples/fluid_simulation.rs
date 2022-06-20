@@ -329,7 +329,7 @@ impl AppState for App {
 pub fn main() -> PixResult<()> {
     println!("Renders more smoothly using `--release` and `--features opengl`.");
     let mut engine = PixEngine::builder()
-        .with_dimensions(WIDTH, HEIGHT)
+        .with_dimensions(2 * WIDTH, 2 * HEIGHT)
         .scale(2.0, 2.0)
         .with_title("Fluid Simulation")
         .with_frame_rate()
