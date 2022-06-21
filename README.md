@@ -254,7 +254,7 @@ corresponding traits are in scope. Many traits are included by default in the
 
 Some examples:
 
-```rust no_run
+```rust ignore
 // Draw a circle at `(x, y)` coordinates`(0, 0)` with a radius of `80`.
 s.circle([0, 0, 80])?;
 
@@ -266,7 +266,7 @@ s.rect([10, 20, 80, 100])?;
 There are also several convenience macros for creating shapes that can be used
 for drawing, or storing inside a `struct`:
 
-```rust no_run
+```rust ignore
 // Create a triangle with points at `(x, y)` coordinates `(10, 20)`, `(30, 10)`, `(20, 25)`.
 let t = tri!([10, 20], [30, 10], [20, 25]);
 
@@ -291,7 +291,7 @@ create things like draggable elements, popups, animation sprites, etc.
 
 To create a texture:
 
-```rust no_run
+```rust ignore
 // Create a texture with a width and height of 256, formatting as RGB with no
 // alpha channel. You can also provide `None` as the format which will inherit
 // the format of the current window.
@@ -318,7 +318,7 @@ s.delete_texture(texture_id)?;
 A limited form of audio support is available, with wider support coming soon. By
 default, an audio queue is available that you can push samples to:
 
-```rust no_run
+```rust ignore
 s.resume_audio(); // Audio queue starts in a `Paused` state.
 
 // Some method generating `f32` samples between 0.0 and 1.0
@@ -379,7 +379,7 @@ simultaneously. This can be done by opening up additional windows to render
 into. Each window has it's own canvas, while sharing the global `PixState`
 context settings. The API is very similar to working with textures.
 
-```rust no_run
+```rust ignore
 // Create a window with size of 800x600.
 let window_id = s
   .window()
@@ -406,7 +406,7 @@ a window gets closed, its ID becomes invalid. Attempting to draw in an invalid
 window will return an error. Thus, most window creation will also require
 removing invalid window IDs from their application:
 
-```rust no_run
+```rust ignore
 fn on_window_event(
     &mut self,
     _s: &mut PixState,
