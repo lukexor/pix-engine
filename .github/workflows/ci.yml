@@ -86,7 +86,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       uses: actions-rs/tarpaulin@v0.1
       with:
-        args: '--verbose --timeout 120 --all-targets'
+        args: '--verbose --timeout 120 --run-types Tests,Doctests'
     - name: Upload Coverage
       if: matrix.os == 'ubuntu-latest'
       uses: codecov/codecov-action@v2
