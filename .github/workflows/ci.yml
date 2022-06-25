@@ -82,13 +82,3 @@ jobs:
     # TODO: Fix missing video device on linux and audio API issue on windows
     - if: matrix.os == 'macos-latest'
       run: cargo test run_engine --features "serde" -- --test-threads=1 --ignored
-    - name: Code Coverage
-      if: matrix.os == 'ubuntu-latest'
-      uses: actions-rs/tarpaulin@v0.1
-      with:
-        args: '--verbose --timeout 120 --run-types Tests,Doctests'
-    - name: Upload Coverage
-      if: matrix.os == 'ubuntu-latest'
-      uses: codecov/codecov-action@v2
-      with:
-        fail_ci_if_error: true
