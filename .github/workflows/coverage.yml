@@ -46,6 +46,6 @@ jobs:
       run: |
         cargo +nightly tarpaulin --verbose --features serde --timeout 120 --run-types Tests,Doctests
     - name: Upload Coverage
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v3
       with:
         fail_ci_if_error: true
