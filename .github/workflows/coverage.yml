@@ -1,9 +1,10 @@
 name: Coverage
 
-on:
-  push:
-    branches: [main]
-  pull_request:
+# Needs more debugging to get working
+# on:
+#   push:
+#     branches: [main]
+#   pull_request:
 
 env:
   CARGO_TERM_COLOR: always
