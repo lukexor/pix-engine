@@ -1,8 +1,12 @@
+---
 name: CI
 
+# yamllint disable-line rule:truthy
 on:
   push:
+    branches: [main]
   pull_request:
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
@@ -13,72 +17,66 @@ jobs:
     name: Check format
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions-rs/cargo@v1
-      with:
-        command: fmt
-        args: --all -- --check
-
-  outdated:
-    name: Outdated
-    runs-on: ubuntu-latest
-    if: github.event_name != 'pull_reqeust'
-    steps:
-    - uses: actions/checkout@v3
-    - uses: dtolnay/install@cargo-outdated
-    - run: cargo outdated --exit-code 1
+      - uses: actions/checkout@v3
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
 
   build-and-test:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os:  [macos-latest, ubuntu-latest, windows-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
         toolchain: [nightly, beta, stable, 1.59.0]
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: ${{ matrix.toolchain }}
-        override: true
-        components: rustfmt, clippy
-    - uses: Swatinem/rust-cache@v1
-    - name: Lint
-      uses: actions-rs/cargo@v1
-      with:
-        command: clippy
-    - name: Cache Linuxbrew
-      uses: actions/cache@v3
-      if: matrix.os == 'ubuntu-latest'
-      with:
-        path: |
-          ~/.cache/Homebrew
-          /home/linuxbrew/.linuxbrew/
-        key: ${{ runner.os }}-linuxbrew-${{ hashFiles('**/Cargo.lock') }}
-    - name: Install Linuxbrew
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
-        test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-        set -xeuo pipefail
-        echo "LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
-        echo "LD_LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
-        sudo apt-get update
-        sudo apt-get install build-essential
-    - name: Install dependencies
-      if: matrix.os != 'windows-latest'
-      run: |
-        brew update
-        brew install sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
-    - name: Build
-      run: |
-        cargo build --all-targets --features "serde" --verbose
-        # TODO: Enable when WASM development begins
-        # bin/build_wasm.sh --dev
-    - run: cargo doc --features "serde" --verbose
-    - run: cargo test --features "serde" --verbose
-    # TODO: Fix missing video device on linux and audio API issue on windows
-    - if: matrix.os == 'macos-latest'
-      run: cargo test run_engine --features "serde" -- --test-threads=1 --ignored
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.toolchain }}
+          override: true
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v1
+      - name: Lint
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+      - name: Cache Linuxbrew
+        uses: actions/cache@v3
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          path: |
+            ~/.cache/Homebrew
+            /home/linuxbrew/.linuxbrew/
+          key: ${{ runner.os }}-linuxbrew-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Linuxbrew
+        if: matrix.os == 'ubuntu-latest'
+        # yamllint disable rule:line-length
+        run: |
+          bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
+          test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          set -xeuo pipefail
+          echo "LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
+          sudo apt-get update
+          sudo apt-get install build-essential
+      # yamllint enable rule:line-length
+      - name: Install dependencies
+        if: matrix.os != 'windows-latest'
+        run: |
+          brew update
+          brew install sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
+      - name: Build
+        run: |
+          cargo build --all-targets --features "serde" --verbose
+          # TODO: Enable when WASM development begins
+          # bin/build_wasm.sh --dev
+      - run: cargo doc --features "serde" --verbose
+      - run: cargo test --features "serde" --verbose
+      # TODO: Fix missing video device on linux and audio API issue on windows
+      - if: matrix.os == 'macos-latest'
+        # yamllint disable-line rule:line-length
+        run: cargo test run_engine --features "serde" -- --test-threads=1 --ignored
