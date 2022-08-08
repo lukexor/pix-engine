@@ -23,6 +23,6 @@ runs:
         set -xeuo pipefail
         echo "LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
         echo "LD_LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
-        sudo apt-get update
-        sudo apt-get install build-essential
+        apt-get update
+        apt-get install build-essential
       # yamllint enable
