@@ -7,6 +7,10 @@ runs:
   steps:
     - name: Install SDL2
       shell: bash
+      # yamllint disable rule:line-length
       run: |
+        test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
+        test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
         brew update
         brew install sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
+      # yamllint enable
