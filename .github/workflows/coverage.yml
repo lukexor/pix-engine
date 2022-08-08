@@ -25,12 +25,8 @@ jobs:
           toolchain: nightly
           override: true
       - uses: Swatinem/rust-cache@v1
-      - uses: ./.github/workflows/install_linuxbrew
-        with:
-          os: ubuntu-latest
-      - uses: ./.github/workflows/install_sdl2
-        with:
-          os: ubuntu-latest
+      - uses: ./.github/actions/install_linuxbrew
+      - uses: ./.github/actions/install_sdl2
       - name: Code Coverage
         shell: bash
         run: cargo tarpaulin --features serde --doc --tests

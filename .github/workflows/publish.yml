@@ -18,9 +18,7 @@ jobs:
           toolchain: stable
           override: true
       - uses: Swatinem/rust-cache@v1
-      - uses: ./.github/workflows/install_sdl2
-        with:
-          os: macos-latest
+      - uses: ./.github/actions/install_sdl2
       - uses: katyo/publish-crates@v1
         with:
           registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
