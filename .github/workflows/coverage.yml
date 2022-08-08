@@ -34,12 +34,12 @@ jobs:
         # source: https://doc.rust-lang.org/rustc/instrument-coverage.html
         # yamllint disable rule:line-length
         run: |
-          env
+          set -xeuo pipefail
 
           cargo install rustfilt cargo-binutils
           brew install jq
 
-          cargo test
+          cargo test --features "serde"
 
           rust-profdata merge -sparse profile-*.profraw -o coverage.profdata
 
@@ -58,6 +58,8 @@ jobs:
 
           rust-cov show "${objects[@]}" --Xdemangler=rustfilt \
             --ignore-filename-regex=/.cargo/registry
+            --ignore-filename-regex=/target/debug \
+            --ignore-filename-regex=/tests \
             --instr-profile=coverage.profdata > coverage.txt
       # yamllint enable rule:line-length
       - name: Upload Coverage
