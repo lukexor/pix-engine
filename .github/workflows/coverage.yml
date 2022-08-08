@@ -6,12 +6,13 @@ on:
   push:
     branches: [main]
   pull_request:
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  test:
+  coverage:
     runs-on: ubuntu-latest
     container:
       image: xd009642/tarpaulin:develop-nightly
@@ -23,33 +24,16 @@ jobs:
           profile: minimal
           toolchain: nightly
           override: true
-          components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v1
-      - name: Cache Linuxbrew
-        uses: actions/cache@v3
+      - uses: ./.github/workflow/install_linuxbrew
         with:
-          path: |
-            ~/.cache/Homebrew
-            /home/linuxbrew/.linuxbrew/
-          key: ${{ runner.os }}-linuxbrew-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install Linuxbrew
-        # yamllint disable rule:line-length
-        run: |
-          bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
-          test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-          set -xeuo pipefail
-          echo "LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
-          sudo apt-get update
-          sudo apt-get install build-essential
-      - name: Install dependencies
-        run: |
-          brew update
-          brew install sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
+          os: ubuntu-latest
+      - uses: ./.github/workflow/install_sdl2
+        with:
+          os: ubuntu-latest
       - name: Code Coverage
-        run: |
-          cargo +nightly tarpaulin --verbose --features serde --timeout 120 --run-types Tests,Doctests --out Xml
+        shell: bash
+        run: cargo tarpaulin --features serde --doc --tests
       # yamllint enable rule:line-length
       - name: Upload Coverage
         uses: codecov/codecov-action@v3

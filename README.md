@@ -1,43 +1,46 @@
 # PixEngine
 
-[![Build Status]][build] [![Latest Version]][crates.io] [![Doc Status]][docs] [![Downloads]][crates.io] [![License]][license]
+[![Build Status]][build] [![Doc Status]][docs] [![codecov]][coverage] [![Latest
+Version]][crates.io] [![Downloads]][crates.io] [![License]][mit]
 
-[Build Status]: https://img.shields.io/github/workflow/status/lukexor/pix-engine/CI?style=plastic
+[build status]: https://img.shields.io/github/workflow/status/lukexor/pix-engine/CI?style=plastic
 [build]: https://github.com/lukexor/pix-engine/actions/workflows/ci.yml
-[Latest Version]: https://img.shields.io/crates/v/pix-engine?style=plastic
-[crates.io]: https://crates.io/crates/pix-engine
-[Doc Status]: https://img.shields.io/docsrs/pix-engine?style=plastic
+[doc status]: https://img.shields.io/docsrs/pix-engine?style=plastic
 [docs]: https://docs.rs/pix-engine/
-[Downloads]: https://img.shields.io/crates/d/pix-engine?style=plastic
-[License]: https://img.shields.io/crates/l/pix-engine?style=plastic
-[license]: https://github.com/lukexor/pix-engine/blob/main/LICENSE-MIT
+[codecov]: https://codecov.io/gh/lukexor/pix-engine/branch/main/graph/badge.svg?token=2O6FVY5VZV
+[coverage]: https://codecov.io/gh/lukexor/pix-engine
+[latest version]: https://img.shields.io/crates/v/pix-engine?style=plastic
+[crates.io]: https://crates.io/crates/pix-engine
+[downloads]: https://img.shields.io/crates/d/pix-engine?style=plastic
+[license]: https://img.shields.io/crates/l/pix-engine?style=plastic
+[mit]: https://github.com/lukexor/pix-engine/blob/main/LICENSE-MIT
 
 ## Table of Contents
 
- - [Summary](#summary)
- - [Minimum Supported Rust Version](#minimum-supported-rust-version)
- - [Screenshots](#screenshots)
- - [Getting Started](#getting-started)
-    - [Installing Dependencies](#installing-dependencies)
-    - [Creating Your Application](#creating-your-application)
-    - [Build Features](#build-features)
- - [Features](#features)
-    - [PixState](#pixstate)
-    - [Drawing](#drawing)
-    - [Audio](#audio)
-    - [UI](#ui)
-    - [Logging](#logging)
- - [Known Issues](#known-issues)
- - [License](#license)
- - [Contribution](#contribution)
- - [Contact](#contact)
- - [Credits](#credits)
+- [Summary](#summary)
+- [Minimum Supported Rust Version](#minimum-supported-rust-version-msrv)
+- [Screenshots](#screenshots)
+- [Getting Started](#getting-started)
+  - [Installing Dependencies](#installing-dependencies)
+  - [Creating Your Application](#creating-your-application)
+  - [Build Features](#build-features)
+- [Features](#features)
+  - [PixState](#pixstate)
+  - [Drawing](#drawing)
+  - [Audio](#audio)
+  - [UI](#ui)
+  - [Logging](#logging)
+- [Known Issues](#known-issues)
+- [License](#license)
+- [Contribution](#contribution)
+- [Contact](#contact)
+- [Credits](#credits)
 
 ## Summary
 
 `pix_engine` is a cross-platform graphics & UI library for simple games,
 visualizations, digital art, and graphics applications written in [Rust][],
-supporting [SDL2][] (and soon [Web-Assembly][WASM]!) renderers.
+supporting [SDL2][] (and soon [Web-Assembly][wasm]!) renderers.
 
 The primary goal of this library is to be simple to setup and use for graphics
 or algorithm exploration and is not meant to be as fully-featured as other,
@@ -65,9 +68,18 @@ The current minimum Rust version is `1.59.0`.
 
 ## Screenshots
 
-<img width="48%" alt="Asteroids" src="https://raw.githubusercontent.com/lukexor/pix-engine/main/images/asteroids.png">&nbsp;&nbsp;<img width="48%" alt="Maze Generation & A* Search" src="https://raw.githubusercontent.com/lukexor/pix-engine/main/images/maze.png">
-<img width="48%" alt="2D Raycasting" src="https://raw.githubusercontent.com/lukexor/pix-engine/main/images/2d_raycasting.png">&nbsp;&nbsp;<img width="48%" alt="UI Widgets" src="https://raw.githubusercontent.com/lukexor/pix-engine/main/images/gui.png">
-<img width="48%" alt="Fluid Simulation" src="https://raw.githubusercontent.com/lukexor/pix-engine/main/images/fluid_simulation.png">&nbsp;&nbsp;<img width="48%" alt="Matrix Rain" src="https://raw.githubusercontent.com/lukexor/pix-engine/main/images/matrix.png">
+<img width="48%" alt="Asteroids"
+src="https://raw.githubusercontent.com/lukexor/pix-engine/main/images/asteroids.png">&nbsp;&nbsp;<img
+width="48%" alt="Maze Generation & A* Search"
+src="https://raw.githubusercontent.com/lukexor/pix-engine/main/images/maze.png">
+<img width="48%" alt="2D Raycasting"
+src="https://raw.githubusercontent.com/lukexor/pix-engine/main/images/2d_raycasting.png">&nbsp;&nbsp;<img
+width="48%" alt="UI Widgets"
+src="https://raw.githubusercontent.com/lukexor/pix-engine/main/images/gui.png">
+<img width="48%" alt="Fluid Simulation"
+src="https://raw.githubusercontent.com/lukexor/pix-engine/main/images/fluid_simulation.png">&nbsp;&nbsp;<img
+width="48%" alt="Matrix Rain"
+src="https://raw.githubusercontent.com/lukexor/pix-engine/main/images/matrix.png">
 
 ## Getting Started
 
@@ -77,7 +89,7 @@ First and foremost you'll need [Rust][] installed! Follow the latest directions
 at <https://www.rust-lang.org/learn/get-started>.
 
 When building or running applications for a desktop target such as `macOS`,
-`Linux`, or `Windows` and not a [Web-Assembly][WASM] target, you must install
+`Linux`, or `Windows` and not a [Web-Assembly][wasm] target, you must install
 [SDL2][] libraries. Note for windows: You may need to install
 [Visual Studio C++ Build Tools][vc++].
 
@@ -99,19 +111,20 @@ brew install sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
 Note: The minimum `SDL2` version is `2.0.20`. Some package managers may not have
 the latest versions available.
 
-*Ubuntu*:
+_Ubuntu_:
 
 ```sh
-sudo apt-get install libsdl2-dev libsdl2-gfx-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
+sudo apt-get install libsdl2-dev libsdl2-gfx-dev libsdl2-image-dev
+libsdl2-mixer-dev libsdl2-ttf-dev
 ```
 
-*Fedora*:
+_Fedora_:
 
 ```sh
 sudo dnf install SDL2-devel SDL2_gfx-devel SDL2_image-devel SDL2_mixer-devel SDL2_ttf-devel
 ```
 
-*Arch*:
+_Arch_:
 
 ```sh
 sudo pacman -S sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
@@ -125,15 +138,15 @@ sudo pacman -S sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
    development libraries from
    <https://www.libsdl.org/projects/>. e.g. (`SDL2_image-devel-2.0.5-VC.zip`).
 3. Unzip each `.zip` file into a folder.
-3. Copy library files:
-   * from: `lib\x64\`
-   * to: `C:\Users\{Username}\.rustup\toolchains\{current toolchain}\lib\rustlib\{current toolchain}\lib`
+4. Copy library files:
+   - from: `lib\x64\`
+   - to: `C:\Users\{Username}\.rustup\toolchains\{current toolchain}\lib\rustlib\{current toolchain}\lib`
      where `{current toolchain}` is likely `stable-x86_64-pc-windows-msvc`.
-   - *Note*: If you don't use `rustup`, See [rust-sdl2][] for more info on
-     Windows installation.
-4. Copy all `dll` files:
-   * from: `lib\x64\`
-   * to: your `cargo` project next to `Cargo.toml`.
+     - _Note_: If you don't use `rustup`, See [rust-sdl2][] for more info on
+       Windows installation.
+5. Copy all `dll` files:
+   - from: `lib\x64\`
+   - to: your `cargo` project next to `Cargo.toml`.
 
 MSVC binaries for SDL2 are also present in this repository under the `lib`
 folder.
@@ -141,13 +154,13 @@ folder.
 ### Creating Your Application
 
 Creating a visual or interactive application using `pix-engine` requires
-implementing only a single method of the [`AppState`][AppState] trait for your
-application: [`AppState::on_update`][AppState::on_update] which gets executed as
+implementing only a single method of the [`AppState`][appstate] trait for your
+application: [`AppState::on_update`][appstate::on_update] which gets executed as
 often as possible. Within that function you'll have access to a mutable
-[`PixState`][PixState] object which provides several methods for modifying
+[`PixState`][pixstate] object which provides several methods for modifying
 settings and drawing to the screen.
 
-[`AppState`][AppState] provides additional methods that can be implemented to
+[`AppState`][appstate] provides additional methods that can be implemented to
 respond to user events and handle application startup and teardown.
 
 Here's an example application which simply draws a circle following the mouse
@@ -215,7 +228,8 @@ fn main() -> PixResult<()> {
 
 ### Build Features
 
-The following features can be added to your `Cargo.toml` depending on your needs. e.g.:
+The following features can be added to your `Cargo.toml` depending on your
+needs. e.g.:
 
 ```toml
 [dependencies.pix-engine]
@@ -224,33 +238,34 @@ default-features = false
 features = ["serde"]
 ```
 
-* **serde** - Adds [serde][] `Serialize`/`Deserialize` implementations for all
+- **serde** - Adds [serde][] `Serialize`/`Deserialize` implementations for all
   enums/structs.
 
-* **backtrace** - Enables the `backtrace` feature for [anyhow][], which allows printing
-  backtraces based on environment variables outlined in [std::backtrace][]. Useful for debugging.
+- **backtrace** - Enables the `backtrace` feature for [anyhow][], which allows
+  printing backtraces based on environment variables outlined in
+  [std::backtrace][]. Useful for debugging.
 
-* **opengl** - Forces `sdl2` to use `opengl` as its renderer. This feature is disabled by
-  default, allowing `sdl2` to use whichever renderer it defaults to on the target system. For
-  example, macOS defaults to `metal`.
+- **opengl** - Forces `sdl2` to use `opengl` as its renderer. This feature is
+  disabled by default, allowing `sdl2` to use whichever renderer it defaults to
+  on the target system. For example, macOS defaults to `metal`.
 
 ## Features
 
 ### PixState
 
-[`PixState`][PixState] is the global application context for the entire
+[`PixState`][pixstate] is the global application context for the entire
 `pix-engine` lifecycle from setup to teardown. It contains all of the settings
 and methods required to draw pixels to the screen, manage windows, textures,
 rendering settings, etc. See [Creating Your
 Application](#creating-your-application) for a brief introduction to the engine
-lifecycle methods and examples of using [`PixState`][PixState].
+lifecycle methods and examples of using [`PixState`][pixstate].
 
 ### Drawing
 
 All of the drawing primitives for drawing shapes, text, or UI widgets are all
-available on the [`PixState`][PixState] instance. Some methods are only available when the
-corresponding traits are in scope. Many traits are included by default in the
-[`prelude`](crate::prelude).
+available on the [`PixState`][pixstate] instance. Some methods are only
+available when the corresponding traits are in scope. Many traits are included
+by default in the [`prelude`](crate::prelude).
 
 Some examples:
 
@@ -267,7 +282,8 @@ There are also several convenience macros for creating shapes that can be used
 for drawing, or storing inside a `struct`:
 
 ```rust ignore
-// Create a triangle with points at `(x, y)` coordinates `(10, 20)`, `(30, 10)`, `(20, 25)`.
+// Create a triangle with points at `(x, y)` coordinates `(10, 20)`, `(30, 10)`,
+// `(20, 25)`.
 let t = tri!([10, 20], [30, 10], [20, 25]);
 
 // Create a 3D point at `(x, y, z)` coordinates `(10, 20, 10)`.
@@ -333,27 +349,31 @@ playback with a microphone.
 
 ### UI
 
-#### Summary
+#### Overview
 
-`pix-engine` offers an immediate mode graphical user interface ([IMGUI][]) library which allows for
-rapid UI development that is performant and simple to setup/iterate on. Some limitations:
+`pix-engine` offers an immediate mode graphical user interface ([IMGUI][])
+library which allows for rapid UI development that is performant and simple to
+setup/iterate on. Some limitations:
 
 - Styling is limited to simple color themes and spacing.
 - No animations or graphical effects.
-- Limited layout constructs - more complicated layouts require carefully crafted code.
+- Limited layout constructs - more complicated layouts require carefully crafted
+  code.
 - Limited responsiveness for changes in viewport.
 
 Much of the API design is inspired by [Dear ImGui][], but note the following differences:
 
-- There are no window rendering utilities or features. Instead, separate native windows can be
-  opened with UI elements rendered within. This approach simplifies window management by leveraging
-  the native window features like minimize, maximize, resizing, etc.
+- There are no window rendering utilities or features. Instead, separate native
+  windows can be opened with UI elements rendered within. This approach
+  simplifies window management by leveraging the native window features like
+  minimize, maximize, resizing, etc.
 
 #### End-User Guide
 
 - `Tab`/`Shift-Tab` cycles focus through interactable elements.
 - `Enter`/`Return` on an active element simulates clicking on it.
-- `Ctrl+Click` (`Cmd+Click` on macOS) on a slider or drag box to edit the value as text.
+- `Ctrl+Click` (`Cmd+Click` on macOS) on a slider or drag box to edit the value
+  as text.
   - Pressing `Tab`/`Escape`/`Return` exits editing mode.
 - The mouse wheel can scroll elements that are out of view.
 - Text Fields:
@@ -366,11 +386,12 @@ Much of the API design is inspired by [Dear ImGui][], but note the following dif
 #### Programmer Notes
 
 - See `gui` in the `examples/` folder to get started.
-- The UI is generated in code with UI method calls executed on the `PixState` instance in the
-  `PixState::on_update` render loop which is called every frame.
+- The UI is generated in code with UI method calls executed on the `PixState`
+  instance in the `PixState::on_update` render loop which is called every frame.
 - Elements are rendered in-order from top-left, to bottom-right.
-- Unless explicitly changed, each element will position itself below the previous element. Calling
-  `PixState::same_line` will shift position to the right of the previous element.
+- Unless explicitly changed, each element will position itself below the
+  previous element. Calling `PixState::same_line` will shift position to the
+  right of the previous element.
 
 #### Windows
 
@@ -449,8 +470,8 @@ See the [github issue tracker][].
 
 Licensed under either of
 
- * Apache License, Version 2.0 ([LICENSE-APACHE][])
- * MIT license ([LICENSE-MIT][])
+- Apache License, Version 2.0 ([LICENSE-APACHE][])
+- MIT license ([LICENSE-MIT][])
 
 at your option.
 
@@ -473,32 +494,32 @@ open source community enough for the all the amazing content and support.
 A special shout out to the following projects which heavily inspired the
 implementation and evolution of this crate:
 
-  * [OneLoneCoder][] and the [olcPixelGameEngine][].
-  * [The Coding Train][] and [p5js][].
-  * [Dear ImGui][]
+- [OneLoneCoder][] and the [olcPixelGameEngine][].
+- [The Coding Train][] and [p5js][].
+- [Dear ImGui][]
 
-[Rust]: https://www.rust-lang.org/
-[SDL2]: https://crates.io/crates/sdl2/
+[rust]: https://www.rust-lang.org/
+[sdl2]: https://crates.io/crates/sdl2/
 [vc++]: https://visualstudio.microsoft.com/visual-cpp-build-tools/
 [homebrew]: https://brew.sh/
 [rust-sdl2]: https://github.com/Rust-SDL2/rust-sdl2#sdl20-development-libraries
 [log]: https://crates.io/crates/log
 [env_logger]: https://crates.io/crates/env_logger
-[WASM]: https://www.rust-lang.org/what/wasm
-[Tetanes]: https://crates.io/crates/tetanes
-[NES]: https://en.wikipedia.org/wiki/Nintendo_Entertainment_System
-[AppState]: crate::prelude::AppState
-[AppState::on_update]: crate::prelude::AppState::on_update
-[PixState]: crate::prelude::PixState
+[wasm]: https://www.rust-lang.org/what/wasm
+[tetanes]: https://crates.io/crates/tetanes
+[nes]: https://en.wikipedia.org/wiki/Nintendo_Entertainment_System
+[appstate]: crate::prelude::AppState
+[appstate::on_update]: crate::prelude::AppState::on_update
+[pixstate]: crate::prelude::PixState
 [serde]: https://crates.io/crates/serde
 [anyhow]: https://crates.io/crates/anyhow
 [std::backtrace]: https://doc.rust-lang.org/std/backtrace/index.html#environment-variables
 [github issue tracker]: https://github.com/lukexor/pix-engine/issues
-[LICENSE-APACHE]: http://www.apache.org/licenses/LICENSE-2.0
-[LICENSE-MIT]: http://opensource.org/licenses/MIT
-[OneLoneCoder]: https://github.com/OneLoneCoder/
-[olcPixelGameEngine]: https://github.com/OneLoneCoder/olcPixelGameEngine
-[The Coding Train]: https://www.youtube.com/channel/UCvjgXvBlbQiydffZU7m1_aw
+[license-apache]: http://www.apache.org/licenses/LICENSE-2.0
+[license-mit]: http://opensource.org/licenses/MIT
+[onelonecoder]: https://github.com/OneLoneCoder/
+[olcpixelgameengine]: https://github.com/OneLoneCoder/olcPixelGameEngine
+[the coding train]: https://www.youtube.com/channel/UCvjgXvBlbQiydffZU7m1_aw
 [p5js]: https://p5js.org/
-[IMGUI]: http://www.johno.se/book/imgui.html
-[Dear ImGui]: https://github.com/ocornut/imgui
+[imgui]: http://www.johno.se/book/imgui.html
+[dear imgui]: https://github.com/ocornut/imgui

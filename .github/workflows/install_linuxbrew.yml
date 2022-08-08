@@ -1,0 +1,36 @@
+---
+name: Install Linuxbrew
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+
+jobs:
+  install_linuxbrew:
+    if: input.os == 'ubuntu-latest'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Swatinem/rust-cache@v1
+      - name: Cache Linuxbrew
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/Homebrew
+            /home/linuxbrew/.linuxbrew/
+          key: ${{ runner.os }}-linuxbrew-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Linuxbrew
+        shell: bash
+        # yamllint disable rule:line-length
+        run: |
+          bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
+          test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          set -xeuo pipefail
+          echo "LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
+          sudo apt-get update
+          sudo apt-get install build-essential

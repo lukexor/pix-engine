@@ -1,0 +1,21 @@
+---
+name: Install SDL2
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+
+jobs:
+  install_sdl2:
+    if: input.os != 'windows-latest'
+    runs-on: ${{ inputs.os }}
+    steps:
+      - name: Install SDL2
+        shell: bash
+        run: |
+          brew update
+          brew install sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
