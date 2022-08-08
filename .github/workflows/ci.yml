@@ -43,9 +43,9 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-      - uses: ./.github/actions/install_linuxbrew
+      - uses: ./.github/actions/install-linuxbrew
         if: matrix.os == 'ubuntu-latest'
-      - uses: ./.github/actions/install_sdl2
+      - uses: ./.github/actions/install-sdl2
         if: matrix.os != 'windows-latest'
       - name: Build
         shell: bash
