@@ -25,10 +25,10 @@ jobs:
           toolchain: nightly
           override: true
       - uses: Swatinem/rust-cache@v1
-      - uses: ./.github/workflow/install_linuxbrew
+      - uses: ./.github/workflows/install_linuxbrew
         with:
           os: ubuntu-latest
-      - uses: ./.github/workflow/install_sdl2
+      - uses: ./.github/workflows/install_sdl2
         with:
           os: ubuntu-latest
       - name: Code Coverage
