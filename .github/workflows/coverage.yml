@@ -29,7 +29,7 @@ jobs:
       - uses: ./.github/actions/install-sdl2
       - name: Code Coverage
         shell: bash
-        run: cargo tarpaulin --features serde --doc --tests
+        run: cargo +nightly tarpaulin --features serde --doc --tests
       # yamllint enable rule:line-length
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
