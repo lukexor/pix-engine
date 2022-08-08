@@ -21,8 +21,8 @@ runs:
         test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
         test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
         set -xeuo pipefail
-        echo "DYLD_FALLBACK_LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
-        echo "LD_LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
+        echo "export LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
+        echo "export LD_LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
         if [ "$EUID" -ne 0 ]; then
           sudo apt-get update
           sudo apt-get install build-essential

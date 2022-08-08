@@ -1,15 +1,22 @@
+<!-- markdownlint-disable-file no-duplicate-heading -->
+
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
 ### Changed
+
 - Added `Features` section to `README`.
 
 ## [0.6.0] - 2022-06-20
+
 ### Added
+
 - Added `PixState::ui_width` and `PoixState::ui_height` methods which take into
   account remaining screen space with regards to current UI cursor position and
   frame padding.
@@ -29,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added arrow keyboard navigation to `PixState::select_box` while focused.
 
 ### Changed
+
 - Improved element focus and blur.
 - Increased the relative font size of `PixState::monospace`.
 - Removed indent of children under `PixState::collapsing_header`.
@@ -46,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Swapped `lazy_static` for `once_cell`.
 
 ### Fixed
+
 - Fixed widgets to properly render the label with the current `fill` color.
 - Fixed `PixState::bullet` to be more indented.
 - Fixed `PixState::tab` size
@@ -61,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `PixState::font_size` affecting `Theme` font size.
 
 ### Breaking
+
 - Changed `PixState::tab_bar` to take a `selected` parameter to control the
   initial selected tab and changed the callback to take a generic type instead
   of a `usize`.
@@ -98,7 +108,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `coords`.
 
 ## [0.5.4] - 2022-01-26
+
 ### Added
+
 - Added `PixState::smooth` and `PixState::no_smooth` to toggle anti-alias
   drawing of shapes.
 - Added `PixState::day`, `PixState::month`, `PixState::year`, `PixState::hour`,
@@ -117,6 +129,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `audio_callback` and `audio_capture_and_replay` examples.
 
 ### Changed
+
 - Removed sleeping when audio queue got too full in favor of a maximum buffer
   size with a warning indicating `resume_audio` was not called.
 - Updated `README` with better installation steps and a Table of Contents.
@@ -128,17 +141,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   panic) if queue gets too full to avoid system contention.
 - Optimized `Color` addition and subtraction operations.
 - Renamed `audio` example to `audio_queue`.
-- Removed `wasm` checks and dependencies until future Web-Assembly implementation starts in
-  earnest.
-- Made `PixState::present` public so that the current canvas can be updated in the middle of, or
-  outside of `AppState::on_update`.
+- Removed `wasm` checks and dependencies until future Web-Assembly
+  implementation starts in earnest.
+- Made `PixState::present` public so that the current canvas can be updated in
+  the middle of, or outside of `AppState::on_update`.
 - Fixed various documentation errors.
 
 ### Breaking
+
 - Made `WindowBuilder::new` crate-visible only. Prefer `PixState::window`.
 
 ## [0.5.3] - 2021-12-21
+
 ### Added
+
 - Fixed mapping of `WindowEvent::Exposed`.
 - Raw audio sample example.
 - `AudioStatus` enum for representing the playback status of the audio device.
@@ -150,21 +166,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `PixState::menu` method that renders a clickable menu item with hover state.
 
 ### Changed
+
 - Engine loop sleeps remainder of target frame rate to reduce CPU usage.
 - Default audio sample rate to 48,000 Hz.
 - Fixed `ThemeBuilder` to default to "dark" theme.
 - Changed radio and checkboxes to scale based on `font_size`.
 
 ### Breaking
+
 - Disabled audio playback by default on startup. To queue and play audio you
   must first call `PixState::resume_audio`.
 
 ## [0.5.2] - 2021-12-13
+
 ### Changed
+
 - Updated MSRV in README.
 
 ## [0.5.1] - 2021-12-13
+
 ### Added
+
 - Basic gamepad controller support and a new event: `JoyHatMotion`.
 - `PixEngineBuider::with_deadzone` which alters the default gamepad axis
   deadzone.
@@ -175,22 +197,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Warning logs for unsupported events.
 
 ### Changed
+
 #### Core
+
 - `PixEngineBuilder::icon` and `WindowBuilder::icon` now take an
   `Into<Icon>` parameter that can converted into either a `PathBuf` or an
   `Image` which allows loading an icon from a file, or a static or dynamic
   image.
 
 #### UI
+
 - Various UI padding now use frame padding instead of item padding.
 
 ### Breaking
+
 - Changed `Unknown` event variants to `Unsupported` to better reflect that some
   events are known, but are not supported by this library.
 
 ## [0.5.0] - 2021-11-27
+
 ### Added
+
 #### Core
+
 - `log` facade added for logging support.
 - Added methods to `PixEngineBuilder` to control cache sizes.
 - Added `PixState::elapsed` method which returns the total elasped time since
@@ -198,6 +227,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A lot of documentation, examples, and README images.
 
 #### UI
+
 - Added `Theme` and `ThemeBuiilder` structs to customize UI theming for colors,
   fonts, sizes, styles and spacing. `PixEngineBuilder` updated with theme
   customizing methods. Default is a dark theme.
@@ -206,19 +236,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Cursor::no` method added.
 
 #### Window
+
 - `PixState` methods for getting and setting window dimensions changed to return
   a result instead of panicking and will return the dimensions for the current
   window target instead of only the primary window.
 - `PixState::save_canvas` and `PixState::save_texture` methods.
 
 #### Drawing
+
 - `Color::from_hex_alpha` and `Color::as_hex_alpha` added that take/return RGBA
-   values.
+  values.
 - `Color::blended` method added.
 - `PixState::set_viewport` and `PixState::clear_viewport` methods added to
   control the rendering viewport.
 
 #### Shapes
+
 - `Rect::resized` and `Rect::resize_by` methods added.
 - Added various `offset` methods to shapes.
 - `Ellipse::diameter` method for circular ellipses.
@@ -228,12 +261,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `serde` feature is enabled.
 
 ### Changed
+
 #### Core
+
 - Several types changed to `must_use`.
 - Several optimizations and performance improvements regarding caching and
   memory management.
 
 #### UI
+
 - `PixEngineBuilder::with_font` updated to take anything that can be turned into
   a `Font` struct which includes a path as before, but can now also take static
   font data loaded from `include_bytes!` for example.
@@ -242,19 +278,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   wrap width.
 
 #### Drawing
+
 - Many `Color` methods made `const`.
 - `Color::set_levels` method added.
 - Changed shapes to use anti-aliasing where possible by default.
 - Added `PixState::stroke_weight` method to draw thick lines.
 
 #### Shapes
+
 - Fixed radius handling in a circle `Ellipse`.
 - `Line::new`, `Tri::new`, and `Quad::new` updated to support different types
   for each point parameter.
 - `Line`, `Tri`, and `Quad` macros updated to have better type inference.
 
 ### Breaking
+
 #### Core
+
 - `core` module removed and all included modules moved up a level.
 - `PixResult` changed to return `anyhow::Error`, which can include a backtrace
   on nightly. Many other types of errors returned now all return the same
@@ -271,11 +311,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `math::constants::*` moved into `math`.
 
 #### UI
+
 - `PixEngineBuilder::with_font` changed to not take `size` as a parameter. Added
   an additional `PixEngineBuilder::with_font_size` method.
 - `PixState::primary_window_id` removed.
 
 #### Drawing
+
 - `Color::new`, `Color::new_alpha`, `Color::rgb`, and `Color::rgba` changed to
   take `u8` RGB/A values. Affects `rgb!` and `color!` macros. RGBA setter
   methods also updated to take `u8`.
@@ -296,12 +338,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `floor`, `ceil`, `round` and `trunc` methods added.
 
 #### Textures
+
 - `Texture` struct removed in favor of `TextureId`. All methods for getting or
   updating textures now take a `TextureId` instead.
 - Removed `unsafe` from `PixState::delete_texture`. Now it will simply return a
   `PixResult` if the `TextureId` is invalid.
 
 #### Shapes
+
 - All shapes had their `values` method changed to `as_array` and `set_values`
   method removed in favor of `as_bytes_mut`.
 - All shapes now have `as_bytes` and `as_bytes_mut` methods.
@@ -311,8 +355,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   item was hovered.
 
 ## [0.4.2] - 2021-09-02
+
 ### Added
+
 #### Core
+
 - `crate::prelude` and `crate::prelude_3d` for common imports.
 - `Copy`, `Clone`, `Debug`, `Default`, `PartialEq`, `Eq`, and `Hash`
   implementations for many/most structs where appropriate.
@@ -321,7 +368,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New optional `AppState` methods:
   - `on_key_pressed()`: Called on key press and key repeat.
   - `on_key_released()`: Called on key release.
-  - `on_key_typed()`: Called on character typed (ignores special keys like Ctrl and Backspace).
+  - `on_key_typed()`: Called on character typed (ignores special keys like Ctrl
+    and Backspace).
   - `on_mouse_dragged()`: Called on mouse motion while button is being heled.
   - `on_mouse_pressed()`: Called on mouse button press.
   - `on_mouse_released()`: Called on mouse button release.
@@ -335,6 +383,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `PixEngine` initialization.
 
 #### State
+
 - `PixState` methods for interacting with the window and `PixEngine` state:
   - `delta_time()`: Time elapsed since last frame.
   - `frame_count()` Total number of frame since application start.
@@ -344,7 +393,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `clear_frame_rate()`: Clear target frame rate.
   - `quit()`: Quit the application.
   - `abort_quit()`: Abort quitting the application (useful in
-  `AppState::on_stop()` as a confirmation).
+    `AppState::on_stop()` as a confirmation).
 - `PixState` methods for controlling drawing and the `PixEngine` render loop:
   - `background()`: Set the color for clearing the screen and clear to it immediately.
   - `fill()`: Set the fill color for drawing operations.
@@ -379,6 +428,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `pop()`: Restore previous drawing settings from the stack.
 
 #### Window
+
 - `WindowBuilder` struct for opening windows:
   - `new()`: Create a new `WindowBuilder` instance.
   - `with_dimensions()`: Set window (width, height).
@@ -418,6 +468,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `window::Result` and `window::Error` for window related failures.
 
 #### Drawing
+
 - `ColorMode` enum with `Rgb`, `Hsb`, and `Hsl` variants.
 - `Color` struct with several methods for creating and converting between color
   modes.
@@ -431,10 +482,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Light` and `LightSource` structs for doing basic 3D light rendering.
 
 #### UI
+
 - New Immediate-mode UI drawing methods for buttons. More to come in future
   versions.
 
 #### Shapes
+
 - Made shape structs generic over their type and number of dimensions using new
   const generics.
 - Conversion implementations to convert shapes between units for better
@@ -449,14 +502,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Tri` with convenience macros.
 
 #### Image
+
 - New `Image` methods for converting and manipulating images.
 - `image::Result` and `image::Error` for image failures.
 
 #### Events
+
 - `WindowEvent` struct.
 - `KeyMod` struct for detecting key modifiers on key press and release events.
 
 #### Misc
+
 - `math` module for noise and randomization utilities.
 - `Num` trait for generic number handling.
 - `Vector` type for doing N-dimensional vector math.
@@ -475,6 +531,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Extensive documentation additions and README improvements.
 
 ### Changed
+
 - `description`, `category` and `keywords` updated in `Cargo.toml`.
 - Updated to [resolver 2](https://doc.rust-lang.org/cargo/reference/resolver.html#resolver-versions)
   in `Cargo.toml`
@@ -483,7 +540,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated and refined examples.
 
 ### Breaking
+
 #### Core
+
 - Root imports have been removed in favor of `crate::prelude`.
 - `PixEngineResult` renamed to `PixResult`.
 - `PixEngineErr` renamed to `PixError` and `PixEngineErr::new()` removed.
@@ -500,6 +559,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `PixResult` instead of `PixEngineResult`.
 
 #### State
+
 - `State` trait renamed to `AppState`.
 - `StateData` struct renamed to `PixState`. Affects all methods from the `State`
   trait which was renamed to `PixState`.
@@ -520,8 +580,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `StateData::is_inside_circle()` removed. Use `Ellipse::contains_point()` instead.
 
 #### Window
+
 - `WindowId` type changed from `u32` to `usize`.
-- `StateData::open_window()` renamed to `PixState::create_window()` which creates a `WindowBuilder`.
+- `StateData::open_window()` renamed to `PixState::create_window()` which
+  creates a `WindowBuilder`.
 - `StateData::close_window()` renamed to `PixState::close_window()`.
 - `StateData::main_window_id()` renamed to `PixState::primary_window_id()`.
 - `StateData::screen_width()` renamed to `PixState::width()`.
@@ -539,6 +601,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `StateData::copy_window_texture()` removed.
 
 #### Drawing
+
 - `Pixel` renamed to `Color` with members made private.
 - `AlphaMode` renamed to `BlendMode`. `Normal` renamed to `None`. `Mask`
   removed. `Add` and `Mod` added.
@@ -568,9 +631,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `StateData::draw_line_pattern()` removed.
 - `StateData::draw_circle()` renamed to `PixState::circle()` which now takes an
   `Into<Ellipse>` to draw with the current `stroke` color.
-- `StateData::draw_partial_circle()` renamed to `PixState::arc()` which now takes an
-  `Into<Point>`, radius, start, and end to draw with the current `fill` and
-  `stroke` colors.
+- `StateData::draw_partial_circle()` renamed to `PixState::arc()` which now
+  takes an `Into<Point>`, radius, start, and end to draw with the current `fill`
+  and `stroke` colors.
 - `StateData::fill_circle()` renamed to `PixState::circle()` which now takes an
   `Into<Ellipse>` to draw with the current `fill` color.
 - `StateData::draw_elipse()` renamed to `PixState::ellipse()` which now takes an
@@ -581,25 +644,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Into<Rect>` to draw with the current `stroke` color.
 - `StateData::fill_rect()` renamed to `PixState::rect()` which now takes an
   `Into<Rect>` to draw with the current `fill` color.
-- `StateData::draw_triangle()` renamed to `PixState::triangle()` which now takes an
-  `Into<Triangle>` to draw with the current `stroke` color.
-- `StateData::fill_triangle()` renamed to `PixState::triangle()` which now takes an
-  `Into<Triangle>` to draw with the current `fill` color.
+- `StateData::draw_triangle()` renamed to `PixState::triangle()` which now takes
+  an `Into<Triangle>` to draw with the current `stroke` color.
+- `StateData::fill_triangle()` renamed to `PixState::triangle()` which now takes
+  an `Into<Triangle>` to draw with the current `fill` color.
 - `StateData::draw_image()` renamed to `PixState::image()` which now takes an
   `Into<Point>`.
 - `StateData::draw_partial_image()` removed.
 - `StateData::draw_string()` renamed to `PixState::text()` which now takes a
   `Into<Point>` to draw with the current `fill` color.
-- `StateData::draw_wireframe()` renamed to `PixState::wireframe()` which now takes a
-  `&[Vector]` and an `Into<Vector>`in addition to angle and scale to draw a
+- `StateData::draw_wireframe()` renamed to `PixState::wireframe()` which now
+  takes a `&[Vector]` and an `Into<Vector>`in addition to angle and scale to
+  draw a
   polygon with the current `stroke` and `fill` colors.
 - `StateData::draw_transform()` removed.
 
 #### Shapes
+
 - `Rect` members made private. Use getter/setter methods to access `x`, `y`,
   `width`, and `height` instead.
 
 #### Image
+
 - `ImageRef` struct removed along with all related methods: `new_ref()`,
   `ref_from()`, `rgb_ref()`, and `rgba_ref()`.
 - `rgb()` renamed to `with_rgb()`.
@@ -612,13 +678,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `color_type()` renamed to `format()` and returns `PixelFormat`.
 - `bytes()` renamed to `as_bytes()`. `bytes()` now returns an `Iterator` of `u8`
   instead of `Vec<u8>`.
-- `bytes_mut()` renamed to `as_mut_bytes()` and changed to return `&mut [u8]` instead of `&mut Vec<u8>`.
+- `bytes_mut()` renamed to `as_mut_bytes()` and changed to return `&mut [u8]`
+  instead of `&mut Vec<u8>`.
 - `from_file()` updated to take `AsRef<Path>` instead of `&str` and returns
   `image::Result`.
 - `save_to_file()` renamed to `save()`, updated to take `AsRef<Path>` instead of
   `&str` and returns `image::Result`.
 
 #### Events
+
 - `Input` renamed to `KeyEvent`. `released` removed. `held` changed to
   `repeat`. `key` and `keymod` added.
 - `Axis::Unknown` added and `Axis` made `[non_exhaustive]`.
@@ -639,7 +707,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `State::get_mouse_wheel()` removed in favor of `AppState::on_mouse_wheel()`.
 - `State::poll()` removed. Use the `AppState::on_*` methods to respond to events.
 
-[Unreleased]: https://github.com/lukexor/pix-engine/compare/v0.6.0...HEAD
+[unreleased]: https://github.com/lukexor/pix-engine/compare/v0.6.0...HEAD
 [0.6.0]: https://github.com/lukexor/pix-engine/compare/v0.5.4...v0.6.0
 [0.5.4]: https://github.com/lukexor/pix-engine/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/lukexor/pix-engine/compare/v0.5.2...v0.5.3

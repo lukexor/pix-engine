@@ -30,7 +30,6 @@ jobs:
       - name: Code Coverage
         shell: bash
         run: cargo +nightly tarpaulin --features serde --doc --tests
-      # yamllint enable rule:line-length
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
         with:

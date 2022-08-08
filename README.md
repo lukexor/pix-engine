@@ -140,6 +140,7 @@ sudo pacman -S sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
 3. Unzip each `.zip` file into a folder.
 4. Copy library files:
    - from: `lib\x64\`
+   <!-- markdownlint-disable-next-line line-length -->
    - to: `C:\Users\{Username}\.rustup\toolchains\{current toolchain}\lib\rustlib\{current toolchain}\lib`
      where `{current toolchain}` is likely `stable-x86_64-pc-windows-msvc`.
      - _Note_: If you don't use `rustup`, See [rust-sdl2][] for more info on
