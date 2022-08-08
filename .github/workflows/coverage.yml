@@ -10,13 +10,14 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-C instrument-coverage"
+  # yamllint disable-line rule:line-length
+  RUSTDOCFLAGS: "-C instrument-coverage -Z unstable-options --persist-doctests target/debug/doctestbins"
+  LLVM_PROFILE_FILE: "profile-%m.profraw"
 
 jobs:
   coverage:
     runs-on: ubuntu-latest
-    container:
-      image: xd009642/tarpaulin:latest-nightly
-      options: --security-opt seccomp=unconfined
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
@@ -24,16 +25,41 @@ jobs:
           profile: minimal
           toolchain: nightly
           override: true
+          components: llvm-tools-preview
       - uses: Swatinem/rust-cache@v1
       - uses: ./.github/actions/install-linuxbrew
       - uses: ./.github/actions/install-sdl2
       - name: Code Coverage
         shell: bash
+        # source: https://doc.rust-lang.org/rustc/instrument-coverage.html
         # yamllint disable rule:line-length
         run: |
-          echo $LIBRARY_PATH
-          echo $LD_LIBRARY_PATH
-          cargo +nightly tarpaulin --features serde --doc --tests --exclude-files tests
+          env
+
+          cargo install rustfilt cargo-binutils
+          brew install jq
+
+          cargo test
+
+          rust-profdata merge -sparse profile-*.profraw -o coverage.profdata
+
+          read -ra objects < <( \
+            for file in \
+              $( \
+                  cargo test --no-run --message-format=json \
+                    | jq -r "select(.profile.test == true) | .filenames[]" \
+                    | grep -v dSYM - \
+              ) \
+              target/debug/doctestbins/*/rust_out; \
+            do \
+              [[ -x $file ]] && printf "%s %s " -object "$file"; \
+            done \
+          )
+
+          rust-cov show "${objects[@]}" --Xdemangler=rustfilt \
+            --ignore-filename-regex=/.cargo/registry
+            --instr-profile=coverage.profdata > coverage.txt
+      # yamllint enable rule:line-length
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
         with:
