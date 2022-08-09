@@ -34,7 +34,7 @@ jobs:
         # source: https://doc.rust-lang.org/rustc/instrument-coverage.html
         # yamllint disable rule:line-length
         run: |
-          set -xeuo pipefail
+          set -uo pipefail
 
           cargo install rustfilt cargo-binutils
           brew install jq
@@ -57,7 +57,7 @@ jobs:
           )
 
           rust-cov show "${objects[@]}" --Xdemangler=rustfilt \
-            --ignore-filename-regex=/.cargo/registry
+            --ignore-filename-regex=/.cargo/registry \
             --ignore-filename-regex=/target/debug \
             --ignore-filename-regex=/tests \
             --instr-profile=coverage.profdata > coverage.txt
