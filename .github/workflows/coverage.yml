@@ -53,7 +53,7 @@ jobs:
                 [[ -x $file ]] && printf "%s %s " -object "$file"; \
               done \
             ) \
-            --format lcov
+            --format lcov \
             --Xdemangler=rustfilt \
             --ignore-filename-regex=/.cargo/registry \
             --ignore-filename-regex=/target/debug \
