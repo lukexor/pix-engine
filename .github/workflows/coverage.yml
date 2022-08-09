@@ -29,39 +29,35 @@ jobs:
       - uses: Swatinem/rust-cache@v1
       - uses: ./.github/actions/install-linuxbrew
       - uses: ./.github/actions/install-sdl2
-      - name: Code Coverage
-        shell: bash
-        # source: https://doc.rust-lang.org/rustc/instrument-coverage.html
-        # yamllint disable rule:line-length
+      - name: Install Coverage Tools
         run: |
-          set -uo pipefail
-
           cargo install rustfilt cargo-binutils
           brew install jq
-
-          cargo test --features "serde"
-
-          rust-profdata merge -sparse profile-*.profraw -o coverage.profdata
-
-          read -ra objects < <( \
-            for file in \
-              $( \
+      - name: Run Tests
+        run: cargo test --features "serde"
+        # source: https://doc.rust-lang.org/rustc/instrument-coverage.html
+      - name: Merge Coverage
+        run: rust-profdata merge -sparse profile-*.profraw -o coverage.profdata
+      - name: Collect Coverage
+        run: |
+          rust-cov show \
+            $( \
+              for file in \
+                $( \
                   cargo test --no-run --message-format=json \
                     | jq -r "select(.profile.test == true) | .filenames[]" \
-                    | grep -v dSYM - \
-              ) \
-              target/debug/doctestbins/*/rust_out; \
-            do \
-              [[ -x $file ]] && printf "%s %s " -object "$file"; \
-            done \
-          )
-
-          rust-cov show "${objects[@]}" --Xdemangler=rustfilt \
+                    | grep -v dsym - \
+                ) \
+                target/debug/doctestbins/*/rust_out; \
+              do \
+                [[ -x $file ]] && printf "%s %s " -object "$file"; \
+              done \
+            ) \
+            --xdemangler=rustfilt \
             --ignore-filename-regex=/.cargo/registry \
             --ignore-filename-regex=/target/debug \
             --ignore-filename-regex=/tests \
             --instr-profile=coverage.profdata > coverage.txt
-      # yamllint enable rule:line-length
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
         with:
