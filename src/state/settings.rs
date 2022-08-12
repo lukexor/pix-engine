@@ -150,6 +150,7 @@ pub(crate) struct Settings {
     pub(crate) running: bool,
     pub(crate) show_frame_rate: bool,
     pub(crate) target_frame_rate: Option<usize>,
+    pub(crate) target_delta_time: Option<Duration>,
     pub(crate) scale_x: f32,
     pub(crate) scale_y: f32,
     pub(crate) rect_mode: RectMode,
@@ -181,6 +182,7 @@ impl Default for Settings {
             running: true,
             show_frame_rate: false,
             target_frame_rate: None,
+            target_delta_time: None,
             scale_x: 1.0,
             scale_y: 1.0,
             rect_mode: RectMode::Corner,
@@ -816,11 +818,14 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn frame_rate<R>(&mut self, rate: R)
+    pub fn frame_rate<R>(&mut self, frame_rate: R)
     where
         R: Into<Option<usize>>,
     {
-        self.settings.target_frame_rate = rate.into();
+        let frame_rate = frame_rate.into();
+        self.settings.target_frame_rate = frame_rate;
+        self.settings.target_delta_time =
+            frame_rate.map(|frame_rate| Duration::from_secs(1) / frame_rate as u32);
     }
 
     /// Set the rendering scale of the current canvas. Drawing coordinates are scaled by x/y
@@ -1101,9 +1106,7 @@ impl PixState {
     /// Get the target delta time between frames.
     #[inline]
     pub(crate) fn target_delta_time(&self) -> Option<Duration> {
-        self.settings
-            .target_frame_rate
-            .map(|rate| Duration::from_secs(1) / rate as u32)
+        self.settings.target_delta_time
     }
 
     /// Get whether `VSync` is enabled.
