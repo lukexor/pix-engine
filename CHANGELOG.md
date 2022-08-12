@@ -9,9 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
 ### Changed
 
 - Added `Features` section to `README`.
+- Avoid computing `target_delta_time` each frame
+
+### Fixed
+
+### Breaking
+
+- Changed `Unsupported` `Event` variants to `Unhandled` to better reflect
+  intention.
 
 ## [0.6.0] - 2022-06-20
 
