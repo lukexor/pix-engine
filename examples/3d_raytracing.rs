@@ -215,8 +215,8 @@ impl AppState for App {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         let half_w = s.width()? as i32 / 2;
         let half_h = s.height()? as i32 / 2;
-        for x in -half_w..=half_w {
-            for y in -half_h..=half_h {
+        for y in -half_h..=half_h {
+            for x in -half_w..=half_w {
                 let direction: Point<f64, 3> = self.canvas_to_viewport(x, y);
                 let color =
                     self.trace_ray(self.origin, direction - self.looking, 1.0, f64::INFINITY, 3);

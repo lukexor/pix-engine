@@ -96,8 +96,8 @@ impl RayScene {
         for c in self.cells.iter_mut() {
             c.reset();
         }
-        for x in 0..rect.width() as i32 {
-            for y in 0..rect.height() as i32 {
+        for y in 0..rect.height() as i32 {
+            for x in 0..rect.width() as i32 {
                 let x_off = x + rect.x();
                 let y_off = y + rect.y();
                 let i = (y_off * pitch + x_off) as usize; // This
