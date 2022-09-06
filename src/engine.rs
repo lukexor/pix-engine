@@ -987,7 +987,7 @@ impl EngineBuilder {
     /// memory or a software driver issue.
     pub fn build(self) -> Result<Engine> {
         Ok(Engine {
-            state: PixState::new(self.settings.clone(), self.theme.clone())?,
+            state: PixState::new(self.settings, self.theme)?,
             joystick_deadzone: self.joystick_deadzone,
         })
     }
