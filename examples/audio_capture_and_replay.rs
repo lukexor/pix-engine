@@ -96,7 +96,7 @@ impl CaptureReplayDemo {
     }
 }
 
-impl AppState for CaptureReplayDemo {
+impl PixEngine for CaptureReplayDemo {
     fn on_update(&mut self, s: &mut PixState) -> Result<()> {
         s.clear()?;
 
@@ -162,7 +162,7 @@ fn main() -> Result<()> {
     }
     pretty_env_logger::init();
 
-    let mut engine = PixEngine::builder()
+    let mut engine = Engine::builder()
         .with_dimensions(800, 600)
         .with_title("Audio Capture & Replay")
         .build()?;

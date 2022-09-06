@@ -2,7 +2,7 @@ use pix_engine::prelude::*;
 
 struct HelloWorld;
 
-impl AppState for HelloWorld {
+impl PixEngine for HelloWorld {
     // Set up any state or resources before starting main event loop.
     fn on_start(&mut self, s: &mut PixState) -> Result<()> {
         s.background(220);
@@ -24,7 +24,7 @@ impl AppState for HelloWorld {
 
 fn main() -> Result<()> {
     let mut app = HelloWorld;
-    let mut engine = PixEngine::builder()
+    let mut engine = Engine::builder()
         .with_dimensions(800, 600)
         .with_title("Hello World")
         .build()?;

@@ -76,7 +76,7 @@
 //! ```
 //! # use pix_engine::prelude::*;
 //! # struct App { checkbox: bool, text_field: String };
-//! # impl AppState for App {
+//! # impl PixEngine for App {
 //! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!     s.text("Some text")?;
 //!     s.separator()?; // Adds a horizontal line separator

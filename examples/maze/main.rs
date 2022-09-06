@@ -163,7 +163,7 @@ impl MazeApp {
     }
 }
 
-impl AppState for MazeApp {
+impl PixEngine for MazeApp {
     fn on_update(&mut self, s: &mut PixState) -> Result<()> {
         s.clear()?;
 
@@ -195,7 +195,7 @@ impl AppState for MazeApp {
 }
 
 pub fn main() -> Result<()> {
-    let mut engine = PixEngine::builder()
+    let mut engine = Engine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("Maze Generation & A* Search")
         .with_frame_rate()

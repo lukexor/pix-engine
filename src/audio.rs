@@ -1,15 +1,15 @@
-//! Trait and types for allowing [`PixEngine`] to play and capture audio.
+//! Trait and types for allowing [`Engine`] to play and capture audio.
 //!
 //! There are several methods for playing audio in your application:
 //!
 //! - Queuing pre-recorded or generated audio samples by calling [`PixState::enqueue_audio`].
-//! - Having [`PixEngine`] request pre-recorded or generated audio samples by implementing the
+//! - Having [`Engine`] request pre-recorded or generated audio samples by implementing the
 //!   [`AudioCallback`] trait on a type and calling [`PixState::open_playback`].
 //! - Loading and playing a `.wav` or `.mp3` file. (Coming soon!).
 //!
 //! You can also record audio from a capture device using [`PixState::open_capture`].
 //!
-//! [`PixEngine`]: crate::engine::PixEngine
+//! [`Engine`]: crate::engine::Engine
 //!
 //! # Examples
 //!
@@ -20,7 +20,7 @@
 //!
 //! struct MyApp;
 //!
-//! impl AppState for MyApp {
+//! impl PixEngine for MyApp {
 //!     fn on_start(&mut self, s: &mut PixState) -> Result<()> {
 //!         s.resume_audio();
 //!         Ok(())
@@ -74,7 +74,7 @@
 //!
 //! struct MyApp;
 //!
-//! impl AppState for MyApp {
+//! impl PixEngine for MyApp {
 //!     fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!         let desired_spec = AudioSpecDesired {
 //!             freq: Some(44_100), // 44,100 HZ
@@ -142,7 +142,7 @@
 //!
 //! const RECORDING_LENGTH_SECONDS: usize = 3;
 //!
-//! impl AppState for MyApp {
+//! impl PixEngine for MyApp {
 //!     fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!         let desired_spec = AudioSpecDesired {
 //!             freq: None,     // default device frequency
@@ -180,7 +180,7 @@
 //! }
 //! ```
 //!
-//! [`AppState`]: crate::prelude::AppState
+//! [`PixEngine`]: crate::prelude::PixEngine
 
 use crate::prelude::{Result, PixState};
 #[cfg(feature = "serde")]
@@ -192,11 +192,11 @@ pub use crate::renderer::sdl::{AudioDevice, AudioFormatNum};
 #[cfg(target_arch = "wasm32")]
 pub use crate::renderer::wasm::{AudioDevice, AudioFormatNum};
 
-/// Trait for allowing [`PixEngine`] to request audio samples from your application.
+/// Trait for allowing [`Engine`] to request audio samples from your application.
 ///
 /// Please see the [module-level documentation] for more examples.
 ///
-/// [`PixEngine`]: crate::engine::PixEngine
+/// [`Engine`]: crate::engine::Engine
 /// [module-level documentation]: crate::audio
 pub trait AudioCallback: Send
 where
@@ -412,7 +412,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::{math::PI, prelude::*};
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     // Some square wave samples of audio
     ///     let volume = 0.2;
@@ -448,7 +448,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
     /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
     ///     match event.key {
@@ -503,7 +503,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
     /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
     ///     match event.key {
@@ -528,7 +528,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
     /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
     ///     match event.key {
@@ -585,7 +585,7 @@ impl PixState {
     ///
     /// struct MyApp;
     ///
-    /// impl AppState for MyApp {
+    /// impl PixEngine for MyApp {
     ///     fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///         let desired_spec = AudioSpecDesired {
     ///             freq: Some(44_100), // 44,100 HZ
@@ -676,7 +676,7 @@ impl PixState {
     ///
     /// const RECORDING_LENGTH_SECONDS: usize = 3;
     ///
-    /// impl AppState for MyApp {
+    /// impl PixEngine for MyApp {
     ///     fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///         let desired_spec = AudioSpecDesired {
     ///             freq: None,     // default device frequency

@@ -263,7 +263,7 @@ impl RayScene {
     }
 }
 
-impl AppState for RayScene {
+impl PixEngine for RayScene {
     fn on_start(&mut self, s: &mut PixState) -> Result<()> {
         s.background(Color::BLACK);
         s.scale(SCALE as f32, SCALE as f32)?;
@@ -370,7 +370,7 @@ impl AppState for RayScene {
 }
 
 fn main() -> Result<()> {
-    let mut engine = PixEngine::builder()
+    let mut engine = Engine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("2D Raycasting")
         .with_frame_rate()

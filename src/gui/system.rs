@@ -11,7 +11,7 @@
 //! ```
 //! # use pix_engine::prelude::*;
 //! # struct App { text_entry: String };
-//! # impl AppState for App {
+//! # impl PixEngine for App {
 //! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!     if s.button("Open Homepage")? {
 //!         s.open_url("https://example.com")?;
@@ -40,7 +40,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool, text_field: String };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     println!("Current clipboard text: {}", s.clipboard_text());
     ///     Ok(())
@@ -64,7 +64,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool, text_field: String };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.set_clipboard_text("Copied to clipboard!")?;
     ///     Ok(())
@@ -92,7 +92,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.button("Open Homepage")? {
     ///         s.open_url("https://example.com")?;

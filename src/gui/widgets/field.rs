@@ -12,7 +12,7 @@
 //! ```
 //! # use pix_engine::prelude::*;
 //! # struct App { text_field: String, text_area: String};
-//! # impl AppState for App {
+//! # impl PixEngine for App {
 //! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!     s.text_field("Text Field", &mut self.text_field)?;
 //!     s.advanced_text_field(
@@ -52,7 +52,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.text_field("Text Field", &mut self.text_field)?;
     ///     Ok(())
@@ -77,7 +77,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.advanced_text_field(
     ///         "Filtered Text Field w/ hint",
@@ -213,7 +213,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.text_area("Text Area", 200, 100, &mut self.text_area)?;
     ///     Ok(())
@@ -244,7 +244,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.advanced_text_area(
     ///         "Filtered Text Area w/ hint",

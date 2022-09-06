@@ -10,7 +10,7 @@ impl WindowDemo {
     }
 }
 
-impl AppState for WindowDemo {
+impl PixEngine for WindowDemo {
     fn on_update(&mut self, s: &mut PixState) -> Result<()> {
         s.clear()?;
 
@@ -60,7 +60,7 @@ impl AppState for WindowDemo {
 }
 
 fn main() -> Result<()> {
-    let mut engine = PixEngine::builder()
+    let mut engine = Engine::builder()
         .with_dimensions(400, 400)
         .with_title("Window 1")
         .position(10, 10)

@@ -4,10 +4,10 @@ use crate::prelude::*;
 use std::{ffi::OsString, io};
 use thiserror::Error;
 
-/// The result type for [`PixEngine`] operations.
+/// The result type for [`Engine`] operations.
 pub type Result<T> = anyhow::Result<T, anyhow::Error>;
 
-/// The error type for [`PixEngine`] operations.
+/// The error type for [`Engine`] operations.
 #[non_exhaustive]
 #[derive(Debug, Error)]
 pub enum Error {

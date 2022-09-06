@@ -211,7 +211,7 @@ impl App {
     }
 }
 
-impl AppState for App {
+impl PixEngine for App {
     fn on_update(&mut self, s: &mut PixState) -> Result<()> {
         let half_w = s.width()? as i32 / 2;
         let half_h = s.height()? as i32 / 2;
@@ -251,7 +251,7 @@ impl AppState for App {
 }
 
 pub fn main() -> Result<()> {
-    let mut engine = PixEngine::builder()
+    let mut engine = Engine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("3D Raytracing")
         .with_frame_rate()

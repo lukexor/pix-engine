@@ -42,7 +42,6 @@
 
 #[macro_use]
 pub mod color;
-pub mod appstate;
 pub mod draw;
 pub mod engine;
 pub mod error;
@@ -68,14 +67,13 @@ pub mod transform;
 
 /// Exports most commonly used types, traits, and functions.
 pub mod prelude {
-    pub use super::appstate::AppState;
     pub use super::audio::{
         AudioCallback, AudioDevice, AudioDeviceDriver, AudioFormat, AudioFormatNum, AudioSpec,
         AudioSpecDesired, AudioStatus,
     };
     pub use super::color::{Color, Mode as ColorMode};
     pub use super::draw::Draw;
-    pub use super::engine::PixEngine;
+    pub use super::engine::{Engine, PixEngine};
     pub use super::error::{Error, Result};
     pub use super::event::{
         Axis, ControllerButton, ControllerEvent, ControllerId, ControllerUpdate, Event, HatState,

@@ -224,7 +224,7 @@ pub(crate) trait WindowRenderer {
 
 /// Opens a new window by providing several window configuration functions.
 ///
-/// In addition to the primary window created for you when calling [`PixEngine::run`], you can open
+/// In addition to the primary window created for you when calling [`Engine::run`], you can open
 /// additional windows with various configurations and render to them using the
 /// [`PixState::with_window`] method.
 ///
@@ -233,7 +233,7 @@ pub(crate) trait WindowRenderer {
 /// ```
 /// # use pix_engine::prelude::*;
 /// # struct App { windows: Vec<WindowId> };
-/// # impl AppState for App {
+/// # impl PixEngine for App {
 /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
 /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
 ///     if let Key::O = event.key {

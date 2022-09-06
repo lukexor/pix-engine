@@ -3,7 +3,7 @@ use std::env;
 
 struct LoggingDemo;
 
-impl AppState for LoggingDemo {
+impl PixEngine for LoggingDemo {
     fn on_update(&mut self, s: &mut PixState) -> Result<()> {
         s.clear()?;
         s.text("Press any key and check the console for log events...")?;
@@ -26,7 +26,7 @@ fn main() -> Result<()> {
     pretty_env_logger::init();
 
     // Build and start application as normal.
-    let mut engine = PixEngine::builder()
+    let mut engine = Engine::builder()
         .with_dimensions(800, 600)
         .with_title("Logging Demo")
         .build()?;

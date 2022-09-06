@@ -18,7 +18,7 @@
 //! ```
 //! # use pix_engine::prelude::*;
 //! # struct App;
-//! # impl AppState for App {
+//! # impl PixEngine for App {
 //! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!     let texture_id1 = s.create_texture(500, 600, PixelFormat::Rgb)?;
 //!     // Does not actually render to the current canvas
@@ -104,7 +104,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { texture_id: TextureId };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.with_texture(self.texture_id, |s: &mut PixState| -> Result<()> {
     ///         s.background(Color::random());
@@ -155,7 +155,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { texture_id: TextureId };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.with_texture(self.texture_id, |s: &mut PixState| -> Result<()> {
     ///         s.background(Color::random());
@@ -236,7 +236,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { texture_id: TextureId };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
     /// fn on_start(&mut self, s: &mut PixState) -> Result<()> {
     ///     self.texture_id = s.create_texture(
@@ -276,7 +276,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     // A more polished implementation would manage state in `self` to avoid re-creating and
     ///     // destroying textures every frame
@@ -304,7 +304,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { texture_id: TextureId };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
     /// fn on_start(&mut self, s: &mut PixState) -> Result<()> {
     ///     self.texture_id = s.create_texture(500, 600, None)?;
@@ -343,7 +343,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { texture_id: TextureId };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
     /// fn on_start(&mut self, s: &mut PixState) -> Result<()> {
     ///     self.texture_id = s.create_texture(500, 600, None)?;
@@ -392,7 +392,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
     /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
     ///     if let Key::S = event.key {

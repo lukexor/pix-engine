@@ -12,7 +12,7 @@
 //! ```
 //! # use pix_engine::prelude::*;
 //! # struct App { drag: i32, advanced_drag: f32, slider: i32, advanced_slider: f32};
-//! # impl AppState for App {
+//! # impl PixEngine for App {
 //! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!     s.drag("Drag", &mut self.drag, 1)?;
 //!     s.advanced_drag(
@@ -56,7 +56,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { int: i32, float: f32};
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.drag("Drag Int", &mut self.int, 1)?;
     ///     s.drag("Drag Float", &mut self.float, 0.005)?;
@@ -83,7 +83,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { advanced_drag: f32};
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.advanced_drag(
     ///         "Advanced Drag",
@@ -237,7 +237,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { int: i32, float: f32};
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.slider("Slider Int", &mut self.int, -5, 5)?;
     ///     s.slider("Slider Float", &mut self.float, 0.0, 1.0)?;
@@ -268,7 +268,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { advanced_slider: f32};
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.advanced_slider(
     ///         "Advanced Slider",

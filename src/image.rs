@@ -403,7 +403,7 @@ impl Image {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { image: Image };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
     /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
     ///     if let Key::S = event.key {
@@ -452,7 +452,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     let image = Image::from_file("./some_image.png")?;
     ///     s.image(&image, [10, 10])?;
@@ -483,7 +483,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.angle_mode(AngleMode::Degrees);
     ///     let image = Image::from_file("./some_image.png")?;

@@ -85,7 +85,7 @@ impl QueueDemo {
     }
 }
 
-impl AppState for QueueDemo {
+impl PixEngine for QueueDemo {
     fn on_start(&mut self, s: &mut PixState) -> Result<()> {
         self.sample_rate = s.audio_sample_rate() as f32;
         self.sample_count = 4 * self.sample_rate as usize;
@@ -176,7 +176,7 @@ fn main() -> Result<()> {
         Some(s) if !s.is_empty() => PathBuf::from(s),
         _ => PathBuf::from("./audio/melancholy.raw"),
     };
-    let mut engine = PixEngine::builder()
+    let mut engine = Engine::builder()
         .with_dimensions(1024, 768)
         .with_title("Audio Queue")
         .with_frame_rate()

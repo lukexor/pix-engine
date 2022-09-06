@@ -12,7 +12,7 @@
 //! ```
 //! # use pix_engine::prelude::*;
 //! # struct App;
-//! # impl AppState for App {
+//! # impl PixEngine for App {
 //! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!     s.background(Color::ALICE_BLUE);
 //!     s.clear();
@@ -44,7 +44,7 @@ pub trait Draw {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     let rect = rect![0, 0, 100, 100];
     ///     // The following two lines are equivalent.
@@ -69,7 +69,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.background(Color::CADET_BLUE);
     ///     s.clear();
@@ -101,7 +101,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
     /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
     ///     if let Key::S = event.key {

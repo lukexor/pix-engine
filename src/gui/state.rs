@@ -167,7 +167,7 @@ impl Default for UiState {
 }
 
 impl UiState {
-    /// Handle state changes this frame prior to calling [`AppState::on_update`].
+    /// Handle state changes this frame prior to calling [`PixEngine::on_update`].
     #[inline]
     pub(crate) fn pre_update(&mut self, theme: &Theme) {
         self.clear_hovered();
@@ -177,7 +177,7 @@ impl UiState {
         self.column_offset = 0;
     }
 
-    /// Handle state changes this frame after calling [`AppState::on_update`].
+    /// Handle state changes this frame after calling [`PixEngine::on_update`].
     #[inline]
     pub(crate) fn post_update(&mut self) {
         for texture in &mut self.textures {
@@ -715,7 +715,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     let mut pos = s.cursor_pos();
     ///     pos.offset_y(20);
@@ -737,7 +737,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.set_cursor_pos(s.center()?);
     ///     s.rect_mode(RectMode::Center);
@@ -772,7 +772,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.text("Hover me")?;
     ///     if s.hovered() {
@@ -797,7 +797,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.text("Hover me")?;
     ///     if s.clicked() {
@@ -822,7 +822,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.text("Hover me")?;
     ///     if s.dbl_clicked() {

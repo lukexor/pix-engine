@@ -14,7 +14,7 @@
 //! ```
 //! # use pix_engine::prelude::*;
 //! # struct App { checkbox: bool, text_field: String, selected: &'static str };
-//! # impl AppState for App {
+//! # impl PixEngine for App {
 //! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!     s.text("Text")?;
 //!     s.same_line(None);
@@ -69,7 +69,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool, text_field: String };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.text("Text")?;
     ///     s.same_line(None);
@@ -99,7 +99,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool, text_field: String };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.next_width(200);
     ///     if s.button("Button")? {
@@ -129,7 +129,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { selected: &'static str };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.tab_bar(
     ///         "Tab bar",
@@ -281,7 +281,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool, text_field: String };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.text("Some text")?;
     ///     s.spacing()?;
@@ -309,7 +309,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool, text_field: String };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.indent()?;
     ///     s.text("Indented!")?;
@@ -336,7 +336,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool, text_field: String };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.text("Some text")?;
     ///     s.separator()?;

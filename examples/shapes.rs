@@ -6,7 +6,7 @@ struct Shapes {
     scale_latch: bool,
 }
 
-impl AppState for Shapes {
+impl PixEngine for Shapes {
     fn on_start(&mut self, s: &mut PixState) -> Result<()> {
         s.background(50);
         s.stroke(Color::BLACK);
@@ -91,7 +91,7 @@ impl AppState for Shapes {
 }
 
 fn main() -> Result<()> {
-    let mut engine = PixEngine::builder()
+    let mut engine = Engine::builder()
         .with_dimensions(800, 600)
         .with_title("Shapes")
         .target_frame_rate(60)

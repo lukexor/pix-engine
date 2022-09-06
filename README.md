@@ -1,4 +1,4 @@
-# PixEngine
+# Engine
 
 [![Build Status]][build] [![Doc Status]][docs] [![codecov]][coverage] [![Latest
 Version]][crates.io] [![Downloads]][crates.io] [![License]][mit]
@@ -155,13 +155,13 @@ folder.
 ### Creating Your Application
 
 Creating a visual or interactive application using `pix-engine` requires
-implementing only a single method of the [`AppState`][appstate] trait for your
-application: [`AppState::on_update`][appstate::on_update] which gets executed as
+implementing only a single method of the [`PixEngine`][appstate] trait for your
+application: [`PixEngine::on_update`][appstate::on_update] which gets executed as
 often as possible. Within that function you'll have access to a mutable
 [`PixState`][pixstate] object which provides several methods for modifying
 settings and drawing to the screen.
 
-[`AppState`][appstate] provides additional methods that can be implemented to
+[`PixEngine`][appstate] provides additional methods that can be implemented to
 respond to user events and handle application startup and teardown.
 
 Here's an example application which simply draws a circle following the mouse
@@ -172,7 +172,7 @@ use pix_engine::prelude::*;
 
 struct MyApp;
 
-impl AppState for MyApp {
+impl PixEngine for MyApp {
     // Set up application state and initial settings. `PixState` contains
     // engine specific state and utility methods for actions like getting mouse
     // coordinates, drawing shapes, etc. (Optional)
@@ -216,7 +216,7 @@ impl AppState for MyApp {
 }
 
 fn main() -> Result<()> {
-    let mut engine = PixEngine::builder()
+    let mut engine = Engine::builder()
       .with_dimensions(800, 600)
       .with_title("MyApp")
       .with_frame_rate()
@@ -454,7 +454,7 @@ Example using [env_logger][]:
 fn main() -> Result<()> {
     env_logger::init();
 
-    let mut engine = PixEngine::builder()
+    let mut engine = Engine::builder()
       .with_dimensions(800, 600)
       .with_title("MyApp")
       .build()?;
@@ -509,8 +509,8 @@ implementation and evolution of this crate:
 [wasm]: https://www.rust-lang.org/what/wasm
 [tetanes]: https://crates.io/crates/tetanes
 [nes]: https://en.wikipedia.org/wiki/Nintendo_Entertainment_System
-[appstate]: crate::prelude::AppState
-[appstate::on_update]: crate::prelude::AppState::on_update
+[appstate]: crate::prelude::PixEngine
+[appstate::on_update]: crate::prelude::PixEngine::on_update
 [pixstate]: crate::prelude::PixState
 [serde]: https://crates.io/crates/serde
 [anyhow]: https://crates.io/crates/anyhow

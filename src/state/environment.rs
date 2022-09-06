@@ -1,4 +1,4 @@
-//! Environment methods for the [`PixEngine`].
+//! Environment methods for the [`Engine`].
 //!
 //! Methods for reading and setting various engine environment values.
 //!
@@ -8,8 +8,8 @@
 //! - [`PixState::delta_time`]: [Duration] elapsed since last frame.
 //! - [`PixState::elapsed`]: [Duration] elapsed since application start.
 //! - [`PixState::frame_count`]: Total number of frames since application start.
-//! - [`PixState::redraw`]: Run render loop 1 time, calling [`AppState::on_update`].
-//! - [`PixState::run_times`]: Run render loop N times, calling [`AppState::on_update`].
+//! - [`PixState::redraw`]: Run render loop 1 time, calling [`PixEngine::on_update`].
+//! - [`PixState::run_times`]: Run render loop N times, calling [`PixEngine::on_update`].
 //! - [`PixState::avg_frame_rate`]: Average frames per second rendered.
 //! - [`PixState::quit`]: Trigger application quit.
 //! - [`PixState::abort_quit`]: Abort application quit.
@@ -74,7 +74,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.focused() {
     ///         // Update screen only when focused
@@ -98,7 +98,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.focused_window(s.window_id()) {
     ///         // Update screen only when focused
@@ -121,7 +121,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { position: f64, velocity: f64 };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     // Update position based on frame timestep
     ///     self.position = self.velocity * s.delta_time().as_secs_f64();
@@ -142,7 +142,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     // Draw a blinking box, indepdendent of frame rate
     ///     if s.elapsed().as_millis() >> 9 & 1 > 0 {
@@ -165,7 +165,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     // Create a strobe effect, dependent on frame rate
     ///     if s.frame_count() % 5 == 0 {
@@ -181,17 +181,17 @@ impl PixState {
         self.env.frame_count
     }
 
-    /// Run the render loop 1 time by calling [`AppState::on_update`].
+    /// Run the render loop 1 time by calling [`PixEngine::on_update`].
     ///
     /// This can be used to only redraw in response to user actions such as
-    /// [`AppState::on_mouse_pressed`] or [`AppState::on_key_pressed`].
+    /// [`PixEngine::on_mouse_pressed`] or [`PixEngine::on_key_pressed`].
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
     /// fn on_start(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.run(false); // Disable render loop
@@ -213,17 +213,17 @@ impl PixState {
         self.env.run_count = 1;
     }
 
-    /// Run the render loop N times by calling [`AppState::on_update`].
+    /// Run the render loop N times by calling [`PixEngine::on_update`].
     ///
     /// This can be used to only redraw in response to user actions such as
-    /// [`AppState::on_mouse_pressed`] or [`AppState::on_key_pressed`].
+    /// [`PixEngine::on_mouse_pressed`] or [`PixEngine::on_key_pressed`].
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
     /// fn on_start(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.run(false); // Disable render loop
@@ -252,7 +252,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.text(format!("FPS: {}", s.avg_frame_rate()))?;
     ///     Ok(())
@@ -272,7 +272,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.button("Quit?")? {
     ///         s.quit();
@@ -286,14 +286,14 @@ impl PixState {
         self.env.quit = true;
     }
 
-    /// Abort application quit and resume render loop by calling [`AppState::on_update`].
+    /// Abort application quit and resume render loop by calling [`PixEngine::on_update`].
     ///
     /// # Example
     ///
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { has_unsaved_changes: bool, prompt_save_dialog: bool }
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
     /// fn on_stop(&mut self, s: &mut PixState) -> Result<()> {
     ///     if self.has_unsaved_changes {

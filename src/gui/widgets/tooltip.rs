@@ -11,7 +11,7 @@
 //! ```
 //! # use pix_engine::prelude::*;
 //! # struct App { select_box: usize };
-//! # impl AppState for App {
+//! # impl PixEngine for App {
 //! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!     s.help_marker("Help marker icon w/ tooltip")?;
 //!
@@ -52,7 +52,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { select_box: usize };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.help_marker("Help marker icon w/ tooltip")?;
     ///     Ok(())
@@ -157,7 +157,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { select_box: usize };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.text("Hover me")?;
     ///     if s.hovered() {
@@ -221,7 +221,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { select_box: usize };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.text("Hover me")?;
     ///     if s.hovered() {

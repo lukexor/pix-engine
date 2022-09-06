@@ -385,7 +385,7 @@ impl Gui {
     }
 }
 
-impl AppState for Gui {
+impl PixEngine for Gui {
     fn on_update(&mut self, s: &mut PixState) -> Result<()> {
         s.clear()?;
 
@@ -439,7 +439,7 @@ impl AppState for Gui {
 }
 
 fn main() -> Result<()> {
-    let mut engine = PixEngine::builder()
+    let mut engine = Engine::builder()
         .with_dimensions(1024, 768)
         .with_title("GUI Demo")
         .with_frame_rate()

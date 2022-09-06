@@ -290,7 +290,7 @@ impl App {
     }
 }
 
-impl AppState for App {
+impl PixEngine for App {
     fn on_start(&mut self, s: &mut PixState) -> Result<()> {
         s.background(Color::BLACK);
         s.rect_mode(RectMode::Center);
@@ -329,7 +329,7 @@ impl AppState for App {
 
 pub fn main() -> Result<()> {
     println!("Renders more smoothly using `--release` and `--features opengl`.");
-    let mut engine = PixEngine::builder()
+    let mut engine = Engine::builder()
         .with_dimensions(2 * WIDTH, 2 * HEIGHT)
         .scale(2.0, 2.0)
         .with_title("Fluid Simulation")

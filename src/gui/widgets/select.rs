@@ -10,7 +10,7 @@
 //! ```
 //! # use pix_engine::prelude::*;
 //! # struct App { selected_box: usize, selected_list: usize };
-//! # impl AppState for App {
+//! # impl PixEngine for App {
 //! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!     let items = ["Item 1", "Item 2", "Item 3"];
 //!     let displayed_count = 4;
@@ -47,7 +47,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { select_box: usize };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     let items = ["Item 1", "Item 2", "Item 3"];
     ///     let displayed_count = 4;
@@ -237,7 +237,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { select_list: usize };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     let items = ["Item 1", "Item 2", "Item 3"];
     ///     let displayed_count = 4;

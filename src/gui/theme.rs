@@ -8,7 +8,7 @@
 //! ```
 //! # use pix_engine::prelude::*;
 //! # struct App { checkbox: bool, text_field: String };
-//! # impl AppState for App {
+//! # impl PixEngine for App {
 //! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!     s.fill(Color::CADET_BLUE); // Change text color
 //!     s.font_size(14)?;
@@ -44,7 +44,7 @@ pub(crate) type FontId = u64;
 /// # use pix_engine::prelude::*;
 /// use pix_engine::gui::theme::*;
 /// # struct MyApp;
-/// # impl AppState for MyApp {
+/// # impl PixEngine for MyApp {
 /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
 /// # }
 /// fn main() -> Result<()> {
@@ -69,7 +69,7 @@ pub(crate) type FontId = u64;
 ///                 .build()
 ///         )
 ///         .build();
-///     let mut engine = PixEngine::builder()
+///     let mut engine = Engine::builder()
 ///         .with_theme(theme)
 ///         .build()?;
 ///     let mut app = MyApp;
@@ -590,7 +590,7 @@ impl Spacing {
 /// ```
 /// # use pix_engine::prelude::*;
 /// # struct App { checkbox: bool, text_field: String };
-/// # impl AppState for App {
+/// # impl PixEngine for App {
 /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 ///     s.fill(Color::CADET_BLUE); // Change font color
 ///     s.font_size(16)?;

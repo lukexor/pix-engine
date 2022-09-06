@@ -302,7 +302,7 @@ impl Asteroids {
     }
 }
 
-impl AppState for Asteroids {
+impl PixEngine for Asteroids {
     fn on_start(&mut self, s: &mut PixState) -> Result<()> {
         s.background(Color::BLACK);
         self.spawn_new_ship();
@@ -355,7 +355,7 @@ impl AppState for Asteroids {
 pub fn main() -> Result<()> {
     let width = 800;
     let height = 600;
-    let mut engine = PixEngine::builder()
+    let mut engine = Engine::builder()
         .with_dimensions(width, height)
         .with_title("Asteroids")
         .with_frame_rate()

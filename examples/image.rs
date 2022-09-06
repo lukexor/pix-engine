@@ -13,7 +13,7 @@ impl ImageDemo {
     }
 }
 
-impl AppState for ImageDemo {
+impl PixEngine for ImageDemo {
     fn on_start(&mut self, s: &mut PixState) -> Result<()> {
         s.blend_mode(BlendMode::Blend);
         s.image_mode(ImageMode::Center);
@@ -51,7 +51,7 @@ fn main() -> Result<()> {
     if args.len() < 2 {
         Err(anyhow!("Usage: cargo run /path/to/image.png"))
     } else {
-        let mut engine = PixEngine::builder()
+        let mut engine = Engine::builder()
             .with_dimensions(WIDTH, HEIGHT)
             .with_title("Image Demo")
             .with_frame_rate()

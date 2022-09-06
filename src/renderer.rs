@@ -41,7 +41,7 @@ pub(crate) struct RendererSettings {
     pub(crate) audio_buffer_size: Option<u16>,
     /// Window fullscreen mode.
     pub(crate) fullscreen: bool,
-    /// Sync [`PixEngine::on_update`] rate with monitor refresh rate.
+    /// Sync [`Engine::on_update`] rate with monitor refresh rate.
     pub(crate) vsync: bool,
     /// Enable window resizing.
     pub(crate) resizable: bool,
@@ -53,7 +53,7 @@ pub(crate) struct RendererSettings {
     pub(crate) hidden: bool,
     /// Show frame rate per second in title bar.
     pub(crate) show_frame_rate: bool,
-    /// Limit [`PixEngine::on_update`] to target frame frate per second.
+    /// Limit [`Engine::on_update`] to target frame frate per second.
     pub(crate) target_frame_rate: Option<usize>,
     /// Size of allowed texture cache before least-used entries are evicted.
     pub(crate) texture_cache_size: usize,

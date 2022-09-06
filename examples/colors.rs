@@ -41,7 +41,7 @@ impl Colors {
     }
 }
 
-impl AppState for Colors {
+impl PixEngine for Colors {
     fn on_update(&mut self, s: &mut PixState) -> Result<()> {
         if self.auto && s.frame_count() % 4 == 0 {
             self.modify_hue(1.0, true);
@@ -71,7 +71,7 @@ impl AppState for Colors {
 }
 
 pub fn main() -> Result<()> {
-    let mut engine = PixEngine::builder()
+    let mut engine = Engine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("Colors")
         .with_frame_rate()

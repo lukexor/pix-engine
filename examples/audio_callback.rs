@@ -25,7 +25,7 @@ impl AudioCallback for SquareWave {
     }
 }
 
-impl AppState for CallbackDemo {
+impl PixEngine for CallbackDemo {
     fn on_update(&mut self, s: &mut PixState) -> Result<()> {
         s.clear()?;
 
@@ -62,7 +62,7 @@ fn main() -> Result<()> {
     }
     pretty_env_logger::init();
 
-    let mut engine = PixEngine::builder()
+    let mut engine = Engine::builder()
         .with_dimensions(800, 600)
         .with_title("Audio Callback")
         .build()?;

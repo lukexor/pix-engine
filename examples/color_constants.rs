@@ -170,7 +170,7 @@ impl ColorConsts {
     }
 }
 
-impl AppState for ColorConsts {
+impl PixEngine for ColorConsts {
     fn on_update(&mut self, s: &mut PixState) -> Result<()> {
         s.clear()?;
         s.stroke(None);
@@ -189,7 +189,7 @@ impl AppState for ColorConsts {
 }
 
 fn main() -> Result<()> {
-    let mut engine = PixEngine::builder()
+    let mut engine = Engine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("SVG Color Constants")
         .build()?;

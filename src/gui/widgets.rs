@@ -11,7 +11,7 @@
 //! ```
 //! # use pix_engine::prelude::*;
 //! # struct App { checkbox: bool, radio: usize };
-//! # impl AppState for App {
+//! # impl PixEngine for App {
 //! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!     if s.button("Button")? {
 //!         // was clicked
@@ -45,7 +45,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.button("Button")? {
     ///         // was clicked
@@ -123,7 +123,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.link("Link")? {
     ///         // was clicked
@@ -194,7 +194,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.checkbox("Checkbox", &mut self.checkbox)?;
     ///     Ok(())
@@ -281,7 +281,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { radio: usize };
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.radio("Radio 1", &mut self.radio, 0)?;
     ///     s.radio("Radio 2", &mut self.radio, 1)?;

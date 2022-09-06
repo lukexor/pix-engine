@@ -13,7 +13,7 @@
 //! ```
 //! # use pix_engine::prelude::*;
 //! # struct App { text_field: String, text_area: String};
-//! # impl AppState for App {
+//! # impl PixEngine for App {
 //! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!     s.text("Text")?;
 //!     s.angle_mode(AngleMode::Degrees);
@@ -40,7 +40,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     let text = "Some text";
     ///     let (w, h) = s.size_of(text)?;
@@ -71,7 +71,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.text("Text")?;
     ///     Ok(())
@@ -99,7 +99,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.heading("Heading")?;
     ///     Ok(())
@@ -134,7 +134,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.monospace("Monospace")?;
     ///     Ok(())
@@ -170,7 +170,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.angle_mode(AngleMode::Degrees);
     ///     let angle = 10.0;
@@ -232,7 +232,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.bullet("Bulleted text")?;
     ///     Ok(())

@@ -1,4 +1,4 @@
-//! Common [`PixEngine`] trait implementations for types.
+//! Common [`Engine`] trait implementations for types.
 
 use crate::prelude::*;
 use num_traits::AsPrimitive;

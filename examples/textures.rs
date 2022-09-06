@@ -13,7 +13,7 @@ impl Textures {
     }
 }
 
-impl AppState for Textures {
+impl PixEngine for Textures {
     fn on_start(&mut self, s: &mut PixState) -> Result<()> {
         // One texture for each quadrant of the screen
         for i in 0..4 {
@@ -61,7 +61,7 @@ impl AppState for Textures {
 }
 
 fn main() -> Result<()> {
-    let mut engine = PixEngine::builder()
+    let mut engine = Engine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("Textures")
         .with_frame_rate()

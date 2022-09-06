@@ -1,10 +1,10 @@
-//! [`PixState`] methods for the [`PixEngine`] and [`AppState`].
+//! [`PixState`] methods for the [`Engine`] and [`PixEngine`].
 //!
 //! `PixState` is the global engine state and API for any application using `pix-engine`. A mutable
-//! reference is passed to most [`AppState`] methods and allows you to modify settings, query engine
+//! reference is passed to most [`PixEngine`] methods and allows you to modify settings, query engine
 //! and input state, as well as drawing to the current render target.
 //!
-//! The most common use of `PixState` is in the [`AppState::on_update`] method.
+//! The most common use of `PixState` is in the [`PixEngine::on_update`] method.
 //!
 //! See the [Getting Started](crate#getting-started) section and the [`PixState`] page for the list
 //! of available methods.
@@ -30,7 +30,7 @@
 //! ```
 //! # use pix_engine::prelude::*;
 //! # struct App { checkbox: bool, text_field: String };
-//! # impl AppState for App {
+//! # impl PixEngine for App {
 //! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!     s.fill(s.theme().colors.primary);
 //!     s.rect([100, 0, 100, 100])?;
@@ -55,7 +55,7 @@ use std::{collections::HashSet, mem, time::Instant};
 pub mod environment;
 pub mod settings;
 
-/// Represents all state and methods for updating and interacting with the [`PixEngine`].
+/// Represents all state and methods for updating and interacting with the [`Engine`].
 #[non_exhaustive]
 #[derive(Debug)]
 pub struct PixState {
@@ -75,7 +75,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.text(format!("Window title: {}", s.title()))?;
     ///     Ok(())
@@ -100,7 +100,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.button("Change title")? {
     ///         s.set_title("Title changed!")?;
@@ -121,7 +121,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     // Draw 100x100 rectangle that follows the mouse
     ///     s.rect(rect![s.mouse_pos(), 100, 100])?;
@@ -141,7 +141,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     // Draw 100x100 rectangle that follows the mouse last frame
     ///     // Creates a yoyo-like effect
@@ -162,7 +162,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.mouse_pressed() {
     ///         s.background(Color::random());
@@ -184,7 +184,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.mouse_clicked(Mouse::Left) {
     ///         s.background(Color::random());
@@ -206,7 +206,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.mouse_dbl_clicked(Mouse::Left) {
     ///         s.background(Color::random());
@@ -228,7 +228,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.mouse_down(Mouse::Left) {
     ///         s.background(Color::random());
@@ -250,7 +250,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     // Only trigger if both buttons are pressed
     ///     if s.mouse_buttons().contains(&Mouse::Left)
@@ -275,7 +275,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.key_pressed() {
     ///         s.background(Color::random());
@@ -297,7 +297,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.key_down(Key::Space) {
     ///         s.background(Color::random());
@@ -319,7 +319,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.keys().contains(&Key::Space) && s.keys().contains(&Key::Up) {
     ///         s.background(Color::random());
@@ -341,7 +341,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.keymod_down(KeyMod::CTRL) && s.key_down(Key::Space) {
     ///         s.background(Color::random());
@@ -363,7 +363,7 @@ impl PixState {
     /// ```
     /// # use pix_engine::prelude::*;
     /// # struct App;
-    /// # impl AppState for App {
+    /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.keymod().intersects(KeyMod::SHIFT | KeyMod::CTRL)
     ///         && s.key_down(Key::Space)
@@ -405,7 +405,7 @@ impl PixState {
         Ok(state)
     }
 
-    /// Handle state changes this frame prior to calling [`AppState::on_update`].
+    /// Handle state changes this frame prior to calling [`PixEngine::on_update`].
     #[inline]
     pub(crate) fn pre_update(&mut self) {
         // Reset mouse cursor icon to the current setting
@@ -424,7 +424,7 @@ impl PixState {
         Ok(())
     }
 
-    /// Handle state changes this frame after calling [`AppState::on_update`].
+    /// Handle state changes this frame after calling [`PixEngine::on_update`].
     #[inline]
     pub(crate) fn post_update(&mut self) {
         self.ui.post_update();

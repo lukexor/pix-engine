@@ -167,7 +167,7 @@ impl Matrix {
     }
 }
 
-impl AppState for Matrix {
+impl PixEngine for Matrix {
     fn on_start(&mut self, s: &mut PixState) -> Result<()> {
         s.background(BG_COLOR);
         s.set_window_dimensions(s.display_dimensions()?)?;
@@ -213,7 +213,7 @@ impl AppState for Matrix {
 }
 
 fn main() -> Result<()> {
-    let mut engine = PixEngine::builder()
+    let mut engine = Engine::builder()
         .with_dimensions(DEFAULT_WIDTH, DEFAULT_HEIGHT)
         .position(0, 0)
         .with_title("The Matrix")

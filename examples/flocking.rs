@@ -169,7 +169,7 @@ impl App {
     }
 }
 
-impl AppState for App {
+impl PixEngine for App {
     fn on_start(&mut self, s: &mut PixState) -> Result<()> {
         s.background(51);
         Ok(())
@@ -195,7 +195,7 @@ impl AppState for App {
 }
 
 pub fn main() -> Result<()> {
-    let mut engine = PixEngine::builder()
+    let mut engine = Engine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("Flocking")
         .with_frame_rate()

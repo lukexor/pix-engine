@@ -1,4 +1,4 @@
-//! Integration tests using [PixEngine] must be run on the main thread.
+//! Integration tests using [Engine] must be run on the main thread.
 //!
 //! ```no_run
 //! cargo test engine -- --test-threads=1 --ignored
@@ -24,7 +24,7 @@ impl App {
     }
 }
 
-impl AppState for App {
+impl PixEngine for App {
     fn on_start(&mut self, s: &mut PixState) -> Result<()> {
         self.start_count += 1;
         if self.quit_on_start {
@@ -50,8 +50,8 @@ impl AppState for App {
     }
 }
 
-fn create_engine() -> Result<PixEngine> {
-    PixEngine::builder()
+fn create_engine() -> Result<Engine> {
+    Engine::builder()
         .with_title("pix-engine integration test")
         .position_centered()
         .hidden()
