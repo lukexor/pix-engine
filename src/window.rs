@@ -238,8 +238,8 @@ pub(crate) trait WindowRenderer {
 /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
 ///     if let Key::O = event.key {
 ///         let window_id = s.window()
-///             .with_title("New Window")
-///             .with_dimensions(800, 600)
+///             .title("New Window")
+///             .dimensions(800, 600)
 ///             .position(10, 10)
 ///             .resizable()
 ///             .borderless()
@@ -274,7 +274,7 @@ impl<'a> WindowBuilder<'a> {
 
     /// Set window dimensions.
     #[inline]
-    pub fn with_dimensions(&mut self, width: u32, height: u32) -> &mut Self {
+    pub fn dimensions(&mut self, width: u32, height: u32) -> &mut Self {
         self.settings.width = width;
         self.settings.height = height;
         self
@@ -282,7 +282,7 @@ impl<'a> WindowBuilder<'a> {
 
     /// Set a window title.
     #[inline]
-    pub fn with_title<S: Into<String>>(&mut self, title: S) -> &mut Self {
+    pub fn title<S: Into<String>>(&mut self, title: S) -> &mut Self {
         self.settings.title = title.into();
         self
     }

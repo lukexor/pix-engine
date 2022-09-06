@@ -72,9 +72,9 @@ impl PixEngine for Colors {
 
 pub fn main() -> Result<()> {
     let mut engine = Engine::builder()
-        .with_dimensions(WIDTH, HEIGHT)
-        .with_title("Colors")
-        .with_frame_rate()
+        .dimensions(WIDTH, HEIGHT)
+        .title("Colors")
+        .show_frame_rate()
         .build()?;
     let mut app = Colors::new();
     engine.run(&mut app)

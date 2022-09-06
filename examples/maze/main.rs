@@ -196,9 +196,9 @@ impl PixEngine for MazeApp {
 
 pub fn main() -> Result<()> {
     let mut engine = Engine::builder()
-        .with_dimensions(WIDTH, HEIGHT)
-        .with_title("Maze Generation & A* Search")
-        .with_frame_rate()
+        .dimensions(WIDTH, HEIGHT)
+        .title("Maze Generation & A* Search")
+        .show_frame_rate()
         .target_frame_rate(60)
         .build()?;
     let mut app = MazeApp::new(COLS, ROWS);

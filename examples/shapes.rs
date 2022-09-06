@@ -92,8 +92,8 @@ impl PixEngine for Shapes {
 
 fn main() -> Result<()> {
     let mut engine = Engine::builder()
-        .with_dimensions(800, 600)
-        .with_title("Shapes")
+        .dimensions(800, 600)
+        .title("Shapes")
         .target_frame_rate(60)
         .build()?;
     let mut app = Shapes {

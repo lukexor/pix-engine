@@ -163,8 +163,8 @@ fn main() -> Result<()> {
     pretty_env_logger::init();
 
     let mut engine = Engine::builder()
-        .with_dimensions(800, 600)
-        .with_title("Audio Capture & Replay")
+        .dimensions(800, 600)
+        .title("Audio Capture & Replay")
         .build()?;
     let mut app = CaptureReplayDemo::new();
     engine.run(&mut app)

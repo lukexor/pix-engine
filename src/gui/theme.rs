@@ -49,20 +49,20 @@ pub(crate) type FontId = u64;
 /// # }
 /// fn main() -> Result<()> {
 ///     let theme = Theme::builder()
-///         .with_font_size(16)
-///         .with_font(
+///         .font_size(16)
+///         .font(
 ///             FontType::Body,
 ///             Font::from_file("Some font", "./some_font.ttf"),
 ///             FontStyle::ITALIC,
 ///         )
-///         .with_font(
+///         .font(
 ///             FontType::Heading,
 ///             Font::NOTO,
 ///             FontStyle::BOLD | FontStyle::UNDERLINE
 ///         )
-///         .with_color(ColorType::OnBackground, Color::BLACK)
-///         .with_color(ColorType::Background, Color::DARK_GRAY)
-///         .with_spacing(
+///         .color(ColorType::OnBackground, Color::BLACK)
+///         .color(ColorType::Background, Color::DARK_GRAY)
+///         .spacing(
 ///             Spacing::builder()
 ///                 .frame_pad(10, 10)
 ///                 .item_pad(5, 5)
@@ -70,7 +70,7 @@ pub(crate) type FontId = u64;
 ///         )
 ///         .build();
 ///     let mut engine = Engine::builder()
-///         .with_theme(theme)
+///         .theme(theme)
 ///         .build()?;
 ///     let mut app = MyApp;
 ///     engine.run(&mut app)
@@ -156,13 +156,13 @@ impl ThemeBuilder {
     }
 
     /// Set font size.
-    pub fn with_font_size(&mut self, size: u32) -> &mut Self {
+    pub fn font_size(&mut self, size: u32) -> &mut Self {
         self.size = size;
         self
     }
 
     /// Set font theme values for a given [`FontType`].
-    pub fn with_font(&mut self, font_type: FontType, font: Font, style: FontStyle) -> &mut Self {
+    pub fn font(&mut self, font_type: FontType, font: Font, style: FontStyle) -> &mut Self {
         match font_type {
             FontType::Body => {
                 self.fonts.body = font;
@@ -181,7 +181,7 @@ impl ThemeBuilder {
     }
 
     /// Set color theme for a given [`ColorType`].
-    pub fn with_color<C: Into<Color>>(&mut self, color_type: ColorType, color: C) -> &mut Self {
+    pub fn color<C: Into<Color>>(&mut self, color_type: ColorType, color: C) -> &mut Self {
         let color = color.into();
         let c = &mut self.colors;
         match color_type {
@@ -202,7 +202,7 @@ impl ThemeBuilder {
     }
 
     /// Set element padding space.
-    pub fn with_spacing(&mut self, spacing: Spacing) -> &mut Self {
+    pub fn spacing(&mut self, spacing: Spacing) -> &mut Self {
         self.spacing = spacing;
         self
     }

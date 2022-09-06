@@ -440,9 +440,9 @@ impl PixEngine for Gui {
 
 fn main() -> Result<()> {
     let mut engine = Engine::builder()
-        .with_dimensions(1024, 768)
-        .with_title("GUI Demo")
-        .with_frame_rate()
+        .dimensions(1024, 768)
+        .title("GUI Demo")
+        .show_frame_rate()
         .target_frame_rate(60)
         .build()?;
     let mut app = Gui::new();

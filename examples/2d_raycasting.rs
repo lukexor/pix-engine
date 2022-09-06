@@ -371,9 +371,9 @@ impl PixEngine for RayScene {
 
 fn main() -> Result<()> {
     let mut engine = Engine::builder()
-        .with_dimensions(WIDTH, HEIGHT)
-        .with_title("2D Raycasting")
-        .with_frame_rate()
+        .dimensions(WIDTH, HEIGHT)
+        .title("2D Raycasting")
+        .show_frame_rate()
         .icon(Image::from_read(LIGHT)?)
         .build()?;
     let mut app = RayScene::new();

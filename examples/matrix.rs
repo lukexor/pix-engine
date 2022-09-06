@@ -214,13 +214,13 @@ impl PixEngine for Matrix {
 
 fn main() -> Result<()> {
     let mut engine = Engine::builder()
-        .with_dimensions(DEFAULT_WIDTH, DEFAULT_HEIGHT)
+        .dimensions(DEFAULT_WIDTH, DEFAULT_HEIGHT)
         .position(0, 0)
-        .with_title("The Matrix")
-        .with_frame_rate()
+        .title("The Matrix")
+        .show_frame_rate()
         .target_frame_rate(30)
-        .with_font(Font::from_bytes("Sunray", FONT_DATA))
-        .with_font_size(DEFAULT_FONT_SIZE)
+        .font(Font::from_bytes("Sunray", FONT_DATA))
+        .font_size(DEFAULT_FONT_SIZE)
         .build()?;
     let mut app = Matrix::new();
     engine.run(&mut app)

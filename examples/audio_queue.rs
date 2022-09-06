@@ -177,9 +177,9 @@ fn main() -> Result<()> {
         _ => PathBuf::from("./audio/melancholy.raw"),
     };
     let mut engine = Engine::builder()
-        .with_dimensions(1024, 768)
-        .with_title("Audio Queue")
-        .with_frame_rate()
+        .dimensions(1024, 768)
+        .title("Audio Queue")
+        .show_frame_rate()
         .build()?;
     let mut app = QueueDemo::new(raw_file);
     engine.run(&mut app)

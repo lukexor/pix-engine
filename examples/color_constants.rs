@@ -190,8 +190,8 @@ impl PixEngine for ColorConsts {
 
 fn main() -> Result<()> {
     let mut engine = Engine::builder()
-        .with_dimensions(WIDTH, HEIGHT)
-        .with_title("SVG Color Constants")
+        .dimensions(WIDTH, HEIGHT)
+        .title("SVG Color Constants")
         .build()?;
     let mut app = ColorConsts::new();
     engine.run(&mut app)

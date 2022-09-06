@@ -27,8 +27,8 @@ fn main() -> Result<()> {
 
     // Build and start application as normal.
     let mut engine = Engine::builder()
-        .with_dimensions(800, 600)
-        .with_title("Logging Demo")
+        .dimensions(800, 600)
+        .title("Logging Demo")
         .build()?;
     let mut app = LoggingDemo;
     engine.run(&mut app)

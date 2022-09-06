@@ -330,10 +330,10 @@ impl PixEngine for App {
 pub fn main() -> Result<()> {
     println!("Renders more smoothly using `--release` and `--features opengl`.");
     let mut engine = Engine::builder()
-        .with_dimensions(2 * WIDTH, 2 * HEIGHT)
+        .dimensions(2 * WIDTH, 2 * HEIGHT)
         .scale(2.0, 2.0)
-        .with_title("Fluid Simulation")
-        .with_frame_rate()
+        .title("Fluid Simulation")
+        .show_frame_rate()
         .target_frame_rate(30)
         .build()?;
     let mut app = App::new();

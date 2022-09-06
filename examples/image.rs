@@ -52,9 +52,9 @@ fn main() -> Result<()> {
         Err(anyhow!("Usage: cargo run /path/to/image.png"))
     } else {
         let mut engine = Engine::builder()
-            .with_dimensions(WIDTH, HEIGHT)
-            .with_title("Image Demo")
-            .with_frame_rate()
+            .dimensions(WIDTH, HEIGHT)
+            .title("Image Demo")
+            .show_frame_rate()
             .build()?;
         let mut app = ImageDemo::new(&args[1])?;
         engine.run(&mut app)

@@ -356,9 +356,9 @@ pub fn main() -> Result<()> {
     let width = 800;
     let height = 600;
     let mut engine = Engine::builder()
-        .with_dimensions(width, height)
-        .with_title("Asteroids")
-        .with_frame_rate()
+        .dimensions(width, height)
+        .title("Asteroids")
+        .show_frame_rate()
         .build()?;
     let mut app = Asteroids::new(width, height);
     engine.run(&mut app)

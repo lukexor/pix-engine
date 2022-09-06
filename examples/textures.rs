@@ -62,9 +62,9 @@ impl PixEngine for Textures {
 
 fn main() -> Result<()> {
     let mut engine = Engine::builder()
-        .with_dimensions(WIDTH, HEIGHT)
-        .with_title("Textures")
-        .with_frame_rate()
+        .dimensions(WIDTH, HEIGHT)
+        .title("Textures")
+        .show_frame_rate()
         .build()?;
     let mut app = Textures::new();
     engine.run(&mut app)

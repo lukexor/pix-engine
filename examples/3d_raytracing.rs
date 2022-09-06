@@ -252,9 +252,9 @@ impl PixEngine for App {
 
 pub fn main() -> Result<()> {
     let mut engine = Engine::builder()
-        .with_dimensions(WIDTH, HEIGHT)
-        .with_title("3D Raytracing")
-        .with_frame_rate()
+        .dimensions(WIDTH, HEIGHT)
+        .title("3D Raytracing")
+        .show_frame_rate()
         .build()?;
     let mut app = App::new();
     engine.run(&mut app)

@@ -91,7 +91,7 @@ impl Image {
     /// Constructs an empty RGBA `Image` with given `width` and `height`.
     #[inline]
     pub fn new(width: u32, height: u32) -> Self {
-        Self::with_rgba(width, height)
+        Self::rgba(width, height)
     }
 
     /// Constructs an empty RGBA `Image` with given `width` and `height`.
@@ -99,7 +99,7 @@ impl Image {
     /// Alias for [Image::new].
     #[doc(alias = "new")]
     #[inline]
-    pub fn with_rgba(width: u32, height: u32) -> Self {
+    pub fn rgba(width: u32, height: u32) -> Self {
         let format = PixelFormat::Rgba;
         let data = vec![0x00; format.channels() * (width * height) as usize];
         Self::from_vec(width, height, data, format)
@@ -107,7 +107,7 @@ impl Image {
 
     /// Constructs an empty RGB `Image` with given `width` and `height`.
     #[inline]
-    pub fn with_rgb(width: u32, height: u32) -> Self {
+    pub fn rgb(width: u32, height: u32) -> Self {
         let format = PixelFormat::Rgb;
         let data = vec![0x00; format.channels() * (width * height) as usize];
         Self::from_vec(width, height, data, format)

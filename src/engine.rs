@@ -47,8 +47,8 @@
 //! fn main() -> Result<()> {
 //!     let mut app = MyApp;
 //!     let mut engine = Engine::builder()
-//!       .with_dimensions(800, 600)
-//!       .with_title("MyApp")
+//!       .dimensions(800, 600)
+//!       .title("MyApp")
 //!       .build()?;
 //!     engine.run(&mut app)
 //! }
@@ -787,10 +787,10 @@ pub trait PixEngine {
 /// # }
 /// fn main() -> Result<()> {
 ///     let mut engine = Engine::builder()
-///         .with_title("My App")
+///         .title("My App")
 ///         .position(10, 10)
 ///         .resizable()
-///         .with_frame_rate()
+///         .show_frame_rate()
 ///         .icon("myapp.png")
 ///         .build()?;
 ///     let mut app = MyApp;
@@ -822,7 +822,7 @@ impl EngineBuilder {
     }
 
     /// Set a window title.
-    pub fn with_title<S>(mut self, title: S) -> Self
+    pub fn title<S>(mut self, title: S) -> Self
     where
         S: Into<String>,
     {
@@ -831,19 +831,19 @@ impl EngineBuilder {
     }
 
     /// Set font for text rendering.
-    pub fn with_font(mut self, font: Font) -> Self {
+    pub fn font(mut self, font: Font) -> Self {
         self.theme.fonts.body = font;
         self
     }
 
     /// Set font size for text rendering.
-    pub fn with_font_size(mut self, size: u32) -> Self {
+    pub fn font_size(mut self, size: u32) -> Self {
         self.theme.font_size = size;
         self
     }
 
     /// Set theme for UI rendering.
-    pub fn with_theme(mut self, theme: Theme) -> Self {
+    pub fn theme(mut self, theme: Theme) -> Self {
         self.theme = theme;
         self
     }
@@ -872,7 +872,7 @@ impl EngineBuilder {
     }
 
     /// Set window dimensions.
-    pub fn with_dimensions(mut self, width: u32, height: u32) -> Self {
+    pub fn dimensions(mut self, width: u32, height: u32) -> Self {
         self.settings.width = width;
         self.settings.height = height;
         self
@@ -932,7 +932,7 @@ impl EngineBuilder {
     }
 
     /// Alter the joystick axis deadzone.
-    pub fn with_deadzone(mut self, value: i32) -> Self {
+    pub fn deadzone(mut self, value: i32) -> Self {
         self.joystick_deadzone = value;
         self
     }
@@ -950,7 +950,7 @@ impl EngineBuilder {
     }
 
     /// Enable average frame rate (FPS) in title.
-    pub fn with_frame_rate(mut self) -> Self {
+    pub fn show_frame_rate(mut self) -> Self {
         self.settings.show_frame_rate = true;
         self
     }
@@ -964,14 +964,14 @@ impl EngineBuilder {
 
     /// Set a custom texture cache size other than the default of `20`.
     /// Affects font family and image rendering caching operations.
-    pub fn with_texture_cache(mut self, size: usize) -> Self {
+    pub fn texture_cache(mut self, size: usize) -> Self {
         self.settings.texture_cache_size = size;
         self
     }
 
     /// Set a custom text cache size other than the default of `500`.
     /// Affects text rendering caching operations.
-    pub fn with_text_cache(mut self, size: usize) -> Self {
+    pub fn text_cache(mut self, size: usize) -> Self {
         self.settings.text_cache_size = size;
         self
     }

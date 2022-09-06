@@ -21,8 +21,8 @@ impl PixEngine for WindowDemo {
             let (w, h) = s.display_dimensions()?;
             let window_id = s
                 .window()
-                .with_dimensions(random!(200, 500), random!(200, 500))
-                .with_title(format!("Window {}", self.windows.len() + 1))
+                .dimensions(random!(200, 500), random!(200, 500))
+                .title(format!("Window {}", self.windows.len() + 1))
                 .position(random!(w) as i32, random!(h) as i32)
                 .build()?;
             self.windows.push((window_id, Color::random()));
@@ -61,8 +61,8 @@ impl PixEngine for WindowDemo {
 
 fn main() -> Result<()> {
     let mut engine = Engine::builder()
-        .with_dimensions(400, 400)
-        .with_title("Window 1")
+        .dimensions(400, 400)
+        .title("Window 1")
         .position(10, 10)
         .build()?;
     let mut app = WindowDemo::new();

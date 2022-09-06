@@ -217,9 +217,9 @@ impl PixEngine for MyApp {
 
 fn main() -> Result<()> {
     let mut engine = Engine::builder()
-      .with_dimensions(800, 600)
-      .with_title("MyApp")
-      .with_frame_rate()
+      .dimensions(800, 600)
+      .title("MyApp")
+      .show_frame_rate()
       .resizable()
       .build()?;
     let mut app = MyApp;
@@ -405,8 +405,8 @@ context settings. The API is very similar to working with textures.
 // Create a window with size of 800x600.
 let window_id = s
   .window()
-  .with_dimensions(800, 600)
-  .with_title("My Window")
+  .dimensions(800, 600)
+  .title("My Window")
   .position_centered()
   .build()?;
 
@@ -455,8 +455,8 @@ fn main() -> Result<()> {
     env_logger::init();
 
     let mut engine = Engine::builder()
-      .with_dimensions(800, 600)
-      .with_title("MyApp")
+      .dimensions(800, 600)
+      .title("MyApp")
       .build()?;
     let mut app = MyApp;
     engine.run(&mut app)

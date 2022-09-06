@@ -52,7 +52,7 @@ impl PixEngine for App {
 
 fn create_engine() -> Result<Engine> {
     Engine::builder()
-        .with_title("pix-engine integration test")
+        .title("pix-engine integration test")
         .position_centered()
         .hidden()
         .build()

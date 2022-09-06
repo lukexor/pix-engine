@@ -25,8 +25,8 @@ impl PixEngine for HelloWorld {
 fn main() -> Result<()> {
     let mut app = HelloWorld;
     let mut engine = Engine::builder()
-        .with_dimensions(800, 600)
-        .with_title("Hello World")
+        .dimensions(800, 600)
+        .title("Hello World")
         .build()?;
     engine.run(&mut app)
 }
