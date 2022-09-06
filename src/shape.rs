@@ -88,14 +88,14 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.stroke(Color::RED);
     ///     s.point(s.mouse_pos())?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    pub fn point<P>(&mut self, p: P) -> PixResult<()>
+    pub fn point<P>(&mut self, p: P) -> Result<()>
     where
         P: Into<Point<i32>>,
     {
@@ -119,14 +119,14 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.stroke(Color::RED);
     ///     s.line([s.pmouse_pos(), s.mouse_pos()])?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    pub fn line<L>(&mut self, line: L) -> PixResult<()>
+    pub fn line<L>(&mut self, line: L) -> Result<()>
     where
         L: Into<Line<i32>>,
     {
@@ -155,14 +155,14 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.stroke(Color::RED);
     ///     s.bezier([[85, 20], [10, 10], [90, 90], [15, 80]])?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    pub fn bezier<P, I>(&mut self, points: I) -> PixResult<()>
+    pub fn bezier<P, I>(&mut self, points: I) -> Result<()>
     where
         P: Into<Point<i32>>,
         I: IntoIterator<Item = P>,
@@ -188,7 +188,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.fill(Color::BLACK);
     ///     s.stroke(Color::RED);
     ///     s.triangle(tri!([10, 0], [-5, 5], [5, 5]))?;
@@ -196,7 +196,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn triangle<T>(&mut self, tri: T) -> PixResult<()>
+    pub fn triangle<T>(&mut self, tri: T) -> Result<()>
     where
         T: Into<Tri<i32>>,
     {
@@ -221,7 +221,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.fill(Color::BLACK);
     ///     s.stroke(Color::RED);
     ///     s.square(square![s.mouse_pos(), 100])?;
@@ -230,7 +230,7 @@ impl PixState {
     /// # }
     /// ```
     #[doc(alias = "rect")]
-    pub fn square<R>(&mut self, square: R) -> PixResult<()>
+    pub fn square<R>(&mut self, square: R) -> Result<()>
     where
         R: Into<Rect<i32>>,
     {
@@ -253,7 +253,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.fill(Color::BLACK);
     ///     s.stroke(Color::RED);
     ///     s.rounded_square(square![s.mouse_pos(), 100], 10)?;
@@ -262,7 +262,7 @@ impl PixState {
     /// # }
     /// ```
     #[doc(alias = "rounded_rect")]
-    pub fn rounded_square<R>(&mut self, square: R, radius: i32) -> PixResult<()>
+    pub fn rounded_square<R>(&mut self, square: R, radius: i32) -> Result<()>
     where
         R: Into<Rect<i32>>,
     {
@@ -283,7 +283,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.fill(Color::BLACK);
     ///     s.stroke(Color::RED);
     ///     s.rect(rect![s.mouse_pos(), 100, 100])?;
@@ -291,7 +291,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn rect<R>(&mut self, rect: R) -> PixResult<()>
+    pub fn rect<R>(&mut self, rect: R) -> Result<()>
     where
         R: Into<Rect<i32>>,
     {
@@ -314,7 +314,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.fill(Color::BLACK);
     ///     s.stroke(Color::RED);
     ///     s.rounded_rect(rect![s.mouse_pos(), 100, 100], 10)?;
@@ -322,7 +322,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn rounded_rect<R>(&mut self, rect: R, radius: i32) -> PixResult<()>
+    pub fn rounded_rect<R>(&mut self, rect: R, radius: i32) -> Result<()>
     where
         R: Into<Rect<i32>>,
     {
@@ -345,7 +345,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.fill(Color::BLACK);
     ///     s.stroke(Color::RED);
     ///     s.quad(quad![10, 20, 30, 10, 20, 25, 15, 15])?;
@@ -353,7 +353,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn quad<Q>(&mut self, quad: Q) -> PixResult<()>
+    pub fn quad<Q>(&mut self, quad: Q) -> Result<()>
     where
         Q: Into<Quad<i32>>,
     {
@@ -374,7 +374,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.fill(Color::BLACK);
     ///     s.stroke(Color::RED);
     ///     s.polygon([[10, 10], [50, 20], [70, 30], [60, 50], [10, 50]])?;
@@ -382,7 +382,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn polygon<P, I>(&mut self, points: I) -> PixResult<()>
+    pub fn polygon<P, I>(&mut self, points: I) -> Result<()>
     where
         P: Into<Point<i32>>,
         I: IntoIterator<Item = P>,
@@ -411,7 +411,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     let wireframe = [
     ///         point!(5.0, 0.0),
     ///         point!(-2.5, -2.5),
@@ -431,7 +431,7 @@ impl PixState {
         pos: P2,
         angle: A,
         scale: S,
-    ) -> PixResult<()>
+    ) -> Result<()>
     where
         V: IntoIterator<Item = P1>,
         P1: Into<Point<f64>>,
@@ -474,7 +474,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.fill(Color::BLACK);
     ///     s.stroke(Color::RED);
     ///     s.circle(circle![s.mouse_pos(), 100])?;
@@ -483,7 +483,7 @@ impl PixState {
     /// # }
     /// ```
     #[doc(alias = "ellipse")]
-    pub fn circle<C>(&mut self, circle: C) -> PixResult<()>
+    pub fn circle<C>(&mut self, circle: C) -> Result<()>
     where
         C: Into<Ellipse<i32>>,
     {
@@ -504,7 +504,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.fill(Color::BLACK);
     ///     s.stroke(Color::RED);
     ///     s.ellipse(ellipse![s.mouse_pos(), 100, 100])?;
@@ -512,7 +512,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn ellipse<E>(&mut self, ellipse: E) -> PixResult<()>
+    pub fn ellipse<E>(&mut self, ellipse: E) -> Result<()>
     where
         E: Into<Ellipse<i32>>,
     {
@@ -535,7 +535,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.fill(Color::BLACK);
     ///     s.stroke(Color::RED);
     ///     s.arc_mode(ArcMode::Pie);
@@ -544,7 +544,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn arc<P>(&mut self, p: P, radius: i32, start: i32, end: i32) -> PixResult<()>
+    pub fn arc<P>(&mut self, p: P, radius: i32, start: i32, end: i32) -> Result<()>
     where
         P: Into<Point<i32>>,
     {

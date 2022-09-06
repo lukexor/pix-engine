@@ -25,7 +25,7 @@ impl MazeCreator {
         }
     }
 
-    pub fn step(&mut self, maze: &mut Maze) -> PixResult<()> {
+    pub fn step(&mut self, maze: &mut Maze) -> Result<()> {
         if let Some(current) = self.current {
             self.visited.insert(current.id());
             let next = self.get_random_neighbor(&current, maze);
@@ -51,7 +51,7 @@ impl MazeCreator {
         self.completed
     }
 
-    pub fn draw(&self, s: &mut PixState, maze: &Maze) -> PixResult<()> {
+    pub fn draw(&self, s: &mut PixState, maze: &Maze) -> Result<()> {
         for cell in maze.cells().iter() {
             let color = match self.stack.last() {
                 Some(current) if current.id() == cell.id() => color!(0, 155, 0),

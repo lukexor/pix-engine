@@ -560,7 +560,7 @@ impl<T: Num> Intersects<Rect<T>> for Rect<T> {
 
 impl Draw for Rect<i32> {
     /// Draw `Rect` to the current [`PixState`] canvas.
-    fn draw(&self, s: &mut PixState) -> PixResult<()> {
+    fn draw(&self, s: &mut PixState) -> Result<()> {
         s.rect(*self)
     }
 }

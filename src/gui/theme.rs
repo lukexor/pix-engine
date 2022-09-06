@@ -9,7 +9,7 @@
 //! # use pix_engine::prelude::*;
 //! # struct App { checkbox: bool, text_field: String };
 //! # impl AppState for App {
-//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+//! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!     s.fill(Color::CADET_BLUE); // Change text color
 //!     s.font_size(14)?;
 //!     s.font_style(FontStyle::BOLD);
@@ -45,9 +45,9 @@ pub(crate) type FontId = u64;
 /// use pix_engine::gui::theme::*;
 /// # struct MyApp;
 /// # impl AppState for MyApp {
-/// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+/// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
 /// # }
-/// fn main() -> PixResult<()> {
+/// fn main() -> Result<()> {
 ///     let theme = Theme::builder()
 ///         .with_font_size(16)
 ///         .with_font(
@@ -79,7 +79,7 @@ pub(crate) type FontId = u64;
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Builder {
+pub struct ThemeBuilder {
     name: String,
     #[cfg_attr(feature = "serde", serde(skip))]
     fonts: Fonts,
@@ -89,7 +89,7 @@ pub struct Builder {
     spacing: Spacing,
 }
 
-impl Default for Builder {
+impl Default for ThemeBuilder {
     fn default() -> Self {
         let theme = Theme::default();
         Self {
@@ -146,7 +146,7 @@ pub enum ColorType {
     OnError,
 }
 
-impl Builder {
+impl ThemeBuilder {
     /// Constructs a default [Theme] `Builder`.
     pub fn new<S: Into<String>>(name: S) -> Self {
         Self {
@@ -591,7 +591,7 @@ impl Spacing {
 /// # use pix_engine::prelude::*;
 /// # struct App { checkbox: bool, text_field: String };
 /// # impl AppState for App {
-/// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+/// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 ///     s.fill(Color::CADET_BLUE); // Change font color
 ///     s.font_size(16)?;
 ///     s.font_style(FontStyle::UNDERLINE);
@@ -632,8 +632,8 @@ impl Theme {
     ///
     /// See [Builder] for examples.
     #[inline]
-    pub fn builder() -> Builder {
-        Builder::default()
+    pub fn builder() -> ThemeBuilder {
+        ThemeBuilder::default()
     }
 
     /// Constructs a default dark `Theme`.

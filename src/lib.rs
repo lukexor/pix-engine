@@ -50,8 +50,8 @@ pub mod error;
 pub mod shape;
 pub mod audio;
 pub mod event;
-pub mod graphics;
 pub mod image;
+pub mod lighting;
 pub mod ops;
 pub mod state;
 pub mod texture;
@@ -76,14 +76,14 @@ pub mod prelude {
     pub use super::color::{Color, Mode as ColorMode};
     pub use super::draw::Draw;
     pub use super::engine::PixEngine;
-    pub use super::error::{Error as PixError, Result as PixResult};
+    pub use super::error::{Error, Result};
     pub use super::event::{
         Axis, ControllerButton, ControllerEvent, ControllerId, ControllerUpdate, Event, HatState,
         Key, KeyEvent, KeyMod, Mouse, WindowEvent,
     };
-    pub use super::graphics::lighting::{Light, LightSource};
-    pub use super::gui::theme::{self, Builder as ThemeBuilder, ColorType, Font, Theme};
+    pub use super::gui::theme::{self, ColorType, Font, Theme};
     pub use super::image::{Image, PixelFormat};
+    pub use super::lighting::{Light, LightSource};
     pub use super::math::{map, random_rng, Float, Num};
     pub use super::shape::{Contains, Ellipse, Intersects, Line, Point, Quad, Rect, Sphere, Tri};
     pub use super::state::{
@@ -95,7 +95,7 @@ pub mod prelude {
     pub use super::texture::TextureId;
     pub use super::transform::Flipped;
     pub use super::vector::Vector;
-    pub use super::window::{Cursor, Position, SystemCursor, WindowBuilder, WindowId};
+    pub use super::window::{Cursor, Position, SystemCursor, WindowId};
 
     // Shape macros
     pub use {circle, ellipse, line_, point, quad, rect, sphere, square, tri};

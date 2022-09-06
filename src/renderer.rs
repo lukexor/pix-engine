@@ -92,16 +92,16 @@ impl Default for RendererSettings {
 /// Trait for operations on the underlying `Renderer`.
 pub(crate) trait Rendering: Sized {
     /// Creates a new Renderer instance.
-    fn new(settings: RendererSettings) -> PixResult<Self>;
+    fn new(settings: RendererSettings) -> Result<Self>;
 
     /// Clears the current canvas to the given clear color
-    fn clear(&mut self) -> PixResult<()>;
+    fn clear(&mut self) -> Result<()>;
 
     /// Sets the color used by the renderer to draw the current canvas.
-    fn set_draw_color(&mut self, color: Color) -> PixResult<()>;
+    fn set_draw_color(&mut self, color: Color) -> Result<()>;
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
-    fn clip(&mut self, rect: Option<Rect<i32>>) -> PixResult<()>;
+    fn clip(&mut self, rect: Option<Rect<i32>>) -> Result<()>;
 
     /// Sets the blend mode used by the renderer to drawing.
     fn blend_mode(&mut self, mode: BlendMode);
@@ -111,25 +111,25 @@ pub(crate) trait Rendering: Sized {
 
     /// Set the rendering scale of the current canvas. Drawing coordinates are scaled by x/y
     /// factors before being drawn to the canvas.
-    fn scale(&mut self, x: f32, y: f32) -> PixResult<()>;
+    fn scale(&mut self, x: f32, y: f32) -> Result<()>;
 
     /// Set the font size for drawing text to the current canvas.
-    fn font_size(&mut self, size: u32) -> PixResult<()>;
+    fn font_size(&mut self, size: u32) -> Result<()>;
 
     /// Set the font style for drawing text to the current canvas.
     fn font_style(&mut self, style: FontStyle);
 
     /// Set the font family for drawing text to the current canvas.
-    fn font_family(&mut self, font: &Font) -> PixResult<()>;
+    fn font_family(&mut self, font: &Font) -> Result<()>;
 
     /// Get clipboard text from the system clipboard.
     fn clipboard_text(&self) -> String;
 
     /// Set clipboard text to the system clipboard.
-    fn set_clipboard_text(&self, value: &str) -> PixResult<()>;
+    fn set_clipboard_text(&self, value: &str) -> Result<()>;
 
     /// Open a URL in the default system browser.
-    fn open_url(&self, url: &str) -> PixResult<()>;
+    fn open_url(&self, url: &str) -> Result<()>;
 
     /// Draw text to the current canvas. `angle` must be in degrees.
     #[allow(clippy::too_many_arguments)]
@@ -143,20 +143,20 @@ pub(crate) trait Rendering: Sized {
         flipped: Option<Flipped>,
         fill: Option<Color>,
         outline: u16,
-    ) -> PixResult<(u32, u32)>;
+    ) -> Result<(u32, u32)>;
 
     /// Returns the rendered dimensions of the given text using the current font
     /// as `(width, height)`.
-    fn size_of(&self, text: &str, wrap_width: Option<u32>) -> PixResult<(u32, u32)>;
+    fn size_of(&self, text: &str, wrap_width: Option<u32>) -> Result<(u32, u32)>;
 
     /// Draw a pixel to the current canvas.
-    fn point(&mut self, p: Point<i32>, color: Color) -> PixResult<()>;
+    fn point(&mut self, p: Point<i32>, color: Color) -> Result<()>;
 
     /// Draw a line to the current canvas.
-    fn line(&mut self, line: Line<i32>, smooth: bool, width: u8, color: Color) -> PixResult<()>;
+    fn line(&mut self, line: Line<i32>, smooth: bool, width: u8, color: Color) -> Result<()>;
 
     /// Draw a cubic Bezier curve to the current canvas.
-    fn bezier<I>(&mut self, ps: I, detail: i32, stroke: Option<Color>) -> PixResult<()>
+    fn bezier<I>(&mut self, ps: I, detail: i32, stroke: Option<Color>) -> Result<()>
     where
         I: Iterator<Item = Point<i32>>;
 
@@ -167,7 +167,7 @@ pub(crate) trait Rendering: Sized {
         smooth: bool,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> PixResult<()>;
+    ) -> Result<()>;
 
     /// Draw a rectangle to the current canvas.
     fn rect(
@@ -176,7 +176,7 @@ pub(crate) trait Rendering: Sized {
         radius: Option<i32>,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> PixResult<()>;
+    ) -> Result<()>;
 
     /// Draw a quadrilateral to the current canvas.
     fn quad(
@@ -185,7 +185,7 @@ pub(crate) trait Rendering: Sized {
         smooth: bool,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> PixResult<()>;
+    ) -> Result<()>;
 
     /// Draw a polygon to the current canvas.
     fn polygon<I>(
@@ -194,7 +194,7 @@ pub(crate) trait Rendering: Sized {
         smooth: bool,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> PixResult<()>
+    ) -> Result<()>
     where
         I: Iterator<Item = Point<i32>>;
 
@@ -205,7 +205,7 @@ pub(crate) trait Rendering: Sized {
         smooth: bool,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> PixResult<()>;
+    ) -> Result<()>;
 
     /// Draw an arc to the current canvas.
     #[allow(clippy::too_many_arguments)]
@@ -218,7 +218,7 @@ pub(crate) trait Rendering: Sized {
         mode: ArcMode,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> PixResult<()>;
+    ) -> Result<()>;
 
     /// Draw an image to the current canvas, optionally rotated about a `center`, flipped or
     /// tinted. `angle` must be in degrees.
@@ -232,13 +232,13 @@ pub(crate) trait Rendering: Sized {
         center: Option<Point<i32>>,
         flipped: Option<Flipped>,
         tint: Option<Color>,
-    ) -> PixResult<()>;
+    ) -> Result<()>;
 
     /// Return the current rendered target pixels as an array of bytes.
-    fn to_bytes(&mut self) -> PixResult<Vec<u8>>;
+    fn to_bytes(&mut self) -> Result<Vec<u8>>;
 
     /// Connect a controller with the given joystick index to start receiving events.
-    fn open_controller(&mut self, controller_id: ControllerId) -> PixResult<()>;
+    fn open_controller(&mut self, controller_id: ControllerId) -> Result<()>;
 
     /// Disconnect a controller with the given joystick index to stop receiving events.
     fn close_controller(&mut self, controller_id: ControllerId);

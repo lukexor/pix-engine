@@ -7,14 +7,14 @@ impl TextureRenderer for Renderer {
         width: u32,
         height: u32,
         format: Option<crate::prelude::PixelFormat>,
-    ) -> crate::prelude::PixResult<crate::prelude::TextureId> {
+    ) -> crate::prelude::Result<crate::prelude::TextureId> {
         todo!()
     }
 
     fn delete_texture(
         &mut self,
         texture_id: crate::prelude::TextureId,
-    ) -> crate::prelude::PixResult<()> {
+    ) -> crate::prelude::Result<()> {
         todo!()
     }
 
@@ -24,7 +24,7 @@ impl TextureRenderer for Renderer {
         rect: Option<crate::prelude::Rect<i32>>,
         pixels: P,
         pitch: usize,
-    ) -> crate::prelude::PixResult<()> {
+    ) -> crate::prelude::Result<()> {
         todo!()
     }
 
@@ -37,7 +37,7 @@ impl TextureRenderer for Renderer {
         center: Option<crate::prelude::Point<i32>>,
         flipped: Option<crate::prelude::Flipped>,
         tint: Option<crate::prelude::Color>,
-    ) -> crate::prelude::PixResult<()> {
+    ) -> crate::prelude::Result<()> {
         todo!()
     }
 

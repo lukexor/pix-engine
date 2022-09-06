@@ -8,19 +8,19 @@ const HEIGHT: u32 = 600;
 struct ImageDemo(Image);
 
 impl ImageDemo {
-    fn new<P: AsRef<Path>>(png: P) -> PixResult<Self> {
+    fn new<P: AsRef<Path>>(png: P) -> Result<Self> {
         Ok(Self(Image::from_file(png)?))
     }
 }
 
 impl AppState for ImageDemo {
-    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn on_start(&mut self, s: &mut PixState) -> Result<()> {
         s.blend_mode(BlendMode::Blend);
         s.image_mode(ImageMode::Center);
         Ok(())
     }
 
-    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
         s.clear()?;
         s.image(&self.0, [s.width()? as i32 / 2, s.height()? as i32 / 2])?;
         s.text("<Esc>: Disable Tint")?;
@@ -32,7 +32,7 @@ impl AppState for ImageDemo {
         Ok(())
     }
 
-    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
         match event.key {
             Key::Escape => s.image_tint(None),
             Key::Return => s.image_tint(Color::random_alpha()),
@@ -46,7 +46,7 @@ impl AppState for ImageDemo {
     }
 }
 
-fn main() -> PixResult<()> {
+fn main() -> Result<()> {
     let args: Vec<_> = env::args().collect();
     if args.len() < 2 {
         Err(anyhow!("Usage: cargo run /path/to/image.png"))

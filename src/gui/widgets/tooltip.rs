@@ -12,7 +12,7 @@
 //! # use pix_engine::prelude::*;
 //! # struct App { select_box: usize };
 //! # impl AppState for App {
-//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+//! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!     s.help_marker("Help marker icon w/ tooltip")?;
 //!
 //!     s.text("Hover me")?;
@@ -53,13 +53,13 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { select_box: usize };
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.help_marker("Help marker icon w/ tooltip")?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    pub fn help_marker<S>(&mut self, text: S) -> PixResult<()>
+    pub fn help_marker<S>(&mut self, text: S) -> Result<()>
     where
         S: AsRef<str>,
     {
@@ -158,7 +158,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { select_box: usize };
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.text("Hover me")?;
     ///     if s.hovered() {
     ///         s.tooltip("Basic tooltip")?;
@@ -167,7 +167,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn tooltip<S>(&mut self, text: S) -> PixResult<()>
+    pub fn tooltip<S>(&mut self, text: S) -> Result<()>
     where
         S: AsRef<str>,
     {
@@ -222,7 +222,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { select_box: usize };
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.text("Hover me")?;
     ///     if s.hovered() {
     ///         s.advanced_tooltip(
@@ -239,11 +239,11 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn advanced_tooltip<S, R, F>(&mut self, label: S, rect: R, f: F) -> PixResult<()>
+    pub fn advanced_tooltip<S, R, F>(&mut self, label: S, rect: R, f: F) -> Result<()>
     where
         S: AsRef<str>,
         R: Into<Rect<i32>>,
-        F: FnOnce(&mut PixState) -> PixResult<()>,
+        F: FnOnce(&mut PixState) -> Result<()>,
     {
         let label = label.as_ref();
 

@@ -52,7 +52,7 @@ impl Boid {
         self.acc *= 0.0;
     }
 
-    fn draw(&self, s: &mut PixState) -> PixResult<()> {
+    fn draw(&self, s: &mut PixState) -> Result<()> {
         s.stroke(Color::SKY_BLUE);
         s.fill(Color::SKY_BLUE);
         s.wireframe(
@@ -170,12 +170,12 @@ impl App {
 }
 
 impl AppState for App {
-    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn on_start(&mut self, s: &mut PixState) -> Result<()> {
         s.background(51);
         Ok(())
     }
 
-    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
         s.clear()?;
         let adjustment = self.get_adjustment();
         for (i, boid) in self.flock.iter_mut().enumerate() {
@@ -186,7 +186,7 @@ impl AppState for App {
         Ok(())
     }
 
-    fn on_key_pressed(&mut self, _s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    fn on_key_pressed(&mut self, _s: &mut PixState, event: KeyEvent) -> Result<bool> {
         if event.key == Key::R {
             self.reset();
         }
@@ -194,7 +194,7 @@ impl AppState for App {
     }
 }
 
-pub fn main() -> PixResult<()> {
+pub fn main() -> Result<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("Flocking")

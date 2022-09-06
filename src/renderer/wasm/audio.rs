@@ -42,7 +42,7 @@ impl AudioFormatNum for i32 {}
 impl AudioFormatNum for f32 {}
 
 impl AudioDriver for Renderer {
-    fn enqueue_audio(&mut self, samples: &[f32]) -> crate::prelude::PixResult<()> {
+    fn enqueue_audio(&mut self, samples: &[f32]) -> crate::prelude::Result<()> {
         todo!()
     }
 
@@ -84,7 +84,7 @@ impl AudioDriver for Renderer {
         device: D,
         desired_spec: &crate::prelude::AudioSpecDesired,
         get_callback: F,
-    ) -> crate::prelude::PixResult<crate::prelude::AudioDevice<CB>>
+    ) -> crate::prelude::Result<crate::prelude::AudioDevice<CB>>
     where
         CB: crate::prelude::AudioCallback,
         F: FnOnce(crate::prelude::AudioSpec) -> CB,
@@ -99,7 +99,7 @@ impl AudioDriver for Renderer {
         device: D,
         desired_spec: &crate::prelude::AudioSpecDesired,
         get_callback: F,
-    ) -> crate::prelude::PixResult<crate::prelude::AudioDevice<CB>>
+    ) -> crate::prelude::Result<crate::prelude::AudioDevice<CB>>
     where
         CB: crate::prelude::AudioCallback,
         F: FnOnce(crate::prelude::AudioSpec) -> CB,

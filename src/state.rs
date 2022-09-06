@@ -31,7 +31,7 @@
 //! # use pix_engine::prelude::*;
 //! # struct App { checkbox: bool, text_field: String };
 //! # impl AppState for App {
-//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+//! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!     s.fill(s.theme().colors.primary);
 //!     s.rect([100, 0, 100, 100])?;
 //!     if s.button("Click me")? {
@@ -76,7 +76,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.text(format!("Window title: {}", s.title()))?;
     ///     Ok(())
     /// }
@@ -101,7 +101,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.button("Change title")? {
     ///         s.set_title("Title changed!")?;
     ///     }
@@ -110,7 +110,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn set_title<S: AsRef<str>>(&mut self, title: S) -> PixResult<()> {
+    pub fn set_title<S: AsRef<str>>(&mut self, title: S) -> Result<()> {
         self.renderer.set_title(title.as_ref())
     }
 
@@ -122,7 +122,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     // Draw 100x100 rectangle that follows the mouse
     ///     s.rect(rect![s.mouse_pos(), 100, 100])?;
     ///     Ok(())
@@ -142,7 +142,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     // Draw 100x100 rectangle that follows the mouse last frame
     ///     // Creates a yoyo-like effect
     ///     s.rect(rect![s.pmouse_pos(), 100, 100])?;
@@ -163,7 +163,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.mouse_pressed() {
     ///         s.background(Color::random());
     ///     }
@@ -185,7 +185,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.mouse_clicked(Mouse::Left) {
     ///         s.background(Color::random());
     ///     }
@@ -207,7 +207,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.mouse_dbl_clicked(Mouse::Left) {
     ///         s.background(Color::random());
     ///     }
@@ -229,7 +229,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.mouse_down(Mouse::Left) {
     ///         s.background(Color::random());
     ///     }
@@ -251,7 +251,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     // Only trigger if both buttons are pressed
     ///     if s.mouse_buttons().contains(&Mouse::Left)
     ///        && s.mouse_buttons().contains(&Mouse::Right)
@@ -276,7 +276,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.key_pressed() {
     ///         s.background(Color::random());
     ///     }
@@ -298,7 +298,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.key_down(Key::Space) {
     ///         s.background(Color::random());
     ///     }
@@ -320,7 +320,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.keys().contains(&Key::Space) && s.keys().contains(&Key::Up) {
     ///         s.background(Color::random());
     ///     }
@@ -342,7 +342,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.keymod_down(KeyMod::CTRL) && s.key_down(Key::Space) {
     ///         s.background(Color::random());
     ///     }
@@ -364,7 +364,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.keymod().intersects(KeyMod::SHIFT | KeyMod::CTRL)
     ///         && s.key_down(Key::Space)
     ///     {
@@ -383,7 +383,7 @@ impl PixState {
 impl PixState {
     /// Constructs `PixState` with a given [Renderer].
     #[inline]
-    pub(crate) fn new(settings: RendererSettings, theme: Theme) -> PixResult<Self> {
+    pub(crate) fn new(settings: RendererSettings, theme: Theme) -> Result<Self> {
         let show_frame_rate = settings.show_frame_rate;
         let target_frame_rate = settings.target_frame_rate;
         let renderer = Renderer::new(settings)?;
@@ -416,7 +416,7 @@ impl PixState {
 
     /// Handle state updates for this frame.
     #[inline]
-    pub(crate) fn on_update(&mut self) -> PixResult<()> {
+    pub(crate) fn on_update(&mut self) -> Result<()> {
         for texture in self.ui.textures.iter_mut().filter(|t| t.visible) {
             self.renderer
                 .texture(texture.id, texture.src, texture.dst, 0.0, None, None, None)?;
@@ -513,7 +513,7 @@ impl PixState {
     /// If the `ControllerId` is invalid or the renderer fails to open the controller, then an
     /// error is returned.
     #[inline]
-    pub fn open_controller(&mut self, id: ControllerId) -> PixResult<()> {
+    pub fn open_controller(&mut self, id: ControllerId) -> Result<()> {
         self.renderer.open_controller(id)
     }
 

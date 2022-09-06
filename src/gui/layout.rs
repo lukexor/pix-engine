@@ -15,7 +15,7 @@
 //! # use pix_engine::prelude::*;
 //! # struct App { checkbox: bool, text_field: String, selected: &'static str };
 //! # impl AppState for App {
-//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+//! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!     s.text("Text")?;
 //!     s.same_line(None);
 //!     s.text("Same line")?;
@@ -70,7 +70,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool, text_field: String };
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.text("Text")?;
     ///     s.same_line(None);
     ///     s.text("Same line")?;
@@ -100,7 +100,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool, text_field: String };
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.next_width(200);
     ///     if s.button("Button")? {
     ///         // was clicked
@@ -130,7 +130,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { selected: &'static str };
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.tab_bar(
     ///         "Tab bar",
     ///         &["Tab 1", "Tab 2"],
@@ -163,11 +163,11 @@ impl PixState {
         tabs: &[I],
         selected: &mut I,
         f: F,
-    ) -> PixResult<bool>
+    ) -> Result<bool>
     where
         S: AsRef<str>,
         I: AsRef<str> + Copy,
-        F: FnOnce(&I, &mut PixState) -> PixResult<()>,
+        F: FnOnce(&I, &mut PixState) -> Result<()>,
     {
         let label = label.as_ref();
 
@@ -282,7 +282,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool, text_field: String };
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.text("Some text")?;
     ///     s.spacing()?;
     ///     s.text("Some other text")?;
@@ -290,7 +290,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn spacing(&mut self) -> PixResult<()> {
+    pub fn spacing(&mut self) -> Result<()> {
         let s = self;
         let width = s.ui_width()?;
         let (_, height) = s.text_size(" ")?;
@@ -310,14 +310,14 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool, text_field: String };
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.indent()?;
     ///     s.text("Indented!")?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    pub fn indent(&mut self) -> PixResult<()> {
+    pub fn indent(&mut self) -> Result<()> {
         let s = self;
         let (width, height) = s.text_size("    ")?;
         s.advance_cursor([width, height]);
@@ -337,7 +337,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool, text_field: String };
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.text("Some text")?;
     ///     s.separator()?;
     ///     s.text("Some other text")?;
@@ -345,7 +345,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn separator(&mut self) -> PixResult<()> {
+    pub fn separator(&mut self) -> Result<()> {
         // TODO: Add s.layout(Direction) method
         let s = self;
         let pos = s.cursor_pos();

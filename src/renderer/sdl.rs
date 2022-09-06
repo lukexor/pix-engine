@@ -60,9 +60,9 @@ pub(crate) struct Renderer {
 
 impl Renderer {
     /// Update the current render target canvas.
-    fn update_canvas<F>(&mut self, f: F) -> PixResult<()>
+    fn update_canvas<F>(&mut self, f: F) -> Result<()>
     where
-        F: FnOnce(&mut Canvas<Window>) -> PixResult<()>,
+        F: FnOnce(&mut Canvas<Window>) -> Result<()>,
     {
         if let Some(texture_id) = self.texture_target {
             let window = self
@@ -81,7 +81,7 @@ impl Renderer {
                     .with_context(|| format!("failed to update texture target {}", texture_id))?;
                 result
             } else {
-                Err(PixError::InvalidTexture(texture_id).into())
+                Err(Error::InvalidTexture(texture_id).into())
             }
         } else {
             f(self.canvas_mut()?)
@@ -90,7 +90,7 @@ impl Renderer {
 
     /// Load font if family or size has not already been loaded. Returns `true` if a font was
     /// loaded.
-    fn load_font(&mut self) -> PixResult<bool> {
+    fn load_font(&mut self) -> Result<bool> {
         let key = (self.current_font, self.font_size);
         if self.loaded_fonts.contains(&key) {
             return Ok(false);
@@ -103,13 +103,13 @@ impl Renderer {
         let loaded_font = match font_data.source() {
             FontSrc::None => return Err(anyhow!("Must provide a font data source")),
             FontSrc::Bytes(bytes) => {
-                let rwops = RWops::from_bytes(bytes).map_err(PixError::Renderer)?;
+                let rwops = RWops::from_bytes(bytes).map_err(Error::Renderer)?;
                 TTF.load_font_from_rwops(rwops, self.font_size)
-                    .map_err(PixError::Renderer)?
+                    .map_err(Error::Renderer)?
             }
             FontSrc::Path(ref path) => TTF
                 .load_font(path, self.font_size)
-                .map_err(PixError::Renderer)?,
+                .map_err(Error::Renderer)?,
         };
         self.loaded_fonts.put(key, loaded_font);
         Ok(true)
@@ -135,22 +135,22 @@ impl Renderer {
 impl Rendering for Renderer {
     /// Initializes the `Sdl2Renderer` using the given settings and opens a new window.
     #[inline]
-    fn new(mut s: RendererSettings) -> PixResult<Self> {
+    fn new(mut s: RendererSettings) -> Result<Self> {
         debug!("Initializing SDLRenderer");
 
-        let context = sdl2::init().map_err(PixError::Renderer)?;
-        let event_pump = context.event_pump().map_err(PixError::Renderer)?;
+        let context = sdl2::init().map_err(Error::Renderer)?;
+        let event_pump = context.event_pump().map_err(Error::Renderer)?;
 
         let title = s.title.clone();
         let primary_window = WindowCanvas::new(&context, &mut s)?;
-        let cursor = Cursor::from_system(SystemCursor::Arrow).map_err(PixError::Renderer)?;
+        let cursor = Cursor::from_system(SystemCursor::Arrow).map_err(Error::Renderer)?;
         cursor.set();
         let window_target = primary_window.id;
         let mut windows = HashMap::new();
         windows.insert(primary_window.id, primary_window);
 
         // Set up Audio
-        let audio_subsys = context.audio().map_err(PixError::Renderer)?;
+        let audio_subsys = context.audio().map_err(Error::Renderer)?;
         let desired_spec = AudioSpecDesired {
             freq: s.audio_sample_rate,
             channels: s.audio_channels,
@@ -158,9 +158,9 @@ impl Rendering for Renderer {
         };
         let audio_device = audio_subsys
             .open_queue(None, &desired_spec)
-            .map_err(PixError::Renderer)?;
+            .map_err(Error::Renderer)?;
         debug!("Loaded AudioDevice: {:?}", audio_device.spec());
-        let controller_subsys = context.game_controller().map_err(PixError::Renderer)?;
+        let controller_subsys = context.game_controller().map_err(Error::Renderer)?;
 
         let default_font = Font::default();
         let current_font = default_font.id();
@@ -196,8 +196,8 @@ impl Rendering for Renderer {
 
     /// Clears the canvas to the current clear color.
     #[inline]
-    fn clear(&mut self) -> PixResult<()> {
-        self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
+    fn clear(&mut self) -> Result<()> {
+        self.update_canvas(|canvas: &mut Canvas<_>| -> Result<()> {
             canvas.clear();
             Ok(())
         })
@@ -205,8 +205,8 @@ impl Rendering for Renderer {
 
     /// Sets the color used by the renderer to draw to the current canvas.
     #[inline]
-    fn set_draw_color(&mut self, color: Color) -> PixResult<()> {
-        self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
+    fn set_draw_color(&mut self, color: Color) -> Result<()> {
+        self.update_canvas(|canvas: &mut Canvas<_>| -> Result<()> {
             canvas.set_draw_color(color);
             Ok(())
         })
@@ -214,8 +214,8 @@ impl Rendering for Renderer {
 
     /// Sets the clip rect used by the renderer to draw to the current canvas.
     #[inline]
-    fn clip(&mut self, rect: Option<Rect<i32>>) -> PixResult<()> {
-        self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
+    fn clip(&mut self, rect: Option<Rect<i32>>) -> Result<()> {
+        self.update_canvas(|canvas: &mut Canvas<_>| -> Result<()> {
             canvas.set_clip_rect(rect.map(Into::into));
             Ok(())
         })
@@ -238,15 +238,15 @@ impl Rendering for Renderer {
     /// Set the rendering scale of the current canvas. Drawing coordinates are scaled by x/y
     /// factors before being drawn to the canvas.
     #[inline]
-    fn scale(&mut self, x: f32, y: f32) -> PixResult<()> {
-        self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
-            Ok(canvas.set_scale(x, y).map_err(PixError::Renderer)?)
+    fn scale(&mut self, x: f32, y: f32) -> Result<()> {
+        self.update_canvas(|canvas: &mut Canvas<_>| -> Result<()> {
+            Ok(canvas.set_scale(x, y).map_err(Error::Renderer)?)
         })
     }
 
     /// Set the font size for drawing to the current canvas.
     #[inline]
-    fn font_size(&mut self, size: u32) -> PixResult<()> {
+    fn font_size(&mut self, size: u32) -> Result<()> {
         self.font_size = size as u16;
         self.load_font()?;
         Ok(())
@@ -264,7 +264,7 @@ impl Rendering for Renderer {
 
     /// Set the font family for drawing to the current canvas.
     #[inline]
-    fn font_family(&mut self, font: &Font) -> PixResult<()> {
+    fn font_family(&mut self, font: &Font) -> Result<()> {
         self.current_font = font.id();
         if !self.font_data.contains(&self.current_font) {
             self.font_data.put(self.current_font, font.clone());
@@ -285,7 +285,7 @@ impl Rendering for Renderer {
         flipped: Option<Flipped>,
         fill: Option<Color>,
         outline: u16,
-    ) -> PixResult<(u32, u32)> {
+    ) -> Result<(u32, u32)> {
         if text.is_empty() {
             return self.size_of(text, wrap_width);
         }
@@ -293,7 +293,7 @@ impl Rendering for Renderer {
             let window = self
                 .windows
                 .get_mut(&self.window_target)
-                .ok_or(PixError::InvalidWindow(self.window_target))?;
+                .ok_or(Error::InvalidWindow(self.window_target))?;
 
             let texture = {
                 // FIXME: Use default or return error
@@ -331,7 +331,7 @@ impl Rendering for Renderer {
             let TextureQuery {
                 width, mut height, ..
             } = texture.query();
-            let update = |canvas: &mut Canvas<_>| -> PixResult<()> {
+            let update = |canvas: &mut Canvas<_>| -> Result<()> {
                 let src = None;
                 let dst = Some(SdlRect::new(pos.x(), pos.y(), width, height));
                 let result = if angle.is_some() || center.is_some() || flipped.is_some() {
@@ -343,7 +343,7 @@ impl Rendering for Renderer {
                 } else {
                     canvas.copy(texture, src, dst)
                 };
-                Ok(result.map_err(PixError::Renderer)?)
+                Ok(result.map_err(Error::Renderer)?)
             };
 
             if let Some(texture_id) = self.texture_target {
@@ -359,7 +359,7 @@ impl Rendering for Renderer {
                         })?;
                     result?;
                 } else {
-                    return Err(PixError::InvalidTexture(texture_id).into());
+                    return Err(Error::InvalidTexture(texture_id).into());
                 }
             } else {
                 update(&mut window.canvas)?;
@@ -389,26 +389,26 @@ impl Rendering for Renderer {
 
     /// Set clipboard text to the system clipboard.
     #[inline]
-    fn set_clipboard_text(&self, value: &str) -> PixResult<()> {
+    fn set_clipboard_text(&self, value: &str) -> Result<()> {
         Ok(self
             .context
             .video()
-            .map_err(PixError::Renderer)?
+            .map_err(Error::Renderer)?
             .clipboard()
             .set_clipboard_text(value)
-            .map_err(PixError::Renderer)?)
+            .map_err(Error::Renderer)?)
     }
 
     /// Open a URL in the default system browser.
     #[inline]
-    fn open_url(&self, url: &str) -> PixResult<()> {
+    fn open_url(&self, url: &str) -> Result<()> {
         sdl2::url::open_url(url).context("invalid url")
     }
 
     /// Returns the rendered dimensions of the given text using the current font
     /// as `(width, height)`.
     #[inline]
-    fn size_of(&self, text: &str, wrap_width: Option<u32>) -> PixResult<(u32, u32)> {
+    fn size_of(&self, text: &str, wrap_width: Option<u32>) -> Result<(u32, u32)> {
         let font = self.font();
         if text.is_empty() {
             return Ok((0, font.height() as u32));
@@ -431,17 +431,17 @@ impl Rendering for Renderer {
 
     /// Draw a pixel to the current canvas.
     #[inline]
-    fn point(&mut self, p: Point<i32>, color: Color) -> PixResult<()> {
-        self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
+    fn point(&mut self, p: Point<i32>, color: Color) -> Result<()> {
+        self.update_canvas(|canvas: &mut Canvas<_>| -> Result<()> {
             let [x, y] = p.map(|v| v as i16);
-            Ok(canvas.pixel(x, y, color).map_err(PixError::Renderer)?)
+            Ok(canvas.pixel(x, y, color).map_err(Error::Renderer)?)
         })
     }
 
     /// Draw a line to the current canvas.
     #[inline]
-    fn line(&mut self, line: Line<i32>, smooth: bool, width: u8, color: Color) -> PixResult<()> {
-        self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
+    fn line(&mut self, line: Line<i32>, smooth: bool, width: u8, color: Color) -> Result<()> {
+        self.update_canvas(|canvas: &mut Canvas<_>| -> Result<()> {
             let [x1, y1] = line.start().map(|v| v as i16);
             let [x2, y2] = line.end().map(|v| v as i16);
             if width == 1 {
@@ -457,18 +457,18 @@ impl Rendering for Renderer {
             } else {
                 canvas.thick_line(x1, y1, x2, y2, width, color)
             }
-            .map_err(PixError::Renderer)?;
+            .map_err(Error::Renderer)?;
             Ok(())
         })
     }
 
     /// Draw a cubic Bezier curve to the current canvas.
     #[inline]
-    fn bezier<I>(&mut self, ps: I, detail: i32, stroke: Option<Color>) -> PixResult<()>
+    fn bezier<I>(&mut self, ps: I, detail: i32, stroke: Option<Color>) -> Result<()>
     where
         I: Iterator<Item = Point<i32>>,
     {
-        self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
+        self.update_canvas(|canvas: &mut Canvas<_>| -> Result<()> {
             let (vx, vy): (Vec<i16>, Vec<i16>) = ps
                 .map(|p| -> (i16, i16) {
                     let [x, y] = p.map(|v| v as i16);
@@ -478,7 +478,7 @@ impl Rendering for Renderer {
             if let Some(stroke) = stroke {
                 canvas
                     .bezier(&vx, &vy, detail, stroke)
-                    .map_err(PixError::Renderer)?;
+                    .map_err(Error::Renderer)?;
             }
             Ok(())
         })
@@ -492,15 +492,15 @@ impl Rendering for Renderer {
         smooth: bool,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> PixResult<()> {
-        self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
+    ) -> Result<()> {
+        self.update_canvas(|canvas: &mut Canvas<_>| -> Result<()> {
             let [x1, y1] = tri.p1().map(|v| v as i16);
             let [x2, y2] = tri.p2().map(|v| v as i16);
             let [x3, y3] = tri.p3().map(|v| v as i16);
             if let Some(fill) = fill {
                 canvas
                     .filled_trigon(x1, y1, x2, y2, x3, y3, fill)
-                    .map_err(PixError::Renderer)?;
+                    .map_err(Error::Renderer)?;
             }
             if let Some(stroke) = stroke {
                 if smooth {
@@ -508,7 +508,7 @@ impl Rendering for Renderer {
                 } else {
                     canvas.trigon(x1, y1, x2, y2, x3, y3, stroke)
                 }
-                .map_err(PixError::Renderer)?;
+                .map_err(Error::Renderer)?;
             }
             Ok(())
         })
@@ -522,8 +522,8 @@ impl Rendering for Renderer {
         radius: Option<i32>,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> PixResult<()> {
-        self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
+    ) -> Result<()> {
+        self.update_canvas(|canvas: &mut Canvas<_>| -> Result<()> {
             let [x, y, width, height] = rect.map(|v| v as i16);
             if let Some(fill) = fill {
                 radius
@@ -534,7 +534,7 @@ impl Rendering for Renderer {
                             canvas.rounded_box(x, y, x + width, y + height, radius, fill)
                         },
                     )
-                    .map_err(PixError::Renderer)?;
+                    .map_err(Error::Renderer)?;
             }
             if let Some(stroke) = stroke {
                 radius
@@ -546,7 +546,7 @@ impl Rendering for Renderer {
                             canvas.rounded_rectangle(x, y, x + width, y + height, radius, stroke)
                         },
                     )
-                    .map_err(PixError::Renderer)?;
+                    .map_err(Error::Renderer)?;
             }
             Ok(())
         })
@@ -560,8 +560,8 @@ impl Rendering for Renderer {
         smooth: bool,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> PixResult<()> {
-        self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
+    ) -> Result<()> {
+        self.update_canvas(|canvas: &mut Canvas<_>| -> Result<()> {
             let [x1, y1] = quad.p1().map(|v| v as i16);
             let [x2, y2] = quad.p2().map(|v| v as i16);
             let [x3, y3] = quad.p3().map(|v| v as i16);
@@ -571,7 +571,7 @@ impl Rendering for Renderer {
             if let Some(fill) = fill {
                 canvas
                     .filled_polygon(&vx, &vy, fill)
-                    .map_err(PixError::Renderer)?;
+                    .map_err(Error::Renderer)?;
             }
             if let Some(stroke) = stroke {
                 if smooth {
@@ -579,7 +579,7 @@ impl Rendering for Renderer {
                 } else {
                     canvas.polygon(&vx, &vy, stroke)
                 }
-                .map_err(PixError::Renderer)?;
+                .map_err(Error::Renderer)?;
             }
             Ok(())
         })
@@ -593,11 +593,11 @@ impl Rendering for Renderer {
         smooth: bool,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> PixResult<()>
+    ) -> Result<()>
     where
         I: Iterator<Item = Point<i32>>,
     {
-        self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
+        self.update_canvas(|canvas: &mut Canvas<_>| -> Result<()> {
             let (vx, vy): (Vec<i16>, Vec<i16>) = ps
                 .map(|p| -> (i16, i16) {
                     let [x, y] = p.map(|v| v as i16);
@@ -607,7 +607,7 @@ impl Rendering for Renderer {
             if let Some(fill) = fill {
                 canvas
                     .filled_polygon(&vx, &vy, fill)
-                    .map_err(PixError::Renderer)?;
+                    .map_err(Error::Renderer)?;
             }
             if let Some(stroke) = stroke {
                 if smooth {
@@ -615,7 +615,7 @@ impl Rendering for Renderer {
                 } else {
                     canvas.polygon(&vx, &vy, stroke)
                 }
-                .map_err(PixError::Renderer)?;
+                .map_err(Error::Renderer)?;
             }
             Ok(())
         })
@@ -629,8 +629,8 @@ impl Rendering for Renderer {
         smooth: bool,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> PixResult<()> {
-        self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
+    ) -> Result<()> {
+        self.update_canvas(|canvas: &mut Canvas<_>| -> Result<()> {
             let [x, y, width, height] = ellipse.map(|v| v as i16);
             let rw = width / 2;
             let rh = height / 2;
@@ -640,7 +640,7 @@ impl Rendering for Renderer {
                 } else {
                     canvas.filled_ellipse(x, y, rw, rh, fill)
                 }
-                .map_err(PixError::Renderer)?;
+                .map_err(Error::Renderer)?;
             }
             if let Some(stroke) = stroke {
                 if width == height {
@@ -654,7 +654,7 @@ impl Rendering for Renderer {
                 } else {
                     canvas.ellipse(x, y, rw, rh, stroke)
                 }
-                .map_err(PixError::Renderer)?;
+                .map_err(Error::Renderer)?;
             }
             Ok(())
         })
@@ -671,8 +671,8 @@ impl Rendering for Renderer {
         mode: ArcMode,
         fill: Option<Color>,
         stroke: Option<Color>,
-    ) -> PixResult<()> {
-        self.update_canvas(|canvas: &mut Canvas<_>| -> PixResult<()> {
+    ) -> Result<()> {
+        self.update_canvas(|canvas: &mut Canvas<_>| -> Result<()> {
             let [x, y] = p.map(|v| v as i16);
             let radius = radius as i16;
             let start = start as i16;
@@ -682,19 +682,19 @@ impl Rendering for Renderer {
                     if let Some(stroke) = stroke {
                         canvas
                             .arc(x, y, radius, start, end, stroke)
-                            .map_err(PixError::Renderer)?;
+                            .map_err(Error::Renderer)?;
                     }
                 }
                 ArcMode::Pie => {
                     if let Some(fill) = fill {
                         canvas
                             .filled_pie(x, y, radius, start, end, fill)
-                            .map_err(PixError::Renderer)?;
+                            .map_err(Error::Renderer)?;
                     }
                     if let Some(stroke) = stroke {
                         canvas
                             .pie(x, y, radius, start, end, stroke)
-                            .map_err(PixError::Renderer)?;
+                            .map_err(Error::Renderer)?;
                     }
                 }
             }
@@ -713,11 +713,11 @@ impl Rendering for Renderer {
         center: Option<Point<i32>>,
         flipped: Option<Flipped>,
         tint: Option<Color>,
-    ) -> PixResult<()> {
+    ) -> Result<()> {
         let window = self
             .windows
             .get_mut(&self.window_target)
-            .ok_or(PixError::InvalidWindow(self.window_target))?;
+            .ok_or(Error::InvalidWindow(self.window_target))?;
         let texture = {
             let key: *const Image = img;
             if !window.image_cache.contains(&key) {
@@ -750,7 +750,7 @@ impl Rendering for Renderer {
             )
             .context("failed to update image texture")?;
 
-        let update = |canvas: &mut Canvas<_>| -> PixResult<()> {
+        let update = |canvas: &mut Canvas<_>| -> Result<()> {
             let src = src.map(Into::into);
             let dst = dst.map(Into::into);
             if angle > 0.0 || center.is_some() || flipped.is_some() {
@@ -761,7 +761,7 @@ impl Rendering for Renderer {
             } else {
                 canvas.copy(texture, src, dst)
             }
-            .map_err(PixError::Renderer)?;
+            .map_err(Error::Renderer)?;
             Ok(())
         };
 
@@ -776,7 +776,7 @@ impl Rendering for Renderer {
                     .with_context(|| format!("failed to update texture target {}", texture_id))?;
                 result?;
             } else {
-                return Err(PixError::InvalidTexture(texture_id).into());
+                return Err(Error::InvalidTexture(texture_id).into());
             }
         } else {
             update(&mut window.canvas)?;
@@ -787,7 +787,7 @@ impl Rendering for Renderer {
 
     /// Return the current rendered target pixels as an array of bytes.
     #[inline]
-    fn to_bytes(&mut self) -> PixResult<Vec<u8>> {
+    fn to_bytes(&mut self) -> Result<Vec<u8>> {
         if let Some(texture_id) = self.texture_target {
             let window = self
                 .windows
@@ -803,20 +803,20 @@ impl Rendering for Renderer {
                         result = canvas.read_pixels(None, SdlPixelFormat::RGBA32);
                     })
                     .with_context(|| format!("failed to read texture target {}", texture_id))?;
-                Ok(result.map_err(PixError::Renderer)?)
+                Ok(result.map_err(Error::Renderer)?)
             } else {
-                Err(PixError::InvalidTexture(texture_id).into())
+                Err(Error::InvalidTexture(texture_id).into())
             }
         } else {
             Ok(self
                 .canvas()?
                 .read_pixels(None, SdlPixelFormat::RGBA32)
-                .map_err(PixError::Renderer)?)
+                .map_err(Error::Renderer)?)
         }
     }
 
     /// Connect a controller with the given joystick index to start receiving events.
-    fn open_controller(&mut self, controller_id: ControllerId) -> PixResult<()> {
+    fn open_controller(&mut self, controller_id: ControllerId) -> Result<()> {
         let joystick_index = *controller_id;
         if self.controller_subsys.is_game_controller(joystick_index) {
             self.controllers

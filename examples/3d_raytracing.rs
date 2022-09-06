@@ -212,7 +212,7 @@ impl App {
 }
 
 impl AppState for App {
-    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
         let half_w = s.width()? as i32 / 2;
         let half_h = s.height()? as i32 / 2;
         for y in -half_h..=half_h {
@@ -227,7 +227,7 @@ impl AppState for App {
         Ok(())
     }
 
-    fn on_key_pressed(&mut self, _s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    fn on_key_pressed(&mut self, _s: &mut PixState, event: KeyEvent) -> Result<bool> {
         match (event.key, event.keymod) {
             // Move left/right
             (Key::Left, KeyMod::NONE) => self.origin -= point!(1.0, 0.0, 0.0) - self.looking,
@@ -250,7 +250,7 @@ impl AppState for App {
     }
 }
 
-pub fn main() -> PixResult<()> {
+pub fn main() -> Result<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("3D Raytracing")

@@ -151,13 +151,13 @@ pub(crate) trait WindowRenderer {
     fn window_id(&self) -> WindowId;
 
     /// Create a new window.
-    fn create_window(&mut self, s: &mut RendererSettings) -> PixResult<WindowId>;
+    fn create_window(&mut self, s: &mut RendererSettings) -> Result<WindowId>;
 
     /// Close a window.
-    fn close_window(&mut self, id: WindowId) -> PixResult<()>;
+    fn close_window(&mut self, id: WindowId) -> Result<()>;
 
     /// Set the mouse cursor to a predefined symbol or image, or hides cursor if `None`.
-    fn cursor(&mut self, cursor: Option<&Cursor>) -> PixResult<()>;
+    fn cursor(&mut self, cursor: Option<&Cursor>) -> Result<()>;
 
     /// Returns a single event or None if the event pump is empty.
     fn poll_event(&mut self) -> Option<Event>;
@@ -166,34 +166,34 @@ pub(crate) trait WindowRenderer {
     fn title(&self) -> &str;
 
     /// Set the current window title.
-    fn set_title(&mut self, title: &str) -> PixResult<()>;
+    fn set_title(&mut self, title: &str) -> Result<()>;
 
     /// Set the average frames-per-second rendered.
-    fn set_fps(&mut self, fps: f32) -> PixResult<()>;
+    fn set_fps(&mut self, fps: f32) -> Result<()>;
 
     /// Dimensions of the current render target as `(width, height)`.
-    fn dimensions(&self) -> PixResult<(u32, u32)>;
+    fn dimensions(&self) -> Result<(u32, u32)>;
 
     /// Dimensions of the current window target as `(width, height)`.
-    fn window_dimensions(&self) -> PixResult<(u32, u32)>;
+    fn window_dimensions(&self) -> Result<(u32, u32)>;
 
     /// Set dimensions of the current window target as `(width, height)`.
-    fn set_window_dimensions(&mut self, dimensions: (u32, u32)) -> PixResult<()>;
+    fn set_window_dimensions(&mut self, dimensions: (u32, u32)) -> Result<()>;
 
     /// Returns the rendering viewport of the current render target.
-    fn viewport(&self) -> PixResult<Rect<i32>>;
+    fn viewport(&self) -> Result<Rect<i32>>;
 
     /// Set the rendering viewport of the current render target.
-    fn set_viewport(&mut self, rect: Option<Rect<i32>>) -> PixResult<()>;
+    fn set_viewport(&mut self, rect: Option<Rect<i32>>) -> Result<()>;
 
     /// Dimensions of the primary display as `(width, height)`.
-    fn display_dimensions(&self) -> PixResult<(u32, u32)>;
+    fn display_dimensions(&self) -> Result<(u32, u32)>;
 
     /// Returns whether the application is fullscreen or not.
-    fn fullscreen(&self) -> PixResult<bool>;
+    fn fullscreen(&self) -> Result<bool>;
 
     /// Set the application to fullscreen or not.
-    fn set_fullscreen(&mut self, val: bool) -> PixResult<()>;
+    fn set_fullscreen(&mut self, val: bool) -> Result<()>;
 
     /// Returns whether the window synchronizes frame rate to the screens refresh rate.
     fn vsync(&self) -> bool;
@@ -207,19 +207,19 @@ pub(crate) trait WindowRenderer {
     ///
     /// If you are storing and interacting with this window using the `WindowId`, make sure to
     /// use the newly returned `WindowId`.
-    fn set_vsync(&mut self, val: bool) -> PixResult<WindowId>;
+    fn set_vsync(&mut self, val: bool) -> Result<WindowId>;
 
     /// Set window as the target for drawing operations.
-    fn set_window_target(&mut self, id: WindowId) -> PixResult<()>;
+    fn set_window_target(&mut self, id: WindowId) -> Result<()>;
 
     /// Reset main window as the target for drawing operations.
     fn reset_window_target(&mut self);
 
     /// Show the current window target.
-    fn show(&mut self) -> PixResult<()>;
+    fn show(&mut self) -> Result<()>;
 
     /// Hide the current window target.
-    fn hide(&mut self) -> PixResult<()>;
+    fn hide(&mut self) -> Result<()>;
 }
 
 /// Opens a new window by providing several window configuration functions.
@@ -234,8 +234,8 @@ pub(crate) trait WindowRenderer {
 /// # use pix_engine::prelude::*;
 /// # struct App { windows: Vec<WindowId> };
 /// # impl AppState for App {
-/// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
-/// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+/// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
+/// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
 ///     if let Key::O = event.key {
 ///         let window_id = s.window()
 ///             .with_title("New Window")
@@ -343,7 +343,7 @@ impl<'a> WindowBuilder<'a> {
     /// Possible errors include the title containing a `nul` character, the position or dimensions
     /// being invalid values or overlowing and an internal renderer error such as running out of
     /// memory or a software driver issue.
-    pub fn build(&mut self) -> PixResult<WindowId> {
+    pub fn build(&mut self) -> Result<WindowId> {
         self.renderer.create_window(&mut self.settings)
     }
 }
@@ -368,7 +368,7 @@ impl PixState {
     ///
     /// If the window has already been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn close_window(&mut self, id: WindowId) -> PixResult<()> {
+    pub fn close_window(&mut self, id: WindowId) -> Result<()> {
         if self.renderer.window_count() == 1 {
             self.quit();
             return Ok(());
@@ -382,7 +382,7 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn dimensions(&self) -> PixResult<(u32, u32)> {
+    pub fn dimensions(&self) -> Result<(u32, u32)> {
         self.renderer.dimensions()
     }
 
@@ -392,7 +392,7 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn window_dimensions(&self) -> PixResult<(u32, u32)> {
+    pub fn window_dimensions(&self) -> Result<(u32, u32)> {
         self.renderer.window_dimensions()
     }
 
@@ -402,7 +402,7 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn set_window_dimensions(&mut self, dimensions: (u32, u32)) -> PixResult<()> {
+    pub fn set_window_dimensions(&mut self, dimensions: (u32, u32)) -> Result<()> {
         self.renderer.set_window_dimensions(dimensions)
     }
 
@@ -412,7 +412,7 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn viewport(&mut self) -> PixResult<Rect<i32>> {
+    pub fn viewport(&mut self) -> Result<Rect<i32>> {
         self.renderer.viewport()
     }
 
@@ -422,7 +422,7 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn set_viewport<R>(&mut self, rect: R) -> PixResult<()>
+    pub fn set_viewport<R>(&mut self, rect: R) -> Result<()>
     where
         R: Into<Rect<i32>>,
     {
@@ -435,7 +435,7 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn clear_viewport(&mut self) -> PixResult<()> {
+    pub fn clear_viewport(&mut self) -> Result<()> {
         self.renderer.set_viewport(None)
     }
 
@@ -445,7 +445,7 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn width(&self) -> PixResult<u32> {
+    pub fn width(&self) -> Result<u32> {
         let (width, _) = self.dimensions()?;
         Ok(width)
     }
@@ -456,7 +456,7 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn window_width(&self) -> PixResult<u32> {
+    pub fn window_width(&self) -> Result<u32> {
         let (width, _) = self.window_dimensions()?;
         Ok(width)
     }
@@ -467,7 +467,7 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn set_window_width(&mut self, width: u32) -> PixResult<()> {
+    pub fn set_window_width(&mut self, width: u32) -> Result<()> {
         let (_, height) = self.window_dimensions()?;
         self.renderer.set_window_dimensions((width, height))
     }
@@ -478,7 +478,7 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn height(&self) -> PixResult<u32> {
+    pub fn height(&self) -> Result<u32> {
         let (_, height) = self.dimensions()?;
         Ok(height)
     }
@@ -489,7 +489,7 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn window_height(&self) -> PixResult<u32> {
+    pub fn window_height(&self) -> Result<u32> {
         let (_, height) = self.window_dimensions()?;
         Ok(height)
     }
@@ -500,7 +500,7 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn set_window_height(&mut self, height: u32) -> PixResult<()> {
+    pub fn set_window_height(&mut self, height: u32) -> Result<()> {
         let (width, _) = self.window_dimensions()?;
         self.renderer.set_window_dimensions((width, height))
     }
@@ -511,7 +511,7 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn center(&self) -> PixResult<Point<i32>> {
+    pub fn center(&self) -> Result<Point<i32>> {
         let (width, height) = self.dimensions()?;
         let (width, height) = clamp_dimensions(width, height);
         Ok(point![width / 2, height / 2])
@@ -523,7 +523,7 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn window_center(&self) -> PixResult<Point<i32>> {
+    pub fn window_center(&self) -> Result<Point<i32>> {
         let (width, height) = self.window_dimensions()?;
         let (width, height) = clamp_dimensions(width, height);
         Ok(point![width / 2, height / 2])
@@ -535,7 +535,7 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn display_dimensions(&self) -> PixResult<(u32, u32)> {
+    pub fn display_dimensions(&self) -> Result<(u32, u32)> {
         self.renderer.display_dimensions()
     }
 
@@ -545,7 +545,7 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn display_width(&self) -> PixResult<u32> {
+    pub fn display_width(&self) -> Result<u32> {
         let (width, _) = self.display_dimensions()?;
         Ok(width)
     }
@@ -556,7 +556,7 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn display_height(&self) -> PixResult<u32> {
+    pub fn display_height(&self) -> Result<u32> {
         let (_, height) = self.display_dimensions()?;
         Ok(height)
     }
@@ -567,7 +567,7 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn show_window(&mut self) -> PixResult<()> {
+    pub fn show_window(&mut self) -> Result<()> {
         self.renderer.show()
     }
 
@@ -577,7 +577,7 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn hide_window(&mut self) -> PixResult<()> {
+    pub fn hide_window(&mut self) -> Result<()> {
         self.renderer.hide()
     }
 
@@ -587,9 +587,9 @@ impl PixState {
     ///
     /// If the window has been closed or is invalid, or the rendering function fails, then an error
     /// is returned.
-    pub fn with_window<F>(&mut self, id: WindowId, f: F) -> PixResult<()>
+    pub fn with_window<F>(&mut self, id: WindowId, f: F) -> Result<()>
     where
-        F: FnOnce(&mut PixState) -> PixResult<()>,
+        F: FnOnce(&mut PixState) -> Result<()>,
     {
         self.push();
         self.ui.push_cursor();

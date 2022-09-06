@@ -12,19 +12,19 @@ pub use audio::{AudioDevice, AudioFormatNum};
 pub(crate) struct Renderer {}
 
 impl Rendering for Renderer {
-    fn new(settings: RendererSettings) -> crate::prelude::PixResult<Self> {
+    fn new(settings: RendererSettings) -> crate::prelude::Result<Self> {
         todo!()
     }
 
-    fn clear(&mut self) -> crate::prelude::PixResult<()> {
+    fn clear(&mut self) -> crate::prelude::Result<()> {
         todo!()
     }
 
-    fn set_draw_color(&mut self, color: crate::prelude::Color) -> crate::prelude::PixResult<()> {
+    fn set_draw_color(&mut self, color: crate::prelude::Color) -> crate::prelude::Result<()> {
         todo!()
     }
 
-    fn clip(&mut self, rect: Option<crate::prelude::Rect<i32>>) -> crate::prelude::PixResult<()> {
+    fn clip(&mut self, rect: Option<crate::prelude::Rect<i32>>) -> crate::prelude::Result<()> {
         todo!()
     }
 
@@ -36,11 +36,11 @@ impl Rendering for Renderer {
         todo!()
     }
 
-    fn scale(&mut self, x: f32, y: f32) -> crate::prelude::PixResult<()> {
+    fn scale(&mut self, x: f32, y: f32) -> crate::prelude::Result<()> {
         todo!()
     }
 
-    fn font_size(&mut self, size: u32) -> crate::prelude::PixResult<()> {
+    fn font_size(&mut self, size: u32) -> crate::prelude::Result<()> {
         todo!()
     }
 
@@ -48,7 +48,7 @@ impl Rendering for Renderer {
         todo!()
     }
 
-    fn font_family(&mut self, font: &crate::prelude::theme::Font) -> crate::prelude::PixResult<()> {
+    fn font_family(&mut self, font: &crate::prelude::theme::Font) -> crate::prelude::Result<()> {
         todo!()
     }
 
@@ -56,11 +56,11 @@ impl Rendering for Renderer {
         todo!()
     }
 
-    fn set_clipboard_text(&self, value: &str) -> crate::prelude::PixResult<()> {
+    fn set_clipboard_text(&self, value: &str) -> crate::prelude::Result<()> {
         todo!()
     }
 
-    fn open_url(&self, url: &str) -> crate::prelude::PixResult<()> {
+    fn open_url(&self, url: &str) -> crate::prelude::Result<()> {
         todo!()
     }
 
@@ -74,7 +74,7 @@ impl Rendering for Renderer {
         flipped: Option<crate::prelude::Flipped>,
         fill: Option<crate::prelude::Color>,
         outline: u16,
-    ) -> crate::prelude::PixResult<(u32, u32)> {
+    ) -> crate::prelude::Result<(u32, u32)> {
         todo!()
     }
 
@@ -82,7 +82,7 @@ impl Rendering for Renderer {
         &self,
         text: &str,
         wrap_width: Option<u32>,
-    ) -> crate::prelude::PixResult<(u32, u32)> {
+    ) -> crate::prelude::Result<(u32, u32)> {
         todo!()
     }
 
@@ -90,7 +90,7 @@ impl Rendering for Renderer {
         &mut self,
         p: crate::prelude::Point<i32>,
         color: crate::prelude::Color,
-    ) -> crate::prelude::PixResult<()> {
+    ) -> crate::prelude::Result<()> {
         todo!()
     }
 
@@ -100,7 +100,7 @@ impl Rendering for Renderer {
         smooth: bool,
         width: u8,
         color: crate::prelude::Color,
-    ) -> crate::prelude::PixResult<()> {
+    ) -> crate::prelude::Result<()> {
         todo!()
     }
 
@@ -109,7 +109,7 @@ impl Rendering for Renderer {
         ps: I,
         detail: i32,
         stroke: Option<crate::prelude::Color>,
-    ) -> crate::prelude::PixResult<()>
+    ) -> crate::prelude::Result<()>
     where
         I: Iterator<Item = crate::prelude::Point<i32>>,
     {
@@ -122,7 +122,7 @@ impl Rendering for Renderer {
         smooth: bool,
         fill: Option<crate::prelude::Color>,
         stroke: Option<crate::prelude::Color>,
-    ) -> crate::prelude::PixResult<()> {
+    ) -> crate::prelude::Result<()> {
         todo!()
     }
 
@@ -132,7 +132,7 @@ impl Rendering for Renderer {
         radius: Option<i32>,
         fill: Option<crate::prelude::Color>,
         stroke: Option<crate::prelude::Color>,
-    ) -> crate::prelude::PixResult<()> {
+    ) -> crate::prelude::Result<()> {
         todo!()
     }
 
@@ -142,7 +142,7 @@ impl Rendering for Renderer {
         smooth: bool,
         fill: Option<crate::prelude::Color>,
         stroke: Option<crate::prelude::Color>,
-    ) -> crate::prelude::PixResult<()> {
+    ) -> crate::prelude::Result<()> {
         todo!()
     }
 
@@ -152,7 +152,7 @@ impl Rendering for Renderer {
         smooth: bool,
         fill: Option<crate::prelude::Color>,
         stroke: Option<crate::prelude::Color>,
-    ) -> crate::prelude::PixResult<()>
+    ) -> crate::prelude::Result<()>
     where
         I: Iterator<Item = crate::prelude::Point<i32>>,
     {
@@ -165,7 +165,7 @@ impl Rendering for Renderer {
         smooth: bool,
         fill: Option<crate::prelude::Color>,
         stroke: Option<crate::prelude::Color>,
-    ) -> crate::prelude::PixResult<()> {
+    ) -> crate::prelude::Result<()> {
         todo!()
     }
 
@@ -178,7 +178,7 @@ impl Rendering for Renderer {
         mode: crate::prelude::ArcMode,
         fill: Option<crate::prelude::Color>,
         stroke: Option<crate::prelude::Color>,
-    ) -> crate::prelude::PixResult<()> {
+    ) -> crate::prelude::Result<()> {
         todo!()
     }
 
@@ -191,18 +191,18 @@ impl Rendering for Renderer {
         center: Option<crate::prelude::Point<i32>>,
         flipped: Option<crate::prelude::Flipped>,
         tint: Option<crate::prelude::Color>,
-    ) -> crate::prelude::PixResult<()> {
+    ) -> crate::prelude::Result<()> {
         todo!()
     }
 
-    fn to_bytes(&mut self) -> crate::prelude::PixResult<Vec<u8>> {
+    fn to_bytes(&mut self) -> crate::prelude::Result<Vec<u8>> {
         todo!()
     }
 
     fn open_controller(
         &mut self,
         controller_id: crate::event::ControllerId,
-    ) -> crate::prelude::PixResult<()> {
+    ) -> crate::prelude::Result<()> {
         todo!()
     }
 

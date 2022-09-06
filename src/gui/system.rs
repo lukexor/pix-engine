@@ -12,14 +12,14 @@
 //! # use pix_engine::prelude::*;
 //! # struct App { text_entry: String };
 //! # impl AppState for App {
-//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+//! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!     if s.button("Open Homepage")? {
 //!         s.open_url("https://example.com")?;
 //!     }
 //!     Ok(())
 //! }
 //!
-//! fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+//! fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
 //!     match (event.keymod, event.key) {
 //!         (KeyMod::CTRL, Key::C) => s.set_clipboard_text(&self.text_entry)?,
 //!         (KeyMod::CTRL, Key::V) => self.text_entry = s.clipboard_text(),
@@ -41,7 +41,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool, text_field: String };
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     println!("Current clipboard text: {}", s.clipboard_text());
     ///     Ok(())
     /// }
@@ -65,14 +65,14 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool, text_field: String };
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.set_clipboard_text("Copied to clipboard!")?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
     #[inline]
-    pub fn set_clipboard_text<S>(&self, value: S) -> PixResult<()>
+    pub fn set_clipboard_text<S>(&self, value: S) -> Result<()>
     where
         S: AsRef<str>,
     {
@@ -93,7 +93,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     if s.button("Open Homepage")? {
     ///         s.open_url("https://example.com")?;
     ///     }
@@ -102,7 +102,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn open_url<S>(&self, url: S) -> PixResult<()>
+    pub fn open_url<S>(&self, url: S) -> Result<()>
     where
         S: AsRef<str>,
     {

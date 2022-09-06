@@ -49,7 +49,7 @@ impl TextureRenderer for Renderer {
         width: u32,
         height: u32,
         format: Option<PixelFormat>,
-    ) -> PixResult<TextureId> {
+    ) -> Result<TextureId> {
         let texture_id = self.next_texture_id;
         self.next_texture_id += 1;
         let window_canvas = self.window_canvas_mut()?;
@@ -72,11 +72,11 @@ impl TextureRenderer for Renderer {
     /// current canvas. Currently, the only way to violate this is by creating a texture using
     /// [`PixState::with_window`] and calling a texture method after that window has been closed.
     #[inline]
-    fn delete_texture(&mut self, texture_id: TextureId) -> PixResult<()> {
+    fn delete_texture(&mut self, texture_id: TextureId) -> Result<()> {
         self.window_canvas_mut()?
             .textures
             .remove(&texture_id)
-            .map_or(Err(PixError::InvalidTexture(texture_id).into()), |_| Ok(()))
+            .map_or(Err(Error::InvalidTexture(texture_id).into()), |_| Ok(()))
     }
 
     /// Update texture with pixel data.
@@ -87,7 +87,7 @@ impl TextureRenderer for Renderer {
         rect: Option<Rect<i32>>,
         pixels: P,
         pitch: usize,
-    ) -> PixResult<()> {
+    ) -> Result<()> {
         let window = self
             .windows
             .values()
@@ -100,7 +100,7 @@ impl TextureRenderer for Renderer {
                 .update(rect.map(Into::into), pixels.as_ref(), pitch)
                 .context("failed to update texture")?)
         } else {
-            Err(PixError::InvalidTexture(texture_id).into())
+            Err(Error::InvalidTexture(texture_id).into())
         }
     }
 
@@ -115,7 +115,7 @@ impl TextureRenderer for Renderer {
         center: Option<Point<i32>>,
         flipped: Option<Flipped>,
         tint: Option<Color>,
-    ) -> PixResult<()> {
+    ) -> Result<()> {
         assert_ne!(
             Some(texture_id),
             self.texture_target,
@@ -139,7 +139,7 @@ impl TextureRenderer for Renderer {
             }
             let src = src.map(Into::into);
             let dst = dst.map(Into::into);
-            let update = |canvas: &mut Canvas<_>| -> PixResult<()> {
+            let update = |canvas: &mut Canvas<_>| -> Result<()> {
                 let result = if angle > 0.0 || center.is_some() || flipped.is_some() {
                     canvas.copy_ex(
                         &texture.borrow(),
@@ -153,7 +153,7 @@ impl TextureRenderer for Renderer {
                 } else {
                     canvas.copy(&texture.borrow(), src, dst)
                 };
-                Ok(result.map_err(PixError::Renderer)?)
+                Ok(result.map_err(Error::Renderer)?)
             };
 
             if let Some(texture_id) = target_texture {
@@ -169,13 +169,13 @@ impl TextureRenderer for Renderer {
                         })?;
                     result
                 } else {
-                    Err(PixError::InvalidTexture(texture_id).into())
+                    Err(Error::InvalidTexture(texture_id).into())
                 }
             } else {
                 update(&mut window.canvas)
             }
         } else {
-            Err(PixError::InvalidTexture(texture_id).into())
+            Err(Error::InvalidTexture(texture_id).into())
         }
     }
 

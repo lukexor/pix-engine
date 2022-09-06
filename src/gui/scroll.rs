@@ -21,10 +21,10 @@ impl PixState {
     /// # Errors
     ///
     /// If the renderer fails to draw to the current render target, then an error is returned.
-    pub fn scroll_area<S, F>(&mut self, label: S, width: u32, height: u32, f: F) -> PixResult<()>
+    pub fn scroll_area<S, F>(&mut self, label: S, width: u32, height: u32, f: F) -> Result<()>
     where
         S: AsRef<str>,
-        F: FnOnce(&mut PixState) -> PixResult<()>,
+        F: FnOnce(&mut PixState) -> Result<()>,
     {
         let label = label.as_ref();
 
@@ -117,7 +117,7 @@ impl PixState {
         rect: Rect<i32>,
         width: i32,
         height: i32,
-    ) -> PixResult<Rect<i32>> {
+    ) -> Result<Rect<i32>> {
         let s = self;
         let scroll_size = s.theme.spacing.scroll_size;
 
@@ -211,7 +211,7 @@ impl PixState {
         max: i32,
         value: &mut i32,
         dir: ScrollDirection,
-    ) -> PixResult<bool> {
+    ) -> Result<bool> {
         use ScrollDirection::{Horizontal, Vertical};
 
         let s = self;

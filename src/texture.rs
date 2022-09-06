@@ -19,10 +19,10 @@
 //! # use pix_engine::prelude::*;
 //! # struct App;
 //! # impl AppState for App {
-//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+//! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!     let texture_id1 = s.create_texture(500, 600, PixelFormat::Rgb)?;
 //!     // Does not actually render to the current canvas
-//!     s.with_texture(texture_id1, |s: &mut PixState| -> PixResult<()> {
+//!     s.with_texture(texture_id1, |s: &mut PixState| -> Result<()> {
 //!         s.background(Color::random());
 //!         s.text("Rendered texture!")?;
 //!         Ok(())
@@ -88,7 +88,7 @@ impl PixState {
     ///
     /// It's possible to render one texture onto another texture, but currently they both have to
     /// have been created in the same window. Attempting to render to a texture created with
-    /// another window will result in a [`PixError::InvalidTexture`]. This restriction may be
+    /// another window will result in a [`Error::InvalidTexture`]. This restriction may be
     /// lifted in the future.
     ///
     /// # Errors
@@ -105,8 +105,8 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { texture_id: TextureId };
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.with_texture(self.texture_id, |s: &mut PixState| -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    ///     s.with_texture(self.texture_id, |s: &mut PixState| -> Result<()> {
     ///         s.background(Color::random());
     ///         s.text("Rendered texture!")?;
     ///         Ok(())
@@ -119,7 +119,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn texture<R1, R2>(&mut self, texture_id: TextureId, src: R1, dst: R2) -> PixResult<()>
+    pub fn texture<R1, R2>(&mut self, texture_id: TextureId, src: R1, dst: R2) -> Result<()>
     where
         R1: Into<Option<Rect<i32>>>,
         R2: Into<Option<Rect<i32>>>,
@@ -139,7 +139,7 @@ impl PixState {
     ///
     /// It's possible to render one texture onto another texture, but currently they both have to
     /// have been created in the same window. Attempting to render to a texture created with
-    /// another window will result in a [`PixError::InvalidTexture`]. This restriction may be
+    /// another window will result in a [`Error::InvalidTexture`]. This restriction may be
     /// lifted in the future.
     ///
     /// # Errors
@@ -156,8 +156,8 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { texture_id: TextureId };
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-    ///     s.with_texture(self.texture_id, |s: &mut PixState| -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    ///     s.with_texture(self.texture_id, |s: &mut PixState| -> Result<()> {
     ///         s.background(Color::random());
     ///         s.text("Rendered texture!")?;
     ///         Ok(())
@@ -188,7 +188,7 @@ impl PixState {
         mut angle: f64,
         center: C,
         flipped: F,
-    ) -> PixResult<()>
+    ) -> Result<()>
     where
         R1: Into<Option<Rect<i32>>>,
         R2: Into<Option<Rect<i32>>>,
@@ -237,8 +237,8 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { texture_id: TextureId };
     /// # impl AppState for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
-    /// fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
+    /// fn on_start(&mut self, s: &mut PixState) -> Result<()> {
     ///     self.texture_id = s.create_texture(
     ///         s.width()? / 2,
     ///         s.height()? / 2,
@@ -248,7 +248,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn create_texture<F>(&mut self, width: u32, height: u32, format: F) -> PixResult<TextureId>
+    pub fn create_texture<F>(&mut self, width: u32, height: u32, format: F) -> Result<TextureId>
     where
         F: Into<Option<PixelFormat>>,
     {
@@ -277,7 +277,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     // A more polished implementation would manage state in `self` to avoid re-creating and
     ///     // destroying textures every frame
     ///     let texture_id = s.create_texture(500, 600, PixelFormat::Rgb)?;
@@ -287,7 +287,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn delete_texture(&mut self, texture_id: TextureId) -> PixResult<()> {
+    pub fn delete_texture(&mut self, texture_id: TextureId) -> Result<()> {
         self.renderer.delete_texture(texture_id)
     }
 
@@ -305,8 +305,8 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { texture_id: TextureId };
     /// # impl AppState for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
-    /// fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
+    /// fn on_start(&mut self, s: &mut PixState) -> Result<()> {
     ///     self.texture_id = s.create_texture(500, 600, None)?;
     ///     let image = Image::from_file("./some_image.png")?;
     ///     s.update_texture(self.texture_id, None, image.as_bytes(), image.pitch())?;
@@ -320,7 +320,7 @@ impl PixState {
         rect: R,
         pixels: P,
         pitch: usize,
-    ) -> PixResult<()>
+    ) -> Result<()>
     where
         R: Into<Option<Rect<i32>>>,
         P: AsRef<[u8]>,
@@ -344,10 +344,10 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { texture_id: TextureId };
     /// # impl AppState for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
-    /// fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
+    /// fn on_start(&mut self, s: &mut PixState) -> Result<()> {
     ///     self.texture_id = s.create_texture(500, 600, None)?;
-    ///     s.with_texture(self.texture_id, |s: &mut PixState| -> PixResult<()> {
+    ///     s.with_texture(self.texture_id, |s: &mut PixState| -> Result<()> {
     ///         s.background(Color::random());
     ///         s.text("Rendered texture!")?;
     ///         Ok(())
@@ -356,9 +356,9 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn with_texture<F>(&mut self, id: TextureId, f: F) -> PixResult<()>
+    pub fn with_texture<F>(&mut self, id: TextureId, f: F) -> Result<()>
     where
-        F: FnOnce(&mut PixState) -> PixResult<()>,
+        F: FnOnce(&mut PixState) -> Result<()>,
     {
         self.push();
         self.ui.push_cursor();
@@ -393,11 +393,11 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
     ///     if let Key::S = event.key {
     ///         let texture_id = s.create_texture(200, 200, None)?;
-    ///         s.with_texture(texture_id, |s: &mut PixState| -> PixResult<()> {
+    ///         s.with_texture(texture_id, |s: &mut PixState| -> Result<()> {
     ///             s.background(Color::random());
     ///             s.text("Rendered texture!")?;
     ///             Ok(())
@@ -408,13 +408,13 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn save_texture<P, R>(&mut self, id: TextureId, src: R, path: P) -> PixResult<()>
+    pub fn save_texture<P, R>(&mut self, id: TextureId, src: R, path: P) -> Result<()>
     where
         P: AsRef<Path>,
         R: Into<Option<Rect<i32>>>,
     {
         info!("Saving TextureId: {} to {}", id, path.as_ref().display());
-        self.with_texture(id, |s: &mut PixState| -> PixResult<()> {
+        self.with_texture(id, |s: &mut PixState| -> Result<()> {
             s.save_canvas(src, path)
         })
     }
@@ -433,7 +433,7 @@ pub(crate) trait TextureRenderer {
         width: u32,
         height: u32,
         format: Option<PixelFormat>,
-    ) -> PixResult<TextureId>;
+    ) -> Result<TextureId>;
 
     /// Delete a `Texture`.
     ///
@@ -442,7 +442,7 @@ pub(crate) trait TextureRenderer {
     /// If the current window target is closed or invalid, or the texture has already been dropped,
     /// then an error is returned.
     ///
-    fn delete_texture(&mut self, texture_id: TextureId) -> PixResult<()>;
+    fn delete_texture(&mut self, texture_id: TextureId) -> Result<()>;
 
     /// Update texture with pixel data.
     ///
@@ -456,7 +456,7 @@ pub(crate) trait TextureRenderer {
         rect: Option<Rect<i32>>,
         pixels: P,
         pitch: usize,
-    ) -> PixResult<()>;
+    ) -> Result<()>;
 
     /// Draw texture to the curent canvas.
     ///
@@ -478,7 +478,7 @@ pub(crate) trait TextureRenderer {
         center: Option<Point<i32>>,
         flipped: Option<Flipped>,
         tint: Option<Color>,
-    ) -> PixResult<()>;
+    ) -> Result<()>;
 
     /// Returns texture used as the target for drawing operations, if set.
     fn texture_target(&self) -> Option<TextureId>;

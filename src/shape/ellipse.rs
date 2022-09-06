@@ -441,7 +441,7 @@ impl<T: Num> Contains<Ellipse<T>> for Ellipse<T> {
 
 impl Draw for Ellipse<i32> {
     /// Draw `Ellipse` to the current [`PixState`] canvas.
-    fn draw(&self, s: &mut PixState) -> PixResult<()> {
+    fn draw(&self, s: &mut PixState) -> Result<()> {
         s.ellipse(*self)
     }
 }

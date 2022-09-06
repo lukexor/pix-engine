@@ -87,7 +87,7 @@ impl RayScene {
     }
 
     #[allow(clippy::many_single_char_names)]
-    fn convert_edges_to_poly_map(&mut self) -> PixResult<()> {
+    fn convert_edges_to_poly_map(&mut self) -> Result<()> {
         let rect = Rect::new(0, 0, self.xcells as i32, self.ycells as i32);
         let pitch = self.xcells as i32;
         let block_size = BLOCK_SIZE as i32;
@@ -234,7 +234,7 @@ impl RayScene {
         intersect
     }
 
-    fn draw_visibility_polygons(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn draw_visibility_polygons(&mut self, s: &mut PixState) -> Result<()> {
         let mouse = s.mouse_pos();
         if !rect![0, 0, s.width()? as i32, s.height()? as i32].contains(mouse) {
             return Ok(());
@@ -264,7 +264,7 @@ impl RayScene {
 }
 
 impl AppState for RayScene {
-    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn on_start(&mut self, s: &mut PixState) -> Result<()> {
         s.background(Color::BLACK);
         s.scale(SCALE as f32, SCALE as f32)?;
         s.cursor(None)?;
@@ -294,7 +294,7 @@ impl AppState for RayScene {
         Ok(())
     }
 
-    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
         s.clear()?;
         let mouse = s.mouse_pos();
 
@@ -341,12 +341,7 @@ impl AppState for RayScene {
         Ok(())
     }
 
-    fn on_mouse_pressed(
-        &mut self,
-        s: &mut PixState,
-        btn: Mouse,
-        pos: Point<i32>,
-    ) -> PixResult<bool> {
+    fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse, pos: Point<i32>) -> Result<bool> {
         if btn == Mouse::Left && rect![0, 0, s.width()? as i32, s.height()? as i32].contains(pos) {
             let i = self.get_cell_index(pos.x() as u32, pos.y() as u32);
             self.cells[i].exists = !self.cells[i].exists;
@@ -361,7 +356,7 @@ impl AppState for RayScene {
         s: &mut PixState,
         pos: Point<i32>,
         rel_pos: Point<i32>,
-    ) -> PixResult<bool> {
+    ) -> Result<bool> {
         if s.mouse_buttons().contains(&Mouse::Left) {
             let within_window = rect![0, 0, s.width()? as i32, s.height()? as i32].contains(pos);
             if within_window && (rel_pos.x() > 0 || rel_pos.y() > 0) {
@@ -374,7 +369,7 @@ impl AppState for RayScene {
     }
 }
 
-fn main() -> PixResult<()> {
+fn main() -> Result<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("2D Raycasting")

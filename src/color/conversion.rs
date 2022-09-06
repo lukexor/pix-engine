@@ -17,7 +17,7 @@
 //! # use pix_engine::prelude::*;
 //! use std::str::FromStr;
 //!
-//! # fn main() -> PixResult<()> {
+//! # fn main() -> Result<()> {
 //! let c = Color::from_str("#F0F5BF")?;
 //! assert_eq!(c.channels(), [240, 245, 191, 255]);
 //!
@@ -56,7 +56,7 @@ impl Color {
     ///
     /// ```
     /// # use pix_engine::prelude::*;
-    /// # fn main() -> PixResult<()> {
+    /// # fn main() -> Result<()> {
     /// let vals: Vec<f64> = vec![128.0, 64.0, 0.0];
     /// let c = Color::from_slice(ColorMode::Rgb, &vals)?; // RGB Vec
     /// assert_eq!(c.channels(), [128, 64, 0, 255]);
@@ -67,7 +67,7 @@ impl Color {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn from_slice<T, S>(mode: ColorMode, slice: S) -> PixResult<Self>
+    pub fn from_slice<T, S>(mode: ColorMode, slice: S) -> Result<Self>
     where
         T: Copy + Into<f64>,
         S: AsRef<[T]>,
@@ -78,7 +78,7 @@ impl Color {
             [gray, a] => Self::with_mode_alpha(mode, gray, gray, gray, a),
             [v1, v2, v3] => Self::with_mode(mode, v1, v2, v3),
             [v1, v2, v3, a] => Self::with_mode_alpha(mode, v1, v2, v3, a),
-            _ => return Err(PixError::InvalidColorSlice.into()),
+            _ => return Err(Error::InvalidColorSlice.into()),
         };
         Ok(result)
     }
@@ -193,7 +193,7 @@ impl Color {
 }
 
 impl FromStr for Color {
-    type Err = PixError;
+    type Err = Error;
 
     /// Converts to [Color] from a hexadecimal string.
     ///
@@ -203,7 +203,7 @@ impl FromStr for Color {
     /// # use pix_engine::prelude::*;
     /// use std::str::FromStr;
     ///
-    /// # fn main() -> PixResult<()> {
+    /// # fn main() -> Result<()> {
     /// let c = Color::from_str("#F0F")?; // 3-digit Hex string
     /// assert_eq!(c.channels(), [255, 0, 255, 255]);
     ///
@@ -220,12 +220,12 @@ impl FromStr for Color {
     /// ```
     fn from_str(string: &str) -> result::Result<Self, Self::Err> {
         if !string.starts_with('#') {
-            return Err(PixError::ParseColorError);
+            return Err(Error::ParseColorError);
         }
 
         let mut channels: [u8; 4] = [0, 0, 0, 255];
         let parse_hex =
-            |hex: &str| u8::from_str_radix(hex, 16).map_err(|_| PixError::ParseColorError);
+            |hex: &str| u8::from_str_radix(hex, 16).map_err(|_| Error::ParseColorError);
 
         let string = string.trim().to_lowercase();
         match string.len() - 1 {
@@ -240,7 +240,7 @@ impl FromStr for Color {
                     channels[i / 2] = parse_hex(&string[i + 1..i + 3])?;
                 }
             }
-            _ => return Err(PixError::ParseColorError),
+            _ => return Err(Error::ParseColorError),
         }
 
         let [r, g, b, a] = channels;
@@ -249,7 +249,7 @@ impl FromStr for Color {
 }
 
 impl TryFrom<&str> for Color {
-    type Error = PixError;
+    type Error = Error;
     /// Try to create a `Color` from a hexadecimal string.
     fn try_from(s: &str) -> result::Result<Self, Self::Error> {
         Self::from_str(s)

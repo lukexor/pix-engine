@@ -3,7 +3,7 @@
 //! This is the core module of the `pix-engine` crate and is responsible for building and running
 //! any application using it.
 //!
-//! [`Builder`] allows you to customize various engine features and, once built, can
+//! [`PixEngineBuilder`] allows you to customize various engine features and, once built, can
 //! [run][`PixEngine::run`] your application which must implement [`AppState::on_update`].
 //!
 //!
@@ -16,13 +16,13 @@
 //! struct MyApp;
 //!
 //! impl AppState for MyApp {
-//!     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+//!     fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!         // Update every frame
 //!         Ok(())
 //!     }
 //! }
 //!
-//! fn main() -> PixResult<()> {
+//! fn main() -> Result<()> {
 //!     let mut engine = PixEngine::builder()
 //!       .with_dimensions(800, 600)
 //!       .with_title("MyApp")
@@ -47,9 +47,9 @@ use std::{
 /// # use pix_engine::prelude::*;
 /// # struct MyApp;
 /// # impl AppState for MyApp {
-/// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+/// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
 /// # }
-/// fn main() -> PixResult<()> {
+/// fn main() -> Result<()> {
 ///     let mut engine = PixEngine::builder()
 ///         .with_title("My App")
 ///         .position(10, 10)
@@ -63,13 +63,13 @@ use std::{
 /// ```
 #[must_use]
 #[derive(Debug)]
-pub struct Builder {
+pub struct PixEngineBuilder {
     settings: RendererSettings,
     theme: Theme,
     joystick_deadzone: i32,
 }
 
-impl Default for Builder {
+impl Default for PixEngineBuilder {
     fn default() -> Self {
         Self {
             settings: RendererSettings::default(),
@@ -79,14 +79,14 @@ impl Default for Builder {
     }
 }
 
-impl Builder {
-    /// Constructs a `Builder`.
+impl PixEngineBuilder {
+    /// Constructs a `PixEngineBuilder`.
     pub fn new() -> Self {
         Self::default()
     }
 
     /// Set a window title.
-    pub fn with_title<S>(&mut self, title: S) -> &mut Self
+    pub fn with_title<S>(mut self, title: S) -> Self
     where
         S: Into<String>,
     {
@@ -95,25 +95,25 @@ impl Builder {
     }
 
     /// Set font for text rendering.
-    pub fn with_font(&mut self, font: Font) -> &mut Self {
+    pub fn with_font(mut self, font: Font) -> Self {
         self.theme.fonts.body = font;
         self
     }
 
     /// Set font size for text rendering.
-    pub fn with_font_size(&mut self, size: u32) -> &mut Self {
+    pub fn with_font_size(mut self, size: u32) -> Self {
         self.theme.font_size = size;
         self
     }
 
     /// Set theme for UI rendering.
-    pub fn with_theme(&mut self, theme: Theme) -> &mut Self {
+    pub fn with_theme(mut self, theme: Theme) -> Self {
         self.theme = theme;
         self
     }
 
     /// Set a window icon.
-    pub fn icon<I>(&mut self, icon: I) -> &mut Self
+    pub fn icon<I>(mut self, icon: I) -> Self
     where
         I: Into<Icon>,
     {
@@ -122,21 +122,21 @@ impl Builder {
     }
 
     /// Position the window at the given `(x, y)` coordinates of the display.
-    pub fn position(&mut self, x: i32, y: i32) -> &mut Self {
+    pub fn position(mut self, x: i32, y: i32) -> Self {
         self.settings.x = Position::Positioned(x);
         self.settings.y = Position::Positioned(y);
         self
     }
 
     /// Position the window in the center of the display. This is the default.
-    pub fn position_centered(&mut self) -> &mut Self {
+    pub fn position_centered(mut self) -> Self {
         self.settings.x = Position::Centered;
         self.settings.y = Position::Centered;
         self
     }
 
     /// Set window dimensions.
-    pub fn with_dimensions(&mut self, width: u32, height: u32) -> &mut Self {
+    pub fn with_dimensions(mut self, width: u32, height: u32) -> Self {
         self.settings.width = width;
         self.settings.height = height;
         self
@@ -144,33 +144,33 @@ impl Builder {
 
     /// Set the rendering scale of the current canvas. Drawing coordinates are scaled by x/y
     /// factors before being drawn to the canvas.
-    pub fn scale(&mut self, x: f32, y: f32) -> &mut Self {
+    pub fn scale(mut self, x: f32, y: f32) -> Self {
         self.settings.scale_x = x;
         self.settings.scale_y = y;
         self
     }
 
     /// Set audio sample rate in Hz (samples per second). Defaults to device fallback sample rate.
-    pub fn audio_sample_rate(&mut self, sample_rate: i32) -> &mut Self {
+    pub fn audio_sample_rate(mut self, sample_rate: i32) -> Self {
         self.settings.audio_sample_rate = Some(sample_rate);
         self
     }
 
     /// Set number of audio channels (1 for Mono, 2 for Stereo, etc). Defaults to device fallback
     /// number of channels.
-    pub fn audio_channels(&mut self, channels: u8) -> &mut Self {
+    pub fn audio_channels(mut self, channels: u8) -> Self {
         self.settings.audio_channels = Some(channels);
         self
     }
 
     /// Set audio buffer size in samples. Defaults to device fallback sample size.
-    pub fn audio_buffer_size(&mut self, buffer_size: u16) -> &mut Self {
+    pub fn audio_buffer_size(mut self, buffer_size: u16) -> Self {
         self.settings.audio_buffer_size = Some(buffer_size);
         self
     }
 
     /// Start window in fullscreen mode.
-    pub fn fullscreen(&mut self) -> &mut Self {
+    pub fn fullscreen(mut self) -> Self {
         self.settings.fullscreen = true;
         self
     }
@@ -178,69 +178,69 @@ impl Builder {
     /// Set the window to synchronize frame rate to the screens refresh rate ([`VSync`]).
     ///
     /// [`VSync`]: https://en.wikipedia.org/wiki/Screen_tearing#Vertical_synchronization
-    pub fn vsync_enabled(&mut self) -> &mut Self {
+    pub fn vsync_enabled(mut self) -> Self {
         self.settings.vsync = true;
         self
     }
 
     /// Allow window resizing.
-    pub fn resizable(&mut self) -> &mut Self {
+    pub fn resizable(mut self) -> Self {
         self.settings.resizable = true;
         self
     }
 
     /// Removes the window decoration.
-    pub fn borderless(&mut self) -> &mut Self {
+    pub fn borderless(mut self) -> Self {
         self.settings.borderless = true;
         self
     }
 
     /// Alter the joystick axis deadzone.
-    pub fn with_deadzone(&mut self, value: i32) -> &mut Self {
+    pub fn with_deadzone(mut self, value: i32) -> Self {
         self.joystick_deadzone = value;
         self
     }
 
     /// Enables high-DPI on displays that support it.
-    pub fn allow_highdpi(&mut self) -> &mut Self {
+    pub fn allow_highdpi(mut self) -> Self {
         self.settings.allow_highdpi = true;
         self
     }
 
     /// Starts engine with window hidden.
-    pub fn hidden(&mut self) -> &mut Self {
+    pub fn hidden(mut self) -> Self {
         self.settings.hidden = true;
         self
     }
 
     /// Enable average frame rate (FPS) in title.
-    pub fn with_frame_rate(&mut self) -> &mut Self {
+    pub fn with_frame_rate(mut self) -> Self {
         self.settings.show_frame_rate = true;
         self
     }
 
     /// Set a target frame rate to render at, controls how often
     /// [`AppState::on_update`] is called.
-    pub fn target_frame_rate(&mut self, rate: usize) -> &mut Self {
+    pub fn target_frame_rate(mut self, rate: usize) -> Self {
         self.settings.target_frame_rate = Some(rate);
         self
     }
 
     /// Set a custom texture cache size other than the default of `20`.
     /// Affects font family and image rendering caching operations.
-    pub fn with_texture_cache(&mut self, size: usize) -> &mut Self {
+    pub fn with_texture_cache(mut self, size: usize) -> Self {
         self.settings.texture_cache_size = size;
         self
     }
 
     /// Set a custom text cache size other than the default of `500`.
     /// Affects text rendering caching operations.
-    pub fn with_text_cache(&mut self, size: usize) -> &mut Self {
+    pub fn with_text_cache(mut self, size: usize) -> Self {
         self.settings.text_cache_size = size;
         self
     }
 
-    /// Convert [Builder] to a [`PixEngine`] instance.
+    /// Convert [PixEngineBuilder] to a [`PixEngine`] instance.
     ///
     /// # Errors
     ///
@@ -249,7 +249,7 @@ impl Builder {
     /// Possible errors include the title containing a `nul` character, the position or dimensions
     /// being invalid values or overlowing and an internal renderer error such as running out of
     /// memory or a software driver issue.
-    pub fn build(&self) -> PixResult<PixEngine> {
+    pub fn build(self) -> Result<PixEngine> {
         Ok(PixEngine {
             state: PixState::new(self.settings.clone(), self.theme.clone())?,
             joystick_deadzone: self.joystick_deadzone,
@@ -266,11 +266,11 @@ pub struct PixEngine {
 }
 
 impl PixEngine {
-    /// Constructs a default [Builder] which can build a `PixEngine` instance.
+    /// Constructs a default [PixEngineBuilder] which can build a `PixEngine` instance.
     ///
-    /// See [Builder] for examples.
-    pub fn builder() -> Builder {
-        Builder::default()
+    /// See [PixEngineBuilder] for examples.
+    pub fn builder() -> PixEngineBuilder {
+        PixEngineBuilder::default()
     }
 
     /// Starts the `PixEngine` application and begins executing the frame loop on a given
@@ -289,15 +289,15 @@ impl PixEngine {
     /// # struct MyApp;
     /// # impl MyApp { fn new() -> Self { Self } }
     /// # impl AppState for MyApp {
-    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
     /// # }
-    /// fn main() -> PixResult<()> {
+    /// fn main() -> Result<()> {
     ///     let mut engine = PixEngine::builder().build()?;
     ///     let mut app = MyApp::new(); // MyApp implements `AppState`
     ///     engine.run(&mut app)
     /// }
     /// ```
-    pub fn run<A>(&mut self, app: &mut A) -> PixResult<()>
+    pub fn run<A>(&mut self, app: &mut A) -> Result<()>
     where
         A: AppState,
     {
@@ -369,7 +369,7 @@ impl PixEngine {
 impl PixEngine {
     /// Handle user and system events.
     #[inline]
-    fn handle_events<A>(&mut self, app: &mut A) -> PixResult<()>
+    fn handle_events<A>(&mut self, app: &mut A) -> Result<()>
     where
         A: AppState,
     {

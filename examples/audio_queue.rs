@@ -86,14 +86,14 @@ impl QueueDemo {
 }
 
 impl AppState for QueueDemo {
-    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn on_start(&mut self, s: &mut PixState) -> Result<()> {
         self.sample_rate = s.audio_sample_rate() as f32;
         self.sample_count = 4 * self.sample_rate as usize;
         s.resume_audio();
         Ok(())
     }
 
-    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
         s.clear()?;
 
         s.heading("Audio Demo")?;
@@ -171,7 +171,7 @@ impl AppState for QueueDemo {
     }
 }
 
-fn main() -> PixResult<()> {
+fn main() -> Result<()> {
     let raw_file = match std::env::args().nth(1) {
         Some(s) if !s.is_empty() => PathBuf::from(s),
         _ => PathBuf::from("./audio/melancholy.raw"),

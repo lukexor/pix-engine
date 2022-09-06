@@ -11,7 +11,7 @@ impl WindowDemo {
 }
 
 impl AppState for WindowDemo {
-    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
         s.clear()?;
 
         s.fill(Color::WHITE);
@@ -51,7 +51,7 @@ impl AppState for WindowDemo {
         _s: &mut PixState,
         window_id: WindowId,
         evt: WindowEvent,
-    ) -> PixResult<()> {
+    ) -> Result<()> {
         if let WindowEvent::Close = evt {
             self.windows.retain(|&(id, _)| id != window_id);
         }
@@ -59,7 +59,7 @@ impl AppState for WindowDemo {
     }
 }
 
-fn main() -> PixResult<()> {
+fn main() -> Result<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(400, 400)
         .with_title("Window 1")

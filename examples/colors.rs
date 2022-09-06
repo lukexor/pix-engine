@@ -15,7 +15,7 @@ impl Colors {
     }
 
     #[allow(clippy::many_single_char_names)]
-    fn draw_gradient(&mut self, state: &mut PixState) -> PixResult<()> {
+    fn draw_gradient(&mut self, state: &mut PixState) -> Result<()> {
         let w = WIDTH as f64;
         let h = HEIGHT as f64;
         let size = SIZE as f64;
@@ -42,7 +42,7 @@ impl Colors {
 }
 
 impl AppState for Colors {
-    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
         if self.auto && s.frame_count() % 4 == 0 {
             self.modify_hue(1.0, true);
         }
@@ -57,7 +57,7 @@ impl AppState for Colors {
         Ok(())
     }
 
-    fn on_key_pressed(&mut self, _s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    fn on_key_pressed(&mut self, _s: &mut PixState, event: KeyEvent) -> Result<bool> {
         match event.key {
             Key::Escape => self.auto = true,
             Key::Up => self.modify_hue(2.0, false),
@@ -70,7 +70,7 @@ impl AppState for Colors {
     }
 }
 
-pub fn main() -> PixResult<()> {
+pub fn main() -> Result<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("Colors")

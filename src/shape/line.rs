@@ -252,7 +252,7 @@ impl<T: Float> Intersects<Line<T>> for Line<T> {
 
 impl Draw for Line<i32> {
     /// Draw `Line` to the current [`PixState`] canvas.
-    fn draw(&self, s: &mut PixState) -> PixResult<()> {
+    fn draw(&self, s: &mut PixState) -> Result<()> {
         s.line(*self)
     }
 }

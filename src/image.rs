@@ -48,7 +48,7 @@ pub struct TryFromColorTypeError(pub(crate) ());
 #[doc(hidden)]
 impl TryFrom<png::ColorType> for PixelFormat {
     type Error = TryFromColorTypeError;
-    fn try_from(color_type: png::ColorType) -> Result<Self, Self::Error> {
+    fn try_from(color_type: png::ColorType) -> std::result::Result<Self, Self::Error> {
         match color_type {
             png::ColorType::Rgb => Ok(Self::Rgb),
             png::ColorType::Rgba => Ok(Self::Rgba),
@@ -125,10 +125,10 @@ impl Image {
         height: u32,
         bytes: B,
         format: PixelFormat,
-    ) -> PixResult<Self> {
+    ) -> Result<Self> {
         let bytes = bytes.as_ref();
         if bytes.len() != (format.channels() * width as usize * height as usize) {
-            return Err(PixError::InvalidImage {
+            return Err(Error::InvalidImage {
                 width,
                 height,
                 size: bytes.len(),
@@ -151,10 +151,10 @@ impl Image {
         height: u32,
         pixels: P,
         format: PixelFormat,
-    ) -> PixResult<Self> {
+    ) -> Result<Self> {
         let pixels = pixels.as_ref();
         if pixels.len() != (width as usize * height as usize) {
-            return Err(PixError::InvalidImage {
+            return Err(Error::InvalidImage {
                 width,
                 height,
                 size: pixels.len() * format.channels(),
@@ -189,11 +189,11 @@ impl Image {
     ///
     /// If the file format is not supported or extension is not `.png`, then an error is returned.
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn from_file<P: AsRef<Path>>(path: P) -> PixResult<Self> {
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
         let ext = path.extension();
         if ext != Some(OsStr::new("png")) {
-            return Err(PixError::UnsupportedFileType(ext.map(OsStr::to_os_string)).into());
+            return Err(Error::UnsupportedFileType(ext.map(OsStr::to_os_string)).into());
         }
         Self::from_read(File::open(&path)?)
     }
@@ -205,7 +205,7 @@ impl Image {
     /// If the file format is not supported or there is an [`io::Error`] reading the file then an
     /// error is returned.
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn from_read<R: io::Read>(read: R) -> PixResult<Self> {
+    pub fn from_read<R: io::Read>(read: R) -> Result<Self> {
         let png_file = BufReader::new(read);
         let png = Decoder::new(png_file);
 
@@ -222,7 +222,7 @@ impl Image {
         let bit_depth = info.bit_depth;
         let color_type = info.color_type;
         if bit_depth != BitDepth::Eight || !matches!(color_type, ColorType::Rgb | ColorType::Rgba) {
-            return Err(PixError::UnsupportedImageFormat {
+            return Err(Error::UnsupportedImageFormat {
                 bit_depth,
                 color_type,
             }
@@ -233,7 +233,7 @@ impl Image {
         let format = info
             .color_type
             .try_into()
-            .map_err(|_| PixError::UnsupportedImageFormat {
+            .map_err(|_| Error::UnsupportedImageFormat {
                 bit_depth,
                 color_type,
             })?;
@@ -404,8 +404,8 @@ impl Image {
     /// # use pix_engine::prelude::*;
     /// # struct App { image: Image };
     /// # impl AppState for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
     ///     if let Key::S = event.key {
     ///         self.image.save("test_image.png")?;
     ///     }
@@ -414,7 +414,7 @@ impl Image {
     /// # }
     /// ```
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn save<P>(&self, path: P) -> PixResult<()>
+    pub fn save<P>(&self, path: P) -> Result<()>
     where
         P: AsRef<Path>,
     {
@@ -453,14 +453,14 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     let image = Image::from_file("./some_image.png")?;
     ///     s.image(&image, [10, 10])?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    pub fn image<P>(&mut self, img: &Image, position: P) -> PixResult<()>
+    pub fn image<P>(&mut self, img: &Image, position: P) -> Result<()>
     where
         P: Into<Point<i32>>,
     {
@@ -484,7 +484,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.angle_mode(AngleMode::Degrees);
     ///     let image = Image::from_file("./some_image.png")?;
     ///     let src = None; // Draw entire image instead of a sub-image
@@ -504,7 +504,7 @@ impl PixState {
         angle: A,
         center: C,
         flipped: F,
-    ) -> PixResult<()>
+    ) -> Result<()>
     where
         R1: Into<Option<Rect<i32>>>,
         R2: Into<Option<Rect<i32>>>,

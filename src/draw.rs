@@ -13,7 +13,7 @@
 //! # use pix_engine::prelude::*;
 //! # struct App;
 //! # impl AppState for App {
-//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+//! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!     s.background(Color::ALICE_BLUE);
 //!     s.clear();
 //!     let rect = rect![0, 0, 100, 100];
@@ -45,7 +45,7 @@ pub trait Draw {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     let rect = rect![0, 0, 100, 100];
     ///     // The following two lines are equivalent.
     ///     s.rect(rect)?;
@@ -54,7 +54,7 @@ pub trait Draw {
     /// }
     /// # }
     /// ```
-    fn draw(&self, s: &mut PixState) -> PixResult<()>;
+    fn draw(&self, s: &mut PixState) -> Result<()>;
 }
 
 impl PixState {
@@ -70,7 +70,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
     ///     s.background(Color::CADET_BLUE);
     ///     s.clear();
     ///     Ok(())
@@ -78,7 +78,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn clear(&mut self) -> PixResult<()> {
+    pub fn clear(&mut self) -> Result<()> {
         self.renderer.set_draw_color(self.settings.background)?;
         self.renderer.clear()
     }
@@ -102,8 +102,8 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl AppState for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
     ///     if let Key::S = event.key {
     ///         s.save_canvas(None, "test_image.png")?;
     ///     }
@@ -111,7 +111,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn save_canvas<P, R>(&mut self, src: R, path: P) -> PixResult<()>
+    pub fn save_canvas<P, R>(&mut self, src: R, path: P) -> Result<()>
     where
         P: AsRef<Path>,
         R: Into<Option<Rect<i32>>>,
@@ -124,7 +124,7 @@ impl PixState {
             self.update_texture(render_texture, None, bytes, self.width()? as usize * 4)?;
             // Render the `src` rect from texture onto another texture, and save it
             let src_texture = self.create_texture(src.width() as u32, src.height() as u32, None)?;
-            self.with_texture(src_texture, |s: &mut PixState| -> PixResult<()> {
+            self.with_texture(src_texture, |s: &mut PixState| -> Result<()> {
                 s.texture(render_texture, src, None)?;
                 s.save_canvas(None, path)
             })?;

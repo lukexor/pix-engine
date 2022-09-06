@@ -59,7 +59,7 @@ impl CaptureReplayDemo {
         Self { recording: false }
     }
 
-    fn record(&self, desired_spec: &AudioSpecDesired, s: &mut PixState) -> PixResult<Vec<f32>> {
+    fn record(&self, desired_spec: &AudioSpecDesired, s: &mut PixState) -> Result<Vec<f32>> {
         log::info!("Recording {:} seconds...", RECORDING_LENGTH_SECONDS);
 
         let (tx, rx) = mpsc::channel();
@@ -97,7 +97,7 @@ impl CaptureReplayDemo {
 }
 
 impl AppState for CaptureReplayDemo {
-    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
         s.clear()?;
 
         if self.recording {
@@ -147,7 +147,7 @@ impl AppState for CaptureReplayDemo {
         Ok(())
     }
 
-    fn on_key_pressed(&mut self, _s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
+    fn on_key_pressed(&mut self, _s: &mut PixState, event: KeyEvent) -> Result<bool> {
         if let Key::Space = event.key {
             self.recording = true;
             return Ok(true);
@@ -156,7 +156,7 @@ impl AppState for CaptureReplayDemo {
     }
 }
 
-fn main() -> PixResult<()> {
+fn main() -> Result<()> {
     if env::var("RUST_LOG").is_err() {
         env::set_var("RUST_LOG", "info");
     }

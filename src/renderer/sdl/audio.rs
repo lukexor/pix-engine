@@ -100,7 +100,7 @@ impl<CB: AudioCallback> From<SdlAudioDevice<UserCallback<CB>>> for AudioDevice<C
 impl AudioDriver for Renderer {
     /// Add audio samples to the audio buffer queue.
     #[inline]
-    fn enqueue_audio(&mut self, samples: &[f32]) -> PixResult<()> {
+    fn enqueue_audio(&mut self, samples: &[f32]) -> Result<()> {
         let size = self.audio_device.size();
         if size <= MAX_QUEUE_SIZE {
             if size >= WARN_QUEUE_SIZE {
@@ -108,7 +108,7 @@ impl AudioDriver for Renderer {
             }
             self.audio_device
                 .queue_audio(samples)
-                .map_err(PixError::Renderer)?;
+                .map_err(Error::Renderer)?;
             Ok(())
         } else {
             Err(anyhow!("Reached max audio queue size: {}. Did you forget to call `PixState::resume_audio`? Audio Device Status: {:?}", MAX_QUEUE_SIZE, self.audio_device.status()))
@@ -167,7 +167,7 @@ impl AudioDriver for Renderer {
         device: D,
         desired_spec: &AudioSpecDesired,
         get_callback: F,
-    ) -> PixResult<AudioDevice<CB>>
+    ) -> Result<AudioDevice<CB>>
     where
         CB: AudioCallback,
         F: FnOnce(AudioSpec) -> CB,
@@ -176,11 +176,11 @@ impl AudioDriver for Renderer {
         Ok(self
             .context
             .audio()
-            .map_err(PixError::Renderer)?
+            .map_err(Error::Renderer)?
             .open_playback(device, &desired_spec.into(), |spec| {
                 UserCallback::new(get_callback(spec.into()))
             })
-            .map_err(PixError::Renderer)?
+            .map_err(Error::Renderer)?
             .into())
     }
 
@@ -192,7 +192,7 @@ impl AudioDriver for Renderer {
         device: D,
         desired_spec: &AudioSpecDesired,
         get_callback: F,
-    ) -> PixResult<AudioDevice<CB>>
+    ) -> Result<AudioDevice<CB>>
     where
         CB: AudioCallback,
         F: FnOnce(AudioSpec) -> CB,
@@ -201,11 +201,11 @@ impl AudioDriver for Renderer {
         Ok(self
             .context
             .audio()
-            .map_err(PixError::Renderer)?
+            .map_err(Error::Renderer)?
             .open_capture(device, &desired_spec.into(), |spec| {
                 UserCallback::new(get_callback(spec.into()))
             })
-            .map_err(PixError::Renderer)?
+            .map_err(Error::Renderer)?
             .into())
     }
 }

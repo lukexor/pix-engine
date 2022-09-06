@@ -171,7 +171,7 @@ impl ColorConsts {
 }
 
 impl AppState for ColorConsts {
-    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
         s.clear()?;
         s.stroke(None);
         for (i, &color) in COLORS.iter().enumerate() {
@@ -188,7 +188,7 @@ impl AppState for ColorConsts {
     }
 }
 
-fn main() -> PixResult<()> {
+fn main() -> Result<()> {
     let mut engine = PixEngine::builder()
         .with_dimensions(WIDTH, HEIGHT)
         .with_title("SVG Color Constants")

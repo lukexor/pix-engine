@@ -265,7 +265,7 @@ impl<T: Num> Contains<Point<T>> for Tri<T> {
 
 impl Draw for Tri<i32> {
     /// Draw `Triangle` to the current [`PixState`] canvas.
-    fn draw(&self, s: &mut PixState) -> PixResult<()> {
+    fn draw(&self, s: &mut PixState) -> Result<()> {
         s.triangle(*self)
     }
 }

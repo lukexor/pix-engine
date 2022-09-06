@@ -47,43 +47,43 @@ impl TextCacheKey {
 impl Renderer {
     /// Returns the current window canvas, holding the canvas and texture creators for a window.
     #[inline]
-    pub(super) fn window_canvas(&self) -> PixResult<&WindowCanvas> {
+    pub(super) fn window_canvas(&self) -> Result<&WindowCanvas> {
         Ok(self
             .windows
             .get(&self.window_target)
-            .ok_or(PixError::InvalidWindow(self.window_target))?)
+            .ok_or(Error::InvalidWindow(self.window_target))?)
     }
 
     /// Returns the current window canvas, holding the canvas and texture creators for a window.
     #[inline]
-    pub(super) fn window_canvas_mut(&mut self) -> PixResult<&mut WindowCanvas> {
+    pub(super) fn window_canvas_mut(&mut self) -> Result<&mut WindowCanvas> {
         Ok(self
             .windows
             .get_mut(&self.window_target)
-            .ok_or(PixError::InvalidWindow(self.window_target))?)
+            .ok_or(Error::InvalidWindow(self.window_target))?)
     }
 
     /// Returns the current SDL canvas.
     #[inline]
-    pub(super) fn canvas(&self) -> PixResult<&Canvas<Window>> {
+    pub(super) fn canvas(&self) -> Result<&Canvas<Window>> {
         Ok(&self.window_canvas()?.canvas)
     }
 
     /// Returns the current SDL canvas.
     #[inline]
-    pub(super) fn canvas_mut(&mut self) -> PixResult<&mut Canvas<Window>> {
+    pub(super) fn canvas_mut(&mut self) -> Result<&mut Canvas<Window>> {
         Ok(&mut self.window_canvas_mut()?.canvas)
     }
 
     /// Returns the current SDL window.
     #[inline]
-    pub(super) fn window(&self) -> PixResult<&Window> {
+    pub(super) fn window(&self) -> Result<&Window> {
         Ok(self.window_canvas()?.canvas.window())
     }
 
     /// Returns the current SDL window.
     #[inline]
-    pub(super) fn window_mut(&mut self) -> PixResult<&mut Window> {
+    pub(super) fn window_mut(&mut self) -> Result<&mut Window> {
         Ok(self.window_canvas_mut()?.canvas.window_mut())
     }
 }
@@ -97,8 +97,8 @@ pub(super) struct WindowCanvas {
 }
 
 impl WindowCanvas {
-    pub(super) fn new(context: &Sdl, s: &mut RendererSettings) -> PixResult<Self> {
-        let video_subsys = context.video().map_err(PixError::Renderer)?;
+    pub(super) fn new(context: &Sdl, s: &mut RendererSettings) -> Result<Self> {
+        let video_subsys = context.video().map_err(Error::Renderer)?;
 
         // TODO: more testing - macOS performance seems low with default "metal" renderer
         // However: https://github.com/libsdl-org/SDL/issues/4001
@@ -156,7 +156,7 @@ impl WindowCanvas {
             .context("invalid logical canvas size")?;
         canvas
             .set_scale(s.scale_x, s.scale_y)
-            .map_err(PixError::Renderer)?;
+            .map_err(Error::Renderer)?;
 
         if let Some(ref mut icon) = s.icon {
             let surface = match icon {
@@ -167,9 +167,9 @@ impl WindowCanvas {
                     let format = img.format().into();
                     let bytes = img.as_mut_bytes();
                     Surface::from_data(bytes, width, height, pitch, format)
-                        .map_err(PixError::Renderer)?
+                        .map_err(Error::Renderer)?
                 }
-                Icon::Path(ref path) => Surface::from_file(path).map_err(PixError::Renderer)?,
+                Icon::Path(ref path) => Surface::from_file(path).map_err(Error::Renderer)?,
             };
             canvas.window_mut().set_icon(surface);
         }
@@ -216,7 +216,7 @@ impl WindowRenderer for Renderer {
     }
 
     /// Create a new window.
-    fn create_window(&mut self, s: &mut RendererSettings) -> PixResult<WindowId> {
+    fn create_window(&mut self, s: &mut RendererSettings) -> Result<WindowId> {
         let window_canvas = WindowCanvas::new(&self.context, s)?;
         let window_id = window_canvas.id;
         self.windows.insert(window_id, window_canvas);
@@ -224,9 +224,9 @@ impl WindowRenderer for Renderer {
     }
 
     /// Close a window.
-    fn close_window(&mut self, id: WindowId) -> PixResult<()> {
+    fn close_window(&mut self, id: WindowId) -> Result<()> {
         if self.windows.remove(&id).is_none() {
-            return Err(PixError::InvalidWindow(id).into());
+            return Err(Error::InvalidWindow(id).into());
         }
         if id == self.window_target {
             if id == self.primary_window_id {
@@ -244,16 +244,16 @@ impl WindowRenderer for Renderer {
     }
 
     /// Set the mouse cursor to a predefined symbol or image, or hides cursor if `None`.
-    fn cursor(&mut self, cursor: Option<&Cursor>) -> PixResult<()> {
+    fn cursor(&mut self, cursor: Option<&Cursor>) -> Result<()> {
         match cursor {
             Some(cursor) => {
                 self.cursor = match cursor {
                     Cursor::System(cursor) => {
-                        SdlCursor::from_system((*cursor).into()).map_err(PixError::Renderer)?
+                        SdlCursor::from_system((*cursor).into()).map_err(Error::Renderer)?
                     }
                     Cursor::Image(path, (x, y)) => {
-                        let surface = Surface::from_file(path).map_err(PixError::Renderer)?;
-                        SdlCursor::from_surface(surface, *x, *y).map_err(PixError::Renderer)?
+                        let surface = Surface::from_file(path).map_err(Error::Renderer)?;
+                        SdlCursor::from_surface(surface, *x, *y).map_err(Error::Renderer)?
                     }
                 };
                 self.cursor.set();
@@ -280,20 +280,20 @@ impl WindowRenderer for Renderer {
 
     /// Set the current window title.
     #[inline]
-    fn set_title(&mut self, title: &str) -> PixResult<()> {
+    fn set_title(&mut self, title: &str) -> Result<()> {
         self.settings.title.replace_range(.., title);
         self.window_mut()?.set_title(title).context("invalid title")
     }
 
     #[inline]
-    fn set_fps(&mut self, fps: f32) -> PixResult<()> {
+    fn set_fps(&mut self, fps: f32) -> Result<()> {
         self.title.clear();
         write!(self.title, "{} - FPS: {:.02}", &self.settings.title, fps)
             .context("invalid title")?;
         // Can't use `self.window_mut` here due to needing split borrows
         self.windows
             .get_mut(&self.window_target)
-            .ok_or(PixError::InvalidWindow(self.window_target))?
+            .ok_or(Error::InvalidWindow(self.window_target))?
             .canvas
             .window_mut()
             .set_title(&self.title)
@@ -302,7 +302,7 @@ impl WindowRenderer for Renderer {
 
     /// Dimensions of the current render target as `(width, height)`.
     #[inline]
-    fn dimensions(&self) -> PixResult<(u32, u32)> {
+    fn dimensions(&self) -> Result<(u32, u32)> {
         self.texture_target.map_or_else(
             || self.window_dimensions(),
             |texture_id| {
@@ -310,7 +310,7 @@ impl WindowRenderer for Renderer {
                     .values()
                     .find_map(|w| w.textures.get(&texture_id))
                     .map_or_else(
-                        || Err(PixError::InvalidTexture(texture_id).into()),
+                        || Err(Error::InvalidTexture(texture_id).into()),
                         |texture| {
                             let query = texture.borrow().query();
                             Ok((query.width, query.height))
@@ -322,13 +322,13 @@ impl WindowRenderer for Renderer {
 
     /// Dimensions of the current window target as `(width, height)`.
     #[inline]
-    fn window_dimensions(&self) -> PixResult<(u32, u32)> {
+    fn window_dimensions(&self) -> Result<(u32, u32)> {
         Ok(self.window()?.size())
     }
 
     /// Set dimensions of the current window target as `(width, height)`.
     #[inline]
-    fn set_window_dimensions(&mut self, (width, height): (u32, u32)) -> PixResult<()> {
+    fn set_window_dimensions(&mut self, (width, height): (u32, u32)) -> Result<()> {
         self.settings.width = width;
         self.settings.height = height;
         let canvas = self.canvas_mut()?;
@@ -344,45 +344,45 @@ impl WindowRenderer for Renderer {
 
     /// Returns the rendering viewport of the current render target.
     #[inline]
-    fn viewport(&self) -> PixResult<Rect<i32>> {
+    fn viewport(&self) -> Result<Rect<i32>> {
         Ok(self.canvas()?.viewport().into())
     }
 
     /// Set the rendering viewport of the current render target.
     #[inline]
-    fn set_viewport(&mut self, rect: Option<Rect<i32>>) -> PixResult<()> {
+    fn set_viewport(&mut self, rect: Option<Rect<i32>>) -> Result<()> {
         self.canvas_mut()?.set_viewport(rect.map(Into::into));
         Ok(())
     }
 
     /// Dimensions of the primary display as `(width, height)`.
     #[inline]
-    fn display_dimensions(&self) -> PixResult<(u32, u32)> {
+    fn display_dimensions(&self) -> Result<(u32, u32)> {
         let window = self.window()?;
-        let display_index = window.display_index().map_err(PixError::Renderer)?;
+        let display_index = window.display_index().map_err(Error::Renderer)?;
         let bounds = window
             .subsystem()
             .display_usable_bounds(display_index)
-            .map_err(PixError::Renderer)?;
+            .map_err(Error::Renderer)?;
         Ok((bounds.width(), bounds.height()))
     }
 
     /// Returns whether the application is fullscreen or not.
     #[inline]
-    fn fullscreen(&self) -> PixResult<bool> {
+    fn fullscreen(&self) -> Result<bool> {
         use FullscreenType::{Desktop, True};
         Ok(matches!(self.window()?.fullscreen_state(), True | Desktop))
     }
 
     /// Set the application to fullscreen or not.
     #[inline]
-    fn set_fullscreen(&mut self, val: bool) -> PixResult<()> {
+    fn set_fullscreen(&mut self, val: bool) -> Result<()> {
         use FullscreenType::{Off, True};
         let fullscreen_type = if val { True } else { Off };
         Ok(self
             .window_mut()?
             .set_fullscreen(fullscreen_type)
-            .map_err(PixError::Renderer)?)
+            .map_err(Error::Renderer)?)
     }
 
     /// Returns whether the window synchronizes frame rate to the screens refresh rate.
@@ -400,12 +400,12 @@ impl WindowRenderer for Renderer {
     ///
     /// If you are storing and interacting with this window using the `WindowId`, make sure to
     /// use the newly returned `WindowId`.
-    fn set_vsync(&mut self, val: bool) -> PixResult<WindowId> {
+    fn set_vsync(&mut self, val: bool) -> Result<WindowId> {
         log::debug!("Set VSync: {}", val);
         let window_canvas = self
             .windows
             .get_mut(&self.window_target)
-            .ok_or(PixError::InvalidWindow(self.window_target))?;
+            .ok_or(Error::InvalidWindow(self.window_target))?;
         let window = window_canvas.canvas.window();
         let (x, y) = window.position();
         let (w, h) = window.size();
@@ -447,12 +447,12 @@ impl WindowRenderer for Renderer {
 
     /// Set window as the target for drawing operations.
     #[inline]
-    fn set_window_target(&mut self, id: WindowId) -> PixResult<()> {
+    fn set_window_target(&mut self, id: WindowId) -> Result<()> {
         if self.windows.contains_key(&id) {
             self.window_target = id;
             Ok(())
         } else {
-            Err(PixError::InvalidWindow(id).into())
+            Err(Error::InvalidWindow(id).into())
         }
     }
 
@@ -464,14 +464,14 @@ impl WindowRenderer for Renderer {
 
     /// Show the current window target.
     #[inline]
-    fn show(&mut self) -> PixResult<()> {
+    fn show(&mut self) -> Result<()> {
         self.window_mut()?.show();
         Ok(())
     }
 
     /// Hide the current window target.
     #[inline]
-    fn hide(&mut self) -> PixResult<()> {
+    fn hide(&mut self) -> Result<()> {
         self.window_mut()?.hide();
         Ok(())
     }

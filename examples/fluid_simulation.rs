@@ -201,7 +201,7 @@ impl Fluid {
     }
 
     #[allow(clippy::many_single_char_names)]
-    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
         self.step();
         for i in 0..N * NHEIGHT {
             let (x, y) = get_xy(i);
@@ -255,7 +255,7 @@ impl App {
         }
     }
 
-    fn flame_on(&mut self) -> PixResult<()> {
+    fn flame_on(&mut self) -> Result<()> {
         for k in 0..COUNT {
             let xmin = random!(-10, -5);
             let xmax = random!(5, 10);
@@ -276,7 +276,7 @@ impl App {
         Ok(())
     }
 
-    fn drag(&mut self, pos: Point<i32>) -> PixResult<()> {
+    fn drag(&mut self, pos: Point<i32>) -> Result<()> {
         let mx = pos.x() as f64;
         let my = pos.y() as f64;
         for r in 3..10 {
@@ -291,7 +291,7 @@ impl App {
 }
 
 impl AppState for App {
-    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn on_start(&mut self, s: &mut PixState) -> Result<()> {
         s.background(Color::BLACK);
         s.rect_mode(RectMode::Center);
         s.stroke(None);
@@ -306,7 +306,7 @@ impl AppState for App {
         Ok(())
     }
 
-    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
         s.clear()?;
         if s.mouse_down(Mouse::Left) {
             self.drag(s.mouse_pos())?;
@@ -321,13 +321,13 @@ impl AppState for App {
         _s: &mut PixState,
         pos: Point<i32>,
         _rel_pos: Point<i32>,
-    ) -> PixResult<bool> {
+    ) -> Result<bool> {
         self.drag(pos)?;
         Ok(false)
     }
 }
 
-pub fn main() -> PixResult<()> {
+pub fn main() -> Result<()> {
     println!("Renders more smoothly using `--release` and `--features opengl`.");
     let mut engine = PixEngine::builder()
         .with_dimensions(2 * WIDTH, 2 * HEIGHT)

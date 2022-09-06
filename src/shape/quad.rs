@@ -306,7 +306,7 @@ impl<T: Copy, const N: usize> Quad<T, N> {
 
 impl Draw for Quad<i32> {
     /// Draw `Quad` to the current [`PixState`] canvas.
-    fn draw(&self, s: &mut PixState) -> PixResult<()> {
+    fn draw(&self, s: &mut PixState) -> Result<()> {
         s.quad(*self)
     }
 }

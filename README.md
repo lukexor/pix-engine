@@ -176,7 +176,7 @@ impl AppState for MyApp {
     // Set up application state and initial settings. `PixState` contains
     // engine specific state and utility methods for actions like getting mouse
     // coordinates, drawing shapes, etc. (Optional)
-    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn on_start(&mut self, s: &mut PixState) -> Result<()> {
         // Set the background to GRAY and clear the screen.
         s.background(Color::GRAY);
 
@@ -192,7 +192,7 @@ impl AppState for MyApp {
 
     // Main update/render loop. Called as often as possible unless
     // `target_frame_rate` was set with a value. (Required)
-    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
         // Set fill color to black if mouse is pressed, otherwise wite.
         if s.mouse_pressed() {
             s.fill(color!(0));
@@ -210,12 +210,12 @@ impl AppState for MyApp {
 
     // Clean up any state or resources before exiting such as deleting temporary
     // files or saving game state. (Optional)
-    fn on_stop(&mut self, s: &mut PixState) -> PixResult<()> {
+    fn on_stop(&mut self, s: &mut PixState) -> Result<()> {
         Ok(())
     }
 }
 
-fn main() -> PixResult<()> {
+fn main() -> Result<()> {
     let mut engine = PixEngine::builder()
       .with_dimensions(800, 600)
       .with_title("MyApp")
@@ -315,7 +315,7 @@ To create a texture:
 let texture_id = s.create_texture(256, 256, PixelFormat::Rgb);
 
 // Draw to the texture. These changes are not visible in the window.
-s.with_texture(texture_id, |s: &mut PixState| -> PixResult<()> {
+s.with_texture(texture_id, |s: &mut PixState| -> Result<()> {
   s.background(Color::BLACK);
   s.text("Hello World!");
   Ok(())
@@ -411,7 +411,7 @@ let window_id = s
   .build()?;
 
 // Draw to the window. These changes are immediately visible in the window.
-s.with_window(window_id, |s: &mut PixState| -> PixResult<()> {
+s.with_window(window_id, |s: &mut PixState| -> Result<()> {
   s.background(Color::BLACK);
   s.fill(Color::RED);
   s.text("Hello World!");
@@ -434,7 +434,7 @@ fn on_window_event(
     _s: &mut PixState,
     window_id: WindowId,
     event: WindowEvent,
-) -> PixResult<()> {
+) -> Result<()> {
     if event == WindowEvent::Close && self.popup_window == Some(window_id) {
       self.popup_window = None;
     }
@@ -451,7 +451,7 @@ and initialize it in your `main` function.
 Example using [env_logger][]:
 
 ```rust ignore
-fn main() -> PixResult<()> {
+fn main() -> Result<()> {
     env_logger::init();
 
     let mut engine = PixEngine::builder()

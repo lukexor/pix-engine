@@ -477,7 +477,7 @@ impl<T: Num + Float, const N: usize> Point<T, N> {
 
 impl Draw for Point<i32> {
     /// Draw point to the current [`PixState`] canvas.
-    fn draw(&self, s: &mut PixState) -> PixResult<()> {
+    fn draw(&self, s: &mut PixState) -> Result<()> {
         s.point(*self)
     }
 }
