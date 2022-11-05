@@ -195,7 +195,7 @@ impl Image {
         if ext != Some(OsStr::new("png")) {
             return Err(Error::UnsupportedFileType(ext.map(OsStr::to_os_string)).into());
         }
-        Self::from_read(File::open(&path)?)
+        Self::from_read(File::open(path)?)
     }
 
     /// Constructs an `Image` from a [png] reader.
@@ -237,7 +237,7 @@ impl Image {
                 bit_depth,
                 color_type,
             })?;
-        Self::from_bytes(info.width, info.height, &data, format)
+        Self::from_bytes(info.width, info.height, data, format)
     }
 
     /// Returns the `Image` width.
@@ -419,7 +419,7 @@ impl Image {
         P: AsRef<Path>,
     {
         let path = path.as_ref();
-        let png_file = BufWriter::new(File::create(&path)?);
+        let png_file = BufWriter::new(File::create(path)?);
         let mut png = png::Encoder::new(png_file, self.width, self.height);
         png.set_color(self.format.into());
         png.set_depth(png::BitDepth::Eight);

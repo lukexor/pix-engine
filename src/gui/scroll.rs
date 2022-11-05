@@ -247,7 +247,7 @@ impl PixState {
             Horizontal => {
                 let w = rect.width() as f32;
                 let w = ((w / (max as f32 + w)) * w) as i32;
-                w.max(THUMB_MIN).min(w)
+                w.clamp(THUMB_MIN, w)
             }
             Vertical => rect.width(),
         };
@@ -256,7 +256,7 @@ impl PixState {
             Vertical => {
                 let h = rect.height() as f32;
                 let h = ((h / (max as f32 + h)) * h) as i32;
-                h.max(THUMB_MIN).min(h)
+                h.clamp(THUMB_MIN, h)
             }
         };
         s.fill(bg);

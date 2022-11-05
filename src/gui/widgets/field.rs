@@ -165,7 +165,7 @@ impl PixState {
             // FIXME: push and pop disabled state instead
             s.ui.push_cursor();
             s.disable(true);
-            s.text(&hint)?;
+            s.text(hint)?;
             if !disabled {
                 s.disable(false);
             }
@@ -328,7 +328,7 @@ impl PixState {
             // FIXME: push and pop disabled state instead
             s.ui.push_cursor();
             s.disable(true);
-            let size = s.text(&hint)?;
+            let size = s.text(hint)?;
             if !disabled {
                 s.disable(false);
             }

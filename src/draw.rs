@@ -133,7 +133,7 @@ impl PixState {
             Ok(())
         } else {
             let path = path.as_ref();
-            let png_file = BufWriter::new(File::create(&path)?);
+            let png_file = BufWriter::new(File::create(path)?);
             let mut png = png::Encoder::new(png_file, self.width()?, self.height()?);
             png.set_color(PixelFormat::Rgba.into());
             png.set_depth(png::BitDepth::Eight);
