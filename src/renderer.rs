@@ -1,6 +1,7 @@
 //! Graphics renderer functions.
 
 use crate::{image::Icon, prelude::*};
+use std::num::NonZeroUsize;
 
 pub(crate) use crate::{texture::TextureRenderer, window::WindowRenderer};
 
@@ -56,9 +57,9 @@ pub(crate) struct RendererSettings {
     /// Limit [`Engine::on_update`] to target frame frate per second.
     pub(crate) target_frame_rate: Option<usize>,
     /// Size of allowed texture cache before least-used entries are evicted.
-    pub(crate) texture_cache_size: usize,
+    pub(crate) texture_cache_size: NonZeroUsize,
     /// Size of allowed font cache before least-used entries are evicted.
-    pub(crate) text_cache_size: usize,
+    pub(crate) text_cache_size: NonZeroUsize,
 }
 
 impl Default for RendererSettings {
@@ -83,8 +84,8 @@ impl Default for RendererSettings {
             hidden: false,
             show_frame_rate: false,
             target_frame_rate: None,
-            texture_cache_size: 256,
-            text_cache_size: 512,
+            texture_cache_size: 256.try_into().expect("infallible conversion"),
+            text_cache_size: 512.try_into().expect("infallible conversion"),
         }
     }
 }

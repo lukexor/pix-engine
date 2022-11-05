@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   consuming builder.
 - Updated `PixEngine::on_event` to return a `bool`, which consumes the event.
 - Removed `with_` prefix from builder methods.
+- `EngineBuilder::texture_cache` and `EngineBuilder::text_cache` now take a
+  `NonZeroUsize` instead of `usize`.
 
 ## [0.6.0] - 2022-06-20
 

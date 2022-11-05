@@ -154,7 +154,11 @@ impl Default for UiState {
             mouse_offset: None,
             pmouse: MouseState::default(),
             keys: KeyState::default(),
-            elements: LruCache::new(ELEMENT_CACHE_SIZE),
+            elements: LruCache::new(
+                ELEMENT_CACHE_SIZE
+                    .try_into()
+                    .expect("infallible conversion"),
+            ),
             active: None,
             hovered: None,
             focused: Some(ElementId::NONE),

@@ -57,6 +57,7 @@
 use crate::{image::Icon, prelude::*, renderer::RendererSettings};
 use log::{debug, error, info};
 use std::{
+    num::NonZeroUsize,
     thread,
     time::{Duration, Instant},
 };
@@ -964,14 +965,14 @@ impl EngineBuilder {
 
     /// Set a custom texture cache size other than the default of `20`.
     /// Affects font family and image rendering caching operations.
-    pub fn texture_cache(mut self, size: usize) -> Self {
+    pub fn texture_cache(mut self, size: NonZeroUsize) -> Self {
         self.settings.texture_cache_size = size;
         self
     }
 
     /// Set a custom text cache size other than the default of `500`.
     /// Affects text rendering caching operations.
-    pub fn text_cache(mut self, size: usize) -> Self {
+    pub fn text_cache(mut self, size: NonZeroUsize) -> Self {
         self.settings.text_cache_size = size;
         self
     }
