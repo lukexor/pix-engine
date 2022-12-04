@@ -117,8 +117,8 @@ impl PixState {
     /// Draw a tabbed view to the current canvas. It accepts a list of tabs to be rendered, which
     /// one is selected and a closure that is passed the current tab and [`&mut
     /// PixState`][`PixState`] which you can use to draw all the standard drawing primitives and
-    /// change any drawing settings. Settings changed inside the closure will not persist, similar
-    /// to [`PixState::with_texture`]. Returns `true` if a tab selection was changed.
+    /// change any drawing settings. Settings changed inside the closure will not persist. Returns
+    /// `true` if a tab selection was changed.
     ///
     /// # Errors
     ///
@@ -157,13 +157,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn tab_bar<S, I, F>(
-        &mut self,
-        label: S,
-        tabs: &[I],
-        selected: &mut I,
-        f: F,
-    ) -> Result<bool>
+    pub fn tab_bar<S, I, F>(&mut self, label: S, tabs: &[I], selected: &mut I, f: F) -> Result<bool>
     where
         S: AsRef<str>,
         I: AsRef<str> + Copy,
@@ -196,8 +190,8 @@ impl PixState {
             let tab_rect = rect![pos, width, height].offset_size(4 * ipad);
 
             // Check hover/active/keyboard focus
-            let hovered = s.ui.try_hover(id, &tab_rect);
-            let focused = s.ui.try_focus(id);
+            let hovered = s.focused() && s.ui.try_hover(id, &tab_rect);
+            let focused = s.focused() && s.ui.try_focus(id);
             let disabled = s.ui.disabled;
             let active = s.ui.is_active(id);
 

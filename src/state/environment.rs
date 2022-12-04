@@ -66,7 +66,7 @@ impl PixState {
         self.renderer.present();
     }
 
-    /// Returns whether any active window has focus. To check focus of a specific window, see
+    /// Returns whether the current window target has focus. To check focus of a specific window, see
     /// [`PixState::focused_window`].
     ///
     /// # Example
@@ -86,8 +86,11 @@ impl PixState {
     /// ```
     #[inline]
     #[must_use]
-    pub const fn focused(&self) -> bool {
-        self.env.focused_window.is_some()
+    pub fn focused(&self) -> bool {
+        self.env
+            .focused_window
+            .map(|focused_window| focused_window == self.renderer.window_id())
+            .unwrap_or_default()
     }
 
     /// Returns whether a given window has focus. To check focus of a any window, see

@@ -5,7 +5,7 @@ use crate::{
     renderer::{RendererSettings, WindowRenderer},
     window::{Position, WindowId},
 };
-use anyhow::{bail, Context};
+use anyhow::Context;
 use lru::LruCache;
 use sdl2::{
     image::LoadSurface,
@@ -209,6 +209,12 @@ impl WindowRenderer for Renderer {
         self.windows.len()
     }
 
+    /// Get the primary window ID.
+    #[inline]
+    fn primary_window_id(&self) -> WindowId {
+        self.primary_window_id
+    }
+
     /// Get the current window target ID.
     #[inline]
     fn window_id(&self) -> WindowId {
@@ -229,16 +235,7 @@ impl WindowRenderer for Renderer {
             return Err(Error::InvalidWindow(id).into());
         }
         if id == self.window_target {
-            if id == self.primary_window_id {
-                if let Some(id) = self.windows.keys().last() {
-                    self.window_target = *id;
-                    self.primary_window_id = self.window_target;
-                } else {
-                    bail!("close_window can not be called on the last window, call quit() instead");
-                }
-            } else {
-                self.reset_window_target();
-            }
+            self.reset_window_target();
         }
         Ok(())
     }

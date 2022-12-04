@@ -1,4 +1,36 @@
-//! `Window` functions.
+//! `Window` methods.
+//!
+//! Provides window creation and manipulation methods on [`PixState`].
+//!
+//! Provided methods:
+//!
+//! - [`PixState::window_id`]: Get current window target ID.
+//! - [`PixState::window`]: Create a [`WindowBuilder`] to open a new window.
+//! - [`PixState::close_window`]: Close a window by ID.
+//! - [`PixState::dimensions`]: Get the current render target (window or texture) dimensions as
+//!   `(width, height)`.
+//! - [`PixState::window_dimensions`]: Get the current window target dimensions as `(width, height)`.
+//! - [`PixState::set_window_dimensions`]: Set the current window target dimensions.
+//! - [`PixState::viewport`]: Get the current render target (window or texture) viewport.
+//! - [`PixState::set_viewport`]: Set the current render target (window or texture) viewport.
+//! - [`PixState::clear_viewport`]: Clear the current render target (window or texture) viewport
+//!   back to the entire render size.
+//! - [`PixState::width`]: Get the current render target (window or texture) width.
+//! - [`PixState::window_width`]: Get the current window target width.
+//! - [`PixState::set_window_width`]: Set the current window target width.
+//! - [`PixState::height`]: Get the current render target (window or texture) height.
+//! - [`PixState::window_height`]: Get the current window target height.
+//! - [`PixState::set_window_height`]: Set the current window target height.
+//! - [`PixState::center`]: Get the current render target (window or texture) center.
+//! - [`PixState::window_center`]: Get the current window target center.
+//! - [`PixState::display_dimensions`]: Get the primary display dimensions as `(width, height)`.
+//! - [`PixState::display_width`]: Get the primary display width.
+//! - [`PixState::display_height`]: Get the primary display height.
+//! - [`PixState::show_window`]: Show the current window target if it is hidden.
+//! - [`PixState::hide_window`]: Hide the current window target if it is shown.
+//! - [`PixState::set_window_target`]: Set a window as the primary target for drawing operations.
+//! - [`PixState::reset_window_target`]: Reset window target back to the primary window for drawing
+//!   operations.
 
 use crate::{
     image::Icon,
@@ -147,6 +179,9 @@ pub(crate) trait WindowRenderer {
     /// Get the count of open windows.
     fn window_count(&self) -> usize;
 
+    /// Get the primary window ID.
+    fn primary_window_id(&self) -> WindowId;
+
     /// Get the current window target ID.
     fn window_id(&self) -> WindowId;
 
@@ -226,7 +261,7 @@ pub(crate) trait WindowRenderer {
 ///
 /// In addition to the primary window created for you when calling [`Engine::run`], you can open
 /// additional windows with various configurations and render to them using the
-/// [`PixState::with_window`] method.
+/// [`PixState::set_window_target`] method.
 ///
 /// # Example
 ///
@@ -369,14 +404,14 @@ impl PixState {
     /// If the window has already been closed or is invalid, then an error is returned.
     #[inline]
     pub fn close_window(&mut self, id: WindowId) -> Result<()> {
-        if self.renderer.window_count() == 1 {
+        if id == self.renderer.primary_window_id() || self.renderer.window_count() == 1 {
             self.quit();
             return Ok(());
         }
         self.renderer.close_window(id)
     }
 
-    /// The dimensions of the current render target as `(width, height)`.
+    /// The dimensions of the current render target (window or texture) as `(width, height)`.
     ///
     /// # Errors
     ///
@@ -386,7 +421,7 @@ impl PixState {
         self.renderer.dimensions()
     }
 
-    /// The dimensions of the current window as `(width, height)`.
+    /// The dimensions of the current window target as `(width, height)`.
     ///
     /// # Errors
     ///
@@ -396,7 +431,7 @@ impl PixState {
         self.renderer.window_dimensions()
     }
 
-    /// Set the dimensions of the current window from `(width, height)`.
+    /// Set the dimensions of the current window target from `(width, height)`.
     ///
     /// # Errors
     ///
@@ -561,7 +596,7 @@ impl PixState {
         Ok(height)
     }
 
-    /// Show the current window target.
+    /// Show the current window target if it is hidden.
     ///
     /// # Errors
     ///
@@ -571,7 +606,7 @@ impl PixState {
         self.renderer.show()
     }
 
-    /// Hide the current window target.
+    /// Hide the current window target if it is shown.
     ///
     /// # Errors
     ///
@@ -581,27 +616,32 @@ impl PixState {
         self.renderer.hide()
     }
 
-    /// Target a `Window` for drawing operations.
+    /// Set a `Window` as the primary target for drawing operations. Pushes current settings and UI
+    /// cursor to the stack, so any changes made while a window target is set will be in effect
+    /// until [`PixState::reset_window_target`] is called.
     ///
     /// # Errors
     ///
-    /// If the window has been closed or is invalid, or the rendering function fails, then an error
-    /// is returned.
-    pub fn with_window<F>(&mut self, id: WindowId, f: F) -> Result<()>
-    where
-        F: FnOnce(&mut PixState) -> Result<()>,
-    {
-        self.push();
-        self.ui.push_cursor();
-        self.set_cursor_pos(self.theme.spacing.frame_pad);
+    /// If the window has been closed or is invalid, then an error is returned.
+    pub fn set_window_target(&mut self, id: WindowId) -> Result<()> {
+        if id != self.renderer.primary_window_id() {
+            self.push();
+            self.ui.push_cursor();
+            self.set_cursor_pos(self.theme.spacing.frame_pad);
+            self.renderer.set_window_target(id)
+        } else {
+            Ok(())
+        }
+    }
 
-        self.renderer.set_window_target(id)?;
-        let result = f(self);
-        self.renderer.reset_window_target();
-
-        self.ui.pop_cursor();
-        self.pop();
-
-        result
+    /// Reset `Window` target back to the primary window for drawing operations. Pops previous
+    /// settings and UI cursor off the stack, so that changes made while window target was set are
+    /// reverted.
+    pub fn reset_window_target(&mut self) {
+        if self.window_id() != self.renderer.primary_window_id() {
+            self.renderer.reset_window_target();
+            self.ui.pop_cursor();
+            self.pop();
+        }
     }
 }

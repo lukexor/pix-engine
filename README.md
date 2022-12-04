@@ -298,11 +298,10 @@ To create a texture:
 let texture_id = s.create_texture(256, 256, PixelFormat::Rgb);
 
 // Draw to the texture. These changes are not visible in the window.
-s.with_texture(texture_id, |s: &mut PixState| -> Result<()> {
-  s.background(Color::BLACK);
-  s.text("Hello World!");
-  Ok(())
-})?;
+s.set_texture_target(texture_id)?;
+s.background(Color::BLACK);
+s.text("Hello World!");
+s.clear_texture_target();
 
 // Now draw the texture to the current canvas. Specifying `None` as the `src`
 // argument means use the entire texture size. The `dst` here is double the
@@ -394,12 +393,11 @@ let window_id = s
   .build()?;
 
 // Draw to the window. These changes are immediately visible in the window.
-s.with_window(window_id, |s: &mut PixState| -> Result<()> {
-  s.background(Color::BLACK);
-  s.fill(Color::RED);
-  s.text("Hello World!");
-  Ok(())
-})?;
+s.set_window_target(window_id)?;
+s.background(Color::BLACK);
+s.fill(Color::RED);
+s.text("Hello World!");
+s.reset_window_target();
 
 // A user can either close the window with the `X` button, `Ctrl-W`, `Alt-F4`,
 // etc. or you can close it programatically.

@@ -10,8 +10,8 @@
 //! - [`PixState::create_texture`]: Creates a new texture to render to.
 //! - [`PixState::delete_texture`]: Delete a texture.
 //! - [`PixState::update_texture`]: Update texture with [u8] [slice] of pixel data.
-//! - [`PixState::with_texture`]: Target a texture for rendering.
-//! - [`PixState::save_texture`]: Save a texture to a [png] file.
+//! - [`PixState::set_texture_target`]: Target a texture for rendering.
+//! - [`PixState::clear_texture_target`]: Clear texture target back to primary canvas for rendering.
 //!
 //! # Example
 //!
@@ -22,11 +22,10 @@
 //! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
 //!     let texture_id1 = s.create_texture(500, 600, PixelFormat::Rgb)?;
 //!     // Does not actually render to the current canvas
-//!     s.with_texture(texture_id1, |s: &mut PixState| -> Result<()> {
-//!         s.background(Color::random());
-//!         s.text("Rendered texture!")?;
-//!         Ok(())
-//!     })?;
+//!     s.set_texture_target(texture_id1)?;
+//!     s.background(Color::random());
+//!     s.text("Rendered texture!")?;
+//!     s.clear_texture_target();
 //!
 //!     // `None` uses PixelFormat::default() which defaults to PixelFormat::Rgba
 //!     let texture_id2 = s.create_texture(500, 600, None)?;
@@ -49,11 +48,9 @@
 //! ```
 
 use crate::prelude::*;
-use log::info;
 use std::{
     fmt,
     ops::{Deref, DerefMut},
-    path::Path,
 };
 
 /// `Texture` identifier used to reference and target an internally managed texture.
@@ -106,11 +103,11 @@ impl PixState {
     /// # struct App { texture_id: TextureId };
     /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
-    ///     s.with_texture(self.texture_id, |s: &mut PixState| -> Result<()> {
-    ///         s.background(Color::random());
-    ///         s.text("Rendered texture!")?;
-    ///         Ok(())
-    ///     })?;
+    ///     s.set_texture_target(texture_id1)?;
+    ///     s.background(Color::random());
+    ///     s.text("Rendered texture!")?;
+    ///     s.clear_texture_target();
+    ///
     ///     let src = rect![10, 10, 100, 100]; // Render a sub-section of the texture
     ///     // translate and scale texture
     ///     let dst = rect![200, 200, 200, 200];
@@ -157,11 +154,11 @@ impl PixState {
     /// # struct App { texture_id: TextureId };
     /// # impl PixEngine for App {
     /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
-    ///     s.with_texture(self.texture_id, |s: &mut PixState| -> Result<()> {
-    ///         s.background(Color::random());
-    ///         s.text("Rendered texture!")?;
-    ///         Ok(())
-    ///     })?;
+    ///     s.set_texture_target(texture_id1)?;
+    ///     s.background(Color::random());
+    ///     s.text("Rendered texture!")?;
+    ///     s.clear_texture_target();
+    ///
     ///     let src = None;
     ///     // translate and scale texture
     ///     let dst = rect![200, 200, 200, 200];
@@ -179,7 +176,6 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    #[allow(clippy::too_many_arguments)]
     pub fn texture_transformed<R1, R2, C, F>(
         &mut self,
         texture_id: TextureId,
@@ -211,7 +207,9 @@ impl PixState {
     }
 
     /// Constructs a `Texture` to render to. Passing `None` for [`PixelFormat`] will use
-    /// [`PixelFormat::default`].
+    /// [`PixelFormat::default`]. The texture will be created and tied to the current window
+    /// target. To create a texture for a window other than the primary window, call
+    /// [`PixState::set_window`].
     ///
     /// # Errors
     ///
@@ -222,11 +220,11 @@ impl PixState {
     ///
     /// Textures are automatically dropped when the window they were created in is closed due to an
     /// implicit lifetime that the texture can not outlive the window it was created for. Calling
-    /// this method will associate the texture to the current `window_target`, which can only be
-    /// changed using the [`PixState::with_window`] method. It is the responsibility of the caller to
-    /// manage created textures and call [`PixState::delete_texture`] when a texture resource is no
-    /// longer needed and to ensure that texture methods are not called for a given window after it
-    /// has been closed, otherwise an error will be returned.
+    /// this method will create a texture for the current `window_target`, which can only be
+    /// changed using the [`PixState::set_window_target`] method. It is the responsibility of the
+    /// caller to manage created textures and call [`PixState::delete_texture`] when a texture
+    /// resource is no longer needed and to ensure that texture methods are not called for a given
+    /// window after it has been closed, otherwise an error will be returned.
     ///
     /// This constraint arises due to lifetime issues with SDL textures, See
     /// <https://github.com/Rust-SDL2/rust-sdl2/issues/1107> for more details.
@@ -331,12 +329,13 @@ impl PixState {
             .update_texture(texture_id, rect, pixels, pitch)
     }
 
-    /// Target a `Texture` for drawing operations.
+    /// Set a `Texture` as the priamry target for drawing operations. Pushes current settings and UI
+    /// cursor to the stack, so any changes made while a texture target is set will be in effect
+    /// until [`PixState::reset_texture_target`] is called.
     ///
     /// # Errors
     ///
-    /// If the window in which the texture was created is closed, or the renderer fails
-    /// to update to the texture, then an error is returned.
+    /// If the target has been dropped or is invalid, then an error is returned.
     ///
     /// # Example
     ///
@@ -347,76 +346,34 @@ impl PixState {
     /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
     /// fn on_start(&mut self, s: &mut PixState) -> Result<()> {
     ///     self.texture_id = s.create_texture(500, 600, None)?;
-    ///     s.with_texture(self.texture_id, |s: &mut PixState| -> Result<()> {
-    ///         s.background(Color::random());
-    ///         s.text("Rendered texture!")?;
-    ///         Ok(())
-    ///     })?;
+    ///     s.set_texture_target(self.texture_id)?;
+    ///     s.background(Color::random());
+    ///     s.text("Rendered texture!")?;
+    ///     s.clear_texture_target();
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    pub fn with_texture<F>(&mut self, id: TextureId, f: F) -> Result<()>
-    where
-        F: FnOnce(&mut PixState) -> Result<()>,
-    {
-        self.push();
-        self.ui.push_cursor();
-        self.set_cursor_pos(self.theme.spacing.frame_pad);
-
-        self.renderer.set_texture_target(id);
-        let result = f(self);
-        self.renderer.clear_texture_target();
-
-        self.ui.pop_cursor();
-        self.pop();
-
-        result
+    pub fn set_texture_target(&mut self, id: TextureId) -> Result<()> {
+        if self.renderer.texture_target().is_none() {
+            self.push();
+            self.ui.push_cursor();
+            self.set_cursor_pos(self.theme.spacing.frame_pad);
+            self.renderer.set_texture_target(id)
+        } else {
+            Ok(())
+        }
     }
 
-    /// Save a portion `src` of a texture to a [png] file. Passing `None` for `src` saves the
-    /// entire texture.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error for any of the following:
-    ///     - The window in which the texture was created is closed.
-    ///     - The renderer fails to read pixels from the texture.
-    ///     - An [`io::Error`] occurs attempting to create the [png] file.
-    ///     - A [`png::EncodingError`] occurs attempting to write image bytes.
-    ///
-    /// [`io::Error`]: std::io::Error
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use pix_engine::prelude::*;
-    /// # struct App;
-    /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
-    ///     if let Key::S = event.key {
-    ///         let texture_id = s.create_texture(200, 200, None)?;
-    ///         s.with_texture(texture_id, |s: &mut PixState| -> Result<()> {
-    ///             s.background(Color::random());
-    ///             s.text("Rendered texture!")?;
-    ///             Ok(())
-    ///         })?;
-    ///         s.save_texture(texture_id, None, "test_image.png")?;
-    ///     }
-    ///     Ok(false)
-    /// }
-    /// # }
-    /// ```
-    pub fn save_texture<P, R>(&mut self, id: TextureId, src: R, path: P) -> Result<()>
-    where
-        P: AsRef<Path>,
-        R: Into<Option<Rect<i32>>>,
-    {
-        info!("Saving TextureId: {} to {}", id, path.as_ref().display());
-        self.with_texture(id, |s: &mut PixState| -> Result<()> {
-            s.save_canvas(src, path)
-        })
+    /// Clears `Texture` target back to the primary canvas for drawing operations. Pops previous
+    /// settings and UI cursor off the stack, so that changes made while texture target was set are
+    /// reverted.
+    pub fn clear_texture_target(&mut self) {
+        if self.renderer.texture_target().is_some() {
+            self.renderer.clear_texture_target();
+            self.ui.pop_cursor();
+            self.pop();
+        }
     }
 }
 
@@ -483,10 +440,15 @@ pub(crate) trait TextureRenderer {
     /// Returns texture used as the target for drawing operations, if set.
     fn texture_target(&self) -> Option<TextureId>;
 
-    /// Set texture as the target for drawing operations.
-    fn set_texture_target(&mut self, texture_id: TextureId);
+    /// Set a `Texture` as the primary target for drawing operations instead of the window target
+    /// canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the texture has been dropped or is invalid, then an error is returned.
+    fn set_texture_target(&mut self, texture_id: TextureId) -> Result<()>;
 
-    /// Clear texture as the target for drawing operations.
+    /// Clear `Texture` target back to the window target canvas for drawing operations.
     fn clear_texture_target(&mut self);
 
     /// Returns whether a texture is set as the target for drawing operations.

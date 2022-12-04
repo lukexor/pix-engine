@@ -83,8 +83,8 @@ impl PixState {
         ];
 
         // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, &hover);
-        let focused = s.ui.try_focus(id);
+        let hovered = s.focused() && s.ui.try_hover(id, &hover);
+        let focused = s.focused() && s.ui.try_focus(id);
         let disabled = s.ui.disabled;
 
         s.push();
@@ -210,7 +210,7 @@ impl PixState {
     /// Draw an advanced tooltip box at the mouse cursor to the current canvas. It accepts a
     /// closure that is passed [`&mut PixState`][`PixState`] which you can use to draw all the
     /// standard drawing primitives and change any drawing settings. Settings changed inside the
-    /// closure will not persist, similar to [`PixState::with_texture`].
+    /// closure will not persist.
     ///
     /// # Errors
     ///
@@ -274,7 +274,11 @@ impl PixState {
 
         let texture_id = s.get_or_create_texture(id, None, rect)?;
         s.ui.offset_mouse(rect.top_left());
-        s.with_texture(texture_id, f)?;
+
+        s.set_texture_target(texture_id)?;
+        f(s)?;
+        s.clear_texture_target();
+
         s.ui.clear_mouse_offset();
 
         Ok(())

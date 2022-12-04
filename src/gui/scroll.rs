@@ -46,8 +46,10 @@ impl PixState {
         let scroll_area = rect![x, y, clamp_size(width), clamp_size(height)];
 
         // Check hover/active/keyboard focus
-        s.ui.try_hover(id, &scroll_area);
-        s.ui.try_focus(id);
+        if s.focused() {
+            s.ui.try_hover(id, &scroll_area);
+            s.ui.try_focus(id);
+        }
 
         s.push();
         s.ui.push_cursor();
@@ -64,33 +66,33 @@ impl PixState {
         let texture_id = s.get_or_create_texture(id, None, scroll_area)?;
         s.ui.offset_mouse(scroll_area.top_left());
         s.ui.set_column_offset(-scroll.x());
-        let mut max_cursor_pos = s.cursor_pos();
 
         let scroll_width = scroll_area.width();
         let scroll_height = scroll_area.height();
         let right = scroll_area.width() - fpad.x();
         let bottom = scroll_area.height() - fpad.y();
-        s.with_texture(texture_id, |s: &mut PixState| {
-            s.background(colors.background);
 
-            s.set_cursor_pos(s.cursor_pos() - scroll);
-            s.stroke(None);
-            s.fill(fg);
-            f(s)?;
-            max_cursor_pos = s.cursor_pos() + scroll;
+        s.set_texture_target(texture_id)?;
+        s.background(colors.background);
 
-            // Since clip doesn't work texture targets, we fake it
-            s.fill(colors.background);
-            s.rect([0, 0, scroll_width, fpad.y()])?; // Top
-            s.rect([0, 0, fpad.x(), scroll_height])?; // Left
-            s.rect([right, 0, fpad.x(), scroll_height])?; // Right
-            s.rect([0, bottom, scroll_width, fpad.y()])?; // Bottom
+        s.set_cursor_pos(s.cursor_pos() - scroll);
+        s.stroke(None);
+        s.fill(fg);
+        f(s)?;
+        let max_cursor_pos = s.cursor_pos() + scroll;
 
-            s.stroke(stroke);
-            s.fill(None);
-            s.rect([0, 0, scroll_width, scroll_height])?;
-            Ok(())
-        })?;
+        // Since clip doesn't work texture targets, we fake it
+        s.fill(colors.background);
+        s.rect([0, 0, scroll_width, fpad.y()])?; // Top
+        s.rect([0, 0, fpad.x(), scroll_height])?; // Left
+        s.rect([right, 0, fpad.x(), scroll_height])?; // Right
+        s.rect([0, bottom, scroll_width, fpad.y()])?; // Bottom
+
+        s.stroke(stroke);
+        s.fill(None);
+        s.rect([0, 0, scroll_width, scroll_height])?;
+        s.clear_texture_target();
+
         s.ui.reset_column_offset();
         s.ui.clear_mouse_offset();
 
@@ -219,8 +221,8 @@ impl PixState {
         let colors = s.theme.colors;
 
         // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, &rect);
-        let focused = s.ui.try_focus(id);
+        let hovered = s.focused() && s.ui.try_hover(id, &rect);
+        let focused = s.focused() && s.ui.try_focus(id);
         let active = s.ui.is_active(id);
 
         s.push();

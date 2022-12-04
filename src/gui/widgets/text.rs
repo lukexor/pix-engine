@@ -283,8 +283,8 @@ impl PixState {
         let width = s.ui.next_width.take().unwrap_or(width + 2 * fpad.x());
 
         let hover = rect![pos, width, height + 2 * fpad.y()];
-        let hovered = s.ui.try_hover(id, &hover);
-        let focused = s.ui.try_focus(id);
+        let hovered = s.focused() && s.ui.try_hover(id, &hover);
+        let focused = s.focused() && s.ui.try_focus(id);
         let active = s.ui.is_active(id);
 
         s.push();
@@ -357,8 +357,8 @@ impl PixState {
                 .unwrap_or_else(|| s.ui_width().unwrap_or(width));
 
         let hover = rect![pos, width - column_offset, height + 2 * fpad.y()];
-        let hovered = s.ui.try_hover(id, &hover);
-        let focused = s.ui.try_focus(id);
+        let hovered = s.focused() && s.ui.try_hover(id, &hover);
+        let focused = s.focused() && s.ui.try_focus(id);
         let active = s.ui.is_active(id);
 
         s.push();
@@ -450,8 +450,8 @@ impl PixState {
                 .unwrap_or_else(|| s.ui_width().unwrap_or(width));
 
         let hover = rect![pos, width - column_offset, height + 2 * fpad.y()];
-        let hovered = s.ui.try_hover(id, &hover);
-        let focused = s.ui.try_focus(id);
+        let hovered = s.focused() && s.ui.try_hover(id, &hover);
+        let focused = s.focused() && s.ui.try_focus(id);
         let active = s.ui.is_active(id);
 
         s.push();

@@ -20,22 +20,21 @@ impl PixEngine for Textures {
             let texture_id = s.create_texture(WIDTH / 2, HEIGHT / 2, None)?;
 
             // Draw to each texture separately
-            s.with_texture(texture_id, |s: &mut PixState| -> Result<()> {
-                let (w, h) = s.dimensions()?;
-                let center = point!(w / 2, h / 2);
-                s.background(Color::random());
+            s.set_texture_target(texture_id)?;
+            let (w, h) = s.dimensions()?;
+            let center = point!(w / 2, h / 2);
+            s.background(Color::random());
 
-                let color = Color::random();
-                s.fill(color);
-                s.stroke(None);
-                s.rect([10, 10, w as i32 - 20, h as i32 - 20])?;
+            let color = Color::random();
+            s.fill(color);
+            s.stroke(None);
+            s.rect([10, 10, w as i32 - 20, h as i32 - 20])?;
 
-                s.fill(color.inverted());
-                s.rect_mode(RectMode::Center);
-                s.set_cursor_pos(center.as_::<i32>());
-                s.text(format!("Quadrant {}", i))?;
-                Ok(())
-            })?;
+            s.fill(color.inverted());
+            s.rect_mode(RectMode::Center);
+            s.set_cursor_pos(center.as_::<i32>());
+            s.text(format!("Quadrant {}", i))?;
+            s.clear_texture_target();
 
             self.textures.push(texture_id);
         }

@@ -1,6 +1,6 @@
 use super::Renderer;
 use crate::{prelude::*, renderer::TextureRenderer};
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use sdl2::render::{Canvas, Texture as SdlTexture};
 use std::{
     cell::RefCell,
@@ -70,7 +70,8 @@ impl TextureRenderer for Renderer {
     ///
     /// It is up to the caller to ensure that the texture to be dropped was created with the
     /// current canvas. Currently, the only way to violate this is by creating a texture using
-    /// [`PixState::with_window`] and calling a texture method after that window has been closed.
+    /// [`PixState::set_window_target`] and calling a texture method after that window has been
+    /// closed.
     #[inline]
     fn delete_texture(&mut self, texture_id: TextureId) -> Result<()> {
         self.window_canvas_mut()?
@@ -185,13 +186,22 @@ impl TextureRenderer for Renderer {
         self.texture_target
     }
 
-    /// Set texture as the target for drawing operations.
+    /// Set a `Texture` as the primary target for drawing operations instead of the window
+    /// target canvas.
+    ///
+    /// # Errors
+    ///
+    /// If the texture has been dropped or is invalid, then an error is returned.
     #[inline]
-    fn set_texture_target(&mut self, texture_id: TextureId) {
-        self.texture_target = Some(texture_id);
+    fn set_texture_target(&mut self, id: TextureId) -> Result<()> {
+        self.windows
+            .values()
+            .find(|window| window.textures.contains_key(&id))
+            .map(|_| self.texture_target = Some(id))
+            .ok_or_else(|| anyhow!(Error::InvalidTexture(id)))
     }
 
-    /// Set texture as the target for drawing operations.
+    /// Clear `Texture` target back to the window target canvas for drawing operations.
     #[inline]
     fn clear_texture_target(&mut self) {
         self.texture_target = None;

@@ -123,8 +123,8 @@ impl PixState {
         let input = rect![x, y, width, label_height + 2 * ipad.y()];
 
         // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, &input);
-        let focused = s.ui.try_focus(id);
+        let hovered = s.focused() && s.ui.try_hover(id, &input);
+        let focused = s.focused() && s.ui.try_focus(id);
         let disabled = s.ui.disabled;
 
         s.push();
@@ -290,8 +290,8 @@ impl PixState {
         let input = rect![x, y, clamp_size(width), clamp_size(height)];
 
         // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, &input);
-        let focused = s.ui.try_focus(id);
+        let hovered = s.focused() && s.ui.try_hover(id, &input);
+        let focused = s.focused() && s.ui.try_focus(id);
         let disabled = s.ui.disabled;
 
         s.push();

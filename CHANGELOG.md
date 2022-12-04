@@ -30,6 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed `with_` prefix from builder methods.
 - `EngineBuilder::texture_cache` and `EngineBuilder::text_cache` now take a
   `NonZeroUsize` instead of `usize`.
+- Changed `PixState::with_texture` to `PixState::set_texture_target` and
+  `PixState::clear_texture_target`.
+- Changed `PixState::with_window` to `PixState::set_window_target` and
+  `PixState::clear_window_target`.
+- Changed `PixState::focused` to return whether the current window target is
+  focused instead of any window.
 
 ## [0.6.0] - 2022-06-20
 

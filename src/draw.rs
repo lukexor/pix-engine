@@ -124,10 +124,10 @@ impl PixState {
             self.update_texture(render_texture, None, bytes, self.width()? as usize * 4)?;
             // Render the `src` rect from texture onto another texture, and save it
             let src_texture = self.create_texture(src.width() as u32, src.height() as u32, None)?;
-            self.with_texture(src_texture, |s: &mut PixState| -> Result<()> {
-                s.texture(render_texture, src, None)?;
-                s.save_canvas(None, path)
-            })?;
+            self.set_texture_target(src_texture)?;
+            self.texture(render_texture, src, None)?;
+            self.save_canvas(None, path)?;
+            self.clear_texture_target();
             self.delete_texture(render_texture)?;
             self.delete_texture(src_texture)?;
             Ok(())

@@ -133,8 +133,8 @@ impl PixState {
         let drag = rect![x, y, width, font_size + 2 * ipad.y()];
 
         // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, &drag);
-        let focused = s.ui.try_focus(id);
+        let hovered = s.focused() && s.ui.try_hover(id, &drag);
+        let focused = s.focused() && s.ui.try_focus(id);
         let disabled = s.ui.disabled;
         let active = s.ui.is_active(id);
 
@@ -316,8 +316,8 @@ impl PixState {
         let slider = rect![x, y, width, font_size + 2 * ipad.y()];
 
         // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, &slider);
-        let focused = s.ui.try_focus(id);
+        let hovered = s.focused() && s.ui.try_hover(id, &slider);
+        let focused = s.focused() && s.ui.try_focus(id);
         let active = s.ui.is_active(id);
 
         // If editing, render editable text field instead

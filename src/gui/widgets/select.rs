@@ -98,8 +98,8 @@ impl PixState {
         let select_box = rect![x, y, width, item_height].offset_size(2 * fpad);
 
         // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, &select_box);
-        let focused = s.ui.try_focus(id);
+        let hovered = s.focused() && s.ui.try_hover(id, &select_box);
+        let focused = s.focused() && s.ui.try_focus(id);
 
         s.push();
         s.ui.push_cursor();
@@ -293,7 +293,7 @@ impl PixState {
         ];
 
         // Check hover/active/keyboard focus
-        let focused = s.ui.try_focus(id);
+        let focused = s.focused() && s.ui.try_focus(id);
 
         s.push();
         s.ui.push_cursor();
@@ -387,22 +387,22 @@ impl PixState {
             let texture_id = s.get_or_create_texture(id, None, size)?;
 
             s.ui.offset_mouse(size.top_left());
-            let mut changed = false;
-            s.with_texture(texture_id, |s: &mut PixState| {
-                s.clear()?;
-                s.set_cursor_pos([0, 0]);
-                if total_height > height {
-                    s.next_width((size.width() - spacing.scroll_size) as u32);
-                } else {
-                    s.next_width(size.width() as u32);
-                }
-                s.ui.disable_focus();
-                s.push_id(id);
-                changed = s.select_list(SELECT_POP_LABEL, selected, items, displayed_count)?;
-                s.pop_id();
-                s.ui.enable_focus();
-                Ok(())
-            })?;
+
+            s.set_texture_target(texture_id)?;
+            s.clear()?;
+            s.set_cursor_pos([0, 0]);
+            if total_height > height {
+                s.next_width((size.width() - spacing.scroll_size) as u32);
+            } else {
+                s.next_width(size.width() as u32);
+            }
+            s.ui.disable_focus();
+            s.push_id(id);
+            let changed = s.select_list(SELECT_POP_LABEL, selected, items, displayed_count)?;
+            s.pop_id();
+            s.ui.enable_focus();
+            s.clear_texture_target();
+
             s.ui.clear_mouse_offset();
             if changed {
                 s.ui.set_expanded(id, false);
@@ -433,7 +433,7 @@ impl PixState {
         let ipad = spacing.item_pad;
 
         // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, &select_list);
+        let hovered = s.focused() && s.ui.try_hover(id, &select_list);
         let active = s.ui.is_active(id);
         let disabled = s.ui.disabled;
 

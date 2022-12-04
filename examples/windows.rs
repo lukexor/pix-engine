@@ -36,12 +36,11 @@ impl PixEngine for WindowDemo {
         }
 
         for &(window_id, color) in &self.windows {
-            s.with_window(window_id, |s: &mut PixState| {
-                s.background(color);
-                s.fill(color.inverted());
-                s.text(format!("Window {}", window_id))?;
-                Ok(())
-            })?;
+            s.set_window_target(window_id)?;
+            s.background(color);
+            s.fill(color.inverted());
+            s.text(format!("Window {window_id}"))?;
+            s.reset_window_target();
         }
         Ok(())
     }

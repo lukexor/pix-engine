@@ -72,8 +72,10 @@ impl PixState {
         let button = rect![pos, width, label_height].offset_size(2 * fpad);
 
         // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, &button);
-        s.ui.try_focus(id);
+        let hovered = s.focused() && s.ui.try_hover(id, &button);
+        if s.focused() {
+            s.ui.try_focus(id);
+        }
         let disabled = s.ui.disabled;
         let active = s.ui.is_active(id);
 
@@ -149,8 +151,8 @@ impl PixState {
         let bounding_box = rect![pos, width, height].grow(pad / 2);
 
         // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, &bounding_box);
-        let focused = s.ui.try_focus(id);
+        let hovered = s.focused() && s.ui.try_hover(id, &bounding_box);
+        let focused = s.focused() && s.ui.try_focus(id);
         let disabled = s.ui.disabled;
         let active = s.ui.is_active(id);
 
@@ -217,8 +219,10 @@ impl PixState {
         let checkbox = square![pos, checkbox_size];
 
         // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, &checkbox);
-        s.ui.try_focus(id);
+        let hovered = s.focused() && s.ui.try_hover(id, &checkbox);
+        if s.focused() {
+            s.ui.try_focus(id);
+        }
         let disabled = s.ui.disabled;
 
         s.push();
@@ -307,8 +311,10 @@ impl PixState {
         let radio = circle![pos + radio_size, radio_size];
 
         // Check hover/active/keyboard focus
-        let hovered = s.ui.try_hover(id, &radio);
-        s.ui.try_focus(id);
+        let hovered = s.focused() && s.ui.try_hover(id, &radio);
+        if s.focused() {
+            s.ui.try_focus(id);
+        }
         let disabled = s.ui.disabled;
 
         s.push();
