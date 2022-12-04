@@ -15,26 +15,9 @@ Version]][crates.io] [![Downloads]][crates.io] [![License]][mit]
 [license]: https://img.shields.io/crates/l/pix-engine?style=plastic
 [mit]: https://github.com/lukexor/pix-engine/blob/main/LICENSE-MIT
 
-## Table of Contents
-
-- [Summary](#summary)
-- [Minimum Supported Rust Version](#minimum-supported-rust-version-msrv)
-- [Screenshots](#screenshots)
-- [Getting Started](#getting-started)
-  - [Installing Dependencies](#installing-dependencies)
-  - [Creating Your Application](#creating-your-application)
-  - [Build Features](#build-features)
-- [Features](#features)
-  - [PixState](#pixstate)
-  - [Drawing](#drawing)
-  - [Audio](#audio)
-  - [UI](#ui)
-  - [Logging](#logging)
-- [Known Issues](#known-issues)
-- [License](#license)
-- [Contribution](#contribution)
-- [Contact](#contact)
-- [Credits](#credits)
+📖 [Summary](#summary) - 🌆 [Screenshots](#screenshots) - 🚀 [Getting
+Started](#getting-started) - 🛠️ [Features](#features) - ⚠️ [Known
+Issues](#known-issues) - 💬 [Contact](#contact)
 
 ## Summary
 
@@ -62,7 +45,7 @@ Some examples of things you can create with `pix-engine`:
 - Image viewing and editing.
 - Visual art.
 
-## Minimum Supported Rust Version (MSRV)
+### Minimum Supported Rust Version (MSRV)
 
 The current minimum Rust version is `1.59.0`.
 
@@ -227,7 +210,9 @@ fn main() -> Result<()> {
 }
 ```
 
-### Build Features
+## Features
+
+### Crate Feature Flags
 
 The following features can be added to your `Cargo.toml` depending on your
 needs. e.g.:
@@ -249,8 +234,6 @@ features = ["serde"]
 - **opengl** - Forces `sdl2` to use `opengl` as its renderer. This feature is
   disabled by default, allowing `sdl2` to use whichever renderer it defaults to
   on the target system. For example, macOS defaults to `metal`.
-
-## Features
 
 ### PixState
 
