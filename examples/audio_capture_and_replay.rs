@@ -103,8 +103,7 @@ impl PixEngine for CaptureReplayDemo {
         if self.recording {
             let cursor_pos = s.cursor_pos();
             s.text(format!(
-                "Recording for {} seconds...",
-                RECORDING_LENGTH_SECONDS
+                "Recording for {RECORDING_LENGTH_SECONDS} seconds..."
             ))?;
             s.present();
 
@@ -139,8 +138,7 @@ impl PixEngine for CaptureReplayDemo {
             // Device is automatically closed when dropped
         } else {
             s.text(format!(
-                "Press <Space> to start recording for {} seconds.",
-                RECORDING_LENGTH_SECONDS
+                "Press <Space> to start recording for {RECORDING_LENGTH_SECONDS} seconds."
             ))?;
         }
 

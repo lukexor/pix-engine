@@ -25,14 +25,14 @@ use std::{
 impl LowerHex for Color {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let [red, green, blue, alpha] = self.channels();
-        write!(f, "#{:x}{:x}{:x}{:x}", red, green, blue, alpha)
+        write!(f, "#{red:x}{green:x}{blue:x}{alpha:x}")
     }
 }
 
 impl UpperHex for Color {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let [red, green, blue, alpha] = self.channels();
-        write!(f, "#{:X}{:X}{:X}{:X}", red, green, blue, alpha)
+        write!(f, "#{red:X}{green:X}{blue:X}{alpha:X}")
     }
 }
 

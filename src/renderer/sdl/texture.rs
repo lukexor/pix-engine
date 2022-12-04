@@ -169,9 +169,7 @@ impl TextureRenderer for Renderer {
                         .with_texture_canvas(&mut texture.borrow_mut(), |canvas| {
                             result = update(canvas);
                         })
-                        .with_context(|| {
-                            format!("failed to update texture target {}", texture_id)
-                        })?;
+                        .with_context(|| format!("failed to update texture target {texture_id}"))?;
                     result
                 } else {
                     Err(Error::InvalidTexture(texture_id).into())

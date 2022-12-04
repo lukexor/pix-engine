@@ -33,7 +33,7 @@ impl PixEngine for Textures {
             s.fill(color.inverted());
             s.rect_mode(RectMode::Center);
             s.set_cursor_pos(center.as_::<i32>());
-            s.text(format!("Quadrant {}", i))?;
+            s.text(format!("Quadrant {i}"))?;
             s.clear_texture_target();
 
             self.textures.push(texture_id);

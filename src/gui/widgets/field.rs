@@ -36,7 +36,7 @@
 //! # }
 //! ```
 
-use crate::{gui::MOD_CTRL, ops::clamp_size, prelude::*, error::Result};
+use crate::{error::Result, gui::MOD_CTRL, ops::clamp_size, prelude::*};
 
 const TEXT_CURSOR: &str = "_";
 
@@ -174,7 +174,7 @@ impl PixState {
                 s.text(TEXT_CURSOR)?;
             }
         } else if focused {
-            s.text(format!("{}{}", value, TEXT_CURSOR))?;
+            s.text(format!("{value}{TEXT_CURSOR}"))?;
         } else {
             s.text(&value)?;
         }
@@ -338,7 +338,7 @@ impl PixState {
             }
             size
         } else if focused {
-            s.text(format!("{}{}", value, TEXT_CURSOR))?
+            s.text(format!("{value}{TEXT_CURSOR}"))?
         } else {
             s.text(&value)?
         };
@@ -364,7 +364,7 @@ impl PixState {
             if let Some(filter) = filter {
                 value.retain(filter);
             }
-            let (_, height) = s.text_size(&format!("{}{}", value, TEXT_CURSOR))?;
+            let (_, height) = s.text_size(&format!("{value}{TEXT_CURSOR}"))?;
             text_height = height + 2 * ipad.y();
 
             // Keep cursor within scroll region

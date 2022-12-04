@@ -255,7 +255,7 @@ impl Gui {
             0.005,
             0.0,
             1.0,
-            Some(|val| format!("{:.3}", val).into()),
+            Some(|val| format!("{val:.3}").into()),
         )?;
 
         // Sliders
@@ -273,7 +273,7 @@ impl Gui {
             &mut self.advanced_slider,
             0.0,
             3.0,
-            Some(|v| format!("{:.3}", v).into()),
+            Some(|v| format!("{v:.3}").into()),
         )?;
 
         Ok(())
@@ -295,7 +295,7 @@ impl Gui {
         // Scroll area
         s.scroll_area("Scroll Area", 300, 200, |s: &mut PixState| {
             for i in 0..10 {
-                s.text(format!("{}: Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam", i))?;
+                s.text(format!("{i}: Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam"))?;
             }
             Ok(())
         })?;
@@ -315,7 +315,7 @@ impl Gui {
 
         s.collapsing_tree("Basic tree", |s: &mut PixState| {
             for i in 0..3 {
-                s.collapsing_tree(format!("Child {}", i), |s: &mut PixState| {
+                s.collapsing_tree(format!("Child {i}"), |s: &mut PixState| {
                     s.text("Some text")?;
                     Ok(())
                 })?;

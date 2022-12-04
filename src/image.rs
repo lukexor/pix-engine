@@ -430,10 +430,10 @@ impl Image {
         png.set_depth(png::BitDepth::Eight);
         let mut writer = png
             .write_header()
-            .with_context(|| format!("failed to write png header: {:?}", path))?;
+            .with_context(|| format!("failed to write png header: {path:?}"))?;
         writer
             .write_image_data(self.as_bytes())
-            .with_context(|| format!("failed to write png data: {:?}", path))
+            .with_context(|| format!("failed to write png data: {path:?}"))
     }
 }
 

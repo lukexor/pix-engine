@@ -941,7 +941,7 @@ impl fmt::Display for Color {
     #[allow(clippy::many_single_char_names)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let [r, g, b, a] = self.channels();
-        write!(f, "[{}, {}, {}, {}]", r, g, b, a)
+        write!(f, "[{r}, {g}, {b}, {a}]")
     }
 }
 

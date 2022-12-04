@@ -79,7 +79,7 @@ impl Renderer {
                     .with_texture_canvas(&mut texture.borrow_mut(), |canvas| {
                         result = f(canvas);
                     })
-                    .with_context(|| format!("failed to update texture target {}", texture_id))?;
+                    .with_context(|| format!("failed to update texture target {texture_id}"))?;
                 result
             } else {
                 Err(Error::InvalidTexture(texture_id).into())
@@ -355,9 +355,7 @@ impl Rendering for Renderer {
                         .with_texture_canvas(&mut texture.borrow_mut(), |canvas| {
                             result = update(canvas);
                         })
-                        .with_context(|| {
-                            format!("failed to update texture target {}", texture_id)
-                        })?;
+                        .with_context(|| format!("failed to update texture target {texture_id}"))?;
                     result?;
                 } else {
                     return Err(Error::InvalidTexture(texture_id).into());
@@ -774,7 +772,7 @@ impl Rendering for Renderer {
                     .with_texture_canvas(&mut texture.borrow_mut(), |canvas| {
                         result = update(canvas);
                     })
-                    .with_context(|| format!("failed to update texture target {}", texture_id))?;
+                    .with_context(|| format!("failed to update texture target {texture_id}"))?;
                 result?;
             } else {
                 return Err(Error::InvalidTexture(texture_id).into());
@@ -803,7 +801,7 @@ impl Rendering for Renderer {
                     .with_texture_canvas(&mut texture.borrow_mut(), |canvas| {
                         result = canvas.read_pixels(None, SdlPixelFormat::RGBA32);
                     })
-                    .with_context(|| format!("failed to read texture target {}", texture_id))?;
+                    .with_context(|| format!("failed to read texture target {texture_id}"))?;
                 Ok(result.map_err(Error::Renderer)?)
             } else {
                 Err(Error::InvalidTexture(texture_id).into())

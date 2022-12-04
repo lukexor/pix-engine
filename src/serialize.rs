@@ -20,7 +20,7 @@ pub mod arrays {
         type Value = [T; N];
 
         fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            formatter.write_str(&format!("an array of length {}", N))
+            formatter.write_str(&format!("an array of length {N}"))
         }
 
         #[inline]
