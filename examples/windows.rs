@@ -11,7 +11,7 @@ impl WindowDemo {
 }
 
 impl PixEngine for WindowDemo {
-    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         s.clear()?;
 
         s.fill(Color::WHITE);
@@ -50,7 +50,7 @@ impl PixEngine for WindowDemo {
         _s: &mut PixState,
         window_id: WindowId,
         evt: WindowEvent,
-    ) -> Result<()> {
+    ) -> PixResult<()> {
         if let WindowEvent::Close = evt {
             self.windows.retain(|&(id, _)| id != window_id);
         }
@@ -58,7 +58,7 @@ impl PixEngine for WindowDemo {
     }
 }
 
-fn main() -> Result<()> {
+fn main() -> PixResult<()> {
     let mut engine = Engine::builder()
         .dimensions(400, 400)
         .title("Window 1")

@@ -79,7 +79,7 @@ impl Gui {
         }
     }
 
-    fn basic_widgets(&mut self, s: &mut PixState) -> Result<()> {
+    fn basic_widgets(&mut self, s: &mut PixState) -> PixResult<()> {
         if s.button("Button")? {
             self.button_clicked = !self.button_clicked;
         }
@@ -107,7 +107,7 @@ impl Gui {
         Ok(())
     }
 
-    fn tooltip_widgets(&mut self, s: &mut PixState) -> Result<()> {
+    fn tooltip_widgets(&mut self, s: &mut PixState) -> PixResult<()> {
         s.text("Hover me")?;
         if s.hovered() {
             s.tooltip("A hot tooltip")?;
@@ -141,7 +141,7 @@ impl Gui {
         Ok(())
     }
 
-    fn text_widgets(&mut self, s: &mut PixState) -> Result<()> {
+    fn text_widgets(&mut self, s: &mut PixState) -> PixResult<()> {
         s.text_transformed("Flipped", None, None, Flipped::Both)?;
         if s.hovered() {
             s.fill(Color::LIGHT_GREY);
@@ -191,7 +191,7 @@ impl Gui {
         Ok(())
     }
 
-    fn text_field_widgets(&mut self, s: &mut PixState) -> Result<()> {
+    fn text_field_widgets(&mut self, s: &mut PixState) -> PixResult<()> {
         s.next_width(200);
         s.text_field("Text Field", &mut self.text_field)?;
         s.same_line(None);
@@ -236,7 +236,7 @@ impl Gui {
         Ok(())
     }
 
-    fn drag_and_slider_widgets(&mut self, s: &mut PixState) -> Result<()> {
+    fn drag_and_slider_widgets(&mut self, s: &mut PixState) -> PixResult<()> {
         // Drag bars
         s.next_width(200);
         s.drag("Drag", &mut self.drag, 1)?;
@@ -279,7 +279,7 @@ impl Gui {
         Ok(())
     }
 
-    fn select_and_tree_widgets(&mut self, s: &mut PixState) -> Result<()> {
+    fn select_and_tree_widgets(&mut self, s: &mut PixState) -> PixResult<()> {
         let items = [
             "Bulbasaur",
             "Charmander",
@@ -332,7 +332,7 @@ impl Gui {
         Ok(())
     }
 
-    fn settings(&mut self, s: &mut PixState) -> Result<()> {
+    fn settings(&mut self, s: &mut PixState) -> PixResult<()> {
         s.next_width(200);
         if s.select_box("Theme", &mut self.theme, &THEMES, THEMES.len())? {
             match THEMES[self.theme] {
@@ -386,7 +386,7 @@ impl Gui {
 }
 
 impl PixEngine for Gui {
-    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         s.clear()?;
 
         if self.disabled {
@@ -438,7 +438,7 @@ impl PixEngine for Gui {
     }
 }
 
-fn main() -> Result<()> {
+fn main() -> PixResult<()> {
     let mut engine = Engine::builder()
         .dimensions(1024, 768)
         .title("GUI Demo")

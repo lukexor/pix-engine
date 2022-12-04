@@ -26,7 +26,7 @@
 //! [`contains`]: Contains::contains
 //! [`intersects`]: Intersects::intersects
 
-use crate::{prelude::*, renderer::Rendering};
+use crate::{error::Result, prelude::*, renderer::Rendering};
 use std::iter::Iterator;
 
 #[macro_use]

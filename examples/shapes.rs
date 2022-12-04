@@ -7,13 +7,13 @@ struct Shapes {
 }
 
 impl PixEngine for Shapes {
-    fn on_start(&mut self, s: &mut PixState) -> Result<()> {
+    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         s.background(50);
         s.stroke(Color::BLACK);
         Ok(())
     }
 
-    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         s.clear()?;
 
         s.stroke(Color::CYAN);
@@ -90,7 +90,7 @@ impl PixEngine for Shapes {
     }
 }
 
-fn main() -> Result<()> {
+fn main() -> PixResult<()> {
     let mut engine = Engine::builder()
         .dimensions(800, 600)
         .title("Shapes")

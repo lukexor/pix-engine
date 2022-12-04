@@ -1,6 +1,7 @@
 //! SDL Renderer
 
 use crate::{
+    error::{Error, Result},
     gui::theme::{FontId, FontSrc},
     prelude::*,
     renderer::{RendererSettings, Rendering},

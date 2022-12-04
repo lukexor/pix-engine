@@ -40,7 +40,10 @@
 //! ```
 
 use super::Mode::{Hsb, Hsl, Rgb};
-use crate::prelude::*;
+use crate::{
+    error::{Error, Result},
+    prelude::*,
+};
 use std::{convert::TryFrom, result, str::FromStr};
 
 impl Color {
@@ -224,8 +227,7 @@ impl FromStr for Color {
         }
 
         let mut channels: [u8; 4] = [0, 0, 0, 255];
-        let parse_hex =
-            |hex: &str| u8::from_str_radix(hex, 16).map_err(|_| Error::ParseColorError);
+        let parse_hex = |hex: &str| u8::from_str_radix(hex, 16).map_err(|_| Error::ParseColorError);
 
         let string = string.trim().to_lowercase();
         match string.len() - 1 {

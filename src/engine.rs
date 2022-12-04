@@ -54,7 +54,7 @@
 //! }
 //! ```
 
-use crate::{image::Icon, prelude::*, renderer::RendererSettings};
+use crate::{error::Result, image::Icon, prelude::*, renderer::RendererSettings};
 use log::{debug, error, info};
 use std::{
     num::NonZeroUsize,

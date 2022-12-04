@@ -52,7 +52,7 @@ impl Maze {
         self.cells[random!(self.len())]
     }
 
-    pub fn draw(&self, s: &mut PixState) -> Result<()> {
+    pub fn draw(&self, s: &mut PixState) -> PixResult<()> {
         for cell in &self.cells {
             cell.draw(s, 51)?;
         }

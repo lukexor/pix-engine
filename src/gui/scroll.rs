@@ -1,7 +1,7 @@
 //! UI scrollbar rendering functions.
 
 use super::state::ElementId;
-use crate::{ops::clamp_size, prelude::*};
+use crate::{error::Result, ops::clamp_size, prelude::*};
 
 pub(crate) const THUMB_MIN: i32 = 10;
 pub(crate) const SCROLL_SPEED: i32 = 3;

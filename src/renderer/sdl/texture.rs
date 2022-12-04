@@ -1,5 +1,9 @@
 use super::Renderer;
-use crate::{prelude::*, renderer::TextureRenderer};
+use crate::{
+    error::{Error, Result},
+    prelude::*,
+    renderer::TextureRenderer,
+};
 use anyhow::{anyhow, Context};
 use sdl2::render::{Canvas, Texture as SdlTexture};
 use std::{

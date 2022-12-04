@@ -62,7 +62,7 @@ impl Cell {
         self.walls[direction as usize] = false;
     }
 
-    pub fn draw<C: Into<Color>>(&self, s: &mut PixState, color: C) -> Result<()> {
+    pub fn draw<C: Into<Color>>(&self, s: &mut PixState, color: C) -> PixResult<()> {
         let color = color.into();
         s.fill(color);
         s.stroke(None);

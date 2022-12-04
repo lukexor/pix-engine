@@ -65,7 +65,7 @@ impl MazeApp {
         self.timer.start();
     }
 
-    fn create_maze(&mut self) -> Result<()> {
+    fn create_maze(&mut self) -> PixResult<()> {
         self.maze = Maze::new(self.cols, self.rows);
         self.creator = MazeCreator::new(&self.maze);
         self.timer.start();
@@ -75,7 +75,7 @@ impl MazeApp {
         Ok(())
     }
 
-    fn step_create_maze(&mut self) -> Result<()> {
+    fn step_create_maze(&mut self) -> PixResult<()> {
         self.creator.step(&mut self.maze)?;
         if self.creator.completed() {
             self.timer.stop();
@@ -84,7 +84,7 @@ impl MazeApp {
         Ok(())
     }
 
-    fn start_solve_maze(&mut self, algorithm: Algorithm) -> Result<()> {
+    fn start_solve_maze(&mut self, algorithm: Algorithm) -> PixResult<()> {
         if let MazeMode::Idle | MazeMode::Creating = self.mode {
             self.create_maze()?;
         }
@@ -94,7 +94,7 @@ impl MazeApp {
         Ok(())
     }
 
-    fn solve_maze(&mut self) -> Result<()> {
+    fn solve_maze(&mut self) -> PixResult<()> {
         if let MazeMode::Idle | MazeMode::Creating = self.mode {
             self.create_maze()?;
         }
@@ -114,7 +114,7 @@ impl MazeApp {
         }
     }
 
-    fn draw(&mut self, s: &mut PixState) -> Result<()> {
+    fn draw(&mut self, s: &mut PixState) -> PixResult<()> {
         match self.mode {
             MazeMode::Idle => self.maze.draw(s)?,
             MazeMode::Creating | MazeMode::Unsolved => {
@@ -164,7 +164,7 @@ impl MazeApp {
 }
 
 impl PixEngine for MazeApp {
-    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         s.clear()?;
 
         self.draw(s)?;
@@ -176,7 +176,7 @@ impl PixEngine for MazeApp {
         Ok(())
     }
 
-    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
         let frame_rate = s.target_frame_rate().unwrap_or(60);
         match event.key {
             Key::Up if frame_rate >= 60 => {
@@ -194,7 +194,7 @@ impl PixEngine for MazeApp {
     }
 }
 
-pub fn main() -> Result<()> {
+pub fn main() -> PixResult<()> {
     let mut engine = Engine::builder()
         .dimensions(WIDTH, HEIGHT)
         .title("Maze Generation & A* Search")

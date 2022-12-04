@@ -37,7 +37,7 @@
 //! # }
 //! ```
 
-use crate::{ops::clamp_dimensions, prelude::*};
+use crate::{error::Result, ops::clamp_dimensions, prelude::*};
 
 impl PixState {
     /// Draw help marker text that, when hovered, displays a help box with text to the current

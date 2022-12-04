@@ -25,7 +25,7 @@
 //! );
 //! ```
 
-use crate::prelude::*;
+use crate::{error::Result, prelude::*};
 #[cfg(feature = "serde")]
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 

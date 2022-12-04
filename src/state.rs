@@ -43,6 +43,7 @@
 //! ```
 
 use crate::{
+    error::Result,
     gui::state::UiState,
     prelude::*,
     renderer::{Renderer, RendererSettings, Rendering, WindowRenderer},

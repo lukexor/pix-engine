@@ -1,5 +1,6 @@
 use super::{texture::RendererTexture, FontId, Renderer};
 use crate::{
+    error::{Error, Result},
     image::Icon,
     prelude::*,
     renderer::{RendererSettings, WindowRenderer},

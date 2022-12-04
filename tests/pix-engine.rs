@@ -25,21 +25,21 @@ impl App {
 }
 
 impl PixEngine for App {
-    fn on_start(&mut self, s: &mut PixState) -> Result<()> {
+    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         self.start_count += 1;
         if self.quit_on_start {
             s.quit();
         }
         Ok(())
     }
-    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         self.update_count += 1;
         if self.quit_on_update || self.update_count > 2 {
             s.quit();
         }
         Ok(())
     }
-    fn on_stop(&mut self, s: &mut PixState) -> Result<()> {
+    fn on_stop(&mut self, s: &mut PixState) -> PixResult<()> {
         self.stop_count += 1;
         if self.abort_quit_on_stop {
             self.abort_quit_on_stop = false;
@@ -50,7 +50,7 @@ impl PixEngine for App {
     }
 }
 
-fn create_engine() -> Result<Engine> {
+fn create_engine() -> PixResult<Engine> {
     Engine::builder()
         .title("pix-engine integration test")
         .position_centered()
@@ -60,7 +60,7 @@ fn create_engine() -> Result<Engine> {
 
 #[test]
 #[ignore = "engine can only be tested in the main thread. --test-threads=1"]
-fn single_thread_engine_start() -> Result<()> {
+fn single_thread_engine_start() -> PixResult<()> {
     let mut eng = create_engine()?;
     // Quitting from on_start should exit the game loop early
     let mut app = App::new();
@@ -74,7 +74,7 @@ fn single_thread_engine_start() -> Result<()> {
 
 #[test]
 #[ignore = "engine can only be tested in the main thread. --test-threads=1"]
-fn single_thread_engine_update() -> Result<()> {
+fn single_thread_engine_update() -> PixResult<()> {
     let mut eng = create_engine()?;
     // Quitting from on_update should exit but still run on_stop
     let mut app = App::new();
@@ -88,7 +88,7 @@ fn single_thread_engine_update() -> Result<()> {
 
 #[test]
 #[ignore = "engine can only be tested in the main thread. --test-threads=1"]
-fn single_thread_engine_stop() -> Result<()> {
+fn single_thread_engine_stop() -> PixResult<()> {
     let mut eng = create_engine()?;
     // Aborting quit from on_stop should resume game loop
     let mut app = App::new();

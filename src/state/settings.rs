@@ -47,6 +47,7 @@
 //! - [`PixState::pop`]: Pop the previously pushed settings off the stack, restoring them.
 
 use crate::{
+    error::Result,
     prelude::*,
     renderer::{Rendering, WindowRenderer},
 };

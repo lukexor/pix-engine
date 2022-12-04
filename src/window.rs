@@ -33,6 +33,7 @@
 //!   operations.
 
 use crate::{
+    error::Result,
     image::Icon,
     ops::clamp_dimensions,
     prelude::*,

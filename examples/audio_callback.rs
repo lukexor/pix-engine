@@ -26,7 +26,7 @@ impl AudioCallback for SquareWave {
 }
 
 impl PixEngine for CallbackDemo {
-    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         s.clear()?;
 
         let desired_spec = AudioSpecDesired {
@@ -56,7 +56,7 @@ impl PixEngine for CallbackDemo {
     }
 }
 
-fn main() -> Result<()> {
+fn main() -> PixResult<()> {
     if env::var("RUST_LOG").is_err() {
         env::set_var("RUST_LOG", "info");
     }

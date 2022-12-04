@@ -14,7 +14,7 @@ impl Textures {
 }
 
 impl PixEngine for Textures {
-    fn on_start(&mut self, s: &mut PixState) -> Result<()> {
+    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         // One texture for each quadrant of the screen
         for i in 0..4 {
             let texture_id = s.create_texture(WIDTH / 2, HEIGHT / 2, None)?;
@@ -42,7 +42,7 @@ impl PixEngine for Textures {
         Ok(())
     }
 
-    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         for (i, texture_id) in self.textures.iter_mut().enumerate() {
             let w = WIDTH as i32 / 2;
             let h = HEIGHT as i32 / 2;
@@ -59,7 +59,7 @@ impl PixEngine for Textures {
     }
 }
 
-fn main() -> Result<()> {
+fn main() -> PixResult<()> {
     let mut engine = Engine::builder()
         .dimensions(WIDTH, HEIGHT)
         .title("Textures")

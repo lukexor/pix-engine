@@ -55,7 +55,7 @@
 //! # }
 //! ```
 
-use crate::{ops::clamp_size, prelude::*};
+use crate::{error::Result, ops::clamp_size, prelude::*};
 
 impl PixState {
     /// Reset current UI rendering position back to the previous line with item padding, and

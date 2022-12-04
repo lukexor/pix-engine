@@ -27,7 +27,7 @@
 
 use anyhow::Context;
 
-use crate::{prelude::*, renderer::Rendering};
+use crate::{error::Result, prelude::*, renderer::Rendering};
 use log::info;
 use std::{fs::File, io::BufWriter, path::Path};
 

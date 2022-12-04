@@ -37,12 +37,13 @@
 //! ```
 
 use crate::{
+    error::Result,
     gui::{scroll::THUMB_MIN, MOD_CTRL},
     ops::clamp_size,
     prelude::*,
 };
 use num_traits::{clamp, Bounded};
-use std::{borrow::Cow, error::Error, fmt, str::FromStr};
+use std::{borrow::Cow, error::Error as StdError, fmt, str::FromStr};
 
 impl PixState {
     /// Draw a draggable number widget to the current canvas.
@@ -67,7 +68,7 @@ impl PixState {
     pub fn drag<T, L>(&mut self, label: L, value: &mut T, speed: T) -> Result<bool>
     where
         T: Num + num_traits::NumCast + Bounded + fmt::Display + FromStr,
-        <T as FromStr>::Err: Error + Sync + Send + 'static,
+        <T as FromStr>::Err: StdError + Sync + Send + 'static,
         L: AsRef<str>,
     {
         self.advanced_drag(label, value, speed, T::min_value(), T::max_value(), None)
@@ -108,7 +109,7 @@ impl PixState {
     ) -> Result<bool>
     where
         T: Num + num_traits::NumCast + fmt::Display + FromStr,
-        <T as FromStr>::Err: Error + Sync + Send + 'static,
+        <T as FromStr>::Err: StdError + Sync + Send + 'static,
         L: AsRef<str>,
     {
         let label = label.as_ref();
@@ -248,7 +249,7 @@ impl PixState {
     pub fn slider<T, L>(&mut self, label: L, value: &mut T, min: T, max: T) -> Result<bool>
     where
         T: Num + num_traits::NumCast + fmt::Display + FromStr,
-        <T as FromStr>::Err: Error + Sync + Send + 'static,
+        <T as FromStr>::Err: StdError + Sync + Send + 'static,
         L: AsRef<str>,
     {
         self.advanced_slider(label, value, min, max, None)
@@ -291,7 +292,7 @@ impl PixState {
     ) -> Result<bool>
     where
         T: Num + num_traits::NumCast + fmt::Display + FromStr,
-        <T as FromStr>::Err: Error + Sync + Send + 'static,
+        <T as FromStr>::Err: StdError + Sync + Send + 'static,
         L: AsRef<str>,
     {
         let label = label.as_ref();

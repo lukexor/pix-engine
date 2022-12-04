@@ -18,7 +18,7 @@
 //! let line = Line::new([10, 20, 5], [30, 10, 5]);
 //! ```
 
-use crate::prelude::*;
+use crate::{error::Result, prelude::*};
 #[cfg(feature = "serde")]
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 

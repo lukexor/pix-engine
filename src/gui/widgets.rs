@@ -25,7 +25,7 @@
 //! # }
 //! ```
 
-use crate::{gui::Direction, ops::clamp_size, prelude::*};
+use crate::{error::Result, gui::Direction, ops::clamp_size, prelude::*};
 
 pub mod field;
 pub mod select;

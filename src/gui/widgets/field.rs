@@ -36,7 +36,7 @@
 //! # }
 //! ```
 
-use crate::{gui::MOD_CTRL, ops::clamp_size, prelude::*};
+use crate::{gui::MOD_CTRL, ops::clamp_size, prelude::*, error::Result};
 
 const TEXT_CURSOR: &str = "_";
 

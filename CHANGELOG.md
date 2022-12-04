@@ -22,7 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Changed `Unsupported` `Event` variants to `Unhandled` to better reflect
   intention.
-- Renamed `PixResult` to `Result` and `PixError` to `Error`.
 - Renamed `AppState` to `PixEngine` and `PixEngine` to `Engine`.
 - Renamed `engine::Builder` to `engine::EngineBuilder` and converted to a
   consuming builder.

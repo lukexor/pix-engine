@@ -42,7 +42,7 @@ impl Glyph {
         GLYPHS[random!(0, GLYPHS.len())]
     }
 
-    fn draw(&mut self, s: &mut PixState, x: i32, y: i32) -> Result<()> {
+    fn draw(&mut self, s: &mut PixState, x: i32, y: i32) -> PixResult<()> {
         if random!(0, 1000) <= Self::MORPH_PROB {
             self.value = Self::random_glyph();
         }
@@ -116,7 +116,7 @@ impl Stream {
         }
     }
 
-    fn draw(&mut self, s: &mut PixState) -> Result<()> {
+    fn draw(&mut self, s: &mut PixState) -> PixResult<()> {
         self.y += (self.speed * s.delta_time().as_secs_f64()) as i32;
         for (i, glyph) in self.glyphs.iter_mut().enumerate() {
             let y = self.y - (i as i32 * self.glyph_size as i32);
@@ -168,7 +168,7 @@ impl Matrix {
 }
 
 impl PixEngine for Matrix {
-    fn on_start(&mut self, s: &mut PixState) -> Result<()> {
+    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         s.background(BG_COLOR);
         s.set_window_dimensions(s.display_dimensions()?)?;
         self.init(s.dimensions()?);
@@ -178,7 +178,7 @@ impl PixEngine for Matrix {
         Ok(())
     }
 
-    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         s.clear()?;
 
         if s.elapsed() < Duration::from_secs_f64(1.5) {
@@ -198,7 +198,7 @@ impl PixEngine for Matrix {
         Ok(())
     }
 
-    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
         match event.key {
             Key::Escape => s.quit(),
             Key::Space => {
@@ -212,7 +212,7 @@ impl PixEngine for Matrix {
     }
 }
 
-fn main() -> Result<()> {
+fn main() -> PixResult<()> {
     let mut engine = Engine::builder()
         .dimensions(DEFAULT_WIDTH, DEFAULT_HEIGHT)
         .position(0, 0)

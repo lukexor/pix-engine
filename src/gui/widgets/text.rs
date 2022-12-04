@@ -26,7 +26,7 @@
 //! # }
 //! ```
 
-use crate::{gui::Direction, ops::clamp_size, prelude::*, renderer::Rendering};
+use crate::{error::Result, gui::Direction, ops::clamp_size, prelude::*, renderer::Rendering};
 
 impl PixState {
     /// Return the dimensions of given text for drawing to the current canvas.

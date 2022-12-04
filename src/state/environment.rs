@@ -21,6 +21,7 @@
 //! - [`PixState::second`]: Return the current second between 0-59.
 
 use crate::{
+    error::Result,
     prelude::*,
     renderer::{Rendering, WindowRenderer},
 };

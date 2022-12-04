@@ -1,6 +1,11 @@
 //! [Image] and [`PixelFormat`] functions.
 
-use crate::{ops::clamp_dimensions, prelude::*, renderer::Rendering};
+use crate::{
+    error::{Error, Result},
+    ops::clamp_dimensions,
+    prelude::*,
+    renderer::Rendering,
+};
 #[cfg(not(target_arch = "wasm32"))]
 use anyhow::Context;
 #[cfg(not(target_arch = "wasm32"))]

@@ -1,6 +1,6 @@
 //! Graphics renderer functions.
 
-use crate::{image::Icon, prelude::*};
+use crate::{error::Result, image::Icon, prelude::*};
 use std::num::NonZeroUsize;
 
 pub(crate) use crate::{texture::TextureRenderer, window::WindowRenderer};

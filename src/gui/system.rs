@@ -30,7 +30,7 @@
 //! # }
 //! ```
 
-use crate::{prelude::*, renderer::Rendering};
+use crate::{error::Result, prelude::*, renderer::Rendering};
 
 impl PixState {
     /// Get clipboard text from the system clipboard.

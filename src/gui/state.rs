@@ -2,6 +2,7 @@
 
 use super::theme::FontId;
 use crate::{
+    error::Result,
     gui::{keys::KeyState, mouse::MouseState},
     prelude::*,
 };

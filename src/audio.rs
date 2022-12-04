@@ -182,7 +182,7 @@
 //!
 //! [`PixEngine`]: crate::prelude::PixEngine
 
-use crate::prelude::{Result, PixState};
+use crate::{error::Result, prelude::PixState};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 

@@ -76,7 +76,7 @@ pub mod prelude {
     pub use super::color::{Color, Mode as ColorMode};
     pub use super::draw::Draw;
     pub use super::engine::{Engine, PixEngine};
-    pub use super::error::{Error, Result};
+    pub use super::error::{Error as PixError, Result as PixResult};
     pub use super::event::{
         Axis, ControllerButton, ControllerEvent, ControllerId, ControllerUpdate, Event, HatState,
         Key, KeyEvent, KeyMod, Mouse, WindowEvent,

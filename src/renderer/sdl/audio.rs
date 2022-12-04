@@ -3,6 +3,7 @@
 use super::Renderer;
 use crate::{
     audio::{AudioDeviceDriver, AudioDriver},
+    error::{Error, Result},
     prelude::*,
 };
 use anyhow::anyhow;

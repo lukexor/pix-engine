@@ -97,6 +97,7 @@
 
 use self::state::ElementId;
 use crate::{
+    error::Result,
     ops::{clamp_dimensions, clamp_size},
     prelude::*,
     renderer::Rendering,

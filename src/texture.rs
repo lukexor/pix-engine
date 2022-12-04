@@ -47,7 +47,7 @@
 //! # }
 //! ```
 
-use crate::prelude::*;
+use crate::{error::Result, prelude::*};
 use std::{
     fmt,
     ops::{Deref, DerefMut},

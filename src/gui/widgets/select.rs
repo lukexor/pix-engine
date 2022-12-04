@@ -22,6 +22,7 @@
 //! ```
 
 use crate::{
+    error::Result,
     gui::{state::ElementId, Direction},
     ops::clamp_size,
     prelude::*,

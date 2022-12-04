@@ -26,7 +26,7 @@
 //! let c = circle!(point![10, 20], 100);
 //! ```
 
-use crate::prelude::*;
+use crate::{error::Result, prelude::*};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 

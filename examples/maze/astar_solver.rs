@@ -147,7 +147,7 @@ impl AStarSolver {
         }
     }
 
-    pub fn draw(&self, s: &mut PixState, maze: &Maze) -> Result<()> {
+    pub fn draw(&self, s: &mut PixState, maze: &Maze) -> PixResult<()> {
         for cell in maze.cells().iter() {
             if self.path_set.contains(&cell.id()) {
                 cell.draw(s, [0, 125, 125])?;

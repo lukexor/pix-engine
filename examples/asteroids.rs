@@ -165,7 +165,7 @@ impl Asteroids {
         }
     }
 
-    fn draw_asteroids(&mut self, s: &mut PixState) -> Result<()> {
+    fn draw_asteroids(&mut self, s: &mut PixState) -> PixResult<()> {
         let (w, h) = (self.width as f64, self.height as f64);
         let elapsed = s.delta_time().as_secs_f64();
         // Draw asteroids
@@ -191,7 +191,7 @@ impl Asteroids {
         Ok(())
     }
 
-    fn draw_bullets(&mut self, s: &mut PixState) -> Result<()> {
+    fn draw_bullets(&mut self, s: &mut PixState) -> PixResult<()> {
         let (w, h) = (self.width as f64, self.height as f64);
         let elapsed = s.delta_time().as_secs_f64();
         // Update bullet and check collisions
@@ -244,7 +244,7 @@ impl Asteroids {
         Ok(())
     }
 
-    fn draw_ship(&mut self, s: &mut PixState) -> Result<()> {
+    fn draw_ship(&mut self, s: &mut PixState) -> PixResult<()> {
         let (w, h) = (self.width as f64, self.height as f64);
         let elapsed = s.delta_time().as_secs_f64();
         self.ship.pos += self.ship.vel * elapsed;
@@ -259,7 +259,7 @@ impl Asteroids {
         )
     }
 
-    fn draw_gameover(&mut self, s: &mut PixState) -> Result<()> {
+    fn draw_gameover(&mut self, s: &mut PixState) -> PixResult<()> {
         let x = self.width as i32 / 2 - 8;
         let y = self.height as i32 / 2 - 100;
         s.fill(Color::WHITE);
@@ -274,7 +274,7 @@ impl Asteroids {
         Ok(())
     }
 
-    fn draw_score(&mut self, s: &mut PixState) -> Result<()> {
+    fn draw_score(&mut self, s: &mut PixState) -> PixResult<()> {
         // Draw Level, Lives, & Score
         s.font_size(16)?;
         s.fill(Color::WHITE);
@@ -303,14 +303,14 @@ impl Asteroids {
 }
 
 impl PixEngine for Asteroids {
-    fn on_start(&mut self, s: &mut PixState) -> Result<()> {
+    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         s.background(Color::BLACK);
         self.spawn_new_ship();
         self.spawn_asteroids();
         Ok(())
     }
 
-    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         s.clear()?;
         if self.gameover {
             return self.draw_gameover(s);
@@ -323,7 +323,7 @@ impl PixEngine for Asteroids {
         Ok(())
     }
 
-    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
         match event.key {
             Key::Escape => {
                 let running = s.running();
@@ -336,7 +336,7 @@ impl PixEngine for Asteroids {
         Ok(false)
     }
 
-    fn on_key_released(&mut self, _s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    fn on_key_released(&mut self, _s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
         match event.key {
             Key::Space if !self.gameover => {
                 self.bullets.push(SpaceObj::new(
@@ -352,7 +352,7 @@ impl PixEngine for Asteroids {
     }
 }
 
-pub fn main() -> Result<()> {
+pub fn main() -> PixResult<()> {
     let width = 800;
     let height = 600;
     let mut engine = Engine::builder()

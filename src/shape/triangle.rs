@@ -16,7 +16,7 @@
 //! let tri = Tri::new(p1, p2, p3);
 //! ```
 
-use crate::prelude::*;
+use crate::{error::Result, prelude::*};
 #[cfg(feature = "serde")]
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 

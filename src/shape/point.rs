@@ -23,9 +23,9 @@
 //! let p = point!(5, 10, 7); // 3D point
 //! ```
 
-use crate::prelude::*;
 #[cfg(feature = "serde")]
 use crate::serialize::arrays;
+use crate::{error::Result, prelude::*};
 use num_traits::Signed;
 #[cfg(feature = "serde")]
 use serde::{de::DeserializeOwned, Deserialize, Serialize};

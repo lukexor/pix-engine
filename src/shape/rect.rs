@@ -26,7 +26,7 @@
 //! let s = square!(point![10, 20], 100);
 //! ```
 
-use crate::prelude::*;
+use crate::{error::Result, prelude::*};
 use num_traits::{AsPrimitive, Bounded, NumCast};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
