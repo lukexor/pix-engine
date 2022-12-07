@@ -478,9 +478,9 @@ impl<T: Num> Rect<T> {
             let [x, y]: [f64; 2] = p.as_().coords();
             point![
                 NumCast::from(((x - cx).mul_add(cos, cx) - (y - cy) * sin).round())
-                    .expect("valid number cast"),
+                    .unwrap_or_else(T::zero),
                 NumCast::from(((y - cy).mul_add(cos, (x - cx).mul_add(sin, cy))).round())
-                    .expect("valid number cast"),
+                    .unwrap_or_else(T::zero),
             ]
         });
         let (min_x, min_y) = transformed_points

@@ -27,6 +27,7 @@ use std::{collections::HashMap, fmt};
 use texture::RendererTexture;
 use window::{TextCacheKey, WindowCanvas};
 
+#[allow(clippy::expect_used)]
 static TTF: Lazy<Sdl2TtfContext> = Lazy::new(|| sdl2::ttf::init().expect("sdl2_ttf initialized"));
 
 pub use audio::{AudioDevice, AudioFormatNum};
@@ -72,7 +73,10 @@ impl Renderer {
                 .find(|w| w.textures.contains_key(&texture_id));
             if let Some(window) = window {
                 // We ensured there's a valid texture above
-                let texture = window.textures.get(&texture_id).expect("valid texture");
+                let texture = window
+                    .textures
+                    .get(&texture_id)
+                    .ok_or_else(|| anyhow!(Error::InvalidTexture(texture_id)))?;
                 let mut result = Ok(());
                 window
                     .canvas
@@ -100,7 +104,7 @@ impl Renderer {
         let font_data = self
             .font_data
             .get(&self.current_font)
-            .expect("valid loaded font");
+            .ok_or_else(|| anyhow!("invalid current font"))?;
         let loaded_font = match font_data.source() {
             FontSrc::None => return Err(anyhow!("Must provide a font data source")),
             FontSrc::Bytes(bytes) => {
@@ -119,6 +123,7 @@ impl Renderer {
     /// Returns a reference to the current SDL font.
     #[inline]
     fn font(&self) -> &SdlFont<'static, 'static> {
+        #[allow(clippy::expect_used)]
         self.loaded_fonts
             .peek(&(self.current_font, self.font_size))
             .expect("valid font")
@@ -127,6 +132,7 @@ impl Renderer {
     /// Returns a mutable reference the current SDL font.
     #[inline]
     fn font_mut(&mut self) -> &mut SdlFont<'static, 'static> {
+        #[allow(clippy::expect_used)]
         self.loaded_fonts
             .get_mut(&(self.current_font, self.font_size))
             .expect("valid font")
@@ -301,7 +307,7 @@ impl Rendering for Renderer {
                 let font = self
                     .loaded_fonts
                     .get_mut(&(self.current_font, self.font_size))
-                    .expect("valid font");
+                    .ok_or_else(|| anyhow!("invalid current font"))?;
                 if font.get_outline_width() != outline {
                     font.set_outline_width(outline);
                 }
@@ -326,6 +332,7 @@ impl Rendering for Renderer {
                 }
 
                 // SAFETY: We just checked or inserted a texture.
+                #[allow(clippy::expect_used)]
                 window.text_cache.get_mut(&key).expect("valid text cache")
             };
 
@@ -367,7 +374,7 @@ impl Rendering for Renderer {
                 let font = self
                     .loaded_fonts
                     .get_mut(&(self.current_font, self.font_size))
-                    .expect("valid font");
+                    .ok_or_else(|| anyhow!("invalid current font"))?;
                 height += font.height() as u32;
             }
             Ok((width, height))
@@ -735,6 +742,7 @@ impl Rendering for Renderer {
                 );
             }
             // SAFETY: We just checked or inserted a texture.
+            #[allow(clippy::expect_used)]
             window.image_cache.get_mut(&key).expect("valid image cache")
         };
         let [r, g, b, a] = tint.map_or([255; 4], |t| t.channels());
@@ -794,7 +802,10 @@ impl Rendering for Renderer {
                 .find(|w| w.textures.contains_key(&texture_id));
             if let Some(window) = window {
                 // We ensured there's a valid texture above
-                let texture = window.textures.get(&texture_id).expect("valid texture");
+                let texture = window
+                    .textures
+                    .get(&texture_id)
+                    .ok_or_else(|| anyhow!(Error::InvalidTexture(texture_id)))?;
                 let mut result = Ok(vec![]);
                 window
                     .canvas
@@ -889,6 +900,7 @@ impl From<Color> for SdlColor {
 impl From<FontStyle> for SdlFontStyle {
     /// Convert [`FontStyle`] to [`SdlFontStyle`].
     fn from(style: FontStyle) -> Self {
+        #[allow(clippy::expect_used)]
         Self::from_bits(style.bits()).expect("valid FontStyle")
     }
 }

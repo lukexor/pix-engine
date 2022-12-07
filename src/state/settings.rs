@@ -1082,15 +1082,11 @@ impl PixState {
         let s = &self.settings;
         // All of these settings should be valid since they were set prior to `pop()` being
         // called.
-        self.renderer.clip(s.clip).expect("valid clip setting");
+        let _ = self.renderer.clip(s.clip);
         // Excluding restoring cursor - as it's used for mouse hover.
-        self.renderer
-            .font_size(s.font_size)
-            .expect("valid font size");
+        let _ = self.renderer.font_size(s.font_size);
         self.renderer.font_style(s.font_style);
-        self.renderer
-            .font_family(&s.font_family)
-            .expect("valid font family");
+        let _ = self.renderer.font_family(&s.font_family);
         self.renderer.blend_mode(s.blend_mode);
     }
 }

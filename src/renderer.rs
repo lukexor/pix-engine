@@ -15,6 +15,9 @@ pub mod wasm;
 #[cfg(target_arch = "wasm32")]
 pub(crate) use wasm::Renderer;
 
+const TEXTURE_CACHE_SIZE: usize = 256;
+const TEXT_CACHE_SIZE: usize = 512;
+
 /// Settings used to set up the renderer.
 #[derive(Debug, Clone)]
 pub(crate) struct RendererSettings {
@@ -63,6 +66,7 @@ pub(crate) struct RendererSettings {
 }
 
 impl Default for RendererSettings {
+    #[allow(clippy::expect_used)]
     fn default() -> Self {
         Self {
             title: String::new(),
@@ -84,8 +88,8 @@ impl Default for RendererSettings {
             hidden: false,
             show_frame_rate: false,
             target_frame_rate: None,
-            texture_cache_size: 256.try_into().expect("infallible conversion"),
-            text_cache_size: 512.try_into().expect("infallible conversion"),
+            texture_cache_size: TEXTURE_CACHE_SIZE.try_into().expect("valid cache size"),
+            text_cache_size: TEXT_CACHE_SIZE.try_into().expect("valid cache size"),
         }
     }
 }

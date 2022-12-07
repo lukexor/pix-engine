@@ -369,9 +369,9 @@ impl PixState {
         s.stroke(None);
         s.fill(fg.blended(bg, 0.60));
         let slider_w = f64::from(slider.width());
-        let vmin: f64 = num_traits::NumCast::from(min).expect("valid number cast");
-        let vmax: f64 = num_traits::NumCast::from(max).expect("valid number cast");
-        let val: f64 = num_traits::NumCast::from(*value).expect("valid number cast");
+        let vmin: f64 = num_traits::NumCast::from(min).unwrap_or(0.0);
+        let vmax: f64 = num_traits::NumCast::from(max).unwrap_or(1.0);
+        let val: f64 = num_traits::NumCast::from(*value).unwrap_or(0.0);
         let thumb_w: f64 = if vmax - vmin > 1.0 {
             slider_w / (vmax - vmin)
         } else {

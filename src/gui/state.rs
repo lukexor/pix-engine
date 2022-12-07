@@ -138,6 +138,7 @@ pub(crate) struct UiState {
 }
 
 impl Default for UiState {
+    #[allow(clippy::expect_used)]
     fn default() -> Self {
         Self {
             cursor: point![],
@@ -155,11 +156,7 @@ impl Default for UiState {
             mouse_offset: None,
             pmouse: MouseState::default(),
             keys: KeyState::default(),
-            elements: LruCache::new(
-                ELEMENT_CACHE_SIZE
-                    .try_into()
-                    .expect("infallible conversion"),
-            ),
+            elements: LruCache::new(ELEMENT_CACHE_SIZE.try_into().expect("valid cache size")),
             active: None,
             hovered: None,
             focused: Some(ElementId::NONE),
@@ -917,9 +914,6 @@ impl PixState {
                 font_id,
                 font_size,
             ));
-            if self.ui.textures.len() > 2 * ELEMENT_CACHE_SIZE {
-                self.ui.textures.truncate(ELEMENT_CACHE_SIZE);
-            }
             Ok(texture_id)
         }
     }

@@ -26,22 +26,25 @@ impl RendererTexture {
 impl Deref for RendererTexture {
     type Target = SdlTexture;
     fn deref(&self) -> &Self::Target {
+        #[allow(clippy::expect_used)]
         self.inner.as_ref().expect("texture has been dropped")
     }
 }
 
 impl DerefMut for RendererTexture {
     fn deref_mut(&mut self) -> &mut Self::Target {
+        #[allow(clippy::expect_used)]
         self.inner.as_mut().expect("texture has been dropped")
     }
 }
 
 impl Drop for RendererTexture {
     fn drop(&mut self) {
-        let texture = self.inner.take().expect("texture has been dropped");
-        // SAFETY: A RendererTexture can only exist inside of a WindowCanvas, which contains the
-        // Canvas that created this texture, therefore it's safe to destroy.
-        unsafe { texture.destroy() };
+        if let Some(texture) = self.inner.take() {
+            // SAFETY: A RendererTexture can only exist inside of a WindowCanvas, which contains the
+            // Canvas that created this texture, therefore it's safe to destroy.
+            unsafe { texture.destroy() };
+        }
     }
 }
 
@@ -99,7 +102,10 @@ impl TextureRenderer for Renderer {
             .find(|w| w.textures.contains_key(&texture_id));
         if let Some(window) = window {
             // We ensured there's a valid texture above
-            let texture = window.textures.get(&texture_id).expect("valid texture");
+            let texture = window
+                .textures
+                .get(&texture_id)
+                .ok_or_else(|| anyhow!(Error::InvalidTexture(texture_id)))?;
             Ok(texture
                 .borrow_mut()
                 .update(rect.map(Into::into), pixels.as_ref(), pitch)
@@ -134,7 +140,10 @@ impl TextureRenderer for Renderer {
             .find(|w| w.textures.contains_key(&texture_id));
         if let Some(window) = window {
             // We ensured there's a valid texture above
-            let texture = window.textures.get(&texture_id).expect("valid texture");
+            let texture = window
+                .textures
+                .get(&texture_id)
+                .ok_or_else(|| anyhow!(Error::InvalidTexture(texture_id)))?;
             {
                 let mut texture = texture.borrow_mut();
                 let [r, g, b, a] = tint.map_or([255; 4], |t| t.channels());
