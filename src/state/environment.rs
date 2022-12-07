@@ -21,7 +21,6 @@
 //! - [`PixState::second`]: Return the current second between 0-59.
 
 use crate::{
-    error::Result,
     prelude::*,
     renderer::{Rendering, WindowRenderer},
 };
@@ -76,7 +75,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     if s.focused() {
     ///         // Update screen only when focused
     ///         s.rect([0, 0, 100, 100])?;
@@ -103,7 +102,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     if s.focused_window(s.window_id()) {
     ///         // Update screen only when focused
     ///         s.rect([0, 0, 100, 100])?;
@@ -126,7 +125,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { position: f64, velocity: f64 };
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     // Update position based on frame timestep
     ///     self.position = self.velocity * s.delta_time().as_secs_f64();
     ///     Ok(())
@@ -147,7 +146,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     // Draw a blinking box, indepdendent of frame rate
     ///     if s.elapsed().as_millis() >> 9 & 1 > 0 {
     ///         s.rect([0, 0, 10, 10])?;
@@ -170,7 +169,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     // Create a strobe effect, dependent on frame rate
     ///     if s.frame_count() % 5 == 0 {
     ///         s.rect([0, 0, 10, 10])?;
@@ -196,12 +195,12 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_start(&mut self, s: &mut PixState) -> Result<()> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.run(false); // Disable render loop
     ///     Ok(())
     /// }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
     ///     // Step one frame draw at a time on each space press
     ///     // Useful for debugging frame-by-frame
     ///     if let Key::Space = event.key {
@@ -228,12 +227,12 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_start(&mut self, s: &mut PixState) -> Result<()> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.run(false); // Disable render loop
     ///     Ok(())
     /// }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
     ///     // Step one frame draw at a time on each space press
     ///     // Useful for debugging by multiple frames at a time
     ///     if let Key::Space = event.key {
@@ -257,7 +256,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.text(format!("FPS: {}", s.avg_frame_rate()))?;
     ///     Ok(())
     /// # }
@@ -277,7 +276,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     if s.button("Quit?")? {
     ///         s.quit();
     ///     }
@@ -298,8 +297,8 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { has_unsaved_changes: bool, prompt_save_dialog: bool }
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_stop(&mut self, s: &mut PixState) -> Result<()> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_stop(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     if self.has_unsaved_changes {
     ///         self.prompt_save_dialog = true;
     ///         s.abort_quit();
@@ -385,7 +384,7 @@ impl PixState {
     /// Increment the internal frame counter. If the `show_frame_rate` option is set, update the
     /// title at most once every second.
     #[inline]
-    pub(crate) fn increment_frame(&mut self, time_since_last: Duration) -> Result<()> {
+    pub(crate) fn increment_frame(&mut self, time_since_last: Duration) -> PixResult<()> {
         let s = &self.settings;
         let mut env = &mut self.env;
 

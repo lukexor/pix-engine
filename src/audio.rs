@@ -21,12 +21,12 @@
 //! struct MyApp;
 //!
 //! impl PixEngine for MyApp {
-//!     fn on_start(&mut self, s: &mut PixState) -> Result<()> {
+//!     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
 //!         s.resume_audio();
 //!         Ok(())
 //!     }
 //!
-//!     fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+//!     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!         // Some square wave samples of audio
 //!         let volume = 0.2;
 //!         let sample_rate = s.audio_sample_rate() as f32;
@@ -75,7 +75,7 @@
 //! struct MyApp;
 //!
 //! impl PixEngine for MyApp {
-//!     fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+//!     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!         let desired_spec = AudioSpecDesired {
 //!             freq: Some(44_100), // 44,100 HZ
 //!             channels: Some(1),  // mono audio
@@ -143,7 +143,7 @@
 //! const RECORDING_LENGTH_SECONDS: usize = 3;
 //!
 //! impl PixEngine for MyApp {
-//!     fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+//!     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!         let desired_spec = AudioSpecDesired {
 //!             freq: None,     // default device frequency
 //!             channels: None, // default device channels
@@ -182,7 +182,7 @@
 //!
 //! [`PixEngine`]: crate::prelude::PixEngine
 
-use crate::{error::Result, prelude::PixState};
+use crate::prelude::*;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
@@ -413,7 +413,7 @@ impl PixState {
     /// # use pix_engine::{math::PI, prelude::*};
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     // Some square wave samples of audio
     ///     let volume = 0.2;
     ///     let sample_rate = s.audio_sample_rate() as f32;
@@ -431,7 +431,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn enqueue_audio<S: AsRef<[f32]>>(&mut self, samples: S) -> Result<()> {
+    pub fn enqueue_audio<S: AsRef<[f32]>>(&mut self, samples: S) -> PixResult<()> {
         self.renderer.enqueue_audio(samples.as_ref())
     }
 
@@ -449,8 +449,8 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
     ///     match event.key {
     ///         Key::Return => {
     ///             if s.audio_status() == AudioStatus::Paused {
@@ -504,8 +504,8 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
     ///     match event.key {
     ///         Key::Return => {
     ///             s.resume_audio();
@@ -529,8 +529,8 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
     ///     match event.key {
     ///         Key::Return => {
     ///             s.pause_audio();
@@ -586,7 +586,7 @@ impl PixState {
     /// struct MyApp;
     ///
     /// impl PixEngine for MyApp {
-    ///     fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    ///     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///         let desired_spec = AudioSpecDesired {
     ///             freq: Some(44_100), // 44,100 HZ
     ///             channels: Some(1),  // mono audio
@@ -619,7 +619,7 @@ impl PixState {
         device: D,
         desired_spec: &AudioSpecDesired,
         get_callback: F,
-    ) -> Result<AudioDevice<CB>>
+    ) -> PixResult<AudioDevice<CB>>
     where
         CB: AudioCallback,
         F: FnOnce(AudioSpec) -> CB,
@@ -677,7 +677,7 @@ impl PixState {
     /// const RECORDING_LENGTH_SECONDS: usize = 3;
     ///
     /// impl PixEngine for MyApp {
-    ///     fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    ///     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///         let desired_spec = AudioSpecDesired {
     ///             freq: None,     // default device frequency
     ///             channels: None, // default device channels
@@ -720,7 +720,7 @@ impl PixState {
         device: D,
         desired_spec: &AudioSpecDesired,
         get_callback: F,
-    ) -> Result<AudioDevice<CB>>
+    ) -> PixResult<AudioDevice<CB>>
     where
         CB: AudioCallback,
         F: FnOnce(AudioSpec) -> CB,
@@ -734,7 +734,7 @@ impl PixState {
 /// Trait representing audio support.
 pub(crate) trait AudioDriver {
     /// Add audio samples to the current audio buffer queue.
-    fn enqueue_audio(&mut self, samples: &[f32]) -> Result<()>;
+    fn enqueue_audio(&mut self, samples: &[f32]) -> PixResult<()>;
 
     /// Clear audio samples from the current audio buffer queue.
     fn clear_audio(&mut self);
@@ -767,7 +767,7 @@ pub(crate) trait AudioDriver {
         device: D,
         desired_spec: &AudioSpecDesired,
         get_callback: F,
-    ) -> Result<AudioDevice<CB>>
+    ) -> PixResult<AudioDevice<CB>>
     where
         CB: AudioCallback,
         F: FnOnce(AudioSpec) -> CB,
@@ -780,7 +780,7 @@ pub(crate) trait AudioDriver {
         device: D,
         desired_spec: &AudioSpecDesired,
         get_callback: F,
-    ) -> Result<AudioDevice<CB>>
+    ) -> PixResult<AudioDevice<CB>>
     where
         CB: AudioCallback,
         F: FnOnce(AudioSpec) -> CB,

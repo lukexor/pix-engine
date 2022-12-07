@@ -14,7 +14,7 @@
 //!
 //! ```
 //! # use pix_engine::prelude::*;
-//! # fn draw(s: &mut PixState) -> Result<()> {
+//! # fn draw(s: &mut PixState) -> PixResult<()> {
 //! if s.button("Click")? {     // Label = "Click", ID = hash of "Click"
 //!     // Handle click action
 //! }
@@ -44,7 +44,7 @@
 //!
 //! ```
 //! # use pix_engine::prelude::*;
-//! # fn draw(s: &mut PixState) -> Result<()> {
+//! # fn draw(s: &mut PixState) -> PixResult<()> {
 //! if s.button("Click##action1")? {     // Label = "Click", ID = hash of "Click##action1"
 //!     // Handle action 1
 //! }
@@ -59,7 +59,7 @@
 //!
 //! ```
 //! # use pix_engine::prelude::*;
-//! # fn draw(s: &mut PixState) -> Result<()> {
+//! # fn draw(s: &mut PixState) -> PixResult<()> {
 //! for i in 0..5 {
 //!   s.push_id(i);             // Push i to the ID stack
 //!   if s.button("Click")? {   // Label = "Click",  ID = hash of "Click" + i
@@ -77,7 +77,7 @@
 //! # use pix_engine::prelude::*;
 //! # struct App { checkbox: bool, text_field: String };
 //! # impl PixEngine for App {
-//! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!     s.text("Some text")?;
 //!     s.separator()?; // Adds a horizontal line separator
 //!     s.spacing(); // Adds a line of spacing
@@ -97,7 +97,6 @@
 
 use self::state::ElementId;
 use crate::{
-    error::Result,
     ops::{clamp_dimensions, clamp_size},
     prelude::*,
     renderer::Rendering,
@@ -140,7 +139,7 @@ impl PixState {
     ///
     /// If the current window target has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn ui_width(&self) -> Result<i32> {
+    pub fn ui_width(&self) -> PixResult<i32> {
         let pos = self.cursor_pos();
         let fpad = self.theme.spacing.frame_pad;
         Ok(clamp_size(self.width()?) - pos.x() - fpad.x())
@@ -152,7 +151,7 @@ impl PixState {
     ///
     /// If the current window target has been closed or is invalid, then an error is returned.
     #[inline]
-    pub fn ui_height(&self) -> Result<i32> {
+    pub fn ui_height(&self) -> PixResult<i32> {
         let pos = self.cursor_pos();
         let fpad = self.theme.spacing.frame_pad;
         Ok(clamp_size(self.height()?) - pos.y() - fpad.y())
@@ -239,7 +238,7 @@ impl PixState {
 
     /// Return the size of text, clamped to i32.
     #[inline]
-    pub(crate) fn text_size(&self, text: &str) -> Result<(i32, i32)> {
+    pub(crate) fn text_size(&self, text: &str) -> PixResult<(i32, i32)> {
         let s = &self.settings;
         let wrap_width = s.wrap_width;
         let ipad = self.theme.spacing.item_pad;

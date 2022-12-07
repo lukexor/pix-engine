@@ -159,7 +159,7 @@ impl PixEngine for MyApp {
     // Set up application state and initial settings. `PixState` contains
     // engine specific state and utility methods for actions like getting mouse
     // coordinates, drawing shapes, etc. (Optional)
-    fn on_start(&mut self, s: &mut PixState) -> Result<()> {
+    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         // Set the background to GRAY and clear the screen.
         s.background(Color::GRAY);
 
@@ -175,7 +175,7 @@ impl PixEngine for MyApp {
 
     // Main update/render loop. Called as often as possible unless
     // `target_frame_rate` was set with a value. (Required)
-    fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
         // Set fill color to black if mouse is pressed, otherwise wite.
         if s.mouse_pressed() {
             s.fill(color!(0));
@@ -193,12 +193,12 @@ impl PixEngine for MyApp {
 
     // Clean up any state or resources before exiting such as deleting temporary
     // files or saving game state. (Optional)
-    fn on_stop(&mut self, s: &mut PixState) -> Result<()> {
+    fn on_stop(&mut self, s: &mut PixState) -> PixResult<()> {
         Ok(())
     }
 }
 
-fn main() -> Result<()> {
+fn main() -> PixResult<()> {
     let mut engine = Engine::builder()
       .dimensions(800, 600)
       .title("MyApp")
@@ -415,7 +415,7 @@ fn on_window_event(
     _s: &mut PixState,
     window_id: WindowId,
     event: WindowEvent,
-) -> Result<()> {
+) -> PixResult<()> {
     if event == WindowEvent::Close && self.popup_window == Some(window_id) {
       self.popup_window = None;
     }
@@ -432,7 +432,7 @@ and initialize it in your `main` function.
 Example using [env_logger][]:
 
 ```rust ignore
-fn main() -> Result<()> {
+fn main() -> PixResult<()> {
     env_logger::init();
 
     let mut engine = Engine::builder()

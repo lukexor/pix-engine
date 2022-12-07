@@ -47,7 +47,6 @@
 //! - [`PixState::pop`]: Pop the previously pushed settings off the stack, restoring them.
 
 use crate::{
-    error::Result,
     prelude::*,
     renderer::{Rendering, WindowRenderer},
 };
@@ -208,7 +207,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.background(Color::ALICE_BLUE);
     ///     s.clear();
     ///     Ok(())
@@ -233,7 +232,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.fill(Color::ALICE_BLUE);
     ///     s.rect([0, 0, 100, 100])?;
     ///     s.fill((None));
@@ -259,7 +258,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.stroke(Color::BLACK);
     ///     s.rect([0, 0, 100, 100])?;
     ///     s.stroke((None));
@@ -284,7 +283,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.stroke(Color::BLUE);
     ///     s.stroke_weight(2);
     ///     // Draws a 2-pixel wide diagonal line
@@ -311,7 +310,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.font_size(22);
     ///     s.text("Some big text")?;
     ///     Ok(())
@@ -319,7 +318,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn font_size(&mut self, size: u32) -> Result<()> {
+    pub fn font_size(&mut self, size: u32) -> PixResult<()> {
         self.settings.font_size = size;
         self.theme.font_size = size;
         self.renderer.font_size(size)
@@ -337,7 +336,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.font_style(FontStyle::BOLD);
     ///     s.text("Some bold text")?;
     ///     Ok(())
@@ -363,7 +362,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.font_family(Font::NOTO)?;
     ///     s.text("Some NOTO family text")?;
     ///     s.font_family(Font::from_file("Custom font", "./custom_font.ttf"))?;
@@ -373,7 +372,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn font_family(&mut self, font: Font) -> Result<()> {
+    pub fn font_family(&mut self, font: Font) -> PixResult<()> {
         self.settings.font_family = font;
         self.renderer.font_family(&self.settings.font_family)
     }
@@ -386,7 +385,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.text_shadow(2);
     ///     // Draws a 2-pixel offset shhadow
     ///     s.text("Shadowed")?;
@@ -411,7 +410,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     // Draws a anti-aliased diagonal line
     ///     s.smooth(true);
     ///     s.line(line_![0, 0, 100, 100])?;
@@ -435,7 +434,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.bezier_detail(5);
     ///     s.stroke(Color::RED);
     ///     s.bezier([[85, 20], [10, 10], [90, 90], [15, 80]])?;
@@ -456,7 +455,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     // Renders as (depending on font width):
     ///     //
     ///     // Lorem ipsum
@@ -495,7 +494,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.clip(rect![0, 0, 100, 100])?;
     ///     // Renders a quarter pie-slice with radius 100
     ///     s.circle([100, 100, 200, 200])?;
@@ -504,7 +503,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn clip<R>(&mut self, rect: R) -> Result<()>
+    pub fn clip<R>(&mut self, rect: R) -> PixResult<()>
     where
         R: Into<Option<Rect<i32>>>,
     {
@@ -525,8 +524,8 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
     ///     if let Key::Return = event.key {
     ///         s.fullscreen(true)?;
     ///         return Ok(true);
@@ -536,7 +535,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn fullscreen(&mut self, val: bool) -> Result<()> {
+    pub fn fullscreen(&mut self, val: bool) -> PixResult<()> {
         self.renderer.set_fullscreen(val)
     }
 
@@ -553,8 +552,8 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
     ///     if let Key::Return = event.key {
     ///         s.toggle_fullscreen()?;
     ///         return Ok(true);
@@ -564,7 +563,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn toggle_fullscreen(&mut self) -> Result<()> {
+    pub fn toggle_fullscreen(&mut self) -> PixResult<()> {
         let is_fullscreen = self.renderer.fullscreen()?;
         self.renderer.set_fullscreen(!is_fullscreen)
     }
@@ -592,8 +591,8 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
     ///     if let Key::Return = event.key {
     ///         s.vsync(true)?;
     ///         return Ok(true);
@@ -603,7 +602,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn vsync(&mut self, val: bool) -> Result<WindowId> {
+    pub fn vsync(&mut self, val: bool) -> PixResult<WindowId> {
         self.renderer.set_vsync(val)
     }
 
@@ -630,8 +629,8 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
     ///     if let Key::Return = event.key {
     ///         s.toggle_vsync()?;
     ///         return Ok(true);
@@ -641,7 +640,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn toggle_vsync(&mut self) -> Result<WindowId> {
+    pub fn toggle_vsync(&mut self) -> PixResult<WindowId> {
         let vsync_enabled = self.renderer.vsync();
         self.renderer.set_vsync(vsync_enabled)
     }
@@ -659,7 +658,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.text("Hover me")?;
     ///     if s.hovered() {
     ///         s.cursor(Cursor::hand())?;
@@ -671,7 +670,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn cursor<C>(&mut self, cursor: C) -> Result<()>
+    pub fn cursor<C>(&mut self, cursor: C) -> PixResult<()>
     where
         C: Into<Option<Cursor>>,
     {
@@ -688,7 +687,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool };
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     if s.button("Disable UI")? {
     ///         s.disable(true);
     ///     }
@@ -710,8 +709,8 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
     ///     if let Key::Return = event.key {
     ///         // Toggle pausing rendering
     ///         let running = s.running();
@@ -736,8 +735,8 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
     ///     if let Key::Return = event.key {
     ///         // Toggle rendering
     ///         let running = s.running();
@@ -761,8 +760,8 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
     ///     if let Key::Return = event.key {
     ///         s.show_frame_rate(true);
     ///         return Ok(true);
@@ -784,8 +783,8 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
     ///     if let Key::Down = event.key {
     ///         let target = s.target_frame_rate().unwrap_or(60);
     ///         s.frame_rate(target - 10);
@@ -810,8 +809,8 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_start(&mut self, s: &mut PixState) -> Result<()> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     // Target a lower FPS than natively possible
     ///     s.frame_rate(30);
     ///     Ok(())
@@ -843,8 +842,8 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
     ///     if let Key::Plus = event.key {
     ///         s.scale(2.0, 2.0)?;
     ///         return Ok(true);
@@ -854,7 +853,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn scale(&mut self, x: f32, y: f32) -> Result<()> {
+    pub fn scale(&mut self, x: f32, y: f32) -> PixResult<()> {
         let mut s = &mut self.settings;
         s.scale_x = x;
         s.scale_y = y;
@@ -870,7 +869,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.rect_mode(RectMode::Center);
     ///     // Draw rect with center at `(100, 100)`
     ///     s.rect([100, 100, 50, 50])?;
@@ -891,7 +890,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.ellipse_mode(EllipseMode::Center);
     ///     // Draw ellipse with center at `(100, 100)`
     ///     s.ellipse([100, 100, 50, 50])?;
@@ -912,7 +911,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.image_mode(ImageMode::Center);
     ///     // Draw image with center at `(100, 100)`
     ///     s.image(&Image::from_file("./some_image.png")?, [100, 100])?;
@@ -933,7 +932,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.image_tint(Color::RED);
     ///     // Draw image tinted red
     ///     s.image(&Image::from_file("./some_image.png")?, [0, 0])?;
@@ -957,7 +956,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     // Draw arc as a open, unfilled pie segment using only the `stroke` (The default)
     ///     s.arc_mode(ArcMode::Default);
     ///     s.arc([100, 100], 20, 0, 180)?;
@@ -981,7 +980,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.angle_mode(AngleMode::Degrees);
     ///     let angle = 10.0;
     ///     let center = point!(10, 10);
@@ -1003,7 +1002,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.blend_mode(BlendMode::Blend);
     ///     // Draw image with alpha blended with background
     ///     s.image(&Image::from_file("./some_image.png")?, [0, 0])?;
@@ -1025,7 +1024,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.fill(Color::BLUE);
     ///     s.stroke(Color::WHITE);
     ///
@@ -1056,7 +1055,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.fill(Color::BLUE);
     ///     s.stroke(Color::WHITE);
     ///
@@ -1096,7 +1095,7 @@ impl PixState {
     ///
     /// Cursor will get reset to the current setting next frame.
     #[inline]
-    pub(crate) fn frame_cursor(&mut self, cursor: &Cursor) -> Result<()> {
+    pub(crate) fn frame_cursor(&mut self, cursor: &Cursor) -> PixResult<()> {
         self.renderer.cursor(Some(cursor))
     }
 

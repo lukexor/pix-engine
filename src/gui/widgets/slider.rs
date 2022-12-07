@@ -13,7 +13,7 @@
 //! # use pix_engine::prelude::*;
 //! # struct App { drag: i32, advanced_drag: f32, slider: i32, advanced_slider: f32};
 //! # impl PixEngine for App {
-//! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!     s.drag("Drag", &mut self.drag, 1)?;
 //!     s.advanced_drag(
 //!         "Advanced Drag",
@@ -37,7 +37,6 @@
 //! ```
 
 use crate::{
-    error::Result,
     gui::{scroll::THUMB_MIN, MOD_CTRL},
     ops::clamp_size,
     prelude::*,
@@ -58,14 +57,14 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { int: i32, float: f32};
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.drag("Drag Int", &mut self.int, 1)?;
     ///     s.drag("Drag Float", &mut self.float, 0.005)?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    pub fn drag<T, L>(&mut self, label: L, value: &mut T, speed: T) -> Result<bool>
+    pub fn drag<T, L>(&mut self, label: L, value: &mut T, speed: T) -> PixResult<bool>
     where
         T: Num + num_traits::NumCast + Bounded + fmt::Display + FromStr,
         <T as FromStr>::Err: StdError + Sync + Send + 'static,
@@ -85,7 +84,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { advanced_drag: f32};
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.advanced_drag(
     ///         "Advanced Drag",
     ///         &mut self.advanced_drag,
@@ -106,7 +105,7 @@ impl PixState {
         min: T,
         max: T,
         formatter: Option<fn(&T) -> Cow<'a, str>>,
-    ) -> Result<bool>
+    ) -> PixResult<bool>
     where
         T: Num + num_traits::NumCast + fmt::Display + FromStr,
         <T as FromStr>::Err: StdError + Sync + Send + 'static,
@@ -239,14 +238,14 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { int: i32, float: f32};
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.slider("Slider Int", &mut self.int, -5, 5)?;
     ///     s.slider("Slider Float", &mut self.float, 0.0, 1.0)?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    pub fn slider<T, L>(&mut self, label: L, value: &mut T, min: T, max: T) -> Result<bool>
+    pub fn slider<T, L>(&mut self, label: L, value: &mut T, min: T, max: T) -> PixResult<bool>
     where
         T: Num + num_traits::NumCast + fmt::Display + FromStr,
         <T as FromStr>::Err: StdError + Sync + Send + 'static,
@@ -270,7 +269,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { advanced_slider: f32};
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.advanced_slider(
     ///         "Advanced Slider",
     ///         &mut self.advanced_slider,
@@ -289,7 +288,7 @@ impl PixState {
         min: T,
         max: T,
         formatter: Option<fn(&T) -> Cow<'a, str>>,
-    ) -> Result<bool>
+    ) -> PixResult<bool>
     where
         T: Num + num_traits::NumCast + fmt::Display + FromStr,
         <T as FromStr>::Err: StdError + Sync + Send + 'static,

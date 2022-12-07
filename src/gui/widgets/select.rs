@@ -11,7 +11,7 @@
 //! # use pix_engine::prelude::*;
 //! # struct App { selected_box: usize, selected_list: usize };
 //! # impl PixEngine for App {
-//! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!     let items = ["Item 1", "Item 2", "Item 3"];
 //!     let displayed_count = 4;
 //!     s.select_box("Select Box", &mut self.selected_box, &items, displayed_count)?;
@@ -22,7 +22,6 @@
 //! ```
 
 use crate::{
-    error::Result,
     gui::{state::ElementId, Direction},
     ops::clamp_size,
     prelude::*,
@@ -49,7 +48,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { select_box: usize };
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     let items = ["Item 1", "Item 2", "Item 3"];
     ///     let displayed_count = 4;
     ///     if s.select_box("Select Box", &mut self.select_box, &items, displayed_count)? {
@@ -65,7 +64,7 @@ impl PixState {
         selected: &mut usize,
         items: &[I],
         mut displayed_count: usize,
-    ) -> Result<bool>
+    ) -> PixResult<bool>
     where
         S: AsRef<str>,
         I: AsRef<str>,
@@ -239,7 +238,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { select_list: usize };
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     let items = ["Item 1", "Item 2", "Item 3"];
     ///     let displayed_count = 4;
     ///     if s.select_list("Select List", &mut self.select_list, &items, displayed_count)? {
@@ -255,7 +254,7 @@ impl PixState {
         selected: &mut usize,
         items: &[I],
         mut displayed_count: usize,
-    ) -> Result<bool>
+    ) -> PixResult<bool>
     where
         S: AsRef<str>,
         I: AsRef<str>,
@@ -368,7 +367,7 @@ impl PixState {
         items: &[I],
         displayed_count: usize,
         size: Rect<i32>,
-    ) -> Result<bool>
+    ) -> PixResult<bool>
     where
         I: AsRef<str>,
     {
@@ -422,7 +421,7 @@ impl PixState {
         items: &[I],
         displayed_count: usize,
         select_list: Rect<i32>,
-    ) -> Result<()>
+    ) -> PixResult<()>
     where
         I: AsRef<str>,
     {

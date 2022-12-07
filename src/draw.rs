@@ -13,7 +13,7 @@
 //! # use pix_engine::prelude::*;
 //! # struct App;
 //! # impl PixEngine for App {
-//! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!     s.background(Color::ALICE_BLUE);
 //!     s.clear();
 //!     let rect = rect![0, 0, 100, 100];
@@ -27,7 +27,7 @@
 
 use anyhow::Context;
 
-use crate::{error::Result, prelude::*, renderer::Rendering};
+use crate::{prelude::*, renderer::Rendering};
 use log::info;
 use std::{fs::File, io::BufWriter, path::Path};
 
@@ -45,7 +45,7 @@ pub trait Draw {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     let rect = rect![0, 0, 100, 100];
     ///     // The following two lines are equivalent.
     ///     s.rect(rect)?;
@@ -54,7 +54,7 @@ pub trait Draw {
     /// }
     /// # }
     /// ```
-    fn draw(&self, s: &mut PixState) -> Result<()>;
+    fn draw(&self, s: &mut PixState) -> PixResult<()>;
 }
 
 impl PixState {
@@ -70,7 +70,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.background(Color::CADET_BLUE);
     ///     s.clear();
     ///     Ok(())
@@ -78,7 +78,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn clear(&mut self) -> Result<()> {
+    pub fn clear(&mut self) -> PixResult<()> {
         self.renderer.set_draw_color(self.settings.background)?;
         self.renderer.clear()
     }
@@ -102,8 +102,8 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
     ///     if let Key::S = event.key {
     ///         s.save_canvas(None, "test_image.png")?;
     ///     }
@@ -111,7 +111,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn save_canvas<P, R>(&mut self, src: R, path: P) -> Result<()>
+    pub fn save_canvas<P, R>(&mut self, src: R, path: P) -> PixResult<()>
     where
         P: AsRef<Path>,
         R: Into<Option<Rect<i32>>>,

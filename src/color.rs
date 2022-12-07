@@ -101,7 +101,7 @@
 //!
 //! let c = Color::from_str("#F0F5BF5F")?; // 8-digit Hex string
 //! assert_eq!(c.channels(), [240, 245, 191, 95]);
-//! # Ok::<(), Error>(())
+//! # Ok::<(), PixError>(())
 //! ```
 
 use crate::random;

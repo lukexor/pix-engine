@@ -12,7 +12,7 @@
 //! # use pix_engine::prelude::*;
 //! # struct App { checkbox: bool, radio: usize };
 //! # impl PixEngine for App {
-//! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!     if s.button("Button")? {
 //!         // was clicked
 //!     }
@@ -25,7 +25,7 @@
 //! # }
 //! ```
 
-use crate::{error::Result, gui::Direction, ops::clamp_size, prelude::*};
+use crate::{gui::Direction, ops::clamp_size, prelude::*};
 
 pub mod field;
 pub mod select;
@@ -46,7 +46,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     if s.button("Button")? {
     ///         // was clicked
     ///     }
@@ -54,7 +54,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn button<L>(&mut self, label: L) -> Result<bool>
+    pub fn button<L>(&mut self, label: L) -> PixResult<bool>
     where
         L: AsRef<str>,
     {
@@ -126,7 +126,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     if s.link("Link")? {
     ///         // was clicked
     ///     }
@@ -134,7 +134,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn link<S>(&mut self, text: S) -> Result<bool>
+    pub fn link<S>(&mut self, text: S) -> PixResult<bool>
     where
         S: AsRef<str>,
     {
@@ -197,13 +197,13 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool };
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.checkbox("Checkbox", &mut self.checkbox)?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    pub fn checkbox<S>(&mut self, label: S, checked: &mut bool) -> Result<bool>
+    pub fn checkbox<S>(&mut self, label: S, checked: &mut bool) -> PixResult<bool>
     where
         S: AsRef<str>,
     {
@@ -286,7 +286,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { radio: usize };
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.radio("Radio 1", &mut self.radio, 0)?;
     ///     s.radio("Radio 2", &mut self.radio, 1)?;
     ///     s.radio("Radio 3", &mut self.radio, 2)?;
@@ -294,7 +294,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn radio<S>(&mut self, label: S, selected: &mut usize, index: usize) -> Result<bool>
+    pub fn radio<S>(&mut self, label: S, selected: &mut usize, index: usize) -> PixResult<bool>
     where
         S: AsRef<str>,
     {
@@ -370,7 +370,7 @@ impl PixState {
     /// # Errors
     ///
     /// If the renderer fails to draw to the current render target, then an error is returned.
-    pub fn arrow<P, S>(&mut self, pos: P, direction: Direction, scale: S) -> Result<()>
+    pub fn arrow<P, S>(&mut self, pos: P, direction: Direction, scale: S) -> PixResult<()>
     where
         P: Into<Point<i32>>,
         S: Into<f64>,

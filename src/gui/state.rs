@@ -2,7 +2,6 @@
 
 use super::theme::FontId;
 use crate::{
-    error::Result,
     gui::{keys::KeyState, mouse::MouseState},
     prelude::*,
 };
@@ -718,7 +717,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     let mut pos = s.cursor_pos();
     ///     pos.offset_y(20);
     ///     s.set_cursor_pos(pos);
@@ -740,7 +739,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.set_cursor_pos(s.center()?);
     ///     s.rect_mode(RectMode::Center);
     ///     s.text("Centered text")?;
@@ -775,7 +774,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.text("Hover me")?;
     ///     if s.hovered() {
     ///         s.tooltip("I'm a tooltip!");
@@ -800,7 +799,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.text("Hover me")?;
     ///     if s.clicked() {
     ///         println!("I was clicked!");
@@ -825,7 +824,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.text("Hover me")?;
     ///     if s.dbl_clicked() {
     ///         println!("I was double clicked!");
@@ -888,7 +887,7 @@ impl PixState {
         id: ElementId,
         src: R,
         dst: Rect<i32>,
-    ) -> Result<TextureId>
+    ) -> PixResult<TextureId>
     where
         R: Into<Option<Rect<i32>>>,
     {

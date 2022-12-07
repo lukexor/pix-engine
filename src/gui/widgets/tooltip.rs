@@ -12,7 +12,7 @@
 //! # use pix_engine::prelude::*;
 //! # struct App { select_box: usize };
 //! # impl PixEngine for App {
-//! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!     s.help_marker("Help marker icon w/ tooltip")?;
 //!
 //!     s.text("Hover me")?;
@@ -37,7 +37,7 @@
 //! # }
 //! ```
 
-use crate::{error::Result, ops::clamp_dimensions, prelude::*};
+use crate::{ops::clamp_dimensions, prelude::*};
 
 impl PixState {
     /// Draw help marker text that, when hovered, displays a help box with text to the current
@@ -53,13 +53,13 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { select_box: usize };
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.help_marker("Help marker icon w/ tooltip")?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    pub fn help_marker<S>(&mut self, text: S) -> Result<()>
+    pub fn help_marker<S>(&mut self, text: S) -> PixResult<()>
     where
         S: AsRef<str>,
     {
@@ -158,7 +158,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { select_box: usize };
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.text("Hover me")?;
     ///     if s.hovered() {
     ///         s.tooltip("Basic tooltip")?;
@@ -167,7 +167,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn tooltip<S>(&mut self, text: S) -> Result<()>
+    pub fn tooltip<S>(&mut self, text: S) -> PixResult<()>
     where
         S: AsRef<str>,
     {
@@ -222,7 +222,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { select_box: usize };
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.text("Hover me")?;
     ///     if s.hovered() {
     ///         s.advanced_tooltip(
@@ -239,11 +239,11 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn advanced_tooltip<S, R, F>(&mut self, label: S, rect: R, f: F) -> Result<()>
+    pub fn advanced_tooltip<S, R, F>(&mut self, label: S, rect: R, f: F) -> PixResult<()>
     where
         S: AsRef<str>,
         R: Into<Rect<i32>>,
-        F: FnOnce(&mut PixState) -> Result<()>,
+        F: FnOnce(&mut PixState) -> PixResult<()>,
     {
         let label = label.as_ref();
 

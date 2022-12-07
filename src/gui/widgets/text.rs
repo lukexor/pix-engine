@@ -14,7 +14,7 @@
 //! # use pix_engine::prelude::*;
 //! # struct App { text_field: String, text_area: String};
 //! # impl PixEngine for App {
-//! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!     s.text("Text")?;
 //!     s.angle_mode(AngleMode::Degrees);
 //!     let angle = 10.0;
@@ -26,7 +26,7 @@
 //! # }
 //! ```
 
-use crate::{error::Result, gui::Direction, ops::clamp_size, prelude::*, renderer::Rendering};
+use crate::{gui::Direction, ops::clamp_size, prelude::*, renderer::Rendering};
 
 impl PixState {
     /// Return the dimensions of given text for drawing to the current canvas.
@@ -41,7 +41,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     let text = "Some text";
     ///     let (w, h) = s.size_of(text)?;
     ///     // Draw a box behind the text
@@ -52,7 +52,7 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn size_of<S: AsRef<str>>(&self, text: S) -> Result<(u32, u32)> {
+    pub fn size_of<S: AsRef<str>>(&self, text: S) -> PixResult<(u32, u32)> {
         self.renderer
             .size_of(text.as_ref(), self.settings.wrap_width)
     }
@@ -72,13 +72,13 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.text("Text")?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    pub fn text<S>(&mut self, text: S) -> Result<(u32, u32)>
+    pub fn text<S>(&mut self, text: S) -> PixResult<(u32, u32)>
     where
         S: AsRef<str>,
     {
@@ -100,13 +100,13 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.heading("Heading")?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    pub fn heading<S>(&mut self, text: S) -> Result<(u32, u32)>
+    pub fn heading<S>(&mut self, text: S) -> PixResult<(u32, u32)>
     where
         S: AsRef<str>,
     {
@@ -135,13 +135,13 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.monospace("Monospace")?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    pub fn monospace<S>(&mut self, text: S) -> Result<(u32, u32)>
+    pub fn monospace<S>(&mut self, text: S) -> PixResult<(u32, u32)>
     where
         S: AsRef<str>,
     {
@@ -171,7 +171,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.angle_mode(AngleMode::Degrees);
     ///     let angle = 10.0;
     ///     let center = point!(10, 10);
@@ -186,7 +186,7 @@ impl PixState {
         angle: A,
         center: C,
         flipped: F,
-    ) -> Result<(u32, u32)>
+    ) -> PixResult<(u32, u32)>
     where
         S: AsRef<str>,
         A: Into<Option<f64>>,
@@ -233,13 +233,13 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.bullet("Bulleted text")?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    pub fn bullet<S>(&mut self, text: S) -> Result<(u32, u32)>
+    pub fn bullet<S>(&mut self, text: S) -> PixResult<(u32, u32)>
     where
         S: AsRef<str>,
     {
@@ -266,7 +266,7 @@ impl PixState {
     /// # Errors
     ///
     /// If the renderer fails to draw to the current render target, then an error is returned.
-    pub fn menu<S>(&mut self, text: S) -> Result<bool>
+    pub fn menu<S>(&mut self, text: S) -> PixResult<bool>
     where
         S: AsRef<str>,
     {
@@ -331,10 +331,10 @@ impl PixState {
     /// # Errors
     ///
     /// If the renderer fails to draw to the current render target, then an error is returned.
-    pub fn collapsing_tree<S, F>(&mut self, text: S, f: F) -> Result<bool>
+    pub fn collapsing_tree<S, F>(&mut self, text: S, f: F) -> PixResult<bool>
     where
         S: AsRef<str>,
-        F: FnOnce(&mut PixState) -> Result<()>,
+        F: FnOnce(&mut PixState) -> PixResult<()>,
     {
         let text = text.as_ref();
 
@@ -424,10 +424,10 @@ impl PixState {
     /// # Errors
     ///
     /// If the renderer fails to draw to the current render target, then an error is returned.
-    pub fn collapsing_header<S, F>(&mut self, text: S, f: F) -> Result<bool>
+    pub fn collapsing_header<S, F>(&mut self, text: S, f: F) -> PixResult<bool>
     where
         S: AsRef<str>,
-        F: FnOnce(&mut PixState) -> Result<()>,
+        F: FnOnce(&mut PixState) -> PixResult<()>,
     {
         let text = text.as_ref();
 
@@ -511,7 +511,7 @@ impl PixState {
         angle: Option<f64>,
         center: Option<Point<i32>>,
         flipped: Option<Flipped>,
-    ) -> Result<Rect<i32>> {
+    ) -> PixResult<Rect<i32>> {
         let s = &self.settings;
         let wrap_width = s.wrap_width;
         let angle_mode = s.angle_mode;

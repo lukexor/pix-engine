@@ -15,7 +15,7 @@
 //! # use pix_engine::prelude::*;
 //! # struct App { checkbox: bool, text_field: String, selected: &'static str };
 //! # impl PixEngine for App {
-//! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!     s.text("Text")?;
 //!     s.same_line(None);
 //!     s.text("Same line")?;
@@ -55,7 +55,7 @@
 //! # }
 //! ```
 
-use crate::{error::Result, ops::clamp_size, prelude::*};
+use crate::{ops::clamp_size, prelude::*};
 
 impl PixState {
     /// Reset current UI rendering position back to the previous line with item padding, and
@@ -70,7 +70,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool, text_field: String };
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.text("Text")?;
     ///     s.same_line(None);
     ///     s.text("Same line")?;
@@ -100,7 +100,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool, text_field: String };
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.next_width(200);
     ///     if s.button("Button")? {
     ///         // was clicked
@@ -130,7 +130,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { selected: &'static str };
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.tab_bar(
     ///         "Tab bar",
     ///         &["Tab 1", "Tab 2"],
@@ -157,11 +157,17 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn tab_bar<S, I, F>(&mut self, label: S, tabs: &[I], selected: &mut I, f: F) -> Result<bool>
+    pub fn tab_bar<S, I, F>(
+        &mut self,
+        label: S,
+        tabs: &[I],
+        selected: &mut I,
+        f: F,
+    ) -> PixResult<bool>
     where
         S: AsRef<str>,
         I: AsRef<str> + Copy,
-        F: FnOnce(&I, &mut PixState) -> Result<()>,
+        F: FnOnce(&I, &mut PixState) -> PixResult<()>,
     {
         let label = label.as_ref();
 
@@ -276,7 +282,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool, text_field: String };
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.text("Some text")?;
     ///     s.spacing()?;
     ///     s.text("Some other text")?;
@@ -284,7 +290,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn spacing(&mut self) -> Result<()> {
+    pub fn spacing(&mut self) -> PixResult<()> {
         let s = self;
         let width = s.ui_width()?;
         let (_, height) = s.text_size(" ")?;
@@ -304,14 +310,14 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool, text_field: String };
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.indent()?;
     ///     s.text("Indented!")?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    pub fn indent(&mut self) -> Result<()> {
+    pub fn indent(&mut self) -> PixResult<()> {
         let s = self;
         let (width, height) = s.text_size("    ")?;
         s.advance_cursor([width, height]);
@@ -331,7 +337,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { checkbox: bool, text_field: String };
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.text("Some text")?;
     ///     s.separator()?;
     ///     s.text("Some other text")?;
@@ -339,7 +345,7 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    pub fn separator(&mut self) -> Result<()> {
+    pub fn separator(&mut self) -> PixResult<()> {
         // TODO: Add s.layout(Direction) method
         let s = self;
         let pos = s.cursor_pos();

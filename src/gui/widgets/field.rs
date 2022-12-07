@@ -13,7 +13,7 @@
 //! # use pix_engine::prelude::*;
 //! # struct App { text_field: String, text_area: String};
 //! # impl PixEngine for App {
-//! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!     s.text_field("Text Field", &mut self.text_field)?;
 //!     s.advanced_text_field(
 //!         "Filtered Text Field w/ hint",
@@ -36,7 +36,7 @@
 //! # }
 //! ```
 
-use crate::{error::Result, gui::MOD_CTRL, ops::clamp_size, prelude::*};
+use crate::{gui::MOD_CTRL, ops::clamp_size, prelude::*};
 
 const TEXT_CURSOR: &str = "_";
 
@@ -53,13 +53,13 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.text_field("Text Field", &mut self.text_field)?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    pub fn text_field<L>(&mut self, label: L, value: &mut String) -> Result<bool>
+    pub fn text_field<L>(&mut self, label: L, value: &mut String) -> PixResult<bool>
     where
         L: AsRef<str>,
     {
@@ -78,7 +78,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.advanced_text_field(
     ///         "Filtered Text Field w/ hint",
     ///         "placeholder",
@@ -95,7 +95,7 @@ impl PixState {
         hint: H,
         value: &mut String,
         filter: Option<fn(char) -> bool>,
-    ) -> Result<bool>
+    ) -> PixResult<bool>
     where
         L: AsRef<str>,
         H: AsRef<str>,
@@ -214,7 +214,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.text_area("Text Area", 200, 100, &mut self.text_area)?;
     ///     Ok(())
     /// }
@@ -226,7 +226,7 @@ impl PixState {
         width: u32,
         height: u32,
         value: &mut String,
-    ) -> Result<bool>
+    ) -> PixResult<bool>
     where
         L: AsRef<str>,
     {
@@ -245,7 +245,7 @@ impl PixState {
     /// # use pix_engine::prelude::*;
     /// # struct App { text_field: String, text_area: String};
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.advanced_text_area(
     ///         "Filtered Text Area w/ hint",
     ///         "placeholder",
@@ -266,7 +266,7 @@ impl PixState {
         height: u32,
         value: &mut String,
         filter: Option<fn(char) -> bool>,
-    ) -> Result<bool>
+    ) -> PixResult<bool>
     where
         L: AsRef<str>,
         H: AsRef<str>,
@@ -392,7 +392,7 @@ impl PixState {
 
 impl PixState {
     /// Helper to handle text entry and text shortcuts.
-    fn handle_text_events(&mut self, value: &mut String) -> Result<bool> {
+    fn handle_text_events(&mut self, value: &mut String) -> PixResult<bool> {
         let s = self;
         let mut changed = false;
         if let Some(key) = s.ui.key_entered() {

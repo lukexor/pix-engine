@@ -9,7 +9,7 @@
 //! # use pix_engine::prelude::*;
 //! # struct App { checkbox: bool, text_field: String };
 //! # impl PixEngine for App {
-//! fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+//! fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!     s.fill(Color::CADET_BLUE); // Change text color
 //!     s.font_size(14)?;
 //!     s.font_style(FontStyle::BOLD);
@@ -45,9 +45,9 @@ pub(crate) type FontId = u64;
 /// use pix_engine::gui::theme::*;
 /// # struct MyApp;
 /// # impl PixEngine for MyApp {
-/// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
+/// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
 /// # }
-/// fn main() -> Result<()> {
+/// fn main() -> PixResult<()> {
 ///     let theme = Theme::builder()
 ///         .font_size(16)
 ///         .font(
@@ -591,7 +591,7 @@ impl Spacing {
 /// # use pix_engine::prelude::*;
 /// # struct App { checkbox: bool, text_field: String };
 /// # impl PixEngine for App {
-/// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+/// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 ///     s.fill(Color::CADET_BLUE); // Change font color
 ///     s.font_size(16)?;
 ///     s.font_style(FontStyle::UNDERLINE);

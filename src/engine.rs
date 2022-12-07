@@ -16,7 +16,7 @@
 //! struct MyApp;
 //!
 //! impl PixEngine for MyApp {
-//!     fn on_start(&mut self, s: &mut PixState) -> Result<()> {
+//!     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
 //!         // Setup App state. `PixState` contains engine specific state and
 //!         // utility functions for things like getting mouse coordinates,
 //!         // drawing shapes, etc.
@@ -26,7 +26,7 @@
 //!         Ok(())
 //!     }
 //!
-//!     fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+//!     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!         // Main render loop. Called as often as possible, or based on `target frame rate`.
 //!         if s.mouse_pressed() {
 //!             s.fill(color!(0));
@@ -38,13 +38,13 @@
 //!         Ok(())
 //!     }
 //!
-//!     fn on_stop(&mut self, s: &mut PixState) -> Result<()> {
+//!     fn on_stop(&mut self, s: &mut PixState) -> PixResult<()> {
 //!         // Teardown any state or resources before exiting.
 //!         Ok(())
 //!     }
 //! }
 //!
-//! fn main() -> Result<()> {
+//! fn main() -> PixResult<()> {
 //!     let mut app = MyApp;
 //!     let mut engine = Engine::builder()
 //!       .dimensions(800, 600)
@@ -54,7 +54,7 @@
 //! }
 //! ```
 
-use crate::{error::Result, image::Icon, prelude::*, renderer::RendererSettings};
+use crate::{image::Icon, prelude::*, renderer::RendererSettings};
 use log::{debug, error, info};
 use std::{
     num::NonZeroUsize,
@@ -88,8 +88,8 @@ pub trait PixEngine {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_start(&mut self, s: &mut PixState) -> Result<()> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     s.background(220);
     ///     s.font_family(Font::NOTO)?;
     ///     s.font_size(16);
@@ -97,7 +97,7 @@ pub trait PixEngine {
     /// }
     /// # }
     /// ```
-    fn on_start(&mut self, s: &mut PixState) -> Result<()> {
+    fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
         Ok(())
     }
 
@@ -129,7 +129,7 @@ pub trait PixEngine {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// fn on_update(&mut self, s: &mut PixState) -> Result<()> {
+    /// fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     if s.mouse_pressed() {
     ///         s.fill(color!(0));
     ///     } else {
@@ -141,7 +141,7 @@ pub trait PixEngine {
     /// }
     /// # }
     /// ```
-    fn on_update(&mut self, s: &mut PixState) -> Result<()>;
+    fn on_update(&mut self, s: &mut PixState) -> PixResult<()>;
 
     /// Called when the engine detects a close/exit event such as calling [`PixState::quit`] or if an
     /// error is returned during program execution by any [`PixEngine`] methods.
@@ -164,14 +164,14 @@ pub trait PixEngine {
     /// # use pix_engine::prelude::*;
     /// # struct App { resources: std::path::PathBuf }
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_stop(&mut self, s: &mut PixState) -> Result<()> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_stop(&mut self, s: &mut PixState) -> PixResult<()> {
     ///     std::fs::remove_file(&self.resources)?;
     ///     Ok(())
     /// }
     /// # }
     /// ```
-    fn on_stop(&mut self, s: &mut PixState) -> Result<()> {
+    fn on_stop(&mut self, s: &mut PixState) -> PixResult<()> {
         Ok(())
     }
 
@@ -191,8 +191,8 @@ pub trait PixEngine {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
     ///     match event.key {
     ///         Key::Return if event.keymod == KeyMod::CTRL => {
     ///             s.fullscreen(true);
@@ -203,7 +203,7 @@ pub trait PixEngine {
     /// }
     /// # }
     /// ```
-    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    fn on_key_pressed(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
         Ok(false)
     }
 
@@ -224,8 +224,8 @@ pub trait PixEngine {
     /// # struct App;
     /// # impl App { fn fire_bullet(&mut self, s: &mut PixState) {} }
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_key_released(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_released(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
     ///     match event.key {
     ///         Key::Space => {
     ///             self.fire_bullet(s);
@@ -236,7 +236,7 @@ pub trait PixEngine {
     /// }
     /// # }
     /// ```
-    fn on_key_released(&mut self, s: &mut PixState, event: KeyEvent) -> Result<bool> {
+    fn on_key_released(&mut self, s: &mut PixState, event: KeyEvent) -> PixResult<bool> {
         Ok(false)
     }
 
@@ -255,14 +255,14 @@ pub trait PixEngine {
     /// # use pix_engine::prelude::*;
     /// # struct App { text: String };
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_key_typed(&mut self, s: &mut PixState, text: &str) -> Result<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_key_typed(&mut self, s: &mut PixState, text: &str) -> PixResult<bool> {
     ///     self.text.push_str(text);
     ///     Ok(true)
     /// }
     /// # }
     /// ```
-    fn on_key_typed(&mut self, s: &mut PixState, text: &str) -> Result<bool> {
+    fn on_key_typed(&mut self, s: &mut PixState, text: &str) -> PixResult<bool> {
         Ok(false)
     }
 
@@ -284,13 +284,13 @@ pub trait PixEngine {
     /// # use pix_engine::prelude::*;
     /// # struct App { pos: Point<i32> };
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
     /// fn on_mouse_dragged(
     ///     &mut self,
     ///     s: &mut PixState,
     ///     pos: Point<i32>,
     ///     rel_pos: Point<i32>,
-    /// ) -> Result<bool> {
+    /// ) -> PixResult<bool> {
     ///     self.pos = pos;
     ///     Ok(true)
     /// }
@@ -301,7 +301,7 @@ pub trait PixEngine {
         s: &mut PixState,
         pos: Point<i32>,
         rel_pos: Point<i32>,
-    ) -> Result<bool> {
+    ) -> PixResult<bool> {
         Ok(false)
     }
 
@@ -322,8 +322,8 @@ pub trait PixEngine {
     /// # struct App;
     /// # impl App { fn pause(&mut self) {} }
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_controller_pressed(&mut self, s: &mut PixState, event: ControllerEvent) -> Result<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_controller_pressed(&mut self, s: &mut PixState, event: ControllerEvent) -> PixResult<bool> {
     ///     match event.button {
     ///         ControllerButton::Start => {
     ///             self.pause();
@@ -334,7 +334,11 @@ pub trait PixEngine {
     /// }
     /// # }
     /// ```
-    fn on_controller_pressed(&mut self, s: &mut PixState, event: ControllerEvent) -> Result<bool> {
+    fn on_controller_pressed(
+        &mut self,
+        s: &mut PixState,
+        event: ControllerEvent,
+    ) -> PixResult<bool> {
         Ok(false)
     }
 
@@ -355,8 +359,8 @@ pub trait PixEngine {
     /// # struct App;
     /// # impl App { fn fire_bullet(&mut self, s: &mut PixState) {} }
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_controller_released(&mut self, s: &mut PixState, event: ControllerEvent) -> Result<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_controller_released(&mut self, s: &mut PixState, event: ControllerEvent) -> PixResult<bool> {
     ///     match event.button {
     ///         ControllerButton::X => {
     ///             self.fire_bullet(s);
@@ -367,7 +371,11 @@ pub trait PixEngine {
     /// }
     /// # }
     /// ```
-    fn on_controller_released(&mut self, s: &mut PixState, event: ControllerEvent) -> Result<bool> {
+    fn on_controller_released(
+        &mut self,
+        s: &mut PixState,
+        event: ControllerEvent,
+    ) -> PixResult<bool> {
         Ok(false)
     }
 
@@ -392,14 +400,14 @@ pub trait PixEngine {
     /// #   fn move_down(&self) {}
     /// # }
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
     /// fn on_controller_axis_motion(
     ///     &mut self,
     ///     s: &mut PixState,
     ///     controller_id: ControllerId,
     ///     axis: Axis,
     ///     value: i32,
-    /// ) -> Result<bool> {
+    /// ) -> PixResult<bool> {
     ///     if controller_id == self.player1 {
     ///         match axis {
     ///             Axis::LeftX => {
@@ -432,7 +440,7 @@ pub trait PixEngine {
         controller_id: ControllerId,
         axis: Axis,
         value: i32,
-    ) -> Result<bool> {
+    ) -> PixResult<bool> {
         Ok(false)
     }
 
@@ -455,13 +463,13 @@ pub trait PixEngine {
     /// # fn remove_gamepad(&mut self, _: ControllerId) {}
     /// # }
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
     /// fn on_controller_update(
     ///     &mut self,
     ///     s: &mut PixState,
     ///     controller_id: ControllerId,
     ///     update: ControllerUpdate,
-    /// ) -> Result<bool> {
+    /// ) -> PixResult<bool> {
     ///     match update {
     ///         ControllerUpdate::Added => {
     ///             self.add_gamepad(controller_id);
@@ -481,7 +489,7 @@ pub trait PixEngine {
         s: &mut PixState,
         controller_id: ControllerId,
         update: ControllerUpdate,
-    ) -> Result<bool> {
+    ) -> PixResult<bool> {
         Ok(false)
     }
 
@@ -500,13 +508,13 @@ pub trait PixEngine {
     /// # use pix_engine::prelude::*;
     /// # struct App { canvas: Rect<i32>, drawing: bool };
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
     /// fn on_mouse_pressed(
     ///     &mut self,
     ///     s: &mut PixState,
     ///     btn: Mouse,
     ///     pos: Point<i32>,
-    /// ) -> Result<bool> {
+    /// ) -> PixResult<bool> {
     ///     if let Mouse::Left = btn {
     ///         if self.canvas.contains(pos) {
     ///             self.drawing = true;
@@ -516,7 +524,12 @@ pub trait PixEngine {
     /// }
     /// # }
     /// ```
-    fn on_mouse_pressed(&mut self, s: &mut PixState, btn: Mouse, pos: Point<i32>) -> Result<bool> {
+    fn on_mouse_pressed(
+        &mut self,
+        s: &mut PixState,
+        btn: Mouse,
+        pos: Point<i32>,
+    ) -> PixResult<bool> {
         Ok(false)
     }
 
@@ -535,13 +548,13 @@ pub trait PixEngine {
     /// # use pix_engine::prelude::*;
     /// # struct App { drawing: bool, canvas: Rect<i32> };
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
     /// fn on_mouse_released(
     ///     &mut self,
     ///     s: &mut PixState,
     ///     btn: Mouse,
     ///     pos: Point<i32>,
-    /// ) -> Result<bool> {
+    /// ) -> PixResult<bool> {
     ///     if let Mouse::Left = btn {
     ///         if self.canvas.contains(pos) {
     ///             self.drawing = false;
@@ -551,7 +564,12 @@ pub trait PixEngine {
     /// }
     /// # }
     /// ```
-    fn on_mouse_released(&mut self, s: &mut PixState, btn: Mouse, pos: Point<i32>) -> Result<bool> {
+    fn on_mouse_released(
+        &mut self,
+        s: &mut PixState,
+        btn: Mouse,
+        pos: Point<i32>,
+    ) -> PixResult<bool> {
         Ok(false)
     }
 
@@ -570,13 +588,13 @@ pub trait PixEngine {
     /// # use pix_engine::prelude::*;
     /// # struct App { item: Rect<i32>, selected: bool };
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
     /// fn on_mouse_clicked(
     ///     &mut self,
     ///     s: &mut PixState,
     ///     btn: Mouse,
     ///     pos: Point<i32>,
-    /// ) -> Result<bool> {
+    /// ) -> PixResult<bool> {
     ///     if let Mouse::Left = btn {
     ///         if self.item.contains(pos) {
     ///             self.selected = true;
@@ -586,7 +604,12 @@ pub trait PixEngine {
     /// }
     /// # }
     /// ```
-    fn on_mouse_clicked(&mut self, s: &mut PixState, btn: Mouse, pos: Point<i32>) -> Result<bool> {
+    fn on_mouse_clicked(
+        &mut self,
+        s: &mut PixState,
+        btn: Mouse,
+        pos: Point<i32>,
+    ) -> PixResult<bool> {
         Ok(false)
     }
 
@@ -606,13 +629,13 @@ pub trait PixEngine {
     /// # struct App { item: Rect<i32> };
     /// # impl App { fn execute_item(&mut self) {} }
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
     /// fn on_mouse_dbl_clicked(
     ///     &mut self,
     ///     s: &mut PixState,
     ///     btn: Mouse,
     ///     pos: Point<i32>,
-    /// ) -> Result<bool> {
+    /// ) -> PixResult<bool> {
     ///     if let Mouse::Left = btn {
     ///         if self.item.contains(pos) {
     ///             self.execute_item()
@@ -627,7 +650,7 @@ pub trait PixEngine {
         s: &mut PixState,
         btn: Mouse,
         pos: Point<i32>,
-    ) -> Result<bool> {
+    ) -> PixResult<bool> {
         Ok(false)
     }
 
@@ -647,13 +670,13 @@ pub trait PixEngine {
     /// # use pix_engine::prelude::*;
     /// # struct App { pos: Point<i32> };
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
     /// fn on_mouse_motion(
     ///     &mut self,
     ///     s: &mut PixState,
     ///     pos: Point<i32>,
     ///     rel_pos: Point<i32>,
-    /// ) -> Result<bool> {
+    /// ) -> PixResult<bool> {
     ///     self.pos = pos;
     ///     Ok(true)
     /// }
@@ -664,7 +687,7 @@ pub trait PixEngine {
         s: &mut PixState,
         pos: Point<i32>,
         rel_pos: Point<i32>,
-    ) -> Result<bool> {
+    ) -> PixResult<bool> {
         Ok(false)
     }
 
@@ -683,14 +706,14 @@ pub trait PixEngine {
     /// # use pix_engine::prelude::*;
     /// # struct App { scroll: Point<i32> };
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
-    /// fn on_mouse_wheel(&mut self, s: &mut PixState, pos: Point<i32>) -> Result<bool> {
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
+    /// fn on_mouse_wheel(&mut self, s: &mut PixState, pos: Point<i32>) -> PixResult<bool> {
     ///     self.scroll += pos;
     ///     Ok(true)
     /// }
     /// # }
     /// ```
-    fn on_mouse_wheel(&mut self, s: &mut PixState, pos: Point<i32>) -> Result<bool> {
+    fn on_mouse_wheel(&mut self, s: &mut PixState, pos: Point<i32>) -> PixResult<bool> {
         Ok(false)
     }
 
@@ -708,13 +731,13 @@ pub trait PixEngine {
     /// # struct App { window_id: WindowId };
     /// # impl App { fn pause(&mut self) {} fn unpause(&mut self) {} }
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
     /// fn on_window_event(
     ///     &mut self,
     ///     s: &mut PixState,
     ///     window_id: WindowId,
     ///     event: WindowEvent,
-    /// ) -> Result<()> {
+    /// ) -> PixResult<()> {
     ///     if window_id == self.window_id {
     ///         match event {
     ///             WindowEvent::Minimized => self.pause(),
@@ -731,7 +754,7 @@ pub trait PixEngine {
         s: &mut PixState,
         window_id: WindowId,
         event: WindowEvent,
-    ) -> Result<()> {
+    ) -> PixResult<()> {
         Ok(())
     }
 
@@ -751,12 +774,12 @@ pub trait PixEngine {
     /// # use pix_engine::prelude::*;
     /// # struct App;
     /// # impl PixEngine for App {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
     /// fn on_event(
     ///     &mut self,
     ///     s: &mut PixState,
     ///     event: &Event,
-    /// ) -> Result<bool> {
+    /// ) -> PixResult<bool> {
     ///     match event {
     ///         Event::ControllerDown { controller_id, button } => {
     ///             // Handle controller down event
@@ -771,7 +794,7 @@ pub trait PixEngine {
     /// }
     /// # }
     /// ```
-    fn on_event(&mut self, s: &mut PixState, event: &Event) -> Result<bool> {
+    fn on_event(&mut self, s: &mut PixState, event: &Event) -> PixResult<bool> {
         Ok(false)
     }
 }
@@ -784,9 +807,9 @@ pub trait PixEngine {
 /// # use pix_engine::prelude::*;
 /// # struct MyApp;
 /// # impl PixEngine for MyApp {
-/// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
+/// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
 /// # }
-/// fn main() -> Result<()> {
+/// fn main() -> PixResult<()> {
 ///     let mut engine = Engine::builder()
 ///         .title("My App")
 ///         .position(10, 10)
@@ -986,7 +1009,7 @@ impl EngineBuilder {
     /// Possible errors include the title containing a `nul` character, the position or dimensions
     /// being invalid values or overlowing and an internal renderer error such as running out of
     /// memory or a software driver issue.
-    pub fn build(self) -> Result<Engine> {
+    pub fn build(self) -> PixResult<Engine> {
         Ok(Engine {
             state: PixState::new(self.settings, self.theme)?,
             joystick_deadzone: self.joystick_deadzone,
@@ -1026,15 +1049,15 @@ impl Engine {
     /// # struct MyApp;
     /// # impl MyApp { fn new() -> Self { Self } }
     /// # impl PixEngine for MyApp {
-    /// # fn on_update(&mut self, s: &mut PixState) -> Result<()> { Ok(()) }
+    /// # fn on_update(&mut self, s: &mut PixState) -> PixResult<()> { Ok(()) }
     /// # }
-    /// fn main() -> Result<()> {
+    /// fn main() -> PixResult<()> {
     ///     let mut engine = Engine::builder().build()?;
     ///     let mut app = MyApp::new(); // MyApp implements `Engine`
     ///     engine.run(&mut app)
     /// }
     /// ```
-    pub fn run<A>(&mut self, app: &mut A) -> Result<()>
+    pub fn run<A>(&mut self, app: &mut A) -> PixResult<()>
     where
         A: PixEngine,
     {
@@ -1106,7 +1129,7 @@ impl Engine {
 impl Engine {
     /// Handle user and system events.
     #[inline]
-    fn handle_events<A>(&mut self, app: &mut A) -> Result<()>
+    fn handle_events<A>(&mut self, app: &mut A) -> PixResult<()>
     where
         A: PixEngine,
     {
