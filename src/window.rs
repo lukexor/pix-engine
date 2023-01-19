@@ -212,6 +212,9 @@ pub(crate) trait WindowRenderer {
     /// Dimensions of the current window target as `(width, height)`.
     fn window_dimensions(&self) -> PixResult<(u32, u32)>;
 
+    /// Position of the current window target as `(x, y)`.
+    fn window_position(&self) -> PixResult<(i32, i32)>;
+
     /// Set dimensions of the current window target as `(width, height)`.
     fn set_window_dimensions(&mut self, dimensions: (u32, u32)) -> PixResult<()>;
 
@@ -441,6 +444,16 @@ impl PixState {
         self.renderer.set_window_dimensions(dimensions)
     }
 
+    /// The position of the current window target as `(x, y)`.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
+    pub fn window_position(&self) -> PixResult<(i32, i32)> {
+        self.renderer.window_position()
+    }
+
     /// Returns the rendering viewport of the current render target.
     ///
     /// # Errors
@@ -538,6 +551,28 @@ impl PixState {
     pub fn set_window_height(&mut self, height: u32) -> PixResult<()> {
         let (width, _) = self.window_dimensions()?;
         self.renderer.set_window_dimensions((width, height))
+    }
+
+    /// The x of the current window.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
+    pub fn window_position_x(&self) -> PixResult<i32> {
+        let (x, _) = self.window_position()?;
+        Ok(x)
+    }
+
+    /// The y of the current window.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
+    pub fn window_position_y(&self) -> PixResult<i32> {
+        let (_, y) = self.window_position()?;
+        Ok(y)
     }
 
     /// The center [Point] of the current render target.
