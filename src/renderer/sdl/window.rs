@@ -324,6 +324,12 @@ impl WindowRenderer for Renderer {
         Ok(self.window()?.size())
     }
 
+    /// Position of the current window target as `(x, y)`.
+    #[inline]
+    fn window_position(&self) -> Result<(i32, i32)> {
+        Ok(self.window()?.position())
+    }
+
     /// Set dimensions of the current window target as `(width, height)`.
     #[inline]
     fn set_window_dimensions(&mut self, (width, height): (u32, u32)) -> Result<()> {
