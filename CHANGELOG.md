@@ -13,6 +13,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+### Fixed
+
+### Breaking
+
+## [0.7.0] - 2023-01-20
+
+### Added
+
+### Changed
+
 - Added `Features` section to `README`.
 - Avoid computing `target_delta_time` each frame
 - Increased MSRV to `1.61.0`
