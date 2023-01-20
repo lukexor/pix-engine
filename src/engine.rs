@@ -846,7 +846,7 @@ impl EngineBuilder {
     }
 
     /// Set a window title.
-    pub fn title<S>(mut self, title: S) -> Self
+    pub fn title<S>(&mut self, title: S) -> &mut Self
     where
         S: Into<String>,
     {
@@ -855,25 +855,25 @@ impl EngineBuilder {
     }
 
     /// Set font for text rendering.
-    pub fn font(mut self, font: Font) -> Self {
+    pub fn font(&mut self, font: Font) -> &mut Self {
         self.theme.fonts.body = font;
         self
     }
 
     /// Set font size for text rendering.
-    pub fn font_size(mut self, size: u32) -> Self {
+    pub fn font_size(&mut self, size: u32) -> &mut Self {
         self.theme.font_size = size;
         self
     }
 
     /// Set theme for UI rendering.
-    pub fn theme(mut self, theme: Theme) -> Self {
+    pub fn theme(&mut self, theme: Theme) -> &mut Self {
         self.theme = theme;
         self
     }
 
     /// Set a window icon.
-    pub fn icon<I>(mut self, icon: I) -> Self
+    pub fn icon<I>(&mut self, icon: I) -> &mut Self
     where
         I: Into<Icon>,
     {
@@ -882,21 +882,21 @@ impl EngineBuilder {
     }
 
     /// Position the window at the given `(x, y)` coordinates of the display.
-    pub fn position(mut self, x: i32, y: i32) -> Self {
+    pub fn position(&mut self, x: i32, y: i32) -> &mut Self {
         self.settings.x = Position::Positioned(x);
         self.settings.y = Position::Positioned(y);
         self
     }
 
     /// Position the window in the center of the display. This is the default.
-    pub fn position_centered(mut self) -> Self {
+    pub fn position_centered(&mut self) -> &mut Self {
         self.settings.x = Position::Centered;
         self.settings.y = Position::Centered;
         self
     }
 
     /// Set window dimensions.
-    pub fn dimensions(mut self, width: u32, height: u32) -> Self {
+    pub fn dimensions(&mut self, width: u32, height: u32) -> &mut Self {
         self.settings.width = width;
         self.settings.height = height;
         self
@@ -904,33 +904,33 @@ impl EngineBuilder {
 
     /// Set the rendering scale of the current canvas. Drawing coordinates are scaled by x/y
     /// factors before being drawn to the canvas.
-    pub fn scale(mut self, x: f32, y: f32) -> Self {
+    pub fn scale(&mut self, x: f32, y: f32) -> &mut Self {
         self.settings.scale_x = x;
         self.settings.scale_y = y;
         self
     }
 
     /// Set audio sample rate in Hz (samples per second). Defaults to device fallback sample rate.
-    pub fn audio_sample_rate(mut self, sample_rate: i32) -> Self {
+    pub fn audio_sample_rate(&mut self, sample_rate: i32) -> &mut Self {
         self.settings.audio_sample_rate = Some(sample_rate);
         self
     }
 
     /// Set number of audio channels (1 for Mono, 2 for Stereo, etc). Defaults to device fallback
     /// number of channels.
-    pub fn audio_channels(mut self, channels: u8) -> Self {
+    pub fn audio_channels(&mut self, channels: u8) -> &mut Self {
         self.settings.audio_channels = Some(channels);
         self
     }
 
     /// Set audio buffer size in samples. Defaults to device fallback sample size.
-    pub fn audio_buffer_size(mut self, buffer_size: u16) -> Self {
+    pub fn audio_buffer_size(&mut self, buffer_size: u16) -> &mut Self {
         self.settings.audio_buffer_size = Some(buffer_size);
         self
     }
 
     /// Start window in fullscreen mode.
-    pub fn fullscreen(mut self) -> Self {
+    pub fn fullscreen(&mut self) -> &mut Self {
         self.settings.fullscreen = true;
         self
     }
@@ -938,64 +938,64 @@ impl EngineBuilder {
     /// Set the window to synchronize frame rate to the screens refresh rate ([`VSync`]).
     ///
     /// [`VSync`]: https://en.wikipedia.org/wiki/Screen_tearing#Vertical_synchronization
-    pub fn vsync_enabled(mut self) -> Self {
+    pub fn vsync_enabled(&mut self) -> &mut Self {
         self.settings.vsync = true;
         self
     }
 
     /// Allow window resizing.
-    pub fn resizable(mut self) -> Self {
+    pub fn resizable(&mut self) -> &mut Self {
         self.settings.resizable = true;
         self
     }
 
     /// Removes the window decoration.
-    pub fn borderless(mut self) -> Self {
+    pub fn borderless(&mut self) -> &mut Self {
         self.settings.borderless = true;
         self
     }
 
     /// Alter the joystick axis deadzone.
-    pub fn deadzone(mut self, value: i32) -> Self {
+    pub fn deadzone(&mut self, value: i32) -> &mut Self {
         self.joystick_deadzone = value;
         self
     }
 
     /// Enables high-DPI on displays that support it.
-    pub fn allow_highdpi(mut self) -> Self {
+    pub fn allow_highdpi(&mut self) -> &mut Self {
         self.settings.allow_highdpi = true;
         self
     }
 
     /// Starts engine with window hidden.
-    pub fn hidden(mut self) -> Self {
+    pub fn hidden(&mut self) -> &mut Self {
         self.settings.hidden = true;
         self
     }
 
     /// Enable average frame rate (FPS) in title.
-    pub fn show_frame_rate(mut self) -> Self {
+    pub fn show_frame_rate(&mut self) -> &mut Self {
         self.settings.show_frame_rate = true;
         self
     }
 
     /// Set a target frame rate to render at, controls how often
     /// [`Engine::on_update`] is called.
-    pub fn target_frame_rate(mut self, rate: usize) -> Self {
+    pub fn target_frame_rate(&mut self, rate: usize) -> &mut Self {
         self.settings.target_frame_rate = Some(rate);
         self
     }
 
     /// Set a custom texture cache size other than the default of `20`.
     /// Affects font family and image rendering caching operations.
-    pub fn texture_cache(mut self, size: NonZeroUsize) -> Self {
+    pub fn texture_cache(&mut self, size: NonZeroUsize) -> &mut Self {
         self.settings.texture_cache_size = size;
         self
     }
 
     /// Set a custom text cache size other than the default of `500`.
     /// Affects text rendering caching operations.
-    pub fn text_cache(mut self, size: NonZeroUsize) -> Self {
+    pub fn text_cache(&mut self, size: NonZeroUsize) -> &mut Self {
         self.settings.text_cache_size = size;
         self
     }
@@ -1009,9 +1009,9 @@ impl EngineBuilder {
     /// Possible errors include the title containing a `nul` character, the position or dimensions
     /// being invalid values or overlowing and an internal renderer error such as running out of
     /// memory or a software driver issue.
-    pub fn build(self) -> PixResult<Engine> {
+    pub fn build(&self) -> PixResult<Engine> {
         Ok(Engine {
-            state: PixState::new(self.settings, self.theme)?,
+            state: PixState::new(self.settings.clone(), self.theme.clone())?,
             joystick_deadzone: self.joystick_deadzone,
         })
     }
