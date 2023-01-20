@@ -47,7 +47,7 @@ Some examples of things you can create with `pix-engine`:
 
 ### Minimum Supported Rust Version (MSRV)
 
-The current minimum Rust version is `1.61.0`.
+The current minimum Rust version is `1.62.0`.
 
 ## Screenshots
 

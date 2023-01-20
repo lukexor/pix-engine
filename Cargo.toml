@@ -14,7 +14,7 @@ exclude = ["/images", "/audio", "/pkg"]
 build = "build.rs"
 
 [package.metadata]
-msrv = "1.61.0"
+msrv = "1.62.0"
 
 [package.metadata.docs.rs]
 features = ["serde"]

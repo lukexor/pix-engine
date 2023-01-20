@@ -321,22 +321,17 @@ impl Default for AudioFormat {
 }
 
 /// Playback status of an audio device.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[must_use]
 pub enum AudioStatus {
     /// Audio device is stopped.
+    #[default]
     Stopped,
     /// Audio device is playing.
     Playing,
     /// Audio device is paused.
     Paused,
-}
-
-impl Default for AudioStatus {
-    fn default() -> Self {
-        AudioStatus::Stopped
-    }
 }
 
 /// Desired audio device specification.
