@@ -247,14 +247,14 @@ impl WindowRenderer for Renderer {
             Some(cursor) => {
                 self.cursor = match cursor {
                     Cursor::System(cursor) => {
-                        SdlCursor::from_system((*cursor).into()).map_err(Error::Renderer)?
+                        Some(SdlCursor::from_system((*cursor).into()).map_err(Error::Renderer)?)
                     }
                     Cursor::Image(path, (x, y)) => {
                         let surface = Surface::from_file(path).map_err(Error::Renderer)?;
-                        SdlCursor::from_surface(surface, *x, *y).map_err(Error::Renderer)?
+                        Some(SdlCursor::from_surface(surface, *x, *y).map_err(Error::Renderer)?)
                     }
                 };
-                self.cursor.set();
+                self.cursor.as_ref().unwrap().set();
                 if !self.context.mouse().is_cursor_showing() {
                     self.context.mouse().show_cursor(true);
                 }
