@@ -78,11 +78,7 @@ impl Rendering for Renderer {
         todo!()
     }
 
-    fn size_of(
-        &self,
-        text: &str,
-        wrap_width: Option<u32>,
-    ) -> crate::prelude::Result<(u32, u32)> {
+    fn size_of(&self, text: &str, wrap_width: Option<u32>) -> crate::prelude::Result<(u32, u32)> {
         todo!()
     }
 
