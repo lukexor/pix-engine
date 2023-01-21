@@ -254,8 +254,8 @@ impl WindowRenderer for Renderer {
                         Some(SdlCursor::from_surface(surface, *x, *y).map_err(Error::Renderer)?)
                     }
                 };
-                if self.cursor.is_some(){
-                    self.cursor.as_ref().unwrap().set();
+                if let Some(cursor) = &self.cursor {
+                    cursor.set();
                 }
                 if !self.context.mouse().is_cursor_showing() {
                     self.context.mouse().show_cursor(true);

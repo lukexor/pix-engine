@@ -155,8 +155,8 @@ impl Rendering for Renderer {
             Ok(c) => Some(c),
             Err(_) => None,
         };
-        if cursor.is_some(){
-            cursor.as_ref().unwrap().set();
+        if let Ok(cursor) = Cursor::from_system(SystemCursor::Arrow) {
+            cursor.set();
         }
         let window_target = primary_window.id;
         let mut windows = HashMap::new();
