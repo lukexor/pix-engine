@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking
 
-## [0.7.0] - 2022-12-06
+## [0.7.0] - 2023-01-20
 
 ### Added
 
@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added `Features` section to `README`.
 - Avoid computing `target_delta_time` each frame
+- Increased MSRV to `1.61.0`
 
 ### Fixed
 
@@ -33,8 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed `Unsupported` `Event` variants to `Unhandled` to better reflect
   intention.
 - Renamed `AppState` to `PixEngine` and `PixEngine` to `Engine`.
-- Renamed `engine::Builder` to `engine::EngineBuilder` and converted to a
-  consuming builder.
+- Renamed `engine::Builder` to `engine::EngineBuilder`.
 - Updated `PixEngine::on_event` to return a `bool`, which consumes the event.
 - Removed `with_` prefix from builder methods.
 - `EngineBuilder::texture_cache` and `EngineBuilder::text_cache` now take a

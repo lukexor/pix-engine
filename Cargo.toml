@@ -4,7 +4,7 @@ categories = ["game-development", "game-engines", "graphics", "gui", "rendering"
 description = "A cross-platform graphics/UI engine framework for simple games, visualizations, and graphics demos."
 documentation = "https://docs.rs/pix-engine"
 edition = "2021"
-keywords = ["game", "engine", "graphics", "ui", "gui", "rendering"]
+keywords = ["game", "engine", "graphics", "ui", "rendering"]
 license = "MIT OR Apache-2.0"
 name = "pix-engine"
 repository = "https://github.com/lukexor/pix-engine.git"
@@ -14,7 +14,7 @@ exclude = ["/images", "/audio", "/pkg"]
 build = "build.rs"
 
 [package.metadata]
-msrv = "1.59.0"
+msrv = "1.62.0"
 
 [package.metadata.docs.rs]
 features = ["serde"]
@@ -24,24 +24,24 @@ targets = ["x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-anyhow = "1.0.66"
+anyhow = "1.0.68"
 bitflags = "1.2.1"
 chrono = "0.4.23"
 log = "0.4.17"
-lru = "0.8.1"
+lru = "0.9.0"
 num-traits = "0.2.15"
-once_cell = "1.16.0"
+once_cell = "1.17.0"
 png = "0.17.6"
 rand = "0.8.5"
-serde = { version = "1.0.149", features = ["derive"], optional = true }
-thiserror = "1.0.37"
+serde = { version = "1.0.152", features = ["derive"], optional = true }
+thiserror = "1.0.38"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 # https://docs.rs/getrandom/latest/getrandom/#webassembly-support
 getrandom = { version = "0.2", features = ["js"] }
 
 [dev-dependencies]
-rayon = "1.6.0"
+rayon = "1.6.1"
 pretty_env_logger = "0.4.0"
 
 [dev-dependencies.cargo-husky]
