@@ -553,6 +553,28 @@ impl PixState {
         self.renderer.set_window_dimensions((width, height))
     }
 
+    /// The x of the current window.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
+    pub fn window_x(&self) -> PixResult<i32> {
+        let (x, _) = self.window_position()?;
+        Ok(x)
+    }
+
+    /// The y of the current window.
+    ///
+    /// # Errors
+    ///
+    /// If the window has been closed or is invalid, then an error is returned.
+    #[inline]
+    pub fn window_y(&self) -> PixResult<i32> {
+        let (_, y) = self.window_position()?;
+        Ok(y)
+    }
+
     /// The center [Point] of the current render target.
     ///
     /// # Errors
