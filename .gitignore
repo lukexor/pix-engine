@@ -4,3 +4,4 @@ target/
 vcpkg/
 *.profraw
 *.profdata
+.idea

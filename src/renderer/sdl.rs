@@ -46,7 +46,7 @@ pub(crate) struct Renderer {
     controllers: HashMap<ControllerId, GameController>,
     title: String,
     settings: RendererSettings,
-    cursor: Cursor,
+    cursor: Option<Cursor>,
     blend_mode: SdlBlendMode,
     current_font: FontId,
     font_size: u16,
@@ -150,8 +150,14 @@ impl Rendering for Renderer {
 
         let title = s.title.clone();
         let primary_window = WindowCanvas::new(&context, &mut s)?;
-        let cursor = Cursor::from_system(SystemCursor::Arrow).map_err(Error::Renderer)?;
-        cursor.set();
+        let cursor_result = Cursor::from_system(SystemCursor::Arrow).map_err(Error::Renderer);
+        let cursor = match cursor_result {
+            Ok(c) => Some(c),
+            Err(_) => None,
+        };
+        if let Ok(cursor) = Cursor::from_system(SystemCursor::Arrow) {
+            cursor.set();
+        }
         let window_target = primary_window.id;
         let mut windows = HashMap::new();
         windows.insert(primary_window.id, primary_window);
