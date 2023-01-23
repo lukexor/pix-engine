@@ -247,14 +247,16 @@ impl WindowRenderer for Renderer {
             Some(cursor) => {
                 self.cursor = match cursor {
                     Cursor::System(cursor) => {
-                        SdlCursor::from_system((*cursor).into()).map_err(Error::Renderer)?
+                        Some(SdlCursor::from_system((*cursor).into()).map_err(Error::Renderer)?)
                     }
                     Cursor::Image(path, (x, y)) => {
                         let surface = Surface::from_file(path).map_err(Error::Renderer)?;
-                        SdlCursor::from_surface(surface, *x, *y).map_err(Error::Renderer)?
+                        Some(SdlCursor::from_surface(surface, *x, *y).map_err(Error::Renderer)?)
                     }
                 };
-                self.cursor.set();
+                if let Some(cursor) = &self.cursor {
+                    cursor.set();
+                }
                 if !self.context.mouse().is_cursor_showing() {
                     self.context.mouse().show_cursor(true);
                 }
@@ -322,6 +324,12 @@ impl WindowRenderer for Renderer {
     #[inline]
     fn window_dimensions(&self) -> Result<(u32, u32)> {
         Ok(self.window()?.size())
+    }
+
+    /// Position of the current window target as `(x, y)`.
+    #[inline]
+    fn window_position(&self) -> Result<(i32, i32)> {
+        Ok(self.window()?.position())
     }
 
     /// Set dimensions of the current window target as `(width, height)`.
