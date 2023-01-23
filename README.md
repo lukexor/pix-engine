@@ -3,7 +3,7 @@
 [![Build Status]][build] [![Doc Status]][docs] [![codecov]][coverage] [![Latest
 Version]][crates.io] [![Downloads]][crates.io] [![License]][mit]
 
-[build status]: https://img.shields.io/github/workflow/status/lukexor/pix-engine/CI?style=plastic
+[build status]: https://img.shields.io/github/actions/workflow/status/lukexor/pix-engine/ci.yml?branch=main
 [build]: https://github.com/lukexor/pix-engine/actions/workflows/ci.yml
 [doc status]: https://img.shields.io/docsrs/pix-engine?style=plastic
 [docs]: https://docs.rs/pix-engine/
