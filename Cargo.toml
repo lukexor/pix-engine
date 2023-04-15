@@ -34,7 +34,7 @@ once_cell = "1.17.1"
 png = "0.17.6"
 rand = "0.8.5"
 serde = { version = "1.0.152", features = ["derive"], optional = true }
-thiserror = "1.0.38"
+thiserror = "1.0.40"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 # https://docs.rs/getrandom/latest/getrandom/#webassembly-support
