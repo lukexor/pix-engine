@@ -24,8 +24,8 @@ use crate::{
     prelude::*,
     renderer::{Rendering, WindowRenderer},
 };
-use chrono::prelude::*;
 use std::time::{Duration, Instant};
+use time::OffsetDateTime;
 
 const ONE_SECOND: Duration = Duration::from_secs(1);
 
@@ -316,42 +316,54 @@ impl PixState {
     #[inline]
     #[must_use]
     pub fn day() -> u32 {
-        Local::now().day()
+        OffsetDateTime::now_local()
+            .unwrap_or(OffsetDateTime::now_utc())
+            .day() as u32
     }
 
     /// Return the current month between 1-12.
     #[inline]
     #[must_use]
     pub fn month() -> u32 {
-        Local::now().month()
+        OffsetDateTime::now_local()
+            .unwrap_or(OffsetDateTime::now_utc())
+            .month() as u32
     }
 
     /// Return the current year as an integer.
     #[inline]
     #[must_use]
     pub fn year() -> i32 {
-        Local::now().year()
+        OffsetDateTime::now_local()
+            .unwrap_or(OffsetDateTime::now_utc())
+            .year()
     }
 
     /// Return the current hour between 0-23.
     #[inline]
     #[must_use]
     pub fn hour() -> u32 {
-        Local::now().hour()
+        OffsetDateTime::now_local()
+            .unwrap_or(OffsetDateTime::now_utc())
+            .hour() as u32
     }
 
     /// Return the current minute between 0-59.
     #[inline]
     #[must_use]
     pub fn minute() -> u32 {
-        Local::now().minute()
+        OffsetDateTime::now_local()
+            .unwrap_or(OffsetDateTime::now_utc())
+            .minute() as u32
     }
 
     /// Return the current second between 0-59.
     #[inline]
     #[must_use]
     pub fn second() -> u32 {
-        Local::now().second()
+        OffsetDateTime::now_local()
+            .unwrap_or(OffsetDateTime::now_utc())
+            .second() as u32
     }
 }
 
