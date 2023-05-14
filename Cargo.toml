@@ -24,7 +24,7 @@ targets = ["x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-anyhow = "1.0.70"
+anyhow = "1.0.71"
 bitflags = "1.2.1"
 time = { version = "0.3.0", features = ["local-offset"] }
 log = "0.4.17"
