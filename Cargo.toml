@@ -25,7 +25,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 anyhow = "1.0.71"
-bitflags = "1.2.1"
+bitflags = "2.3.0"
 time = { version = "0.3.0", features = ["local-offset"] }
 log = "0.4.17"
 lru = "0.10.0"
