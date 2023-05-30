@@ -30,7 +30,7 @@ time = { version = "0.3.0", features = ["local-offset"] }
 log = "0.4.17"
 lru = "0.10.0"
 num-traits = "0.2.15"
-once_cell = "1.17.1"
+once_cell = "1.17.2"
 png = "0.17.6"
 rand = "0.8.5"
 serde = { version = "1.0.163", features = ["derive"], optional = true }
