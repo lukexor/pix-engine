@@ -4,9 +4,6 @@ set -e
 RUSTDOCFLAGS="-Dwarnings"
 RUSTFLAGS="-Dwarnings"
 
-echo 'skipped for now (CHiPs44)'
-exit 0
-
 echo '+cargo +nightly test'
 cargo +nightly test
 
