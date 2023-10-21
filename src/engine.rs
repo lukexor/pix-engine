@@ -1167,8 +1167,9 @@ impl Engine {
                         key: Some(key),
                         keymod,
                         repeat,
+                        scan: Some(scan),
                     } => {
-                        let evt = KeyEvent::new(key, keymod, repeat);
+                        let evt = KeyEvent::new(key, keymod, repeat, scan);
                         if !app.on_key_pressed(state, evt)? {
                             state.ui.keys.press(key, keymod);
                         }
@@ -1177,8 +1178,9 @@ impl Engine {
                         key: Some(key),
                         keymod,
                         repeat,
+                        scan: Some(scan),
                     } => {
-                        let evt = KeyEvent::new(key, keymod, repeat);
+                        let evt = KeyEvent::new(key, keymod, repeat, scan);
                         if !app.on_key_released(state, evt)? {
                             state.ui.keys.release(key, keymod);
                         }

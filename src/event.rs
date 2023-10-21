@@ -32,6 +32,8 @@ pub enum Event {
         keymod: KeyMod,
         /// Whether this is a key-repeat event.
         repeat: bool,
+        /// Scancode of key being pressed.
+        scan: Option<Scan>,
     },
     /// User key release event.
     KeyUp {
@@ -41,6 +43,8 @@ pub enum Event {
         keymod: KeyMod,
         /// Whether this is a key-repeat event.
         repeat: bool,
+        /// Scancode of key being pressed.
+        scan: Option<Scan>,
     },
     /// User text entry event.
     TextInput {
@@ -260,14 +264,17 @@ pub struct KeyEvent {
     pub keymod: KeyMod,
     /// Whether this is a key-repeat event.
     pub repeat: bool,
+    /// Specific scancode for this event.
+    pub scan: Scan,
 }
 
 impl KeyEvent {
-    pub(crate) const fn new(key: Key, keymod: KeyMod, repeat: bool) -> Self {
+    pub(crate) const fn new(key: Key, keymod: KeyMod, repeat: bool, scan: Scan) -> Self {
         Self {
             key,
             keymod,
             repeat,
+            scan,
         }
     }
 }
@@ -375,6 +382,31 @@ pub enum Key {
 }
 
 impl Default for Key {
+    fn default() -> Self {
+        Self::Unhandled
+    }
+}
+
+/// Keyboard scancode
+#[allow(missing_docs)]
+#[non_exhaustive]
+#[rustfmt::skip]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub enum Scan {
+    // Just a copy of Key for now
+    Backspace, Tab, Return, Escape, Space, Exclaim, Quotedbl, Hash, Dollar, Percent, Ampersand,
+    Quote, LeftParen, RightParen, Asterisk, Plus, Comma, Minus, Period, Slash, Num0, Num1, Num2,
+    Num3, Num4, Num5, Num6, Num7, Num8, Num9, Colon, Semicolon, Less, Equals, Greater, Question,
+    At, LeftBracket, Backslash, RightBracket, Caret, Underscore, Backquote, A, B, C, D, E, F, G, H,
+    I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, Delete, CapsLock, F1, F2, F3, F4, F5, F6,
+    F7, F8, F9, F10, F11, F12, PrintScreen, ScrollLock, Pause, Insert, Home, PageUp, End, PageDown,
+    Right, Left, Down, Up, NumLock, KpDivide, KpMultiply, KpMinus, KpPlus, KpEnter, Kp1, Kp2, Kp3,
+    Kp4, Kp5, Kp6, Kp7, Kp8, Kp9, Kp0, KpPeriod, KpEquals, KpComma, LCtrl, LShift, LAlt, LGui,
+    RCtrl, RShift, RAlt, RGui, Unhandled
+}
+
+impl Default for Scan {
     fn default() -> Self {
         Self::Unhandled
     }
