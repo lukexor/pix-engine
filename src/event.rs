@@ -404,7 +404,7 @@ pub enum Scan {
     Right, Left, Down, Up, NumLock, KpDivide, KpMultiply, KpMinus, KpPlus, KpEnter, Kp1, Kp2, Kp3,
     Kp4, Kp5, Kp6, Kp7, Kp8, Kp9, Kp0, KpPeriod, KpEquals, KpComma, LCtrl, LShift, LAlt, LGui,
     RCtrl, RShift, RAlt, RGui, 
-    // Added by CHiPs44
+    // Added from SDL_SCANCODE_XXXXXXX
     NonUsHash, Apostrophe, Grave, NonUsBackslash, Application, Power, F13, F14, F15, 
     F16, F17, F18, F19, F20, F21, F22, F23, F24, Execute, Help, Menu, Select, Stop, Again, Undo, 
     Cut, Copy, Paste, Find, Mute, VolumeUp, VolumeDown, KpEqualsAS400, International1, 
