@@ -1,5 +1,5 @@
 ---
-name: Release
+name: Continuous Deployment
 
 # yamllint disable-line rule:truthy
 on:
@@ -8,7 +8,7 @@ on:
       - main
 
 jobs:
-  release:
+  cd:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
