@@ -15,7 +15,7 @@ license = "MIT OR Apache-2.0"
 name = "pix-engine"
 repository = "https://github.com/lukexor/pix-engine.git"
 resolver = "2"
-version = "0.7.0"
+version = "0.7.1"
 exclude = ["/images", "/audio", "/pkg"]
 build = "build.rs"
 
