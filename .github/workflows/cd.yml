@@ -4,8 +4,11 @@ name: Continuous Deployment
 # yamllint disable-line rule:truthy
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+
+permissions:
+  pull-requests: write
+  contents: write
 
 jobs:
   cd:

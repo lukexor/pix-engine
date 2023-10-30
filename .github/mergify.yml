@@ -11,5 +11,6 @@ pull_request_rules:
       - -conflict
       - -draft
       - -author=dependabot[bot]
+      - -head~=release-plz-*
     actions:
       update:
