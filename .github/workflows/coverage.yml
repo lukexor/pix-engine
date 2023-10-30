@@ -20,11 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
         with:
-          profile: minimal
-          toolchain: nightly
-          override: true
           components: llvm-tools-preview
       - uses: Swatinem/rust-cache@v2
       - uses: ./.github/actions/install-linuxbrew

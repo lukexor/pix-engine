@@ -32,11 +32,9 @@ jobs:
         toolchain: [stable, 1.67.0]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@stable
+      - uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
           toolchain: ${{ matrix.toolchain }}
-          override: true
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
       - name: Lint
