@@ -16,7 +16,10 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.RELEASE_PLZ_TOKEN }}
       - uses: dtolnay/rust-toolchain@stable
-      - name: Run release-plz
+      - uses: Swatinem/rust-cache@v2
+      - uses: ./.github/actions/install-linuxbrew
+      - uses: ./.github/actions/install-sdl2
+      - name: Run release
         uses: MarcoIeni/release-plz-action@v0.5
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PLZ_TOKEN }}
