@@ -338,7 +338,7 @@ impl Default for Mouse {
 
 bitflags! {
     /// Key Modifier.
-    #[derive(Default)]
+    #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "serde", serde(transparent))]
     #[must_use]

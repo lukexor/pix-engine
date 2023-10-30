@@ -398,7 +398,7 @@ impl PixState {
     #[inline]
     pub(crate) fn increment_frame(&mut self, time_since_last: Duration) -> PixResult<()> {
         let s = &self.settings;
-        let mut env = &mut self.env;
+        let env = &mut self.env;
 
         if env.run_count > 0 {
             env.run_count -= 1;

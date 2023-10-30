@@ -113,7 +113,7 @@ pub enum AngleMode {
 
 bitflags! {
     /// Font style for drawing text.
-    #[derive(Default)]
+    #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
     #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
     #[cfg_attr(feature = "serde", serde(transparent))]
     pub struct FontStyle: i32 {
@@ -854,7 +854,7 @@ impl PixState {
     /// ```
     #[inline]
     pub fn scale(&mut self, x: f32, y: f32) -> PixResult<()> {
-        let mut s = &mut self.settings;
+        let s = &mut self.settings;
         s.scale_x = x;
         s.scale_y = y;
         self.renderer.scale(s.scale_x, s.scale_y)

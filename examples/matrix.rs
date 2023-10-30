@@ -174,7 +174,6 @@ impl PixEngine for Matrix {
         self.init(s.dimensions()?);
         s.cursor(None)?;
         s.font_style(FontStyle::BOLD);
-        s.fullscreen(true)?;
         Ok(())
     }
 
