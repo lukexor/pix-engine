@@ -54,11 +54,6 @@ getrandom = { version = "0.2", features = ["js"] }
 rayon = "1.7"
 pretty_env_logger = "0.5"
 
-[dev-dependencies.cargo-husky]
-version = "1.5"
-default-features = false
-features = ["user-hooks"]
-
 [features]
 default = []
 opengl = []
