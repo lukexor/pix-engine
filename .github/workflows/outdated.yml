@@ -15,6 +15,8 @@ jobs:
     name: Outdated
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: dtolnay/install@cargo-outdated
       - run: cargo outdated --exit-code 1

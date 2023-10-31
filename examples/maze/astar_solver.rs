@@ -179,7 +179,7 @@ impl AStarSolver {
     }
 
     fn update_heuristic(&mut self, cell: &AStarCell, current: &AStarCell) -> AStarCell {
-        let mut neighbor = &mut self.cells[cell.id()];
+        let neighbor = &mut self.cells[cell.id()];
         neighbor.previous = Some(current.id());
         neighbor.g = current.g + 1.0;
         neighbor.h = neighbor.heuristic(&self.end);
