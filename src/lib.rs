@@ -78,7 +78,7 @@ pub mod prelude {
     pub use super::error::{Error as PixError, Result as PixResult};
     pub use super::event::{
         Axis, ControllerButton, ControllerEvent, ControllerId, ControllerUpdate, Event, HatState,
-        Key, KeyEvent, KeyMod, Scan, Mouse, WindowEvent,
+        Key, KeyEvent, KeyMod, Mouse, Scan, WindowEvent,
     };
     pub use super::gui::theme::{self, ColorType, Font, Theme};
     pub use super::image::{Image, PixelFormat};

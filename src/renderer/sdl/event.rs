@@ -613,10 +613,7 @@ impl From<SdlScancode> for Scan {
             SdlScancode::Sleep => Self::Sleep,
             SdlScancode::App1 => Self::App1,
             SdlScancode::App2 => Self::App2,
-            // Undefined?
-            // SdlScancode::AudioRewind => Self::AudioRewind,
-            // SdlScancode::AudioFastForward => Self::AudioFastForward,
-            scancode => {
+            scancode @ SdlScancode::Num => {
                 warn!("Unhandled SDL `Scancode`: {:?}", scancode);
                 Self::Unhandled
             }
