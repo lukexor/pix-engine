@@ -74,16 +74,21 @@ sdl2 = { version = "0.36", default_features = false, features = [
 # Reasonable performance for development
 [profile.dev-opt]
 inherits = "dev"
-opt-level = 2
+opt-level = 1
 
-[profile.release]
-codegen-units = 1
-lto = true
+[profile.test]
+inherits = "dev"
+
+[profile.profiling]
+inherits = "release"
+debug = true
 
 # The profile that 'cargo dist' will build with
 [profile.dist]
+codegen-units = 1
 inherits = "release"
 lto = "thin"
+strip = "debug"
 
 # Config for 'cargo dist'
 [workspace.metadata.dist]

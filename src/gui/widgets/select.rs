@@ -88,7 +88,7 @@ impl PixState {
         let ipad = spacing.item_pad;
 
         // Calculate rect
-        let (item_width, item_height) = s.text_size(items.get(0).map_or("", AsRef::as_ref))?;
+        let (item_width, item_height) = s.text_size(items.first().map_or("", AsRef::as_ref))?;
         let width = s.ui.next_width.take().unwrap_or(item_width);
         let (label_width, label_height) = s.text_size(label)?;
         let [mut x, y] = pos.coords();

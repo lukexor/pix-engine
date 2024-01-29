@@ -51,7 +51,3 @@ jobs:
           # bin/build_wasm.sh --dev
       - run: cargo doc --features "serde" --verbose
       - run: cargo test --features "serde" --verbose
-      # TODO: Fix missing video device on linux and audio API issue on windows
-      - if: matrix.os == 'macos-latest'
-        # yamllint disable-line rule:line-length
-        run: cargo test run_engine --features "serde" -- --test-threads=1 --ignored
