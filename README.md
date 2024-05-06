@@ -138,13 +138,13 @@ folder.
 ### Creating Your Application
 
 Creating a visual or interactive application using `pix-engine` requires
-implementing only a single method of the [`PixEngine`][appstate] trait for your
-application: [`PixEngine::on_update`][appstate::on_update] which gets executed as
+implementing only a single method of the [`PixEngine`][pixengine] trait for your
+application: [`PixEngine::on_update`][pixengine::on_update] which gets executed as
 often as possible. Within that function you'll have access to a mutable
 [`PixState`][pixstate] object which provides several methods for modifying
 settings and drawing to the screen.
 
-[`PixEngine`][appstate] provides additional methods that can be implemented to
+[`PixEngine`][pixengine] provides additional methods that can be implemented to
 respond to user events and handle application startup and teardown.
 
 Here's an example application which simply draws a circle following the mouse
@@ -490,8 +490,8 @@ implementation and evolution of this crate:
 [wasm]: https://www.rust-lang.org/what/wasm
 [tetanes]: https://crates.io/crates/tetanes
 [nes]: https://en.wikipedia.org/wiki/Nintendo_Entertainment_System
-[appstate]: crate::prelude::PixEngine
-[appstate::on_update]: crate::prelude::PixEngine::on_update
+[pixengine]: crate::prelude::PixEngine
+[pixengine::on_update]: crate::prelude::PixEngine::on_update
 [pixstate]: crate::prelude::PixState
 [serde]: https://crates.io/crates/serde
 [anyhow]: https://crates.io/crates/anyhow

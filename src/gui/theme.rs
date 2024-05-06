@@ -207,7 +207,7 @@ impl ThemeBuilder {
         self
     }
 
-    /// Convert `Builder` into a [Theme] instance.
+    /// Convert `ThemeBuilder` into a [Theme] instance.
     pub fn build(&self) -> Theme {
         Theme {
             name: self.name.clone(),
@@ -583,7 +583,7 @@ impl Spacing {
 
 /// A UI `Theme` containing font families, sizes, styles, and colors.
 ///
-/// See the [Builder] examples for building a custom theme.
+/// See the [`ThemeBuilder`] examples for building a custom theme.
 ///
 /// # Example
 ///
@@ -628,9 +628,9 @@ impl Default for Theme {
 }
 
 impl Theme {
-    /// Constructs a default [Builder] which can build a `Theme` instance.
+    /// Constructs a default [`ThemeBuilder`] which can build a `Theme` instance.
     ///
-    /// See [Builder] for examples.
+    /// See [`ThemeBuilder`] for examples.
     #[inline]
     pub fn builder() -> ThemeBuilder {
         ThemeBuilder::default()

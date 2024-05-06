@@ -35,7 +35,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// Please see the [module-level documentation] for examples.
 ///
-/// [module-level documentation]: crate::shape::ellipse
+/// [module-level documentation]: mod@crate::shape::ellipse
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[repr(transparent)]
 #[must_use]

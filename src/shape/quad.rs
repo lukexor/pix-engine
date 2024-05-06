@@ -35,7 +35,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 ///
 /// Please see the [module-level documentation] for examples.
 ///
-/// [module-level documentation]: crate::shape::quad
+/// [module-level documentation]: mod@crate::shape::quad
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[repr(transparent)]
 #[must_use]

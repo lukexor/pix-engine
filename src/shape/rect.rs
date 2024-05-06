@@ -37,7 +37,7 @@ use std::ops::{Add, Sub};
 ///
 /// Please see the [module-level documentation] for examples.
 ///
-/// [module-level documentation]: crate::shape::rect
+/// [module-level documentation]: mod@crate::shape::rect
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[repr(transparent)]
 #[must_use]

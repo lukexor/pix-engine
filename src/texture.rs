@@ -116,6 +116,8 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    ///
+    /// [`Error::InvalidTexture`]: crate::error::Error::InvalidTexture
     pub fn texture<R1, R2>(&mut self, texture_id: TextureId, src: R1, dst: R2) -> PixResult<()>
     where
         R1: Into<Option<Rect<i32>>>,
@@ -176,6 +178,8 @@ impl PixState {
     /// }
     /// # }
     /// ```
+    ///
+    /// [`Error::InvalidTexture`]: crate::error::Error::InvalidTexture
     pub fn texture_transformed<R1, R2, C, F>(
         &mut self,
         texture_id: TextureId,
@@ -209,7 +213,7 @@ impl PixState {
     /// Constructs a `Texture` to render to. Passing `None` for [`PixelFormat`] will use
     /// [`PixelFormat::default`]. The texture will be created and tied to the current window
     /// target. To create a texture for a window other than the primary window, call
-    /// [`PixState::set_window`].
+    /// [`PixState::set_window_target`].
     ///
     /// # Errors
     ///
@@ -331,7 +335,7 @@ impl PixState {
 
     /// Set a `Texture` as the priamry target for drawing operations. Pushes current settings and UI
     /// cursor to the stack, so any changes made while a texture target is set will be in effect
-    /// until [`PixState::reset_texture_target`] is called.
+    /// until [`PixState::clear_texture_target`] is called.
     ///
     /// # Errors
     ///

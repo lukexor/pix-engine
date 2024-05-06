@@ -28,7 +28,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// Please see the [module-level documentation] for examples.
 ///
-/// [module-level documentation]: crate::shape::sphere
+/// [module-level documentation]: mod@crate::shape::sphere
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 #[repr(transparent)]
 #[must_use]

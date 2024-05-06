@@ -35,7 +35,7 @@ use std::{fmt, ops::MulAssign};
 ///
 /// Please see the [module-level documentation] for examples.
 ///
-/// [module-level documentation]: crate::shape::point
+/// [module-level documentation]: mod@crate::shape::point
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 #[must_use]

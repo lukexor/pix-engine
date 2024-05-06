@@ -1,4 +1,4 @@
-//! Primary [`PiEngine`] trait and functions which drive your application.
+//! Primary [`PixEngine`] trait and functions which drive your application.
 //!
 //! This is the core module of the `pix-engine` crate and is responsible for building and running
 //! any application using it.
@@ -67,7 +67,7 @@ use std::{
 ///
 /// Please see the [module-level documentation] for more examples.
 ///
-/// [module-level documentation]: crate::appstate
+/// [module-level documentation]: crate::engine
 #[allow(unused_variables)]
 pub trait PixEngine {
     /// Called once upon engine start when [`Engine::run`] is called.
@@ -980,7 +980,7 @@ impl EngineBuilder {
     }
 
     /// Set a target frame rate to render at, controls how often
-    /// [`Engine::on_update`] is called.
+    /// [`PixEngine::on_update`] is called.
     pub fn target_frame_rate(&mut self, rate: usize) -> &mut Self {
         self.settings.target_frame_rate = Some(rate);
         self
@@ -1035,12 +1035,12 @@ impl Engine {
 
     /// Starts the `Engine` application and begins executing the frame loop on a given
     /// application which must implement [`Engine`]. The only required method of which is
-    /// [`Engine::on_update`].
+    /// [`PixEngine::on_update`].
     ///
     /// # Errors
     ///
     /// Any error in the entire library can propagate here and terminate the program. See the
-    /// [error](crate::error) module for details. Also see [`Engine::on_stop`].
+    /// [error](crate::error) module for details. Also see [`PixEngine::on_stop`].
     ///
     /// # Example
     ///
@@ -1066,11 +1066,11 @@ impl Engine {
         // Handle events before on_start to initialize window
         self.handle_events(app)?;
 
-        debug!("Starting with `Engine::on_start`");
+        debug!("Starting with `PixEngine::on_start`");
         self.state.clear()?;
         let on_start = app.on_start(&mut self.state);
         if on_start.is_err() || self.state.should_quit() {
-            debug!("Quitting during startup with `Engine::on_stop`");
+            debug!("Quitting during startup with `PixEngine::on_stop`");
             if let Err(ref err) = on_start {
                 error!("Error: {}", err);
             }
@@ -1080,7 +1080,7 @@ impl Engine {
 
         // on_stop loop enables on_stop to prevent application close if necessary
         'on_stop: loop {
-            debug!("Starting `Engine::on_update` loop.");
+            debug!("Starting `PixEngine::on_update` loop.");
             // running loop continues until an event or on_update returns false or errors
             let result = 'running: loop {
                 let start_time = Instant::now();
@@ -1116,7 +1116,7 @@ impl Engine {
                 }
             };
 
-            debug!("Quitting with `Engine::on_stop`");
+            debug!("Quitting with `PixEngine::on_stop`");
             let on_stop = app.on_stop(&mut self.state);
             if self.state.should_quit() {
                 info!("Quitting `Engine`...");
