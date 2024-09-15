@@ -35,7 +35,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 anyhow = "1.0"
-bitflags = "2.4"
+bitflags = "2.6"
 time = { version = "0.3", features = ["local-offset"] }
 log = "0.4"
 lru = "0.12"
@@ -51,7 +51,7 @@ thiserror = "1.0"
 getrandom = { version = "0.2", features = ["js"] }
 
 [dev-dependencies]
-rayon = "1.7"
+rayon = "1.10"
 pretty_env_logger = "0.5"
 
 [features]
@@ -63,7 +63,7 @@ debug_ui = []
 serde = ["dep:serde", "bitflags/serde"]
 
 [target."cfg(not(target_arch = \"wasm32\"))".dependencies]
-sdl2 = { version = "0.36", default_features = false, features = [
+sdl2 = { version = "0.37", default-features = false, features = [
   "gfx",
   "image",
   "mixer",
@@ -99,6 +99,11 @@ ci = ["github"]
 # The installers to generate for each app
 installers = ["shell", "powershell"]
 # Target platforms to build apps for (Rust target-triple syntax)
-targets = ["x86_64-unknown-linux-gnu", "aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-pc-windows-msvc"]
+targets = [
+  "x86_64-unknown-linux-gnu",
+  "aarch64-apple-darwin",
+  "x86_64-apple-darwin",
+  "x86_64-pc-windows-msvc",
+]
 # Publish jobs to run in CI
 pr-run-mode = "upload"
