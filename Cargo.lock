@@ -354,7 +354,7 @@ checksum = "33ea5043e58958ee56f3e15a90aee535795cd7dfd319846288d93c5b57d85cbe"
 
 [[package]]
 name = "pix-engine"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "anyhow",
  "bitflags 2.6.0",
