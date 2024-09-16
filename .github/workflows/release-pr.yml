@@ -1,5 +1,5 @@
 ---
-name: Continuous Deployment
+name: Release PR
 
 # yamllint disable-line rule:truthy
 on:
@@ -11,12 +11,14 @@ permissions:
   contents: write
 
 jobs:
-  cd:
+  release-pr:
+    name: Release PR
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # Required to trigger post-release workflows
           token: ${{ secrets.RELEASE_PLZ_TOKEN }}
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2

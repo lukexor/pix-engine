@@ -1,14 +1,12 @@
 # Engine
 
-[![Build Status]][build] [![Doc Status]][docs] [![codecov]][coverage] [![Latest
+[![Build Status]][build] [![Doc Status]][docs] [![Latest
 Version]][crates.io] [![Downloads]][crates.io] [![License]][mit]
 
 [build status]: https://img.shields.io/github/actions/workflow/status/lukexor/pix-engine/ci.yml?branch=main
 [build]: https://github.com/lukexor/pix-engine/actions/workflows/ci.yml
 [doc status]: https://img.shields.io/docsrs/pix-engine?style=plastic
 [docs]: https://docs.rs/pix-engine/
-[codecov]: https://codecov.io/gh/lukexor/pix-engine/branch/main/graph/badge.svg?token=2O6FVY5VZV
-[coverage]: https://codecov.io/gh/lukexor/pix-engine
 [latest version]: https://img.shields.io/crates/v/pix-engine?style=plastic
 [crates.io]: https://crates.io/crates/pix-engine
 [downloads]: https://img.shields.io/crates/d/pix-engine?style=plastic
