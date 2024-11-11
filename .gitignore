@@ -5,3 +5,4 @@ vcpkg/
 *.profraw
 *.profdata
 .idea
+.direnv
