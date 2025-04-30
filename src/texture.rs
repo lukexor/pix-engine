@@ -369,6 +369,11 @@ impl PixState {
         }
     }
 
+    /// Returns the current texture target and returns `None` if no texture target is set.
+    pub fn get_texture_target(&self) -> Option<TextureId> {
+        self.renderer.texture_target()
+    }
+
     /// Clears `Texture` target back to the primary canvas for drawing operations. Pops previous
     /// settings and UI cursor off the stack, so that changes made while texture target was set are
     /// reverted.
