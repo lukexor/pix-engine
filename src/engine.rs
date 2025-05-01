@@ -1149,7 +1149,7 @@ impl Engine {
             let handled = app.on_event(state, &event)?;
             if !handled {
                 match event {
-                    Event::Quit { .. } | Event::AppTerminating { .. } => state.quit(),
+                    Event::Quit | Event::AppTerminating => state.quit(),
                     Event::Window {
                         window_id,
                         win_event,

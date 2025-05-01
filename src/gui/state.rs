@@ -7,7 +7,7 @@ use crate::{
 };
 use lru::LruCache;
 use std::{
-    collections::{hash_map::DefaultHasher, HashSet},
+    collections::{HashSet, hash_map::DefaultHasher},
     convert::TryInto,
     error::Error,
     fmt,
@@ -664,7 +664,7 @@ impl UiState {
     pub(crate) fn expanded(&mut self, id: ElementId) -> bool {
         self.elements
             .get_mut(&id)
-            .map_or(false, |state| state.expanded)
+            .is_some_and(|state| state.expanded)
     }
 
     /// Set whether the current element is expanded or not.
@@ -786,9 +786,9 @@ impl PixState {
     #[inline]
     #[must_use]
     pub fn hovered(&self) -> bool {
-        self.ui.last_size.map_or(false, |rect| {
-            !self.ui.disabled && rect.contains(self.mouse_pos())
-        })
+        self.ui
+            .last_size
+            .is_some_and(|rect| !self.ui.disabled && rect.contains(self.mouse_pos()))
     }
 
     /// Returns whether the last item drawn was clicked with the left mouse button.
@@ -811,7 +811,7 @@ impl PixState {
     #[inline]
     #[must_use]
     pub fn clicked(&self) -> bool {
-        self.ui.last_size.map_or(false, |rect| {
+        self.ui.last_size.is_some_and(|rect| {
             !self.ui.disabled && self.mouse_clicked(Mouse::Left) && rect.contains(self.mouse_pos())
         })
     }
@@ -836,7 +836,7 @@ impl PixState {
     #[inline]
     #[must_use]
     pub fn dbl_clicked(&self) -> bool {
-        self.ui.last_size.map_or(false, |rect| {
+        self.ui.last_size.is_some_and(|rect| {
             !self.ui.disabled
                 && self.mouse_clicked(Mouse::Left)
                 && self.mouse_dbl_clicked(Mouse::Left)

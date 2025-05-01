@@ -1,0 +1,9 @@
+[toolchain]
+channel = "1.70.0"
+profile = "default"
+# Additional components to add to `profile`
+# rust-analyzer is recommended to install separately, as the component can be
+# pretty outdated
+components = ["rust-analyzer", "rustfmt", "clippy"]
+# Custom targets
+targets = []

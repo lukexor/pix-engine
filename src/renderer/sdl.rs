@@ -6,11 +6,12 @@ use crate::{
     prelude::*,
     renderer::{RendererSettings, Rendering},
 };
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use log::{debug, warn};
 use lru::LruCache;
 use once_cell::sync::Lazy;
 use sdl2::{
+    EventPump, GameControllerSubsystem, Sdl,
     audio::{AudioQueue, AudioSpecDesired},
     controller::GameController,
     gfx::primitives::{DrawRenderer, ToColor},
@@ -21,7 +22,6 @@ use sdl2::{
     rwops::RWops,
     ttf::{Font as SdlFont, FontStyle as SdlFontStyle, Sdl2TtfContext},
     video::Window,
-    EventPump, GameControllerSubsystem, Sdl,
 };
 use std::{collections::HashMap, fmt};
 use texture::RendererTexture;
@@ -152,12 +152,12 @@ impl Rendering for Renderer {
         let primary_window = WindowCanvas::new(&context, &mut s)?;
         let cursor_result = Cursor::from_system(SystemCursor::Arrow).map_err(Error::Renderer);
         let cursor = match cursor_result {
-            Ok(c) => Some(c),
+            Ok(cursor) => {
+                cursor.set();
+                Some(cursor)
+            }
             Err(_) => None,
         };
-        if let Ok(cursor) = Cursor::from_system(SystemCursor::Arrow) {
-            cursor.set();
-        }
         let window_target = primary_window.id;
         let mut windows = HashMap::new();
         windows.insert(primary_window.id, primary_window);
@@ -838,7 +838,10 @@ impl Rendering for Renderer {
             self.controllers
                 .insert(controller_id, self.controller_subsys.open(joystick_index)?);
         } else {
-            warn!("Joystick {} is not a game controller. Generic joysticks are currently unsupported.", joystick_index);
+            warn!(
+                "Joystick {} is not a game controller. Generic joysticks are currently unsupported.",
+                joystick_index
+            );
         }
         Ok(())
     }
