@@ -7,7 +7,7 @@ use crate::{
 };
 use lru::LruCache;
 use std::{
-    collections::{HashSet, hash_map::DefaultHasher},
+    collections::{hash_map::DefaultHasher, HashSet},
     convert::TryInto,
     error::Error,
     fmt,

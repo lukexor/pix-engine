@@ -55,6 +55,7 @@ use std::{
 
 /// `Texture` identifier used to reference and target an internally managed texture.
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[must_use]
 pub struct TextureId(pub(crate) usize);
 
 impl fmt::Display for TextureId {
@@ -370,6 +371,7 @@ impl PixState {
     }
 
     /// Returns the current texture target and returns `None` if no texture target is set.
+    #[must_use]
     pub fn get_texture_target(&self) -> Option<TextureId> {
         self.renderer.texture_target()
     }

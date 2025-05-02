@@ -6,12 +6,11 @@ use crate::{
     prelude::*,
     renderer::{RendererSettings, Rendering},
 };
-use anyhow::{Context, anyhow};
+use anyhow::{anyhow, Context};
 use log::{debug, warn};
 use lru::LruCache;
 use once_cell::sync::Lazy;
 use sdl2::{
-    EventPump, GameControllerSubsystem, Sdl,
     audio::{AudioQueue, AudioSpecDesired},
     controller::GameController,
     gfx::primitives::{DrawRenderer, ToColor},
@@ -22,6 +21,7 @@ use sdl2::{
     rwops::RWops,
     ttf::{Font as SdlFont, FontStyle as SdlFontStyle, Sdl2TtfContext},
     video::Window,
+    EventPump, GameControllerSubsystem, Sdl,
 };
 use std::{collections::HashMap, fmt};
 use texture::RendererTexture;
