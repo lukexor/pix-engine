@@ -64,7 +64,7 @@ debug_ui = []
 serde = ["dep:serde", "bitflags/serde"]
 
 [target."cfg(not(target_arch = \"wasm32\"))".dependencies]
-sdl2 = { version = "0.37", default-features = false, features = [
+sdl2 = { version = "0.38", default-features = false, features = [
   "gfx",
   "image",
   "mixer",
