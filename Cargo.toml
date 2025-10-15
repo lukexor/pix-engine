@@ -39,7 +39,7 @@ anyhow = "1.0"
 bitflags = "2.6"
 time = { version = "0.3", features = ["local-offset"] }
 log = "0.4"
-lru = "0.12"
+lru = "0.16"
 num-traits = "0.2"
 once_cell = "1.17"
 png = "0.17"
