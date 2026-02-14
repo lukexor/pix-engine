@@ -64,7 +64,7 @@ use crate::prelude::*;
 #[cfg(feature = "serde")]
 use crate::serialize::arrays;
 use num_traits::Signed;
-use rand::distributions::uniform::SampleUniform;
+use rand::distr::uniform::SampleUniform;
 #[cfg(feature = "serde")]
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{fmt, ops::MulAssign};

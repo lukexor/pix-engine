@@ -4,7 +4,7 @@ use crate::prelude::Vector;
 use num_traits::{
     Float as FloatT, Num as NumT, NumAssignOps, NumAssignRef, NumCast, NumOps, NumRef,
 };
-use rand::{self, distributions::uniform::SampleUniform, Rng};
+use rand::{self, distr::uniform::SampleUniform, RngExt};
 use std::ops::{AddAssign, Range};
 
 use once_cell::sync::Lazy;
@@ -67,7 +67,7 @@ where
     R: Into<Range<T>>,
 {
     let val = val.into();
-    rand::thread_rng().gen_range(val)
+    rand::rng().random_range(val)
 }
 
 /// Returns a random number between `0` and a given `value`.
