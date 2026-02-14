@@ -1,5 +1,5 @@
 [toolchain]
-channel = "1.70.0"
+channel = "1.93.1"
 profile = "default"
 # Additional components to add to `profile`
 # rust-analyzer is recommended to install separately, as the component can be

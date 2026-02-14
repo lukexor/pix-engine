@@ -48,19 +48,14 @@ use std::{
 };
 
 /// Represents a possible screen position.
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Position {
     /// A positioned `(x, y)` coordinate.
     Positioned(i32),
     /// A coordinate placed in the center of the display.
+    #[default]
     Centered,
-}
-
-impl Default for Position {
-    fn default() -> Self {
-        Self::Centered
-    }
 }
 
 /// Window Identifier.

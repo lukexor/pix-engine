@@ -34,7 +34,6 @@ impl<CB: AudioCallback> AudioDeviceDriver for AudioDevice<CB> {
 
     /// Return the current driver of this audio callback device.
     #[inline]
-    #[must_use]
     fn driver(&self) -> &'static str {
         self.0.subsystem().current_audio_driver()
     }
@@ -105,14 +104,22 @@ impl AudioDriver for Renderer {
         let size = self.audio_device.size();
         if size <= MAX_QUEUE_SIZE {
             if size >= WARN_QUEUE_SIZE {
-                warn!("Audio queue size is increasing: {}. Did you forget to call `PixState::resume_audio`? Audio Device Status: {:?}", size, self.audio_device.status());
+                warn!(
+                    "Audio queue size is increasing: {}. Did you forget to call `PixState::resume_audio`? Audio Device Status: {:?}",
+                    size,
+                    self.audio_device.status()
+                );
             }
             self.audio_device
                 .queue_audio(samples)
                 .map_err(Error::Renderer)?;
             Ok(())
         } else {
-            Err(anyhow!("Reached max audio queue size: {}. Did you forget to call `PixState::resume_audio`? Audio Device Status: {:?}", MAX_QUEUE_SIZE, self.audio_device.status()))
+            Err(anyhow!(
+                "Reached max audio queue size: {}. Did you forget to call `PixState::resume_audio`? Audio Device Status: {:?}",
+                MAX_QUEUE_SIZE,
+                self.audio_device.status()
+            ))
         }
     }
 

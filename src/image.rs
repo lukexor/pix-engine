@@ -17,7 +17,7 @@ use std::{
 use std::{fmt, iter::Copied, slice};
 
 /// Format for interpreting image data.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[non_exhaustive]
 #[must_use]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -25,6 +25,7 @@ pub enum PixelFormat {
     /// 8-bit Red, Green, and Blue
     Rgb,
     /// 8-bit Red, Green, Blue, and Alpha
+    #[default]
     Rgba,
 }
 
@@ -64,12 +65,6 @@ impl From<PixelFormat> for png::ColorType {
             PixelFormat::Rgb => Self::Rgb,
             PixelFormat::Rgba => Self::Rgba,
         }
-    }
-}
-
-impl Default for PixelFormat {
-    fn default() -> Self {
-        Self::Rgba
     }
 }
 
