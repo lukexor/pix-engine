@@ -1,5 +1,5 @@
 use pix_engine::{math, prelude::*};
-use rand::{thread_rng, Rng};
+use rand::RngExt;
 use std::{
     fs::File,
     io::{BufReader, Read},
@@ -76,10 +76,10 @@ impl QueueDemo {
     }
 
     fn gen_noise(&self) -> Vec<f32> {
-        let mut rng = thread_rng();
+        let mut rng = rand::rng();
         let mut result = Vec::with_capacity(self.sample_count);
         for _ in 0..self.sample_count {
-            result.push(self.volume * (rng.gen_range(0.0..2.0) - 1.0));
+            result.push(self.volume * (rng.random_range(0.0..2.0) - 1.0));
         }
         result
     }

@@ -200,7 +200,7 @@ impl Image {
     /// If the file format is not supported or there is an [`io::Error`] reading the file then an
     /// error is returned.
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn from_read<R: io::Read>(read: R) -> PixResult<Self> {
+    pub fn from_read<R: io::Read + io::Seek>(read: R) -> PixResult<Self> {
         let png_file = BufReader::new(read);
         let png = Decoder::new(png_file);
 
@@ -210,7 +210,7 @@ impl Image {
         // png.set_transformations(Transformations::SWAP_ALPHA | Transformations::EXPAND);
 
         let mut reader = png.read_info().context("failed to read png data")?;
-        let mut buf = vec![0x00; reader.output_buffer_size()];
+        let mut buf = vec![0x00; reader.output_buffer_size().unwrap_or_default()];
         let info = reader
             .next_frame(&mut buf)
             .context("failed to read png data frame")?;

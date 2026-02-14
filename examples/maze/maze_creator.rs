@@ -69,7 +69,7 @@ impl MazeCreator {
     }
 
     fn get_random_neighbor(&self, cell: &Cell, maze: &Maze) -> Option<(Direction, Cell)> {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         cell.walls()
             .iter()
             .enumerate()

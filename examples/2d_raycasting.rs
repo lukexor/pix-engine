@@ -1,4 +1,5 @@
 use pix_engine::prelude::*;
+use std::io;
 
 const WIDTH: u32 = 1000;
 const HEIGHT: u32 = 800;
@@ -288,7 +289,7 @@ impl PixEngine for RayScene {
 
         self.convert_edges_to_poly_map()?;
 
-        self.light = Image::from_read(LIGHT)?;
+        self.light = Image::from_read(io::Cursor::new(LIGHT))?;
         s.image_tint(color![255, 255, 153]);
 
         Ok(())
@@ -379,7 +380,7 @@ fn main() -> PixResult<()> {
         .dimensions(WIDTH, HEIGHT)
         .title("2D Raycasting")
         .show_frame_rate()
-        .icon(Image::from_read(LIGHT)?)
+        .icon(Image::from_read(io::Cursor::new(LIGHT))?)
         .build()?;
     let mut app = RayScene::new();
     engine.run(&mut app)
