@@ -7,6 +7,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1](https://github.com/lukexor/pix-engine/compare/0.8.0..0.8.1) - 2026-02-14
+
+### 🐛 Bug Fixes
+
+
+- Fixed unused warning - ([e88f9da](https://github.com/lukexor/pix-engine/commit/e88f9da3cb09cbedce999a440cfa5f80648ee29a))
+- Fix removing joypad devices - ([539eb18](https://github.com/lukexor/pix-engine/commit/539eb18d93437c86ab3ec13ca052335277d00902))
+
+### 📚 Documentation
+
+
+- Fixed docs - ([284b8dc](https://github.com/lukexor/pix-engine/commit/284b8dcdd27e5c25b778ee39f46ca149f1b60670))
+
+### 🎨 Styling
+
+
+- Fixed lints - ([839145c](https://github.com/lukexor/pix-engine/commit/839145ca6253a2950782da6d30c52445bd233a1b))
+- Fix lints - ([e361694](https://github.com/lukexor/pix-engine/commit/e36169475bdb41926c4e5a8b2d1ed73da4424cd3))
+
+### 🧪 Testing
+
+
+- Updated tests - ([ebe6f47](https://github.com/lukexor/pix-engine/commit/ebe6f471c43395ad7bc5f32b13860f7ce0238b6f))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(ci)* Fixed changelog - ([ea653e5](https://github.com/lukexor/pix-engine/commit/ea653e5c2bd1adc25c7d30d4ad226d3579c0b42b))
+
+- Updated deps - ([26ad40c](https://github.com/lukexor/pix-engine/commit/26ad40c7090a2453aaee90cc1eee06dba41c0bc1))
+- Updated lints and set msrv - ([45fb86a](https://github.com/lukexor/pix-engine/commit/45fb86ad06daa7f79ba9a28c4896147f03455c70))
+- Updated deps - ([12e684e](https://github.com/lukexor/pix-engine/commit/12e684ec06e161416f6bf47b015102a4aba27f56))
+- Updated deps - ([780baf7](https://github.com/lukexor/pix-engine/commit/780baf71f2754f7ef9bf7718195150a61ea06434))
+- Update dependencies - ([1128b2d](https://github.com/lukexor/pix-engine/commit/1128b2dc132cf064ce22a969927662b9f49222d8))
+- Updated deps - ([d3e647e](https://github.com/lukexor/pix-engine/commit/d3e647e4167a884b385635837fbee3841ca11357))
+- Updated deps - ([f9cd068](https://github.com/lukexor/pix-engine/commit/f9cd06868007d8c64c82363aae9cae7990f87874))
+- Updated deps - ([2a6515e](https://github.com/lukexor/pix-engine/commit/2a6515e91166bec6e36987dec28ba86080697ce8))
+- Updated deps - ([a6c49ba](https://github.com/lukexor/pix-engine/commit/a6c49ba538ff2a9caac82154368341e4dd7ca802))
+- Updated packages - ([dba3424](https://github.com/lukexor/pix-engine/commit/dba34240dabf667c15970e2cb04dd7bc840ec885))
+- Updated cargo deps - ([bccdb27](https://github.com/lukexor/pix-engine/commit/bccdb27720d2de9765c271709a2a7e0975fd6cd4))
+
+
 ## [0.8.0] - 2023-10-30
 
 ### ⛰️  Features
