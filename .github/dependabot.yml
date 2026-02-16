@@ -4,12 +4,6 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
-    assignees:
-      - "lukexor"
-  - package-ecosystem: "cargo"
-    directory: "/"
-    schedule:
-      interval: "daily"
+      interval: "weekly"
     assignees:
       - "lukexor"
