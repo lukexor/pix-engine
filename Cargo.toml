@@ -16,7 +16,7 @@ name = "pix-engine"
 repository = "https://github.com/lukexor/pix-engine.git"
 resolver = "2"
 rust-version = "1.70.0"
-version = "0.8.0"
+version = "0.8.1"
 exclude = ["/images", "/audio", "/pkg"]
 build = "build.rs"
 
