@@ -17,7 +17,7 @@ jobs:
     name: Check format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - run: cargo fmt --all --check
@@ -30,7 +30,7 @@ jobs:
         os: [macos-latest, ubuntu-latest, windows-latest]
         toolchain: [stable, 1.67.0]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - uses: dtolnay/rust-toolchain@master
