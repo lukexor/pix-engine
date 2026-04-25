@@ -894,6 +894,14 @@ impl ToColor for Color {
         let [r, g, b, a] = self.channels();
         (r, g, b, a)
     }
+
+    #[inline]
+    fn as_u32(&self) -> u32 {
+        let (r, g, b, a) = self.as_rgba();
+        // This should be le bytes, pending a new release.
+        // See: https://github.com/Rust-SDL2/rust-sdl2/pull/1522
+        u32::from_le_bytes([r, g, b, a])
+    }
 }
 
 #[doc(hidden)]
