@@ -41,6 +41,8 @@
     html_logo_url = ""
 )]
 
+mod bench;
+
 #[macro_use]
 pub mod color;
 pub mod draw;

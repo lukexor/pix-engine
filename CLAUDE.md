@@ -25,6 +25,16 @@ cargo run --profile dev-opt --example fluid_simulation  # opt-level 1, unoptimiz
 
 Run a single test: `cargo test --features serde <name>`.
 
+Setting `PIX_BENCH_FRAMES` puts any example into the frame-timing harness in `src/bench.rs`. It
+discards a warmup, records that many frames, prints the distribution and exits.
+
+```sh
+PIX_BENCH_FRAMES=600 cargo run --release --features serde --example matrix
+```
+
+`benches/baseline.md` contains the recorded numbers and the protocol that produced them. Follow
+that protocol when comparing, and rerun on the machine it names.
+
 Integration tests in `tests/pix-engine.rs` construct a real `Engine`, so they are `#[ignore]`d and
 must be run single-threaded on the main thread:
 

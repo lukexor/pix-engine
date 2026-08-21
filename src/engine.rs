@@ -54,7 +54,7 @@
 //! }
 //! ```
 
-use crate::{image::Icon, prelude::*, renderer::RendererSettings};
+use crate::{bench::Bench, image::Icon, prelude::*, renderer::RendererSettings};
 use log::{debug, error, info};
 use std::{
     num::NonZeroUsize,
@@ -1063,6 +1063,8 @@ impl Engine {
     {
         info!("Starting `Engine`...");
 
+        let mut bench = Bench::from_env();
+
         // Handle events before on_start to initialize window
         self.handle_events(app)?;
 
@@ -1109,6 +1111,16 @@ impl Engine {
                     self.state.present();
                     self.state.set_delta_time(start_time, time_since_last);
                     self.state.increment_frame(time_since_last)?;
+
+                    // Measured before the pacing sleep below, so the number is the work the
+                    // frame did rather than the interval it was scheduled at.
+                    if let Some(active) = bench.as_mut() {
+                        if active.record(start_time.elapsed()) {
+                            active.report(self.state.vsync_enabled());
+                            bench = None;
+                            self.state.quit();
+                        }
+                    }
                 }
 
                 if !self.state.vsync_enabled() {
