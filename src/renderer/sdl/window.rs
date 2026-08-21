@@ -23,16 +23,40 @@ use std::{
     hash::{Hash, Hasher},
 };
 
+/// Identifies a rendered text texture.
+///
+/// Every input that changes the rendered pixels has to be part of this key. Style, outline and
+/// wrap width all mutate the shared `SdlFont` before rendering, so a key without them returns a
+/// texture drawn with whichever settings happened to be active when it was first cached.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub(super) struct TextCacheKey {
+    /// Hash of the text content.
     pub(super) text_id: FontId,
+    /// Font family the text is rendered with.
     pub(super) font_id: FontId,
+    /// Fill color the glyphs are blended with.
     pub(super) color: Color,
+    /// Point size the font is loaded at.
     pub(super) size: u16,
+    /// Raw bits of the font style, covering bold, italic, underline and strikethrough.
+    pub(super) style: i32,
+    /// Outline width in pixels.
+    pub(super) outline: u16,
+    /// Width the text wraps at, or `None` to render a single line.
+    pub(super) wrap_width: Option<u32>,
 }
 
 impl TextCacheKey {
-    pub(super) fn new(text: &str, font_id: FontId, color: Color, size: u16) -> Self {
+    /// Constructs a key, hashing `text` so the key stays `Copy`.
+    pub(super) fn new(
+        text: &str,
+        font_id: FontId,
+        color: Color,
+        size: u16,
+        style: i32,
+        outline: u16,
+        wrap_width: Option<u32>,
+    ) -> Self {
         let mut hasher = DefaultHasher::new();
         text.hash(&mut hasher);
         let text_id = hasher.finish();
@@ -41,6 +65,9 @@ impl TextCacheKey {
             font_id,
             color,
             size,
+            style,
+            outline,
+            wrap_width,
         }
     }
 }
@@ -447,6 +474,12 @@ impl WindowRenderer for Renderer {
 
         self.windows.remove(&previous_window_id);
         self.window_target = new_window.id;
+        // Changing VSync replaces the window, so every handle naming it has to follow. Both
+        // `close_window`'s primary check and `reset_window_target` resolve through
+        // `primary_window_id`, and both need it to name a live window.
+        if self.primary_window_id == previous_window_id {
+            self.primary_window_id = new_window.id;
+        }
         self.windows.insert(new_window.id, new_window);
         Ok(self.window_target)
     }
@@ -500,5 +533,31 @@ impl From<SystemCursor> for SdlSystemCursor {
             SystemCursor::No => Self::No,
             SystemCursor::Hand => Self::Hand,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn key(style: i32, outline: u16, wrap_width: Option<u32>) -> TextCacheKey {
+        TextCacheKey::new("hello", 1, Color::WHITE, 14, style, outline, wrap_width)
+    }
+
+    #[test]
+    fn text_cache_keys_separate_every_rendered_difference() {
+        let plain = key(0, 0, None);
+        assert_ne!(plain, key(1, 0, None), "style changes the rendered glyphs");
+        assert_ne!(
+            plain,
+            key(0, 2, None),
+            "outline changes the rendered glyphs"
+        );
+        assert_ne!(
+            plain,
+            key(0, 0, Some(100)),
+            "wrapping changes the rendered layout"
+        );
+        assert_eq!(plain, key(0, 0, None), "identical inputs share a texture");
     }
 }

@@ -37,6 +37,9 @@ pub(crate) struct Environment {
     start: Instant,
     frame_rate: f32,
     frame_count: usize,
+    // Frames drawn inside the current one-second sampling window. Separate from `frame_count`,
+    // which counts the lifetime of the application and must stay monotonic.
+    fps_frame_count: usize,
     run_count: usize,
     quit: bool,
     last_frame_time: Instant,
@@ -51,6 +54,7 @@ impl Default for Environment {
             start: Instant::now(),
             frame_rate: 0.0,
             frame_count: 0,
+            fps_frame_count: 0,
             run_count: 0,
             quit: false,
             last_frame_time: Instant::now(),
@@ -404,13 +408,14 @@ impl PixState {
             env.run_count -= 1;
         }
         env.frame_count += 1;
+        env.fps_frame_count += 1;
 
         if s.running && s.show_frame_rate {
             env.frame_timer += time_since_last;
             if env.frame_timer >= ONE_SECOND {
-                env.frame_rate = env.frame_count as f32 / env.frame_timer.as_secs_f32();
+                env.frame_rate = env.fps_frame_count as f32 / env.frame_timer.as_secs_f32();
                 env.frame_timer -= ONE_SECOND;
-                env.frame_count = 0;
+                env.fps_frame_count = 0;
                 self.renderer.set_fps(env.frame_rate)?;
             }
         }

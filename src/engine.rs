@@ -1086,7 +1086,13 @@ impl Engine {
                 let start_time = Instant::now();
                 let time_since_last = start_time - self.state.last_frame_time();
 
-                self.handle_events(app)?;
+                // Errors from event hooks take the same path as errors from `on_update`, so
+                // `on_stop` still runs and can release resources. Propagating with `?` here
+                // would leave the loop without it.
+                if let Err(err) = self.handle_events(app) {
+                    self.state.quit();
+                    break 'running Err(err);
+                }
                 if self.state.should_quit() {
                     break 'running Ok(());
                 }

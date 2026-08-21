@@ -97,7 +97,9 @@ impl Renderer {
     /// loaded.
     fn load_font(&mut self) -> Result<bool> {
         let key = (self.current_font, self.font_size);
-        if self.loaded_fonts.contains(&key) {
+        // `get` rather than `contains`, because only `get` marks the entry as recently used. A
+        // cache probe that leaves recency alone lets the LRU evict the font currently in use.
+        if self.loaded_fonts.get(&key).is_some() {
             return Ok(false);
         }
 
@@ -121,21 +123,45 @@ impl Renderer {
     }
 
     /// Returns a reference to the current SDL font.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the current font is not loaded. Takes `&self`, so it cannot mark the
+    /// entry as recently used, which leaves a measuring-only workload cycling more fonts than
+    /// the cache holds able to evict the font it is about to read.
     #[inline]
-    fn font(&self) -> &SdlFont<'static, 'static> {
-        #[allow(clippy::expect_used)]
+    fn font(&self) -> Result<&SdlFont<'static, 'static>> {
         self.loaded_fonts
             .peek(&(self.current_font, self.font_size))
-            .expect("valid font")
+            .ok_or_else(|| anyhow!("current font is not loaded"))
     }
 
     /// Returns a mutable reference the current SDL font.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the current font is not loaded.
     #[inline]
-    fn font_mut(&mut self) -> &mut SdlFont<'static, 'static> {
-        #[allow(clippy::expect_used)]
+    fn font_mut(&mut self) -> Result<&mut SdlFont<'static, 'static>> {
         self.loaded_fonts
             .get_mut(&(self.current_font, self.font_size))
-            .expect("valid font")
+            .ok_or_else(|| anyhow!("current font is not loaded"))
+    }
+}
+
+/// Resolves a rotation and a [`Flipped`] into the arguments `Canvas::copy_ex` takes.
+///
+/// `copy_ex` builds its flip argument by transmuting the bitwise OR of SDL's two flip flags, and
+/// the combined value matches no variant of the target enum, so requesting both axes at once
+/// aborts the process. Flipping both axes is a half turn, so it is expressed as one. The two
+/// agree exactly when the rotation center is the center of the destination rect, the center
+/// `copy_ex` picks for `center: None`.
+fn copy_ex_args(angle: f64, flipped: Option<Flipped>) -> (f64, bool, bool) {
+    match flipped {
+        Some(Flipped::Both) => (angle + 180.0, false, false),
+        Some(Flipped::Horizontal) => (angle, true, false),
+        Some(Flipped::Vertical) => (angle, false, true),
+        Some(Flipped::None) | None => (angle, false, false),
     }
 }
 
@@ -271,7 +297,12 @@ impl Rendering for Renderer {
         let style = style.into();
         if self.font_style != style {
             self.font_style = style;
-            self.font_mut().set_style(style);
+            // The trait method returns no error, so an unloaded font is reported and skipped.
+            // The style is still recorded, and takes effect once the font loads.
+            match self.font_mut() {
+                Ok(font) => font.set_style(style),
+                Err(err) => warn!("failed to apply font style: {err}"),
+            }
         }
     }
 
@@ -318,7 +349,15 @@ impl Rendering for Renderer {
                     font.set_outline_width(outline);
                 }
 
-                let key = TextCacheKey::new(text, self.current_font, fill, self.font_size);
+                let key = TextCacheKey::new(
+                    text,
+                    self.current_font,
+                    fill,
+                    self.font_size,
+                    self.font_style.bits(),
+                    outline,
+                    wrap_width,
+                );
                 if !window.text_cache.contains(&key) {
                     let surface = wrap_width
                         .map_or_else(
@@ -349,10 +388,8 @@ impl Rendering for Renderer {
                 let src = None;
                 let dst = Some(SdlRect::new(pos.x(), pos.y(), width, height));
                 let result = if angle.is_some() || center.is_some() || flipped.is_some() {
-                    let angle = angle.unwrap_or(0.0);
                     let center = center.map(Into::into);
-                    let horizontal = matches!(flipped, Some(Flipped::Horizontal | Flipped::Both));
-                    let vertical = matches!(flipped, Some(Flipped::Vertical | Flipped::Both));
+                    let (angle, horizontal, vertical) = copy_ex_args(angle.unwrap_or(0.0), flipped);
                     canvas.copy_ex(texture, src, dst, angle, center, horizontal, vertical)
                 } else {
                     canvas.copy(texture, src, dst)
@@ -421,7 +458,7 @@ impl Rendering for Renderer {
     /// as `(width, height)`.
     #[inline]
     fn size_of(&self, text: &str, wrap_width: Option<u32>) -> Result<(u32, u32)> {
-        let font = self.font();
+        let font = self.font()?;
         if text.is_empty() {
             return Ok((0, font.height() as u32));
         }
@@ -768,8 +805,7 @@ impl Rendering for Renderer {
             let dst = dst.map(Into::into);
             if angle > 0.0 || center.is_some() || flipped.is_some() {
                 let center = center.map(Into::into);
-                let horizontal = matches!(flipped, Some(Flipped::Horizontal | Flipped::Both));
-                let vertical = matches!(flipped, Some(Flipped::Vertical | Flipped::Both));
+                let (angle, horizontal, vertical) = copy_ex_args(angle, flipped);
                 canvas.copy_ex(texture, src, dst, angle, center, horizontal, vertical)
             } else {
                 canvas.copy(texture, src, dst)

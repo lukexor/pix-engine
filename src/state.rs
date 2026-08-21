@@ -49,6 +49,7 @@ use crate::{
     texture::TextureRenderer,
 };
 use environment::Environment;
+use log::warn;
 use settings::Settings;
 use std::{collections::HashSet, mem, time::Instant};
 
@@ -427,6 +428,24 @@ impl PixState {
     /// Handle state changes this frame after calling [`PixEngine::on_update`].
     #[inline]
     pub(crate) fn post_update(&mut self) {
+        // Widget textures are created on demand, so one that went undrawn this frame is
+        // released. Holding them instead grows `ui.textures` for the life of the process, one
+        // entry per element and font size ever rendered, and the linear scan in
+        // `get_or_create_texture` walks all of them every frame.
+        let mut stale = Vec::new();
+        self.ui.textures.retain(|texture| {
+            if texture.visible {
+                true
+            } else {
+                stale.push(texture.id);
+                false
+            }
+        });
+        for texture_id in stale {
+            if let Err(err) = self.delete_texture(texture_id) {
+                warn!("failed to delete unused UI texture: {err}");
+            }
+        }
         self.ui.post_update();
     }
 
