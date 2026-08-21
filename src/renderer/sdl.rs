@@ -11,7 +11,6 @@ use log::{debug, warn};
 use lru::LruCache;
 use once_cell::sync::Lazy;
 use sdl2::{
-    audio::{AudioQueue, AudioSpecDesired},
     controller::GameController,
     gfx::primitives::{DrawRenderer, ToColor},
     mouse::{Cursor, SystemCursor},
@@ -30,9 +29,6 @@ use window::{TextCacheKey, WindowCanvas};
 #[allow(clippy::expect_used)]
 static TTF: Lazy<Sdl2TtfContext> = Lazy::new(|| sdl2::ttf::init().expect("sdl2_ttf initialized"));
 
-pub use audio::{AudioDevice, AudioFormatNum};
-
-pub mod audio;
 mod event;
 mod texture;
 mod window;
@@ -41,7 +37,6 @@ mod window;
 pub(crate) struct Renderer {
     context: Sdl,
     event_pump: EventPump,
-    audio_device: AudioQueue<f32>,
     controller_subsys: GameControllerSubsystem,
     controllers: HashMap<ControllerId, GameController>,
     title: String,
@@ -188,17 +183,6 @@ impl Rendering for Renderer {
         let mut windows = HashMap::new();
         windows.insert(primary_window.id, primary_window);
 
-        // Set up Audio
-        let audio_subsys = context.audio().map_err(Error::Renderer)?;
-        let desired_spec = AudioSpecDesired {
-            freq: s.audio_sample_rate,
-            channels: s.audio_channels,
-            samples: s.audio_buffer_size,
-        };
-        let audio_device = audio_subsys
-            .open_queue(None, &desired_spec)
-            .map_err(Error::Renderer)?;
-        debug!("Loaded AudioDevice: {:?}", audio_device.spec());
         let controller_subsys = context.game_controller().map_err(Error::Renderer)?;
 
         let default_font = Font::default();
@@ -210,7 +194,6 @@ impl Rendering for Renderer {
         let mut renderer = Self {
             context,
             event_pump,
-            audio_device,
             controller_subsys,
             controllers: HashMap::new(),
             settings: s,
@@ -891,15 +874,6 @@ impl Rendering for Renderer {
 impl fmt::Debug for Renderer {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Renderer")
-            .field(
-                "audio_device",
-                &format_args!(
-                    "{{ spec: {:?}, status: {:?}, queue: {:?} }}",
-                    self.audio_device.spec(),
-                    self.audio_device.status(),
-                    self.audio_device.size()
-                ),
-            )
             .field("title", &self.title)
             .field("settings", &self.settings)
             .field("blend_mode", &self.blend_mode)

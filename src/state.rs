@@ -43,6 +43,7 @@
 //! ```
 
 use crate::{
+    audio::backend::AudioQueue,
     gui::state::UiState,
     prelude::*,
     renderer::{Renderer, RendererSettings, Rendering, WindowRenderer},
@@ -61,6 +62,9 @@ pub mod settings;
 #[derive(Debug)]
 pub struct PixState {
     pub(crate) renderer: Renderer,
+    /// Output stream backing [`PixState::enqueue_audio`], owned separately from the renderer
+    /// because audio and graphics share no device.
+    pub(crate) audio: AudioQueue,
     pub(crate) env: Environment,
     pub(crate) ui: UiState,
     pub(crate) settings: Settings,
@@ -387,9 +391,11 @@ impl PixState {
     pub(crate) fn new(settings: RendererSettings, theme: Theme) -> PixResult<Self> {
         let show_frame_rate = settings.show_frame_rate;
         let target_frame_rate = settings.target_frame_rate;
+        let audio = AudioQueue::new(&settings.audio_spec());
         let renderer = Renderer::new(settings)?;
         let mut state = Self {
             renderer,
+            audio,
             env: Environment::default(),
             ui: UiState::default(),
             settings: Settings::default(),

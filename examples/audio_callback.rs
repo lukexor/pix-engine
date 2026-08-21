@@ -30,14 +30,14 @@ impl PixEngine for CallbackDemo {
         s.clear()?;
 
         let desired_spec = AudioSpecDesired {
-            freq: Some(44_100), // 44,100 HZ
-            channels: Some(1),  // mono audio
-            samples: None,      // default sample size
+            sample_rate: Some(44_100), // 44,100 HZ
+            channels: Some(1),         // mono audio
+            buffer_size: None,         // device default
         };
         let device = s.open_playback(None, &desired_spec, |spec| {
             log::info!("Playback Spec: {:?}", spec);
             SquareWave {
-                phase_inc: 440.0 / spec.freq as f32,
+                phase_inc: 440.0 / spec.sample_rate as f32,
                 phase: 0.0,
                 volume: 40,
             }

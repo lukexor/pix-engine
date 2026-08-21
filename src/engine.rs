@@ -911,20 +911,20 @@ impl EngineBuilder {
     }
 
     /// Set audio sample rate in Hz (samples per second). Defaults to device fallback sample rate.
-    pub fn audio_sample_rate(&mut self, sample_rate: i32) -> &mut Self {
+    pub fn audio_sample_rate(&mut self, sample_rate: u32) -> &mut Self {
         self.settings.audio_sample_rate = Some(sample_rate);
         self
     }
 
     /// Set number of audio channels (1 for Mono, 2 for Stereo, etc). Defaults to device fallback
     /// number of channels.
-    pub fn audio_channels(&mut self, channels: u8) -> &mut Self {
+    pub fn audio_channels(&mut self, channels: u16) -> &mut Self {
         self.settings.audio_channels = Some(channels);
         self
     }
 
     /// Set audio buffer size in samples. Defaults to device fallback sample size.
-    pub fn audio_buffer_size(&mut self, buffer_size: u16) -> &mut Self {
+    pub fn audio_buffer_size(&mut self, buffer_size: u32) -> &mut Self {
         self.settings.audio_buffer_size = Some(buffer_size);
         self
     }
@@ -1112,8 +1112,7 @@ impl Engine {
                     self.state.set_delta_time(start_time, time_since_last);
                     self.state.increment_frame(time_since_last)?;
 
-                    // Measured before the pacing sleep below, so the number is the work the
-                    // frame did rather than the interval it was scheduled at.
+                    // Sampled before the pacing sleep below. See `crate::bench`.
                     if let Some(active) = bench.as_mut() {
                         if active.record(start_time.elapsed()) {
                             active.report(self.state.vsync_enabled());
