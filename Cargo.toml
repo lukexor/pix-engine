@@ -15,13 +15,10 @@ license = "MIT OR Apache-2.0"
 name = "pix-engine"
 repository = "https://github.com/lukexor/pix-engine.git"
 resolver = "2"
-rust-version = "1.70.0"
+rust-version = "1.85.0"
 version = "0.8.0"
 exclude = ["/images", "/audio", "/pkg"]
 build = "build.rs"
-
-[package.metadata]
-msrv = "1.67.0"
 
 [package.metadata.docs.rs]
 features = ["serde"]
@@ -58,8 +55,6 @@ pretty_env_logger = "0.5"
 [features]
 default = []
 opengl = []
-# TODO: `backtrace` feature can be removed when `Backtrace` lands in stable https://github.com/rust-lang/rust/issues/53487
-backtrace = ["anyhow/backtrace"]
 debug_ui = []
 serde = ["dep:serde", "bitflags/serde"]
 

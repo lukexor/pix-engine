@@ -5,15 +5,8 @@ use std::num::NonZeroUsize;
 
 pub(crate) use crate::{texture::TextureRenderer, window::WindowRenderer};
 
-#[cfg(not(target_arch = "wasm32"))]
 pub mod sdl;
-#[cfg(not(target_arch = "wasm32"))]
 pub(crate) use sdl::Renderer;
-
-#[cfg(target_arch = "wasm32")]
-pub mod wasm;
-#[cfg(target_arch = "wasm32")]
-pub(crate) use wasm::Renderer;
 
 const TEXTURE_CACHE_SIZE: usize = 256;
 const TEXT_CACHE_SIZE: usize = 512;
