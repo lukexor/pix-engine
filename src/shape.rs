@@ -26,7 +26,12 @@
 //! [`contains`]: Contains::contains
 //! [`intersects`]: Intersects::intersects
 
-use crate::{prelude::*, renderer::Rendering};
+// Named imports rather than a glob of the prelude. The prelude re-exports the same shape types
+// this module defines, and two globs bringing one name into a module is ambiguous.
+use crate::{
+    prelude::{AngleMode, PixResult, PixState},
+    renderer::Rendering,
+};
 use std::iter::Iterator;
 
 #[macro_use]
