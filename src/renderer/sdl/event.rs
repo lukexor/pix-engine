@@ -65,76 +65,22 @@ impl From<SdlEvent> for Event {
                 y,
             },
             SdlEvent::MouseWheel { x, y, .. } => Self::MouseWheel { x, y },
-            SdlEvent::JoyAxisMotion {
-                which,
-                axis_idx,
-                value,
-                ..
-            } => Self::JoyAxisMotion {
-                joy_id: which,
-                axis_idx,
-                value,
-            },
-            SdlEvent::JoyHatMotion {
-                which,
-                hat_idx,
-                state,
-                ..
-            } => Self::JoyHatMotion {
-                joy_id: which,
-                hat_idx,
-                state: state.into(),
-            },
-            SdlEvent::JoyBallMotion {
-                which,
-                ball_idx,
-                xrel,
-                yrel,
-                ..
-            } => Self::JoyBallMotion {
-                joy_id: which,
-                ball_idx,
-                xrel,
-                yrel,
-            },
-            SdlEvent::JoyButtonDown {
-                which, button_idx, ..
-            } => Self::JoyDown {
-                joy_id: which,
-                button_idx,
-            },
-            SdlEvent::JoyButtonUp {
-                which, button_idx, ..
-            } => Self::JoyUp {
-                joy_id: which,
-                button_idx,
-            },
-            SdlEvent::JoyDeviceAdded { which, .. } => Self::JoyDeviceAdded { joy_id: which },
-            SdlEvent::JoyDeviceRemoved { which, .. } => Self::JoyDeviceRemoved { joy_id: which },
-            SdlEvent::ControllerAxisMotion {
-                which, axis, value, ..
-            } => Self::ControllerAxisMotion {
-                controller_id: which,
-                axis: axis.into(),
-                value,
-            },
-            SdlEvent::ControllerButtonDown { which, button, .. } => Self::ControllerDown {
-                controller_id: which,
-                button: button.into(),
-            },
-            SdlEvent::ControllerButtonUp { which, button, .. } => Self::ControllerUp {
-                controller_id: which,
-                button: button.into(),
-            },
-            SdlEvent::ControllerDeviceAdded { which, .. } => Self::ControllerAdded {
-                controller_id: which,
-            },
-            SdlEvent::ControllerDeviceRemoved { which, .. } => Self::ControllerRemoved {
-                controller_id: which,
-            },
-            SdlEvent::ControllerDeviceRemapped { which, .. } => Self::ControllerRemapped {
-                controller_id: which,
-            },
+            // Controllers come from gilrs, which reports every connected pad regardless of
+            // which window has focus. Passing SDL's copies through as well would open each pad
+            // twice and fire every button press twice.
+            SdlEvent::JoyAxisMotion { .. }
+            | SdlEvent::JoyHatMotion { .. }
+            | SdlEvent::JoyBallMotion { .. }
+            | SdlEvent::JoyButtonDown { .. }
+            | SdlEvent::JoyButtonUp { .. }
+            | SdlEvent::JoyDeviceAdded { .. }
+            | SdlEvent::JoyDeviceRemoved { .. }
+            | SdlEvent::ControllerAxisMotion { .. }
+            | SdlEvent::ControllerButtonDown { .. }
+            | SdlEvent::ControllerButtonUp { .. }
+            | SdlEvent::ControllerDeviceAdded { .. }
+            | SdlEvent::ControllerDeviceRemoved { .. }
+            | SdlEvent::ControllerDeviceRemapped { .. } => Self::Unhandled,
             SdlEvent::FingerDown {
                 touch_id,
                 finger_id,

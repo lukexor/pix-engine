@@ -419,9 +419,10 @@ pub trait PixEngine {
     ///                 Ok(true)
     ///             }
     ///             Axis::LeftY => {
-    ///                 if value > 0 {
+    ///                 // A stick pushed up reports a negative value.
+    ///                 if value < 0 {
     ///                     self.move_up();
-    ///                 } else if value < 0 {
+    ///                 } else if value > 0 {
     ///                     self.move_down();
     ///                 }
     ///                 Ok(true)

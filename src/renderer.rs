@@ -245,10 +245,4 @@ pub(crate) trait Rendering: Sized {
 
     /// Return the current rendered target pixels as an array of bytes.
     fn to_bytes(&mut self) -> Result<Vec<u8>>;
-
-    /// Connect a controller with the given joystick index to start receiving events.
-    fn open_controller(&mut self, controller_id: ControllerId) -> Result<()>;
-
-    /// Disconnect a controller with the given joystick index to stop receiving events.
-    fn close_controller(&mut self, controller_id: ControllerId);
 }

@@ -44,6 +44,7 @@
 
 use crate::{
     audio::backend::AudioQueue,
+    event::controller::Controllers,
     gui::state::UiState,
     prelude::*,
     renderer::{Renderer, RendererSettings, Rendering, WindowRenderer},
@@ -65,6 +66,9 @@ pub struct PixState {
     /// Output stream backing [`PixState::enqueue_audio`], owned separately from the renderer
     /// because audio and graphics share no device.
     pub(crate) audio: AudioQueue,
+    /// Controller pump, owned separately from the renderer because the window backend has no
+    /// gamepad support.
+    pub(crate) controllers: Controllers,
     pub(crate) env: Environment,
     pub(crate) ui: UiState,
     pub(crate) settings: Settings,
@@ -392,10 +396,12 @@ impl PixState {
         let show_frame_rate = settings.show_frame_rate;
         let target_frame_rate = settings.target_frame_rate;
         let audio = AudioQueue::new(&settings.audio_spec());
+        let controllers = Controllers::new();
         let renderer = Renderer::new(settings)?;
         let mut state = Self {
             renderer,
             audio,
+            controllers,
             env: Environment::default(),
             ui: UiState::default(),
             settings: Settings::default(),
@@ -528,7 +534,10 @@ impl PixState {
     /// Polls for events from the underlying renderer.
     #[inline]
     pub fn poll_event(&mut self) -> Option<Event> {
-        self.renderer.poll_event()
+        // Window events first, then controllers, so one call drains both sources.
+        self.renderer
+            .poll_event()
+            .or_else(|| self.controllers.poll())
     }
 
     /// Open a controller with a given ID to start handling events.
@@ -539,12 +548,13 @@ impl PixState {
     /// error is returned.
     #[inline]
     pub fn open_controller(&mut self, id: ControllerId) -> PixResult<()> {
-        self.renderer.open_controller(id)
+        self.controllers.open(id);
+        Ok(())
     }
 
     /// Close a controller with a given ID to stop handling events.
     #[inline]
     pub fn close_controller(&mut self, id: ControllerId) {
-        self.renderer.close_controller(id);
+        self.controllers.close(id);
     }
 }
