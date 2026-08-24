@@ -41,7 +41,9 @@
     html_logo_url = ""
 )]
 
+mod app;
 mod bench;
+mod time;
 
 #[macro_use]
 pub mod color;

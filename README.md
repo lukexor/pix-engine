@@ -21,7 +21,8 @@ Issues](#known-issues) - 💬 [Contact](#contact)
 
 `pix_engine` is a cross-platform graphics & UI library for simple games,
 visualizations, digital art, and graphics applications written in [Rust][],
-supporting [SDL2][] (and soon [Web-Assembly][wasm]!) renderers.
+drawing with [wgpu][] and windowing with [winit][] (and soon
+[Web-Assembly][wasm]!).
 
 The primary goal of this library is to be simple to setup and use for graphics
 or algorithm exploration and is not meant to be as fully-featured as other,
@@ -69,69 +70,30 @@ src="https://raw.githubusercontent.com/lukexor/pix-engine/main/images/matrix.png
 First and foremost you'll need [Rust][] installed! Follow the latest directions
 at <https://www.rust-lang.org/learn/get-started>.
 
-When building or running applications for a desktop target such as `macOS`,
-`Linux`, or `Windows` and not a [Web-Assembly][wasm] target, you must install
-[SDL2][] libraries. Note for windows: You may need to install
+Drawing goes through [wgpu][], which picks `Vulkan`, `Metal`, `DirectX 12` or
+`OpenGL` depending on the platform, so no graphics libraries need installing by
+hand. Note for Windows: you may need to install
 [Visual Studio C++ Build Tools][vc++].
 
-There are several options for installing `SDL2`, but these are the most common:
-
-- Install via [homebrew][] for `macOS`, a package management tool like `apt` for
-  `Linux` or `MSVC` for `Windows`.
-
-For more details and installation options see the [rust-sdl2][] documentation.
-
-#### macOS, Linux, or Windows 10 Subsystem for Linux (homebrew)
-
-```sh
-brew install sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
-```
-
-#### Linux (package manager)
-
-Note: The minimum `SDL2` version is `2.0.20`. Some package managers may not have
-the latest versions available.
+On `Linux`, audio and gamepad support are built against system libraries:
 
 _Ubuntu_:
 
 ```sh
-sudo apt-get install libsdl2-dev libsdl2-gfx-dev libsdl2-image-dev
-libsdl2-mixer-dev libsdl2-ttf-dev
+sudo apt-get install libasound2-dev libudev-dev
 ```
 
 _Fedora_:
 
 ```sh
-sudo dnf install SDL2-devel SDL2_gfx-devel SDL2_image-devel SDL2_mixer-devel SDL2_ttf-devel
+sudo dnf install alsa-lib-devel systemd-devel
 ```
 
 _Arch_:
 
 ```sh
-sudo pacman -S sdl2 sdl2_gfx sdl2_image sdl2_mixer sdl2_ttf
+sudo pacman -S alsa-lib systemd-libs
 ```
-
-#### Windows (MSVC)
-
-1. Download the latest `SDL2` `MSVC` development libraries from
-   <https://www.libsdl.org/download-2.0.php> e.g. (`SDL2-devel-2.0.20-VC.zip`).
-2. Download the latest `SDL2_image`, `SDL2_mixer`, and `SDL2_ttf` `MSVC`
-   development libraries from
-   <https://www.libsdl.org/projects/>. e.g. (`SDL2_image-devel-2.0.5-VC.zip`).
-3. Unzip each `.zip` file into a folder.
-4. Copy library files:
-   - from: `lib\x64\`
-   <!-- markdownlint-disable-next-line line-length -->
-   - to: `C:\Users\{Username}\.rustup\toolchains\{current toolchain}\lib\rustlib\{current toolchain}\lib`
-     where `{current toolchain}` is likely `stable-x86_64-pc-windows-msvc`.
-     - _Note_: If you don't use `rustup`, See [rust-sdl2][] for more info on
-       Windows installation.
-5. Copy all `dll` files:
-   - from: `lib\x64\`
-   - to: your `cargo` project next to `Cargo.toml`.
-
-MSVC binaries for SDL2 are also present in this repository under the `lib`
-folder.
 
 ### Creating Your Application
 
@@ -228,10 +190,6 @@ features = ["serde"]
 - **backtrace** - Enables the `backtrace` feature for [anyhow][], which allows
   printing backtraces based on environment variables outlined in
   [std::backtrace][]. Useful for debugging.
-
-- **opengl** - Forces `sdl2` to use `opengl` as its renderer. This feature is
-  disabled by default, allowing `sdl2` to use whichever renderer it defaults to
-  on the target system. For example, macOS defaults to `metal`.
 
 ### PixState
 
@@ -479,10 +437,9 @@ implementation and evolution of this crate:
 - [Dear ImGui][]
 
 [rust]: https://www.rust-lang.org/
-[sdl2]: https://crates.io/crates/sdl2/
+[wgpu]: https://crates.io/crates/wgpu/
+[winit]: https://crates.io/crates/winit/
 [vc++]: https://visualstudio.microsoft.com/visual-cpp-build-tools/
-[homebrew]: https://brew.sh/
-[rust-sdl2]: https://github.com/Rust-SDL2/rust-sdl2#sdl20-development-libraries
 [log]: https://crates.io/crates/log
 [env_logger]: https://crates.io/crates/env_logger
 [wasm]: https://www.rust-lang.org/what/wasm

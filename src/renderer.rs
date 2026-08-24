@@ -3,10 +3,18 @@
 use crate::{audio::AudioSpecDesired, error::Result, image::Icon, prelude::*};
 use std::num::NonZeroUsize;
 
-pub(crate) use crate::{texture::TextureRenderer, window::WindowRenderer};
+pub(crate) use crate::window::WindowRenderer;
 
-pub mod sdl;
-pub(crate) use sdl::Renderer;
+pub(crate) mod backend;
+pub(crate) mod event;
+pub(crate) mod gpu;
+pub(crate) mod painter;
+pub(crate) mod shapes;
+pub(crate) mod target;
+pub(crate) mod text;
+pub(crate) mod texture;
+pub(crate) mod window;
+pub(crate) use backend::Renderer;
 
 const TEXTURE_CACHE_SIZE: usize = 256;
 const TEXT_CACHE_SIZE: usize = 512;

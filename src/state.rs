@@ -414,7 +414,11 @@ impl PixState {
         state.frame_rate(target_frame_rate);
         state.font_size(theme.font_size)?;
         state.font_style(theme.styles.body);
-        state.font_family(theme.fonts.body)?;
+        // Loading a font rebuilds the atlas, which a frame cannot absorb once it has laid text
+        // out. Every font the theme names is loaded here, leaving body current.
+        state.font_family(theme.fonts.heading.clone())?;
+        state.font_family(theme.fonts.monospace.clone())?;
+        state.font_family(theme.fonts.body.clone())?;
         Ok(state)
     }
 

@@ -6,8 +6,9 @@ repository.
 ## Project
 
 `pix-engine` is a single-crate, cross-platform graphics/UI library (a Processing-like drawing API
-plus an immediate-mode GUI) backed by SDL2. It is published on crates.io and used by the [TetaNES]
-emulator for rendering, windowing and events.
+plus an immediate-mode GUI) backed by `wgpu` for drawing, `winit` for windowing and events, `cpal`
+for audio and `gilrs` for gamepads. It is published on crates.io and used by the [TetaNES]
+emulator.
 
 [TetaNES]: https://github.com/lukexor/tetanes
 
@@ -35,22 +36,24 @@ PIX_BENCH_FRAMES=600 cargo run --release --features serde --example matrix
 `benches/baseline.md` contains the recorded numbers and the protocol that produced them. Follow
 that protocol when comparing, and rerun on the machine it names.
 
-Integration tests in `tests/pix-engine.rs` construct a real `Engine`, so they are `#[ignore]`d and
-must be run single-threaded on the main thread:
+Integration tests in `tests/pix-engine.rs` construct a real `Engine`. A `winit` event loop has to
+be built on the main thread and only once per process, so that target sets `harness = false` and
+runs its scenarios in turn from `main`. `PIX_ENGINE_TESTS` gates them, so an ordinary `cargo test`
+opens no window:
 
 ```sh
-cargo test engine -- --test-threads=1 --ignored
+PIX_ENGINE_TESTS=1 cargo test --features serde --test pix-engine
 ```
 
-SDL2 development libraries must be installed on the host (see README for per-OS instructions).
-`shell.nix` provides them plus a toolchain for Nix users. `build.rs` only does work on
-`pc-windows-msvc`, where it copies the bundled `lib/msvc` libraries into `OUT_DIR`.
+`wgpu` picks a graphics backend at runtime and needs nothing installed. `Linux` builds need ALSA
+and udev headers for audio and gamepads, listed per-OS in the README. `shell.nix` provides them
+plus a toolchain for Nix users.
 
 ## Toolchain and MSRV
 
-`rust-toolchain.toml` pins 1.93.1 for local development, but CI also builds against 1.67.0 and
-`Cargo.toml` declares `rust-version = "1.70.0"`. Language or std features newer than the MSRV pass
-locally and fail in CI.
+`rust-toolchain.toml` pins 1.93.1 for local development. `Cargo.toml` declares
+`rust-version = "1.92.0"`, which `egui` 0.35 requires, and CI builds against that as well as
+stable. Language or std features newer than the MSRV pass locally and fail in CI.
 
 ## Architecture
 
@@ -76,14 +79,21 @@ spread across `src/draw.rs`, `src/texture.rs`, `src/window.rs`, `src/audio.rs`, 
 ### Renderer abstraction
 
 `src/renderer.rs` defines the private `Rendering` trait, along with `TextureRenderer` in
-`src/texture.rs` and `WindowRenderer` in `src/window.rs`, and selects a concrete `Renderer` by
-target arch: `renderer/sdl/` for native, `renderer/wasm/` for `wasm32`. **The wasm renderer is an
-unimplemented stub.** Every method is `todo!()`, wasm is not built in CI, and `bin/build_wasm.sh` is
-commented out there. Adding a method to `Rendering` means adding a stub on the wasm side too.
-`src/platform.rs` and `src/graphics2.rs` are empty placeholder traits with no users.
+`src/texture.rs` and `WindowRenderer` in `src/window.rs`. `src/renderer/backend.rs` implements all
+three over `wgpu`. **wasm is unsupported.** `Gpu::new` picks an adapter before any window exists,
+which a browser does not allow, and wasm is not built in CI.
 
-Renderers keep LRU caches for textures (`TEXTURE_CACHE_SIZE`) and rendered text
-(`TEXT_CACHE_SIZE`), so drawing the same text every frame is expected to hit the cache.
+Drawing records `epaint` shapes into a `RenderTarget` rather than issuing draw calls, and
+`Rendering::present` tessellates and paints everything recorded since the last frame. A target is
+an offscreen texture in every case, including a window canvas, so a canvas keeps its contents
+between frames and `src/renderer/gpu.rs` copies it onto the surface. `src/renderer/shapes.rs`
+translates drawing primitives into shapes with no state of its own, which makes it the one part
+testable against values.
+
+`winit` owns the frame loop. `src/app.rs` implements the `ApplicationHandler` it calls back into,
+and `Engine::run` hands control to the loop. Windows are created in its callbacks, because only an
+`ActiveEventLoop` can create one. `WindowRenderer::create_window` allocates the canvas and returns
+an id straight away, and the window follows on the next pass.
 
 ### Drawing model
 
@@ -104,9 +114,9 @@ unless `same_line` is called.
 
 ### Features
 
-`serde` derives across all public types, `opengl` forces SDL's GL renderer, plus `backtrace` and
-`debug_ui`. CI builds and tests with `serde` on, so `#[cfg_attr(feature = "serde", ...)]` attributes
-need to stay consistent when adding public types.
+`serde` derives across all public types, plus `backtrace` and `debug_ui`. CI builds and tests with
+`serde` on, so `#[cfg_attr(feature = "serde", ...)]` attributes need to stay consistent when adding
+public types.
 
 Fonts in `assets/` are compiled in and exposed as `Font::EMULOGIC`, `Font::INCONSOLATA` and
 `Font::NOTO`.

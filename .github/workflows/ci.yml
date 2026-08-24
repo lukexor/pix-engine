@@ -28,7 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-        toolchain: [stable, 1.85.0]
+        toolchain: [stable, 1.92.0]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -38,11 +38,14 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
-      - run: cargo clippy
-      - uses: ./.github/actions/install-linuxbrew
+      # `cpal` and `gilrs` build against these. `wgpu` and `winit` pick their backends at runtime.
+      - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-latest'
-      - uses: ./.github/actions/install-sdl2
-        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libudev-dev
+      - run: cargo clippy
       - name: Build
         shell: bash
         run: |

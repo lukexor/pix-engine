@@ -523,9 +523,6 @@ impl PixState {
             let (width, height) = self.size_of(text)?;
             pos.offset([-(clamp_size(width) / 2), -(clamp_size(height) / 2)]);
         };
-        if outline == 0 && s.stroke_weight > 0 {
-            pos += i32::from(s.stroke_weight);
-        }
 
         self.push();
 

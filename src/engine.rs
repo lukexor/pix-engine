@@ -54,13 +54,9 @@
 //! }
 //! ```
 
-use crate::{bench::Bench, image::Icon, prelude::*, renderer::RendererSettings};
-use log::{debug, error, info};
-use std::{
-    num::NonZeroUsize,
-    thread,
-    time::{Duration, Instant},
-};
+use crate::{image::Icon, prelude::*, renderer::RendererSettings, time::Instant};
+use log::debug;
+use std::{num::NonZeroUsize, time::Duration};
 
 /// Trait for allowing the [`Engine`] to drive your application and send notification of events,
 /// passing along a [`&mut PixState`](PixState) to allow interacting with the [`Engine`].
@@ -1022,8 +1018,10 @@ impl EngineBuilder {
 #[must_use]
 #[derive(Debug)]
 pub struct Engine {
-    state: PixState,
-    joystick_deadzone: i32,
+    /// Engine state threaded through every [`PixEngine`] callback.
+    pub(crate) state: PixState,
+    /// Range around center a controller axis reports as rest.
+    pub(crate) joystick_deadzone: i32,
 }
 
 impl Engine {
@@ -1062,92 +1060,14 @@ impl Engine {
     where
         A: PixEngine,
     {
-        info!("Starting `Engine`...");
-
-        let mut bench = Bench::from_env();
-
-        // Handle events before on_start to initialize window
-        self.handle_events(app)?;
-
-        debug!("Starting with `PixEngine::on_start`");
-        self.state.clear()?;
-        let on_start = app.on_start(&mut self.state);
-        if on_start.is_err() || self.state.should_quit() {
-            debug!("Quitting during startup with `PixEngine::on_stop`");
-            if let Err(ref err) = on_start {
-                error!("Error: {}", err);
-            }
-            return app.on_stop(&mut self.state).and(on_start);
-        }
-        self.state.present();
-
-        // on_stop loop enables on_stop to prevent application close if necessary
-        'on_stop: loop {
-            debug!("Starting `PixEngine::on_update` loop.");
-            // running loop continues until an event or on_update returns false or errors
-            let result = 'running: loop {
-                let start_time = Instant::now();
-                let time_since_last = start_time - self.state.last_frame_time();
-
-                // Errors from event hooks take the same path as errors from `on_update`, so
-                // `on_stop` still runs and can release resources. Propagating with `?` here
-                // would leave the loop without it.
-                if let Err(err) = self.handle_events(app) {
-                    self.state.quit();
-                    break 'running Err(err);
-                }
-                if self.state.should_quit() {
-                    break 'running Ok(());
-                }
-
-                if self.state.is_running() {
-                    self.state.pre_update();
-                    let on_update = app.on_update(&mut self.state);
-                    if on_update.is_err() {
-                        self.state.quit();
-                        break 'running on_update;
-                    }
-                    self.state.on_update()?;
-                    self.state.post_update();
-                    self.state.present();
-                    self.state.set_delta_time(start_time, time_since_last);
-                    self.state.increment_frame(time_since_last)?;
-
-                    // Sampled before the pacing sleep below. See `crate::bench`.
-                    if let Some(active) = bench.as_mut() {
-                        if active.record(start_time.elapsed()) {
-                            active.report(self.state.vsync_enabled());
-                            bench = None;
-                            self.state.quit();
-                        }
-                    }
-                }
-
-                if !self.state.vsync_enabled() {
-                    if let Some(target_delta_time) = self.state.target_delta_time() {
-                        let time_to_next_frame = start_time + target_delta_time;
-                        let now = Instant::now();
-                        if time_to_next_frame > now {
-                            thread::sleep(time_to_next_frame - now);
-                        }
-                    }
-                }
-            };
-
-            debug!("Quitting with `PixEngine::on_stop`");
-            let on_stop = app.on_stop(&mut self.state);
-            if self.state.should_quit() {
-                info!("Quitting `Engine`...");
-                break 'on_stop on_stop.and(result);
-            }
-        }
+        crate::app::run(self, app)
     }
 }
 
 impl Engine {
     /// Handle user and system events.
     #[inline]
-    fn handle_events<A>(&mut self, app: &mut A) -> PixResult<()>
+    pub(crate) fn handle_events<A>(&mut self, app: &mut A) -> PixResult<()>
     where
         A: PixEngine,
     {
