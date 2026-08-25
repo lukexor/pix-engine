@@ -46,6 +46,10 @@ pub(super) struct ImageTexture {
     texture: wgpu::Texture,
     /// Size in pixels. A resized image is reallocated at the new size.
     size: (u32, u32),
+    /// Fingerprint of the pixels this texture was last written from.
+    hash: u64,
+    /// Frame this texture was last drawn from.
+    frame: u64,
 }
 
 /// A `wgpu` [`Renderer`] implementation.
@@ -84,6 +88,8 @@ pub(crate) struct Renderer {
     pub(super) next_texture_id: usize,
     /// Next painter identifier to hand out, shared by targets and images.
     pub(super) next_paint_id: u64,
+    /// Frames painted so far, which tells an image cache entry whether it is in use.
+    pub(super) frame: u64,
     /// How subsequent shapes blend against what a target already contains.
     pub(super) blend_mode: BlendMode,
     /// Modifier and cursor state a single `winit` event does not include.
@@ -160,50 +166,101 @@ impl Renderer {
 
     /// Uploads an image and returns the identifier the canvas draws it by.
     ///
-    /// The pixels are rewritten every call, because an application is free to mutate an image
-    /// between frames and the cache is keyed by where the image lives, not by its contents.
+    /// The cache is keyed by where the image lives, and each entry records a fingerprint of the
+    /// pixels it was written from. Matching pixels skip the upload, and a changed image rewrites
+    /// the texture it already has.
     fn upload_image(&mut self, img: &Image) -> PaintTextureId {
         let key: *const Image = img;
         let size = (img.width(), img.height());
-        let stale = self
+        let hash = fingerprint(img);
+
+        if let Some(cached) = self.images.get_mut(&key) {
+            if cached.size == size && cached.hash == hash {
+                // Stamped here as well as on the write path below. The guard that follows reads
+                // this to tell a second draw of the same address apart from the first, so an
+                // unstamped hit leaves it looking at the frame before and the guard never fires.
+                cached.frame = self.frame;
+                return cached.id;
+            }
+        }
+
+        // An address is only unique among live images, and a draw is painted at the end of the
+        // frame. Two images sharing an address within one frame each need a texture of their own,
+        // and the second is released once the frame it was drawn in has been painted.
+        if self
             .images
             .peek(&key)
-            .is_some_and(|cached| cached.size != size);
-        if stale {
+            .is_some_and(|cached| cached.frame == self.frame)
+        {
+            let (id, texture) = self.allocate_image(size);
+            self.write_image(&texture, img, size);
+            self.pending_free.push(id);
+            return id;
+        }
+
+        if self
+            .images
+            .peek(&key)
+            .is_some_and(|cached| cached.size != size)
+        {
             if let Some(cached) = self.images.pop(&key) {
-                self.painter.free_texture(cached.id);
+                self.pending_free.push(cached.id);
             }
         }
         if self.images.peek(&key).is_none() {
-            let id = self.next_paint_id();
-            let texture = self.gpu.device.create_texture(&wgpu::TextureDescriptor {
-                label: Some("pix-engine image"),
-                size: wgpu::Extent3d {
-                    width: size.0.max(1),
-                    height: size.1.max(1),
-                    depth_or_array_layers: 1,
-                },
-                mip_level_count: 1,
-                sample_count: 1,
-                dimension: wgpu::TextureDimension::D2,
-                format: TARGET_FORMAT,
-                usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-                view_formats: &[],
-            });
-            let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
-            self.painter
-                .register_texture(&self.gpu.device, id, &view, wgpu::FilterMode::Nearest);
-            if let Some((_, evicted)) = self.images.push(key, ImageTexture { id, texture, size }) {
-                self.painter.free_texture(evicted.id);
+            let (id, texture) = self.allocate_image(size);
+            let entry = ImageTexture {
+                id,
+                texture,
+                size,
+                hash,
+                frame: self.frame,
+            };
+            if let Some((_, evicted)) = self.images.push(key, entry) {
+                self.pending_free.push(evicted.id);
             }
         }
 
         #[allow(clippy::expect_used)]
-        let cached = self.images.get(&key).expect("image was just cached");
+        let (id, texture) = {
+            let cached = self.images.get_mut(&key).expect("image was just cached");
+            cached.hash = hash;
+            cached.frame = self.frame;
+            (cached.id, cached.texture.clone())
+        };
+        self.write_image(&texture, img, size);
+        id
+    }
+
+    /// Allocates a texture an image is drawn from, and gives the painter a way to sample it.
+    fn allocate_image(&mut self, size: (u32, u32)) -> (PaintTextureId, wgpu::Texture) {
+        let id = self.next_paint_id();
+        let texture = self.gpu.device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("pix-engine image"),
+            size: wgpu::Extent3d {
+                width: size.0.max(1),
+                height: size.1.max(1),
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: TARGET_FORMAT,
+            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+            view_formats: &[],
+        });
+        let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+        self.painter
+            .register_texture(&self.gpu.device, id, &view, wgpu::FilterMode::Nearest);
+        (id, texture)
+    }
+
+    /// Writes an image's pixels into the texture it is drawn from.
+    fn write_image(&self, texture: &wgpu::Texture, img: &Image, size: (u32, u32)) {
         let pixels = rgba(img);
         self.gpu.queue.write_texture(
             wgpu::TexelCopyTextureInfo {
-                texture: &cached.texture,
+                texture,
                 mip_level: 0,
                 origin: wgpu::Origin3d::ZERO,
                 aspect: wgpu::TextureAspect::All,
@@ -220,7 +277,6 @@ impl Renderer {
                 depth_or_array_layers: 1,
             },
         );
-        cached.id
     }
 
     /// Releases what the event loop owns, before the loop tears itself down.
@@ -274,6 +330,7 @@ impl Rendering for Renderer {
             pending_free: Vec::new(),
             next_texture_id: 0,
             next_paint_id: 0,
+            frame: 0,
             blend_mode: BlendMode::None,
             input: Input::default(),
             events: VecDeque::new(),
@@ -640,6 +697,28 @@ impl fmt::Debug for Renderer {
     }
 }
 
+/// Multiplier the pixel fingerprint mixes with, from `rustc`'s `FxHasher`.
+const HASH_KEY: u64 = 0x517c_c1b7_2722_0a95;
+
+/// Fingerprints an image's pixels and dimensions.
+///
+/// A word at a time, because the alternative is re-uploading every image on every frame it is
+/// drawn. A collision would draw one image in place of another of the same size, which is remote
+/// enough not to pay for a stronger hash.
+fn fingerprint(img: &Image) -> u64 {
+    let mut hash = u64::from(img.width()) ^ (u64::from(img.height()) << 32);
+    let mut mix = |word: u64| hash = (hash.rotate_left(5) ^ word).wrapping_mul(HASH_KEY);
+    let bytes = img.as_bytes();
+    let mut words = bytes.chunks_exact(8);
+    for word in &mut words {
+        mix(u64::from_le_bytes(word.try_into().unwrap_or_default()));
+    }
+    let mut tail = [0; 8];
+    tail[..words.remainder().len()].copy_from_slice(words.remainder());
+    mix(u64::from_le_bytes(tail));
+    hash
+}
+
 /// Returns an image's pixels as premultiplied RGBA, widening a three-channel image.
 fn rgba(img: &Image) -> Vec<u8> {
     match img.format() {
@@ -670,4 +749,37 @@ pub(super) fn premultiply(pixel: &[u8]) -> [u8; 4] {
         }
     };
     [scale(pixel[0]), scale(pixel[1]), scale(pixel[2]), pixel[3]]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The image cache reuses a texture when the fingerprint matches, so two images that differ
+    /// must not share one.
+    #[test]
+    fn a_fingerprint_separates_images_of_the_same_size() {
+        let red = Image::from_pixels(2, 2, vec![Color::RED; 4], PixelFormat::Rgba);
+        let blue = Image::from_pixels(2, 2, vec![Color::BLUE; 4], PixelFormat::Rgba);
+        let (Ok(red), Ok(blue)) = (red, blue) else {
+            panic!("a solid image is valid");
+        };
+        assert_ne!(fingerprint(&red), fingerprint(&blue));
+
+        let Ok(same) = Image::from_pixels(2, 2, vec![Color::RED; 4], PixelFormat::Rgba) else {
+            panic!("a solid image is valid");
+        };
+        assert_eq!(fingerprint(&red), fingerprint(&same));
+    }
+
+    /// Dimensions are part of the fingerprint, so a resize is not mistaken for the same image.
+    #[test]
+    fn a_fingerprint_separates_images_of_the_same_pixels() {
+        let wide = Image::from_pixels(4, 1, vec![Color::RED; 4], PixelFormat::Rgba);
+        let tall = Image::from_pixels(1, 4, vec![Color::RED; 4], PixelFormat::Rgba);
+        let (Ok(wide), Ok(tall)) = (wide, tall) else {
+            panic!("a solid image is valid");
+        };
+        assert_ne!(fingerprint(&wide), fingerprint(&tall));
+    }
 }

@@ -481,6 +481,7 @@ impl Renderer {
         for id in self.pending_free.drain(..) {
             self.painter.free_texture(id);
         }
+        self.frame += 1;
         self.text.begin_frame();
         Ok(())
     }
