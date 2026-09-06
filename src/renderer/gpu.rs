@@ -8,9 +8,9 @@
 //! [`Rendering::new`]: crate::renderer::Rendering::new
 
 use crate::error::Result;
+use ahash::{HashMap, HashMapExt};
 use anyhow::{anyhow, Context};
 use egui_wgpu::wgpu;
-use std::collections::HashMap;
 
 /// Format every render target is allocated in.
 ///

@@ -21,13 +21,14 @@ use crate::{
         RendererSettings, Rendering,
     },
 };
+use ahash::{HashMap, HashMapExt};
 use anyhow::{anyhow, Context};
 use egui::epaint::{Shape, TextureId as PaintTextureId};
 use egui_wgpu::wgpu;
 use egui_winit::clipboard::Clipboard;
 use log::warn;
 use lru::LruCache;
-use std::{cell::RefCell, collections::HashMap, collections::VecDeque, fmt};
+use std::{cell::RefCell, collections::VecDeque, fmt};
 
 /// Bytes a texture-to-buffer copy aligns each row to.
 const COPY_ROW_ALIGNMENT: u32 = 256;

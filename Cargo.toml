@@ -31,6 +31,9 @@ targets = [
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+# The hasher `egui` uses. The renderer keys maps on small integers and looks one up per draw
+# call, where SipHash is most of the lookup.
+ahash = "0.8"
 anyhow = "1.0"
 bitflags = "2.6"
 time = { version = "0.3", features = ["local-offset"] }

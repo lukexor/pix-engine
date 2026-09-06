@@ -7,10 +7,11 @@
 //! before the next one uploads over them.
 
 use crate::prelude::BlendMode;
+use ahash::{HashMap, HashMapExt};
 use egui::epaint::{ClippedPrimitive, ImageDelta, Primitive, TextureId, Vertex};
 use egui_wgpu::wgpu;
 use log::warn;
-use std::{collections::HashMap, mem, num::NonZeroU64, ops::Range};
+use std::{mem, num::NonZeroU64, ops::Range};
 
 /// Vertices a freshly created buffer makes room for.
 const INITIAL_VERTICES: u64 = 1024;
