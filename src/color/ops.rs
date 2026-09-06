@@ -13,8 +13,9 @@
 //! values channel-wise. [`Deref`] is also implemented which returns `[u8; 4]`.
 
 use super::{
-    conversion::{calculate_channels, clamp_levels, convert_levels},
+    conversion::{calculate_channels, clamp_levels, convert_levels, to_channel},
     Color,
+    Mode::Rgb,
 };
 use std::{
     fmt::{self, LowerHex, UpperHex},
@@ -190,18 +191,68 @@ impl Deref for Color {
     }
 }
 
+/// Applies `f` to each color level, leaving alpha alone, and returns the resulting channels.
+#[inline]
+fn scaled(color: &Color, f: impl Fn(f64) -> f64) -> [u8; 4] {
+    // `Color::levels` divides every channel by its maximum and converts the result into the
+    // current mode, and `calculate_channels` reverses both. Under `Rgb` the conversion is the
+    // identity and the normalizing clamp cannot fire, so the channels are scaled where they are
+    // and alpha is copied. This runs once per channel per pixel in `3d_raytracing`, where the
+    // round trip measured a tenth of a frame.
+    if color.mode == Rgb {
+        let [r, g, b, a] = color.channels;
+        let [r, g, b] = scaled_channels([r, g, b], f);
+        [r, g, b, a]
+    } else {
+        let [v1, v2, v3, a] = color.levels();
+        calculate_channels(clamp_levels([f(v1), f(v2), f(v3), a]))
+    }
+}
+
+/// Applies `f` to each color level in place, leaving alpha alone.
+#[inline]
+fn scale_in_place(color: &mut Color, f: impl Fn(f64) -> f64) {
+    // The assigning operators convert the scaled levels back out of the current mode where
+    // `scaled` does not, so the two agree only under `Rgb`.
+    if color.mode == Rgb {
+        let [r, g, b, _] = color.channels;
+        let [r, g, b] = scaled_channels([r, g, b], f);
+        color.channels[0] = r;
+        color.channels[1] = g;
+        color.channels[2] = b;
+    } else {
+        let [v1, v2, v3, a] = color.levels();
+        let levels = clamp_levels([f(v1), f(v2), f(v3), a]);
+        color.update_channels(levels, color.mode);
+    }
+}
+
+/// Normalizes three [`Rgb`] bytes, applies `f`, and converts them back.
+#[inline]
+fn scaled_channels(channels: [u8; 3], f: impl Fn(f64) -> f64) -> [u8; 3] {
+    // The operation order matches `clamp_levels` followed by `calculate_channels`, so these are
+    // the bytes the level round trip produces. The three stay in one array expression so the
+    // compiler vectorizes the arithmetic.
+    let [r, g, b] = channels;
+    let level = |c: u8| f(f64::from(c) / 255.0).clamp(0.0, 1.0);
+    let levels = [level(r), level(g), level(b)];
+    [
+        to_channel(levels[0], 255.0),
+        to_channel(levels[1], 255.0),
+        to_channel(levels[2], 255.0),
+    ]
+}
+
 macro_rules! impl_ops {
     ($($target:ty),*) => {
         $(
             impl Mul<$target> for Color where $target: Into<f64> {
                 type Output = Self;
                 fn mul(self, s: $target) -> Self::Output {
-                    let [v1, v2, v3, a] = self.levels();
                     let s = f64::from(s);
-                    let levels = clamp_levels([v1 * s, v2 * s, v3 * s, a]);
                     Self {
                         mode: self.mode,
-                        channels: calculate_channels(levels),
+                        channels: scaled(&self, |v| v * s),
                     }
                 }
             }
@@ -209,44 +260,36 @@ macro_rules! impl_ops {
             impl Mul<Color> for $target where $target: Into<f64> {
                 type Output = Color;
                 fn mul(self, c: Color) -> Self::Output {
-                    let [v1, v2, v3, a] = c.levels();
                     let s = f64::from(self);
-                    let levels = clamp_levels([v1 * s, v2 * s, v3 * s, a]);
                     Color {
                         mode: c.mode,
-                        channels: calculate_channels(levels),
+                        channels: scaled(&c, |v| v * s),
                     }
                 }
             }
 
             impl MulAssign<$target> for Color where $target: Into<f64> {
                 fn mul_assign(&mut self, s: $target) {
-                    let [v1, v2, v3, a] = self.levels();
                     let s = f64::from(s);
-                    let levels = clamp_levels([v1 * s, v2 * s, v3 * s, a]);
-                    self.update_channels(levels, self.mode);
+                    scale_in_place(self, |v| v * s);
                 }
             }
 
             impl Div<$target> for Color where $target: Into<f64> {
                 type Output = Self;
                 fn div(self, s: $target) -> Self::Output {
-                    let [v1, v2, v3, a] = self.levels();
                     let s = f64::from(s);
-                    let levels = clamp_levels([v1 / s, v2 / s, v3 / s, a]);
                     Self {
                         mode: self.mode,
-                        channels: calculate_channels(levels),
+                        channels: scaled(&self, |v| v / s),
                     }
                 }
             }
 
             impl DivAssign<$target> for Color where $target: Into<f64> {
                 fn div_assign(&mut self, s: $target) {
-                    let [v1, v2, v3, a] = self.levels();
                     let s = f64::from(s);
-                    let levels = clamp_levels([v1 / s, v2 / s, v3 / s, a]);
-                    self.update_channels(levels, self.mode);
+                    scale_in_place(self, |v| v / s);
                 }
             }
         )*
@@ -259,12 +302,10 @@ macro_rules! impl_as_ops {
             impl Mul<$target> for Color {
                 type Output = Self;
                 fn mul(self, s: $target) -> Self::Output {
-                    let [v1, v2, v3, a] = self.levels();
                     let s = s as f64;
-                    let levels = clamp_levels([v1 * s, v2 * s, v3 * s, a]);
                     Self {
                         mode: self.mode,
-                        channels: calculate_channels(levels),
+                        channels: scaled(&self, |v| v * s),
                     }
                 }
             }
@@ -272,44 +313,36 @@ macro_rules! impl_as_ops {
             impl Mul<Color> for $target {
                 type Output = Color;
                 fn mul(self, c: Color) -> Self::Output {
-                    let [v1, v2, v3, a] = c.levels();
                     let s = self as f64;
-                    let levels = clamp_levels([v1 * s, v2 * s, v3 * s, a]);
                     Color {
                         mode: c.mode,
-                        channels: calculate_channels(levels),
+                        channels: scaled(&c, |v| v * s),
                     }
                 }
             }
 
             impl MulAssign<$target> for Color {
                 fn mul_assign(&mut self, s: $target) {
-                    let [v1, v2, v3, a] = self.levels();
                     let s = s as f64;
-                    let levels = clamp_levels([v1 * s, v2 * s, v3 * s, a]);
-                    self.update_channels(levels, self.mode);
+                    scale_in_place(self, |v| v * s);
                 }
             }
 
             impl Div<$target> for Color {
                 type Output = Self;
                 fn div(self, s: $target) -> Self::Output {
-                    let [v1, v2, v3, a] = self.levels();
                     let s = s as f64;
-                    let levels = clamp_levels([v1 / s, v2 / s, v3 / s, a]);
                     Self {
                         mode: self.mode,
-                        channels: calculate_channels(levels),
+                        channels: scaled(&self, |v| v / s),
                     }
                 }
             }
 
             impl DivAssign<$target> for Color {
                 fn div_assign(&mut self, s: $target) {
-                    let [v1, v2, v3, a] = self.levels();
                     let s = s as f64;
-                    let levels = clamp_levels([v1 / s, v2 / s, v3 / s, a]);
-                    self.update_channels(levels, self.mode);
+                    scale_in_place(self, |v| v / s);
                 }
             }
         )*
@@ -379,5 +412,86 @@ mod tests {
         assert_eq!(c1.channels(), [100, 50, 0, 200]);
 
         test_ops!(2i8, 2u8, 2i16, 2u16, 2i32, 2u32, 2f32, 2f64);
+    }
+
+    /// The reference arithmetic the scaling operators have to agree with.
+    ///
+    /// Spelled out rather than calling [`calculate_channels`], so it keeps the [`f64::round`]
+    /// call and pins the behavior independently of the code under test.
+    fn round_trip(c: Color, s: f64) -> [u8; 4] {
+        use crate::color::conversion::clamp_levels;
+        let [v1, v2, v3, a] = c.levels();
+        let levels = clamp_levels([v1 * s, v2 * s, v3 * s, a]);
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        [
+            (levels[0] * 255.0).round().clamp(0.0, 255.0) as u8,
+            (levels[1] * 255.0).round().clamp(0.0, 255.0) as u8,
+            (levels[2] * 255.0).round().clamp(0.0, 255.0) as u8,
+            (levels[3] * 255.0).round().clamp(0.0, 255.0) as u8,
+        ]
+    }
+
+    /// Scalars either side of the interesting boundaries, including ones that land a channel on
+    /// a rounding tie.
+    const SCALARS: [f64; 12] = [
+        0.0,
+        0.1,
+        0.25,
+        1.0 / 3.0,
+        0.5,
+        0.5019,
+        0.9,
+        0.999,
+        1.0,
+        1.5,
+        2.0,
+        255.0,
+    ];
+
+    #[test]
+    fn rgb_scaling_matches_the_level_round_trip() {
+        for byte in 0..=u8::MAX {
+            let c = color!(
+                byte,
+                byte.wrapping_add(83),
+                byte.wrapping_mul(3),
+                byte.wrapping_sub(41)
+            );
+            for s in SCALARS {
+                assert_eq!(
+                    (c * s).channels(),
+                    round_trip(c, s),
+                    "{:?} * {s}",
+                    c.channels()
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn scaling_in_place_matches_scaling_by_value() {
+        for byte in 0..=u8::MAX {
+            let c = color!(byte, 255 - byte, byte.wrapping_mul(7), byte);
+            for s in SCALARS {
+                let mut assigned = c;
+                assigned *= s;
+                assert_eq!(assigned.channels(), (c * s).channels(), "{byte} *= {s}");
+
+                let mut assigned = c;
+                assigned /= s;
+                assert_eq!(assigned.channels(), (c / s).channels(), "{byte} /= {s}");
+            }
+        }
+    }
+
+    #[test]
+    fn scaling_leaves_alpha_alone() {
+        for alpha in 0..=u8::MAX {
+            let c = color!(200, 50, 10, alpha);
+            for s in SCALARS {
+                assert_eq!((c * s).channels()[3], alpha, "alpha {alpha} * {s}");
+                assert_eq!((c / s).channels()[3], alpha, "alpha {alpha} / {s}");
+            }
+        }
     }
 }
