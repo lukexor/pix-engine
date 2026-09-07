@@ -18,7 +18,6 @@ use egui::epaint::{
     text::{FontDefinitions, Fonts, LayoutJob, TextFormat, TextOptions},
     Color32, FontFamily, Galley, ImageDelta, Shape, Stroke, TextShape,
 };
-use log::warn;
 use std::{cell::RefCell, collections::HashMap, sync::Arc};
 
 /// Scale between a laid-out point and a pixel.
@@ -26,6 +25,23 @@ use std::{cell::RefCell, collections::HashMap, sync::Arc};
 /// The canvas is the size of the window in pixels, so a point is a pixel and text comes out at
 /// the size the drawing API asked for.
 const PIXELS_PER_POINT: f32 = 1.0;
+
+/// Horizontal offset a bold draws its second copy at, as a fraction of the point size.
+///
+/// `epaint` selects a bold face rather than thickening a regular one, and each engine font is a
+/// single face. Drawing the galley twice, offset horizontally, widens every stem by that much.
+/// This fraction puts the widening near the stem difference between a regular and a bold face,
+/// and it applies to any font the caller supplies.
+///
+/// The offset is rounded to whole pixels. [`PIXELS_PER_POINT`] is 1, so a fractional offset puts
+/// the second copy across a pixel boundary and the stem gains a grey fringe instead of a column.
+/// That reads as blur on a pixel font such as `Font::EMULOGIC`.
+const BOLD_OFFSET: f32 = 0.045;
+
+/// Smallest offset a bold draws its second copy at.
+///
+/// Under one pixel the second copy lands on the pixels of the first and nothing thickens.
+const MIN_BOLD_OFFSET: f32 = 1.0;
 
 /// Offsets an outline is drawn at, as fractions of the outline width.
 ///
@@ -117,13 +133,7 @@ impl TextRenderer {
     }
 
     /// Sets the style applied to subsequent text.
-    ///
-    /// `epaint` picks bold from a bold face rather than thickening a regular one, and the engine
-    /// ships one face per family, so [`FontStyle::BOLD`] is reported and dropped.
     pub(crate) fn set_style(&mut self, style: FontStyle) {
-        if style.contains(FontStyle::BOLD) && !self.style.contains(FontStyle::BOLD) {
-            warn!("bold text needs a bold font face; drawing regular weight instead");
-        }
         self.style = style;
     }
 
@@ -195,8 +205,13 @@ impl TextRenderer {
         }
         let galley = self.layout(text, wrap_width, Color::WHITE);
         let size = galley.rect.size();
+        // Layout knows nothing of the second copy a bold draws, so the width it reports is short
+        // by the offset between them.
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-        (size.x.ceil() as u32, size.y.ceil() as u32)
+        (
+            (size.x + self.bold_offset()).ceil() as u32,
+            size.y.ceil() as u32,
+        )
     }
 
     /// Builds the shape that draws `galley` at `pos`.
@@ -213,6 +228,7 @@ impl TextRenderer {
         stroke: Color,
     ) -> Shape {
         let origin = shapes::pos2(pos);
+        let bold = self.bold_offset();
         let text = |at: egui::Pos2, color: Color32| {
             Shape::Text(TextShape {
                 angle,
@@ -220,17 +236,45 @@ impl TextRenderer {
                 ..TextShape::new(at, Arc::clone(galley), color)
             })
         };
-        if outline == 0 {
+        // A bold is the same galley drawn again alongside itself, so every stem widens. The step
+        // turns with `angle`, or it would run along the stems of rotated text instead of across
+        // them. The halo below repeats the pair, or the outline would ring the regular weight.
+        // Where the copies overlap a translucent fill composites twice and comes out denser.
+        let step = egui::Vec2::angled(angle) * bold;
+        let copies = |at: egui::Pos2, color: Color32, out: &mut Vec<Shape>| {
+            out.push(text(at, color));
+            if bold > 0.0 {
+                out.push(text(at + step, color));
+            }
+        };
+
+        if outline == 0 && bold == 0.0 {
             return text(origin, shapes::color32(fill));
         }
-        let width = f32::from(outline);
-        let halo = shapes::color32(stroke);
-        let mut shapes: Vec<Shape> = OUTLINE_OFFSETS
-            .iter()
-            .map(|(x, y)| text(origin + egui::Vec2::new(x * width, y * width), halo))
-            .collect();
-        shapes.push(text(origin, shapes::color32(fill)));
+
+        let mut shapes = Vec::new();
+        if outline > 0 {
+            let width = f32::from(outline);
+            let halo = shapes::color32(stroke);
+            for (x, y) in OUTLINE_OFFSETS {
+                copies(
+                    origin + egui::Vec2::new(x * width, y * width),
+                    halo,
+                    &mut shapes,
+                );
+            }
+        }
+        copies(origin, shapes::color32(fill), &mut shapes);
         Shape::Vec(shapes)
+    }
+
+    /// Returns the offset a bold draws its second copy at, or zero when text is not bold.
+    fn bold_offset(&self) -> f32 {
+        if self.style.contains(FontStyle::BOLD) {
+            (self.size * BOLD_OFFSET).round().max(MIN_BOLD_OFFSET)
+        } else {
+            0.0
+        }
     }
 
     /// Returns the font the current family, size and style resolve to.
