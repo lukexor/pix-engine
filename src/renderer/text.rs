@@ -18,7 +18,11 @@ use egui::epaint::{
     text::{FontDefinitions, Fonts, LayoutJob, TextFormat, TextOptions},
     Color32, FontFamily, Galley, ImageDelta, Shape, Stroke, TextShape,
 };
-use std::{cell::RefCell, collections::HashMap, sync::Arc};
+use std::{
+    cell::RefCell,
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
 /// Scale between a laid-out point and a pixel.
 ///
@@ -35,7 +39,7 @@ const PIXELS_PER_POINT: f32 = 1.0;
 ///
 /// The offset is rounded to whole pixels. [`PIXELS_PER_POINT`] is 1, so a fractional offset puts
 /// the second copy across a pixel boundary and the stem gains a grey fringe instead of a column.
-/// That reads as blur on a pixel font such as `Font::EMULOGIC`.
+/// That reads as blur on a pixel font such as [`Font::EMULOGIC`].
 const BOLD_OFFSET: f32 = 0.045;
 
 /// Smallest offset a bold draws its second copy at.
@@ -68,6 +72,13 @@ pub(crate) struct TextRenderer {
     families: HashMap<FontId, Arc<str>>,
     /// Family text is currently laid out in.
     current: FontId,
+    /// Families the current [`TextRenderer::fonts`] was built with.
+    ///
+    /// `epaint` panics on a family its [`Fonts`] does not hold, so a font named this frame is
+    /// laid out in [`TextRenderer::default_family`] until the rebuild binds it.
+    baked: HashSet<FontId>,
+    /// Family every other one falls back to, registered before any frame runs.
+    default_family: FontId,
     /// Point size text is currently laid out at.
     size: f32,
     /// Style applied to laid-out text.
@@ -97,8 +108,10 @@ impl TextRenderer {
         Ok(Self {
             fonts: RefCell::new(Fonts::new(options, definitions.clone())),
             definitions,
+            baked: families.keys().copied().collect(),
             families,
             current: default.id(),
+            default_family: default.id(),
             size: 14.0,
             style: FontStyle::NORMAL,
             options,
@@ -118,7 +131,7 @@ impl TextRenderer {
             self.families.insert(id, name);
             // Faces are baked into `Fonts` when it is built, so adding one rebuilds it and repacks
             // the atlas. Text already laid out this frame points into the atlas as it stands, so
-            // the rebuild waits for the frame boundary and this frame draws a fallback face.
+            // the rebuild waits for the frame boundary, and `font_id` falls back until then.
             self.stale = true;
         }
         self.current = id;
@@ -142,6 +155,7 @@ impl TextRenderer {
         if self.stale {
             self.stale = false;
             self.fonts = RefCell::new(Fonts::new(self.options, self.definitions.clone()));
+            self.baked = self.families.keys().copied().collect();
             return;
         }
         // Repacks the atlas when it is filling up.
@@ -278,8 +292,15 @@ impl TextRenderer {
     }
 
     /// Returns the font the current family, size and style resolve to.
+    ///
+    /// A family falls back to [`TextRenderer::default_family`] until a rebuild bakes it.
     fn font_id(&self) -> egui::FontId {
-        let family = self.families.get(&self.current).map_or_else(
+        let current = if self.baked.contains(&self.current) {
+            self.current
+        } else {
+            self.default_family
+        };
+        let family = self.families.get(&current).map_or_else(
             || FontFamily::Proportional,
             |name| FontFamily::Name(Arc::clone(name)),
         );
