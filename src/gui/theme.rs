@@ -229,6 +229,33 @@ pub struct Font {
     #[cfg(not(target_arch = "wasm32"))]
     /// Data source for the font.
     pub(crate) source: FontSrc,
+    #[cfg(not(target_arch = "wasm32"))]
+    /// Faces the styled variants are drawn from, where they were supplied.
+    pub(crate) variants: FontVariants,
+}
+
+/// Faces a [`Font`] draws its styled variants from.
+///
+/// A variant left unset is synthesized by thickening or shearing the regular face.
+#[cfg(not(target_arch = "wasm32"))]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct FontVariants {
+    /// Face drawn for [`FontStyle::BOLD`].
+    pub(crate) bold: Option<FontSrc>,
+    /// Face drawn for [`FontStyle::ITALIC`].
+    pub(crate) italic: Option<FontSrc>,
+    /// Face drawn for [`FontStyle::BOLD`] and [`FontStyle::ITALIC`] together.
+    pub(crate) bold_italic: Option<FontSrc>,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl FontVariants {
+    /// A font with no styled faces of its own.
+    const NONE: Self = Self {
+        bold: None,
+        italic: None,
+        bold_italic: None,
+    };
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -246,17 +273,37 @@ impl Default for Font {
 }
 
 impl Font {
+    /// Regular face of the bundled Noto Sans family.
     #[cfg(not(target_arch = "wasm32"))]
-    const NOTO_TTF: &'static [u8] = include_bytes!("../../assets/noto_sans_regular.ttf");
+    pub(crate) const NOTO_TTF: &'static [u8] = include_bytes!("../../assets/noto_sans_regular.ttf");
+    /// Bold face of the bundled Noto Sans family.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub(crate) const NOTO_BOLD_TTF: &'static [u8] =
+        include_bytes!("../../assets/noto_sans_bold.ttf");
+    /// Italic face of the bundled Noto Sans family.
+    #[cfg(not(target_arch = "wasm32"))]
+    const NOTO_ITALIC_TTF: &'static [u8] = include_bytes!("../../assets/noto_sans_italic.ttf");
+    /// Bold italic face of the bundled Noto Sans family.
+    #[cfg(not(target_arch = "wasm32"))]
+    const NOTO_BOLD_ITALIC_TTF: &'static [u8] =
+        include_bytes!("../../assets/noto_sans_bold_italic.ttf");
+    /// The one face Emulogic ships, which every style is synthesized from.
     #[cfg(not(target_arch = "wasm32"))]
     const EMULOGIC_TTF: &'static [u8] = include_bytes!("../../assets/emulogic.ttf");
+    /// The one face Inconsolata ships here, which is already a bold weight.
     #[cfg(not(target_arch = "wasm32"))]
     const INCONSOLATA_TTF: &'static [u8] = include_bytes!("../../assets/inconsolata_bold.ttf");
 
     /// [Noto Sans Regular](https://fonts.google.com/noto/specimen/Noto+Sans) - an open-source used
     /// by Linux and Google.
     #[cfg(not(target_arch = "wasm32"))]
-    pub const NOTO: Self = Self::from_bytes("Noto", Self::NOTO_TTF);
+    pub const NOTO: Self = Self::family(
+        "Noto",
+        Self::NOTO_TTF,
+        Self::NOTO_BOLD_TTF,
+        Self::NOTO_ITALIC_TTF,
+        Self::NOTO_BOLD_ITALIC_TTF,
+    );
 
     /// Emulogic - a bold, retro gaming pixel font by Freaky Fonts.
     #[cfg(not(target_arch = "wasm32"))]
@@ -274,6 +321,8 @@ impl Font {
             name: Cow::Borrowed(name),
             #[cfg(not(target_arch = "wasm32"))]
             source: FontSrc::None,
+            #[cfg(not(target_arch = "wasm32"))]
+            variants: FontVariants::NONE,
         }
     }
 
@@ -284,6 +333,28 @@ impl Font {
         Self {
             name: Cow::Borrowed(name),
             source: FontSrc::from_bytes(bytes),
+            variants: FontVariants::NONE,
+        }
+    }
+
+    /// Constructs a `Font` from a face per style, for the families bundled with the engine.
+    #[cfg(not(target_arch = "wasm32"))]
+    #[inline]
+    const fn family(
+        name: &'static str,
+        regular: &'static [u8],
+        bold: &'static [u8],
+        italic: &'static [u8],
+        bold_italic: &'static [u8],
+    ) -> Self {
+        Self {
+            name: Cow::Borrowed(name),
+            source: FontSrc::from_bytes(regular),
+            variants: FontVariants {
+                bold: Some(FontSrc::from_bytes(bold)),
+                italic: Some(FontSrc::from_bytes(italic)),
+                bold_italic: Some(FontSrc::from_bytes(bold_italic)),
+            },
         }
     }
 
@@ -298,7 +369,36 @@ impl Font {
         Self {
             name: name.into(),
             source: FontSrc::from_file(path),
+            variants: FontVariants::NONE,
         }
+    }
+
+    /// Adds a bold face, drawn when [`FontStyle::BOLD`] is set.
+    ///
+    /// Without one, bold is synthesized by drawing the regular face twice.
+    #[cfg(not(target_arch = "wasm32"))]
+    #[inline]
+    pub fn bold(mut self, bytes: &'static [u8]) -> Self {
+        self.variants.bold = Some(FontSrc::from_bytes(bytes));
+        self
+    }
+
+    /// Adds an italic face, drawn when [`FontStyle::ITALIC`] is set.
+    ///
+    /// Without one, italic is synthesized by shearing the regular face.
+    #[cfg(not(target_arch = "wasm32"))]
+    #[inline]
+    pub fn italic(mut self, bytes: &'static [u8]) -> Self {
+        self.variants.italic = Some(FontSrc::from_bytes(bytes));
+        self
+    }
+
+    /// Adds a face drawn when [`FontStyle::BOLD`] and [`FontStyle::ITALIC`] are both set.
+    #[cfg(not(target_arch = "wasm32"))]
+    #[inline]
+    pub fn bold_italic(mut self, bytes: &'static [u8]) -> Self {
+        self.variants.bold_italic = Some(FontSrc::from_bytes(bytes));
+        self
     }
 
     /// Returns the name of the font family.

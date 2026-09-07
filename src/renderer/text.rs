@@ -68,8 +68,8 @@ pub(crate) struct TextRenderer {
     fonts: RefCell<Fonts>,
     /// Face data and the families built from it, kept so a new font can be added.
     definitions: FontDefinitions,
-    /// Family name each registered [`Font`] is laid out under.
-    families: HashMap<FontId, Arc<str>>,
+    /// Family names each registered [`Font`] is laid out under, one per face it supplied.
+    families: HashMap<FontId, Families>,
     /// Family text is currently laid out in.
     current: FontId,
     /// Families the current [`TextRenderer::fonts`] was built with.
@@ -187,7 +187,7 @@ impl TextRenderer {
             TextFormat {
                 font_id: self.font_id(),
                 color: shapes::color32(color),
-                italics: self.style.contains(FontStyle::ITALIC),
+                italics: self.synthetic().contains(FontStyle::ITALIC),
                 underline: self.decoration(FontStyle::UNDERLINE, color),
                 strikethrough: self.decoration(FontStyle::STRIKETHROUGH, color),
                 ..TextFormat::default()
@@ -284,7 +284,7 @@ impl TextRenderer {
 
     /// Returns the offset a bold draws its second copy at, or zero when text is not bold.
     fn bold_offset(&self) -> f32 {
-        if self.style.contains(FontStyle::BOLD) {
+        if self.synthetic().contains(FontStyle::BOLD) {
             (self.size * BOLD_OFFSET).round().max(MIN_BOLD_OFFSET)
         } else {
             0.0
@@ -295,16 +295,27 @@ impl TextRenderer {
     ///
     /// A family falls back to [`TextRenderer::default_family`] until a rebuild bakes it.
     fn font_id(&self) -> egui::FontId {
+        let family = self
+            .resolve()
+            .map_or(FontFamily::Proportional, |(family, _)| {
+                FontFamily::Name(Arc::clone(family))
+            });
+        egui::FontId::new(self.size, family)
+    }
+
+    /// Returns the family the current font and style draw from, with the bits it cannot cover.
+    fn resolve(&self) -> Option<(&Arc<str>, FontStyle)> {
         let current = if self.baked.contains(&self.current) {
             self.current
         } else {
             self.default_family
         };
-        let family = self.families.get(&current).map_or_else(
-            || FontFamily::Proportional,
-            |name| FontFamily::Name(Arc::clone(name)),
-        );
-        egui::FontId::new(self.size, family)
+        Some(self.families.get(&current)?.resolve(self.style))
+    }
+
+    /// Returns the style bits no registered face covers, which the renderer synthesizes.
+    fn synthetic(&self) -> FontStyle {
+        self.resolve().map_or(self.style, |(_, style)| style)
     }
 
     /// Returns the stroke a text decoration is drawn with, or none when it is not set.
@@ -317,26 +328,176 @@ impl TextRenderer {
     }
 }
 
-/// Adds a font to `definitions` under a family of its own, returning the family name.
-///
-/// Each engine font becomes its own family rather than a fallback within one, because the drawing
-/// API selects a family by name and expects exactly the glyphs of that face.
-fn register(definitions: &mut FontDefinitions, font: &Font) -> Result<Arc<str>> {
-    let data = match font.source() {
-        FontSrc::None => return Err(anyhow!("font `{}` has no data source", font.name())),
+/// Family names one [`Font`] is laid out under, one per face it supplied.
+struct Families {
+    /// Family holding the regular face.
+    regular: Arc<str>,
+    /// Family holding the bold face, where the font supplied one.
+    bold: Option<Arc<str>>,
+    /// Family holding the italic face, where the font supplied one.
+    italic: Option<Arc<str>>,
+    /// Family holding the bold italic face, where the font supplied one.
+    bold_italic: Option<Arc<str>>,
+}
+
+impl Families {
+    /// Returns the family `style` is drawn from, and the bits no face covers.
+    ///
+    /// The renderer synthesizes the returned style on top, by thickening or shearing. A font with
+    /// every face returns [`FontStyle::NORMAL`], and nothing is synthesized.
+    fn resolve(&self, style: FontStyle) -> (&Arc<str>, FontStyle) {
+        let wants_bold = style.contains(FontStyle::BOLD);
+        let wants_italic = style.contains(FontStyle::ITALIC);
+        match (wants_bold, wants_italic) {
+            (false, false) => (&self.regular, FontStyle::NORMAL),
+            (true, false) => self
+                .bold
+                .as_ref()
+                .map_or((&self.regular, FontStyle::BOLD), |f| (f, FontStyle::NORMAL)),
+            (false, true) => self
+                .italic
+                .as_ref()
+                .map_or((&self.regular, FontStyle::ITALIC), |f| {
+                    (f, FontStyle::NORMAL)
+                }),
+            // Half a match beats none, so a font with only one of the two faces draws from it and
+            // synthesizes the other.
+            (true, true) => {
+                if let Some(face) = &self.bold_italic {
+                    (face, FontStyle::NORMAL)
+                } else if let Some(face) = &self.bold {
+                    (face, FontStyle::ITALIC)
+                } else if let Some(face) = &self.italic {
+                    (face, FontStyle::BOLD)
+                } else {
+                    (&self.regular, FontStyle::BOLD | FontStyle::ITALIC)
+                }
+            }
+        }
+    }
+}
+
+/// Adds a font's faces to `definitions`, returning the family name of each.
+fn register(definitions: &mut FontDefinitions, font: &Font) -> Result<Families> {
+    // `epaint` picks a face per family, not per style, so each face is registered as a family of
+    // its own instead of as a fallback within one.
+    let variant = |definitions: &mut FontDefinitions, suffix: &str, src: Option<&FontSrc>| {
+        src.map(|src| insert(definitions, &format!("{}{suffix}", font.name()), src))
+            .transpose()
+    };
+    let regular = insert(definitions, font.name(), font.source())?;
+    Ok(Families {
+        regular,
+        bold: variant(definitions, "-Bold", font.variants.bold.as_ref())?,
+        italic: variant(definitions, "-Italic", font.variants.italic.as_ref())?,
+        bold_italic: variant(
+            definitions,
+            "-BoldItalic",
+            font.variants.bold_italic.as_ref(),
+        )?,
+    })
+}
+
+/// Adds one face to `definitions` under `name`, returning the family name.
+fn insert(definitions: &mut FontDefinitions, name: &str, src: &FontSrc) -> Result<Arc<str>> {
+    let data = match src {
+        FontSrc::None => return Err(anyhow!("font `{name}` has no data source")),
         FontSrc::Bytes(bytes) => egui::FontData::from_static(bytes),
         FontSrc::Path(path) => egui::FontData::from_owned(
             std::fs::read(path)
                 .with_context(|| format!("failed to read font file {}", path.display()))?,
         ),
     };
-    let name: Arc<str> = Arc::from(font.name());
+    let family: Arc<str> = Arc::from(name);
     definitions
         .font_data
-        .insert(font.name().to_owned(), Arc::new(data));
-    definitions.families.insert(
-        FontFamily::Name(Arc::clone(&name)),
-        vec![font.name().to_owned()],
-    );
-    Ok(name)
+        .insert(name.to_owned(), Arc::new(data));
+    definitions
+        .families
+        .insert(FontFamily::Name(Arc::clone(&family)), vec![name.to_owned()]);
+    Ok(family)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Builds a renderer with `font` registered and baked into the atlas.
+    // Setup that cannot run leaves nothing to assert, so it fails the test where it breaks.
+    #[allow(clippy::expect_used)]
+    fn renderer(font: &Font) -> TextRenderer {
+        let mut text = TextRenderer::new(2048).expect("default font loads");
+        text.set_family(font).expect("font registers");
+        text.begin_frame();
+        text
+    }
+
+    /// Returns the family name text lays out under.
+    fn family(text: &TextRenderer) -> String {
+        match text.font_id().family {
+            FontFamily::Name(name) => name.to_string(),
+            other => panic!("expected a named family, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn a_font_with_faces_draws_each_style_from_its_own() {
+        let mut text = renderer(&Font::NOTO);
+        for (style, expected) in [
+            (FontStyle::NORMAL, "Noto"),
+            (FontStyle::BOLD, "Noto-Bold"),
+            (FontStyle::ITALIC, "Noto-Italic"),
+            (FontStyle::BOLD | FontStyle::ITALIC, "Noto-BoldItalic"),
+        ] {
+            text.set_style(style);
+            assert_eq!(family(&text), expected, "{style:?}");
+            assert_eq!(
+                text.synthetic(),
+                FontStyle::NORMAL,
+                "{style:?} is drawn, not synthesized"
+            );
+        }
+    }
+
+    #[test]
+    fn a_font_without_faces_synthesizes_every_style() {
+        let mut text = renderer(&Font::EMULOGIC);
+        for style in [
+            FontStyle::BOLD,
+            FontStyle::ITALIC,
+            FontStyle::BOLD | FontStyle::ITALIC,
+        ] {
+            text.set_style(style);
+            assert_eq!(family(&text), "Emulogic", "{style:?} keeps the one face");
+            assert_eq!(text.synthetic(), style, "{style:?} is synthesized");
+        }
+    }
+
+    #[test]
+    fn only_a_synthesized_bold_widens_the_glyphs() {
+        let mut noto = renderer(&Font::NOTO);
+        noto.set_style(FontStyle::BOLD);
+        assert_eq!(
+            noto.bold_offset(),
+            0.0,
+            "a drawn bold face needs no widening"
+        );
+
+        let mut emulogic = renderer(&Font::EMULOGIC);
+        emulogic.set_style(FontStyle::BOLD);
+        assert!(emulogic.bold_offset() >= MIN_BOLD_OFFSET);
+    }
+
+    #[test]
+    fn half_a_match_draws_from_the_face_it_has() {
+        let font = Font::from_bytes("Half", Font::NOTO_TTF).bold(Font::NOTO_BOLD_TTF);
+        let mut text = renderer(&font);
+        text.set_style(FontStyle::BOLD | FontStyle::ITALIC);
+        assert_eq!(family(&text), "Half-Bold");
+        assert_eq!(
+            text.synthetic(),
+            FontStyle::ITALIC,
+            "italic is sheared on top"
+        );
+    }
 }
