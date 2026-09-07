@@ -100,11 +100,11 @@ pub trait PixEngine {
     /// Called after [`PixEngine::on_start`], every frame based on the [target frame rate].
     ///
     /// By default, this is called as often as possible but can be controlled by changing the
-    /// [target frame rate]. It will continue to be executed until the application is terminated,
-    /// or [`PixState::run(false)`] is called.
+    /// [target frame rate]. It runs until the application terminates, or [`PixState::run`] is
+    /// called with `false`.
     ///
-    /// After [`PixState::run(false)`] is called, you can call [`PixState::redraw`] or
-    /// [`PixState::run_times`] to control the execution.
+    /// After that, you can call [`PixState::redraw`] or [`PixState::run_times`] to control the
+    /// execution.
     ///
     /// [target frame rate]: PixState::frame_rate
     ///

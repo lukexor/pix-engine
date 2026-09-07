@@ -210,9 +210,9 @@ impl PixState {
             .triangle(tri.into(), s.smooth, s.fill, s.stroke)
     }
 
-    /// Draw a square [Rect] to the current canvas. [`PixState::fill`] and [`PixState::stroke`] control
-    /// whether the square is filled or outlined. [`RectMode`] controls how the `(x, y)` position is
-    /// interpreted.
+    /// Draw a square [Rect] to the current canvas. [`PixState::fill`] and [`PixState::stroke`]
+    /// control whether the square is filled or outlined.
+    /// [`RectMode`](crate::prelude::RectMode) controls how the `(x, y)` position is interpreted.
     ///
     /// Alias for [`PixState::rect`].
     ///
@@ -243,8 +243,8 @@ impl PixState {
     }
 
     /// Draw a rounded [Square](Rect) to the current canvas. [`PixState::fill`] and
-    /// [`PixState::stroke`] control whether the square is filled or outlined. [`RectMode`] controls
-    /// how the `(x, y)` position is interpreted.
+    /// [`PixState::stroke`] control whether the square is filled or outlined.
+    /// [`RectMode`](crate::prelude::RectMode) controls how the `(x, y)` position is interpreted.
     ///
     /// Alias for [`PixState::rounded_rect`].
     ///
@@ -275,8 +275,8 @@ impl PixState {
     }
 
     /// Draw a [Rectangle](Rect) to the current canvas. [`PixState::fill`] and [`PixState::stroke`]
-    /// control whether the rect is filled or outlined. [`RectMode`] controls how the `(x, y)`
-    /// position is interpreted.
+    /// control whether the rect is filled or outlined.
+    /// [`RectMode`](crate::prelude::RectMode) controls how the `(x, y)` position is interpreted.
     ///
     /// # Errors
     ///
@@ -306,8 +306,8 @@ impl PixState {
     }
 
     /// Draw a rounded [Rectangle](Rect) to the current canvas. [`PixState::fill`] and
-    /// [`PixState::stroke`] control whether the rect is filled or outlined. [`RectMode`] controls how
-    /// the `(x, y)` position is interpreted.
+    /// [`PixState::stroke`] control whether the rect is filled or outlined.
+    /// [`RectMode`](crate::prelude::RectMode) controls how the `(x, y)` position is interpreted.
     ///
     /// # Errors
     ///
@@ -337,8 +337,8 @@ impl PixState {
     }
 
     /// Draw a [Quadrilateral](Quad) to the current canvas. [`PixState::fill`] and
-    /// [`PixState::stroke`] control whether the quad is filled or outlined. [`RectMode`] has no
-    /// effect.
+    /// [`PixState::stroke`] control whether the quad is filled or outlined.
+    /// [`RectMode`](crate::prelude::RectMode) has no effect.
     ///
     /// # Errors
     ///
@@ -367,7 +367,8 @@ impl PixState {
     }
 
     /// Draw a polygon to the current canvas. [`PixState::fill`] and [`PixState::stroke`] control
-    /// whether the polygon is filled or outlined. [`RectMode`] has no effect.
+    /// whether the polygon is filled or outlined.
+    /// [`RectMode`](crate::prelude::RectMode) has no effect.
     ///
     /// # Errors
     ///
@@ -464,8 +465,9 @@ impl PixState {
     }
 
     /// Draw a circle [Ellipse] to the current canvas. [`PixState::fill`] and [`PixState::stroke`]
-    /// control whether the circle is filled or outlined. [`EllipseMode`] controls how the `(x, y)`
-    /// position is interpreted.
+    /// control whether the circle is filled or outlined.
+    /// [`EllipseMode`](crate::prelude::EllipseMode) controls how the `(x, y)` position is
+    /// interpreted.
     ///
     /// Alias for [`PixState::ellipse`].
     ///
@@ -496,8 +498,9 @@ impl PixState {
     }
 
     /// Draw a [Ellipse] to the current canvas. [`PixState::fill`] and [`PixState::stroke`] control
-    /// whether the ellipse is filled or outlined. [`EllipseMode`] controls how the `(x, y)` position
-    /// is interpreted.
+    /// whether the ellipse is filled or outlined.
+    /// [`EllipseMode`](crate::prelude::EllipseMode) controls how the `(x, y)` position is
+    /// interpreted.
     ///
     /// # Errors
     ///
@@ -528,7 +531,8 @@ impl PixState {
 
     /// Draw an arc of a given `radius` and length defined by `start` and `end` to the current
     /// canvas. [`PixState::fill`] and [`PixState::stroke`] control whether the pie is filled or
-    /// outlined. [`ArcMode`] changes whether the arc is drawn as an open segment or a pie shape.
+    /// outlined. [`ArcMode`](crate::prelude::ArcMode) changes whether the arc is drawn as an open
+    /// segment or a pie shape.
     ///
     /// # Errors
     ///
