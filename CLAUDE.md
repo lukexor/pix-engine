@@ -18,7 +18,7 @@ emulator.
 cargo build --all-targets --features serde   # what CI builds
 cargo clippy                                  # CI runs with RUSTFLAGS="-Dwarnings"
 cargo fmt --all --check
-cargo doc --features serde                    # CI treats rustdoc warnings as errors too
+cargo doc --features serde                    # rustdoc lints only warn, CI sets no RUSTDOCFLAGS
 cargo test --features serde                   # unit + doc tests
 cargo run --example asteroids                 # any file in examples/ (gui, matrix, flocking, ...)
 cargo run --profile dev-opt --example fluid_simulation  # opt-level 1, unoptimized examples crawl
@@ -80,8 +80,11 @@ spread across `src/draw.rs`, `src/texture.rs`, `src/window.rs`, `src/audio.rs`, 
 
 `src/renderer.rs` defines the private `Rendering` trait, along with `TextureRenderer` in
 `src/texture.rs` and `WindowRenderer` in `src/window.rs`. `src/renderer/backend.rs` implements all
-three over `wgpu`. **wasm is unsupported.** `Gpu::new` picks an adapter before any window exists,
-which a browser does not allow, and wasm is not built in CI.
+three over `wgpu`. **wasm is not wired up yet**, and is planned. Two things block it, both in
+`src/renderer/gpu.rs`: `Gpu::new` requests an adapter with `compatible_surface: None` before any
+window exists, which a browser rejects, and it calls `pollster::block_on` twice, which deadlocks
+on the browser main thread. Both want GPU creation deferred to the first window and made async.
+wasm is not built in CI.
 
 Drawing records `epaint` shapes into a `RenderTarget` rather than issuing draw calls, and
 `Rendering::present` tessellates and paints everything recorded since the last frame. A target is
