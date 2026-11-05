@@ -221,6 +221,10 @@ impl ThemeBuilder {
 }
 
 /// Represents a font family name along with the font glyph source.
+///
+/// The name identifies the font. The first `Font` drawn with a given name is loaded, and a later
+/// one with the same name draws from those faces, so give fonts with different faces different
+/// names.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[must_use]
 pub struct Font {
@@ -416,7 +420,7 @@ impl Font {
         &self.source
     }
 
-    /// Returns the hashed identifier for this font family.
+    /// Returns the hashed identifier for this font family, derived from its name alone.
     #[inline]
     #[must_use]
     pub fn id(&self) -> FontId {
