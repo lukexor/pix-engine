@@ -659,16 +659,13 @@ impl WindowRenderer for Renderer {
     }
 
     /// Reconfigures the surface to synchronize with the display, or to stop doing so.
-    ///
-    /// The window is kept, so the returned identifier is the one that was already in use.
-    fn set_vsync(&mut self, val: bool) -> Result<WindowId> {
+    fn set_vsync(&mut self, val: bool) -> Result<()> {
         let id = self.window_target;
         self.settings.vsync = val;
         if let Some(state) = self.windows.get_mut(&id) {
             state.settings.vsync = val;
         }
-        self.configure_surface(id)?;
-        Ok(id)
+        self.configure_surface(id)
     }
 
     fn set_window_target(&mut self, id: WindowId) -> Result<()> {
