@@ -406,9 +406,14 @@ impl Renderer {
                 | wgpu::CurrentSurfaceTexture::Validation => (),
             }
         }
-        // A surface that has gone stale is reconfigured and drawn on the next frame.
+        // A surface that has gone stale is reconfigured and drawn on the next frame. A failure is
+        // logged, not returned, so the `pending_free` drain and the frame counter below still run.
+        // A stalled counter sends every cached image down the same-frame alias path in
+        // `upload_image`.
         for id in stale {
-            self.configure_surface(id)?;
+            if let Err(err) = self.configure_surface(id) {
+                warn!("failed to reconfigure window {id}: {err}");
+            }
         }
 
         // One submit per target. The painter reuses one set of buffers, and a queued write does
