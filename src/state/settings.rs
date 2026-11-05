@@ -642,7 +642,7 @@ impl PixState {
     #[inline]
     pub fn toggle_vsync(&mut self) -> PixResult<WindowId> {
         let vsync_enabled = self.renderer.vsync();
-        self.renderer.set_vsync(vsync_enabled)
+        self.renderer.set_vsync(!vsync_enabled)
     }
 
     /// Set the mouse cursor to a predefined symbol or image. `None` hides the cursor.
