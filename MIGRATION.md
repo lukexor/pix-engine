@@ -235,6 +235,8 @@ the browser main thread.
 exposes no handle to them. `PixState::egui_ctx()` and a `pub use egui` are
 planned.
 
-**HiDPI scaling.** `EngineBuilder::allow_highdpi` has no effect. Window sizes,
-positions and the mouse are physical pixels, so on a 2x display an 800x600
-window opens at half its expected size, with half-size text.
+**Full-resolution HiDPI.** `EngineBuilder::allow_highdpi` has no effect. Window
+sizes, positions and mouse coordinates are logical points, so an 800x600 window
+opens at the same size on any display. On a 2x display the canvas is drawn at
+800x600 and stretched to fill the window, so edges look blockier than the
+display can show.

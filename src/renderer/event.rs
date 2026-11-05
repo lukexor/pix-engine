@@ -6,11 +6,12 @@
 
 use crate::prelude::{Event, Key, KeyMod, Mouse, Point, Scan, WindowEvent};
 use winit::{
+    dpi::{LogicalPosition, LogicalSize},
     event::{ElementState, MouseButton, MouseScrollDelta, WindowEvent as WinitEvent},
     keyboard::{Key as WinitKey, KeyCode, ModifiersState, NamedKey, PhysicalKey},
 };
 
-/// Pixels a wheel notch scrolls, when a device reports pixels rather than lines.
+/// Logical points a wheel notch scrolls, when a device reports pixels rather than lines.
 ///
 /// The engine's wheel events count notches, so a touchpad that reports pixels is divided down to
 /// the same unit.
@@ -21,15 +22,22 @@ const PIXELS_PER_LINE: f32 = 32.0;
 pub(crate) struct Input {
     /// Modifiers held as of the last `ModifiersChanged`.
     keymod: KeyMod,
-    /// Cursor position in window pixels, from the last `CursorMoved`.
+    /// Cursor position in logical points, from the last `CursorMoved`.
     cursor: Point<i32>,
 }
 
 impl Input {
     /// Appends the engine events a `winit` window event produces.
     ///
-    /// A canvas is the size of its window, so a position needs no scaling on the way through.
-    pub(crate) fn translate(&mut self, window_id: u32, event: &WinitEvent, out: &mut Vec<Event>) {
+    /// `winit` reports sizes and positions in physical pixels. They are divided by `scale`, the
+    /// window's scale factor, to match a canvas sized in logical points.
+    pub(crate) fn translate(
+        &mut self,
+        window_id: u32,
+        scale: f64,
+        event: &WinitEvent,
+        out: &mut Vec<Event>,
+    ) {
         match event {
             WinitEvent::CloseRequested | WinitEvent::Destroyed => out.push(Event::Window {
                 window_id,
@@ -44,8 +52,8 @@ impl Input {
                 },
             }),
             WinitEvent::Resized(size) => {
-                #[allow(clippy::cast_possible_wrap)]
-                let (width, height) = (size.width as i32, size.height as i32);
+                let size: LogicalSize<i32> = size.to_logical(scale);
+                let (width, height) = (size.width, size.height);
                 out.push(Event::Window {
                     window_id,
                     win_event: WindowEvent::Resized(width, height),
@@ -55,10 +63,13 @@ impl Input {
                     win_event: WindowEvent::SizeChanged(width, height),
                 });
             }
-            WinitEvent::Moved(position) => out.push(Event::Window {
-                window_id,
-                win_event: WindowEvent::Moved(position.x, position.y),
-            }),
+            WinitEvent::Moved(position) => {
+                let position: LogicalPosition<i32> = position.to_logical(scale);
+                out.push(Event::Window {
+                    window_id,
+                    win_event: WindowEvent::Moved(position.x, position.y),
+                });
+            }
             WinitEvent::Occluded(occluded) => out.push(Event::Window {
                 window_id,
                 win_event: if *occluded {
@@ -122,8 +133,8 @@ impl Input {
                 out.push(Event::TextInput { text: text.clone() });
             }
             WinitEvent::CursorMoved { position, .. } => {
-                #[allow(clippy::cast_possible_truncation)]
-                let pos = Point::new([position.x as i32, position.y as i32]);
+                let position: LogicalPosition<i32> = position.to_logical(scale);
+                let pos = Point::new([position.x, position.y]);
                 let previous = self.cursor;
                 self.cursor = pos;
                 out.push(Event::MouseMotion {
@@ -144,13 +155,9 @@ impl Input {
             WinitEvent::MouseWheel { delta, .. } => {
                 let (x, y) = match delta {
                     MouseScrollDelta::LineDelta(x, y) => (*x, *y),
-                    MouseScrollDelta::PixelDelta(delta) =>
-                    {
-                        #[allow(clippy::cast_possible_truncation)]
-                        (
-                            delta.x as f32 / PIXELS_PER_LINE,
-                            delta.y as f32 / PIXELS_PER_LINE,
-                        )
+                    MouseScrollDelta::PixelDelta(delta) => {
+                        let delta: LogicalPosition<f32> = delta.to_logical(scale);
+                        (delta.x / PIXELS_PER_LINE, delta.y / PIXELS_PER_LINE)
                     }
                 };
                 #[allow(clippy::cast_possible_truncation)]

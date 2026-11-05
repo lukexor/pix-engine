@@ -958,7 +958,10 @@ impl EngineBuilder {
         self
     }
 
-    /// Enables high-DPI on displays that support it.
+    /// Requests drawing at the display's full resolution on a scaled display.
+    ///
+    /// Not yet implemented, so this has no effect. Window sizes and drawing coordinates are
+    /// logical points either way, and a scaled display stretches the canvas to fit.
     pub fn allow_highdpi(&mut self) -> &mut Self {
         self.settings.allow_highdpi = true;
         self

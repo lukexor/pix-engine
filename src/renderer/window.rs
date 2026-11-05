@@ -24,6 +24,7 @@ use egui_wgpu::wgpu;
 use log::warn;
 use std::{fmt::Write, sync::Arc};
 use winit::{
+    dpi::{LogicalPosition, LogicalSize},
     event_loop::ActiveEventLoop,
     window::{CustomCursor, Fullscreen, Window, WindowAttributes},
 };
@@ -178,8 +179,8 @@ impl Renderer {
 
     /// Resizes a window's canvas to match the window, if the two have drifted apart.
     ///
-    /// The canvas is the size of the window, so drawing coordinates are window pixels and the copy
-    /// onto the surface is one to one.
+    /// The canvas is the window's size in logical points, so drawing coordinates are points. On a
+    /// scaled display the copy onto the physical surface stretches it.
     fn resize_window(&mut self, id: WindowId) -> Result<()> {
         let Some(state) = self.windows.get_mut(&id) else {
             return Ok(());
@@ -187,8 +188,7 @@ impl Renderer {
         let Some(window) = &state.window else {
             return Ok(());
         };
-        let size = window.inner_size();
-        let (width, height) = (size.width.max(1), size.height.max(1));
+        let (width, height) = logical_size(window);
         if state.canvas.size() == [width, height] {
             return Ok(());
         }
@@ -222,7 +222,11 @@ impl Renderer {
         }) else {
             return;
         };
-        if matches!(event, winit::event::WindowEvent::Resized(_)) {
+        if matches!(
+            event,
+            winit::event::WindowEvent::Resized(_)
+                | winit::event::WindowEvent::ScaleFactorChanged { .. }
+        ) {
             if let Err(err) = self
                 .configure_surface(id)
                 .and_then(|()| self.resize_window(id))
@@ -230,8 +234,13 @@ impl Renderer {
                 warn!("failed to resize window {id}: {err}");
             }
         }
+        let scale = self
+            .windows
+            .get(&id)
+            .and_then(|state| state.window.as_ref())
+            .map_or(1.0, |window| window.scale_factor());
         let mut events = Vec::new();
-        self.input.translate(id.0, event, &mut events);
+        self.input.translate(id.0, scale, event, &mut events);
         self.events.extend(events);
     }
 
@@ -572,11 +581,11 @@ impl WindowRenderer for Renderer {
     }
 
     fn window_position(&self) -> Result<(i32, i32)> {
-        let position = self
-            .window_state()?
-            .window()?
+        let window = self.window_state()?.window()?;
+        let position: LogicalPosition<i32> = window
             .outer_position()
-            .context("window position is unavailable")?;
+            .context("window position is unavailable")?
+            .to_logical(window.scale_factor());
         Ok((position.x, position.y))
     }
 
@@ -592,7 +601,7 @@ impl WindowRenderer for Renderer {
             self.settings.height = height;
         }
         if let Some(window) = &state.window {
-            let _ignored = window.request_inner_size(winit::dpi::PhysicalSize::new(width, height));
+            let _ignored = window.request_inner_size(LogicalSize::new(width, height));
         }
         state
             .canvas
@@ -632,12 +641,9 @@ impl WindowRenderer for Renderer {
             .current_monitor()
             .or_else(|| window.available_monitors().next());
         Ok(monitor.map_or_else(
-            || {
-                let size = window.inner_size();
-                (size.width, size.height)
-            },
+            || logical_size(window),
             |monitor| {
-                let size = monitor.size();
+                let size: LogicalSize<u32> = monitor.size().to_logical(monitor.scale_factor());
                 (size.width, size.height)
             },
         ))
@@ -724,19 +730,22 @@ impl Renderer {
     }
 }
 
+/// Returns a window's inner size in logical points, at least one in each direction.
+fn logical_size(window: &Window) -> (u32, u32) {
+    let size: LogicalSize<u32> = window.inner_size().to_logical(window.scale_factor());
+    (size.width.max(1), size.height.max(1))
+}
+
 /// Builds the `winit` attributes a window is created from.
 fn attributes(settings: &RendererSettings) -> WindowAttributes {
     let mut attributes = Window::default_attributes()
         .with_title(&settings.title)
-        .with_inner_size(winit::dpi::PhysicalSize::new(
-            settings.width,
-            settings.height,
-        ))
+        .with_inner_size(LogicalSize::new(settings.width, settings.height))
         .with_resizable(settings.resizable)
         .with_decorations(!settings.borderless)
         .with_visible(!settings.hidden);
     if let (Position::Positioned(x), Position::Positioned(y)) = (settings.x, settings.y) {
-        attributes = attributes.with_position(winit::dpi::PhysicalPosition::new(x, y));
+        attributes = attributes.with_position(LogicalPosition::new(x, y));
     }
     if settings.fullscreen {
         attributes = attributes.with_fullscreen(Some(Fullscreen::Borderless(None)));
