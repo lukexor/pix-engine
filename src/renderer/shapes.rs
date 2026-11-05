@@ -331,8 +331,9 @@ pub(crate) fn arc(
 /// Builds a textured quad.
 ///
 /// `src` selects a region of an image `size` pixels across and `dst` places it on the target.
-/// `angle` is in degrees, clockwise about `center`, defaulting to the center of `dst`. A tint
-/// multiplies the sampled color, so `None` draws the image as it is.
+/// `angle` is in degrees, clockwise about `center`, which is relative to the top-left of `dst`
+/// and defaults to its center. A tint multiplies the sampled color, so `None` draws the image as
+/// it is.
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn textured(
     texture: TextureId,
@@ -359,7 +360,7 @@ pub(crate) fn textured(
     }
 
     let quad = rect(dst);
-    let pivot = center.map_or_else(|| quad.center(), pos2);
+    let pivot = center.map_or_else(|| quad.center(), |c| quad.min + pos2(c).to_vec2());
     #[allow(clippy::cast_possible_truncation)]
     let rotation = egui::emath::Rot2::from_angle(angle.to_radians() as f32);
     let color = tint.map_or(Color32::WHITE, color32);
@@ -383,7 +384,8 @@ pub(crate) fn textured(
 
 /// A mirror and rotation applied to a shape's vertices after it is tessellated.
 ///
-/// The shape is mirrored about the center of `bounds`, then rotated about the pivot.
+/// The shape is mirrored about the center of the box it was drawn in, then rotated about the
+/// pivot.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct Placement {
     /// Center of the box the shape is mirrored within.
@@ -686,6 +688,27 @@ mod tests {
             centered.apply(Pos2::new(10.0, 20.0)),
             Pos2::new(50.0, 30.0)
         ));
+    }
+
+    #[test]
+    fn textured_rotates_about_a_center_relative_to_dst() {
+        let dst = PixRect::new(100, 50, 20, 10);
+        let shape = textured(
+            TextureId::default(),
+            (20, 10),
+            PixRect::new(0, 0, 20, 10),
+            dst,
+            90.0,
+            Some(Point::new([0, 0])),
+            None,
+            None,
+        );
+        let Shape::Mesh(mesh) = shape else {
+            panic!("a textured quad is a mesh");
+        };
+        // The pivot is the top-left of `dst`, so that corner stays put.
+        assert!(close(mesh.vertices[0].pos, Pos2::new(100.0, 50.0)));
+        assert!(close(mesh.vertices[1].pos, Pos2::new(100.0, 70.0)));
     }
 
     #[test]
