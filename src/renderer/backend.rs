@@ -51,6 +51,25 @@ pub(super) struct ImageTexture {
     hash: u64,
     /// Frame this texture was last drawn from.
     frame: u64,
+    /// Extra textures for further draws of the same address within one frame, at `size`.
+    spares: Vec<(PaintTextureId, wgpu::Texture)>,
+    /// Number of `spares` drawn from so far in `frame`.
+    spares_used: usize,
+}
+
+impl ImageTexture {
+    /// Records a draw in `frame`, starting the spares over on the first draw of a frame.
+    fn stamp(&mut self, frame: u64) {
+        if self.frame != frame {
+            self.frame = frame;
+            self.spares_used = 0;
+        }
+    }
+
+    /// Returns every painter identifier this entry owns.
+    pub(super) fn ids(&self) -> impl Iterator<Item = PaintTextureId> + '_ {
+        std::iter::once(self.id).chain(self.spares.iter().map(|(id, _)| *id))
+    }
 }
 
 /// A `wgpu` [`Renderer`] implementation.
@@ -180,22 +199,36 @@ impl Renderer {
                 // Stamped here as well as on the write path below. The guard that follows reads
                 // this to tell a second draw of the same address apart from the first, so an
                 // unstamped hit leaves it looking at the frame before and the guard never fires.
-                cached.frame = self.frame;
+                cached.stamp(self.frame);
                 return cached.id;
             }
         }
 
         // An address is only unique among live images, and a draw is painted at the end of the
-        // frame. Two images sharing an address within one frame each need a texture of their own,
-        // and the second is released once the frame it was drawn in has been painted.
-        if self
+        // frame. Two draws of one address within a frame each need a texture of their own. The
+        // entry keeps the extra textures as spares, so a "draw, mutate, draw again" loop reuses
+        // them every frame. A draw at another size gets a texture released after this frame.
+        if let Some(cached) = self
             .images
             .peek(&key)
-            .is_some_and(|cached| cached.frame == self.frame)
+            .filter(|cached| cached.frame == self.frame)
         {
-            let (id, texture) = self.allocate_image(size);
+            if cached.size != size {
+                let (id, texture) = self.allocate_image(size);
+                self.write_image(&texture, img, size);
+                self.pending_free.push(id);
+                return id;
+            }
+            let used = cached.spares_used;
+            let spare = cached.spares.get(used).cloned();
+            let (id, texture) = spare.unwrap_or_else(|| self.allocate_image(size));
+            if let Some(cached) = self.images.peek_mut(&key) {
+                if cached.spares.len() == used {
+                    cached.spares.push((id, texture.clone()));
+                }
+                cached.spares_used = used + 1;
+            }
             self.write_image(&texture, img, size);
-            self.pending_free.push(id);
             return id;
         }
 
@@ -205,7 +238,7 @@ impl Renderer {
             .is_some_and(|cached| cached.size != size)
         {
             if let Some(cached) = self.images.pop(&key) {
-                self.pending_free.push(cached.id);
+                self.pending_free.extend(cached.ids());
             }
         }
         if self.images.peek(&key).is_none() {
@@ -216,9 +249,11 @@ impl Renderer {
                 size,
                 hash,
                 frame: self.frame,
+                spares: Vec::new(),
+                spares_used: 0,
             };
             if let Some((_, evicted)) = self.images.push(key, entry) {
-                self.pending_free.push(evicted.id);
+                self.pending_free.extend(evicted.ids());
             }
         }
 
@@ -226,7 +261,7 @@ impl Renderer {
         let (id, texture) = {
             let cached = self.images.get_mut(&key).expect("image was just cached");
             cached.hash = hash;
-            cached.frame = self.frame;
+            cached.stamp(self.frame);
             (cached.id, cached.texture.clone())
         };
         self.write_image(&texture, img, size);

@@ -193,7 +193,7 @@ impl TextureRenderer for Renderer {
 
     fn clear_texture_cache(&mut self) {
         for (_, cached) in self.images.iter() {
-            self.pending_free.push(cached.id);
+            self.pending_free.extend(cached.ids());
         }
         self.images.clear();
     }
