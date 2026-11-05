@@ -1,6 +1,5 @@
-use once_cell::sync::Lazy;
 use pix_engine::prelude::*;
-use std::time::Duration;
+use std::{sync::LazyLock, time::Duration};
 
 const DEFAULT_WIDTH: u32 = 960;
 const DEFAULT_HEIGHT: u32 = 600;
@@ -9,7 +8,7 @@ const DEFAULT_GLYPH_SPACING: u32 = 12;
 const BG_COLOR: [u8; 4] = [0, 0, 0, 255];
 const FONT_DATA: &[u8] = include_bytes!("gn_koharuiro_sunray.ttf");
 
-static GLYPHS: Lazy<Vec<char>> = Lazy::new(|| {
+static GLYPHS: LazyLock<Vec<char>> = LazyLock::new(|| {
     let mut glyphs = vec![
         '0', '1', '2', '3', '4', '5', '7', '8', '9', 'Z', ' ', ':', '.', '"', '-', '+', '*', ';',
         '|', '_', '╌', '*', '=', 'ç', '<', '>', '¦',

@@ -5,9 +5,11 @@ use num_traits::{
     Float as FloatT, Num as NumT, NumAssignOps, NumAssignRef, NumCast, NumOps, NumRef,
 };
 use rand::{self, distr::uniform::SampleUniform, RngExt};
-use std::ops::{AddAssign, Range};
+use std::{
+    ops::{AddAssign, Range},
+    sync::LazyLock,
+};
 
-use once_cell::sync::Lazy;
 /// Default math constants.
 pub use std::f64::consts::*;
 
@@ -41,7 +43,7 @@ const PERLIN_ZWRAPB: usize = 8;
 const PERLIN_ZWRAP: usize = 1 << PERLIN_ZWRAPB;
 const PERLIN_SIZE: usize = 4095;
 
-static PERLIN: Lazy<Vec<f64>> = Lazy::new(|| {
+static PERLIN: LazyLock<Vec<f64>> = LazyLock::new(|| {
     let mut perlin = Vec::with_capacity(PERLIN_SIZE + 1);
     for _ in 0..=PERLIN_SIZE {
         perlin.push(random(1.0));

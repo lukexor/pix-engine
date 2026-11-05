@@ -2191,7 +2191,6 @@ dependencies = [
  "log",
  "lru",
  "num-traits",
- "once_cell",
  "png",
  "pollster",
  "pretty_env_logger",
