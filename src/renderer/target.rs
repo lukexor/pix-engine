@@ -9,9 +9,9 @@
 
 use crate::{
     prelude::{BlendMode, Color, Point, Rect as PixRect},
-    renderer::{painter::Run, shapes},
+    renderer::{painter::Run, shapes, shapes::Placement},
 };
-use egui::epaint::{ClippedShape, Rect, Shape, Tessellator, TextureId};
+use egui::epaint::{ClippedShape, Mesh, Rect, Shape, Tessellator, TextureId};
 use egui_wgpu::wgpu;
 
 /// A recorded shape and the state it was recorded under.
@@ -22,6 +22,19 @@ struct Recorded {
     smooth: bool,
     /// The shape and the region it is clipped to.
     clipped: ClippedShape,
+    /// Where the tessellated shape is moved to, for a shape `epaint` cannot place itself.
+    placed: Option<Placed>,
+}
+
+/// A placement and the target transform a shape was recorded under, applied after tessellation.
+#[derive(Clone, Copy)]
+struct Placed {
+    /// Mirror and rotation applied first.
+    placement: Placement,
+    /// Target scale applied after the placement.
+    scale: [f32; 2],
+    /// Target translation applied after the placement.
+    offset: Point<i32>,
 }
 
 /// A texture the engine draws into and can sample from.
@@ -195,7 +208,22 @@ impl RenderTarget {
     /// Records a shape to be drawn at the next flush.
     pub(crate) fn record(&mut self, shape: Shape, blend_mode: BlendMode, smooth: bool) {
         self.flush_points();
-        self.push(shape, blend_mode, smooth);
+        self.push(shape, blend_mode, smooth, None);
+    }
+
+    /// Records a shape to be mirrored and rotated once it is tessellated.
+    ///
+    /// The shape is tessellated into a single mesh, so every part of it has to sample the same
+    /// texture. Text does, since every glyph comes from the font atlas.
+    pub(crate) fn record_placed(
+        &mut self,
+        shape: Shape,
+        blend_mode: BlendMode,
+        smooth: bool,
+        placement: Placement,
+    ) {
+        self.flush_points();
+        self.push(shape, blend_mode, smooth, Some(placement));
     }
 
     /// Records a single-pixel point, holding it back so consecutive points share one mesh.
@@ -218,18 +246,30 @@ impl RenderTarget {
         }
         let blend_mode = self.points_blend.take().unwrap_or(BlendMode::None);
         let points = std::mem::take(&mut self.points);
-        self.push(shapes::points(&points), blend_mode, false);
+        self.push(shapes::points(&points), blend_mode, false, None);
     }
 
     /// Adds a shape to the recording, applying the current scale and translation.
-    fn push(&mut self, shape: Shape, blend_mode: BlendMode, smooth: bool) {
+    fn push(
+        &mut self,
+        shape: Shape,
+        blend_mode: BlendMode,
+        smooth: bool,
+        placement: Option<Placement>,
+    ) {
         if matches!(shape, Shape::Noop) {
             return;
         }
         let mut shape = shape;
         // Scale and translation are folded in at record time. `TSTransform` scales both axes
-        // together, and the drawing API allows a different factor per axis.
-        if self.scale != [1.0, 1.0] || self.offset != Point::new([0, 0]) {
+        // together, and the drawing API allows a different factor per axis. A placed shape takes
+        // them after its placement, at flush.
+        let placed = placement.map(|placement| Placed {
+            placement,
+            scale: self.scale,
+            offset: self.offset,
+        });
+        if placed.is_none() && (self.scale != [1.0, 1.0] || self.offset != Point::new([0, 0])) {
             transform(&mut shape, self.scale, self.offset);
         }
         let clip_rect = self.clip.map_or_else(
@@ -246,6 +286,7 @@ impl RenderTarget {
             blend_mode,
             smooth,
             clipped: ClippedShape { clip_rect, shape },
+            placed,
         });
     }
 
@@ -259,7 +300,7 @@ impl RenderTarget {
     /// to be read after the last text was laid out.
     pub(crate) fn flush(&mut self, pixels_per_point: f32, font_tex_size: [usize; 2]) -> Vec<Run> {
         self.flush_points();
-        let tessellate = |shapes: Vec<ClippedShape>, smooth: bool| {
+        let tessellator = |smooth: bool| {
             let options = egui::epaint::TessellationOptions {
                 feathering: smooth,
                 ..egui::epaint::TessellationOptions::default()
@@ -267,7 +308,20 @@ impl RenderTarget {
             // Precomputed discs speed up rounded corners and `epaint` documents an empty list as
             // safe, so it recomputes them instead. `PreparedDisc` cannot be named from here.
             Tessellator::new(pixels_per_point, options, font_tex_size, Vec::new())
-                .tessellate_shapes(shapes)
+        };
+        let tessellate =
+            |shapes: Vec<ClippedShape>, smooth: bool| tessellator(smooth).tessellate_shapes(shapes);
+        let place = |shape: Shape, smooth: bool, placed: Placed| {
+            let mut mesh = Mesh::default();
+            tessellator(smooth).tessellate_shape(shape, &mut mesh);
+            for vertex in &mut mesh.vertices {
+                vertex.pos = placed.placement.apply(vertex.pos);
+            }
+            let mut shape = Shape::mesh(mesh);
+            if placed.scale != [1.0, 1.0] || placed.offset != Point::new([0, 0]) {
+                transform(&mut shape, placed.scale, placed.offset);
+            }
+            shape
         };
 
         let mut runs: Vec<Run> = Vec::new();
@@ -277,9 +331,13 @@ impl RenderTarget {
         for Recorded {
             blend_mode,
             smooth,
-            clipped,
+            mut clipped,
+            placed,
         } in self.recorded.drain(..)
         {
+            if let Some(placed) = placed {
+                clipped.shape = place(clipped.shape, smooth, placed);
+            }
             if current != Some((blend_mode, smooth)) {
                 if let Some((mode, was_smooth)) = current.take() {
                     runs.push(Run {

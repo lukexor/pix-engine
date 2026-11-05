@@ -228,15 +228,15 @@ impl TextRenderer {
         )
     }
 
-    /// Builds the shape that draws `galley` at `pos`.
+    /// Builds the shape that draws `galley` upright at `pos`.
     ///
-    /// `angle` is clockwise radians about `pos`. An `outline` wider than zero rings the text in
-    /// `stroke`, which is how stroked text is drawn.
+    /// An `outline` wider than zero rings the text in `stroke`, which is how stroked text is
+    /// drawn. Rotated or flipped text is placed after tessellation, with
+    /// [`RenderTarget::record_placed`](super::target::RenderTarget::record_placed).
     pub(crate) fn shape(
         &self,
         pos: Point<i32>,
         galley: &Arc<Galley>,
-        angle: f32,
         fill: Color,
         outline: u16,
         stroke: Color,
@@ -245,16 +245,14 @@ impl TextRenderer {
         let bold = self.bold_offset();
         let text = |at: egui::Pos2, color: Color32| {
             Shape::Text(TextShape {
-                angle,
                 override_text_color: Some(color),
                 ..TextShape::new(at, Arc::clone(galley), color)
             })
         };
-        // A bold is the same galley drawn again alongside itself, so every stem widens. The step
-        // turns with `angle`, or it would run along the stems of rotated text instead of across
-        // them. The halo below repeats the pair, or the outline would ring the regular weight.
-        // Where the copies overlap a translucent fill composites twice and comes out denser.
-        let step = egui::Vec2::angled(angle) * bold;
+        // A bold is the same galley drawn again alongside itself, so every stem widens. The halo
+        // below repeats the pair, or the outline would ring the regular weight. Where the copies
+        // overlap a translucent fill composites twice and comes out denser.
+        let step = egui::Vec2::new(bold, 0.0);
         let copies = |at: egui::Pos2, color: Color32, out: &mut Vec<Shape>| {
             out.push(text(at, color));
             if bold > 0.0 {

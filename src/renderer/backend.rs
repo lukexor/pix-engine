@@ -14,7 +14,7 @@ use crate::{
         event::Input,
         gpu::{Blit, Gpu, TARGET_FORMAT},
         painter::Painter,
-        shapes,
+        shapes::{self, Placement},
         target::RenderTarget,
         text::TextRenderer,
         window::WindowState,
@@ -452,8 +452,8 @@ impl Rendering for Renderer {
         text: &str,
         wrap_width: Option<u32>,
         angle: Option<f64>,
-        _center: Option<Point<i32>>,
-        _flipped: Option<Flipped>,
+        center: Option<Point<i32>>,
+        flipped: Option<Flipped>,
         fill: Option<Color>,
         outline: u16,
     ) -> Result<(u32, u32)> {
@@ -467,12 +467,19 @@ impl Rendering for Renderer {
         // An outline draws the halo in the fill color and the glyphs on top in the same color,
         // matching how the drawing API asks for stroked text: one pass per color.
         let galley = self.text.layout(text, wrap_width, fill);
-        #[allow(clippy::cast_possible_truncation)]
-        let angle = angle.unwrap_or(0.0).to_radians() as f32;
-        let shape = self
-            .text
-            .shape(position, &galley, angle, fill, outline, fill);
-        self.record(shape, true)?;
+        let shape = self.text.shape(position, &galley, fill, outline, fill);
+        #[allow(clippy::cast_precision_loss)]
+        let bounds = egui::Rect::from_min_size(
+            shapes::pos2(position),
+            egui::Vec2::new(size.0 as f32, size.1 as f32),
+        );
+        match Placement::new(bounds, angle.unwrap_or(0.0), center, flipped) {
+            Some(placement) => {
+                self.target_mut()?
+                    .record_placed(shape, BlendMode::Blend, true, placement);
+            }
+            None => self.record(shape, true)?,
+        }
         Ok(size)
     }
 

@@ -381,6 +381,62 @@ pub(crate) fn textured(
     Shape::mesh(mesh)
 }
 
+/// A mirror and rotation applied to a shape's vertices after it is tessellated.
+///
+/// The shape is mirrored about the center of `bounds`, then rotated about the pivot.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub(crate) struct Placement {
+    /// Center of the box the shape is mirrored within.
+    middle: Pos2,
+    /// Point the mirrored shape is rotated about.
+    pivot: Pos2,
+    /// Clockwise rotation about `pivot`.
+    rotation: egui::emath::Rot2,
+    /// Whether the shape is mirrored left to right.
+    horizontal: bool,
+    /// Whether the shape is mirrored top to bottom.
+    vertical: bool,
+}
+
+impl Placement {
+    /// Places a shape drawn upright inside `bounds`, or returns `None` when nothing moves.
+    ///
+    /// `angle` is in degrees, clockwise about `center`, which is relative to the top-left of
+    /// `bounds` and defaults to its center.
+    pub(crate) fn new(
+        bounds: Rect,
+        angle: f64,
+        center: Option<Point<i32>>,
+        flipped: Option<Flipped>,
+    ) -> Option<Self> {
+        let horizontal = matches!(flipped, Some(Flipped::Horizontal | Flipped::Both));
+        let vertical = matches!(flipped, Some(Flipped::Vertical | Flipped::Both));
+        if angle == 0.0 && !horizontal && !vertical {
+            return None;
+        }
+        #[allow(clippy::cast_possible_truncation)]
+        let rotation = egui::emath::Rot2::from_angle(angle.to_radians() as f32);
+        Some(Self {
+            middle: bounds.center(),
+            pivot: center.map_or_else(|| bounds.center(), |c| bounds.min + pos2(c).to_vec2()),
+            rotation,
+            horizontal,
+            vertical,
+        })
+    }
+
+    /// Returns where `pos` lands once placed.
+    pub(crate) fn apply(&self, mut pos: Pos2) -> Pos2 {
+        if self.horizontal {
+            pos.x = 2.0 * self.middle.x - pos.x;
+        }
+        if self.vertical {
+            pos.y = 2.0 * self.middle.y - pos.y;
+        }
+        self.pivot + self.rotation * (pos - self.pivot)
+    }
+}
+
 /// Builds an outline as one stroked segment per edge.
 ///
 /// `epaint` joins the segments of a path with a miter, whose length grows without bound as the
@@ -588,6 +644,48 @@ mod tests {
             Pos2::new(4.0, 10.0),
             Pos2::new(0.0, 10.0),
         ]
+    }
+
+    fn close(a: Pos2, b: Pos2) -> bool {
+        (a - b).length() < 1e-4
+    }
+
+    #[test]
+    fn placement_mirrors_within_its_bounds() {
+        let bounds = Rect::from_min_size(Pos2::new(10.0, 20.0), Vec2::new(40.0, 10.0));
+        let Some(both) = Placement::new(bounds, 0.0, None, Some(Flipped::Both)) else {
+            panic!("a flip moves the shape");
+        };
+        assert!(close(
+            both.apply(Pos2::new(10.0, 20.0)),
+            Pos2::new(50.0, 30.0)
+        ));
+        assert!(Placement::new(bounds, 0.0, None, Some(Flipped::None)).is_none());
+    }
+
+    #[test]
+    fn placement_rotates_about_a_center_relative_to_its_bounds() {
+        let bounds = Rect::from_min_size(Pos2::new(10.0, 20.0), Vec2::new(40.0, 10.0));
+        let Some(turned) = Placement::new(bounds, 90.0, Some(Point::new([0, 0])), None) else {
+            panic!("a rotation moves the shape");
+        };
+        // The top-left corner is the pivot, and the top-right swings clockwise below it.
+        assert!(close(
+            turned.apply(Pos2::new(10.0, 20.0)),
+            Pos2::new(10.0, 20.0)
+        ));
+        assert!(close(
+            turned.apply(Pos2::new(50.0, 20.0)),
+            Pos2::new(10.0, 60.0)
+        ));
+
+        let Some(centered) = Placement::new(bounds, 180.0, None, None) else {
+            panic!("a rotation moves the shape");
+        };
+        assert!(close(
+            centered.apply(Pos2::new(10.0, 20.0)),
+            Pos2::new(50.0, 30.0)
+        ));
     }
 
     #[test]
