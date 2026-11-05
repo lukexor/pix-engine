@@ -50,7 +50,5 @@ jobs:
         shell: bash
         run: |
           cargo build --all-targets --features "serde" --verbose
-          # TODO: Enable when WASM development begins
-          # bin/build_wasm.sh --dev
       - run: cargo doc --features "serde" --verbose
       - run: cargo test --features "serde" --verbose
