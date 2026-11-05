@@ -187,9 +187,8 @@ features = ["serde"]
 - **serde** - Adds [serde][] `Serialize`/`Deserialize` implementations for all
   enums/structs.
 
-- **backtrace** - Enables the `backtrace` feature for [anyhow][], which allows
-  printing backtraces based on environment variables outlined in
-  [std::backtrace][]. Useful for debugging.
+Errors capture a backtrace through [anyhow][] when the environment variables
+described in [std::backtrace][] are set, with no feature needed.
 
 ### PixState
 

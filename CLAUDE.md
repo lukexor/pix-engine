@@ -117,7 +117,8 @@ unless `same_line` is called.
 
 ### Features
 
-`serde` derives across all public types, plus `backtrace` and `debug_ui`. CI builds and tests with
+`serde` derives across all public types. `debug_ui` outlines each widget's bounds and cursor
+position. Errors capture a backtrace through `anyhow` with no feature. CI builds and tests with
 `serde` on, so `#[cfg_attr(feature = "serde", ...)]` attributes need to stay consistent when adding
 public types.
 
