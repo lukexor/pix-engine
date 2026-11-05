@@ -31,6 +31,10 @@ sudo pacman -S alsa-lib systemd-libs              # Arch
 
 macOS and Windows need nothing. See the README for the full per-OS list.
 
+The crate builds as an `rlib` only. It no longer produces a `cdylib`, so code
+that loaded `libpix_engine` as a shared library needs to depend on the crate
+instead.
+
 ## Minimum Supported Rust Version
 
 The MSRV is now **1.92.0**, up from 1.67. `egui` 0.35 sets the floor.

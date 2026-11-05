@@ -27,9 +27,6 @@ targets = [
   "x86_64-pc-windows-msvc",
 ]
 
-[lib]
-crate-type = ["cdylib", "rlib"]
-
 [dependencies]
 # The hasher `egui` uses. The renderer keys maps on small integers and looks one up per draw
 # call, where SipHash is most of the lookup.
