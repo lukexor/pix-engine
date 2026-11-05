@@ -174,14 +174,10 @@ fn main() -> PixResult<()> {
 
 ### Crate Feature Flags
 
-The following features can be added to your `Cargo.toml` depending on your
-needs. e.g.:
+The following features can be enabled depending on your needs, e.g.:
 
-```toml
-[dependencies.pix-engine]
-version = "0.6.0"
-default-features = false
-features = ["serde"]
+```sh
+cargo add pix-engine --features serde
 ```
 
 - **serde** - Adds [serde][] `Serialize`/`Deserialize` implementations for all

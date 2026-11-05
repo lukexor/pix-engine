@@ -171,10 +171,12 @@ renderer's to give back.
 
 `2d_raycasting` and `asteroids` regress on p99, from about 1 ms to about 10.5 ms. Both are the
 examples that set no `target_frame_rate`, and both now run above 1500 frames a second. The
-likely mechanism is swapchain back-pressure: `desired_maximum_frame_latency` is 2, so a frame
-that outruns the presentation engine blocks in `Surface::get_current_texture`, and the protocol
-samples after present. That is a wait rather than work, but it has not been confirmed. Nothing
-else regressed.
+spikes are a wait in `Surface::get_current_texture`, which the protocol samples because it
+samples after present. With `2d_raycasting` under Immediate or Mailbox, 80 to 104 acquires per
+run blocked for 10.x ms and none for any other duration. Under Fifo every acquire waited for
+the 144 Hz vblank instead, and `desired_maximum_frame_latency` at 1, 2 or 3 did not change the
+p99. The constant 10 ms points at a timeout in the driver or compositor when an application
+outruns the display. Which one has not been traced. Nothing else regressed.
 
 Peak RSS rises about 45 MB across the board, which is the wgpu device and its driver. Within a
 run the first invocation reports 35 to 50 MB more than the two that follow it, on every example,
