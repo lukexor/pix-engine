@@ -12,11 +12,7 @@
 //! Also implemented are [`Add`], [`Sub`], [`AddAssign`], and [`SubAssign`] with other `Color`s and u8
 //! values channel-wise. [`Deref`] is also implemented which returns `[u8; 4]`.
 
-use super::{
-    conversion::{calculate_channels, clamp_levels, convert_levels, to_channel},
-    Color,
-    Mode::Rgb,
-};
+use super::{conversion::to_channel, Color};
 use std::{
     fmt::{self, LowerHex, UpperHex},
     hash::{Hash, Hasher},
@@ -61,26 +57,16 @@ impl Hash for Color {
 impl Add for Color {
     type Output = Self;
     fn add(self, other: Color) -> Self::Output {
-        if self.mode == other.mode {
-            let [r, g, b, a] = self.channels();
-            let [or, og, ob, _] = other.channels();
-            Self {
-                mode: self.mode,
-                channels: [
-                    r.saturating_add(or),
-                    g.saturating_add(og),
-                    b.saturating_add(ob),
-                    a,
-                ],
-            }
-        } else {
-            let [v1, v2, v3, a] = self.levels();
-            let [ov1, ov2, ov3, _] = convert_levels(other.levels(), other.mode, self.mode);
-            let levels = clamp_levels([v1 + ov1, v2 + ov2, v3 + ov3, a]);
-            Self {
-                mode: self.mode,
-                channels: calculate_channels(levels),
-            }
+        let [r, g, b, a] = self.channels();
+        let [or, og, ob, _] = other.channels();
+        Self {
+            mode: self.mode,
+            channels: [
+                r.saturating_add(or),
+                g.saturating_add(og),
+                b.saturating_add(ob),
+                a,
+            ],
         }
     }
 }
@@ -99,15 +85,8 @@ impl Add<u8> for Color {
 
 impl AddAssign for Color {
     fn add_assign(&mut self, other: Color) {
-        if self.mode == other.mode {
-            for (i, v) in self.channels.iter_mut().enumerate().take(3) {
-                *v = v.saturating_add(other[i]);
-            }
-        } else {
-            let [v1, v2, v3, a] = self.levels();
-            let [ov1, ov2, ov3, _] = convert_levels(other.levels(), other.mode, self.mode);
-            let levels = clamp_levels([v1 + ov1, v2 + ov2, v3 + ov3, a]);
-            self.update_channels(levels, self.mode);
+        for (i, v) in self.channels.iter_mut().enumerate().take(3) {
+            *v = v.saturating_add(other[i]);
         }
     }
 }
@@ -123,26 +102,16 @@ impl AddAssign<u8> for Color {
 impl Sub for Color {
     type Output = Self;
     fn sub(self, other: Color) -> Self::Output {
-        if self.mode == other.mode {
-            let [r, g, b, a] = self.channels();
-            let [or, og, ob, _] = other.channels();
-            Self {
-                mode: self.mode,
-                channels: [
-                    r.saturating_sub(or),
-                    g.saturating_sub(og),
-                    b.saturating_sub(ob),
-                    a,
-                ],
-            }
-        } else {
-            let [v1, v2, v3, a] = self.levels();
-            let [ov1, ov2, ov3, _] = convert_levels(other.levels(), other.mode, self.mode);
-            let levels = clamp_levels([v1 - ov1, v2 - ov2, v3 - ov3, a]);
-            Self {
-                mode: self.mode,
-                channels: calculate_channels(levels),
-            }
+        let [r, g, b, a] = self.channels();
+        let [or, og, ob, _] = other.channels();
+        Self {
+            mode: self.mode,
+            channels: [
+                r.saturating_sub(or),
+                g.saturating_sub(og),
+                b.saturating_sub(ob),
+                a,
+            ],
         }
     }
 }
@@ -162,15 +131,8 @@ impl Sub<u8> for Color {
 
 impl SubAssign for Color {
     fn sub_assign(&mut self, other: Color) {
-        if self.mode == other.mode {
-            for (i, v) in self.channels.iter_mut().enumerate().take(3) {
-                *v = v.saturating_sub(other[i]);
-            }
-        } else {
-            let [v1, v2, v3, a] = self.levels();
-            let [ov1, ov2, ov3, _] = convert_levels(other.levels(), other.mode, self.mode);
-            let levels = clamp_levels([v1 - ov1, v2 - ov2, v3 - ov3, a]);
-            self.update_channels(levels, self.mode);
+        for (i, v) in self.channels.iter_mut().enumerate().take(3) {
+            *v = v.saturating_sub(other[i]);
         }
     }
 }
@@ -191,43 +153,25 @@ impl Deref for Color {
     }
 }
 
-/// Applies `f` to each color level, leaving alpha alone, and returns the resulting channels.
+/// Applies `f` to the red, green and blue levels, leaving alpha alone, and returns the channels.
+///
+/// The color mode is ignored. Under [`Hsb`](super::Mode::Hsb) this scales brightness and keeps
+/// hue and saturation, until a channel saturates.
 #[inline]
 fn scaled(color: &Color, f: impl Fn(f64) -> f64) -> [u8; 4] {
-    // `Color::levels` divides every channel by its maximum and converts the result into the
-    // current mode, and `calculate_channels` reverses both. Under `Rgb` the conversion is the
-    // identity and the normalizing clamp cannot fire, so the channels are scaled where they are
-    // and alpha is copied. This runs once per channel per pixel in `3d_raytracing`, where the
-    // round trip measured a tenth of a frame.
-    if color.mode == Rgb {
-        let [r, g, b, a] = color.channels;
-        let [r, g, b] = scaled_channels([r, g, b], f);
-        [r, g, b, a]
-    } else {
-        let [v1, v2, v3, a] = color.levels();
-        calculate_channels(clamp_levels([f(v1), f(v2), f(v3), a]))
-    }
+    let [r, g, b, a] = color.channels;
+    let [r, g, b] = scaled_channels([r, g, b], f);
+    [r, g, b, a]
 }
 
-/// Applies `f` to each color level in place, leaving alpha alone.
+/// Applies `f` to the red, green and blue levels in place, leaving alpha alone.
 #[inline]
 fn scale_in_place(color: &mut Color, f: impl Fn(f64) -> f64) {
-    // The assigning operators convert the scaled levels back out of the current mode where
-    // `scaled` does not, so the two agree only under `Rgb`.
-    if color.mode == Rgb {
-        let [r, g, b, _] = color.channels;
-        let [r, g, b] = scaled_channels([r, g, b], f);
-        color.channels[0] = r;
-        color.channels[1] = g;
-        color.channels[2] = b;
-    } else {
-        let [v1, v2, v3, a] = color.levels();
-        let levels = clamp_levels([f(v1), f(v2), f(v3), a]);
-        color.update_channels(levels, color.mode);
-    }
+    let [r, g, b, a] = scaled(color, f);
+    color.channels = [r, g, b, a];
 }
 
-/// Normalizes three [`Rgb`] bytes, applies `f`, and converts them back.
+/// Normalizes three [`Rgb`](super::Mode::Rgb) bytes, applies `f`, and converts them back.
 #[inline]
 fn scaled_channels(channels: [u8; 3], f: impl Fn(f64) -> f64) -> [u8; 3] {
     // The operation order matches `clamp_levels` followed by `calculate_channels`, so these are
@@ -482,6 +426,41 @@ mod tests {
                 assert_eq!(assigned.channels(), (c / s).channels(), "{byte} /= {s}");
             }
         }
+    }
+
+    #[test]
+    fn arithmetic_ignores_the_color_mode() {
+        let other = color!(30, 40, 50);
+        for c in [Color::hsb(200.0, 60.0, 50.0), Color::hsl(200.0, 60.0, 50.0)] {
+            let [r, g, b, a] = c.channels();
+            let rgb = color!(r, g, b, a);
+            assert_eq!((c + other).channels(), (rgb + other).channels(), "+");
+            assert_eq!((c - other).channels(), (rgb - other).channels(), "-");
+            for s in SCALARS {
+                assert_eq!((c * s).channels(), (rgb * s).channels(), "* {s}");
+                assert_eq!((c / s).channels(), (rgb / s).channels(), "/ {s}");
+
+                let mut assigned = c;
+                assigned *= s;
+                assert_eq!(assigned.channels(), (c * s).channels(), "*= {s}");
+            }
+        }
+    }
+
+    #[test]
+    fn scaling_an_hsb_color_keeps_its_hue_and_saturation() {
+        let c = Color::hsb(200.0, 60.0, 80.0);
+        let [hue, saturation, _, _] = c.levels();
+        let [scaled_hue, scaled_saturation, _, _] = (c * 0.5f64).levels();
+        // Each channel rounds to a whole byte, which moves hue and saturation slightly.
+        assert!(
+            (hue - scaled_hue).abs() < 0.01,
+            "hue {hue} became {scaled_hue}"
+        );
+        assert!(
+            (saturation - scaled_saturation).abs() < 0.01,
+            "saturation {saturation} became {scaled_saturation}"
+        );
     }
 
     #[test]

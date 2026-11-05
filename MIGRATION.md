@@ -181,6 +181,18 @@ Both fix cases where 0.8 drew the wrong thing: styled text drawn from the
 regular texture, and an image drawn with another image's pixels. Workarounds
 for either can be removed.
 
+### Color arithmetic ignores the color mode
+
+`+`, `-`, `*` and `/` and their assigning forms work on the red, green and blue
+channels, whatever mode a color was created in. Alpha is unchanged.
+
+In 0.8, `*` and `/` on an Hsb or Hsl color stored hue, saturation and
+brightness as red, green and blue, so halving white gave blue. `*=` and `/=`
+scaled the hue along with the other levels, and `+` or `-` between colors in
+different modes added levels in the first color's mode. Multiplying an Hsb color
+now scales its brightness and keeps its hue and saturation. Rgb colors give the
+same results as before.
+
 ## What has not changed
 
 - **`Engine::run`.** It is still `run(&mut self, app: &mut A)`.
