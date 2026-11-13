@@ -30,11 +30,14 @@ impl Input {
     /// Appends the engine events a `winit` window event produces.
     ///
     /// `winit` reports sizes and positions in physical pixels. They are divided by `scale`, the
-    /// window's scale factor, to match a canvas sized in logical points.
+    /// window's scale factor, to match a canvas sized in logical points. The cursor position is
+    /// further divided by `draw_scale`, the canvas's drawing scale, to put it in drawing
+    /// coordinates.
     pub(crate) fn translate(
         &mut self,
         window_id: u32,
         scale: f64,
+        draw_scale: [f32; 2],
         event: &WinitEvent,
         out: &mut Vec<Event>,
     ) {
@@ -133,8 +136,12 @@ impl Input {
                 out.push(Event::TextInput { text: text.clone() });
             }
             WinitEvent::CursorMoved { position, .. } => {
-                let position: LogicalPosition<i32> = position.to_logical(scale);
-                let pos = Point::new([position.x, position.y]);
+                let position: LogicalPosition<f64> = position.to_logical(scale);
+                #[allow(clippy::cast_possible_truncation)]
+                let pos = Point::new([
+                    (position.x / f64::from(draw_scale[0])).floor() as i32,
+                    (position.y / f64::from(draw_scale[1])).floor() as i32,
+                ]);
                 let previous = self.cursor;
                 self.cursor = pos;
                 out.push(Event::MouseMotion {

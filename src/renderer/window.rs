@@ -68,12 +68,13 @@ impl Renderer {
     /// Allocates a canvas for a window that does not exist yet.
     pub(super) fn open_canvas(&mut self, id: WindowId, settings: RendererSettings) {
         let paint_id = self.next_paint_id();
-        let canvas = RenderTarget::new(
+        let mut canvas = RenderTarget::new(
             &self.gpu.device,
             paint_id,
             [settings.width, settings.height],
             TARGET_FORMAT,
         );
+        canvas.set_scale(settings.scale_x, settings.scale_y);
         self.painter.register_texture(
             &self.gpu.device,
             paint_id,
@@ -234,13 +235,14 @@ impl Renderer {
                 warn!("failed to resize window {id}: {err}");
             }
         }
-        let scale = self
-            .windows
-            .get(&id)
+        let state = self.windows.get(&id);
+        let scale = state
             .and_then(|state| state.window.as_ref())
             .map_or(1.0, |window| window.scale_factor());
+        let draw_scale = state.map_or([1.0, 1.0], |state| state.canvas.scale());
         let mut events = Vec::new();
-        self.input.translate(id.0, scale, event, &mut events);
+        self.input
+            .translate(id.0, scale, draw_scale, event, &mut events);
         self.events.extend(events);
     }
 

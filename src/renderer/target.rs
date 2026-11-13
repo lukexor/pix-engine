@@ -199,6 +199,11 @@ impl RenderTarget {
         self.scale = [x, y];
     }
 
+    /// Returns the scale applied to drawing.
+    pub(crate) const fn scale(&self) -> [f32; 2] {
+        self.scale
+    }
+
     /// Translates subsequent drawing.
     pub(crate) fn set_offset(&mut self, offset: Point<i32>) {
         self.flush_points();
@@ -280,7 +285,15 @@ impl RenderTarget {
                     egui::Vec2::new(self.size[0] as f32, self.size[1] as f32),
                 )
             },
-            shapes::rect,
+            |clip| {
+                // The clip is in drawing coordinates, so it scales with what it confines.
+                let clip = shapes::rect(clip);
+                let [sx, sy] = self.scale;
+                Rect::from_min_max(
+                    egui::Pos2::new(clip.min.x * sx, clip.min.y * sy),
+                    egui::Pos2::new(clip.max.x * sx, clip.max.y * sy),
+                )
+            },
         );
         self.recorded.push(Recorded {
             blend_mode,
@@ -392,7 +405,8 @@ fn linear(channel: u8) -> f64 {
 /// Applies a per-axis scale and a translation to a shape.
 fn transform(shape: &mut Shape, scale: [f32; 2], offset: Point<i32>) {
     #[allow(clippy::cast_precision_loss)]
-    let offset = egui::Vec2::new(offset.x() as f32, offset.y() as f32);
+    // The offset is in drawing coordinates, like the clip it moves the origin to.
+    let offset = egui::Vec2::new(offset.x() as f32 * scale[0], offset.y() as f32 * scale[1]);
     // A uniform scale goes through `TSTransform`. A different factor per axis does not fit
     // that, so the shape is walked and its positions scaled directly.
     if (scale[0] - scale[1]).abs() < f32::EPSILON {
