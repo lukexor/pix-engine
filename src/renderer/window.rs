@@ -662,7 +662,7 @@ impl WindowRenderer for Renderer {
         };
         state.settings.fullscreen = val;
         if let Some(window) = &state.window {
-            window.set_fullscreen(val.then(|| Fullscreen::Borderless(None)));
+            window.set_fullscreen(val.then_some(Fullscreen::Borderless(None)));
         }
         Ok(())
     }
