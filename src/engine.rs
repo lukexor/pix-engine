@@ -54,13 +54,9 @@
 //! }
 //! ```
 
-use crate::{image::Icon, prelude::*, renderer::RendererSettings};
-use log::{debug, error, info};
-use std::{
-    num::NonZeroUsize,
-    thread,
-    time::{Duration, Instant},
-};
+use crate::{image::Icon, prelude::*, renderer::RendererSettings, time::Instant};
+use log::debug;
+use std::{num::NonZeroUsize, time::Duration};
 
 /// Trait for allowing the [`Engine`] to drive your application and send notification of events,
 /// passing along a [`&mut PixState`](PixState) to allow interacting with the [`Engine`].
@@ -104,11 +100,11 @@ pub trait PixEngine {
     /// Called after [`PixEngine::on_start`], every frame based on the [target frame rate].
     ///
     /// By default, this is called as often as possible but can be controlled by changing the
-    /// [target frame rate]. It will continue to be executed until the application is terminated,
-    /// or [`PixState::run(false)`] is called.
+    /// [target frame rate]. It runs until the application terminates, or [`PixState::run`] is
+    /// called with `false`.
     ///
-    /// After [`PixState::run(false)`] is called, you can call [`PixState::redraw`] or
-    /// [`PixState::run_times`] to control the execution.
+    /// After that, you can call [`PixState::redraw`] or [`PixState::run_times`] to control the
+    /// execution.
     ///
     /// [target frame rate]: PixState::frame_rate
     ///
@@ -419,9 +415,10 @@ pub trait PixEngine {
     ///                 Ok(true)
     ///             }
     ///             Axis::LeftY => {
-    ///                 if value > 0 {
+    ///                 // A stick pushed up reports a negative value.
+    ///                 if value < 0 {
     ///                     self.move_up();
-    ///                 } else if value < 0 {
+    ///                 } else if value > 0 {
     ///                     self.move_down();
     ///                 }
     ///                 Ok(true)
@@ -911,20 +908,20 @@ impl EngineBuilder {
     }
 
     /// Set audio sample rate in Hz (samples per second). Defaults to device fallback sample rate.
-    pub fn audio_sample_rate(&mut self, sample_rate: i32) -> &mut Self {
+    pub fn audio_sample_rate(&mut self, sample_rate: u32) -> &mut Self {
         self.settings.audio_sample_rate = Some(sample_rate);
         self
     }
 
     /// Set number of audio channels (1 for Mono, 2 for Stereo, etc). Defaults to device fallback
     /// number of channels.
-    pub fn audio_channels(&mut self, channels: u8) -> &mut Self {
+    pub fn audio_channels(&mut self, channels: u16) -> &mut Self {
         self.settings.audio_channels = Some(channels);
         self
     }
 
     /// Set audio buffer size in samples. Defaults to device fallback sample size.
-    pub fn audio_buffer_size(&mut self, buffer_size: u16) -> &mut Self {
+    pub fn audio_buffer_size(&mut self, buffer_size: u32) -> &mut Self {
         self.settings.audio_buffer_size = Some(buffer_size);
         self
     }
@@ -961,7 +958,10 @@ impl EngineBuilder {
         self
     }
 
-    /// Enables high-DPI on displays that support it.
+    /// Requests drawing at the display's full resolution on a scaled display.
+    ///
+    /// Not yet implemented, so this has no effect. Window sizes and drawing coordinates are
+    /// logical points either way, and a scaled display stretches the canvas to fit.
     pub fn allow_highdpi(&mut self) -> &mut Self {
         self.settings.allow_highdpi = true;
         self
@@ -1021,8 +1021,10 @@ impl EngineBuilder {
 #[must_use]
 #[derive(Debug)]
 pub struct Engine {
-    state: PixState,
-    joystick_deadzone: i32,
+    /// Engine state threaded through every [`PixEngine`] callback.
+    pub(crate) state: PixState,
+    /// Range around center a controller axis reports as rest.
+    pub(crate) joystick_deadzone: i32,
 }
 
 impl Engine {
@@ -1061,81 +1063,14 @@ impl Engine {
     where
         A: PixEngine,
     {
-        info!("Starting `Engine`...");
-
-        // Handle events before on_start to initialize window
-        self.handle_events(app)?;
-
-        debug!("Starting with `PixEngine::on_start`");
-        self.state.clear()?;
-        let on_start = app.on_start(&mut self.state);
-        if on_start.is_err() || self.state.should_quit() {
-            debug!("Quitting during startup with `PixEngine::on_stop`");
-            if let Err(ref err) = on_start {
-                error!("Error: {}", err);
-            }
-            return app.on_stop(&mut self.state).and(on_start);
-        }
-        self.state.present();
-
-        // on_stop loop enables on_stop to prevent application close if necessary
-        'on_stop: loop {
-            debug!("Starting `PixEngine::on_update` loop.");
-            // running loop continues until an event or on_update returns false or errors
-            let result = 'running: loop {
-                let start_time = Instant::now();
-                let time_since_last = start_time - self.state.last_frame_time();
-
-                // Errors from event hooks take the same path as errors from `on_update`, so
-                // `on_stop` still runs and can release resources. Propagating with `?` here
-                // would leave the loop without it.
-                if let Err(err) = self.handle_events(app) {
-                    self.state.quit();
-                    break 'running Err(err);
-                }
-                if self.state.should_quit() {
-                    break 'running Ok(());
-                }
-
-                if self.state.is_running() {
-                    self.state.pre_update();
-                    let on_update = app.on_update(&mut self.state);
-                    if on_update.is_err() {
-                        self.state.quit();
-                        break 'running on_update;
-                    }
-                    self.state.on_update()?;
-                    self.state.post_update();
-                    self.state.present();
-                    self.state.set_delta_time(start_time, time_since_last);
-                    self.state.increment_frame(time_since_last)?;
-                }
-
-                if !self.state.vsync_enabled() {
-                    if let Some(target_delta_time) = self.state.target_delta_time() {
-                        let time_to_next_frame = start_time + target_delta_time;
-                        let now = Instant::now();
-                        if time_to_next_frame > now {
-                            thread::sleep(time_to_next_frame - now);
-                        }
-                    }
-                }
-            };
-
-            debug!("Quitting with `PixEngine::on_stop`");
-            let on_stop = app.on_stop(&mut self.state);
-            if self.state.should_quit() {
-                info!("Quitting `Engine`...");
-                break 'on_stop on_stop.and(result);
-            }
-        }
+        crate::app::run(self, app)
     }
 }
 
 impl Engine {
     /// Handle user and system events.
     #[inline]
-    fn handle_events<A>(&mut self, app: &mut A) -> PixResult<()>
+    pub(crate) fn handle_events<A>(&mut self, app: &mut A) -> PixResult<()>
     where
         A: PixEngine,
     {

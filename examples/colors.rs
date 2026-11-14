@@ -43,7 +43,7 @@ impl Colors {
 
 impl PixEngine for Colors {
     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
-        if self.auto && s.frame_count() % 4 == 0 {
+        if self.auto && s.frame_count().is_multiple_of(4) {
             self.modify_hue(1.0, true);
         }
         self.draw_gradient(s)?;

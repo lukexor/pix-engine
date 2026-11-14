@@ -282,7 +282,13 @@ impl App {
         for r in 3..10 {
             let r = r as f64;
             for (sin, cos) in self.sincos.iter() {
-                let idx = get_idx((mx + r * cos) as usize, (my + r * sin) as usize);
+                let y = (my + r * sin) as usize;
+                // Rows from NHEIGHT down are never stepped, so density written there never clears
+                // and the bottom row keeps reading it.
+                if y >= NHEIGHT {
+                    continue;
+                }
+                let idx = get_idx((mx + r * cos) as usize, y);
                 self.fluid.add_density(idx, random!(2.0, 5.0));
             }
         }

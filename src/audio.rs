@@ -77,13 +77,13 @@
 //! impl PixEngine for MyApp {
 //!     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!         let desired_spec = AudioSpecDesired {
-//!             freq: Some(44_100), // 44,100 HZ
-//!             channels: Some(1),  // mono audio
-//!             samples: None,      // default sample size
+//!             sample_rate: Some(44_100), // 44,100 HZ
+//!             channels: Some(1),         // mono audio
+//!             buffer_size: None,         // device default
 //!         };
 //!         let mut device = s.open_playback(None, &desired_spec, |spec| {
 //!             SquareWave {
-//!                 phase_inc: 440.0 / spec.freq as f32,
+//!                 phase_inc: 440.0 / spec.sample_rate as f32,
 //!                 phase: 0.0,
 //!                 volume: 0.25,
 //!             }
@@ -145,9 +145,9 @@
 //! impl PixEngine for MyApp {
 //!     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
 //!         let desired_spec = AudioSpecDesired {
-//!             freq: None,     // default device frequency
-//!             channels: None, // default device channels
-//!             samples: None,  // default sample size
+//!             sample_rate: None, // device default
+//!             channels: None,    // device default
+//!             buffer_size: None, // device default
 //!         };
 //!
 //!         let (tx, rx) = mpsc::channel();
@@ -155,7 +155,7 @@
 //!             Recording {
 //!                 record_buffer: vec![
 //!                     0.0;
-//!                     spec.freq as usize
+//!                     spec.sample_rate as usize
 //!                         * RECORDING_LENGTH_SECONDS
 //!                         * spec.channels as usize
 //!                 ],
@@ -186,11 +186,67 @@ use crate::prelude::*;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-#[cfg(not(target_arch = "wasm32"))]
-pub use crate::renderer::sdl::{AudioDevice, AudioFormatNum};
+pub(crate) mod backend;
 
-#[cfg(target_arch = "wasm32")]
-pub use crate::renderer::wasm::{AudioDevice, AudioFormatNum};
+pub use backend::AudioDevice;
+
+use backend::Direction;
+
+/// Restricts [`AudioFormatNum`] to the sample types the engine converts.
+mod sealed {
+    /// Marks a type as an engine-provided sample format.
+    pub trait Sealed {}
+}
+
+/// Sample types an [`AudioCallback`] can work in.
+///
+/// Sealed, because every implementation has to agree with the conversions the backend performs.
+/// Implemented for `i8`, `u8`, `i16`, `u16`, `i32`, `u32`, `f32` and `f64`.
+pub trait AudioFormatNum: sealed::Sealed + Copy + Send + 'static {
+    /// The [`AudioFormat`] naming this sample type.
+    const FORMAT: AudioFormat;
+
+    /// Converts this sample to `f32`, the type the backend converts through.
+    fn to_f32(self) -> f32;
+
+    /// Converts an `f32` sample to this type.
+    fn from_f32(sample: f32) -> Self;
+}
+
+/// Implements [`AudioFormatNum`] by deferring the conversion to `cpal`, which scales between
+/// integer and float ranges rather than casting.
+macro_rules! impl_audio_format_num {
+    ($($ty:ty => $format:ident),+ $(,)?) => {
+        $(
+            impl sealed::Sealed for $ty {}
+
+            impl AudioFormatNum for $ty {
+                const FORMAT: AudioFormat = AudioFormat::$format;
+
+                #[inline]
+                fn to_f32(self) -> f32 {
+                    cpal::Sample::to_sample::<f32>(self)
+                }
+
+                #[inline]
+                fn from_f32(sample: f32) -> Self {
+                    cpal::Sample::from_sample(sample)
+                }
+            }
+        )+
+    };
+}
+
+impl_audio_format_num! {
+    i8 => I8,
+    u8 => U8,
+    i16 => I16,
+    u16 => U16,
+    i32 => I32,
+    u32 => U32,
+    f32 => F32,
+    f64 => F64,
+}
 
 /// Trait for allowing [`Engine`] to request audio samples from your application.
 ///
@@ -239,84 +295,50 @@ where
     fn callback(&mut self, buffer: &mut [Self::Channel]);
 }
 
-/// Audio number and endianness format for the given audio device.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+/// Sample format an audio device reads or writes.
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[non_exhaustive]
 #[must_use]
 pub enum AudioFormat {
-    /// Unsigned 8-bit samples
+    /// Signed 8-bit samples.
+    I8,
+    /// Unsigned 8-bit samples.
     U8,
-    /// Signed 8-bit samples
-    S8,
-    /// Unsigned 16-bit samples, little-endian
-    U16LSB,
-    /// Unsigned 16-bit samples, big-endian
-    U16MSB,
-    /// Signed 16-bit samples, little-endian
-    S16LSB,
-    /// Signed 16-bit samples, big-endian
-    S16MSB,
-    /// Signed 32-bit samples, little-endian
-    S32LSB,
-    /// Signed 32-bit samples, big-endian
-    S32MSB,
-    /// 32-bit floating point samples, little-endian
-    F32LSB,
-    /// 32-bit floating point samples, big-endian
-    F32MSB,
+    /// Signed 16-bit samples.
+    I16,
+    /// Unsigned 16-bit samples.
+    U16,
+    /// Signed 32-bit samples.
+    I32,
+    /// Unsigned 32-bit samples.
+    U32,
+    /// Signed 64-bit samples.
+    I64,
+    /// Unsigned 64-bit samples.
+    U64,
+    /// 32-bit floating point samples.
+    #[default]
+    F32,
+    /// 64-bit floating point samples.
+    F64,
 }
 
-#[cfg(target_endian = "little")]
-impl AudioFormat {
-    /// Unsigned 16-bit samples, native endian
-    #[inline]
-    pub const fn u16_sys() -> AudioFormat {
-        AudioFormat::U16LSB
-    }
-    /// Signed 16-bit samples, native endian
-    #[inline]
-    pub const fn s16_sys() -> AudioFormat {
-        AudioFormat::S16LSB
-    }
-    /// Signed 32-bit samples, native endian
-    #[inline]
-    pub const fn s32_sys() -> AudioFormat {
-        AudioFormat::S32LSB
-    }
-    /// 32-bit floating point samples, native endian
-    #[inline]
-    pub const fn f32_sys() -> AudioFormat {
-        AudioFormat::F32LSB
-    }
-}
-
-#[cfg(target_endian = "big")]
-impl AudioFormat {
-    /// Unsigned 16-bit samples, native endian
-    #[inline]
-    pub const fn u16_sys() -> AudioFormat {
-        AudioFormat::U16MSB
-    }
-    /// Signed 16-bit samples, native endian
-    #[inline]
-    pub const fn s16_sys() -> AudioFormat {
-        AudioFormat::S16MSB
-    }
-    /// Signed 32-bit samples, native endian
-    #[inline]
-    pub const fn s32_sys() -> AudioFormat {
-        AudioFormat::S32MSB
-    }
-    /// 32-bit floating point samples, native endian
-    #[inline]
-    pub const fn f32_sys() -> AudioFormat {
-        AudioFormat::F32MSB
-    }
-}
-
-impl Default for AudioFormat {
-    fn default() -> Self {
-        Self::f32_sys()
+#[doc(hidden)]
+impl From<cpal::SampleFormat> for AudioFormat {
+    fn from(format: cpal::SampleFormat) -> Self {
+        match format {
+            cpal::SampleFormat::I8 => Self::I8,
+            cpal::SampleFormat::U8 => Self::U8,
+            cpal::SampleFormat::I16 => Self::I16,
+            cpal::SampleFormat::U16 => Self::U16,
+            cpal::SampleFormat::I32 => Self::I32,
+            cpal::SampleFormat::U32 => Self::U32,
+            cpal::SampleFormat::I64 => Self::I64,
+            cpal::SampleFormat::U64 => Self::U64,
+            cpal::SampleFormat::F64 => Self::F64,
+            _ => Self::F32,
+        }
     }
 }
 
@@ -334,44 +356,43 @@ pub enum AudioStatus {
     Paused,
 }
 
-/// Desired audio device specification.
+/// Audio device configuration to request when opening a device.
+///
+/// `None` accepts whatever the device offers.
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[must_use]
 pub struct AudioSpecDesired {
-    /// DSP frequency (samples per second) in Hz. Set to None for the device’s fallback frequency.
-    pub freq: Option<i32>,
-    /// Number of separate sound channels. Set to None for the device’s fallback number of channels.
-    pub channels: Option<u8>,
-    /// The audio buffer size in samples (power of 2). Set to None for the device’s fallback sample size.
-    pub samples: Option<u16>,
+    /// Samples per second per channel, in Hz.
+    pub sample_rate: Option<u32>,
+    /// Number of channels. 1 for mono, 2 for stereo.
+    pub channels: Option<u16>,
+    /// Buffer size in frames. Smaller buffers lower latency and raise the risk of an underrun.
+    pub buffer_size: Option<u32>,
 }
 
-/// Audio device specification.
+/// Audio device configuration an opened device is running with.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[must_use]
 pub struct AudioSpec {
-    /// DSP frequency (samples per second) in Hz.
-    pub freq: i32,
-    /// `AudioFormat` for the generic sample type.
+    /// Samples per second per channel, in Hz.
+    pub sample_rate: u32,
+    /// Sample format the device reads or writes.
     pub format: AudioFormat,
-    /// Number of separate sound channels.
-    pub channels: u8,
-    /// The audio buffer size in samples (power of 2).
-    pub samples: u16,
-    /// The audio buffer size in bytes.
-    pub size: u32,
+    /// Number of channels. 1 for mono, 2 for stereo.
+    pub channels: u16,
+    /// Buffer size in frames.
+    pub buffer_size: u32,
 }
 
 impl Default for AudioSpec {
     fn default() -> Self {
         Self {
-            freq: 44_100,
+            sample_rate: 44_100,
             format: AudioFormat::default(),
             channels: 1,
-            samples: 512,
-            size: 2048,
+            buffer_size: 512,
         }
     }
 }
@@ -392,6 +413,33 @@ pub trait AudioDeviceDriver {
 
     /// Pause playback of this audio callback device.
     fn pause(&self);
+}
+
+impl<CB: AudioCallback> AudioDeviceDriver for AudioDevice<CB> {
+    #[inline]
+    fn status(&self) -> AudioStatus {
+        Self::status(self)
+    }
+
+    #[inline]
+    fn driver(&self) -> &'static str {
+        Self::driver(self)
+    }
+
+    #[inline]
+    fn spec(&self) -> AudioSpec {
+        Self::spec(self)
+    }
+
+    #[inline]
+    fn resume(&self) {
+        Self::resume(self);
+    }
+
+    #[inline]
+    fn pause(&self) {
+        Self::pause(self);
+    }
 }
 
 impl PixState {
@@ -427,13 +475,13 @@ impl PixState {
     /// ```
     #[inline]
     pub fn enqueue_audio<S: AsRef<[f32]>>(&mut self, samples: S) -> PixResult<()> {
-        self.renderer.enqueue_audio(samples.as_ref())
+        self.audio.enqueue(samples.as_ref())
     }
 
     /// Clear audio samples from the current audio buffer queue.
     #[inline]
     pub fn clear_audio(&mut self) {
-        self.renderer.clear_audio();
+        self.audio.clear();
     }
 
     /// Return the status of the current audio queue device.
@@ -460,35 +508,38 @@ impl PixState {
     /// ```
     #[inline]
     pub fn audio_status(&self) -> AudioStatus {
-        self.renderer.audio_status()
+        self.audio.status()
     }
 
     /// Return the current driver of this audio callback device.
     #[inline]
     #[must_use]
     pub fn audio_driver(&self) -> &'static str {
-        self.renderer.audio_driver()
+        self.audio.driver()
     }
 
     /// Returns the sample rate for the current audio queue device.
     #[inline]
     #[must_use]
-    pub fn audio_sample_rate(&self) -> i32 {
-        self.renderer.audio_sample_rate()
+    pub fn audio_sample_rate(&self) -> u32 {
+        self.audio.spec().sample_rate
     }
 
-    /// Returns the queued buffer size of the current audio queue device.
+    /// Returns how many samples are waiting to play in the audio queue.
     #[inline]
     #[must_use]
-    pub fn audio_queued_size(&self) -> u32 {
-        self.renderer.audio_queued_size()
+    pub fn audio_queued_samples(&self) -> usize {
+        self.audio.queued_samples()
     }
 
-    /// Returns the buffer size of the current audio queue device.
+    /// Returns the audio device buffer size in samples, across all channels.
+    ///
+    /// This is how much the device asks for at a time. Comparing it against
+    /// [`PixState::audio_queued_samples`] is how an application paces its own output.
     #[inline]
     #[must_use]
-    pub fn audio_size(&self) -> u32 {
-        self.renderer.audio_size()
+    pub fn audio_buffer_size(&self) -> usize {
+        self.audio.buffer_samples()
     }
 
     /// Resumes playback of the current audio queue device.
@@ -513,7 +564,7 @@ impl PixState {
     /// ```
     #[inline]
     pub fn resume_audio(&mut self) {
-        self.renderer.resume_audio();
+        self.audio.resume();
     }
 
     /// Pause playback of the current audio queue device.
@@ -538,13 +589,13 @@ impl PixState {
     /// ```
     #[inline]
     pub fn pause_audio(&mut self) {
-        self.renderer.pause_audio();
+        self.audio.pause();
     }
 
     /// Opens and returns an audio callback device for playback.
     ///
-    /// The audio device starts out `paused`. Call [resume](`AudioDevice::resume`) to start
-    /// playback and [pause](`AudioDevice::pause`) to stop playback.
+    /// The audio device starts out `paused`. Call [resume](`AudioDeviceDriver::resume`) to start
+    /// playback and [pause](`AudioDeviceDriver::pause`) to stop playback.
     ///
     /// # Errors
     ///
@@ -583,13 +634,13 @@ impl PixState {
     /// impl PixEngine for MyApp {
     ///     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///         let desired_spec = AudioSpecDesired {
-    ///             freq: Some(44_100), // 44,100 HZ
-    ///             channels: Some(1),  // mono audio
-    ///             samples: None,      // default sample size
+    ///             sample_rate: Some(44_100), // 44,100 HZ
+    ///             channels: Some(1),         // mono audio
+    ///             buffer_size: None,         // device default
     ///         };
     ///         let mut device = s.open_playback(None, &desired_spec, |spec| {
     ///             SquareWave {
-    ///                 phase_inc: 440.0 / spec.freq as f32,
+    ///                 phase_inc: 440.0 / spec.sample_rate as f32,
     ///                 phase: 0.0,
     ///                 volume: 0.25,
     ///             }
@@ -616,18 +667,17 @@ impl PixState {
         get_callback: F,
     ) -> PixResult<AudioDevice<CB>>
     where
-        CB: AudioCallback,
+        CB: AudioCallback + 'static,
         F: FnOnce(AudioSpec) -> CB,
         D: Into<Option<&'a str>>,
     {
-        self.renderer
-            .open_playback(device, desired_spec, get_callback)
+        backend::open_device(device.into(), desired_spec, Direction::Output, get_callback)
     }
 
     /// Opens and returns an audio capture device for recording.
     ///
-    /// The audio device starts out `paused`. Call [resume](`AudioDevice::resume`) to start
-    /// recording and [pause](`AudioDevice::pause`) to stop recording.
+    /// The audio device starts out `paused`. Call [resume](`AudioDeviceDriver::resume`) to start
+    /// recording and [pause](`AudioDeviceDriver::pause`) to stop recording.
     ///
     /// # Errors
     ///
@@ -674,9 +724,9 @@ impl PixState {
     /// impl PixEngine for MyApp {
     ///     fn on_update(&mut self, s: &mut PixState) -> PixResult<()> {
     ///         let desired_spec = AudioSpecDesired {
-    ///             freq: None,     // default device frequency
-    ///             channels: None, // default device channels
-    ///             samples: None,  // default sample size
+    ///             sample_rate: None, // device default
+    ///             channels: None,    // device default
+    ///             buffer_size: None, // device default
     ///         };
     ///
     ///         let (tx, rx) = mpsc::channel();
@@ -684,7 +734,7 @@ impl PixState {
     ///             Recording {
     ///                 record_buffer: vec![
     ///                     0.0;
-    ///                     spec.freq as usize
+    ///                     spec.sample_rate as usize
     ///                         * RECORDING_LENGTH_SECONDS
     ///                         * spec.channels as usize
     ///                 ],
@@ -717,67 +767,10 @@ impl PixState {
         get_callback: F,
     ) -> PixResult<AudioDevice<CB>>
     where
-        CB: AudioCallback,
+        CB: AudioCallback + 'static,
         F: FnOnce(AudioSpec) -> CB,
         D: Into<Option<&'a str>>,
     {
-        self.renderer
-            .open_capture(device, desired_spec, get_callback)
+        backend::open_device(device.into(), desired_spec, Direction::Input, get_callback)
     }
-}
-
-/// Trait representing audio support.
-pub(crate) trait AudioDriver {
-    /// Add audio samples to the current audio buffer queue.
-    fn enqueue_audio(&mut self, samples: &[f32]) -> PixResult<()>;
-
-    /// Clear audio samples from the current audio buffer queue.
-    fn clear_audio(&mut self);
-
-    /// Return the status of the current audio queue device.
-    fn audio_status(&self) -> AudioStatus;
-
-    /// Return the driver of current audio queue device.
-    fn audio_driver(&self) -> &'static str;
-
-    /// Return the sample rate of the current audio queue device.
-    fn audio_sample_rate(&self) -> i32;
-
-    /// Returns the queued buffer size (in bytes) of the current audio queue device.
-    fn audio_queued_size(&self) -> u32;
-
-    /// Returns the buffer size (in bytes) of the current audio queue device.
-    fn audio_size(&self) -> u32;
-
-    /// Resume playback of the current audio queue device.
-    fn resume_audio(&mut self);
-
-    /// Pause playback of the current audio queue device.
-    fn pause_audio(&mut self);
-
-    /// Opens and returns an audio callback device for playback.
-    #[allow(single_use_lifetimes)]
-    fn open_playback<'a, CB, F, D>(
-        &self,
-        device: D,
-        desired_spec: &AudioSpecDesired,
-        get_callback: F,
-    ) -> PixResult<AudioDevice<CB>>
-    where
-        CB: AudioCallback,
-        F: FnOnce(AudioSpec) -> CB,
-        D: Into<Option<&'a str>>;
-
-    /// Opens and returns an audio capture device for recording.
-    #[allow(single_use_lifetimes)]
-    fn open_capture<'a, CB, F, D>(
-        &self,
-        device: D,
-        desired_spec: &AudioSpecDesired,
-        get_callback: F,
-    ) -> PixResult<AudioDevice<CB>>
-    where
-        CB: AudioCallback,
-        F: FnOnce(AudioSpec) -> CB,
-        D: Into<Option<&'a str>>;
 }

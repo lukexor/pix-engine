@@ -8,6 +8,8 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
+pub(crate) mod controller;
+
 /// System or User `Event`.
 #[non_exhaustive]
 #[derive(Default, Debug, Clone, PartialEq)]

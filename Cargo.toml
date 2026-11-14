@@ -15,13 +15,9 @@ license = "MIT OR Apache-2.0"
 name = "pix-engine"
 repository = "https://github.com/lukexor/pix-engine.git"
 resolver = "2"
-rust-version = "1.70.0"
+rust-version = "1.92.0"
 version = "0.8.0"
 exclude = ["/images", "/audio", "/pkg"]
-build = "build.rs"
-
-[package.metadata]
-msrv = "1.67.0"
 
 [package.metadata.docs.rs]
 features = ["serde"]
@@ -31,21 +27,30 @@ targets = [
   "x86_64-pc-windows-msvc",
 ]
 
-[lib]
-crate-type = ["cdylib", "rlib"]
-
 [dependencies]
+# The hasher `egui` uses. The renderer keys maps on small integers and looks one up per draw
+# call, where SipHash is most of the lookup.
+ahash = "0.8"
 anyhow = "1.0"
 bitflags = "2.6"
 time = { version = "0.3", features = ["local-offset"] }
 log = "0.4"
 lru = "0.16"
 num-traits = "0.2"
-once_cell = "1.17"
 png = "0.18"
 rand = "0.10"
 serde = { version = "1.0", features = ["derive"], optional = true }
 thiserror = "2.0"
+cpal = "0.18.2"
+gilrs = "0.11.2"
+egui = "0.35"
+egui-wgpu = "0.35"
+egui-winit = "0.35"
+winit = "0.30"
+bytemuck = "1.25.2"
+pollster = "1.0.1"
+web-time = "1.1.0"
+webbrowser = "1.2.4"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 # https://docs.rs/getrandom/latest/getrandom/#webassembly-support
@@ -55,22 +60,16 @@ getrandom = { version = "0.4", features = ["wasm_js"] }
 rayon = "1.10"
 pretty_env_logger = "0.5"
 
+# A `winit` event loop has to be built on the main thread, and the test harness runs every test on
+# one it spawned.
+[[test]]
+name = "pix-engine"
+harness = false
+
 [features]
 default = []
-opengl = []
-# TODO: `backtrace` feature can be removed when `Backtrace` lands in stable https://github.com/rust-lang/rust/issues/53487
-backtrace = ["anyhow/backtrace"]
 debug_ui = []
 serde = ["dep:serde", "bitflags/serde"]
-
-[target."cfg(not(target_arch = \"wasm32\"))".dependencies]
-sdl2 = { version = "0.38", default-features = false, features = [
-  "gfx",
-  "image",
-  "mixer",
-  "ttf",
-  "unsafe_textures",
-] }
 
 # Reasonable performance for development
 [profile.dev-opt]

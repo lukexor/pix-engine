@@ -570,14 +570,6 @@ impl PixState {
 
     /// Set the window to synchronize frame rate to the screens refresh rate ([`VSync`]).
     ///
-    /// # Note
-    ///
-    /// Due to the current limitation with changing `VSync` at runtime, this method creates a new
-    /// window using the properties of the current window and returns the new `WindowId`.
-    ///
-    /// If you are storing and interacting with this window using the `WindowId`, make sure to
-    /// use the newly returned `WindowId`.
-    ///
     /// [`VSync`]: https://en.wikipedia.org/wiki/Screen_tearing#Vertical_synchronization
     ///
     /// # Errors
@@ -602,19 +594,11 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn vsync(&mut self, val: bool) -> PixResult<WindowId> {
+    pub fn vsync(&mut self, val: bool) -> PixResult<()> {
         self.renderer.set_vsync(val)
     }
 
     /// Toggle synchronizing frame rate to the screens refresh rate ([`VSync`]).
-    ///
-    /// # Note
-    ///
-    /// Due to the current limitation with changing `VSync` at runtime, this method creates a new
-    /// window using the properties of the current window and returns the new `WindowId`.
-    ///
-    /// If you are storing and interacting with this window using the `WindowId`, make sure to
-    /// use the newly returned `WindowId`.
     ///
     /// [`VSync`]: https://en.wikipedia.org/wiki/Screen_tearing#Vertical_synchronization
     ///
@@ -640,9 +624,9 @@ impl PixState {
     /// # }
     /// ```
     #[inline]
-    pub fn toggle_vsync(&mut self) -> PixResult<WindowId> {
+    pub fn toggle_vsync(&mut self) -> PixResult<()> {
         let vsync_enabled = self.renderer.vsync();
-        self.renderer.set_vsync(vsync_enabled)
+        self.renderer.set_vsync(!vsync_enabled)
     }
 
     /// Set the mouse cursor to a predefined symbol or image. `None` hides the cursor.

@@ -15,11 +15,6 @@ with (import <nixpkgs> {
       targets = ["wasm32-unknown-unknown"];
     }))
     udev
-    SDL2
-    SDL2_ttf
-    SDL2_gfx
-    SDL2_mixer
-    SDL2_image
   ];
 
   LD_LIBRARY_PATH = "${with pkgs; lib.makeLibraryPath [

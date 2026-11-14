@@ -82,13 +82,6 @@ impl PixState {
     /// the target `dst`. Passing `None` for `src` renders the entire texture. Passing `None` for
     /// `dst` renders to the maximum size of the render target.
     ///
-    /// # Note
-    ///
-    /// It's possible to render one texture onto another texture, but currently they both have to
-    /// have been created in the same window. Attempting to render to a texture created with
-    /// another window will result in a [`Error::InvalidTexture`]. This restriction may be
-    /// lifted in the future.
-    ///
     /// # Errors
     ///
     /// Returns an error for any of the following:
@@ -117,8 +110,6 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    ///
-    /// [`Error::InvalidTexture`]: crate::error::Error::InvalidTexture
     pub fn texture<R1, R2>(&mut self, texture_id: TextureId, src: R1, dst: R2) -> PixResult<()>
     where
         R1: Into<Option<Rect<i32>>>,
@@ -134,13 +125,6 @@ impl PixState {
     /// `None` for `src` renders the entire texture. Passing `None` for `dst` renders to the
     /// maximum size of the render target. [`PixState::image_tint`] can optionally add a tint color
     /// to the rendered texture.
-    ///
-    /// # Note
-    ///
-    /// It's possible to render one texture onto another texture, but currently they both have to
-    /// have been created in the same window. Attempting to render to a texture created with
-    /// another window will result in a [`Error::InvalidTexture`]. This restriction may be
-    /// lifted in the future.
     ///
     /// # Errors
     ///
@@ -179,8 +163,6 @@ impl PixState {
     /// }
     /// # }
     /// ```
-    ///
-    /// [`Error::InvalidTexture`]: crate::error::Error::InvalidTexture
     pub fn texture_transformed<R1, R2, C, F>(
         &mut self,
         texture_id: TextureId,
@@ -212,27 +194,18 @@ impl PixState {
     }
 
     /// Constructs a `Texture` to render to. Passing `None` for [`PixelFormat`] will use
-    /// [`PixelFormat::default`]. The texture will be created and tied to the current window
-    /// target. To create a texture for a window other than the primary window, call
-    /// [`PixState::set_window_target`].
+    /// [`PixelFormat::default`]. The texture is allocated from the graphics device and belongs to
+    /// no window.
     ///
     /// # Errors
     ///
-    /// If the current window target is closed or invalid, or the texture dimensions are invalid,
-    /// then an error is returned.
+    /// If the texture dimensions are invalid, then an error is returned.
     ///
     /// # Note
     ///
-    /// Textures are automatically dropped when the window they were created in is closed due to an
-    /// implicit lifetime that the texture can not outlive the window it was created for. Calling
-    /// this method will create a texture for the current `window_target`, which can only be
-    /// changed using the [`PixState::set_window_target`] method. It is the responsibility of the
-    /// caller to manage created textures and call [`PixState::delete_texture`] when a texture
-    /// resource is no longer needed and to ensure that texture methods are not called for a given
-    /// window after it has been closed, otherwise an error will be returned.
-    ///
-    /// This constraint arises due to lifetime issues with SDL textures, See
-    /// <https://github.com/Rust-SDL2/rust-sdl2/issues/1107> for more details.
+    /// A texture lives until [`PixState::delete_texture`] is called for it, so a caller that
+    /// creates textures is responsible for deleting the ones it no longer needs. Closing a window
+    /// frees that window's canvas and leaves every texture in place.
     ///
     /// # Example
     ///
@@ -262,17 +235,12 @@ impl PixState {
     ///
     /// # Errors
     ///
-    /// If the current window target is closed or invalid, or the texture has already been dropped,
-    /// then an error is returned.
+    /// If the texture has already been deleted, then an error is returned.
     ///
     /// # Note
     ///
-    /// Currently, it is up to the caller to manage valid textures. Textures become invalid
-    /// whenever the `window_target` they were created in has been closed. Calling any texture
-    /// methods with an invalid `TextureId` will result in an error.
-    ///
-    /// This constraint arises due to lifetime issues with SDL textures, See
-    /// <https://github.com/Rust-SDL2/rust-sdl2/issues/1107> for more details.
+    /// It is up to the caller to track which textures are still live. Any texture method called
+    /// with a deleted [`TextureId`] returns an error.
     ///
     /// # Example
     ///
@@ -299,8 +267,8 @@ impl PixState {
     /// padding between lines.
     /// # Errors
     ///
-    /// If the window in which the texture was created is closed, or the renderer fails
-    /// to update to the texture, then an error is returned.
+    /// If the texture has been deleted, or the renderer fails to update it, then an error is
+    /// returned.
     ///
     /// # Example
     ///

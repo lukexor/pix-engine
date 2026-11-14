@@ -69,7 +69,7 @@ impl CaptureReplayDemo {
             Recording {
                 record_buffer: vec![
                     0.0;
-                    spec.freq as usize
+                    spec.sample_rate as usize
                         * RECORDING_LENGTH_SECONDS
                         * spec.channels as usize
                 ],
@@ -108,9 +108,9 @@ impl PixEngine for CaptureReplayDemo {
             s.present();
 
             let desired_spec = AudioSpecDesired {
-                freq: None,     // default device frequency
-                channels: None, // default device channels
-                samples: None,  // default sample size
+                sample_rate: None, // device default
+                channels: None,    // device default
+                buffer_size: None, // device default
             };
 
             let recorded_samples = self.record(&desired_spec, s)?;

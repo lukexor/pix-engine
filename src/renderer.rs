@@ -1,19 +1,20 @@
 //! Graphics renderer functions.
 
-use crate::{error::Result, image::Icon, prelude::*};
+use crate::{audio::AudioSpecDesired, error::Result, image::Icon, prelude::*};
 use std::num::NonZeroUsize;
 
-pub(crate) use crate::{texture::TextureRenderer, window::WindowRenderer};
+pub(crate) use crate::window::WindowRenderer;
 
-#[cfg(not(target_arch = "wasm32"))]
-pub mod sdl;
-#[cfg(not(target_arch = "wasm32"))]
-pub(crate) use sdl::Renderer;
-
-#[cfg(target_arch = "wasm32")]
-pub mod wasm;
-#[cfg(target_arch = "wasm32")]
-pub(crate) use wasm::Renderer;
+pub(crate) mod backend;
+pub(crate) mod event;
+pub(crate) mod gpu;
+pub(crate) mod painter;
+pub(crate) mod shapes;
+pub(crate) mod target;
+pub(crate) mod text;
+pub(crate) mod texture;
+pub(crate) mod window;
+pub(crate) use backend::Renderer;
 
 const TEXTURE_CACHE_SIZE: usize = 256;
 const TEXT_CACHE_SIZE: usize = 512;
@@ -38,11 +39,11 @@ pub(crate) struct RendererSettings {
     /// Rendering scale for y-coordinates.
     pub(crate) scale_y: f32,
     /// Audio queue sample rate. `None` uses device default.
-    pub(crate) audio_sample_rate: Option<i32>,
+    pub(crate) audio_sample_rate: Option<u32>,
     /// Audio queue channel count. 1 for mono, 2 for stereo, etc. `None` uses device default.
-    pub(crate) audio_channels: Option<u8>,
+    pub(crate) audio_channels: Option<u16>,
     /// Audio queue buffer size. `None` uses devide default.
-    pub(crate) audio_buffer_size: Option<u16>,
+    pub(crate) audio_buffer_size: Option<u32>,
     /// Window fullscreen mode.
     pub(crate) fullscreen: bool,
     /// Sync [`Engine::on_update`] rate with monitor refresh rate.
@@ -63,6 +64,17 @@ pub(crate) struct RendererSettings {
     pub(crate) texture_cache_size: NonZeroUsize,
     /// Size of allowed font cache before least-used entries are evicted.
     pub(crate) text_cache_size: NonZeroUsize,
+}
+
+impl RendererSettings {
+    /// Returns the audio configuration to request when opening the output device.
+    pub(crate) const fn audio_spec(&self) -> AudioSpecDesired {
+        AudioSpecDesired {
+            sample_rate: self.audio_sample_rate,
+            channels: self.audio_channels,
+            buffer_size: self.audio_buffer_size,
+        }
+    }
 }
 
 impl Default for RendererSettings {
@@ -241,10 +253,4 @@ pub(crate) trait Rendering: Sized {
 
     /// Return the current rendered target pixels as an array of bytes.
     fn to_bytes(&mut self) -> Result<Vec<u8>>;
-
-    /// Connect a controller with the given joystick index to start receiving events.
-    fn open_controller(&mut self, controller_id: ControllerId) -> Result<()>;
-
-    /// Disconnect a controller with the given joystick index to stop receiving events.
-    fn close_controller(&mut self, controller_id: ControllerId);
 }

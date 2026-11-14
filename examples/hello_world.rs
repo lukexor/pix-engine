@@ -5,7 +5,7 @@ struct HelloWorld;
 impl PixEngine for HelloWorld {
     // Set up any state or resources before starting main event loop.
     fn on_start(&mut self, s: &mut PixState) -> PixResult<()> {
-        s.background(220);
+        s.background(20);
         Ok(())
     }
 

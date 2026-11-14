@@ -447,11 +447,24 @@ pub(crate) fn calculate_channels(levels: [f64; 4]) -> [u8; 4] {
     let [r, g, b, a] = levels;
     let [r_max, g_max, b_max, a_max] = maxes(Rgb);
     [
-        (r * r_max).round().clamp(0.0, 255.0) as u8,
-        (g * g_max).round().clamp(0.0, 255.0) as u8,
-        (b * b_max).round().clamp(0.0, 255.0) as u8,
-        (a * a_max).round().clamp(0.0, 255.0) as u8,
+        to_channel(r, r_max),
+        to_channel(g, g_max),
+        to_channel(b, b_max),
+        to_channel(a, a_max),
     ]
+}
+
+/// Converts one level to a channel byte, rounding to nearest.
+#[inline]
+pub(crate) fn to_channel(level: f64, max: f64) -> u8 {
+    // Adding a half and letting the cast truncate rounds without calling `f64::round`, which is a
+    // libm call on a target without SSE4.1. This runs once per channel per color operation, and
+    // dropping the call halves the time a color scale takes. The clamp follows the add, so a
+    // negative level still lands on 0.
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    {
+        (level * max + 0.5).clamp(0.0, 255.0) as u8
+    }
 }
 
 impl Color {
