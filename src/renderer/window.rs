@@ -596,14 +596,23 @@ impl WindowRenderer for Renderer {
         let Some(state) = self.windows.get_mut(&id) else {
             return Err(Error::InvalidWindow(id).into());
         };
+        if let Some(window) = &state.window {
+            // The window manager may refuse or delay the request. The canvas follows the size the
+            // window actually takes, now if it was applied at once, or on the resize event.
+            if window
+                .request_inner_size(LogicalSize::new(width, height))
+                .is_some()
+            {
+                self.configure_surface(id)?;
+                self.resize_window(id)?;
+            }
+            return Ok(());
+        }
         state.settings.width = width;
         state.settings.height = height;
         if id == self.primary_window_id {
             self.settings.width = width;
             self.settings.height = height;
-        }
-        if let Some(window) = &state.window {
-            let _ignored = window.request_inner_size(LogicalSize::new(width, height));
         }
         state
             .canvas
