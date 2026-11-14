@@ -7,6 +7,104 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0](https://github.com/lukexor/pix-engine/compare/0.8.0..0.9.0) - 2026-11-14
+
+### ⛰️  Features
+
+- *(audio)* Replace SDL audio with cpal - ([9496d98](https://github.com/lukexor/pix-engine/commit/9496d98aab39ca9d71d8fd71a7e9f9aea615479b))
+- *(bench)* Add a frame-timing harness and record the baseline - ([ff2f050](https://github.com/lukexor/pix-engine/commit/ff2f050c639bc967f7c2d1927bb945c25f7cc76b))
+- *(controller)* Replace SDL game controllers with gilrs - ([cc4d267](https://github.com/lukexor/pix-engine/commit/cc4d2675b1b3ac7b9d95ea1875ed1c20ef61adf9))
+- *(renderer)* [**breaking**] Replace SDL rendering with wgpu and winit - ([b23fffd](https://github.com/lukexor/pix-engine/commit/b23fffde24ad3388194d26ba1d01dfc985baf255))
+- *(text)* [**breaking**] Draw bold and italic from real faces - ([8008e75](https://github.com/lukexor/pix-engine/commit/8008e75f448a70e52d99509a78d3b3a5ecfb8a52))
+- *(window)* [**breaking**] Return nothing from vsync and toggle_vsync - ([1adb7fe](https://github.com/lukexor/pix-engine/commit/1adb7fe499d559fe44a181471114ad08fc95ffd8))
+
+- Add scancode support WIP 4 - Complete list of scancodes from SDL2 - ([0d7fe30](https://github.com/lukexor/pix-engine/commit/0d7fe305a629308f45dd7ef5993c4ebe36d0d65f))
+- Add scancode support WIP 3 - ([4d912a0](https://github.com/lukexor/pix-engine/commit/4d912a095d600dc2330f0ab9106d2779cd8bf3f6))
+- Add scancode support WIP 2 - ([bc208ba](https://github.com/lukexor/pix-engine/commit/bc208ba969c5e179c923c32fcc6b2809d17d7720))
+- Add scancode support WIP 1 - ([c53cb2c](https://github.com/lukexor/pix-engine/commit/c53cb2c9e304d494321106d48072a1170299ac44))
+
+### 🐛 Bug Fixes
+
+- *(color)* [**breaking**] Do color arithmetic on Rgb channels in every mode - ([53f103c](https://github.com/lukexor/pix-engine/commit/53f103c413e37fc5cf60267d44d9d76af36c51df))
+- *(examples)* Keep fluid drags inside the simulated rows - ([068977b](https://github.com/lukexor/pix-engine/commit/068977b7b8d1d382a9c14dbfe5b49ab0ad98b65d))
+- *(examples)* Show the matrix rain sooner - ([be5cac1](https://github.com/lukexor/pix-engine/commit/be5cac1e4cf9dd44a8953977b6eb4f98d3abaf1e))
+- *(renderer)* Stretch text when the drawing scale differs per axis - ([014a473](https://github.com/lukexor/pix-engine/commit/014a47370ba629440ce160926ebc1127e264eb90))
+- *(renderer)* Satisfy clippy on Windows when toggling fullscreen - ([7bea0fc](https://github.com/lukexor/pix-engine/commit/7bea0fc57e532c4d0447e23685f610cce3fb7c49))
+- *(renderer)* Apply the drawing scale to new windows, clips and the mouse - ([fd8644c](https://github.com/lukexor/pix-engine/commit/fd8644c8d02e7c2f9052e476591c9d778935d5b9))
+- *(renderer)* Rotate images about a center relative to dst - ([36a496d](https://github.com/lukexor/pix-engine/commit/36a496dc49439e42c4a322dfd07298aacb786610))
+- *(renderer)* Honor the text rotation center and flip - ([f54f4e0](https://github.com/lukexor/pix-engine/commit/f54f4e01862c7716dea882fbe3c2f37be858b505))
+- *(renderer)* Size windows in logical points on scaled displays - ([7dd6da1](https://github.com/lukexor/pix-engine/commit/7dd6da102dd60f90e850a316d326763fe8cb4930))
+- *(renderer)* Reuse textures for an image redrawn within a frame - ([410004e](https://github.com/lukexor/pix-engine/commit/410004e0d9d49275ac5fcdcf84ca12e7fe773ef7))
+- *(renderer)* Keep presenting after a surface fails to reconfigure - ([39b30da](https://github.com/lukexor/pix-engine/commit/39b30dab192993779f72ae3fa738a673154f24d6))
+- *(renderer)* Draw the default face until a new font is baked - ([a0b1b21](https://github.com/lukexor/pix-engine/commit/a0b1b21d33a1160ab8e05e6183015afcf29daff9))
+- *(renderer)* Draw bold text by drawing the glyphs twice - ([02a6f63](https://github.com/lukexor/pix-engine/commit/02a6f632159f299de182bdf6cb9d0cd5c2b632b9))
+- *(renderer)* Fingerprint cached images so two cannot share a texture - ([2c04886](https://github.com/lukexor/pix-engine/commit/2c04886a8e892f5b7082788b0b77347ac5e703f7))
+- *(window)* Size the canvas to the window the compositor grants - ([5c96c2a](https://github.com/lukexor/pix-engine/commit/5c96c2ad4110702ee50f45d5fef937a72c95c446))
+- *(window)* Make toggle_vsync flip the setting - ([d811d2a](https://github.com/lukexor/pix-engine/commit/d811d2aa98341abe69d2916d974fc74333f538a8))
+
+- Import shape types by name instead of globbing the prelude - ([200415f](https://github.com/lukexor/pix-engine/commit/200415ffb16e695b549372b46fc8a9e51026457d))
+- Correct caching, counter and lifecycle bugs - ([955c386](https://github.com/lukexor/pix-engine/commit/955c38648a658b71ec4d3291f2fd2debe3e928aa))
+- Fixed color byte order pending updated rust-sdl2 release - ([8827bac](https://github.com/lukexor/pix-engine/commit/8827bacef75741a40bae1e7db16226b4fd1a3f87))
+- Fixed unused warning - ([e88f9da](https://github.com/lukexor/pix-engine/commit/e88f9da3cb09cbedce999a440cfa5f80648ee29a))
+- Fix removing joypad devices - ([539eb18](https://github.com/lukexor/pix-engine/commit/539eb18d93437c86ab3ec13ca052335277d00902))
+
+### 🚜 Refactor
+
+
+- Replace once_cell with std LazyLock - ([5497af7](https://github.com/lukexor/pix-engine/commit/5497af76d1998ea86acf9ba68e951b6e022a1112))
+
+### 📚 Documentation
+
+- *(bench)* Record the wgpu, color and hasher measurements - ([e0afec9](https://github.com/lukexor/pix-engine/commit/e0afec98ac4721a5d966fe050482cdfd840ce01e))
+- *(text)* Note that a font's name identifies it - ([7e7139a](https://github.com/lukexor/pix-engine/commit/7e7139a421af2eb3851f135be1bd2f81434ffdb3))
+
+- Explain the unpaced p99 spikes and drop a stale README version - ([dc05f8a](https://github.com/lukexor/pix-engine/commit/dc05f8ab8f046ad2e29118e8c06b0581e736fb62))
+- Drop the removed backtrace feature from the README and CLAUDE.md - ([2ab3906](https://github.com/lukexor/pix-engine/commit/2ab39066c136b156fb7cb1e26eb3275f9011944f))
+- Add a migration guide from 0.8 - ([2c7a875](https://github.com/lukexor/pix-engine/commit/2c7a8754d40b2cd72a740cb87fcfa96c79ed8d18))
+- Correct the rustdoc and wasm notes in CLAUDE.md - ([e21e6a9](https://github.com/lukexor/pix-engine/commit/e21e6a907502bc2a49f3ae0a5987014dafa71705))
+- Resolve the broken intra-doc links - ([10de1d6](https://github.com/lukexor/pix-engine/commit/10de1d6c93bac03975785ba6c64acb950a2e991c))
+- Add CLAUDE.md for Claude Code - ([7de235c](https://github.com/lukexor/pix-engine/commit/7de235cf4a7b004b4063d65a45f54f0b68453ed2))
+- Fixed docs - ([284b8dc](https://github.com/lukexor/pix-engine/commit/284b8dcdd27e5c25b778ee39f46ca149f1b60670))
+
+### ⚡ Performance
+
+- *(color)* Scale Rgb colors without the level round trip - ([bb41a14](https://github.com/lukexor/pix-engine/commit/bb41a1429b3c817c203836eb626659d3f9d2164e))
+- *(renderer)* Hash the renderer maps with ahash - ([da6c543](https://github.com/lukexor/pix-engine/commit/da6c54397dbaaf64a9e272bbaf70fd0f775e95df))
+
+
+### 🎨 Styling
+
+
+- Fixed lints - ([839145c](https://github.com/lukexor/pix-engine/commit/839145ca6253a2950782da6d30c52445bd233a1b))
+- Fix lints - ([e361694](https://github.com/lukexor/pix-engine/commit/e36169475bdb41926c4e5a8b2d1ed73da4424cd3))
+
+### 🧪 Testing
+
+
+- Updated tests - ([ebe6f47](https://github.com/lukexor/pix-engine/commit/ebe6f471c43395ad7bc5f32b13860f7ce0238b6f))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(ci)* Fixed changelog - ([ea653e5](https://github.com/lukexor/pix-engine/commit/ea653e5c2bd1adc25c7d30d4ad226d3579c0b42b))
+
+- Remove the SDL and wasm-pack scripts - ([701d61d](https://github.com/lukexor/pix-engine/commit/701d61d014fbdf299c5e63c9227fd65f28117cff))
+- Drop dead modules and raise the MSRV - ([7c738fb](https://github.com/lukexor/pix-engine/commit/7c738fba7eac5ddaa37e0c4a4070694e64220f4a))
+- Fix homebrew paths - ([4baff7c](https://github.com/lukexor/pix-engine/commit/4baff7c89d9fc005b931bbe6aa7bd170ec0cd002))
+- Update actions - ([44520b2](https://github.com/lukexor/pix-engine/commit/44520b2e2b3b963df848c4d99718df88aa465a16))
+- Reduce dependabot - ([b901fc6](https://github.com/lukexor/pix-engine/commit/b901fc66c16db3034be6428b2c113e9c1f01afe6))
+- Updated deps - ([4a9c949](https://github.com/lukexor/pix-engine/commit/4a9c949ebb64cb8c44ee78f2a35ff146b734d1ae))
+- Updated lints and set msrv - ([45fb86a](https://github.com/lukexor/pix-engine/commit/45fb86ad06daa7f79ba9a28c4896147f03455c70))
+- Updated deps - ([12e684e](https://github.com/lukexor/pix-engine/commit/12e684ec06e161416f6bf47b015102a4aba27f56))
+- Updated deps - ([780baf7](https://github.com/lukexor/pix-engine/commit/780baf71f2754f7ef9bf7718195150a61ea06434))
+- Update dependencies - ([1128b2d](https://github.com/lukexor/pix-engine/commit/1128b2dc132cf064ce22a969927662b9f49222d8))
+- Updated deps - ([d3e647e](https://github.com/lukexor/pix-engine/commit/d3e647e4167a884b385635837fbee3841ca11357))
+- Updated deps - ([f9cd068](https://github.com/lukexor/pix-engine/commit/f9cd06868007d8c64c82363aae9cae7990f87874))
+- Updated deps - ([2a6515e](https://github.com/lukexor/pix-engine/commit/2a6515e91166bec6e36987dec28ba86080697ce8))
+- Updated deps - ([a6c49ba](https://github.com/lukexor/pix-engine/commit/a6c49ba538ff2a9caac82154368341e4dd7ca802))
+- Updated packages - ([dba3424](https://github.com/lukexor/pix-engine/commit/dba34240dabf667c15970e2cb04dd7bc840ec885))
+- Updated cargo deps - ([bccdb27](https://github.com/lukexor/pix-engine/commit/bccdb27720d2de9765c271709a2a7e0975fd6cd4))
+
+
 ## [0.8.0] - 2023-10-30
 
 ### ⛰️  Features
