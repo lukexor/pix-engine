@@ -456,7 +456,28 @@ fn scale_shape(shape: &mut Shape, scale: [f32; 2], offset: egui::Vec2) {
             apply(&mut rect.rect.max);
         }
         Shape::Text(text) => {
+            // Mirrors `TextShape::transform`, which scales the galley by a single factor.
             apply(&mut text.pos);
+            let factor = egui::Vec2::new(scale[0], scale[1]);
+            let scale_rect = |rect: &mut Rect| {
+                *rect = Rect::from_min_max(
+                    (rect.min.to_vec2() * factor).to_pos2(),
+                    (rect.max.to_vec2() * factor).to_pos2(),
+                );
+            };
+            let galley = std::sync::Arc::make_mut(&mut text.galley);
+            scale_rect(&mut galley.rect);
+            scale_rect(&mut galley.mesh_bounds);
+            // `intrinsic_size` is private. It feeds layout, which is done by now, not painting.
+            for placed in &mut galley.rows {
+                placed.pos = (placed.pos.to_vec2() * factor).to_pos2();
+                let row = std::sync::Arc::make_mut(&mut placed.row);
+                row.size = row.size * factor;
+                scale_rect(&mut row.visuals.mesh_bounds);
+                for vertex in &mut row.visuals.mesh.vertices {
+                    vertex.pos = (vertex.pos.to_vec2() * factor).to_pos2();
+                }
+            }
         }
         Shape::Mesh(mesh) => {
             let mesh = std::sync::Arc::make_mut(mesh);
